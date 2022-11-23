@@ -1,0 +1,36 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Label="General">
+	  <Authors>Xavier John</Authors>
+	  <Company>$(Authors)</Company>
+	  <Copyright>Copyright © $(Company) 2022. All rights reserved.</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <SolutionDir Condition=" '$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined if not building a solution or within Visual Studio*' ">$(MSBuildThisFileDirectory)</SolutionDir>
+    <IsTestProject>$(MSBuildProjectName.EndsWith('.Tests'))</IsTestProject>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+	<PropertyGroup  Label="Version">
+		<Version>0.0.1-alpha</Version>
+	</PropertyGroup>
+
+  <PropertyGroup  Label="Build">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Enable linter -->
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
+    <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Test projects. -->
+  <ImportGroup Condition=" '$(IsTestProject)' == 'true' ">
+    <Import Project="$(MSBuildThisFileDirectory)shared/commontest.props"/>
+  </ImportGroup>
+ 
+</Project>

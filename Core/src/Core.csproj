@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Description>
+			Experimental version of functional programming with Domain Driven Design
+		</Description>
+	</PropertyGroup>
+</Project>
