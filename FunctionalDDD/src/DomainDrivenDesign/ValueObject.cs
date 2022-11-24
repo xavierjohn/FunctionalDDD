@@ -1,11 +1,11 @@
-﻿namespace DomainDrivenDesign;
+﻿namespace FunctionalDDD;
 
 public abstract class ValueObject : IComparable, IComparable<ValueObject>
 {
     private int? _cachedHashCode;
 
     protected abstract IEnumerable<IComparable> GetEqualityComponents();
-    
+
     public override bool Equals(object? obj)
     {
         if (obj == null)

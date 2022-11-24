@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+﻿namespace FunctionalDDD.Tests.DomainDrivenDesign.ValueObjects;
 internal class DerivedAddress : Address
 {
     public string Country { get; }

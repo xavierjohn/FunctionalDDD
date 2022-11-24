@@ -1,8 +1,5 @@
-using System.Net.Mail;
+namespace FunctionalDDD.Tests.DomainDrivenDesign.ValueObjects;
 using FluentAssertions;
-using Xunit;
-
-namespace DomainDrivenDesign.Tests.ValueObjects;
 
 public class ValueObjectTests
 {
@@ -42,7 +39,7 @@ public class ValueObjectTests
         moneys.Should().Equal(new List<Money> { one, two, three });
 
     }
-    
+
     [Fact]
     public void It_is_possible_to_override_default_equality_comparison_behavior()
     {

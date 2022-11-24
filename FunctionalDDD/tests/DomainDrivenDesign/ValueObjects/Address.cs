@@ -1,4 +1,6 @@
-﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+﻿namespace FunctionalDDD.Tests.DomainDrivenDesign.ValueObjects;
+using FunctionalDDD;
+
 internal class Address : ValueObject
 {
     public string Street { get; }
