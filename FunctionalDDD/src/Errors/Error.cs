@@ -31,6 +31,23 @@ public class Error : ValueObject
 
     public static Error Unauthorized(string code, string message) =>
         new Unauthorized(code, message);
+    
+    public static Error Unexpected(string code, string message) =>
+    new Unexpected(code, message);
 
+    public static Error Conflict(string message) =>
+    new Conflict("conflict.error", message);
+
+    public static Error NotFound(string message) =>
+        new NotFound("notfound.error", message);
+
+    public static Error Validation(string message) =>
+       new Validation("validation.error", message);
+
+    public static Error Unauthorized(string message) =>
+        new Unauthorized("unauthorized.error", message);
+    
+    public static Error Unexpected(string message) =>
+        new Unexpected("unexpected.error", message);
 }
 
