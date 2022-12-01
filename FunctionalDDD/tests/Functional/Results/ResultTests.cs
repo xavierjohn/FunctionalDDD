@@ -27,7 +27,7 @@ public class ResultTests
         Result<string> result = Result.Failure<string>(Error.Validation("Bad first name"));
 
         result.IsFailure.Should().BeTrue();
-        result.Errors[0].Should().Be(Error.Validation("Bad first name"));
+        result.Error.Should().Be(Error.Validation("Bad first name"));
     }
 
 
@@ -53,7 +53,7 @@ public class ResultTests
         Result<string> result = Result.FailureIf(() => true, "Hello", Error.Unexpected("You can't touch this."));
 
         result.IsFailure.Should().BeTrue();
-        result.Errors[0].Should().Be(Error.Unexpected("You can't touch this."));
+        result.Error.Should().Be(Error.Unexpected("You can't touch this."));
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class ResultTests
         Result<string> result = await Result.FailureIf(() => Task.FromResult(true), "Hello", Error.Unexpected("You can't touch this."));
 
         result.IsFailure.Should().BeTrue();
-        result.Errors[0].Should().Be(Error.Unexpected("You can't touch this."));
+        result.Error.Should().Be(Error.Unexpected("You can't touch this."));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class ResultTests
         Result<double> result = Result.FailureIf(true, val, Error.Unexpected("simple result error"));
 
         result.IsFailure.Should().BeTrue();
-        result.Errors[0].Should().Be(Error.Unexpected("simple result error"));
+        result.Error.Should().Be(Error.Unexpected("simple result error"));
     }
 
     [Fact]

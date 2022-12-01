@@ -9,6 +9,8 @@ public readonly partial struct Result<T>
 
     private readonly ErrorList? _error;
     public ErrorList Errors => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
+    
+    public Error Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
 
     private readonly T? _value;
 
@@ -47,20 +49,4 @@ public readonly partial struct Result<T>
 
         return Result.Success(value);
     }
-
-    //public static implicit operator Result(Result<T> result)
-    //{
-    //    if (result.IsSuccess)
-    //        return Result.Success();
-    //    else
-    //        return Result.Failure(result.Error);
-    //}
-
-    //public static implicit operator UnitResult(Result<T> result)
-    //{
-    //    if (result.IsSuccess)
-    //        return UnitResult.Success();
-    //    else
-    //        return UnitResult.Failure(result.Error);
-    //}
 }
