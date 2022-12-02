@@ -9,10 +9,10 @@ public readonly partial struct Result<T>
 
     private readonly ErrorList? _error;
     public ErrorList Errors => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
-    
+
     public Error Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
 
-    private readonly T? _value;
+    private readonly T _value;
 
     public T Value
     {
@@ -24,9 +24,7 @@ public readonly partial struct Result<T>
             if (Nullable.GetUnderlyingType(typeof(T)) == null && _value is null)
                 throw new InvalidOperationException("Result is in success state, but value is null");
 
-#pragma warning disable CS8603
             return _value;
-#pragma warning restore CS8603            
         }
     }
 
@@ -34,7 +32,7 @@ public readonly partial struct Result<T>
     {
         IsFailure = ResultCommonLogic.ErrorStateGuard(isFailure, error);
         _error = error;
-        _value = value;
+        _value = value ?? default!;
     }
 
     public static implicit operator Result<T>(T value)
