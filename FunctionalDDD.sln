@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DCF81061-FBF4-44DB-9452-EA12D0021D46}"
+	ProjectSection(SolutionItems) = preProject
+		shared\commontest.props = shared\commontest.props
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		shared\xunit.runner.json = shared\xunit.runner.json
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FunctionalDDD", "FunctionalDDD\src\FunctionalDDD.csproj", "{D0ACC3CB-1ED2-464B-8EBE-D2618542AFBE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FunctionalDDD.Tests", "FunctionalDDD\tests\FunctionalDDD.Tests.csproj", "{1A28FE38-D6E0-4A40-A258-CDD28C20630A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D0ACC3CB-1ED2-464B-8EBE-D2618542AFBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0ACC3CB-1ED2-464B-8EBE-D2618542AFBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0ACC3CB-1ED2-464B-8EBE-D2618542AFBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0ACC3CB-1ED2-464B-8EBE-D2618542AFBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A28FE38-D6E0-4A40-A258-CDD28C20630A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A28FE38-D6E0-4A40-A258-CDD28C20630A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A28FE38-D6E0-4A40-A258-CDD28C20630A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A28FE38-D6E0-4A40-A258-CDD28C20630A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B687416C-3313-4018-820C-DD90FD4367E9}
+	EndGlobalSection
+EndGlobal
