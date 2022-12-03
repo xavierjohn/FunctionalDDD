@@ -2,4 +2,9 @@
   <ItemGroup>
     <ProjectReference Include="..\src\FunctionalDDD.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Ensure.Task.cs" DependentUpon="Ensure.cs" />
+		<Compile Update="Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
+	</ItemGroup>
 </Project>

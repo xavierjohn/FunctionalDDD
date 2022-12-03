@@ -59,7 +59,7 @@ public class ResultTests
     [Fact]
     public async Task CreateFailure_async_predicate_is_false_Success_result_expected()
     {
-        Result<string> result = await Result.FailureIf(() => Task.FromResult(false), "Hello", Error.Unexpected(string.Empty));
+        Result<string> result = await Result.FailureIfAsync(() => Task.FromResult(false), "Hello", Error.Unexpected(string.Empty));
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be("Hello");
@@ -68,7 +68,7 @@ public class ResultTests
     [Fact]
     public async Task CreateFailure_async_predicate_is_true_Failure_result_expected()
     {
-        Result<string> result = await Result.FailureIf(() => Task.FromResult(true), "Hello", Error.Unexpected("You can't touch this."));
+        Result<string> result = await Result.FailureIfAsync(() => Task.FromResult(true), "Hello", Error.Unexpected("You can't touch this."));
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("You can't touch this."));

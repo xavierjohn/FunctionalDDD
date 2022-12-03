@@ -1,4 +1,5 @@
 ﻿namespace FunctionalDDD;
+
 using FunctionalDDD.Internal;
 
 /// <summary>
@@ -13,7 +14,9 @@ public readonly partial struct UnitResult
     public bool IsSuccess => !IsFailure;
 
     private readonly ErrorList? _error;
-    public ErrorList Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
+    public ErrorList Errors => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
+
+    public Error Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
 
     internal UnitResult(bool isFailure, in ErrorList? error)
     {

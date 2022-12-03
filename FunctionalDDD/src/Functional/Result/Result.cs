@@ -8,7 +8,7 @@ public partial struct Result
     /// </summary>
     public static Result<T> Success<T>(T value) =>
         new(false, default, value);
-
+    
     /// <summary>
     ///     Creates a failure result with the given error.
     /// </summary>
@@ -23,6 +23,7 @@ public partial struct Result
         return isSuccess
             ? Success(value)
             : Failure<T>(error);
+
     }
 
     /// <summary>
@@ -40,18 +41,18 @@ public partial struct Result
     /// <summary>
     ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of FailureIf().
     /// </summary>
-    public static async Task<Result<T>> SuccessIf<T>(Func<Task<bool>> predicate, T value, ErrorList error)
+    public static async Task<Result<T>> SuccessIfAsync<T>(Func<Task<bool>> predicate, T value, ErrorList error)
     {
-        bool isSuccess = await predicate();
+        bool isSuccess = await predicate().DefaultAwait();
         return SuccessIf(isSuccess, value, error);
     }
 
     /// <summary>
     ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of SuccessIf().
     /// </summary>
-    public static async Task<Result<T>> FailureIf<T>(Func<Task<bool>> failurePredicate, T value, ErrorList error)
+    public static async Task<Result<T>> FailureIfAsync<T>(Func<Task<bool>> failurePredicate, T value, ErrorList error)
     {
-        bool isFailure = await failurePredicate();
+        bool isFailure = await failurePredicate().DefaultAwait();
         return SuccessIf(!isFailure, value, error);
     }
 }

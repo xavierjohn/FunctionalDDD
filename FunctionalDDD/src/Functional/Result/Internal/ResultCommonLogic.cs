@@ -22,7 +22,7 @@ internal static class ResultCommonLogic
     {
         if (!isFailure)
             throw new ResultSuccessException();
-        
+
         if (error is null || error.HasErrors == false)
             throw new InvalidOperationException("Failed state without error object");
 
