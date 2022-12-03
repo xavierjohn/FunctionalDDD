@@ -4,7 +4,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Ensure.Task.cs" DependentUpon="Ensure.cs" />
-		<Compile Update="Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
+		<Compile Update="Functional\Results\Extensions\EnsureTests.Task.cs" DependentUpon="EnsureTests.cs" />
+		<Compile Update="Functional\Results\Extensions\EnsureTests.Task.*.cs" DependentUpon="EnsureTests.Task.cs" />
 	</ItemGroup>
 </Project>
