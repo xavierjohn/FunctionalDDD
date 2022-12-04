@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-
-namespace FunctionalDDD.Tests.Functional.Results.Extensions;
+﻿namespace FunctionalDDD.Tests.Functional.Results.Extensions;
 
 public class EnsureTests
 {
