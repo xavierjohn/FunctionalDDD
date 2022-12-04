@@ -1,6 +1,6 @@
 namespace FunctionalDDD;
 
-public static class AsyncResultExtensionsLeftOperand
+public static partial class AsyncResultExtensionsLeftOperand
 {
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.

@@ -80,20 +80,6 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static UnitResult Ensure<E>(this UnitResult result, Func<bool> predicate, Func<ErrorList> errorPredicate)
-    {
-        if (result.IsFailure)
-            return result;
-
-        if (!predicate())
-            return UnitResult.Failure(errorPredicate());
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
     public static UnitResult Ensure(this UnitResult result, Func<bool> predicate, ErrorList errors)
     {
         if (result.IsFailure)

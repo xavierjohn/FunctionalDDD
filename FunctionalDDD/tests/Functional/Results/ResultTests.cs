@@ -1,6 +1,4 @@
-using FluentAssertions;
-
-namespace FunctionalDDD.Tests.Functional.Results;
+namespace FunctionalDDD.Tests.ResultTests;
 
 public class ResultTests
 {
