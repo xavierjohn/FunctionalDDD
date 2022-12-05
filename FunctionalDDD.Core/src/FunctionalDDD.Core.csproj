@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>FunctionalDDD.Core.Tests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+	
+	<ItemGroup>
+		<Compile Update="Functional\Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
+		<Compile Update="Functional\Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
+		<Compile Update="Functional\Result\Extensions\Bind.Task.cs" DependentUpon="Bind.cs" />
+		<Compile Update="Functional\Result\Extensions\Bind.Task.*.cs" DependentUpon="Bind.Task.cs" />
+		<Compile Update="Functional\Result\Extensions\Bind.ValueTask.cs" DependentUpon="Bind.cs" />
+		<Compile Update="Functional\Result\Extensions\Bind.ValueTask.*.cs" DependentUpon="Bind.ValueTask.cs" />
+	</ItemGroup>
+</Project>
