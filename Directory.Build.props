@@ -25,10 +25,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
-    <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
+	  <RootNamespace>FunctionalDDD.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+	  <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
 
   <!-- Test projects. -->
+  <PropertyGroup Condition=" '$(IsTestProject)' == 'true' ">
+	  <IsPackable>false</IsPackable>
+  </PropertyGroup>
   <ImportGroup Condition=" '$(IsTestProject)' == 'true' ">
     <Import Project="$(MSBuildThisFileDirectory)shared/commontest.props"/>
   </ImportGroup>

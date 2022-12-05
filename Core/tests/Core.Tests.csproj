@@ -1,13 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<ItemGroup>
-	  <ProjectReference Include="..\src\FunctionalDDD.Core.csproj" />
+		<ProjectReference Include="..\src\Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Update="Functional\Results\Extensions\EnsureTests.Task.cs" DependentUpon="EnsureTests.cs" />
 		<Compile Update="Functional\Results\Extensions\EnsureTests.Task.*.cs" DependentUpon="EnsureTests.Task.cs" />
-		
+
 		<Compile Update="Functional\Results\Extensions\BindTests.Task.cs" DependentUpon="BindTests.cs" />
 		<Compile Update="Functional\Results\Extensions\BindsTests.Task.*.cs" DependentUpon="BindTests.Task.cs" />
 		<Compile Update="Functional\Results\Extensions\BindTests.ValueTask.cs" DependentUpon="BindTests.cs" />
