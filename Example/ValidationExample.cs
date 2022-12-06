@@ -8,8 +8,9 @@ public class ValidationExample
     [Fact]
     public void Test1()
     {
-        var email = EmailAddress.Create("xavier@somewhere.com");
-        var firstName = FirstName.Create("Xavier");
+        var x = EmailAddress.Create("xavier@somewhere.com")
+            .Combine(() => FirstName.Create("Xavier"))
+            .Combine(() => LastName.Create("John"));
 //            .Validate(LastName.Create(string.empty));
         
 //.AndValidate(FirstName.Create(string.empty))
