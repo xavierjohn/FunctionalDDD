@@ -7,11 +7,20 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<Compile Update="Functional\Maybe\Extensions\ToResult.*.cs" DependentUpon="ToResult.cs" />
+		
 		<Compile Update="Functional\Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
 		<Compile Update="Functional\Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
+		
 		<Compile Update="Functional\Result\Extensions\Bind.Task.cs" DependentUpon="Bind.cs" />
 		<Compile Update="Functional\Result\Extensions\Bind.Task.*.cs" DependentUpon="Bind.Task.cs" />
 		<Compile Update="Functional\Result\Extensions\Bind.ValueTask.cs" DependentUpon="Bind.cs" />
 		<Compile Update="Functional\Result\Extensions\Bind.ValueTask.*.cs" DependentUpon="Bind.ValueTask.cs" />
+
+		<Compile Update="Functional\Result\Extensions\Map.Task.cs" DependentUpon="Map.cs" />
+		<Compile Update="Functional\Result\Extensions\Map.Task.*.cs" DependentUpon="Map.Task.cs" />
+		<Compile Update="Functional\Result\Extensions\Map.ValueTask.cs" DependentUpon="Map.cs" />
+		<Compile Update="Functional\Result\Extensions\Map.ValueTask.*.cs" DependentUpon="Map.ValueTask.cs" />
+
 	</ItemGroup>
 </Project>
