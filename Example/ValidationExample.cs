@@ -9,8 +9,8 @@ public class ValidationExample
     public void Test1()
     {
         var x = EmailAddress.Create("xavier@somewhere.com")
-            .Combine(() => FirstName.Create("Xavier"))
-            .Combine(() => LastName.Create("John"));
+            .Combine(FirstName.Create("Xavier"))
+            .Combine(LastName.Create("John"));
 //            .Validate(LastName.Create(string.empty));
         
 //.AndValidate(FirstName.Create(string.empty))
