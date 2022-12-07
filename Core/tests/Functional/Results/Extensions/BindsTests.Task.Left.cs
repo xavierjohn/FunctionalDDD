@@ -26,44 +26,4 @@ public class BindTests_Task_Left : BindTestsBase
 
         AssertFailure(output);
     }
-
-    [Fact]
-    public async Task Bind_Task_Left_T_E_returns_failure_and_does_not_execute_func()
-    {
-        UnitResult output = await Task_Failure_T_E().BindAsync(UnitResult_E_T);
-
-        AssertFailure(output);
-    }
-
-    [Fact]
-    public async Task Bind_Task_Left_E_selects_new_result()
-    {
-        UnitResult output = await Task_UnitResult_Success_E().BindAsync(Success_T_E);
-
-        AssertSuccess(output);
-    }
-
-    [Fact]
-    public async Task Bind_Task_Left_E_returns_failure_and_does_not_execute_func()
-    {
-        UnitResult output = await Task_UnitResult_Failure_E().BindAsync(Success_T_E);
-
-        AssertFailure(output);
-    }
-
-    [Fact]
-    public async Task Bind_Task_Left_E_selects_new_UnitResult()
-    {
-        UnitResult output = await Task_UnitResult_Success_E().BindAsync(UnitResult_Success_E);
-
-        AssertSuccess(output);
-    }
-
-    [Fact]
-    public async Task Bind_Task_Left_E_returns_UnitResult_failure_and_does_not_execute_func()
-    {
-        UnitResult output = await Task_UnitResult_Failure_E().BindAsync(UnitResult_Success_E);
-
-        AssertFailure(output);
-    }
 }

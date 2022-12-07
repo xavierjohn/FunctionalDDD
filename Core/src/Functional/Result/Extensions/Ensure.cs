@@ -77,36 +77,6 @@ public static partial class ResultExtensions
       return result;
     }
 
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
-    public static UnitResult Ensure(this UnitResult result, Func<bool> predicate, ErrorList errors)
-    {
-        if (result.IsFailure)
-            return result;
-
-        if (!predicate())
-            return UnitResult.Failure(errors);
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
-    /// </summary>
-    public static UnitResult Ensure(this UnitResult result, Func<UnitResult> predicate)
-    {
-        if (result.IsFailure)
-            return result;
-
-        var predicateResult = predicate();
-
-        if (predicateResult.IsFailure)
-            return UnitResult.Failure(predicateResult.Error);
-
-        return result;
-    }
-
     public static Result<string> EnsureNotNullOrWhiteSpace(this Maybe<string> maybe, Error error)
     {
         return maybe.ToResult(error)

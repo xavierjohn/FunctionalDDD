@@ -68,12 +68,4 @@ public static partial class AsyncResultExtensionsLeftOperand
       return result.Ensure(predicate);
     }
 
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
-    public static async Task<UnitResult> EnsureAsync(this Task<UnitResult> resultTask, Func<bool> predicate, ErrorList errorMessage)
-    {
-        UnitResult result = await resultTask.DefaultAwait();
-        return result.Ensure(predicate, errorMessage);
-    }
 }

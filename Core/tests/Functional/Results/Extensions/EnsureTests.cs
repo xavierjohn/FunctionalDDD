@@ -92,63 +92,6 @@ public class EnsureTests
     }
 
     [Fact]
-    public async Task Ensure_task_source_result_is_success_predicate_is_failed_expected_result_failure()
-    {
-        Task<UnitResult> sut = Task.FromResult(UnitResult.Success());
-
-        UnitResult result = await sut.EnsureAsync(() => false, Error.Unexpected("predicate problems"));
-
-        result.Should().NotBe(sut.Result);
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("predicate problems"));
-    }
-
-
-    [Fact]
-    public async Task Ensure_task_source_result_is_success_predicate_is_passed_expected_result_success()
-    {
-        Task<UnitResult> sut = Task.FromResult(UnitResult.Success());
-
-        UnitResult result = await sut.EnsureAsync(() => true, Error.Unexpected("No Error"));
-
-        result.Should().Be(sut.Result);
-    }
-
-    [Fact]
-    public async Task Ensure_task_source_result_is_failure_async_predicate_do_not_invoked_expect_is_result_failure()
-    {
-        Task<UnitResult> sut = Task.FromResult(UnitResult.Failure(Error.Unexpected("some error")));
-
-        UnitResult result = await sut.EnsureAsync(() => Task.FromResult(false), Error.Unexpected("No Error"));
-
-        result.Should().Be(sut.Result);
-    }
-
-
-    [Fact]
-    public async Task Ensure_task_source_result_is_success_async_predicate_is_failed_expected_result_failure()
-    {
-        Task<UnitResult> sut = Task.FromResult(UnitResult.Success());
-
-        UnitResult result = await sut.EnsureAsync(() => Task.FromResult(false), Error.Unexpected("predicate problems"));
-
-        result.Should().NotBe(sut.Result);
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("predicate problems"));
-    }
-
-    [Fact]
-    public async Task Ensure_task_source_result_is_success_async_predicate_is_passed_expected_result_success()
-    {
-        Task<UnitResult> sut = Task.FromResult(UnitResult.Success());
-
-        UnitResult result = await sut.EnsureAsync(() => Task.FromResult(true), Error.Unexpected("No Error"));
-
-        result.Should().Be(sut.Result);
-    }
-
-
-    [Fact]
     public void Ensure_generic_source_result_is_failure_predicate_do_not_invoked_expect_is_error_result_failure()
     {
         Result<TimeSpan> sut = Result.Failure<TimeSpan>(Error.Unexpected("some error"));

@@ -47,17 +47,6 @@ public class Ensure_Task_Tests
     }
 
     [Fact]
-    public async Task Ensure_Task_with_successInput_and_parameterisedFailurePredicate()
-    {
-        var initialResult = Task.FromResult(Result.Success("Initial Success message"));
-
-        var result = await initialResult.EnsureAsync(_ => Task.FromResult(UnitResult.Failure(Error.NotFound("Error Message"))));
-
-        result.IsSuccess.Should().BeFalse("Predicate is failure result");
-        result.Error.Should().Be(Error.NotFound("Error Message"));
-    }
-
-    [Fact]
     public async Task Ensure_Task_with_successInput_and_parameterisedSuccessPredicate()
     {
         var initialResult = Task.FromResult(Result.Success("Initial Success message"));
