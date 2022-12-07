@@ -52,12 +52,4 @@ public readonly partial struct Result<T>
     {
         return Result.Failure<T>(errors);
     }
-
-    public static implicit operator UnitResult(Result<T> result)
-    {
-        if (result.IsSuccess)
-            return UnitResult.Success();
-        else
-            return UnitResult.Failure(result.Error);
-    }
 }

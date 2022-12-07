@@ -1,3 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <ItemGroup>
+    <ProjectReference Include="..\CommonValueObjects\src\CommonValueObjects.csproj" />
+  </ItemGroup>
 </Project>

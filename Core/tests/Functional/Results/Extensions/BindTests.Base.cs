@@ -71,25 +71,6 @@ public abstract class BindTestsBase : TestBase
         return Result.Success(T.Value);
     }
 
-    protected UnitResult UnitResult_Success_E()
-    {
-        _funcExecuted = true;
-        return UnitResult.Success();
-    }
-
-    protected UnitResult UnitResult_Failure_E()
-    {
-        _funcExecuted = false;
-        return UnitResult.Failure(Error1);
-    }
-
-    protected UnitResult UnitResult_E_T(T value)
-    {
-        _funcExecuted = true;
-        FuncParam = value;
-        return UnitResult.Success();
-    }
-
     protected Task<Result<T>> Task_Success_T(T value)
     {
         return Success_T(value).AsTask();
@@ -119,21 +100,6 @@ public abstract class BindTestsBase : TestBase
         return Success_T_Func_K(value).AsTask();
     }
 
-    protected Task<UnitResult> Task_UnitResult_Success_E()
-    {
-        return UnitResult_Success_E().AsTask();
-    }
-
-    protected Task<UnitResult> Task_UnitResult_Failure_E()
-    {
-        return UnitResult_Failure_E().AsTask();
-    }
-
-    protected Task<UnitResult> Func_T_Task_UnitResult_E(T value)
-    {
-        return UnitResult_E_T(value).AsTask();
-    }
-
     protected ValueTask<Result<T>> ValueTask_Success_T(T value)
     {
         return Success_T(value).AsValueTask();
@@ -158,21 +124,6 @@ public abstract class BindTestsBase : TestBase
         return Success_T_Func_K(value).AsValueTask();
     }
 
-    protected ValueTask<UnitResult> ValueTask_UnitResult_Success_E()
-    {
-        return UnitResult_Success_E().AsValueTask();
-    }
-
-    protected ValueTask<UnitResult> ValueTask_UnitResult_Failure_E()
-    {
-        return UnitResult_Failure_E().AsValueTask();
-    }
-
-    protected ValueTask<UnitResult> Func_T_ValueTask_UnitResult_E(T value)
-    {
-        return UnitResult_E_T(value).AsValueTask();
-    }
-
     protected void AssertFailure(Result<K> output)
     {
         _funcExecuted.Should().BeFalse();
@@ -180,25 +131,11 @@ public abstract class BindTestsBase : TestBase
         output.Error.Should().Be(Error1);
     }
 
-    protected void AssertFailure(UnitResult output)
-    {
-        _funcExecuted.Should().BeFalse();
-        output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Error1);
-    }
-
-
     protected void AssertSuccess(Result<K> output)
     {
         _funcExecuted.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be(K.Value);
-    }
-
-    protected void AssertSuccess(UnitResult output)
-    {
-        _funcExecuted.Should().BeTrue();
-        output.IsSuccess.Should().BeTrue();
     }
 
     protected Task<Result<T>> Task_Success_T_E()
