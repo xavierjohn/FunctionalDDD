@@ -2,6 +2,7 @@
   
    <!-- Runtime -->
   <ItemGroup>
+	  <PackageVersion Include="FluentValidation" Version="11.3.0" />
   </ItemGroup>
 
   <!-- Test -->
