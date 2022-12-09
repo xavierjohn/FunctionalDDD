@@ -1,4 +1,3 @@
-using FluentAssertions;
 using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD.Core;
 
