@@ -18,6 +18,7 @@ public class Error : ValueObject
     protected override IEnumerable<IComparable> GetEqualityComponents()
     {
         yield return Code;
+        yield return Message;
     }
 
     public static Error Conflict(string code, string message) =>

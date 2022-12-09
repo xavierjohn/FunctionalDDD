@@ -1,20 +1,24 @@
-﻿namespace BuberDinner.Domain.User.Entities;
+﻿using FluentValidation;
+using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.Core;
 
-public class User : Entity<Guid>
+namespace FunctionalDDD.FluentValidation.Tests;
+
+internal class User : Aggregate<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }
     public EmailAddress Email { get; }
     public string Password { get; }
 
-    public static Result<User, ErrorList> Create(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User> Create(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
         var user = new User(firstName, lastName, email, password);
         return s_validator.ValidateToResult(user);
     }
 
 
-    private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    private User(FirstName firstName, LastName lastName, EmailAddress email, string password) : base(UserId.CreateUnique())
     {
         FirstName = firstName;
         LastName = lastName;
@@ -24,8 +28,8 @@ public class User : Entity<Guid>
 
     static readonly InlineValidator<User> s_validator = new()
     {
-        v => v.RuleFor(x => x.FirstName).NotEmpty(),
-        v => v.RuleFor(x => x.LastName).NotEmpty(),
+        v => v.RuleFor(x => x.FirstName).NotNull(),
+        v => v.RuleFor(x => x.LastName).NotNull(),
         v => v.RuleFor(x => x.Email).NotNull(),
         v => v.RuleFor(x => x.Password).NotEmpty()
     };

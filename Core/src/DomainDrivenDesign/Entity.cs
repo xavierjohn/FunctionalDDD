@@ -2,16 +2,9 @@
 
 public abstract class Entity<TId>
 {
-    public virtual TId Id { get; protected set; }
+    public TId Id { get; init; }
 
-    protected Entity()
-    {
-    }
-
-    protected Entity(TId id)
-    {
-        Id = id;
-    }
+    protected Entity(TId id) => Id = id;
 
     public override bool Equals(object? obj)
     {
