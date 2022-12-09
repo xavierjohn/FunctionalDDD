@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Core\src\Core.csproj" />
+	</ItemGroup>
+</Project>
