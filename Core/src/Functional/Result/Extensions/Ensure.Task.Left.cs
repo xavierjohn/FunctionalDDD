@@ -1,4 +1,4 @@
-namespace FunctionalDDD.Core;
+namespace FunctionalDDD;
 
 public static partial class AsyncResultExtensionsLeftOperand
 {

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 using System.Threading.Tasks;
 
 public partial struct Result

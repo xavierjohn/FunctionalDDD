@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 using System;
-using FunctionalDDD.Core.Internal;
+using FunctionalDDD.Internal;
 
 public readonly partial struct Result<T>
 {

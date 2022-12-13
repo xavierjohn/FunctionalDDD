@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Core.Tests;
+﻿namespace FunctionalDDD.Tests;
 
-using FunctionalDDD.Core.Tests.ResultTests;
+using FunctionalDDD.Tests.ResultTests;
 
 public abstract class BindTestsBase : TestBase
 {

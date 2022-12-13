@@ -1,6 +1,6 @@
 ﻿
 // Generated code
-namespace FunctionalDDD.Core;
+namespace FunctionalDDD;
 
 public static partial class ResultExtensions
 {

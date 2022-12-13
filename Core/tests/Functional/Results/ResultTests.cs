@@ -1,4 +1,4 @@
-namespace FunctionalDDD.Core.Tests.ResultTests;
+namespace FunctionalDDD.Tests.ResultTests;
 
 public class ResultTests
 {

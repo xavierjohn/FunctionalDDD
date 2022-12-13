@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDDD.CommonValueObjects;
 
 using System.Text.RegularExpressions;
-using FunctionalDDD.Core;
+using FunctionalDDD;
 
 public partial class EmailAddress : SimpleValueObject<string>
 {

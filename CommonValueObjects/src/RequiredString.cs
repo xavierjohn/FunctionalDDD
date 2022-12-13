@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
-using FunctionalDDD.Core;
+using FunctionalDDD;
 
 namespace FunctionalDDD.CommonValueObjects;
 public abstract class RequiredString<T> : SimpleValueObject<string>

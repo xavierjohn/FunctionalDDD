@@ -1,5 +1,5 @@
 ﻿
-namespace FunctionalDDD.Core.Tests.ResultTests;
+namespace FunctionalDDD.Tests.ResultTests;
 
 public abstract class TestBase
 {

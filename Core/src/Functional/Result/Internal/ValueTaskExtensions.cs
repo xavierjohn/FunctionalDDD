@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 
 internal static class ValueTaskExtensions
 {

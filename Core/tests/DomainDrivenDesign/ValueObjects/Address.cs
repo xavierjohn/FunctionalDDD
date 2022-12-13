@@ -1,5 +1,5 @@
-﻿namespace FunctionalDDD.Core.Tests.DomainDrivenDesign.ValueObjects;
-using FunctionalDDD.Core;
+﻿namespace FunctionalDDD.Tests.DomainDrivenDesign.ValueObjects;
+using FunctionalDDD;
 
 internal class Address : ValueObject
 {

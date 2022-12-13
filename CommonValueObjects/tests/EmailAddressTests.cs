@@ -1,5 +1,5 @@
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
+using FunctionalDDD;
 
 namespace CommonValueObjects.Tests;
 

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 public class ResultFailureException : Exception
 {
     public ErrorList Error { get; }

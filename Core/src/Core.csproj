@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<PropertyGroup>
+	  <AssemblyName>FunctionalDDD</AssemblyName>
+	  <RootNamespace>FunctionalDDD</RootNamespace>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>Core.Tests</_Parameter1>

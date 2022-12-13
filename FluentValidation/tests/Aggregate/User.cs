@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
+using FunctionalDDD;
 
 namespace FunctionalDDD.FluentValidation.Tests;
 
