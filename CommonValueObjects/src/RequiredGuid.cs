@@ -1,8 +1,7 @@
-﻿using System.Linq.Expressions;
+﻿namespace FunctionalDDD.CommonValueObjects;
+using System.Linq.Expressions;
 using System.Reflection;
-using FunctionalDDD;
 
-namespace FunctionalDDD.CommonValueObjects;
 public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
     where T : RequiredGuid<T>
 {
@@ -19,8 +18,10 @@ public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
         return requiredStringOrNothing
             .ToResult(cannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, cannotBeEmptyError)
-            .Map(name => CreateInstance.Value(name));
+            .Map(guid => CreateInstance.Value(guid));
     }
+
+    public static T CreateUnique() => CreateInstance.Value(Guid.NewGuid());
 
     private static Func<Guid, T> CreateInstanceFunc()
     {

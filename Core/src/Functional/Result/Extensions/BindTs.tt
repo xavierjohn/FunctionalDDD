@@ -12,6 +12,10 @@ public static partial class ResultExtensions
 {
 
 <#
+  void WriteArgs(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "args" + i)));
+  }
+
   for(var i = 2; i <=9; i++) { 
 #>
 

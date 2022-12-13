@@ -1,7 +1,6 @@
-﻿using FunctionalDDD.CommonValueObjects;
+﻿namespace CommonValueObjects.Tests;
+using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
-
-namespace CommonValueObjects.Tests;
 
 public class TrackingId : RequiredString<TrackingId>
 {

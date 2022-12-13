@@ -10,14 +10,6 @@
 			<_Parameter1>Core.Tests</_Parameter1>
 		</AssemblyAttribute>
 	</ItemGroup>
-
-	<ItemGroup>
-	  <None Include="Functional\Result\Extensions\BindTs.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>BindTs.tt</DependentUpon>
-	  </None>
-	</ItemGroup>
 	
 	<ItemGroup>
 		<Compile Update="Functional\Maybe\Extensions\ToResult.*.cs" DependentUpon="ToResult.cs" />
@@ -25,6 +17,11 @@
 		  <DesignTime>True</DesignTime>
 		  <AutoGen>True</AutoGen>
 		  <DependentUpon>BindTs.tt</DependentUpon>
+		</Compile>
+		<Compile Update="Functional\Result\Extensions\CombineTs.cs">
+		  <DesignTime>True</DesignTime>
+		  <AutoGen>True</AutoGen>
+		  <DependentUpon>CombineTs.tt</DependentUpon>
 		</Compile>
 		
 		<Compile Update="Functional\Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
@@ -36,6 +33,10 @@
 	    <Generator>TextTemplatingFileGenerator</Generator>
 	    <LastGenOutput>BindTs.cs</LastGenOutput>
 		  <DependentUpon>Bind.cs</DependentUpon>
+	  </None>
+	  <None Update="Functional\Result\Extensions\CombineTs.tt">
+	    <Generator>TextTemplatingFileGenerator</Generator>
+	    <LastGenOutput>CombineTs.cs</LastGenOutput>
 	  </None>
 	</ItemGroup>
 	
