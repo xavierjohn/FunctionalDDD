@@ -1,4 +1,4 @@
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
 
 public static partial class AsyncResultExtensionsLeftOperand
 {
@@ -10,7 +10,7 @@ public static partial class AsyncResultExtensionsLeftOperand
         Result<T> result = await resultTask.DefaultAwait();
         return result.Ensure(predicate, errorMessage);
     }
-    
+
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
@@ -55,17 +55,17 @@ public static partial class AsyncResultExtensionsLeftOperand
     /// </summary>
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<Result<T>> predicate)
     {
-      Result<T> result = await resultTask.DefaultAwait();
-      return result.Ensure(predicate);
+        Result<T> result = await resultTask.DefaultAwait();
+        return result.Ensure(predicate);
     }
-    
+
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<T,Result<T>> predicate)
+    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<T, Result<T>> predicate)
     {
-      Result<T> result = await resultTask.DefaultAwait();
-      return result.Ensure(predicate);
+        Result<T> result = await resultTask.DefaultAwait();
+        return result.Ensure(predicate);
     }
 
 }

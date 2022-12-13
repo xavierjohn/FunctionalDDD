@@ -1,4 +1,4 @@
-namespace FunctionalDDD.Tests.ResultTests;
+﻿namespace FunctionalDDD.Tests.ResultTests;
 
 public class ResultTests
 {
@@ -15,7 +15,7 @@ public class ResultTests
     public void Success_argument_is_null_Success_result_expected()
     {
         Result<string?> result = Result.Success(default(string));
-        
+
         result.IsSuccess.Should().BeTrue();
     }
 

@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDDD;
 
 public abstract class SimpleValueObject<T> : ValueObject
-    where T: IComparable
+    where T : IComparable
 {
     public T Value { get; }
 

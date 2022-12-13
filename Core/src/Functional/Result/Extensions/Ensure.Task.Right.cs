@@ -1,4 +1,4 @@
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
 
 public static partial class AsyncResultExtensionsRightOperand
 {
@@ -15,7 +15,7 @@ public static partial class AsyncResultExtensionsRightOperand
 
         return result;
     }
-    
+
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>

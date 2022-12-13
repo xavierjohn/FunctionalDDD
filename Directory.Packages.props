@@ -1,13 +1,12 @@
 <Project>
-  
-   <!-- Runtime -->
+  <!-- Runtime -->
   <ItemGroup>
-	  <PackageVersion Include="FluentValidation" Version="11.3.0" />
-	  <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-	  <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="7.0.0" />
-	  <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageVersion Include="FluentValidation" Version="11.3.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.4.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
-
   <!-- Test -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />

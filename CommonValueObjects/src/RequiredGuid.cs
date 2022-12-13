@@ -6,8 +6,8 @@ public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
     where T : RequiredGuid<T>
 {
     private static readonly Lazy<Func<Guid, T>> CreateInstance = new Lazy<Func<Guid, T>>(CreateInstanceFunc);
-    private static readonly Error cannotBeEmptyError= Error.Validation($"{typeof(T).Name}", $"{typeof(T).Name} cannot be empty");
-    
+    private static readonly Error cannotBeEmptyError = Error.Validation($"{typeof(T).Name}", $"{typeof(T).Name} cannot be empty");
+
     protected RequiredGuid(Guid value) : base(value)
     {
     }

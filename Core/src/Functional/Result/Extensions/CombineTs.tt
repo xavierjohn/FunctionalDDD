@@ -20,7 +20,7 @@ public static partial class ResultExtensions
 #>
     public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(this Result<(<# WriteTs(i - 1); #>)> t1, Result<<# Write("T" + i); #>> tc)
     {
-	    if (t1.IsFailure || tc.IsFailure)
+        if (t1.IsFailure || tc.IsFailure)
         {
             var errors = new ErrorList();
             if (t1.IsFailure)
@@ -29,7 +29,7 @@ public static partial class ResultExtensions
                 errors.AddRange(tc.Errors);
             return Result.Failure<(<# WriteTs(i); #>)>(errors);
         }
-		
+
         return Result.Success((<# WriteT1Values(i - 1); #>, tc.Value));
     }
 

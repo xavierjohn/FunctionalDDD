@@ -25,7 +25,7 @@ public readonly struct Maybe<T>
 
         return From(value);
     }
-    
+
     public static implicit operator Maybe<T>(Maybe value) => None;
 
     public override string ToString() => _value?.ToString() ?? NoValue;
@@ -35,10 +35,10 @@ public readonly struct Maybe<T>
         value = _value;
         return HasValue;
     }
-    
+
     private readonly T? _value;
     private readonly bool _isValueSet;
-    
+
     public static readonly string NoValueException = "Maybe has no value.";
     private static readonly string NoValue = "No value";
 

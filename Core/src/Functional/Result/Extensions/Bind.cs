@@ -1,4 +1,4 @@
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
 
 public static partial class ResultExtensions
 {
@@ -41,7 +41,7 @@ public static partial class ResultExtensions
 
         return func(result.Value);
     }
-    
+
     /// <summary>
     ///     Selects result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>

@@ -1,4 +1,4 @@
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
 
 public static partial class ResultExtensions
 {
@@ -15,7 +15,7 @@ public static partial class ResultExtensions
 
         return result;
     }
-    
+
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
@@ -50,31 +50,31 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<T> Ensure<T>(this Result<T> result, Func<Result<T>> predicate)
     {
-      if (result.IsFailure)
+        if (result.IsFailure)
+            return result;
+
+        var predicateResult = predicate();
+
+        if (predicateResult.IsFailure)
+            return Result.Failure<T>(predicateResult.Error);
+
         return result;
-
-      var predicateResult = predicate();
-      
-      if (predicateResult.IsFailure)
-        return Result.Failure<T>(predicateResult.Error);
-
-      return result;
     }
 
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static Result<T> Ensure<T>(this Result<T> result, Func<T,Result<T>> predicate)
+    public static Result<T> Ensure<T>(this Result<T> result, Func<T, Result<T>> predicate)
     {
-      if (result.IsFailure)
+        if (result.IsFailure)
+            return result;
+
+        var predicateResult = predicate(result.Value);
+
+        if (predicateResult.IsFailure)
+            return Result.Failure<T>(predicateResult.Error);
+
         return result;
-    
-      var predicateResult = predicate(result.Value);
-      
-      if (predicateResult.IsFailure)
-        return Result.Failure<T>(predicateResult.Error);
-    
-      return result;
     }
 
     public static Result<string> EnsureNotNullOrWhiteSpace(this Maybe<string> maybe, Error error)

@@ -1,14 +1,13 @@
-﻿using System.Linq.Expressions;
+﻿namespace FunctionalDDD.CommonValueObjects;
+using System.Linq.Expressions;
 using System.Reflection;
-using FunctionalDDD;
 
-namespace FunctionalDDD.CommonValueObjects;
 public abstract class RequiredString<T> : SimpleValueObject<string>
     where T : RequiredString<T>
 {
     private static readonly Lazy<Func<string, T>> CreateInstance = new Lazy<Func<string, T>>(CreateInstanceFunc);
-    private static readonly Error cannotBeEmptyError= Error.Validation($"{typeof(T).Name}", $"{typeof(T).Name} cannot be empty");
-    
+    private static readonly Error cannotBeEmptyError = Error.Validation($"{typeof(T).Name}", $"{typeof(T).Name} cannot be empty");
+
     protected RequiredString(string value) : base(value)
     {
     }
