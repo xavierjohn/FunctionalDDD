@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+   <PropertyGroup>
+      <!-- 👇 Source generators must target netstandard 2.0 -->
+      <TargetFramework>netstandard2.0</TargetFramework>
+      <!-- 👇 We don't want to reference the source generator dll directly in consuming projects -->
+      <IncludeBuildOutput>false</IncludeBuildOutput>
+   </PropertyGroup>
+
+   <!-- This ensures the library will be packaged as a source generator when we use `dotnet pack` -->
+   <ItemGroup>
+      <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true"
+          PackagePath="analyzers/dotnet/cs" Visible="false" />
+   </ItemGroup>
+   
+   <ItemGroup>
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+      <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+   </ItemGroup>
+
+</Project>

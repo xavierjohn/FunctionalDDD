@@ -1,6 +1,7 @@
 ﻿namespace FunctionalDDD.CommonValueObjects;
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.CodeAnalysis;
 
 public abstract class RequiredString<T> : SimpleValueObject<string>
     where T : RequiredString<T>

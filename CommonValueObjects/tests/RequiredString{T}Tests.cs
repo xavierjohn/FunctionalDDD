@@ -2,21 +2,8 @@
 using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
 
-public class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString<TrackingId>
 {
-    private TrackingId(string value) : base(value)
-    {
-    }
-
-    public static explicit operator TrackingId(string trackingId)
-    {
-        return Create(trackingId).Value;
-    }
-
-    public static implicit operator string(TrackingId trackingId)
-    {
-        return trackingId.Value;
-    }
 }
 
 public class RequiredString_T_Tests
