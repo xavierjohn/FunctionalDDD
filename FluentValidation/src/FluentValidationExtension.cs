@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.FluentValidation;
+﻿namespace FunctionalDDD.FluentValidationExt;
 
 using System.Linq;
 using FunctionalDDD;

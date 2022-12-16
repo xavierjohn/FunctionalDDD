@@ -1,9 +1,6 @@
-﻿namespace FunctionalDDD.FluentValidation.Tests;
+﻿namespace FunctionalDDD.FluentValidationExt.Tests;
 using FunctionalDDD.CommonValueObjects;
 
-internal class UserId : RequiredGuid<UserId>
+internal partial class UserId : RequiredGuid<UserId>
 {
-    private UserId(Guid value) : base(value)
-    {
-    }
 }

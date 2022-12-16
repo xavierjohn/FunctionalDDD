@@ -1,9 +1,8 @@
-﻿using FluentValidation;
+﻿namespace SampleWebApplication;
+using FluentValidation;
 using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
-using FunctionalDDD.FluentValidation;
-
-namespace SampleWebApplication;
+using FunctionalDDD.FluentValidationExt;
 
 public class User : Aggregate<UserId>
 {
