@@ -4,7 +4,7 @@ using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
 using FunctionalDDD.FluentValidationExt;
 
-public class User : Aggregate<UserId>
+public class User : AggregateRoot<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }

@@ -1,6 +1,4 @@
-using System;
-
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
 
 public static partial class ResultExtensions
 {
@@ -12,22 +10,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<K>(result.Error);
 
-        return Result.Success<K>(func(result.Value));
-    }
-
-    /// <summary>
-    ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
-    /// </summary>
-    public static async Task<Result<K>> Map<T, K, E>(this Task<Result<T>> resultTask, Func<T, Task<K>> func)
-    {
-        Result<T> result = await resultTask.DefaultAwait();
-
-        if (result.IsFailure)
-            return Result.Failure<K>(result.Error);
-
-        K value = await func(result.Value).DefaultAwait();
-
-        return Result.Success<K>(value);
+        return Result.Success(func(result.Value));
     }
 
     /// <summary>

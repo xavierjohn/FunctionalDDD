@@ -80,7 +80,7 @@ public class RequiredGuid_T_Tests
     }
 
     [Fact]
-    public void Cannot_cast_empty_to_RequiredString()
+    public void Cannot_cast_empty_to_RequiredGuid()
     {
         // Arrange
         Guid myGuid = default;

@@ -12,7 +12,6 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<Compile Update="Functional\Maybe\Extensions\ToResult.*.cs" DependentUpon="ToResult.cs" />
 		<Compile Update="Functional\Result\Extensions\BindTs.cs">
 		  <DesignTime>True</DesignTime>
 		  <AutoGen>True</AutoGen>
@@ -25,6 +24,12 @@
 		</Compile>
 		
 		<Compile Update="Functional\Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
+		
+		<Compile Update="Functional\Result\Extensions\MapTs.cs">
+		  <DesignTime>True</DesignTime>
+		  <AutoGen>True</AutoGen>
+		  <DependentUpon>MapTs.tt</DependentUpon>
+		</Compile>
 		<Compile Update="Functional\Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
 	</ItemGroup>
 	
@@ -37,6 +42,10 @@
 	  <None Update="Functional\Result\Extensions\CombineTs.tt">
 	    <Generator>TextTemplatingFileGenerator</Generator>
 	    <LastGenOutput>CombineTs.cs</LastGenOutput>
+	  </None>
+	  <None Update="Functional\Result\Extensions\MapTs.tt">
+	    <Generator>TextTemplatingFileGenerator</Generator>
+	    <LastGenOutput>MapTs.cs</LastGenOutput>
 	  </None>
 	</ItemGroup>
 	
