@@ -15,8 +15,8 @@ public class RequiredString_T_Tests
         var trackingId1 = TrackingId.Create("");
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Errors.Should().HaveCount(1);
-        trackingId1.Error.Message.Should().Be("TrackingId cannot be empty");
-        trackingId1.Error.Code.Should().Be("TrackingId");
+        trackingId1.Error.Message.Should().Be("Tracking Id cannot be empty");
+        trackingId1.Error.Code.Should().Be("trackingId");
     }
 
     [Fact]
@@ -86,6 +86,6 @@ public class RequiredString_T_Tests
         // Assert
         act.Should().Throw<ResultFailureException>()
             .WithMessage("You attempted to access the Value property for a failed result. A failed result has no Value.")
-            .Where(e => e.Errors[0].Message == "TrackingId cannot be empty");
+            .Where(e => e.Errors[0].Message == "Tracking Id cannot be empty");
     }
 }
