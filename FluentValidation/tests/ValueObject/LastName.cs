@@ -1,9 +1,6 @@
-﻿namespace FunctionalDDD.FluentValidation.Tests;
+﻿namespace FunctionalDDD.FluentValidationExt.Tests;
 using FunctionalDDD.CommonValueObjects;
 
-internal class LastName : RequiredString<LastName>
+internal partial class LastName : RequiredString<LastName>
 {
-    private LastName(string value) : base(value)
-    {
-    }
 }

@@ -1,5 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\src\CommonValueObjects.csproj" />
-  </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+      <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+   </PropertyGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\generator\CommonValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+      <ProjectReference Include="..\src\CommonValueObjects.csproj" />
+   </ItemGroup>
 </Project>

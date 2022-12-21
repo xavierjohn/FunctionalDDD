@@ -1,14 +1,13 @@
-﻿using System.Linq.Expressions;
+﻿namespace FunctionalDDD.CommonValueObjects;
+using System.Linq.Expressions;
 using System.Reflection;
-using FunctionalDDD.Core;
 
-namespace FunctionalDDD.CommonValueObjects;
 public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
     where T : RequiredGuid<T>
 {
     private static readonly Lazy<Func<Guid, T>> CreateInstance = new Lazy<Func<Guid, T>>(CreateInstanceFunc);
-    private static readonly Error cannotBeEmptyError= Error.Validation($"{typeof(T).Name}", $"{typeof(T).Name} cannot be empty");
-    
+    private static readonly Error cannotBeEmptyError = Error.Validation($"{typeof(T).Name.ToCamelCase()}", $"{typeof(T).Name.SplitPascalCase()} cannot be empty");
+
     protected RequiredGuid(Guid value) : base(value)
     {
     }
@@ -19,8 +18,10 @@ public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
         return requiredStringOrNothing
             .ToResult(cannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, cannotBeEmptyError)
-            .Map(name => CreateInstance.Value(name));
+            .Map(guid => CreateInstance.Value(guid));
     }
+
+    public static T CreateUnique() => CreateInstance.Value(Guid.NewGuid());
 
     private static Func<Guid, T> CreateInstanceFunc()
     {

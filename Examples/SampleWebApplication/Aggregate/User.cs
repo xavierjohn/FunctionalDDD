@@ -1,11 +1,10 @@
-﻿using FluentValidation;
+﻿namespace SampleWebApplication;
+using FluentValidation;
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
-using FunctionalDDD.FluentValidation;
+using FunctionalDDD;
+using FunctionalDDD.FluentValidationExt;
 
-namespace SampleWebApplication;
-
-public class User : Aggregate<UserId>
+public class User : AggregateRoot<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }

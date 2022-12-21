@@ -1,5 +1,5 @@
 ﻿
-namespace FunctionalDDD.Core.Tests.Functional.Results.Extensions;
+namespace FunctionalDDD.Tests.Functional.Results.Extensions;
 
 public class BindTests : BindTestsBase
 {

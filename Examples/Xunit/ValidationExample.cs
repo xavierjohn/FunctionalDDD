@@ -1,5 +1,5 @@
-using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
+﻿using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD;
 
 namespace Example;
 
@@ -35,8 +35,8 @@ public class ValidationExample
         actual.IsFailure.Should().BeTrue();
         actual.Errors.Should().HaveCount(2);
         actual.Errors.Should().BeEquivalentTo(new ErrorList(
-            Error.Validation("LastName", "LastName cannot be empty"),
-            Error.Validation("Email", "Email address is not valid")));
+            Error.Validation("lastName", "Last Name cannot be empty"),
+            Error.Validation("email", "Email address is not valid")));
     }
 
 }

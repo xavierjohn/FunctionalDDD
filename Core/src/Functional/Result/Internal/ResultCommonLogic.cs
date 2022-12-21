@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core.Internal;
+﻿namespace FunctionalDDD.Internal;
 
 internal static class ResultCommonLogic
 {

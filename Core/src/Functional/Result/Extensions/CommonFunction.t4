@@ -2,8 +2,4 @@
   void WriteTs(int n) {
      Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "T" + i)));
   }
-
-  void WriteArgs(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "args" + i)));
-  }
 #>

@@ -1,10 +1,10 @@
 ﻿
-namespace FunctionalDDD.Core.Tests.ResultTests;
+namespace FunctionalDDD.Tests.ResultTests;
 
 public abstract class TestBase
 {
     protected readonly Error Error1 = Error.Unexpected("Error Message");
-    
+
     protected readonly Error Error2 = Error.Unexpected("Error Message2");
 
     protected class T
@@ -17,7 +17,7 @@ public abstract class TestBase
     protected class K
     {
         public static readonly K Value = new K();
-        
+
         public static readonly K Value2 = new K();
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 
 public abstract class ValueObject : IComparable, IComparable<ValueObject>
 {

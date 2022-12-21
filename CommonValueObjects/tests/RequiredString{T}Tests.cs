@@ -1,23 +1,10 @@
-﻿using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
+﻿namespace CommonValueObjects.Tests;
+using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD;
+using Xunit;
 
-namespace CommonValueObjects.Tests;
-
-public class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString<TrackingId>
 {
-    private TrackingId(string value) : base(value)
-    {
-    }
-
-    public static explicit operator TrackingId(string trackingId)
-    {
-        return Create(trackingId).Value;
-    }
-
-    public static implicit operator string(TrackingId trackingId)
-    {
-        return trackingId.Value;
-    }
 }
 
 public class RequiredString_T_Tests
@@ -28,8 +15,8 @@ public class RequiredString_T_Tests
         var trackingId1 = TrackingId.Create("");
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Errors.Should().HaveCount(1);
-        trackingId1.Error.Message.Should().Be("TrackingId cannot be empty");
-        trackingId1.Error.Code.Should().Be("TrackingId");
+        trackingId1.Error.Message.Should().Be("Tracking Id cannot be empty");
+        trackingId1.Error.Code.Should().Be("trackingId");
     }
 
     [Fact]
@@ -61,5 +48,44 @@ public class RequiredString_T_Tests
         rTrackingIds.IsSuccess.Should().BeTrue();
         (var trackingId1, var trackingId2) = rTrackingIds.Value;
         trackingId1.Value.Should().Be(trackingId2.Value);
+    }
+
+    [Fact]
+    public void Can_implicitly_cast_to_string()
+    {
+        // Arrange
+        TrackingId trackingId1 = TrackingId.Create("32141sd").Value;
+
+        // Act
+        string strTracking = trackingId1;
+
+        // Assert
+        strTracking.Should().Be("32141sd");
+    }
+
+    [Fact]
+    public void Can_explictly_cast_to_RequiredString()
+    {
+        // Arrange
+
+        // Act
+        TrackingId trackingId1 = (TrackingId)"32141sd";
+
+        // Assert
+        trackingId1.Should().Be(TrackingId.Create("32141sd").Value);
+    }
+
+    [Fact]
+    public void Cannot_cast_empty_to_RequiredString()
+    {
+        // Arrange
+        TrackingId trackingId;
+        // Act
+        Action act = () => trackingId = (TrackingId)string.Empty;
+
+        // Assert
+        act.Should().Throw<ResultFailureException>()
+            .WithMessage("You attempted to access the Value property for a failed result. A failed result has no Value.")
+            .Where(e => e.Errors[0].Message == "Tracking Id cannot be empty");
     }
 }

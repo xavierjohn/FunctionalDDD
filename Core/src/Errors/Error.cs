@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,18 +32,18 @@ public class Error : ValueObject
 
     public static Error Unauthorized(string code, string message) =>
         new Unauthorized(code, message);
-    
+
     public static Error Unexpected(string code, string message) =>
     new Unexpected(code, message);
 
     public static Error Conflict(string message) => Conflict("conflict.error", message);
 
     public static Error NotFound(string message) => NotFound("notfound.error", message);
-    
+
     public static Error Validation(string message) => Validation("validation.error", message);
-    
+
     public static Error Unauthorized(string message) => Unauthorized("unauthorized.error", message);
-    
+
     public static Error Unexpected(string message) => Unexpected("unexpected.error", message);
 }
 

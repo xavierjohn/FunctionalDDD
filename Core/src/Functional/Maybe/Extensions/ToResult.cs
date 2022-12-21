@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 
 public static partial class MaybeExtensions
 {
@@ -8,5 +8,17 @@ public static partial class MaybeExtensions
             return Result.Failure<T>(error);
 
         return Result.Success(maybe.GetValueOrThrow());
+    }
+
+    public static async Task<Result<T>> ToResultAsync<T>(this Task<Maybe<T>> maybeTask, Error error)
+    {
+        var maybe = await maybeTask.DefaultAwait();
+        return maybe.ToResult(error);
+    }
+
+    public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<Maybe<T>> maybeTask, Error error)
+    {
+        Maybe<T> maybe = await maybeTask;
+        return maybe.ToResult(error);
     }
 }

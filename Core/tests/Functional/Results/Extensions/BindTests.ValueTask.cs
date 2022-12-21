@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core.Tests.ResultTests.Extensions;
+﻿namespace FunctionalDDD.Tests.ResultTests.Extensions;
 
 public class BindTests_ValueTask : BindTestsBase
 {

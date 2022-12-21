@@ -1,40 +1,56 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-			<_Parameter1>Core.Tests</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
+   <PropertyGroup>
+      <AssemblyName>FunctionalDDD</AssemblyName>
+      <RootNamespace>FunctionalDDD</RootNamespace>
+   </PropertyGroup>
 
-	<ItemGroup>
-	  <None Include="Functional\Result\Extensions\BindTs.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>BindTs.tt</DependentUpon>
-	  </None>
-	</ItemGroup>
-	
-	<ItemGroup>
-		<Compile Update="Functional\Maybe\Extensions\ToResult.*.cs" DependentUpon="ToResult.cs" />
-		<Compile Update="Functional\Result\Extensions\BindTs.cs">
-		  <DesignTime>True</DesignTime>
-		  <AutoGen>True</AutoGen>
-		  <DependentUpon>BindTs.tt</DependentUpon>
-		</Compile>
-		
-		<Compile Update="Functional\Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
-		<Compile Update="Functional\Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <None Update="Functional\Result\Extensions\BindTs.tt">
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	    <LastGenOutput>BindTs.cs</LastGenOutput>
-		  <DependentUpon>Bind.cs</DependentUpon>
-	  </None>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-	</ItemGroup>
+   <ItemGroup>
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+         <_Parameter1>Core.Tests</_Parameter1>
+      </AssemblyAttribute>
+   </ItemGroup>
+
+   <ItemGroup>
+      <Compile Update="Functional\Result\Extensions\BindTs.cs">
+         <DesignTime>True</DesignTime>
+         <AutoGen>True</AutoGen>
+         <DependentUpon>BindTs.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Functional\Result\Extensions\CombineTs.cs">
+         <DesignTime>True</DesignTime>
+         <AutoGen>True</AutoGen>
+         <DependentUpon>CombineTs.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Functional\Result\Extensions\MapTs.cs">
+         <DesignTime>True</DesignTime>
+         <AutoGen>True</AutoGen>
+         <DependentUpon>MapTs.tt</DependentUpon>
+      </Compile>
+
+      <Compile Update="Functional\Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
+      <Compile Update="Functional\Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
+   </ItemGroup>
+
+   <ItemGroup>
+      <None Update="Functional\Result\Extensions\BindTs.tt">
+         <Generator>TextTemplatingFileGenerator</Generator>
+         <LastGenOutput>BindTs.cs</LastGenOutput>
+         <DependentUpon>Bind.cs</DependentUpon>
+      </None>
+      <None Update="Functional\Result\Extensions\CombineTs.tt">
+         <Generator>TextTemplatingFileGenerator</Generator>
+         <LastGenOutput>CombineTs.cs</LastGenOutput>
+         <DependentUpon>Combine.cs</DependentUpon>
+      </None>
+      <None Update="Functional\Result\Extensions\MapTs.tt">
+         <Generator>TextTemplatingFileGenerator</Generator>
+         <LastGenOutput>MapTs.cs</LastGenOutput>
+         <DependentUpon>Map.cs</DependentUpon>
+      </None>
+   </ItemGroup>
+
+   <ItemGroup>
+      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+   </ItemGroup>
 </Project>

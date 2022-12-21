@@ -11,6 +11,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>Latest</LangVersion>
   </PropertyGroup>
 
 	<PropertyGroup  Label="Version">

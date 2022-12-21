@@ -1,7 +1,7 @@
-﻿namespace FunctionalDDD.FluentValidation;
+﻿namespace FunctionalDDD.FluentValidationExt;
 
 using System.Linq;
-using FunctionalDDD.Core;
+using FunctionalDDD;
 
 public static class FluentValidationExtension
 {

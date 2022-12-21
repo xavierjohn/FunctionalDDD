@@ -1,10 +1,9 @@
-﻿using FluentValidation;
+﻿namespace FunctionalDDD.FluentValidationExt.Tests;
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
+using FunctionalDDD;
+using FluentValidation;
 
-namespace FunctionalDDD.FluentValidation.Tests;
-
-internal class User : Aggregate<UserId>
+internal class User : AggregateRoot<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }

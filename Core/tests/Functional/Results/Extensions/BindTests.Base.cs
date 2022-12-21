@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Core.Tests;
+﻿namespace FunctionalDDD.Tests;
 
-using FunctionalDDD.Core.Tests.ResultTests;
+using FunctionalDDD.Tests.ResultTests;
 
 public abstract class BindTestsBase : TestBase
 {
@@ -32,7 +32,7 @@ public abstract class BindTestsBase : TestBase
         _funcExecuted = false;
         return Result.Failure<T>(Error1);
     }
-    
+
     protected Result<K> Success_K()
     {
         _funcExecuted = true;
@@ -84,7 +84,7 @@ public abstract class BindTestsBase : TestBase
     {
         return Failure_T_E().AsTask();
     }
-    
+
     protected Task<Result<K>> Task_Success_K()
     {
         return Success_K().AsTask();

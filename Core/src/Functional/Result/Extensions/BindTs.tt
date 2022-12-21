@@ -6,21 +6,25 @@
 <#@ output extension=".cs" #>
 <#@ include file="CommonFunction.t4" #>
 // Generated code
-namespace FunctionalDDD.Core;
+namespace FunctionalDDD;
 
 public static partial class ResultExtensions
 {
 
 <#
+  void WriteArgs(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "args" + i)));
+  }
+
   for(var i = 2; i <=9; i++) { 
 #>
 
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<TResult> Bind<<# WriteTs(i); #>,TResult>(
+    public static Result<TResult> Bind<<# WriteTs(i); #>, TResult>(
         this Result<(<# WriteTs(i); #>)> result
-        , Func<<# WriteTs(i); #>,Result<TResult>> func)
+        , Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);

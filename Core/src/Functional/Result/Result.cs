@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Core;
+﻿namespace FunctionalDDD;
 using System.Threading.Tasks;
 
 public partial struct Result
@@ -8,7 +8,7 @@ public partial struct Result
     /// </summary>
     public static Result<T> Success<T>(T value) =>
         new(false, default, value);
-    
+
     /// <summary>
     ///     Creates a failure result with the given error.
     /// </summary>

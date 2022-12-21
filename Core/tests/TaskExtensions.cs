@@ -1,5 +1,5 @@
 ﻿
-namespace FunctionalDDD.Core.Tests;
+namespace FunctionalDDD.Tests;
 
 internal static class TaskExtensions
 {

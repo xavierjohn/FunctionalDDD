@@ -1,7 +1,6 @@
+﻿namespace CommonValueObjects.Tests;
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
-
-namespace CommonValueObjects.Tests;
+using FunctionalDDD;
 
 public class EmailAddressTests
 {
@@ -12,7 +11,7 @@ public class EmailAddressTests
     [InlineData("@com")]
     [InlineData("@#@@##@%^%#$@#$@#.com")]
     [InlineData("John Doe <example@email.com>")]
-    [InlineData("CAT�123@email.com")]
+    [InlineData("CAT…123@email.com")]
     public void Cannot_create_invalid_email(string email)
     {
         // Arrange

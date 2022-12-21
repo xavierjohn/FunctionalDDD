@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.FluentValidation.Tests;
+﻿namespace FunctionalDDD.FluentValidationExt.Tests;
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.Core;
+using FunctionalDDD;
 
 public class FluentTests
 {

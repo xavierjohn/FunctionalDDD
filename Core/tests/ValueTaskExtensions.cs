@@ -1,5 +1,5 @@
-﻿namespace FunctionalDDD.Core.Tests;
-using FunctionalDDD.Core;
+﻿namespace FunctionalDDD.Tests;
+using FunctionalDDD;
 
 internal static class ValueTaskExtensions
 {

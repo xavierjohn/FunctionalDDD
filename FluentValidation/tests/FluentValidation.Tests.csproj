@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\CommonValueObjects\src\CommonValueObjects.csproj" />
-    <ProjectReference Include="..\src\FluentValidation.csproj" />
-  </ItemGroup>
-
-</Project>
