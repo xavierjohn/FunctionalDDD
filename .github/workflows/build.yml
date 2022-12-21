@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # depth is needed for nbgv
     - uses: dotnet/nbgv@master
@@ -21,7 +21,7 @@ jobs:
         setAllVars: true
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '7.0.x'
 
@@ -38,4 +38,9 @@ jobs:
       if: ${{ success() && !github.base_ref }}
       run: |
         dotnet pack --no-build --verbosity normal -c Release -o artifacts/
-
+        
+    - uses: actions/upload-artifact@v3
+      if: ${{ success() && !github.base_ref }}
+      with:
+        name: artifact
+        path: artifacts/
