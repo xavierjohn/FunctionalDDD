@@ -14,10 +14,6 @@
     <LangVersion>Latest</LangVersion>
   </PropertyGroup>
 
-	<PropertyGroup  Label="Version">
-		<Version>0.0.1-alpha</Version>
-	</PropertyGroup>
-
   <PropertyGroup  Label="Build">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -29,6 +25,11 @@
 	  <RootNamespace>FunctionalDDD.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	  <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup Condition=" '$(IsTestProject)' == 'false' ">
+    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
+    <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="All"/>
+  </ItemGroup>
 
   <!-- Test projects. -->
   <PropertyGroup Condition=" '$(IsTestProject)' == 'true' ">
