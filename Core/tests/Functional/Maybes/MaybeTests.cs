@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-
-namespace FunctionalDDD.Tests.Functional.MayBes;
+﻿namespace FunctionalDDD.Tests.Functional.MayBes;
 public class MaybeTests
 {
     [Fact]

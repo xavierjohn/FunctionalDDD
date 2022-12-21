@@ -1,6 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
+using System.Runtime.CompilerServices;
 
 internal static class TaskExtensions
 {

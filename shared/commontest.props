@@ -3,7 +3,7 @@
 
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)xunit.runner.json" Link="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" Visible="false" />
-    <Compile Include="$(MSBuildThisFileDirectory)TestUsings.cs" Link="TestUsing.cs" CopyToOutputDirectory="PreserveNewest" Visible="true" />
+    <Compile Include="$(MSBuildThisFileDirectory)Usings.cs" Link="Using.cs" CopyToOutputDirectory="PreserveNewest" Visible="true" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio">
