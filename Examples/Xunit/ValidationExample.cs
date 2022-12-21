@@ -1,7 +1,6 @@
-﻿using FunctionalDDD.CommonValueObjects;
+﻿namespace Example;
+using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
-
-namespace Example;
 
 public class ValidationExample
 {
