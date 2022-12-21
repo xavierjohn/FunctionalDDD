@@ -12,22 +12,14 @@
     {
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            //#if DEBUG
-            //            if (!Debugger.IsAttached)
-            //            {
-            //                Debugger.Launch();
-            //            }
-            //#endif
             IncrementalValuesProvider<ClassDeclarationSyntax> requiredGuids = context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: static (n, _) => IsSyntaxTargetForGeneration(n),
                     transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx));
 
-            //// Combine the selected enums with the `Compilation`
             IncrementalValueProvider<(Compilation, ImmutableArray<ClassDeclarationSyntax>)> compilationAndEnums
                 = context.CompilationProvider.Combine(requiredGuids.Collect());
 
-            //// Generate the source using the compilation and enums
             context.RegisterSourceOutput(compilationAndEnums,
                 static (spc, source) => Execute(source.Item1, source.Item2, spc));
         }
