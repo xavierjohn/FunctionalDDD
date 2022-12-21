@@ -26,7 +26,7 @@ jobs:
         dotnet-version: '7.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore Build.csproj
+      run: dotnet restore
 
     - name: Build
       run: dotnet build --no-restore -c Release
