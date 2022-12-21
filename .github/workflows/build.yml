@@ -32,7 +32,7 @@ jobs:
       run: dotnet build --no-restore -c Release
 
     - name: Test
-      run: dotnet test --no-build --verbosity normal -c Release -f net7.0
+      run: dotnet test --no-build  -l "console;verbosity=normal" -c Release -f net7.0
 
     - name: Pack
       if: ${{ success() && !github.base_ref }}
