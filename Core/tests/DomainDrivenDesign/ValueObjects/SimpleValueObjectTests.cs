@@ -37,7 +37,21 @@ public class SimpleValueObjectTests
         var password2 = new PasswordSimple("Password");
 
         password1.Equals(password2).Should().BeTrue();
+        (password1 == password2).Should().BeTrue();
+        (password1 != password2).Should().BeFalse();
         password1.GetHashCode().Equals(password2.GetHashCode()).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Two_SVO_of_the_different_content_are_not_equal()
+    {
+        var password1 = new PasswordSimple("Password1");
+        var password2 = new PasswordSimple("Password2");
+
+        password1.Equals(password2).Should().BeFalse();
+        (password1 == password2).Should().BeFalse();
+        (password1 != password2).Should().BeTrue();
+        password1.GetHashCode().Equals(password2.GetHashCode()).Should().BeFalse();
     }
 
     [Fact]
@@ -48,6 +62,7 @@ public class SimpleValueObjectTests
 
         password.Equals(derivedPassword).Should().BeFalse();
         derivedPassword.Equals(password).Should().BeFalse();
+        (password == derivedPassword).Should().BeFalse();
     }
 
     [Fact]
