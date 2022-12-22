@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.CommonValueObjects;
+﻿namespace FunctionalDDD;
 
 using System.Linq.Expressions;
 using System.Reflection;

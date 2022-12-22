@@ -1,5 +1,5 @@
 ﻿namespace FunctionalDDD.FluentValidationExt.Tests;
-using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD;
 
 internal partial class LastName : RequiredString<LastName>
 {

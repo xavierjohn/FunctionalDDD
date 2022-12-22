@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.CommonValueObjects;
+﻿namespace FunctionalDDD;
 
 public abstract class RequiredString<T> : Required<string, T>
     where T : RequiredString<T>

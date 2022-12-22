@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.CommonValueObjects;
+﻿namespace FunctionalDDD;
 public abstract class RequiredGuid<T> : Required<Guid, T>
     where T : RequiredGuid<T>
 {
