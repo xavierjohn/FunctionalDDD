@@ -1,5 +1,4 @@
 ﻿namespace FunctionalDDD.FluentValidationExt.Tests;
-using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
 using FluentValidation;
 

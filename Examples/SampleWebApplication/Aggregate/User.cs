@@ -1,8 +1,6 @@
 ﻿namespace SampleWebApplication;
 using FluentValidation;
-using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD;
-using FunctionalDDD.FluentValidationExt;
 
 public class User : AggregateRoot<UserId>
 {

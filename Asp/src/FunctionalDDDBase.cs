@@ -30,6 +30,7 @@ public class FunctionalDDDBase : ControllerBase
             FunctionalDDD.NotFound => (ActionResult<T>)base.NotFound(error),
             FunctionalDDD.Validation => ValidationErrors<T>(errors),
             FunctionalDDD.Conflict => (ActionResult<T>)base.Conflict(error),
+            FunctionalDDD.Unauthorized => (ActionResult<T>)base.Unauthorized(error),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }

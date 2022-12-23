@@ -1,6 +1,6 @@
+namespace SampleWebApplication.Controllers;
 using Microsoft.AspNetCore.Mvc;
 
-namespace SampleWebApplication.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
