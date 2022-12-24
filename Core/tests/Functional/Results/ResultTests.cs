@@ -122,4 +122,17 @@ public class ResultTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(Maybe<string>.None);
     }
+
+    [Fact]
+    public void Can_implicitly_convert_to_Result()
+    {
+        // Arrange
+        var hello = "Hello";
+
+        // Act
+        Result<string> result = hello;
+
+        // Assert
+        result.Value.Should().Be(hello);
+    }
 }

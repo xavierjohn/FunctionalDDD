@@ -35,21 +35,7 @@ public readonly partial struct Result<T>
         _value = value ?? default!;
     }
 
-    public static implicit operator Result<T>(T value)
-    {
-        if (value is Result<T> result)
-        {
-            ErrorList? resultError = result.IsFailure ? result.Errors : default;
-            T? resultValue = result.IsSuccess ? result.Value : default;
+    public static implicit operator Result<T>(T value) => Result.Success(value);
 
-            return new Result<T>(result.IsFailure, resultError, resultValue);
-        }
-
-        return Result.Success(value);
-    }
-
-    public static implicit operator Result<T>(ErrorList errors)
-    {
-        return Result.Failure<T>(errors);
-    }
+    public static implicit operator Result<T>(ErrorList errors) => Result.Failure<T>(errors);
 }
