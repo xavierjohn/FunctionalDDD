@@ -1,10 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-   <PropertyGroup>
-      <AssemblyName>FunctionalDDD</AssemblyName>
-      <RootNamespace>FunctionalDDD</RootNamespace>
-   </PropertyGroup>
-
    <ItemGroup>
       <Compile Update="Functional\Result\Extensions\BindTs.cs">
          <DesignTime>True</DesignTime>

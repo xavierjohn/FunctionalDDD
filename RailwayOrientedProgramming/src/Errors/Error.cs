@@ -1,11 +1,12 @@
 ﻿namespace FunctionalDDD;
 
-using System.Collections.Generic;
 using System.Diagnostics;
 
 [DebuggerDisplay("{Message}")]
-public class Error : ValueObject
+public class Error : IEquatable<Error>
 {
+    private int? _cachedHashCode;
+
     public string Code { get; }
     public string Message { get; }
 
@@ -15,10 +16,31 @@ public class Error : ValueObject
         Message = message;
     }
 
-    protected override IEnumerable<IComparable> GetEqualityComponents()
+    public bool Equals(Error? other)
     {
-        yield return Code;
-        yield return Message;
+        if (other == null) return false;
+        return Code == other.Code && Message == other.Message;
+    }
+    public override bool Equals(object? obj)
+    {
+        if (obj is Error error)
+            return Equals(error);
+        else
+            return false;
+    }
+
+    public override int GetHashCode()
+    {
+        if (!_cachedHashCode.HasValue)
+        {
+            unchecked
+            {
+
+                _cachedHashCode = Message.GetHashCode() * 23 + Code.GetHashCode();
+            }
+        }
+
+        return _cachedHashCode.Value;
     }
 
     public static Error Conflict(string code, string message) =>
@@ -45,5 +67,7 @@ public class Error : ValueObject
     public static Error Unauthorized(string message) => Unauthorized("unauthorized.error", message);
 
     public static Error Unexpected(string message) => Unexpected("unexpected.error", message);
+
+
 }
 
