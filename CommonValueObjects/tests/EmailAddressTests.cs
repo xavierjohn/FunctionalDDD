@@ -1,4 +1,5 @@
 ﻿namespace CommonValueObjects.Tests;
+
 using FunctionalDDD;
 
 public class EmailAddressTests

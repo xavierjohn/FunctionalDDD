@@ -1,4 +1,5 @@
 ﻿namespace Example;
+
 using FunctionalDDD;
 
 public class ValidationExample

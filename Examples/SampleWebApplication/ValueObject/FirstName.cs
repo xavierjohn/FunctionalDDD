@@ -1,4 +1,5 @@
 ﻿namespace SampleWebApplication;
+
 using FunctionalDDD;
 
 public class FirstName : RequiredString<FirstName>

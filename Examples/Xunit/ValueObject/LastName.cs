@@ -1,4 +1,5 @@
 ﻿namespace Example;
+
 using FunctionalDDD;
 
 internal class LastName : RequiredString<LastName>

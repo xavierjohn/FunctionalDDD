@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDDD;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

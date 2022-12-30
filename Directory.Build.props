@@ -21,6 +21,10 @@
     <!-- Enable linter -->
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+  </ItemGroup>
+  
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
 	  <RootNamespace>FunctionalDDD.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 	  <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>

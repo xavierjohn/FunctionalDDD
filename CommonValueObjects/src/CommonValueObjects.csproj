@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\src\Core.csproj" />
+    <ProjectReference Include="..\..\DomainDrivenDesign\src\DomainDrivenDesign.csproj" />
+    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
   </ItemGroup>
 </Project>
