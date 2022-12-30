@@ -1,5 +1,5 @@
 ﻿namespace FunctionalDDD.RailwayOrientedProgramming;
-public readonly struct Maybe<T>
+public readonly struct Maybe<T> : IEquatable<Maybe<T>>
 {
     public bool HasValue => _isValueSet;
     public bool HasNoValue => !HasValue;
@@ -36,7 +36,58 @@ public readonly struct Maybe<T>
         return HasValue;
     }
 
-    private readonly T? _value;
+    public static bool operator ==(Maybe<T> maybe, T value)
+    {
+        if (value is Maybe<T>)
+            return maybe.Equals(value);
+
+        if (maybe.HasNoValue)
+            return value is null;
+
+        return maybe._value?.Equals(value) ?? false;
+    }
+
+    public static bool operator !=(Maybe<T> maybe, T value) => !(maybe == value);
+
+    public static bool operator ==(Maybe<T> maybe, object other) => maybe.Equals(other);
+
+    public static bool operator !=(Maybe<T> maybe, object other) => !(maybe == other);
+
+    public static bool operator ==(Maybe<T> first, Maybe<T> second) => first.Equals(second);
+
+    public static bool operator !=(Maybe<T> first, Maybe<T> second) => !(first == second);
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is null)
+            return false;
+        if (obj is Maybe<T> other)
+            return Equals(other);
+        if (obj is T value)
+            return Equals(value);
+        return false;
+    }
+
+    public bool Equals(Maybe<T> other)
+    {
+        if (HasNoValue && other.HasNoValue)
+            return true;
+
+        if (HasNoValue || other.HasNoValue)
+            return false;
+
+        return EqualityComparer<T>.Default.Equals(_value, other._value);
+    }
+
+    public override int GetHashCode()
+    {
+        if (HasNoValue)
+            return 0;
+
+        return _value?.GetHashCode() ?? 0;
+    }
+
+    private readonly T _value;
     private readonly bool _isValueSet;
 
     public static readonly string NoValueException = "Maybe has no value.";
@@ -47,7 +98,7 @@ public readonly struct Maybe<T>
         if (value == null)
         {
             _isValueSet = false;
-            _value = default;
+            _value = default!;
             return;
         }
 
