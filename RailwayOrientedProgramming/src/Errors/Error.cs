@@ -5,7 +5,6 @@ using System.Diagnostics;
 [DebuggerDisplay("{Message}")]
 public class Error : IEquatable<Error>
 {
-    private int? _cachedHashCode;
 
     public string Code { get; }
     public string Message { get; }
@@ -19,7 +18,7 @@ public class Error : IEquatable<Error>
     public bool Equals(Error? other)
     {
         if (other == null) return false;
-        return Code == other.Code && Message == other.Message;
+        return Code == other.Code;
     }
     public override bool Equals(object? obj)
     {
@@ -29,19 +28,7 @@ public class Error : IEquatable<Error>
             return false;
     }
 
-    public override int GetHashCode()
-    {
-        if (!_cachedHashCode.HasValue)
-        {
-            unchecked
-            {
-
-                _cachedHashCode = Message.GetHashCode() * 23 + Code.GetHashCode();
-            }
-        }
-
-        return _cachedHashCode.Value;
-    }
+    public override int GetHashCode() => Code.GetHashCode();
 
     public static Error Conflict(string code, string message) =>
         new Conflict(code, message);

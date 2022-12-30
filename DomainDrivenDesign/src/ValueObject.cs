@@ -15,7 +15,7 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
 
     public bool Equals(ValueObject? valueObject)
     {
-        if (valueObject == null) return false;
+        if (valueObject is null) return false;
         if (GetType() != valueObject.GetType())
             return false;
 
@@ -72,7 +72,7 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
         return CompareTo(other as object);
     }
 
-    private static int CompareComponents(object object1, object object2)
+    private static int CompareComponents(object? object1, object? object2)
     {
         if (object1 is null && object2 is null)
             return 0;
