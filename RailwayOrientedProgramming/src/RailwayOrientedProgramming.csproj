@@ -6,12 +6,6 @@
    </PropertyGroup>
 
    <ItemGroup>
-      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-         <_Parameter1>Core.Tests</_Parameter1>
-      </AssemblyAttribute>
-   </ItemGroup>
-
-   <ItemGroup>
       <Compile Update="Functional\Result\Extensions\BindTs.cs">
          <DesignTime>True</DesignTime>
          <AutoGen>True</AutoGen>

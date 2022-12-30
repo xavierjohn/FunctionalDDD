@@ -5,6 +5,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Core\src\Core.csproj" />
+	  <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
 	</ItemGroup>
 </Project>

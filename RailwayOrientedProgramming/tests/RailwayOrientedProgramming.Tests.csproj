@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
 	<ItemGroup>
-		<ProjectReference Include="..\src\Core.csproj" />
+	  <ProjectReference Include="..\src\RailwayOrientedProgramming.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
