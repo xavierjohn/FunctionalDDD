@@ -1,5 +1,5 @@
 ﻿namespace FunctionalDDD;
-public abstract class ValueObject : IComparable, IComparable<ValueObject>
+public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEquatable<ValueObject>
 {
     private int? _cachedHashCode;
 
@@ -7,16 +7,21 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>
 
     public override bool Equals(object? obj)
     {
-        if (obj == null)
+        if (obj is ValueObject valueObject)
+            return Equals(valueObject);
+        else
             return false;
+    }
 
-        if (GetType() != obj.GetType())
+    public bool Equals(ValueObject? valueObject)
+    {
+        if (valueObject == null) return false;
+        if (GetType() != valueObject.GetType())
             return false;
-
-        var valueObject = (ValueObject)obj;
 
         return GetEqualityComponents().SequenceEqual(valueObject.GetEqualityComponents());
     }
+
 
     public override int GetHashCode()
     {
@@ -84,7 +89,7 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>
         return object1.Equals(object2) ? 0 : -1;
     }
 
-    public static bool operator ==(ValueObject a, ValueObject b)
+    public static bool operator ==(ValueObject? a, ValueObject? b)
     {
         if (a is null && b is null)
             return true;
