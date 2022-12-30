@@ -22,9 +22,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{BD
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FluentValidations", "FluentValidations", "{18ECBEC0-5687-4833-BCFB-84538E62172D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentValidationExt", "FluentValidation\src\FluentValidationExt.csproj", "{B763EC4D-64ED-4D20-BC60-4A8886F707DA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentValidation", "FluentValidation\src\FluentValidation.csproj", "{B763EC4D-64ED-4D20-BC60-4A8886F707DA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentValidationExt.Tests", "FluentValidation\tests\FluentValidationExt.Tests.csproj", "{928C2228-3D0F-4253-9705-5E71BAF1AB5B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentValidation.Tests", "FluentValidation\tests\FluentValidation.Tests.csproj", "{928C2228-3D0F-4253-9705-5E71BAF1AB5B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Asp", "Asp", "{1E3022F4-1620-4087-A015-7FFF0906AE14}"
 EndProject
