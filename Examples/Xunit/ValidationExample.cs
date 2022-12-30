@@ -1,7 +1,6 @@
 ﻿namespace Example;
 
-using FunctionalDDD.DomainDrivenDesign;
-using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD;
 
 public class ValidationExample
 {

@@ -1,6 +1,6 @@
 ﻿namespace Example;
 
-using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD;
 
 internal class FirstName : RequiredString<FirstName>
 {

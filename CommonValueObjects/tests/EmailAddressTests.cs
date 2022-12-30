@@ -1,7 +1,6 @@
 ﻿namespace CommonValueObjects.Tests;
 
-using FunctionalDDD.DomainDrivenDesign;
-using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD;
 
 public class EmailAddressTests
 {

@@ -1,6 +1,6 @@
 ﻿namespace SampleWebApplication;
 
-using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD;
 
 public class UserId : RequiredGuid<UserId>
 {

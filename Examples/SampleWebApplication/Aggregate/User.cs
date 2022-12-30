@@ -1,7 +1,6 @@
 ﻿namespace SampleWebApplication;
 using FluentValidation;
-using FunctionalDDD.DomainDrivenDesign;
-using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD;
 
 public class User : AggregateRoot<UserId>
 {

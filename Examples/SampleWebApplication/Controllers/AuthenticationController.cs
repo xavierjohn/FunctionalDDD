@@ -1,7 +1,6 @@
 ﻿namespace SampleWebApplication.Controllers;
 
-using FunctionalDDD.DomainDrivenDesign;
-using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD;
 using Microsoft.AspNetCore.Mvc;
 using SampleWebApplication.Model;
 

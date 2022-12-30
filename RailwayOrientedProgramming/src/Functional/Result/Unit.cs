@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD;
 
 /// <summary>
 ///     Represents the result of an operation that has no return value.

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.DomainDrivenDesign;
+﻿namespace FunctionalDDD;
 
 using System.Text;
 

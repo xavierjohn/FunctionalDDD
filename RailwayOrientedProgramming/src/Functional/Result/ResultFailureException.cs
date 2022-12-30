@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD;
 public class ResultFailureException : Exception
 {
     public ErrorList Errors { get; }

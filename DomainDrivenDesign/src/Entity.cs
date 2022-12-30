@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.DomainDrivenDesign;
+﻿namespace FunctionalDDD;
 public abstract class Entity<TId>
 {
     public TId Id { get; init; }

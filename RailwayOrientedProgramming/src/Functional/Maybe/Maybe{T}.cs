@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD;
 public readonly struct Maybe<T> : IEquatable<Maybe<T>>
 {
     public bool HasValue => _isValueSet;

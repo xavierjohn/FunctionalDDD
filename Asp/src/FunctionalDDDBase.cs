@@ -1,6 +1,5 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDDD;
 
-using FunctionalDDD.RailwayOrientedProgramming;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -28,10 +27,10 @@ public class FunctionalDDDBase : ControllerBase
         var error = errors[0];
         return error switch
         {
-            RailwayOrientedProgramming.NotFound => (ActionResult<T>)base.NotFound(error),
-            RailwayOrientedProgramming.Validation => ValidationErrors<T>(errors),
-            RailwayOrientedProgramming.Conflict => (ActionResult<T>)base.Conflict(error),
-            RailwayOrientedProgramming.Unauthorized => (ActionResult<T>)base.Unauthorized(error),
+            FunctionalDDD.NotFound => (ActionResult<T>)base.NotFound(error),
+            FunctionalDDD.Validation => ValidationErrors<T>(errors),
+            FunctionalDDD.Conflict => (ActionResult<T>)base.Conflict(error),
+            FunctionalDDD.Unauthorized => (ActionResult<T>)base.Unauthorized(error),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }

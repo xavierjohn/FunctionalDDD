@@ -1,8 +1,7 @@
-﻿namespace FunctionalDDD.DomainDrivenDesign;
+﻿namespace FunctionalDDD;
 
 using System.Linq.Expressions;
 using System.Reflection;
-using FunctionalDDD.RailwayOrientedProgramming;
 
 public abstract class Required<T1, T2> : SimpleValueObject<T1>
     where T1 : IComparable
