@@ -54,10 +54,10 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async ValueTask<Result<TResult>> BindAsync<T, TResult>(this ValueTask<Result<T>> resultTask, Func<T, Result<TResult>> valueTask)
+    public static async ValueTask<Result<TResult>> BindAsync<T, TResult>(this ValueTask<Result<T>> resultTask, Func<T, Result<TResult>> func)
     {
         Result<T> result = await resultTask;
-        return result.Bind(valueTask);
+        return result.Bind(func);
     }
 
     /// <summary>
