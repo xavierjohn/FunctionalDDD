@@ -1,4 +1,7 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.DomainDrivenDesign;
+
+using FunctionalDDD.RailwayOrientedProgramming;
+
 public abstract class RequiredGuid<T> : Required<Guid, T>
     where T : RequiredGuid<T>
 {

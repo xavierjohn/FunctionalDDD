@@ -1,4 +1,6 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.DomainDrivenDesign;
+
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public abstract class RequiredString<T> : Required<string, T>
     where T : RequiredString<T>

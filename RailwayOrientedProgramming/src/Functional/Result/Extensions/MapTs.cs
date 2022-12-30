@@ -1,6 +1,6 @@
 ﻿
 // Generated code
-namespace FunctionalDDD;
+namespace FunctionalDDD.RailwayOrientedProgramming;
 
 public static partial class ResultExtensions
 {

@@ -1,5 +1,4 @@
-﻿namespace FunctionalDDD;
-
+﻿namespace FunctionalDDD.DomainDrivenDesign;
 public abstract class SimpleValueObject<T> : ValueObject
     where T : IComparable
 {

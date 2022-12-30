@@ -1,5 +1,6 @@
 ﻿namespace CommonValueObjects.Tests;
-using FunctionalDDD;
+using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD.RailwayOrientedProgramming;
 using Xunit;
 
 public partial class TrackingId : RequiredString<TrackingId>

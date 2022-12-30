@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Internal;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
 internal static class ResultCommonLogic
 {

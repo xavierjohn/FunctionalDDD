@@ -1,5 +1,7 @@
-﻿namespace FunctionalDDD.FluentValidationExt.Tests;
-using FunctionalDDD;
+﻿namespace FluentValidationExt.Tests;
+
+using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public class FluentTests
 {

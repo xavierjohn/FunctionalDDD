@@ -1,5 +1,6 @@
-﻿
-namespace FunctionalDDD.Tests.ResultTests;
+﻿namespace RailwayOrientedProgramming.Tests.Functional.Results;
+
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public abstract class TestBase
 {

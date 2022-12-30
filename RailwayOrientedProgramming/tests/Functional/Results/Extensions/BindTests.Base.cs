@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Tests;
+﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
 
-using FunctionalDDD.Tests.ResultTests;
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public abstract class BindTestsBase : TestBase
 {
@@ -55,7 +55,7 @@ public abstract class BindTestsBase : TestBase
     {
         _funcExecuted = true;
         FuncParam = value;
-        return Result.Success<K>(K.Value);
+        return Result.Success(K.Value);
     }
 
     protected Result<K> Failure_T_E_Func_K(T value)

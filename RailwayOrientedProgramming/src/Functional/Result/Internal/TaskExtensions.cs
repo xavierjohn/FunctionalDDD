@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 using System.Runtime.CompilerServices;
 
 internal static class TaskExtensions

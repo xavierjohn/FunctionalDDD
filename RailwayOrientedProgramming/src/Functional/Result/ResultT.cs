@@ -1,6 +1,5 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 using System;
-using FunctionalDDD.Internal;
 
 public readonly partial struct Result<T>
 {

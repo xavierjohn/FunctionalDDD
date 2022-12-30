@@ -1,5 +1,6 @@
-﻿namespace FunctionalDDD.Tests;
-using FunctionalDDD;
+﻿namespace RailwayOrientedProgramming.Tests;
+
+using FunctionalDDD.RailwayOrientedProgramming;
 
 internal static class ValueTaskExtensions
 {

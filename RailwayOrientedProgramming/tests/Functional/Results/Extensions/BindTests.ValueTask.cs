@@ -1,4 +1,6 @@
-﻿namespace FunctionalDDD.Tests.ResultTests.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
+
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public class BindTests_ValueTask : BindTestsBase
 {

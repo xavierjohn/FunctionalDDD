@@ -1,5 +1,4 @@
-﻿
-namespace FunctionalDDD.Tests;
+﻿namespace RailwayOrientedProgramming.Tests;
 
 internal static class TaskExtensions
 {

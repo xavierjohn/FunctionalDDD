@@ -1,5 +1,4 @@
-﻿namespace FunctionalDDD;
-
+﻿namespace FunctionalDDD.DomainDrivenDesign;
 public abstract class ValueObject : IComparable, IComparable<ValueObject>
 {
     private int? _cachedHashCode;
@@ -53,9 +52,9 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>
         object[] components = GetEqualityComponents().ToArray();
         object[] otherComponents = other.GetEqualityComponents().ToArray();
 
-        for (int i = 0; i < components.Length; i++)
+        for (var i = 0; i < components.Length; i++)
         {
-            int comparison = CompareComponents(components[i], otherComponents[i]);
+            var comparison = CompareComponents(components[i], otherComponents[i]);
             if (comparison != 0)
                 return comparison;
         }

@@ -1,13 +1,15 @@
-﻿namespace FunctionalDDD.Tests.Functional.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
+
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public class EnsureTests
 {
     [Fact]
     public void Ensure_source_result_is_failure_predicate_do_not_invoked_expect_is_result_failure()
     {
-        Result<string> sut = Result.Failure<string>(Error.Unexpected("some error"));
+        var sut = Result.Failure<string>(Error.Unexpected("some error"));
 
-        Result<string> result = sut.Ensure(() => true, Error.Unexpected("can't be this error"));
+        var result = sut.Ensure(() => true, Error.Unexpected("can't be this error"));
 
         result.Should().Be(sut);
     }
@@ -15,9 +17,9 @@ public class EnsureTests
     [Fact]
     public void Ensure_source_result_is_success_predicate_is_failed_expected_result_failure()
     {
-        Result<string> sut = Result.Success("Hello");
+        var sut = Result.Success("Hello");
 
-        Result<string> result = sut.Ensure(() => false, Error.Unexpected("predicate failed"));
+        var result = sut.Ensure(() => false, Error.Unexpected("predicate failed"));
 
         result.Should().NotBe(sut);
         result.IsFailure.Should().BeTrue();
@@ -27,9 +29,9 @@ public class EnsureTests
     [Fact]
     public void Ensure_source_result_is_success_predicate_is_passed_expected_result_success()
     {
-        Result<string> sut = Result.Success("Hello");
+        var sut = Result.Success("Hello");
 
-        Result<string> result = sut.Ensure(() => true, Error.Unexpected("can't be this error"));
+        var result = sut.Ensure(() => true, Error.Unexpected("can't be this error"));
 
         result.Should().Be(sut);
     }
@@ -38,9 +40,9 @@ public class EnsureTests
     [Fact]
     public async Task Ensure_source_result_is_failure_async_predicate_do_not_invoked_expect_is_result_failure()
     {
-        Result<string> sut = Result.Failure<string>(Error.Unexpected("some error"));
+        var sut = Result.Failure<string>(Error.Unexpected("some error"));
 
-        Result<string> result = await sut.EnsureAsync(() => Task.FromResult(true), Error.Unexpected("can't be this error"));
+        var result = await sut.EnsureAsync(() => Task.FromResult(true), Error.Unexpected("can't be this error"));
 
         result.Should().Be(sut);
     }
@@ -49,9 +51,9 @@ public class EnsureTests
     [Fact]
     public async Task Ensure_source_result_is_success_async_predicate_is_failed_expected_result_failure()
     {
-        Result<string> sut = Result.Success("Hello");
+        var sut = Result.Success("Hello");
 
-        Result<string> result = await sut.EnsureAsync(() => Task.FromResult(false), Error.Unexpected("predicate problems"));
+        var result = await sut.EnsureAsync(() => Task.FromResult(false), Error.Unexpected("predicate problems"));
 
         result.Should().NotBe(sut);
         result.IsFailure.Should().BeTrue();
@@ -62,9 +64,9 @@ public class EnsureTests
     [Fact]
     public async Task Ensure_source_result_is_success_async_predicate_is_passed_expected_result_success()
     {
-        Result<string> sut = Result.Success("Hello");
+        var sut = Result.Success("Hello");
 
-        Result<string> result = await sut.EnsureAsync(() => Task.FromResult(true), Error.Unexpected("can't be this error"));
+        var result = await sut.EnsureAsync(() => Task.FromResult(true), Error.Unexpected("can't be this error"));
 
         result.Should().Be(sut);
     }
@@ -73,9 +75,9 @@ public class EnsureTests
     [Fact]
     public async Task Ensure_task_source_result_is_success_predicate_is_passed_error_predicate_is_not_invoked()
     {
-        Task<Result<int?>> sut = Task.FromResult(Result.Success<int?>(null));
+        var sut = Task.FromResult(Result.Success<int?>(null));
 
-        Result<int?> result = await sut.EnsureAsync(value => !value.HasValue,
+        var result = await sut.EnsureAsync(value => !value.HasValue,
             value => Task.FromResult<ErrorList>(Error.Unexpected($"should be null but found {value}")));
         result.Should().Be(sut.Result);
     }
@@ -84,9 +86,9 @@ public class EnsureTests
     [Fact]
     public async Task Ensure_task_source_result_is_failure_predicate_do_not_invoked_expect_is_result_failure()
     {
-        Task<Result<string>> sut = Task.FromResult(Result.Failure<string>(Error.Unexpected("some error")));
+        var sut = Task.FromResult(Result.Failure<string>(Error.Unexpected("some error")));
 
-        Result<string> result = await sut.EnsureAsync(() => true, Error.Unexpected("can't be this error"));
+        var result = await sut.EnsureAsync(() => true, Error.Unexpected("can't be this error"));
 
         result.Should().Be(sut.Result);
     }
@@ -94,9 +96,9 @@ public class EnsureTests
     [Fact]
     public void Ensure_generic_source_result_is_failure_predicate_do_not_invoked_expect_is_error_result_failure()
     {
-        Result<TimeSpan> sut = Result.Failure<TimeSpan>(Error.Unexpected("some error"));
+        var sut = Result.Failure<TimeSpan>(Error.Unexpected("some error"));
 
-        Result<TimeSpan> result = sut.Ensure(time => true, Error.Unexpected("test error"));
+        var result = sut.Ensure(time => true, Error.Unexpected("test error"));
 
         result.Should().Be(sut);
     }
@@ -104,9 +106,9 @@ public class EnsureTests
     [Fact]
     public void Ensure_generic_source_result_is_success_predicate_is_failed_expected_error_result_failure()
     {
-        Result<int> sut = Result.Success(10101);
+        var sut = Result.Success(10101);
 
-        Result<int> result = sut.Ensure(i => false, Error.Unexpected("test error"));
+        var result = sut.Ensure(i => false, Error.Unexpected("test error"));
 
         result.Should().NotBe(sut);
         result.IsFailure.Should().BeTrue();
@@ -116,9 +118,9 @@ public class EnsureTests
     [Fact]
     public void Ensure_generic_source_result_is_success_predicate_is_passed_expected_error_result_success()
     {
-        Result<decimal> sut = Result.Success(.03m);
+        var sut = Result.Success(.03m);
 
-        Result<decimal> result = sut.Ensure(d => true, Error.Unexpected("test error"));
+        var result = sut.Ensure(d => true, Error.Unexpected("test error"));
 
         result.Should().Be(sut);
     }
@@ -128,9 +130,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_source_result_is_failure_async_predicate_do_not_invoked_expect_is_error_result_failure()
     {
-        Result<DateTimeOffset> sut = Result.Failure<DateTimeOffset>(Error.Unexpected("test error"));
+        var sut = Result.Failure<DateTimeOffset>(Error.Unexpected("test error"));
 
-        Result<DateTimeOffset> result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test ensure error"));
+        var result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test ensure error"));
 
         result.Should().Be(sut);
     }
@@ -140,9 +142,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_source_result_is_success_async_predicate_is_failed_expected_error_result_failure()
     {
-        Result<int> sut = Result.Success(333);
+        var sut = Result.Success(333);
 
-        Result<int> result = await sut.EnsureAsync(i => Task.FromResult(false), Error.Unexpected("test ensure error"));
+        var result = await sut.EnsureAsync(i => Task.FromResult(false), Error.Unexpected("test ensure error"));
 
         result.Should().NotBe(sut);
         result.IsFailure.Should().BeTrue();
@@ -154,9 +156,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_source_result_is_success_async_predicate_is_passed_expected_error_result_success()
     {
-        Result<decimal> sut = Result.Success(.33m);
+        var sut = Result.Success(.33m);
 
-        Result<decimal> result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test error"));
+        var result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test error"));
 
         result.Should().Be(sut);
     }
@@ -165,9 +167,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_task_source_result_is_failure_async_predicate_do_not_invoked_expect_is_error_result_failure()
     {
-        Task<Result<TimeSpan>> sut = Task.FromResult(Result.Failure<TimeSpan>(Error.Unexpected("some result error")));
+        var sut = Task.FromResult(Result.Failure<TimeSpan>(Error.Unexpected("some result error")));
 
-        Result<TimeSpan> result = await sut.EnsureAsync(t => Task.FromResult(true), Error.Unexpected("test ensure error"));
+        var result = await sut.EnsureAsync(t => Task.FromResult(true), Error.Unexpected("test ensure error"));
 
         result.Should().Be(sut.Result);
     }
@@ -177,9 +179,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_task_source_result_is_success_async_predicate_is_failed_expected_error_result_failure()
     {
-        Task<Result<long>> sut = Task.FromResult(Result.Success<long>(333));
+        var sut = Task.FromResult(Result.Success<long>(333));
 
-        Result<long> result = await sut.EnsureAsync(l => Task.FromResult(false), Error.Unexpected("test ensure error"));
+        var result = await sut.EnsureAsync(l => Task.FromResult(false), Error.Unexpected("test ensure error"));
 
         result.Should().NotBe(sut);
         result.IsFailure.Should().BeTrue();
@@ -191,9 +193,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_task_source_result_is_success_async_predicate_is_passed_expected_error_result_success()
     {
-        Task<Result<double>> sut = Task.FromResult(Result.Success(.33));
+        var sut = Task.FromResult(Result.Success(.33));
 
-        Result<double> result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test error"));
+        var result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test error"));
 
         result.Should().Be(sut.Result);
     }
@@ -202,9 +204,9 @@ public class EnsureTests
     public async Task
     Ensure_generic_task_source_result_is_failure_predicate_do_not_invoked_expect_is_error_result_failure()
     {
-        Task<Result<TimeSpan>> sut = Task.FromResult(Result.Failure<TimeSpan>(Error.Unexpected("some result error")));
+        var sut = Task.FromResult(Result.Failure<TimeSpan>(Error.Unexpected("some result error")));
 
-        Result<TimeSpan> result = await sut.EnsureAsync(t => true, Error.Unexpected("test ensure error"));
+        var result = await sut.EnsureAsync(t => true, Error.Unexpected("test ensure error"));
 
         result.Should().Be(sut.Result);
     }

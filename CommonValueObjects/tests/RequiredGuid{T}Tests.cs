@@ -1,6 +1,7 @@
 ﻿namespace CommonValueObjects.Tests;
-using FunctionalDDD;
 using System;
+using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public partial class MyGuidId : RequiredGuid<MyGuidId>
 {

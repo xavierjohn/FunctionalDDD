@@ -1,4 +1,5 @@
-namespace FunctionalDDD.Tests.DomainDrivenDesign.ValueObjects;
+﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+
 using FluentAssertions;
 
 public class ValueObjectTests

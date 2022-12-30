@@ -1,4 +1,7 @@
-﻿namespace FunctionalDDD.Tests.Functional.MayBes;
+﻿namespace RailwayOrientedProgramming.Tests.Functional.Maybes;
+
+using FunctionalDDD.RailwayOrientedProgramming;
+
 public class MaybeTests
 {
     [Fact]
@@ -13,7 +16,7 @@ public class MaybeTests
     [Fact]
     public void Can_create_a_maybe_none()
     {
-        Maybe<MyClass> maybe = Maybe<MyClass>.None;
+        var maybe = Maybe<MyClass>.None;
 
         maybe.HasValue.Should().BeFalse();
         maybe.HasNoValue.Should().BeTrue();
@@ -23,7 +26,7 @@ public class MaybeTests
     public void Nullable_maybe_is_same_as_maybe_none()
     {
         Maybe<MyClass> nullableMaybe = null;
-        Maybe<MyClass> maybeNone = Maybe<MyClass>.None;
+        var maybeNone = Maybe<MyClass>.None;
 
         nullableMaybe.Should().Be(maybeNone);
     }
@@ -35,7 +38,7 @@ public class MaybeTests
 
         Action action = () =>
         {
-            MyClass myClass = maybe.GetValueOrThrow();
+            var myClass = maybe.GetValueOrThrow();
         };
 
         action.Should().Throw<InvalidOperationException>();
@@ -58,7 +61,7 @@ public class MaybeTests
     {
         Maybe<MyClass> maybe = null;
 
-        string str = maybe.ToString();
+        var str = maybe.ToString();
 
         str.Should().Be("No value");
     }
@@ -68,7 +71,7 @@ public class MaybeTests
     {
         Maybe<MyClass> maybe = new MyClass();
 
-        string str = maybe.ToString();
+        var str = maybe.ToString();
 
         str.Should().Be("My custom class");
     }
@@ -122,7 +125,7 @@ public class MaybeTests
         Action action = () =>
         {
             var maybe = Maybe<int>.None;
-            int _ = maybe.GetValueOrThrow(errorMessage);
+            var _ = maybe.GetValueOrThrow(errorMessage);
         };
 
         action.Should().Throw<InvalidOperationException>().WithMessage(errorMessage);
@@ -145,7 +148,7 @@ public class MaybeTests
     {
         var maybe = Maybe<int>.None;
 
-        bool result = maybe.TryGetValue(out int value);
+        var result = maybe.TryGetValue(out var value);
 
         result.Should().BeFalse();
         value.Should().Be(default);
@@ -156,7 +159,7 @@ public class MaybeTests
     {
         var maybe = Maybe.From(5);
 
-        bool result = maybe.TryGetValue(out int value);
+        var result = maybe.TryGetValue(out var value);
 
         result.Should().BeTrue();
         value.Should().Be(5);
@@ -167,7 +170,7 @@ public class MaybeTests
     {
         var maybe = Maybe<int?>.None;
 
-        bool result = maybe.TryGetValue(out int? value);
+        var result = maybe.TryGetValue(out var value);
 
         result.Should().BeFalse();
         value.Should().BeNull();
@@ -178,7 +181,7 @@ public class MaybeTests
     {
         var maybe = Maybe<int?>.From(5);
 
-        bool result = maybe.TryGetValue(out int? value);
+        var result = maybe.TryGetValue(out var value);
 
         result.Should().BeTrue();
         value.Should().Be(5);
