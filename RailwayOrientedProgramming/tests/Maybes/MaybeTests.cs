@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Functional.Maybes;
+﻿namespace RailwayOrientedProgramming.Tests.Maybes;
 
 using FunctionalDDD;
 

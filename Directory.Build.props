@@ -12,7 +12,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>Latest</LangVersion>
-    <AnalysisMode>Recommended</AnalysisMode>
   </PropertyGroup>
 
   <PropertyGroup  Label="Build">

@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Functional.Maybes;
+﻿namespace RailwayOrientedProgramming.Tests.Maybes;
 
 using FunctionalDDD;
 
@@ -11,11 +11,11 @@ public class EqualityTests
         Maybe<MyClass> maybe1 = instance;
         Maybe<MyClass> maybe2 = instance;
 
-        bool equals1 = maybe1.Equals(maybe2);
-        bool equals2 = ((object)maybe1).Equals(maybe2);
-        bool equals3 = maybe1 == maybe2;
-        bool equals4 = maybe1 != maybe2;
-        bool equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
+        var equals1 = maybe1.Equals(maybe2);
+        var equals2 = ((object)maybe1).Equals(maybe2);
+        var equals3 = maybe1 == maybe2;
+        var equals4 = maybe1 != maybe2;
+        var equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
 
         equals1.Should().BeTrue();
         equals2.Should().BeTrue();
@@ -30,11 +30,11 @@ public class EqualityTests
         Maybe<MyClass> maybe1 = new MyClass();
         Maybe<MyClass> maybe2 = new MyClass();
 
-        bool equals1 = maybe1.Equals(maybe2);
-        bool equals2 = ((object)maybe1).Equals(maybe2);
-        bool equals3 = maybe1 == maybe2;
-        bool equals4 = maybe1 != maybe2;
-        bool equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
+        var equals1 = maybe1.Equals(maybe2);
+        var equals2 = ((object)maybe1).Equals(maybe2);
+        var equals3 = maybe1 == maybe2;
+        var equals4 = maybe1 != maybe2;
+        var equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
 
         equals1.Should().BeFalse();
         equals2.Should().BeFalse();
@@ -49,11 +49,11 @@ public class EqualityTests
         Maybe<MyClass> maybe1 = null;
         Maybe<MyClass> maybe2 = null;
 
-        bool equals1 = maybe1.Equals(maybe2);
-        bool equals2 = ((object)maybe1).Equals(maybe2);
-        bool equals3 = maybe1 == maybe2;
-        bool equals4 = maybe1 != maybe2;
-        bool equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
+        var equals1 = maybe1.Equals(maybe2);
+        var equals2 = ((object)maybe1).Equals(maybe2);
+        var equals3 = maybe1 == maybe2;
+        var equals4 = maybe1 != maybe2;
+        var equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
 
         equals1.Should().BeTrue();
         equals2.Should().BeTrue();
@@ -68,11 +68,11 @@ public class EqualityTests
         Maybe<MyClass> maybe1 = new MyClass();
         Maybe<MyClass> maybe2 = null;
 
-        bool equals1 = maybe1.Equals(maybe2);
-        bool equals2 = ((object)maybe1).Equals(maybe2);
-        bool equals3 = maybe1 == maybe2;
-        bool equals4 = maybe1 != maybe2;
-        bool equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
+        var equals1 = maybe1.Equals(maybe2);
+        var equals2 = ((object)maybe1).Equals(maybe2);
+        var equals3 = maybe1 == maybe2;
+        var equals4 = maybe1 != maybe2;
+        var equals5 = maybe1.GetHashCode() == maybe2.GetHashCode();
 
         equals1.Should().BeFalse();
         equals2.Should().BeFalse();
@@ -87,11 +87,11 @@ public class EqualityTests
         var instance = new MyClass();
         Maybe<MyClass> maybe = instance;
 
-        bool equals1 = maybe.Equals(instance);
-        bool equals2 = ((object)maybe).Equals(instance);
-        bool equals3 = maybe == instance;
-        bool equals4 = maybe != instance;
-        bool equals5 = maybe.GetHashCode() == instance.GetHashCode();
+        var equals1 = maybe.Equals(instance);
+        var equals2 = ((object)maybe).Equals(instance);
+        var equals3 = maybe == instance;
+        var equals4 = maybe != instance;
+        var equals5 = maybe.GetHashCode() == instance.GetHashCode();
 
         equals1.Should().BeTrue();
         equals2.Should().BeTrue();
@@ -106,8 +106,8 @@ public class EqualityTests
         var instance = new MyClass();
         Maybe<MyClass> maybe = instance;
 
-        bool equals1 = instance == maybe;
-        bool equals2 = instance != maybe;
+        var equals1 = instance == maybe;
+        var equals2 = instance != maybe;
 
         equals1.Should().BeTrue();
         equals2.Should().BeFalse();
@@ -119,11 +119,11 @@ public class EqualityTests
         var instance = new object();
         Maybe<object> maybe = instance;
 
-        bool equals1 = maybe.Equals(instance);
-        bool equals2 = ((object)maybe).Equals(instance);
-        bool equals3 = maybe == instance;
-        bool equals4 = maybe != instance;
-        bool equals5 = maybe.GetHashCode() == instance.GetHashCode();
+        var equals1 = maybe.Equals(instance);
+        var equals2 = ((object)maybe).Equals(instance);
+        var equals3 = maybe == instance;
+        var equals4 = maybe != instance;
+        var equals5 = maybe.GetHashCode() == instance.GetHashCode();
 
         equals1.Should().BeTrue();
         equals2.Should().BeTrue();
