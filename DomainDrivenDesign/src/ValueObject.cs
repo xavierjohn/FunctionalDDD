@@ -95,4 +95,16 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
     }
 
     public static bool operator !=(ValueObject a, ValueObject b) => !(a == b);
+
+    public static bool operator <(ValueObject left, ValueObject right) =>
+        ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
+
+    public static bool operator <=(ValueObject left, ValueObject right) =>
+        ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
+
+    public static bool operator >(ValueObject left, ValueObject right) =>
+        !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
+
+    public static bool operator >=(ValueObject left, ValueObject right) =>
+        ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
 }

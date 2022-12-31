@@ -17,4 +17,7 @@
     <PackageReference Include="FluentAssertions" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
 </Project>
