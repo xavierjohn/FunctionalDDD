@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 using FunctionalDDD;
 

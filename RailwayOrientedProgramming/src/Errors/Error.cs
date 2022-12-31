@@ -3,7 +3,9 @@
 using System.Diagnostics;
 
 [DebuggerDisplay("{Message}")]
+#pragma warning disable CA1716 // Identifiers should not match keywords
 public class Error : IEquatable<Error>
+#pragma warning restore CA1716 // Identifiers should not match keywords
 {
 
     public string Code { get; }

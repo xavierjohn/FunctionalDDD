@@ -13,13 +13,13 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
             return false;
     }
 
-    public bool Equals(ValueObject? valueObject)
+    public bool Equals(ValueObject? other)
     {
-        if (valueObject is null) return false;
-        if (GetType() != valueObject.GetType())
+        if (other is null) return false;
+        if (GetType() != other.GetType())
             return false;
 
-        return GetEqualityComponents().SequenceEqual(valueObject.GetEqualityComponents());
+        return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
 
 
@@ -28,13 +28,7 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
         if (!_cachedHashCode.HasValue)
         {
             _cachedHashCode = GetEqualityComponents()
-                .Aggregate(1, (current, obj) =>
-                {
-                    unchecked
-                    {
-                        return current * 23 + (obj?.GetHashCode() ?? 0);
-                    }
-                });
+                .Aggregate(1, (current, obj) => HashCode.Combine(current, (obj?.GetHashCode() ?? 0)));
         }
 
         return _cachedHashCode.Value;

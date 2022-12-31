@@ -10,7 +10,7 @@ public static partial class AsyncResultExtensionsRightOperand
         if (result.IsFailure)
             return result;
 
-        if (!await predicate().DefaultAwait())
+        if (!await predicate().ConfigureAwait(false))
             return Result.Failure<T>(errorMessage);
 
         return result;
@@ -24,7 +24,7 @@ public static partial class AsyncResultExtensionsRightOperand
         if (result.IsFailure)
             return result;
 
-        if (!await predicate(result.Value).DefaultAwait())
+        if (!await predicate(result.Value).ConfigureAwait(false))
             return Result.Failure<T>(errorMessage);
 
         return result;
@@ -38,7 +38,7 @@ public static partial class AsyncResultExtensionsRightOperand
         if (result.IsFailure)
             return result;
 
-        if (!await predicate(result.Value).DefaultAwait())
+        if (!await predicate(result.Value).ConfigureAwait(false))
             return Result.Failure<T>(errorPredicate(result.Value));
 
         return result;
@@ -52,8 +52,8 @@ public static partial class AsyncResultExtensionsRightOperand
         if (result.IsFailure)
             return result;
 
-        if (!await predicate(result.Value).DefaultAwait())
-            return Result.Failure<T>(await errorPredicate(result.Value).DefaultAwait());
+        if (!await predicate(result.Value).ConfigureAwait(false))
+            return Result.Failure<T>(await errorPredicate(result.Value).ConfigureAwait(false));
 
         return result;
     }
@@ -66,7 +66,7 @@ public static partial class AsyncResultExtensionsRightOperand
         if (result.IsFailure)
             return result;
 
-        var predicateResult = await predicate().DefaultAwait();
+        var predicateResult = await predicate().ConfigureAwait(false);
 
         if (predicateResult.IsFailure)
             return Result.Failure<T>(predicateResult.Error);
@@ -82,7 +82,7 @@ public static partial class AsyncResultExtensionsRightOperand
         if (result.IsFailure)
             return result;
 
-        var predicateResult = await predicate(result.Value).DefaultAwait();
+        var predicateResult = await predicate(result.Value).ConfigureAwait(false);
 
         if (predicateResult.IsFailure)
             return Result.Failure<T>(predicateResult.Error);

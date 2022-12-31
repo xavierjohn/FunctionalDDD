@@ -59,4 +59,22 @@ public class ValueObjectTests
 
         money1.Equals(money2).Should().BeFalse();
     }
+
+    [Fact]
+    public void Comparing_less_than()
+    {
+        var money1 = new Money(2.1m);
+        var money2 = new Money(2.2m);
+
+        (money1 < money2).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Comparing_greater_than()
+    {
+        var money1 = new Money(2.1m);
+        var money2 = new Money(2.2m);
+
+        (money2 > money1).Should().BeTrue();
+    }
 }

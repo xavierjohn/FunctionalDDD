@@ -5,12 +5,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Functional\Results\Extensions\EnsureTests.Task.cs" DependentUpon="EnsureTests.cs" />
-		<Compile Update="Functional\Results\Extensions\EnsureTests.Task.*.cs" DependentUpon="EnsureTests.Task.cs" />
+		<Compile Update="Results\Extensions\EnsureTests.Task.cs" DependentUpon="EnsureTests.cs" />
+		<Compile Update="Results\Extensions\EnsureTests.Task.*.cs" DependentUpon="EnsureTests.Task.cs" />
 
-		<Compile Update="Functional\Results\Extensions\BindTests.Task.cs" DependentUpon="BindTests.cs" />
-		<Compile Update="Functional\Results\Extensions\BindsTests.Task.*.cs" DependentUpon="BindTests.Task.cs" />
-		<Compile Update="Functional\Results\Extensions\BindTests.ValueTask.cs" DependentUpon="BindTests.cs" />
-		<Compile Update="Functional\Results\Extensions\BindsTests.ValueTask.*.cs" DependentUpon="BindTests.ValueTask.cs" />
+		<Compile Update="Results\Extensions\BindTests.Task.cs" DependentUpon="BindTests.cs" />
+		<Compile Update="Results\Extensions\BindsTests.Task.*.cs" DependentUpon="BindTests.Task.cs" />
+		<Compile Update="Results\Extensions\BindTests.ValueTask.cs" DependentUpon="BindTests.cs" />
+		<Compile Update="Results\Extensions\BindsTests.ValueTask.*.cs" DependentUpon="BindTests.ValueTask.cs" />
 	</ItemGroup>
 </Project>

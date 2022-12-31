@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Functional.Results;
+﻿namespace RailwayOrientedProgramming.Tests.Results;
 
 using FunctionalDDD;
 
