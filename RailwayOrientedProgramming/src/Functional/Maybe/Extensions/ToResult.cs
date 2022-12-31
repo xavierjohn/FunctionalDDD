@@ -12,7 +12,7 @@ public static partial class MaybeExtensions
 
     public static async Task<Result<T>> ToResultAsync<T>(this Task<Maybe<T>> maybeTask, Error error)
     {
-        var maybe = await maybeTask.DefaultAwait();
+        var maybe = await maybeTask.ConfigureAwait(false);
         return maybe.ToResult(error);
     }
 

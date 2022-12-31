@@ -29,7 +29,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static async Task<Result<TResult>> TapAsync<TResult>(this Task<Result<TResult>> resultTask, Action action)
     {
-        var result = await resultTask.DefaultAwait();
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
             action();
 

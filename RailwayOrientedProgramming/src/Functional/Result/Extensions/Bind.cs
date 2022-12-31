@@ -18,8 +18,8 @@ public static partial class ResultExtensions
     /// </summary>
     public static async Task<Result<TResult>> BindAsync<T, TResult>(this Task<Result<T>> resultTask, Func<T, Task<Result<TResult>>> func)
     {
-        Result<T> result = await resultTask.DefaultAwait();
-        return await result.BindAsync(func).DefaultAwait();
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.BindAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -27,7 +27,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static async Task<Result<TResult>> BindAsync<T, TResult>(this Task<Result<T>> resultTask, Func<T, Result<TResult>> func)
     {
-        Result<T> result = await resultTask.DefaultAwait();
+        Result<T> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
     }
 

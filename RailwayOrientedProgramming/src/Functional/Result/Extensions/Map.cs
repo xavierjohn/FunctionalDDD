@@ -5,10 +5,10 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<K> Map<T, K>(this Result<T> result, Func<T, K> func)
+    public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> func)
     {
         if (result.IsFailure)
-            return Result.Failure<K>(result.Error);
+            return Result.Failure<TOut>(result.Error);
 
         return Result.Success(func(result.Value));
     }
@@ -16,26 +16,26 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async Task<Result<K>> MapAsync<T, K>(this Task<Result<T>> resultTask, Func<T, Task<K>> func)
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
     {
-        Result<T> result = await resultTask.DefaultAwait();
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
-            return Result.Failure<K>(result.Error);
+            return Result.Failure<TOut>(result.Error);
 
-        K value = await func(result.Value).DefaultAwait();
+        TOut value = await func(result.Value).ConfigureAwait(false);
 
         return Result.Success(value);
     }
 
-    public static async Task<Result<K>> MapAsync<T, K>(this Task<Result<T>> resultTask, Func<T, K> func)
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, TOut> func)
     {
-        Result<T> result = await resultTask;
+        Result<TIn> result = await resultTask;
 
         if (result.IsFailure)
-            return Result.Failure<K>(result.Error);
+            return Result.Failure<TOut>(result.Error);
 
-        K value = func(result.Value);
+        TOut value = func(result.Value);
 
         return Result.Success(value);
     }
@@ -43,26 +43,26 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Creates a new result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async ValueTask<Result<K>> MapAsync<T, K>(this ValueTask<Result<T>> resultTask, Func<T, ValueTask<K>> valueTask)
+    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> valueTask)
     {
-        Result<T> result = await resultTask;
+        Result<TIn> result = await resultTask;
 
         if (result.IsFailure)
-            return Result.Failure<K>(result.Error);
+            return Result.Failure<TOut>(result.Error);
 
-        K value = await valueTask(result.Value);
+        TOut value = await valueTask(result.Value);
 
         return Result.Success(value);
     }
 
-    public static async ValueTask<Result<K>> MapAsync<T, K>(this ValueTask<Result<T>> resultTask, Func<T, K> func)
+    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, TOut> func)
     {
-        Result<T> result = await resultTask;
+        Result<TIn> result = await resultTask;
 
         if (result.IsFailure)
-            return Result.Failure<K>(result.Error);
+            return Result.Failure<TOut>(result.Error);
 
-        K value = func(result.Value);
+        TOut value = func(result.Value);
 
         return Result.Success(value);
     }

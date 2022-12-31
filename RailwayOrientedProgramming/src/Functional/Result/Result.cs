@@ -43,7 +43,7 @@ public partial struct Result
     /// </summary>
     public static async Task<Result<T>> SuccessIfAsync<T>(Func<Task<bool>> predicate, T value, ErrorList error)
     {
-        bool isSuccess = await predicate().DefaultAwait();
+        bool isSuccess = await predicate().ConfigureAwait(false);
         return SuccessIf(isSuccess, value, error);
     }
 
@@ -52,7 +52,7 @@ public partial struct Result
     /// </summary>
     public static async Task<Result<T>> FailureIfAsync<T>(Func<Task<bool>> failurePredicate, T value, ErrorList error)
     {
-        bool isFailure = await failurePredicate().DefaultAwait();
+        bool isFailure = await failurePredicate().ConfigureAwait(false);
         return SuccessIf(!isFailure, value, error);
     }
 }
