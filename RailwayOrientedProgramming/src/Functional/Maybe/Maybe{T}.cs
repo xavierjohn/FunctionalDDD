@@ -128,10 +128,10 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
 
     public override string ToString()
     {
-        if (HasNoValue || _value is null)
-            return Maybe<T>.NoValue;
+        if (_value is null)
+            return NoValue;
 
-        return _value?.ToString() ?? Maybe<T>.NoValue;
+        return _value?.ToString() ?? NoValue;
     }
 }
 
@@ -140,7 +140,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
 /// </summary>
 public readonly struct Maybe
 {
-    public static Maybe None => new Maybe();
+    public static Maybe None => new();
 
     /// <summary>
     /// Creates a new <see cref="Maybe{T}" /> from the provided <paramref name="value"/>
