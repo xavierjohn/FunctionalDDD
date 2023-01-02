@@ -74,7 +74,7 @@ using FunctionalDDD;
                 cancellationToken.ThrowIfCancellationRequested();
 
                 SemanticModel semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
-                if (semanticModel.GetDeclaredSymbol(classDeclarationSyntax) is not INamedTypeSymbol classSymbol)
+                if (semanticModel.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol classSymbol)
                 {
                     // something went wrong
                     continue;

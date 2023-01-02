@@ -1,9 +1,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Label="General">
-	  <Authors>Xavier John</Authors>
-	  <Company>$(Authors)</Company>
-	  <Copyright>Copyright © $(Company) 2022. All rights reserved.</Copyright>
+    <Authors>Xavier John</Authors>
+    <Company>$(Authors)</Company>
+    <Copyright>Copyright © $(Company) 2022. All rights reserved.</Copyright>
     <NeutralLanguage>en</NeutralLanguage>
     <DefaultLanguage>en-US</DefaultLanguage>
     <SolutionDir Condition=" '$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined if not building a solution or within Visual Studio*' ">$(MSBuildThisFileDirectory)</SolutionDir>
@@ -12,6 +12,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>Latest</LangVersion>
+    <!--<AnalysisLevel>latest-Recommended</AnalysisLevel>-->
   </PropertyGroup>
 
   <PropertyGroup  Label="Build">
@@ -24,10 +25,10 @@
   <ItemGroup>
     <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
   </ItemGroup>
-  
+
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
-	  <RootNamespace>FunctionalDDD.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-	  <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>FunctionalDDD.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(IsTestProject)' == 'false' ">
@@ -37,10 +38,10 @@
 
   <!-- Test projects. -->
   <PropertyGroup Condition=" '$(IsTestProject)' == 'true' ">
-	  <IsPackable>false</IsPackable>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ImportGroup Condition=" '$(IsTestProject)' == 'true' ">
     <Import Project="$(MSBuildThisFileDirectory)shared/commontest.props"/>
   </ImportGroup>
- 
+
 </Project>
