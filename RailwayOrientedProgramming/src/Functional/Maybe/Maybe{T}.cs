@@ -45,12 +45,10 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
     /// </summary>
     public T Value => GetValueOrThrow();
 
-    public static Maybe<T> None => new Maybe<T>();
-
     public bool HasValue => _isValueSet;
     public bool HasNoValue => !HasValue;
 
-    private Maybe(T? value)
+    internal Maybe(T? value)
     {
         if (value == null)
         {
@@ -70,10 +68,6 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
 
         return Maybe.From(value);
     }
-
-    public static implicit operator Maybe<T>(Maybe value) => None;
-
-    public static Maybe<T> From(T? obj) => new Maybe<T>(obj);
 
     public static bool operator ==(Maybe<T> maybe, T value)
     {
@@ -140,12 +134,12 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
 /// </summary>
 public readonly struct Maybe
 {
-    public static Maybe None => new();
+    public static Maybe<T> None<T>() => new Maybe<T>();
 
     /// <summary>
     /// Creates a new <see cref="Maybe{T}" /> from the provided <paramref name="value"/>
     /// </summary>
-    public static Maybe<T> From<T>(T? value) => Maybe<T>.From(value);
+    public static Maybe<T> From<T>(T? value) => new Maybe<T>(value);
 }
 
 /// <summary>

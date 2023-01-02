@@ -106,23 +106,23 @@ public class ResultTests
     [Fact]
     public void Can_work_with_maybe_of_struct()
     {
-        var maybe = Maybe<DateTime>.None;
+        var maybe = Maybe.None<DateTime>();
 
         var result = Result.Success(maybe);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Maybe<DateTime>.None);
+        result.Value.Should().Be(Maybe.None<DateTime>());
     }
 
     [Fact]
     public void Can_work_with_maybe_of_ref_type()
     {
-        var maybe = Maybe<string>.None;
+        var maybe = Maybe.None<string>();
 
         var result = Result.Success(maybe);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Maybe<string>.None);
+        result.Value.Should().Be(Maybe.None<string>());
     }
 
     [Fact]

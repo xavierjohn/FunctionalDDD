@@ -6,7 +6,7 @@ using RailwayOrientedProgramming.Tests.Results;
 public abstract class BindTestsBase : TestBase
 {
     private bool _funcExecuted;
-    protected T? FuncParam;
+    protected T? FuncParam { get; set; }
 
     protected BindTestsBase()
     {

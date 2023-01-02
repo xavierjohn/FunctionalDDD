@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Diagnostics;
     using System.Threading;
     using FunctionalDDD.CommonValueObjectGenerator;
     using Microsoft.CodeAnalysis;
@@ -51,9 +52,36 @@ using FunctionalDDD;
     }}
 
     public static explicit operator {g.ClassName}({g.ClassType} {camelArg}) => Create({camelArg}).Value;
-}}
 ";
 
+                if (g.ClassType == "Guid")
+                {
+                    source += $@"
+    public static {g.ClassName} CreateUnique() => CreateInstance.Value(Guid.NewGuid());
+
+    public static Result<{g.ClassName}> Create(Maybe<Guid> requiredGuidOrNothing)
+    {{
+        return requiredGuidOrNothing
+            .ToResult(CannotBeEmptyError)
+            .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
+            .Map(guid => CreateInstance.Value(guid));
+    }}
+}}
+";
+                }
+
+                if (g.ClassType == "String")
+                {
+                    source += $@"
+    public static Result<{g.ClassName}> Create(Maybe<string> requiredStringOrNothing)
+    {{
+        return requiredStringOrNothing
+            .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
+            .Map(name => CreateInstance.Value(name));
+    }}
+}}
+";
+                }
 
                 context.AddSource($"{g.ClassName}.g.cs", source);
             }

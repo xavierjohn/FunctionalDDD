@@ -4,9 +4,8 @@ using FunctionalDDD;
 
 public abstract class TestBase
 {
-    protected readonly Error Error1 = Error.Unexpected("Error Message");
-
-    protected readonly Error Error2 = Error.Unexpected("Error Message2");
+    public Error Error1 { get; } = Error.Unexpected("Error Message");
+    public Error Error2 { get; } = Error.Unexpected("Error Message2");
 
     protected class T
     {

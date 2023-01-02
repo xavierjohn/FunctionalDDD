@@ -2,9 +2,6 @@
 
 using FunctionalDDD;
 
-internal class FirstName : RequiredString<FirstName>
+internal partial class FirstName : RequiredString<FirstName>
 {
-    private FirstName(string value) : base(value)
-    {
-    }
 }

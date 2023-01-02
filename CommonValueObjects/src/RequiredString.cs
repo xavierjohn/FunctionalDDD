@@ -6,10 +6,4 @@ public abstract class RequiredString<T> : Required<string, T>
     protected RequiredString(string value) : base(value)
     {
     }
-    public static Result<T> Create(Maybe<string> requiredStringOrNothing)
-    {
-        return requiredStringOrNothing
-            .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
-            .Map(name => CreateInstance.Value(name));
-    }
 }
