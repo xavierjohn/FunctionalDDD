@@ -66,9 +66,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
     public static implicit operator Maybe<T>(T? value)
     {
         if (value is Maybe<T> m)
-        {
             return m;
-        }
 
         return Maybe.From(value);
     }
