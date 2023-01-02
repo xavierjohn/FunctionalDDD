@@ -2,9 +2,6 @@
 
 using FunctionalDDD;
 
-public class UserId : RequiredGuid<UserId>
+public partial class UserId : RequiredGuid<UserId>
 {
-    private UserId(Guid value) : base(value)
-    {
-    }
 }
