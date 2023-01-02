@@ -82,12 +82,10 @@ public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<objec
         if (value is Maybe<T>)
             return maybe.Equals(value);
 
-        if (maybe.HasNoValue)
+        if (maybe._value is null)
             return value is null;
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
         return maybe._value.Equals(value);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
 
     public static bool operator !=(Maybe<T> maybe, T value) => !(maybe == value);
