@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMaybe<T>
 {
-
+    private const string NoValue = "Maybe has no value.";
     private readonly bool _isValueSet;
 
     private readonly T _value;
@@ -15,7 +15,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
     public T GetValueOrThrow(string? errorMessage = null)
     {
         if (HasNoValue)
-            throw new InvalidOperationException(errorMessage ?? "Maybe has no value.");
+            throw new InvalidOperationException(errorMessage ?? NoValue);
 
         return _value;
     }
@@ -131,9 +131,9 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMay
     public override string ToString()
     {
         if (HasNoValue || _value is null)
-            return "No value";
+            return Maybe<T>.NoValue;
 
-        return _value?.ToString() ?? "No Value";
+        return _value?.ToString() ?? Maybe<T>.NoValue;
     }
 }
 
