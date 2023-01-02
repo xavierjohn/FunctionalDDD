@@ -1,10 +1,12 @@
 ﻿namespace FunctionalDDD;
-public readonly struct Maybe<T> : IEquatable<Maybe<T>>
+using System.Runtime.CompilerServices;
+
+public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMaybe<T>
 {
-    public bool HasValue => _isValueSet;
-    public bool HasNoValue => !HasValue;
-    public static Maybe<T> None => new();
-    public static Maybe<T> From(T? obj) => new(obj);
+    private const string NoValue = "Maybe has no value.";
+    private readonly bool _isValueSet;
+
+    private readonly T _value;
 
     /// <summary>
     /// Returns the inner value if there's one, otherwise throws an InvalidOperationException with <paramref name="errorMessage"/>
@@ -12,10 +14,53 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>
     /// <exception cref="InvalidOperationException">Maybe has no value.</exception>
     public T GetValueOrThrow(string? errorMessage = null)
     {
-        if (HasNoValue || _value is null)
-            throw new InvalidOperationException(errorMessage ?? NoValueException);
+        if (HasNoValue)
+            throw new InvalidOperationException(errorMessage ?? NoValue);
 
         return _value;
+    }
+
+    public T GetValueOrDefault(T defaultValue = default!)
+    {
+        if (HasNoValue)
+            return defaultValue;
+
+        return _value;
+    }
+
+    /// <summary>
+    ///  Indicates whether the inner value is present and returns the value if it is.
+    /// </summary>
+    /// <param name="value">The inner value, if present; otherwise `default`</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetValue(
+        out T value)
+    {
+        value = _value;
+        return _isValueSet;
+    }
+
+    /// <summary>
+    /// Try to use GetValueOrThrow() or GetValueOrDefault() instead for better explicitness.
+    /// </summary>
+    public T Value => GetValueOrThrow();
+
+    public static Maybe<T> None => new Maybe<T>();
+
+    public bool HasValue => _isValueSet;
+    public bool HasNoValue => !HasValue;
+
+    private Maybe(T? value)
+    {
+        if (value == null)
+        {
+            _isValueSet = false;
+            _value = default!;
+            return;
+        }
+
+        _isValueSet = true;
+        _value = value;
     }
 
     public static implicit operator Maybe<T>(T? value)
@@ -23,28 +68,22 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>
         if (value is Maybe<T> m)
             return m;
 
-        return From(value);
+        return Maybe.From(value);
     }
 
     public static implicit operator Maybe<T>(Maybe value) => None;
 
-    public override string ToString() => _value?.ToString() ?? NoValue;
-
-    public bool TryGetValue(out T? value)
-    {
-        value = _value;
-        return HasValue;
-    }
+    public static Maybe<T> From(T? obj) => new Maybe<T>(obj);
 
     public static bool operator ==(Maybe<T> maybe, T value)
     {
         if (value is Maybe<T>)
             return maybe.Equals(value);
 
-        if (maybe.HasNoValue)
+        if (maybe._value is null)
             return value is null;
 
-        return maybe._value?.Equals(value) ?? false;
+        return maybe._value.Equals(value);
     }
 
     public static bool operator !=(Maybe<T> maybe, T value) => !(maybe == value);
@@ -87,28 +126,17 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>
         return _value?.GetHashCode() ?? 0;
     }
 
-    private readonly T _value;
-    private readonly bool _isValueSet;
-
-    public static readonly string NoValueException = "Maybe has no value.";
-    private static readonly string NoValue = "No value";
-
-    private Maybe(T? value)
+    public override string ToString()
     {
-        if (value == null)
-        {
-            _isValueSet = false;
-            _value = default!;
-            return;
-        }
+        if (_value is null)
+            return NoValue;
 
-        _isValueSet = true;
-        _value = value;
+        return _value?.ToString() ?? NoValue;
     }
 }
 
 /// <summary>
-/// Non-generic entrypoint for <see cref="Maybe{T}" /> members
+/// Non-generic entry point for <see cref="Maybe{T}" /> members
 /// </summary>
 public readonly struct Maybe
 {
@@ -117,5 +145,15 @@ public readonly struct Maybe
     /// <summary>
     /// Creates a new <see cref="Maybe{T}" /> from the provided <paramref name="value"/>
     /// </summary>
-    public static Maybe<T> From<T>(T value) => Maybe<T>.From(value);
+    public static Maybe<T> From<T>(T? value) => Maybe<T>.From(value);
+}
+
+/// <summary>
+/// Useful in scenarios where you need to determine if a value is Maybe or not
+/// </summary>
+public interface IMaybe<out T>
+{
+    T Value { get; }
+    bool HasValue { get; }
+    bool HasNoValue { get; }
 }

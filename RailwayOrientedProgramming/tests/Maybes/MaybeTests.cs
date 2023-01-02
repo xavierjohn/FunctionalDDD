@@ -63,7 +63,7 @@ public class MaybeTests
 
         var str = maybe.ToString();
 
-        str.Should().Be("No value");
+        str.Should().Be("Maybe has no value.");
     }
 
     [Fact]
