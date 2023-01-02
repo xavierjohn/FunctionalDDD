@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDDD;
 using System.Runtime.CompilerServices;
 
-public readonly partial struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMaybe<T>
+public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IEquatable<object>, IMaybe<T>
 {
 
     private readonly bool _isValueSet;
