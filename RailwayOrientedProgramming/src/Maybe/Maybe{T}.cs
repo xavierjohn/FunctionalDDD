@@ -8,16 +8,25 @@ public readonly struct Maybe<T> :
     IMaybe<T>
 {
     private readonly bool _isValueSet;
-    private readonly T _value;
+    private readonly T? _value;
 
     private const string NoValue = "Maybe has no value.";
 
-    public T GetValueOrThrow(string? errorMessage = null) =>
-        _isValueSet
-        ? _value
-        : throw new InvalidOperationException(errorMessage ?? NoValue);
+    public T GetValueOrThrow(string? errorMessage = null)
+    {
+        if (_isValueSet)
+            return _value!;
 
-    public T GetValueOrDefault(T defaultValue) => _isValueSet ? _value : defaultValue;
+        throw new InvalidOperationException(errorMessage ?? NoValue);
+    }
+
+    public T GetValueOrDefault(T defaultValue)
+    {
+        if (_isValueSet)
+            return _value!;
+
+        return defaultValue;
+    }
 
     public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
