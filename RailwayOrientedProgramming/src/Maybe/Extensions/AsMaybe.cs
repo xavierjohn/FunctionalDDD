@@ -7,7 +7,7 @@ public static partial class MaybeExtensions
     /// </summary>
     /// <returns>Returns the <see cref="Maybe{T}"/> equivalent to the <see cref="Nullable{T}"/>.</returns>
     public static Maybe<T> AsMaybe<T>(ref this T? value) where T : struct =>
-        System.Runtime.CompilerServices.Unsafe.As<T?, Maybe<T>>(ref value);
+         value.HasValue ? new(value.Value) : default;
 
     /// <summary>
     /// Wraps the class instance in a <see cref="Maybe{T}"/>.
