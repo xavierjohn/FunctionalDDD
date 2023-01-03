@@ -8,8 +8,11 @@ public partial class EmailAddress : SimpleValueObject<string>
 
     public static Result<EmailAddress> Create(string emailString, string? fieldName = null)
     {
-        var isEmail = EmailRegEx().IsMatch(emailString);
-        if (isEmail) return new EmailAddress(emailString);
+        if (emailString != null)
+        {
+            var isEmail = EmailRegEx().IsMatch(emailString);
+            if (isEmail) return new EmailAddress(emailString);
+        }
 
         return Result.Failure<EmailAddress>(Error.Validation(fieldName?.ToCamelCase() ?? "email", "Email address is not valid"));
     }
