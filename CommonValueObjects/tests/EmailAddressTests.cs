@@ -8,6 +8,7 @@ public class EmailAddressTests
     [InlineData("xavier")]
     [InlineData("xavier@")]
     [InlineData("")]
+    [InlineData(null)]
     [InlineData("@com")]
     [InlineData("@#@@##@%^%#$@#$@#.com")]
     [InlineData("John Doe <example@email.com>")]

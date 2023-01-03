@@ -4,7 +4,7 @@ using FunctionalDDD;
 using Microsoft.AspNetCore.Mvc;
 using SampleWebApplication.Model;
 
-public class AuthenticationController : ApiControllerBase
+public class AuthenticationController : ControllerBase
 {
     [HttpPost("[action]")]
     public ActionResult<User> Register(RegisterRequest request) =>
@@ -12,5 +12,5 @@ public class AuthenticationController : ApiControllerBase
         .Combine(LastName.Create(request.LastName))
         .Combine(EmailAddress.Create(request.Email))
         .Bind((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.Password))
-        .Finally(result => MapToActionResult(result));
+        .MapToActionResult(this);
 }
