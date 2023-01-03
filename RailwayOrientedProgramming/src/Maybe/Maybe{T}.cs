@@ -4,8 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 public readonly struct Maybe<T> :
     IEquatable<T>,
-    IEquatable<Maybe<T>>,
-    IMaybe<T>
+    IEquatable<Maybe<T>>
 {
     private readonly bool _isValueSet;
     private readonly T? _value;
@@ -82,14 +81,4 @@ public readonly struct Maybe<T> :
     public override int GetHashCode() => _value?.GetHashCode() ?? 0;
 
     public override string ToString() => _value?.ToString() ?? NoValue;
-}
-
-/// <summary>
-/// Useful in scenarios where you need to determine if a value is Maybe or not
-/// </summary>
-public interface IMaybe<out T>
-{
-    T Value { get; }
-    bool HasValue { get; }
-    bool HasNoValue { get; }
 }
