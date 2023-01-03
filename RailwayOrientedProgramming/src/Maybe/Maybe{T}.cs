@@ -69,13 +69,6 @@ public readonly struct Maybe<T> :
     public override string ToString() => inner.Value?.ToString() ?? NoValue;
 }
 
-public readonly struct Maybe
-{
-    public static Maybe<T> None<T>() => new();
-
-    public static Maybe<T> From<T>(T? value) => new(value);
-}
-
 /// <summary>
 /// Useful in scenarios where you need to determine if a value is Maybe or not
 /// </summary>
