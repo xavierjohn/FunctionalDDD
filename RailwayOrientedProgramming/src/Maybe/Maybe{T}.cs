@@ -7,29 +7,35 @@ public readonly struct Maybe<T> :
     IEquatable<Maybe<T>>,
     IMaybe<T>
 {
+    private readonly bool _isValueSet;
+    private readonly T _value;
+
     private const string NoValue = "Maybe has no value.";
-    private readonly (bool IsSet, T? Value) inner;
 
     public T GetValueOrThrow(string? errorMessage = null) =>
-        inner.IsSet
-        ? inner.Value!
+        _isValueSet
+        ? _value
         : throw new InvalidOperationException(errorMessage ?? NoValue);
 
-    public T GetValueOrDefault(T defaultValue) => inner.IsSet ? inner.Value! : defaultValue;
+    public T GetValueOrDefault(T defaultValue) => _isValueSet ? _value : defaultValue;
 
     public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
-        value = inner.Value;
-        return inner.IsSet;
+        value = _value;
+        return _isValueSet;
     }
 
     public T Value => GetValueOrThrow();
 
-    public bool HasValue => inner.IsSet;
+    public bool HasValue => _isValueSet;
 
-    public bool HasNoValue => !inner.IsSet;
+    public bool HasNoValue => !_isValueSet;
 
-    internal Maybe(T? value) => inner = (value is not null, value);
+    internal Maybe(T? value)
+    {
+        _isValueSet = value is not null;
+        _value = value!;
+    }
 
     public static implicit operator Maybe<T>(T? value) =>
         value is Maybe<T> maybe ? maybe : new(value);
@@ -55,18 +61,18 @@ public readonly struct Maybe<T> :
         };
 
     public bool Equals(Maybe<T> other) =>
-        inner.IsSet && other.inner.IsSet
-        ? EqualityComparer<T>.Default.Equals(inner.Value!, other.inner.Value!)
-        : !inner.IsSet && !other.inner.IsSet;
+        _isValueSet && other._isValueSet
+        ? EqualityComparer<T>.Default.Equals(_value, other._value)
+        : !_isValueSet && !other._isValueSet;
 
     public bool Equals(T? other) =>
-        inner.IsSet
-        ? EqualityComparer<T>.Default.Equals(inner.Value, other)
-        : !inner.IsSet;
+        _isValueSet
+        ? EqualityComparer<T>.Default.Equals(_value, other)
+        : !_isValueSet;
 
-    public override int GetHashCode() => inner.Value?.GetHashCode() ?? 0;
+    public override int GetHashCode() => _value?.GetHashCode() ?? 0;
 
-    public override string ToString() => inner.Value?.ToString() ?? NoValue;
+    public override string ToString() => _value?.ToString() ?? NoValue;
 }
 
 /// <summary>
