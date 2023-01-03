@@ -12,5 +12,5 @@ public class AuthenticationController : ControllerBase
         .Combine(LastName.Create(request.LastName))
         .Combine(EmailAddress.Create(request.Email))
         .Bind((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.Password))
-        .MapToActionResult(this);
+        .ToActionResult(this);
 }

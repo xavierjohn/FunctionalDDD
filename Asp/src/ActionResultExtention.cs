@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 public static class ActionResultExtention
 {
-    public static ActionResult<T> MapToActionResult<T>(this Result<T> result, ControllerBase controllerBase)
+    public static ActionResult<T> ToActionResult<T>(this Result<T> result, ControllerBase controllerBase)
     {
         if (result.IsSuccess)
             return controllerBase.Ok(result.Value);
@@ -13,7 +13,7 @@ public static class ActionResultExtention
         return ConvertToHttpError<T>(result.Errors, controllerBase);
     }
 
-    public static ActionResult<T> MapToCreatedResult<T>(this Result<T> result, ControllerBase controller, string location)
+    public static ActionResult<T> ToCreatedResult<T>(this Result<T> result, ControllerBase controller, string location)
     {
         if (result.IsSuccess)
             return controller.Created(location, result.Value);
