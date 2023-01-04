@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 public readonly struct Maybe<T> :
     IEquatable<T>,
     IEquatable<Maybe<T>>
+    where T : notnull
 {
     private readonly bool _isValueSet;
     private readonly T? _value;
