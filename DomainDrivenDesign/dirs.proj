@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+    <ItemGroup Label="source">
+        <ProjectReference Include="src\DomainDrivenDesign.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="test">
+        <ProjectReference Include="tests\DomainDrivenDesign.Tests.csproj" />
+    </ItemGroup>
+
+</Project>

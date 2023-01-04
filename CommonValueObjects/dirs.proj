@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.Build.Traversal">
+    <ItemGroup Label="source">
+        <ProjectReference Include="src\CommonValueObjects.csproj" />
+        <ProjectReference Include="generator\CommonValueObjectGenerator.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="test">
+        <ProjectReference Include="tests\CommonValueObjects.Tests.csproj" />
+    </ItemGroup>
+
+</Project>
