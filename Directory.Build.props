@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
+    <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="All"/>
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
@@ -31,17 +33,9 @@
     <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(IsTestProject)' == 'false' ">
-    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
-    <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="All"/>
-  </ItemGroup>
-
   <!-- Test projects. -->
-  <PropertyGroup Condition=" '$(IsTestProject)' == 'true' ">
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
   <ImportGroup Condition=" '$(IsTestProject)' == 'true' ">
-    <Import Project="$(MSBuildThisFileDirectory)shared/commontest.props"/>
+    <Import Project="$(MSBuildThisFileDirectory)build/test.props"/>
   </ImportGroup>
 
 </Project>

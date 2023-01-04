@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+    <ItemGroup Label="source">
+        <ProjectReference Include="src\RailwayOrientedProgramming.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="test">
+        <ProjectReference Include="tests\RailwayOrientedProgramming.Tests.csproj" />
+    </ItemGroup>
+
+</Project>
