@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD;
 
-public abstract class RequiredString<T> : Required<string, T>
+public abstract class RequiredString<T> : SimpleValueObject<string>
     where T : RequiredString<T>
 {
     protected RequiredString(string value) : base(value)

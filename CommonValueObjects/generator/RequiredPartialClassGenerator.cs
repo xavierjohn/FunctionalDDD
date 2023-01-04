@@ -2,8 +2,8 @@
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics;
     using System.Threading;
+    using FunctionalDDD;
     using FunctionalDDD.CommonValueObjectGenerator;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -47,6 +47,8 @@ namespace {g.NameSpace};
 using FunctionalDDD;
 {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : Required{g.ClassType}<{g.ClassName}>
 {{
+    protected static readonly Error CannotBeEmptyError = Error.Validation(""{g.ClassName.ToCamelCase()}"", ""{g.ClassName.SplitPascalCase()} cannot be empty"");
+
     private {g.ClassName}({g.ClassType} value) : base(value)
     {{
     }}
@@ -57,14 +59,14 @@ using FunctionalDDD;
                 if (g.ClassType == "Guid")
                 {
                     source += $@"
-    public static {g.ClassName} CreateUnique() => CreateInstance.Value(Guid.NewGuid());
+    public static {g.ClassName} CreateUnique() => new(Guid.NewGuid());
 
     public static Result<{g.ClassName}> Create(Maybe<Guid> requiredGuidOrNothing)
     {{
         return requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
-            .Map(guid => CreateInstance.Value(guid));
+            .Map(guid => new {g.ClassName}(guid));
     }}
 }}
 ";
@@ -77,7 +79,7 @@ using FunctionalDDD;
     {{
         return requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
-            .Map(name => CreateInstance.Value(name));
+            .Map(str => new {g.ClassName}(str));
     }}
 }}
 ";

@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD;
 
-public abstract class RequiredGuid<T> : Required<Guid, T>
+public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
     where T : RequiredGuid<T>
 {
 
