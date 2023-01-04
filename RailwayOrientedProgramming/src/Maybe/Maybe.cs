@@ -6,7 +6,7 @@ public sealed class Maybe
     {
     }
 
-    public static Maybe<T> None<T>() => new();
+    public static Maybe<T> None<T>() where T : notnull => new();
 
-    public static Maybe<T> From<T>(T? value) => new(value);
+    public static Maybe<T> From<T>(T? value) where T : notnull => new(value);
 }
