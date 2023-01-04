@@ -13,6 +13,20 @@ public static class ActionResultExtention
         return ConvertToHttpError<T>(result.Errors, controllerBase);
     }
 
+    public static async Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
+    {
+        Result<T> result = await resultTask;
+
+        return result.ToActionResult(controllerBase);
+    }
+
+    public static async ValueTask<ActionResult<T>> ToActionResultAsync<T>(this ValueTask<Result<T>> resultTask, ControllerBase controllerBase)
+    {
+        Result<T> result = await resultTask;
+
+        return result.ToActionResult(controllerBase);
+    }
+
     public static ActionResult<T> ToCreatedResult<T>(this Result<T> result, ControllerBase controller, string location)
     {
         if (result.IsSuccess)
