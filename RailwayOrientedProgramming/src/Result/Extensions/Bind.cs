@@ -16,6 +16,17 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
+    public static Task<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, Task<Result<TResult>>> func)
+    {
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error).AsCompletedTask();
+
+        return func(result.Value);
+    }
+
+    /// <summary>
+    ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
+    /// </summary>
     public static async Task<Result<TResult>> BindAsync<T, TResult>(this Task<Result<T>> resultTask, Func<T, Task<Result<TResult>>> func)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
@@ -29,17 +40,6 @@ public static partial class ResultExtensions
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
-    }
-
-    /// <summary>
-    ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
-    /// </summary>
-    public static Task<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, Task<Result<TResult>>> func)
-    {
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error).AsCompletedTask();
-
-        return func(result.Value);
     }
 
     /// <summary>
