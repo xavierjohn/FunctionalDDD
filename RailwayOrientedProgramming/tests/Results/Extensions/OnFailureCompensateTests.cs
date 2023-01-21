@@ -2,7 +2,7 @@
 
 using FunctionalDDD;
 
-public class CompensateTests
+public class OnFailureCompensateTests
 {
     bool _compensatingFunctionCalled;
 
@@ -16,7 +16,7 @@ public class CompensateTests
     public void Result_success_then_compensate_func_does_not_execute()
     {
         Result<string> input = Result.Success("Success");
-        Result<string> output = input.Compensate(GetErrorResult);
+        Result<string> output = input.OnFailureCompensate(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -32,7 +32,7 @@ public class CompensateTests
     public void Result_failure_and_compensate_func_does_execute_and_succeed()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = input.Compensate(GetSuccessResult);
+        Result<string> output = input.OnFailureCompensate(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -48,7 +48,7 @@ public class CompensateTests
     public void Result_failure_and_compensate_func_does_execute_and_fail()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = input.Compensate(GetErrorResult);
+        Result<string> output = input.OnFailureCompensate(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -61,7 +61,7 @@ public class CompensateTests
     public async Task Task_Result_success_and_compensate_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.CompensateAsync(GetErrorResult);
+        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -72,7 +72,7 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_succeed()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetSuccessResult);
+        Result<string> output = await input.OnFailureCompensateAsync(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -83,7 +83,7 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_fail()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetErrorResult);
+        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -96,7 +96,7 @@ public class CompensateTests
     public async Task Task_Result_success_and_compensate_async_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.CompensateAsync(GetErrorResultAsync);
+        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -107,7 +107,7 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_succeed()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetSuccessResultAsync);
+        Result<string> output = await input.OnFailureCompensateAsync(GetSuccessResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -118,7 +118,7 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_fail()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetErrorResultAsync);
+        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -126,25 +126,25 @@ public class CompensateTests
     }
     #endregion
 
-    private Result<string> GetSuccessResult(ErrorList errors)
+    private Result<string> GetSuccessResult()
     {
         _compensatingFunctionCalled = true;
         return Result.Success("Compensated Success");
     }
 
-    private Result<string> GetErrorResult(ErrorList errors)
+    private Result<string> GetErrorResult()
     {
         _compensatingFunctionCalled = true;
         return Result.Failure<string>(Error.Unexpected("Compensated Error"));
     }
 
-    private Task<Result<string>> GetSuccessResultAsync(ErrorList errors)
+    private Task<Result<string>> GetSuccessResultAsync()
     {
         _compensatingFunctionCalled = true;
         return Task.FromResult(Result.Success("Compensated Success"));
     }
 
-    private Task<Result<string>> GetErrorResultAsync(ErrorList errors)
+    private Task<Result<string>> GetErrorResultAsync()
     {
         _compensatingFunctionCalled = true;
         return Task.FromResult(Result.Failure<string>(Error.Unexpected("Compensated Error")));

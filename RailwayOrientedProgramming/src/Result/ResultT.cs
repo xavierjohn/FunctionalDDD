@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDDD;
 using System;
 
-public readonly partial struct Result<T>
+public readonly struct Result<T>
 {
     public bool IsFailure { get; }
     public bool IsSuccess => !IsFailure;
