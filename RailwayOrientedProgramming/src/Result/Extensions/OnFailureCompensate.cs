@@ -3,7 +3,7 @@
 public static partial class ResultExtensions
 {
     /// <summary>
-    /// Compensate for failure by calling the given function.
+    /// Compensate for failed result by calling the given function.
     /// </summary>
     public static Result<T> OnFailureCompensate<T>(this Result<T> result, Func<Result<T>> func)
     {
@@ -14,7 +14,7 @@ public static partial class ResultExtensions
     }
 
     /// <summary>
-    /// Compensate for failure by calling the given function.
+    /// Compensate for failed result by calling the given function.
     /// </summary>
     public static async Task<Result<T>> OnFailureCompensateAsync<T>(this Task<Result<T>> resultTask, Func<Result<T>> func)
     {
@@ -23,7 +23,7 @@ public static partial class ResultExtensions
     }
 
     /// <summary>
-    /// Compensate for failure by calling the given function.
+    /// Compensate for failed result by calling the given function.
     /// </summary>
     public static async Task<Result<T>> OnFailureCompensateAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
     {
