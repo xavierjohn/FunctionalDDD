@@ -70,4 +70,17 @@ public static partial class ResultExtensions
 
         return valueTask(result.Value);
     }
+
+    /// <summary>
+    ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
+    /// </summary>
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2)>> resultTask, Func<T1, T2, Result<TResult>> func)
+    {
+        var result = await resultTask;
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Errors);
+
+        var (args1, args2) = result.Value;
+        return func(args1, args2);
+    }
 }
