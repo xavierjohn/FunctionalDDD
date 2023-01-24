@@ -9,7 +9,7 @@ public class ParallelTests
         // Act
         var r = await Task.FromResult(Result.Success("Hi"))
             .ParallelAsync(Task.FromResult(Result.Success("Bye")))
-            .ParallelWhenAll()
+            .ParallelWhenAllAsync()
             .BindAsync((a, b) => Result.Success(a + b));
 
         // Assert
