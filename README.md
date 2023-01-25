@@ -95,4 +95,4 @@ I wanted the following
 }
  ```
 
- Look at the [examples folder](examples) for more examples.
+ Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more examples.
