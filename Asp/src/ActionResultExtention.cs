@@ -45,6 +45,7 @@ public static class ActionResultExtention
             Validation => ValidationErrors<T>(errors, controllerBase),
             Conflict => (ActionResult<T>)controllerBase.Conflict(error),
             Unauthorized => (ActionResult<T>)controllerBase.Unauthorized(error),
+            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Message),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }
