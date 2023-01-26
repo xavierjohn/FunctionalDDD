@@ -2,7 +2,7 @@
 
 public sealed class NotFound : Error
 {
-    public NotFound(string code, string message) : base(code, message)
+    public NotFound(string description, string code) : base(description, code)
     {
     }
 }

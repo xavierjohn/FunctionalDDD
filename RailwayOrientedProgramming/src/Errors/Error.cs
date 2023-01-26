@@ -7,14 +7,13 @@ using System.Diagnostics;
 public class Error : IEquatable<Error>
 #pragma warning restore CA1716 // Identifiers should not match keywords
 {
-
+    public string Description { get; }
     public string Code { get; }
-    public string Message { get; }
 
-    internal Error(string code, string message)
+    internal Error(string description, string code)
     {
+        Description = description;
         Code = code;
-        Message = message;
     }
 
     public bool Equals(Error? other)
@@ -32,34 +31,22 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
-    public static Error Validation(string fieldName, string message) =>
-    new Validation(fieldName, message);
+    public static Error Validation(string description, string fieldName = "", string code = "validation.error") =>
+    new Validation(description, fieldName, code);
 
-    public static Error Conflict(string code, string message) =>
-        new Conflict(code, message);
+    public static Error Conflict(string description, string code = "conflict.error") =>
+        new Conflict(description, code);
 
-    public static Error NotFound(string code, string message) =>
-        new NotFound(code, message);
+    public static Error NotFound(string description, string code = "notfound.error") =>
+        new NotFound(description, code);
 
-    public static Error Unauthorized(string code, string message) =>
-        new Unauthorized(code, message);
+    public static Error Unauthorized(string description, string code = "unauthorized.error") =>
+        new Unauthorized(description, code);
 
-    public static Error Forbidden(string code, string message) =>
-     new Forbidden(code, message);
+    public static Error Forbidden(string description, string code = "forbidden.error") =>
+     new Forbidden(description, code);
 
-    public static Error Unexpected(string code, string message) =>
-    new Unexpected(code, message);
-
-    public static Error Conflict(string message) => Conflict("conflict.error", message);
-
-    public static Error NotFound(string message) => NotFound("notfound.error", message);
-
-    public static Error Validation(string message) => Validation("validation.error", message);
-
-    public static Error Unauthorized(string message) => Unauthorized("unauthorized.error", message);
-
-    public static Error Unexpected(string message) => Unexpected("unexpected.error", message);
-
-
+    public static Error Unexpected(string description, string code = "unexpected.error") =>
+    new Unexpected(description, code);
 }
 

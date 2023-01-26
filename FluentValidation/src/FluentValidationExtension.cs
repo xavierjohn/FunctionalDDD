@@ -10,7 +10,7 @@ public static class FluentValidationExtension
             return Result.Success<T>(value);
 
         var errors = validationResult.Errors
-            .Select(x => Error.Validation(x.PropertyName, x.ErrorMessage));
+            .Select(x => Error.Validation(x.ErrorMessage, x.PropertyName));
 
         return Result.Failure<T>(new ErrorList(errors));
     }
