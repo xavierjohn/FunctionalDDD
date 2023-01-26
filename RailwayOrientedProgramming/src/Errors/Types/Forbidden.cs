@@ -2,7 +2,7 @@
 
 public sealed class Forbidden : Error
 {
-    public Forbidden(string code, string message) : base(code, message)
+    public Forbidden(string description, string code) : base(description, code)
     {
     }
 }

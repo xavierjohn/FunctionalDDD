@@ -45,7 +45,7 @@ public static class ActionResultExtention
             Validation => ValidationErrors<T>(errors, controllerBase),
             Conflict => (ActionResult<T>)controllerBase.Conflict(error),
             Unauthorized => (ActionResult<T>)controllerBase.Unauthorized(error),
-            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Message),
+            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Description),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }
@@ -55,7 +55,7 @@ public static class ActionResultExtention
         foreach (var error in errors)
         {
             if (error is Validation validation)
-                modelState.AddModelError(validation.Code, validation.Message);
+                modelState.AddModelError(validation.FieldName, validation.Description);
         }
 
         return controllerBase.ValidationProblem(modelState);

@@ -14,8 +14,11 @@ public class RequiredGuid_T_Tests
         var guidId1 = MyGuidId.Create(default);
         guidId1.IsFailure.Should().BeTrue();
         guidId1.Errors.Should().HaveCount(1);
-        guidId1.Error.Message.Should().Be("My Guid Id cannot be empty");
-        guidId1.Error.Code.Should().Be("myGuidId");
+        guidId1.Error.Should().BeOfType<Validation>();
+        var validation = (Validation)guidId1.Error;
+        validation.Description.Should().Be("My Guid Id cannot be empty");
+        validation.FieldName.Should().Be("myGuidId");
+        validation.Code.Should().Be("validation.error");
     }
 
     [Fact]
@@ -91,6 +94,6 @@ public class RequiredGuid_T_Tests
         // Assert
         act.Should().Throw<ResultFailureException>()
             .WithMessage("You attempted to access the Value property for a failed result. A failed result has no Value.")
-            .Where(e => e.Errors[0].Message == "My Guid Id cannot be empty");
+            .Where(e => e.Errors[0].Description == "My Guid Id cannot be empty");
     }
 }

@@ -14,7 +14,7 @@ public partial class EmailAddress : SimpleValueObject<string>
             if (isEmail) return new EmailAddress(emailString);
         }
 
-        return Result.Failure<EmailAddress>(Error.Validation(fieldName?.ToCamelCase() ?? "email", "Email address is not valid"));
+        return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid", fieldName?.ToCamelCase() ?? "email"));
     }
 
     [GeneratedRegex("\\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\\Z", RegexOptions.IgnoreCase, "en-US")]
