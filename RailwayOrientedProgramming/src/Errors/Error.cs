@@ -32,7 +32,7 @@ public class Error : IEquatable<Error>
     public override int GetHashCode() => Code.GetHashCode();
 
     public static Error Validation(string description, string fieldName = "", string code = "validation.error") =>
-    new Validation(description, fieldName, code);
+        new Validation(description, fieldName, code);
 
     public static Error Conflict(string description, string code = "conflict.error") =>
         new Conflict(description, code);
@@ -44,9 +44,12 @@ public class Error : IEquatable<Error>
         new Unauthorized(description, code);
 
     public static Error Forbidden(string description, string code = "forbidden.error") =>
-     new Forbidden(description, code);
+        new Forbidden(description, code);
 
     public static Error Unexpected(string description, string code = "unexpected.error") =>
-    new Unexpected(description, code);
+        new Unexpected(description, code);
+
+    internal static Error Transient(string description, string code = "transient.error") =>
+        new Transient(description, code);
 }
 

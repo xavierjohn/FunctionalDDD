@@ -46,6 +46,8 @@ public static class ActionResultExtention
             Conflict => (ActionResult<T>)controllerBase.Conflict(error),
             Unauthorized => (ActionResult<T>)controllerBase.Unauthorized(error),
             Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Description),
+            Unexpected => (ActionResult<T>)controllerBase.StatusCode(500, error),
+            Transient => (ActionResult<T>)controllerBase.StatusCode(500, error),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }
