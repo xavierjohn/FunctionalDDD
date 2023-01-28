@@ -1,0 +1,45 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#@ include file="CommonFunction.t4" #>
+// Generated code
+namespace FunctionalDDD;
+
+public static partial class ResultExtensions
+{
+
+<#
+  void WriteTaskResult(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}>>")));
+  }
+  
+  void WriteTaskItem(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"tasks.Item{i}")));
+  }
+  
+  void WriteTaskItemResult(int n) {
+     Write(String.Join(", ", Enumerable.Range(2, n - 1).Select(i => $"tasks.Item{i}.Result")));
+  }
+
+  for(var i = 3; i <= 9; i++) { 
+#>
+    public static (<# WriteTaskResult(i); #>) ParallelAsync<<# WriteTs(i); #>>(
+        this (<# WriteTaskResult(i - 1); #>) tasks,
+        Task<Result<T<#=i#>>> task
+        ) => (<# WriteTaskItem(i - 1); #>, task);
+
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this (<# WriteTaskResult(i); #>) tasks,
+        Func<<# WriteTs(i); #>, Result<TResult>> func)
+    {
+        await Task.WhenAll(<# WriteTaskItem(i); #>);
+        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
+    }
+
+<#
+ }
+#>
+}

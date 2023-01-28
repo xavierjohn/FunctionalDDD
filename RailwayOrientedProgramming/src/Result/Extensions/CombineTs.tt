@@ -13,7 +13,25 @@ public static partial class ResultExtensions
 
 <#
   void WriteT1Values(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "t1.Value.Item" + i)));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t1.Value.Item{i}")));
+  }
+  
+  void WriteIsFailure(int n) {
+    Write(String.Join(" || ", Enumerable.Range(1, n).Select(i => $"t{i}.IsFailure")));
+  }
+
+  void WriteResultT(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Result<T{i}> t{i}")));
+  }
+
+  void WriteAddFailure(int n) {
+    WriteLine("if (t1.IsFailure) errors.AddRange(t1.Errors);");
+    for(var i=2; i <= n; i++)
+        WriteLine($"            if (t{i}.IsFailure) errors.AddRange(t{i}.Errors);");
+  }
+
+  void WriteTValues(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t{i}.Value")));
   }
 
   for(var i = 3; i <=9; i++) { 
@@ -31,6 +49,18 @@ public static partial class ResultExtensions
         }
 
         return Result.Success((<# WriteT1Values(i - 1); #>, tc.Value));
+    }
+
+    public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(this <# WriteResultT(i); #>)
+    {
+        if (<# WriteIsFailure(i); #>)
+        {
+            var errors = new ErrorList();
+            <# WriteAddFailure(i); #>
+            return Result.Failure<(<# WriteTs(i); #>)>(errors);
+        }
+
+        return Result.Success((<# WriteTValues(i); #>));
     }
 
 <#
