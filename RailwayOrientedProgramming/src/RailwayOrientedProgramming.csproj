@@ -18,6 +18,12 @@
       </Compile>
 
       <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
+
+      <Compile Update="Result\Extensions\ParallelAsyncs.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>ParallelAsyncs.tt</DependentUpon>
+      </Compile>
       <Compile Update="Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
    </ItemGroup>
 
@@ -36,6 +42,10 @@
          <Generator>TextTemplatingFileGenerator</Generator>
          <LastGenOutput>MapTs.cs</LastGenOutput>
          <DependentUpon>Map.cs</DependentUpon>
+      </None>
+      <None Update="Result\Extensions\ParallelAsyncs.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>ParallelAsyncs.cs</LastGenOutput>
       </None>
    </ItemGroup>
 
