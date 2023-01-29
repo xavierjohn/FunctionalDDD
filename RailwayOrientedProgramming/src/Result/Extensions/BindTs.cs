@@ -17,7 +17,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2) = result.Value;
+        var (args1, args2) = result.Ok;
         return func(args1, args2);
     }
 
@@ -32,7 +32,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3) = result.Value;
+        var (args1, args2, args3) = result.Ok;
         return func(args1, args2, args3);
     }
 
@@ -47,7 +47,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3, args4) = result.Value;
+        var (args1, args2, args3, args4) = result.Ok;
         return func(args1, args2, args3, args4);
     }
 
@@ -62,7 +62,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3, args4, args5) = result.Value;
+        var (args1, args2, args3, args4, args5) = result.Ok;
         return func(args1, args2, args3, args4, args5);
     }
 
@@ -77,7 +77,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3, args4, args5, args6) = result.Value;
+        var (args1, args2, args3, args4, args5, args6) = result.Ok;
         return func(args1, args2, args3, args4, args5, args6);
     }
 
@@ -92,7 +92,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3, args4, args5, args6, args7) = result.Value;
+        var (args1, args2, args3, args4, args5, args6, args7) = result.Ok;
         return func(args1, args2, args3, args4, args5, args6, args7);
     }
 
@@ -107,7 +107,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3, args4, args5, args6, args7, args8) = result.Value;
+        var (args1, args2, args3, args4, args5, args6, args7, args8) = result.Ok;
         return func(args1, args2, args3, args4, args5, args6, args7, args8);
     }
 
@@ -122,7 +122,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2, args3, args4, args5, args6, args7, args8, args9) = result.Value;
+        var (args1, args2, args3, args4, args5, args6, args7, args8, args9) = result.Ok;
         return func(args1, args2, args3, args4, args5, args6, args7, args8, args9);
     }
 

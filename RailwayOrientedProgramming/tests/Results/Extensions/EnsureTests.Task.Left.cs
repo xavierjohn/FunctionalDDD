@@ -36,7 +36,7 @@ public class EnsureTests_Task_Left
             x => Error.Validation("new error message: string should not be empty"));
 
         result.IsSuccess.Should().BeTrue("Input Result passes predicate condition");
-        result.Value.Should().Be("initial ok");
+        result.Ok.Should().Be("initial ok");
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class EnsureTests_Task_Left
         var result = await initialResult.EnsureAsync(() => Result.Success("Success message"));
 
         result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded");
-        result.Value.Should().Be("Initial message");
+        result.Ok.Should().Be("Initial message");
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class EnsureTests_Task_Left
         var result = await initialResult.EnsureAsync(_ => Result.Success("Success Message"));
 
         result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded"); ;
-        result.Value.Should().Be("Initial Success message");
+        result.Ok.Should().Be("Initial Success message");
     }
 
     [Fact]

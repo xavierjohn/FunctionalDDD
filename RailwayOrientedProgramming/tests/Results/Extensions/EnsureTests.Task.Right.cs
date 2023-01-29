@@ -12,7 +12,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Success("Success message")));
 
         result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded");
-        result.Value.Should().Be("Initial message");
+        result.Ok.Should().Be("Initial message");
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Success("Success Message")));
 
         result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded"); ;
-        result.Value.Should().Be("Initial Success message");
+        result.Ok.Should().Be("Initial Success message");
     }
 
     [Fact]

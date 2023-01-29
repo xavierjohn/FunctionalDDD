@@ -27,8 +27,8 @@ public class RequiredGuid_T_Tests
         var str = Guid.NewGuid().ToString();
         var guidId1 = MyGuidId.Create(Guid.Parse(str));
         guidId1.IsSuccess.Should().BeTrue();
-        guidId1.Value.Should().BeOfType<MyGuidId>();
-        guidId1.Value.Value.Should().Be(Guid.Parse(str));
+        guidId1.Ok.Should().BeOfType<MyGuidId>();
+        guidId1.Ok.Value.Should().Be(Guid.Parse(str));
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class RequiredGuid_T_Tests
             .Combine(MyGuidId.Create(Guid.NewGuid()));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var trackingId2) = rGuidsIds.Value;
+        (var guidId1, var trackingId2) = rGuidsIds.Ok;
         guidId1.Value.Should().NotBe(trackingId2.Value);
     }
 
@@ -50,7 +50,7 @@ public class RequiredGuid_T_Tests
             .Combine(MyGuidId.Create(myGuid));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var guidId2) = rGuidsIds.Value;
+        (var guidId1, var guidId2) = rGuidsIds.Ok;
         guidId1.Value.Should().Be(guidId2.Value);
     }
 
@@ -59,7 +59,7 @@ public class RequiredGuid_T_Tests
     {
         // Arrange
         Guid myGuid = Guid.NewGuid();
-        MyGuidId myGuidId1 = MyGuidId.Create(myGuid).Value;
+        MyGuidId myGuidId1 = MyGuidId.Create(myGuid).Ok;
 
         // Act
         Guid primGuid = myGuidId1;

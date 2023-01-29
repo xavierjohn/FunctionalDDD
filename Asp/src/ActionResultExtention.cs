@@ -8,7 +8,7 @@ public static class ActionResultExtention
     public static ActionResult<T> ToActionResult<T>(this Result<T> result, ControllerBase controllerBase)
     {
         if (result.IsSuccess)
-            return controllerBase.Ok(result.Value);
+            return controllerBase.Ok(result.Ok);
 
         return ConvertToHttpError<T>(result.Errors, controllerBase);
     }
@@ -30,7 +30,7 @@ public static class ActionResultExtention
     public static ActionResult<T> ToCreatedResult<T>(this Result<T> result, ControllerBase controller, string location)
     {
         if (result.IsSuccess)
-            return controller.Created(location, result.Value);
+            return controller.Created(location, result.Ok);
 
         return ConvertToHttpError<T>(result.Errors, controller);
     }

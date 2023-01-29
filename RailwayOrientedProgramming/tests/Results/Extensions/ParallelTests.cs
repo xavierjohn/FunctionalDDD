@@ -13,7 +13,7 @@ public class ParallelTests
 
         // Assert
         r.IsSuccess.Should().BeTrue();
-        r.Value.Should().Be("HiBye");
+        r.Ok.Should().Be("HiBye");
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class ParallelTests
 
         // Assert
         r.IsSuccess.Should().BeTrue();
-        r.Value.Should().Be("12345");
+        r.Ok.Should().Be("12345");
     }
 
     [Fact]

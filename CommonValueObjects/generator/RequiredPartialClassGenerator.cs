@@ -53,7 +53,7 @@ using FunctionalDDD;
     {{
     }}
 
-    public static explicit operator {g.ClassName}({g.ClassType} {camelArg}) => Create({camelArg}).Value;
+    public static explicit operator {g.ClassName}({g.ClassType} {camelArg}) => Create({camelArg}).Ok;
 ";
 
                 if (g.ClassType == "Guid")

@@ -13,7 +13,7 @@ public static partial class AsyncResultExtensionsBothOperands
         if (result.IsFailure)
             return result;
 
-        if (!await predicate(result.Value).ConfigureAwait(false))
+        if (!await predicate(result.Ok).ConfigureAwait(false))
             return Result.Failure<T>(errors);
 
         return result;
@@ -29,8 +29,8 @@ public static partial class AsyncResultExtensionsBothOperands
         if (result.IsFailure)
             return result;
 
-        if (!await predicate(result.Value).ConfigureAwait(false))
-            return Result.Failure<T>(errorPredicate(result.Value));
+        if (!await predicate(result.Ok).ConfigureAwait(false))
+            return Result.Failure<T>(errorPredicate(result.Ok));
 
         return result;
     }
@@ -45,8 +45,8 @@ public static partial class AsyncResultExtensionsBothOperands
         if (result.IsFailure)
             return result;
 
-        if (!await predicate(result.Value).ConfigureAwait(false))
-            return Result.Failure<T>(await errorPredicate(result.Value).ConfigureAwait(false));
+        if (!await predicate(result.Ok).ConfigureAwait(false))
+            return Result.Failure<T>(await errorPredicate(result.Ok).ConfigureAwait(false));
 
         return result;
     }
@@ -79,7 +79,7 @@ public static partial class AsyncResultExtensionsBothOperands
         if (result.IsFailure)
             return result;
 
-        var predicateResult = await predicate(result.Value);
+        var predicateResult = await predicate(result.Ok);
 
         if (predicateResult.IsFailure)
             return Result.Failure<T>(predicateResult.Error);

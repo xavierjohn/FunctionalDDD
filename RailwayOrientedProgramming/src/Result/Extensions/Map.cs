@@ -10,7 +10,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        return Result.Success(func(result.Value));
+        return Result.Success(func(result.Ok));
     }
 
     /// <summary>
@@ -23,7 +23,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = await func(result.Value).ConfigureAwait(false);
+        TOut value = await func(result.Ok).ConfigureAwait(false);
 
         return Result.Success(value);
     }
@@ -35,7 +35,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = func(result.Value);
+        TOut value = func(result.Ok);
 
         return Result.Success(value);
     }
@@ -50,7 +50,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = await valueTask(result.Value);
+        TOut value = await valueTask(result.Ok);
 
         return Result.Success(value);
     }
@@ -62,7 +62,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = func(result.Value);
+        TOut value = func(result.Ok);
 
         return Result.Success(value);
     }

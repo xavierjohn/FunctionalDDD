@@ -43,10 +43,10 @@ public static partial class AsyncResultExtensionsLeftOperand
         if (result.IsFailure)
             return result;
 
-        if (predicate(result.Value))
+        if (predicate(result.Ok))
             return result;
 
-        return Result.Failure<T>(await errorPredicate(result.Value).ConfigureAwait(false));
+        return Result.Failure<T>(await errorPredicate(result.Ok).ConfigureAwait(false));
     }
 
 

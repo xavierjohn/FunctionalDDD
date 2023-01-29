@@ -8,13 +8,13 @@ public class FluentTests
     public void Can_create_user()
     {
         var rUser = User.Create(
-            FirstName.Create("John").Value,
-            LastName.Create("Doe").Value,
-            EmailAddress.Create("xavier@somewhere.com").Value,
+            FirstName.Create("John").Ok,
+            LastName.Create("Doe").Ok,
+            EmailAddress.Create("xavier@somewhere.com").Ok,
             "password");
 
         rUser.IsSuccess.Should().BeTrue();
-        var user = rUser.Value;
+        var user = rUser.Ok;
         user.FirstName.Value.Should().Be("John");
         user.LastName.Value.Should().Be("Doe");
         user.Email.Value.Should().Be("xavier@somewhere.com");
@@ -50,7 +50,7 @@ public class FluentTests
         // Arrange
         FirstName firstName = default!;
         LastName lastName = default!;
-        EmailAddress email = EmailAddress.Create("xavier@somewhere.com").Value;
+        EmailAddress email = EmailAddress.Create("xavier@somewhere.com").Ok;
         var expectedValidationErrors = new[]
         {
             Error.Validation("'First Name' must not be empty.", "FirstName"),

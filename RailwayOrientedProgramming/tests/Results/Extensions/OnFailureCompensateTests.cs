@@ -20,7 +20,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Success");
+        output.Ok.Should().Be("Success");
     }
 
     /// <summary>
@@ -36,7 +36,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Ok.Should().Be("Compensated Success");
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Success");
+        output.Ok.Should().Be("Success");
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Ok.Should().Be("Compensated Success");
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Success");
+        output.Ok.Should().Be("Success");
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Ok.Should().Be("Compensated Success");
     }
 
     [Fact]

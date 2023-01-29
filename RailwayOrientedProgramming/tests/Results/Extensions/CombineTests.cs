@@ -14,7 +14,7 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsSuccess.Should().BeTrue();
-        var helloWorld = rHelloWorld.Value;
+        var helloWorld = rHelloWorld.Ok;
         helloWorld.Should().Be("Hello World");
     }
 
@@ -46,7 +46,7 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsSuccess.Should().BeTrue();
-        var helloWorld = rHelloWorld.Value;
+        var helloWorld = rHelloWorld.Ok;
         helloWorld.Should().Be("Hello First Last");
     }
 
@@ -88,7 +88,7 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsSuccess.Should().BeTrue();
-        var helloWorld = rHelloWorld.Value;
+        var helloWorld = rHelloWorld.Ok;
         helloWorld.Should().Be("123456789");
     }
 

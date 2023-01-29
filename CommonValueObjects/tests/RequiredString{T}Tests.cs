@@ -25,8 +25,8 @@ public class RequiredString_T_Tests
     {
         var trackingId1 = TrackingId.Create("32141sd");
         trackingId1.IsSuccess.Should().BeTrue();
-        trackingId1.Value.Should().BeOfType<TrackingId>();
-        trackingId1.Value.Value.Should().Be("32141sd");
+        trackingId1.Ok.Should().BeOfType<TrackingId>();
+        trackingId1.Ok.Value.Should().Be("32141sd");
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class RequiredString_T_Tests
             .Combine(TrackingId.Create("Value2"));
 
         rTrackingIds.IsSuccess.Should().BeTrue();
-        (var trackingId1, var trackingId2) = rTrackingIds.Value;
+        (var trackingId1, var trackingId2) = rTrackingIds.Ok;
         trackingId1.Value.Should().NotBe(trackingId2.Value);
     }
 
@@ -47,7 +47,7 @@ public class RequiredString_T_Tests
             .Combine(TrackingId.Create("SameValue"));
 
         rTrackingIds.IsSuccess.Should().BeTrue();
-        (var trackingId1, var trackingId2) = rTrackingIds.Value;
+        (var trackingId1, var trackingId2) = rTrackingIds.Ok;
         trackingId1.Value.Should().Be(trackingId2.Value);
     }
 
@@ -55,7 +55,7 @@ public class RequiredString_T_Tests
     public void Can_implicitly_cast_to_string()
     {
         // Arrange
-        TrackingId trackingId1 = TrackingId.Create("32141sd").Value;
+        TrackingId trackingId1 = TrackingId.Create("32141sd").Ok;
 
         // Act
         string strTracking = trackingId1;
@@ -73,7 +73,7 @@ public class RequiredString_T_Tests
         TrackingId trackingId1 = (TrackingId)"32141sd";
 
         // Assert
-        trackingId1.Should().Be(TrackingId.Create("32141sd").Value);
+        trackingId1.Should().Be(TrackingId.Create("32141sd").Ok);
     }
 
     [Fact]

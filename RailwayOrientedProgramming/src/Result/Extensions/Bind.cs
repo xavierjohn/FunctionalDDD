@@ -10,7 +10,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        return func(result.Value);
+        return func(result.Ok);
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error).AsCompletedTask();
 
-        return func(result.Value);
+        return func(result.Ok);
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
 
-        return valueTask(result.Value);
+        return valueTask(result.Ok);
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public static partial class ResultExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Errors);
 
-        var (args1, args2) = result.Value;
+        var (args1, args2) = result.Ok;
         return func(args1, args2);
     }
 }

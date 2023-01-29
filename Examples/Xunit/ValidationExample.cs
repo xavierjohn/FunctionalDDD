@@ -14,7 +14,7 @@ public class ValidationExample
             .Combine(EmailAddress.Create("xavier@somewhereelse.com"))
             .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
-        actual.Value.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
+        actual.Ok.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
     }
 
     [Fact]

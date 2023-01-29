@@ -136,7 +136,7 @@ public abstract class BindTestsBase : TestBase
     {
         _funcExecuted.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be(K.Value);
+        output.Ok.Should().Be(K.Value);
     }
 
     protected Task<Result<T>> Task_Success_T_E()

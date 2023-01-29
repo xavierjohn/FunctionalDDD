@@ -17,7 +17,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, tc.Ok));
     }
 
     public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(this Result<T1> t1, Result<T2> t2, Result<T3> t3)
@@ -31,7 +31,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok));
     }
 
     public static Result<(T1, T2, T3, T4)> Combine<T1, T2, T3, T4>(this Result<(T1, T2, T3)> t1, Result<T4> tc)
@@ -46,7 +46,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, tc.Ok));
     }
 
     public static Result<(T1, T2, T3, T4)> Combine<T1, T2, T3, T4>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4)
@@ -61,7 +61,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5)> Combine<T1, T2, T3, T4, T5>(this Result<(T1, T2, T3, T4)> t1, Result<T5> tc)
@@ -76,7 +76,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, tc.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5)> Combine<T1, T2, T3, T4, T5>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5)
@@ -92,7 +92,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6)> Combine<T1, T2, T3, T4, T5, T6>(this Result<(T1, T2, T3, T4, T5)> t1, Result<T6> tc)
@@ -107,7 +107,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, tc.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6)> Combine<T1, T2, T3, T4, T5, T6>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6)
@@ -124,7 +124,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6, T7)> Combine<T1, T2, T3, T4, T5, T6, T7>(this Result<(T1, T2, T3, T4, T5, T6)> t1, Result<T7> tc)
@@ -139,7 +139,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, t1.Value.Item6, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, t1.Ok.Item6, tc.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6, T7)> Combine<T1, T2, T3, T4, T5, T6, T7>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6, Result<T7> t7)
@@ -157,7 +157,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value, t7.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok, t7.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6, T7, T8)> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(this Result<(T1, T2, T3, T4, T5, T6, T7)> t1, Result<T8> tc)
@@ -172,7 +172,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, t1.Value.Item6, t1.Value.Item7, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, t1.Ok.Item6, t1.Ok.Item7, tc.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6, T7, T8)> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6, Result<T7> t7, Result<T8> t8)
@@ -191,7 +191,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value, t7.Value, t8.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok, t7.Ok, t8.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9)> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this Result<(T1, T2, T3, T4, T5, T6, T7, T8)> t1, Result<T9> tc)
@@ -206,7 +206,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(errors);
         }
 
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, t1.Value.Item6, t1.Value.Item7, t1.Value.Item8, tc.Value));
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, t1.Ok.Item6, t1.Ok.Item7, t1.Ok.Item8, tc.Ok));
     }
 
     public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9)> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6, Result<T7> t7, Result<T8> t8, Result<T9> t9)
@@ -226,7 +226,7 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value, t7.Value, t8.Value, t9.Value));
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok, t7.Ok, t8.Ok, t9.Ok));
     }
 
 

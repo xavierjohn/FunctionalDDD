@@ -14,6 +14,6 @@ public static partial class ResultExtensions
             return Result.Failure<(T1, T2)>(errors);
         }
 
-        return Result.Success((t1.Value, t2.Value));
+        return Result.Success((t1.Ok, t2.Ok));
     }
 }

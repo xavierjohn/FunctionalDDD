@@ -13,7 +13,7 @@ public readonly struct Result<T>
 
     private readonly T _value;
 
-    public T Value
+    public T Ok
     {
         get
         {

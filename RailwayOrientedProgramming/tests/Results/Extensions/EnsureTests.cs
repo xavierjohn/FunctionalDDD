@@ -220,7 +220,7 @@ public class EnsureTests
         var result = initialResult.Ensure(() => Result.Success("Success message"));
 
         result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded");
-        result.Value.Should().Be("Initial message");
+        result.Ok.Should().Be("Initial message");
     }
 
     [Fact]
@@ -276,6 +276,6 @@ public class EnsureTests
 
         result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded");
         ;
-        result.Value.Should().Be("Initial Success message");
+        result.Ok.Should().Be("Initial Success message");
     }
 }
