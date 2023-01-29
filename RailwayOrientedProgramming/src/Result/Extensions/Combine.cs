@@ -6,11 +6,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (t2.IsFailure)
-                errors.AddRange(t2.Errors);
+                errors.AddRange(t2.Errs);
             return Result.Failure<(T1, T2)>(errors);
         }
 

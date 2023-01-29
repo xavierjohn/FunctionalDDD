@@ -6,10 +6,10 @@ public readonly struct Result<T>
     public bool IsFailure { get; }
     public bool IsSuccess => !IsFailure;
 
-    private readonly ErrorList? _error;
-    public ErrorList Errors => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
+    private readonly Errs? _error;
+    public Errs Errs => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
 
-    public Err Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
+    public Err Err => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
 
     private readonly T _value;
 
@@ -18,7 +18,7 @@ public readonly struct Result<T>
         get
         {
             if (IsFailure)
-                throw new ResultFailureException(Errors);
+                throw new ResultFailureException(Errs);
 
             if (Nullable.GetUnderlyingType(typeof(T)) == null && _value is null)
                 throw new InvalidOperationException("Result is in success state, but value is null");
@@ -27,7 +27,7 @@ public readonly struct Result<T>
         }
     }
 
-    internal Result(bool isFailure, ErrorList? error, T? value)
+    internal Result(bool isFailure, Errs? error, T? value)
     {
         IsFailure = ResultCommonLogic.ErrorStateGuard(isFailure, error);
         _error = error;
@@ -36,5 +36,5 @@ public readonly struct Result<T>
 
     public static implicit operator Result<T>(T value) => Result.Success(value);
 
-    public static implicit operator Result<T>(ErrorList errors) => Result.Failure<T>(errors);
+    public static implicit operator Result<T>(Errs errors) => Result.Failure<T>(errors);
 }

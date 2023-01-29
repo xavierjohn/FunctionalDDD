@@ -52,7 +52,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Err.Unexpected("Compensated Error"));
+        output.Err.Should().Be(Err.Unexpected("Compensated Error"));
     }
     #endregion
 
@@ -87,7 +87,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Err.Unexpected("Compensated Error"));
+        output.Err.Should().Be(Err.Unexpected("Compensated Error"));
     }
     #endregion
 
@@ -122,7 +122,7 @@ public class OnFailureCompensateTests
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Err.Unexpected("Compensated Error"));
+        output.Err.Should().Be(Err.Unexpected("Compensated Error"));
     }
     #endregion
 

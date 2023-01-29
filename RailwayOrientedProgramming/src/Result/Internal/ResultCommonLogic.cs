@@ -2,7 +2,7 @@
 
 internal static class ResultCommonLogic
 {
-    internal static bool ErrorStateGuard(bool isFailure, ErrorList? error)
+    internal static bool ErrorStateGuard(bool isFailure, Errs? error)
     {
         if (isFailure)
         {
@@ -18,7 +18,7 @@ internal static class ResultCommonLogic
         return isFailure;
     }
 
-    internal static ErrorList GetErrorWithSuccessGuard(bool isFailure, ErrorList? error)
+    internal static Errs GetErrorWithSuccessGuard(bool isFailure, Errs? error)
     {
         if (!isFailure)
             throw new ResultSuccessException();

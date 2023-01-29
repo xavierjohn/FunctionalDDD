@@ -1,9 +1,9 @@
 ﻿namespace FunctionalDDD;
 public class ResultFailureException : Exception
 {
-    public ErrorList Errors { get; }
+    public Errs Errors { get; }
 
-    internal ResultFailureException(ErrorList errors)
+    internal ResultFailureException(Errs errors)
         : base(Result.Messages.ValueIsInaccessibleForFailure())
     {
         Errors = errors;

@@ -9,11 +9,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3)>(errors);
         }
 
@@ -24,10 +24,10 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
             return Result.Failure<(T1, T2, T3)>(errors);
         }
 
@@ -38,11 +38,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3, T4)>(errors);
         }
 
@@ -53,11 +53,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
+            if (t4.IsFailure) errors.AddRange(t4.Errs);
             return Result.Failure<(T1, T2, T3, T4)>(errors);
         }
 
@@ -68,11 +68,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5)>(errors);
         }
 
@@ -83,12 +83,12 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
+            if (t4.IsFailure) errors.AddRange(t4.Errs);
+            if (t5.IsFailure) errors.AddRange(t5.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5)>(errors);
         }
 
@@ -99,11 +99,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6)>(errors);
         }
 
@@ -114,13 +114,13 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
+            if (t4.IsFailure) errors.AddRange(t4.Errs);
+            if (t5.IsFailure) errors.AddRange(t5.Errs);
+            if (t6.IsFailure) errors.AddRange(t6.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6)>(errors);
         }
 
@@ -131,11 +131,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(errors);
         }
 
@@ -146,14 +146,14 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure || t7.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            if (t7.IsFailure) errors.AddRange(t7.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
+            if (t4.IsFailure) errors.AddRange(t4.Errs);
+            if (t5.IsFailure) errors.AddRange(t5.Errs);
+            if (t6.IsFailure) errors.AddRange(t6.Errs);
+            if (t7.IsFailure) errors.AddRange(t7.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(errors);
         }
 
@@ -164,11 +164,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(errors);
         }
 
@@ -179,15 +179,15 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure || t7.IsFailure || t8.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            if (t7.IsFailure) errors.AddRange(t7.Errors);
-            if (t8.IsFailure) errors.AddRange(t8.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
+            if (t4.IsFailure) errors.AddRange(t4.Errs);
+            if (t5.IsFailure) errors.AddRange(t5.Errs);
+            if (t6.IsFailure) errors.AddRange(t6.Errs);
+            if (t7.IsFailure) errors.AddRange(t7.Errs);
+            if (t8.IsFailure) errors.AddRange(t8.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(errors);
         }
 
@@ -198,11 +198,11 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || tc.IsFailure)
         {
-            var errors = new ErrorList();
+            var errors = new Errs();
             if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
+                errors.AddRange(t1.Errs);
             if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
+                errors.AddRange(tc.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(errors);
         }
 
@@ -213,16 +213,16 @@ public static partial class ResultExtensions
     {
         if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure || t7.IsFailure || t8.IsFailure || t9.IsFailure)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            if (t7.IsFailure) errors.AddRange(t7.Errors);
-            if (t8.IsFailure) errors.AddRange(t8.Errors);
-            if (t9.IsFailure) errors.AddRange(t9.Errors);
+            var errors = new Errs();
+            if (t1.IsFailure) errors.AddRange(t1.Errs);
+            if (t2.IsFailure) errors.AddRange(t2.Errs);
+            if (t3.IsFailure) errors.AddRange(t3.Errs);
+            if (t4.IsFailure) errors.AddRange(t4.Errs);
+            if (t5.IsFailure) errors.AddRange(t5.Errs);
+            if (t6.IsFailure) errors.AddRange(t6.Errs);
+            if (t7.IsFailure) errors.AddRange(t7.Errs);
+            if (t8.IsFailure) errors.AddRange(t8.Errs);
+            if (t9.IsFailure) errors.AddRange(t9.Errs);
             return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(errors);
         }
 

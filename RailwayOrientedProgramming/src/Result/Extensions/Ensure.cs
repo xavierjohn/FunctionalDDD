@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<T> Ensure<T>(this Result<T> result, Func<bool> predicate, ErrorList errors)
+    public static Result<T> Ensure<T>(this Result<T> result, Func<bool> predicate, Errs errors)
     {
         if (result.IsFailure)
             return result;
@@ -19,7 +19,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> predicate, ErrorList errors)
+    public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> predicate, Errs errors)
     {
         if (result.IsFailure)
             return result;
@@ -33,7 +33,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> predicate, Func<T, ErrorList> errorPredicate)
+    public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> predicate, Func<T, Errs> errorPredicate)
     {
         if (result.IsFailure)
             return result;
@@ -56,7 +56,7 @@ public static partial class ResultExtensions
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Failure<T>(predicateResult.Error);
+            return Result.Failure<T>(predicateResult.Err);
 
         return result;
     }
@@ -72,7 +72,7 @@ public static partial class ResultExtensions
         var predicateResult = predicate(result.Ok);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<T>(predicateResult.Error);
+            return Result.Failure<T>(predicateResult.Err);
 
         return result;
     }

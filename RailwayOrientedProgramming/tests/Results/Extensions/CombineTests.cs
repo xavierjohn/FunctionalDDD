@@ -30,7 +30,7 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Errors.Count.Should().Be(1);
+        rHelloWorld.Errs.Count.Should().Be(1);
     }
 
     [Fact]
@@ -63,9 +63,9 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Errors.Count.Should().Be(2);
-        rHelloWorld.Errors[0].Should().Be(Err.Validation("Bad First"));
-        rHelloWorld.Errors[1].Should().Be(Err.Validation("Bad Last"));
+        rHelloWorld.Errs.Count.Should().Be(2);
+        rHelloWorld.Errs[0].Should().Be(Err.Validation("Bad First"));
+        rHelloWorld.Errs[1].Should().Be(Err.Validation("Bad Last"));
     }
 
     [Fact]
@@ -111,8 +111,8 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Errors.Count.Should().Be(1);
-        rHelloWorld.Errors[0].Should().Be(Err.Validation("Bad 9"));
+        rHelloWorld.Errs.Count.Should().Be(1);
+        rHelloWorld.Errs[0].Should().Be(Err.Validation("Bad 9"));
     }
 
     [Fact]
@@ -134,9 +134,9 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Errors.Count.Should().Be(2);
-        rHelloWorld.Errors[0].Should().Be(Err.Validation("Bad 3"));
-        rHelloWorld.Errors[1].Should().Be(Err.Validation("Bad 9"));
+        rHelloWorld.Errs.Count.Should().Be(2);
+        rHelloWorld.Errs[0].Should().Be(Err.Validation("Bad 3"));
+        rHelloWorld.Errs[1].Should().Be(Err.Validation("Bad 9"));
     }
 
 }

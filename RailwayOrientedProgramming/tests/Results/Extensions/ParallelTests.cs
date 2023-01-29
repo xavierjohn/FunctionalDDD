@@ -53,9 +53,9 @@ public class ParallelTests
 
         // Assert
         r.IsFailure.Should().BeTrue();
-        r.Errors.Count.Should().Be(2);
+        r.Errs.Count.Should().Be(2);
         calledFunction.Should().BeFalse();
-        r.Errors.Should().BeEquivalentTo(new List<Err>() {
+        r.Errs.Should().BeEquivalentTo(new List<Err>() {
             Err.Unexpected("Internal Server error."),
             Err.Transient("Network unreachable.")
         }, opt => opt.WithStrictOrdering());

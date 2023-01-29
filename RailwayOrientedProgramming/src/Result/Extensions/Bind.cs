@@ -8,7 +8,7 @@ public static partial class ResultExtensions
     public static Result<TResult> Bind<T, TResult>(this Result<T> result, Func<T, Result<TResult>> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Errors);
+            return Result.Failure<TResult>(result.Errs);
 
         return func(result.Ok);
     }
@@ -19,7 +19,7 @@ public static partial class ResultExtensions
     public static Task<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, Task<Result<TResult>>> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error).AsCompletedTask();
+            return Result.Failure<TResult>(result.Err).AsCompletedTask();
 
         return func(result.Ok);
     }
@@ -66,7 +66,7 @@ public static partial class ResultExtensions
     public static ValueTask<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, ValueTask<Result<TResult>>> valueTask)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
+            return Result.Failure<TResult>(result.Err).AsCompletedValueTask();
 
         return valueTask(result.Ok);
     }
@@ -78,7 +78,7 @@ public static partial class ResultExtensions
     {
         var result = await resultTask;
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Errors);
+            return Result.Failure<TResult>(result.Errs);
 
         var (args1, args2) = result.Ok;
         return func(args1, args2);

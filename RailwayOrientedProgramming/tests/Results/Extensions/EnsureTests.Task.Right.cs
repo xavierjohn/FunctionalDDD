@@ -23,7 +23,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string>(Err.Unauthorized("Error message"))));
 
         result.IsSuccess.Should().BeFalse("Predicate is failure result");
-        result.Error.Should().Be(Err.Unauthorized("Error message"));
+        result.Err.Should().Be(Err.Unauthorized("Error message"));
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Success("Success message")));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result");
-        result.Error.Should().Be(Err.Conflict("Initial Error message"));
+        result.Err.Should().Be(Err.Conflict("Initial Error message"));
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string>(Err.Unauthorized("Error message"))));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result");
-        result.Error.Should().Be(Err.NotFound("Initial Error message"));
+        result.Err.Should().Be(Err.NotFound("Initial Error message"));
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string>(Err.Conflict("Error Message"))));
 
         result.IsSuccess.Should().BeFalse("Predicate is failure result");
-        result.Error.Should().Be(Err.Conflict("Error Message"));
+        result.Err.Should().Be(Err.Conflict("Error Message"));
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Success("Success Message")));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result"); ;
-        result.Error.Should().Be(Err.Unexpected("Initial Error message"));
+        result.Err.Should().Be(Err.Unexpected("Initial Error message"));
     }
 
     [Fact]
@@ -89,6 +89,6 @@ public class EnsureTests_Task_Right
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string>(Err.Unexpected("Success Message"))));
 
         result.IsSuccess.Should().BeFalse("Initial result and predicate is failure result"); ;
-        result.Error.Should().Be(Err.Unexpected("Initial Error message"));
+        result.Err.Should().Be(Err.Unexpected("Initial Error message"));
     }
 }

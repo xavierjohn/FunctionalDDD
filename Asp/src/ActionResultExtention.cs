@@ -10,7 +10,7 @@ public static class ActionResultExtention
         if (result.IsSuccess)
             return controllerBase.Ok(result.Ok);
 
-        return ConvertToHttpError<T>(result.Errors, controllerBase);
+        return ConvertToHttpError<T>(result.Errs, controllerBase);
     }
 
     public static async Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
@@ -32,11 +32,11 @@ public static class ActionResultExtention
         if (result.IsSuccess)
             return controller.Created(location, result.Ok);
 
-        return ConvertToHttpError<T>(result.Errors, controller);
+        return ConvertToHttpError<T>(result.Errs, controller);
     }
 
 
-    private static ActionResult<T> ConvertToHttpError<T>(ErrorList errors, ControllerBase controllerBase)
+    private static ActionResult<T> ConvertToHttpError<T>(Errs errors, ControllerBase controllerBase)
     {
         var error = errors[0];
         return error switch
@@ -51,7 +51,7 @@ public static class ActionResultExtention
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }
-    private static ActionResult<T> ValidationErrors<T>(ErrorList errors, ControllerBase controllerBase)
+    private static ActionResult<T> ValidationErrors<T>(Errs errors, ControllerBase controllerBase)
     {
         ModelStateDictionary modelState = new();
         foreach (var error in errors)

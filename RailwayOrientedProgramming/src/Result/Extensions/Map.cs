@@ -8,7 +8,7 @@ public static partial class ResultExtensions
     public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
+            return Result.Failure<TOut>(result.Err);
 
         return Result.Success(func(result.Ok));
     }
@@ -21,7 +21,7 @@ public static partial class ResultExtensions
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
+            return Result.Failure<TOut>(result.Err);
 
         TOut value = await func(result.Ok).ConfigureAwait(false);
 
@@ -33,7 +33,7 @@ public static partial class ResultExtensions
         Result<TIn> result = await resultTask;
 
         if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
+            return Result.Failure<TOut>(result.Err);
 
         TOut value = func(result.Ok);
 
@@ -48,7 +48,7 @@ public static partial class ResultExtensions
         Result<TIn> result = await resultTask;
 
         if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
+            return Result.Failure<TOut>(result.Err);
 
         TOut value = await valueTask(result.Ok);
 
@@ -60,7 +60,7 @@ public static partial class ResultExtensions
         Result<TIn> result = await resultTask;
 
         if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
+            return Result.Failure<TOut>(result.Err);
 
         TOut value = func(result.Ok);
 

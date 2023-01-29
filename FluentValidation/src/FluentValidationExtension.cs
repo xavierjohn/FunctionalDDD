@@ -12,7 +12,7 @@ public static class FluentValidationExtension
         var errors = validationResult.Errors
             .Select(x => Err.Validation(x.ErrorMessage, x.PropertyName));
 
-        return Result.Failure<T>(new ErrorList(errors));
+        return Result.Failure<T>(new Errs(errors));
     }
 
     public static Result<T> ValidateToResult<T>(this global::FluentValidation.IValidator<T> validator, T value) =>
