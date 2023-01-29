@@ -47,7 +47,7 @@ namespace {g.NameSpace};
 using FunctionalDDD;
 {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : Required{g.ClassType}<{g.ClassName}>
 {{
-    protected static readonly Error CannotBeEmptyError = Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty"", ""{g.ClassName.ToCamelCase()}"");
+    protected static readonly Err CannotBeEmptyError = Err.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty"", ""{g.ClassName.ToCamelCase()}"");
 
     private {g.ClassName}({g.ClassType} value) : base(value)
     {{

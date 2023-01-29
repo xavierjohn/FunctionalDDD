@@ -11,8 +11,8 @@ public class AsyncUsageExamples
         var id = 1;
 
         var result = await GetByIdAsync(id)
-            .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-            .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
+            .ToResultAsync(Err.NotFound("Customer with such Id is not found: " + id))
+            .EnsureAsync(customer => customer.CanBePromoted, Err.Validation("The customer has the highest status possible"))
             .TapAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Description);
@@ -26,8 +26,8 @@ public class AsyncUsageExamples
         var id = 1;
 
         var result = await GetByIdAsync(id)
-            .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-            .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
+            .ToResultAsync(Err.NotFound("Customer with such Id is not found: " + id))
+            .EnsureAsync(customer => customer.CanBePromoted, Err.Validation("The customer has the highest status possible"))
             .TapAsync(customer => customer.PromoteAsync())
             .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Description);
@@ -41,8 +41,8 @@ public class AsyncUsageExamples
         var id = 1;
 
         var result = await GetByIdAsync(id)
-            .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-            .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
+            .ToResultAsync(Err.NotFound("Customer with such Id is not found: " + id))
+            .EnsureAsync(customer => customer.CanBePromoted, Err.Validation("Need to ask manager"))
             .TapErrorAsync(error => Log(error))
             .OnFailureCompensateAsync(() => AskManagerAsync(id))
             .TapAsync(customer => Log("Manager approved promotion"))

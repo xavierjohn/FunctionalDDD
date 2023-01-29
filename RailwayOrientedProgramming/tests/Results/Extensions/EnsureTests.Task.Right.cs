@@ -20,32 +20,32 @@ public class EnsureTests_Task_Right
     {
         var initialResult = Result.Success("Initial Result");
 
-        var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string>(Error.Unauthorized("Error message"))));
+        var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string>(Err.Unauthorized("Error message"))));
 
         result.IsSuccess.Should().BeFalse("Predicate is failure result");
-        result.Error.Should().Be(Error.Unauthorized("Error message"));
+        result.Error.Should().Be(Err.Unauthorized("Error message"));
     }
 
     [Fact]
     public async Task Ensure_Task_Right_with_failureInput_and_successPredicate()
     {
-        var initialResult = Result.Failure<string>(Error.Conflict("Initial Error message"));
+        var initialResult = Result.Failure<string>(Err.Conflict("Initial Error message"));
 
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Success("Success message")));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result");
-        result.Error.Should().Be(Error.Conflict("Initial Error message"));
+        result.Error.Should().Be(Err.Conflict("Initial Error message"));
     }
 
     [Fact]
     public async Task Ensure_Task_Right_with_failureInput_and_failurePredicate()
     {
-        var initialResult = Result.Failure<string>(Error.NotFound("Initial Error message"));
+        var initialResult = Result.Failure<string>(Err.NotFound("Initial Error message"));
 
-        var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string>(Error.Unauthorized("Error message"))));
+        var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string>(Err.Unauthorized("Error message"))));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result");
-        result.Error.Should().Be(Error.NotFound("Initial Error message"));
+        result.Error.Should().Be(Err.NotFound("Initial Error message"));
     }
 
     [Fact]
@@ -53,10 +53,10 @@ public class EnsureTests_Task_Right
     {
         var initialResult = Result.Success("Initial Success message");
 
-        var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string>(Error.Conflict("Error Message"))));
+        var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string>(Err.Conflict("Error Message"))));
 
         result.IsSuccess.Should().BeFalse("Predicate is failure result");
-        result.Error.Should().Be(Error.Conflict("Error Message"));
+        result.Error.Should().Be(Err.Conflict("Error Message"));
     }
 
     [Fact]
@@ -73,22 +73,22 @@ public class EnsureTests_Task_Right
     [Fact]
     public async Task Ensure_Task_Right_with_failureInput_and_parameterisedSuccessPredicate()
     {
-        var initialResult = Result.Failure<string>(Error.Unexpected("Initial Error message"));
+        var initialResult = Result.Failure<string>(Err.Unexpected("Initial Error message"));
 
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Success("Success Message")));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result"); ;
-        result.Error.Should().Be(Error.Unexpected("Initial Error message"));
+        result.Error.Should().Be(Err.Unexpected("Initial Error message"));
     }
 
     [Fact]
     public async Task Ensure_Task_Right_with_failureInput_and_parameterisedFailurePredicate()
     {
-        var initialResult = Result.Failure<string>(Error.Unexpected("Initial Error message"));
+        var initialResult = Result.Failure<string>(Err.Unexpected("Initial Error message"));
 
-        var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string>(Error.Unexpected("Success Message"))));
+        var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string>(Err.Unexpected("Success Message"))));
 
         result.IsSuccess.Should().BeFalse("Initial result and predicate is failure result"); ;
-        result.Error.Should().Be(Error.Unexpected("Initial Error message"));
+        result.Error.Should().Be(Err.Unexpected("Initial Error message"));
     }
 }

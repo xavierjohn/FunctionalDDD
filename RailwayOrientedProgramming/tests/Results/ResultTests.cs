@@ -24,17 +24,17 @@ public class ResultTests
     [Fact]
     public void Fail_argument_is_not_default_Fail_result_expected()
     {
-        var result = Result.Failure<string>(Error.Validation("Bad first name"));
+        var result = Result.Failure<string>(Err.Validation("Bad first name"));
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Validation("Bad first name"));
+        result.Error.Should().Be(Err.Validation("Bad first name"));
     }
 
 
     [Fact]
     public void CreateFailure_value_is_null_Success_result_expected()
     {
-        var result = Result.FailureIf(false, "Hello", Error.Validation("Bad first name"));
+        var result = Result.FailureIf(false, "Hello", Err.Validation("Bad first name"));
 
         result.IsSuccess.Should().BeTrue();
     }
@@ -42,7 +42,7 @@ public class ResultTests
     [Fact]
     public void CreateFailure_predicate_is_false_Success_result_expected()
     {
-        var result = Result.FailureIf(() => false, string.Empty, Error.Unexpected(string.Empty));
+        var result = Result.FailureIf(() => false, string.Empty, Err.Unexpected(string.Empty));
 
         result.IsSuccess.Should().BeTrue();
     }
@@ -50,16 +50,16 @@ public class ResultTests
     [Fact]
     public void CreateFailure_predicate_is_true_Failure_result_expected()
     {
-        var result = Result.FailureIf(() => true, "Hello", Error.Unexpected("You can't touch this."));
+        var result = Result.FailureIf(() => true, "Hello", Err.Unexpected("You can't touch this."));
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("You can't touch this."));
+        result.Error.Should().Be(Err.Unexpected("You can't touch this."));
     }
 
     [Fact]
     public async Task CreateFailure_async_predicate_is_false_Success_result_expected()
     {
-        var result = await Result.FailureIfAsync(() => Task.FromResult(false), "Hello", Error.Unexpected(string.Empty));
+        var result = await Result.FailureIfAsync(() => Task.FromResult(false), "Hello", Err.Unexpected(string.Empty));
 
         result.IsSuccess.Should().BeTrue();
         result.Ok.Should().Be("Hello");
@@ -68,17 +68,17 @@ public class ResultTests
     [Fact]
     public async Task CreateFailure_async_predicate_is_true_Failure_result_expected()
     {
-        var result = await Result.FailureIfAsync(() => Task.FromResult(true), "Hello", Error.Unexpected("You can't touch this."));
+        var result = await Result.FailureIfAsync(() => Task.FromResult(true), "Hello", Err.Unexpected("You can't touch this."));
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("You can't touch this."));
+        result.Error.Should().Be(Err.Unexpected("You can't touch this."));
     }
 
     [Fact]
     public void CreateFailure_generic_argument_is_false_Success_result_expected()
     {
         byte val = 7;
-        var result = Result.FailureIf(false, val, Error.Unexpected(string.Empty));
+        var result = Result.FailureIf(false, val, Err.Unexpected(string.Empty));
 
         result.IsSuccess.Should().BeTrue();
         result.Ok.Should().Be(val);
@@ -88,10 +88,10 @@ public class ResultTests
     public void CreateFailure_generic_argument_is_true_Failure_result_expected()
     {
         var val = .56;
-        var result = Result.FailureIf(true, val, Error.Unexpected("simple result error"));
+        var result = Result.FailureIf(true, val, Err.Unexpected("simple result error"));
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("simple result error"));
+        result.Error.Should().Be(Err.Unexpected("simple result error"));
     }
 
     [Fact]

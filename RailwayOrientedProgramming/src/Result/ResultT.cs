@@ -9,7 +9,7 @@ public readonly struct Result<T>
     private readonly ErrorList? _error;
     public ErrorList Errors => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
 
-    public Error Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
+    public Err Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
 
     private readonly T _value;
 
