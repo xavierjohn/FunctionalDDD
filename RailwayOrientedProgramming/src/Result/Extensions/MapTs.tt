@@ -22,15 +22,15 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<TResult> Map<<# WriteTs(i); #>, TResult>(
-        this Result<(<# WriteTs(i); #>)> result
+    public static Result<TResult, Err> Map<<# WriteTs(i); #>, TResult>(
+        this Result<(<# WriteTs(i); #>), Err> result
         , Func<<# WriteTs(i); #>, TResult> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Errors);
+            return Result.Failure<TResult, Err>(result.Errs);
 
-        var (<# WriteArgs(i); #>) = result.Value;
-        return Result.Success(func(<# WriteArgs(i); #>));
+        var (<# WriteArgs(i); #>) = result.Ok;
+        return Result.Success<TResult, Err>(func(<# WriteArgs(i); #>));
     }
 <#
  }

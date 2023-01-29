@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
-    public static Result<T> OnFailureCompensate<T>(this Result<T> result, Func<Result<T>> func)
+    public static Result<T, Err> OnFailureCompensate<T>(this Result<T, Err> result, Func<Result<T, Err>> func)
     {
         if (result.IsSuccess)
             return result;
@@ -16,18 +16,18 @@ public static partial class ResultExtensions
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
-    public static async Task<Result<T>> OnFailureCompensateAsync<T>(this Task<Result<T>> resultTask, Func<Result<T>> func)
+    public static async Task<Result<T, Err>> OnFailureCompensateAsync<T>(this Task<Result<T, Err>> resultTask, Func<Result<T, Err>> func)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<T, Err> result = await resultTask.ConfigureAwait(false);
         return result.OnFailureCompensate(func);
     }
 
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
-    public static async Task<Result<T>> OnFailureCompensateAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
+    public static async Task<Result<T, Err>> OnFailureCompensateAsync<T>(this Task<Result<T, Err>> resultTask, Func<Task<Result<T, Err>>> funcAsync)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<T, Err> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
             return result;
 

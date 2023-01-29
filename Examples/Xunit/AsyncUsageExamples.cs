@@ -53,7 +53,7 @@ public class AsyncUsageExamples
         result.Should().Be("Okay");
     }
 
-    static void Log(Errs message)
+    static void Log(Errs<Err> message)
     {
     }
 
@@ -61,7 +61,7 @@ public class AsyncUsageExamples
     {
     }
 
-    static Task<Result<Customer>> AskManagerAsync(long id) => Task.FromResult(Result.Success(new Customer()));
+    static Task<Result<Customer, Err>> AskManagerAsync(long id) => Task.FromResult(Result.Success<Customer, Err>(new Customer()));
 
     public static Task<Maybe<Customer>> GetByIdAsync(long id) => Task.FromResult((Maybe<Customer>)new Customer());
 
@@ -85,8 +85,8 @@ public class AsyncUsageExamples
 
     public class EmailGateway
     {
-        public static Result<Unit> SendPromotionNotification(string email) => Result.Success(new Unit());
+        public static Result<Unit, Err> SendPromotionNotification(string email) => Result.Success<Unit, Err>(new Unit());
 
-        public static Task<Result<Unit>> SendPromotionNotificationAsync(string email) => Task.FromResult(SendPromotionNotification(email));
+        public static Task<Result<Unit, Err>> SendPromotionNotificationAsync(string email) => Task.FromResult(SendPromotionNotification(email));
     }
 }

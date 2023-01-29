@@ -38,8 +38,8 @@ public class RequiredGuid_T_Tests
             .Combine(MyGuidId.Create(Guid.NewGuid()));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var trackingId2) = rGuidsIds.Ok;
-        guidId1.Value.Should().NotBe(trackingId2.Value);
+        (var guidId1, var guidId2) = rGuidsIds.Ok;
+        guidId1.Value.Should().NotBe(guidId2.Value);
     }
 
     [Fact]
@@ -92,8 +92,8 @@ public class RequiredGuid_T_Tests
         Action act = () => myGuidId1 = (MyGuidId)myGuid;
 
         // Assert
-        act.Should().Throw<ResultFailureException>()
+        act.Should().Throw<ResultFailureException<Err>>()
             .WithMessage("You attempted to access the Value property for a failed result. A failed result has no Value.")
-            .Where(e => e.Errors[0].Description == "My Guid Id cannot be empty");
+            .Where(e => e.Errs[0].Description == "My Guid Id cannot be empty");
     }
 }

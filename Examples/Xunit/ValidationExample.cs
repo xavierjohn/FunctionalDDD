@@ -33,7 +33,7 @@ public class ValidationExample
 
         actual.IsFailure.Should().BeTrue();
         actual.Errs.Should().HaveCount(2);
-        actual.Errs.Should().BeEquivalentTo(new Errs(
+        actual.Errs.Should().BeEquivalentTo(new Errs<Err>(
             Err.Validation("Last Name cannot be empty", "lastName"),
             Err.Validation("Email address is not valid", "email")));
     }

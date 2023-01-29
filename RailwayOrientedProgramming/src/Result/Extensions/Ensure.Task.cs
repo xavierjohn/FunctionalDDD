@@ -6,15 +6,15 @@ public static partial class AsyncResultExtensionsBothOperands
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<T, Task<bool>> predicate, Errs errors)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Func<TOk, Task<bool>> predicate, Errs<Err> errors)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
 
         if (!await predicate(result.Ok).ConfigureAwait(false))
-            return Result.Failure<T>(errors);
+            return Result.Failure<TOk, Err>(errors);
 
         return result;
     }
@@ -22,15 +22,15 @@ public static partial class AsyncResultExtensionsBothOperands
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<T, Task<bool>> predicate, Func<T, Errs> errorPredicate)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Func<TOk, Task<bool>> predicate, Func<TOk, Errs<Err>> errorPredicate)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
 
         if (!await predicate(result.Ok).ConfigureAwait(false))
-            return Result.Failure<T>(errorPredicate(result.Ok));
+            return Result.Failure<TOk, Err>(errorPredicate(result.Ok));
 
         return result;
     }
@@ -38,15 +38,15 @@ public static partial class AsyncResultExtensionsBothOperands
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<T, Task<bool>> predicate, Func<T, Task<Errs>> errorPredicate)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Func<TOk, Task<bool>> predicate, Func<TOk, Task<Errs<Err>>> errorPredicate)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
 
         if (!await predicate(result.Ok).ConfigureAwait(false))
-            return Result.Failure<T>(await errorPredicate(result.Ok).ConfigureAwait(false));
+            return Result.Failure<TOk, Err>(await errorPredicate(result.Ok).ConfigureAwait(false));
 
         return result;
     }
@@ -54,9 +54,9 @@ public static partial class AsyncResultExtensionsBothOperands
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> predicate)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Func<Task<Result<TOk, Err>>> predicate)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
@@ -64,7 +64,7 @@ public static partial class AsyncResultExtensionsBothOperands
         var predicateResult = await predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Failure<T>(predicateResult.Err);
+            return Result.Failure<TOk, Err>(predicateResult.Err);
 
         return result;
     }
@@ -72,9 +72,9 @@ public static partial class AsyncResultExtensionsBothOperands
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> resultTask, Func<T, Task<Result<T>>> predicate)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Func<TOk, Task<Result<TOk, Err>>> predicate)
     {
-        Result<T> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
@@ -82,7 +82,7 @@ public static partial class AsyncResultExtensionsBothOperands
         var predicateResult = await predicate(result.Ok);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<T>(predicateResult.Err);
+            return Result.Failure<TOk, Err>(predicateResult.Err);
 
         return result;
     }

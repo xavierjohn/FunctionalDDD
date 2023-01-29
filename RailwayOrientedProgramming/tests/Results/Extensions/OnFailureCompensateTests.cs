@@ -15,8 +15,8 @@ public class OnFailureCompensateTests
     [Fact]
     public void Result_success_then_compensate_func_does_not_execute()
     {
-        Result<string> input = Result.Success("Success");
-        Result<string> output = input.OnFailureCompensate(GetErrorResult);
+        Result<string, Err> input = Result.Success("Success");
+        Result<string, Err> output = input.OnFailureCompensate(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -31,8 +31,8 @@ public class OnFailureCompensateTests
     [Fact]
     public void Result_failure_and_compensate_func_does_execute_and_succeed()
     {
-        Result<string> input = Result.Failure<string>(Err.Unexpected("Error"));
-        Result<string> output = input.OnFailureCompensate(GetSuccessResult);
+        Result<string, Err> input = Result.Failure<string>(Err.Unexpected("Error"));
+        Result<string, Err> output = input.OnFailureCompensate(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -47,8 +47,8 @@ public class OnFailureCompensateTests
     [Fact]
     public void Result_failure_and_compensate_func_does_execute_and_fail()
     {
-        Result<string> input = Result.Failure<string>(Err.Unexpected("Error"));
-        Result<string> output = input.OnFailureCompensate(GetErrorResult);
+        Result<string, Err> input = Result.Failure<string>(Err.Unexpected("Error"));
+        Result<string, Err> output = input.OnFailureCompensate(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -60,8 +60,8 @@ public class OnFailureCompensateTests
     [Fact]
     public async Task Task_Result_success_and_compensate_func_does_not_execute()
     {
-        Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResult);
+        Task<Result<string, Err>> input = Task.FromResult(Result.Success("Success"));
+        Result<string, Err> output = await input.OnFailureCompensateAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -71,8 +71,8 @@ public class OnFailureCompensateTests
     [Fact]
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_succeed()
     {
-        Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
-        Result<string> output = await input.OnFailureCompensateAsync(GetSuccessResult);
+        Task<Result<string, Err>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
+        Result<string, Err> output = await input.OnFailureCompensateAsync(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -82,8 +82,8 @@ public class OnFailureCompensateTests
     [Fact]
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_fail()
     {
-        Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
-        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResult);
+        Task<Result<string, Err>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
+        Result<string, Err> output = await input.OnFailureCompensateAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -95,8 +95,8 @@ public class OnFailureCompensateTests
     [Fact]
     public async Task Task_Result_success_and_compensate_async_func_does_not_execute()
     {
-        Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResultAsync);
+        Task<Result<string, Err>> input = Task.FromResult(Result.Success("Success"));
+        Result<string, Err> output = await input.OnFailureCompensateAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -106,8 +106,8 @@ public class OnFailureCompensateTests
     [Fact]
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_succeed()
     {
-        Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
-        Result<string> output = await input.OnFailureCompensateAsync(GetSuccessResultAsync);
+        Task<Result<string, Err>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
+        Result<string, Err> output = await input.OnFailureCompensateAsync(GetSuccessResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -117,8 +117,8 @@ public class OnFailureCompensateTests
     [Fact]
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_fail()
     {
-        Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
-        Result<string> output = await input.OnFailureCompensateAsync(GetErrorResultAsync);
+        Task<Result<string, Err>> input = Task.FromResult(Result.Failure<string>(Err.Unexpected("Error")));
+        Result<string, Err> output = await input.OnFailureCompensateAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -126,25 +126,25 @@ public class OnFailureCompensateTests
     }
     #endregion
 
-    private Result<string> GetSuccessResult()
+    private Result<string, Err> GetSuccessResult()
     {
         _compensatingFunctionCalled = true;
         return Result.Success("Compensated Success");
     }
 
-    private Result<string> GetErrorResult()
+    private Result<string, Err> GetErrorResult()
     {
         _compensatingFunctionCalled = true;
         return Result.Failure<string>(Err.Unexpected("Compensated Error"));
     }
 
-    private Task<Result<string>> GetSuccessResultAsync()
+    private Task<Result<string, Err>> GetSuccessResultAsync()
     {
         _compensatingFunctionCalled = true;
         return Task.FromResult(Result.Success("Compensated Success"));
     }
 
-    private Task<Result<string>> GetErrorResultAsync()
+    private Task<Result<string, Err>> GetErrorResultAsync()
     {
         _compensatingFunctionCalled = true;
         return Task.FromResult(Result.Failure<string>(Err.Unexpected("Compensated Error")));

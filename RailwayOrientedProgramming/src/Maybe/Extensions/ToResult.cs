@@ -2,26 +2,26 @@
 
 public static partial class MaybeExtensions
 {
-    public static Result<T> ToResult<T>(in this Maybe<T> maybe, Err error)
-        where T : notnull
+    public static Result<TOk, Err> ToResult<TOk>(in this Maybe<TOk> maybe, Err error)
+        where TOk : notnull
     {
         if (maybe.HasNoValue)
-            return Result.Failure<T>(error);
+            return Result.Failure<TOk, Err>(error);
 
-        return Result.Success(maybe.GetValueOrThrow());
+        return Result.Success<TOk, Err>(maybe.GetValueOrThrow());
     }
 
-    public static async Task<Result<T>> ToResultAsync<T>(this Task<Maybe<T>> maybeTask, Err error)
-        where T : notnull
+    public static async Task<Result<TOk, Err>> ToResultAsync<TOk>(this Task<Maybe<TOk>> maybeTask, Err errors)
+        where TOk : notnull
     {
         var maybe = await maybeTask.ConfigureAwait(false);
-        return maybe.ToResult(error);
+        return maybe.ToResult(errors);
     }
 
-    public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<Maybe<T>> maybeTask, Err error)
-        where T : notnull
+    public static async ValueTask<Result<TOk, Err>> ToResultAsync<TOk>(this ValueTask<Maybe<TOk>> maybeTask, Err errors)
+        where TOk : notnull
     {
-        Maybe<T> maybe = await maybeTask;
-        return maybe.ToResult(error);
+        Maybe<TOk> maybe = await maybeTask;
+        return maybe.ToResult(errors);
     }
 }
