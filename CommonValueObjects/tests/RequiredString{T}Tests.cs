@@ -13,8 +13,8 @@ public class RequiredString_T_Tests
         var trackingId1 = TrackingId.Create("");
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Errs.Should().HaveCount(1);
-        trackingId1.Err.Should().BeOfType<Validation>();
-        var validation = (Validation)trackingId1.Err;
+        trackingId1.Error.Should().BeOfType<Validation>();
+        var validation = (Validation)trackingId1.Error;
         validation.Description.Should().Be("Tracking Id cannot be empty");
         validation.FieldName.Should().Be("trackingId");
         validation.Code.Should().Be("validation.error");

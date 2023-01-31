@@ -56,7 +56,7 @@ public static partial class ResultExtensions
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk, Err>(predicateResult.Err);
+            return Result.Failure<TOk, Err>(predicateResult.Error);
 
         return result;
     }
@@ -72,7 +72,7 @@ public static partial class ResultExtensions
         var predicateResult = predicate(result.Ok);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk, Err>(predicateResult.Err);
+            return Result.Failure<TOk, Err>(predicateResult.Error);
 
         return result;
     }

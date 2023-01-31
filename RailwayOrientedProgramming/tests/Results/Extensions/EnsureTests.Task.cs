@@ -23,7 +23,7 @@ public class Ensure_Task_Tests
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string, Err>(Err.Unexpected("Error message"))));
 
         result.IsSuccess.Should().BeFalse("Predicate is failure result");
-        result.Err.Should().Be(Err.Unexpected("Error message"));
+        result.Error.Should().Be(Err.Unexpected("Error message"));
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class Ensure_Task_Tests
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Success<string, Err>("Success message")));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result");
-        result.Err.Should().Be(Err.Unauthorized("Initial Error message"));
+        result.Error.Should().Be(Err.Unauthorized("Initial Error message"));
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class Ensure_Task_Tests
         var result = await initialResult.EnsureAsync(() => Task.FromResult(Result.Failure<string, Err>(Err.Unauthorized("Error message"))));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result");
-        result.Err.Should().Be(Err.Validation("Initial Error message"));
+        result.Error.Should().Be(Err.Validation("Initial Error message"));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class Ensure_Task_Tests
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Success<string, Err>("Success Message")));
 
         result.IsSuccess.Should().BeFalse("Initial result is failure result"); ;
-        result.Err.Should().Be(Err.Conflict("Initial Error message"));
+        result.Error.Should().Be(Err.Conflict("Initial Error message"));
     }
 
     [Fact]
@@ -78,6 +78,6 @@ public class Ensure_Task_Tests
         var result = await initialResult.EnsureAsync(_ => Task.FromResult(Result.Failure<string, Err>(Err.Unexpected("Success Message"))));
 
         result.IsSuccess.Should().BeFalse("Initial result and predicate is failure result"); ;
-        result.Err.Should().Be(Err.Conflict("Initial Error message"));
+        result.Error.Should().Be(Err.Conflict("Initial Error message"));
     }
 }

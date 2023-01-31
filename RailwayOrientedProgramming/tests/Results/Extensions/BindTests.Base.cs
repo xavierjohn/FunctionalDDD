@@ -129,7 +129,7 @@ public abstract class BindTestsBase : TestBase
     {
         _funcExecuted.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
-        output.Err.Should().Be(Error1);
+        output.Error.Should().Be(Error1);
     }
 
     protected void AssertSuccess(Result<K, Err> output)

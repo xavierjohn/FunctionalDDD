@@ -20,7 +20,7 @@ public class EmailAddressTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Err.Should().Be(Err.Validation("Email address is not valid", "school email"));
+        result.Error.Should().Be(Err.Validation("Email address is not valid", "school email"));
     }
 
     [Theory]

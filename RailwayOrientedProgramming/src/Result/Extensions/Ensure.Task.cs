@@ -64,7 +64,7 @@ public static partial class AsyncResultExtensionsBothOperands
         var predicateResult = await predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk, Err>(predicateResult.Err);
+            return Result.Failure<TOk, Err>(predicateResult.Error);
 
         return result;
     }
@@ -82,7 +82,7 @@ public static partial class AsyncResultExtensionsBothOperands
         var predicateResult = await predicate(result.Ok);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk, Err>(predicateResult.Err);
+            return Result.Failure<TOk, Err>(predicateResult.Error);
 
         return result;
     }

@@ -46,8 +46,5 @@ public class Err : IEquatable<Err>
 
     public static Err Unexpected(string description, string code = "unexpected.error") =>
         new Unexpected(description, code);
-
-    internal static Err Transient(string description, string code = "transient.error") =>
-        new Transient(description, code);
 }
 

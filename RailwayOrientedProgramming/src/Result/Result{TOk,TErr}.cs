@@ -21,7 +21,7 @@ public readonly struct Result<TOk, TErr>
     public bool IsFailure { get; }
     public bool IsSuccess => !IsFailure;
 
-    public TErr Err => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
+    public TErr Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
 
     private readonly TOk _value;
     private readonly Errs<TErr>? _error;

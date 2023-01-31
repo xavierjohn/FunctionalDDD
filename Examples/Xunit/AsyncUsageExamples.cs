@@ -15,7 +15,7 @@ public class AsyncUsageExamples
             .EnsureAsync(customer => customer.CanBePromoted, Err.Validation("The customer has the highest status possible"))
             .TapAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Err.Description);
+            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Description);
 
         result.Should().Be("Okay");
     }
@@ -30,7 +30,7 @@ public class AsyncUsageExamples
             .EnsureAsync(customer => customer.CanBePromoted, Err.Validation("The customer has the highest status possible"))
             .TapAsync(customer => customer.PromoteAsync())
             .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Err.Description);
+            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Description);
 
         result.Should().Be("Okay");
     }
@@ -48,7 +48,7 @@ public class AsyncUsageExamples
             .TapAsync(customer => Log("Manager approved promotion"))
             .TapAsync(customer => customer.PromoteAsync())
             .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Err.Description);
+            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Description);
 
         result.Should().Be("Okay");
     }

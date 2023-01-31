@@ -14,8 +14,8 @@ public class RequiredGuid_T_Tests
         var guidId1 = MyGuidId.Create(default);
         guidId1.IsFailure.Should().BeTrue();
         guidId1.Errs.Should().HaveCount(1);
-        guidId1.Err.Should().BeOfType<Validation>();
-        var validation = (Validation)guidId1.Err;
+        guidId1.Error.Should().BeOfType<Validation>();
+        var validation = (Validation)guidId1.Error;
         validation.Description.Should().Be("My Guid Id cannot be empty");
         validation.FieldName.Should().Be("myGuidId");
         validation.Code.Should().Be("validation.error");
