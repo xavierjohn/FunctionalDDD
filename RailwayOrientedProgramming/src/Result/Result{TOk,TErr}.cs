@@ -1,39 +1,20 @@
 ﻿namespace FunctionalDDD;
-using System;
-
 public readonly struct Result<TOk, TErr>
 {
-    public TOk Ok
-    {
-        get
-        {
-            if (IsFailure)
-                throw new ResultFailureException<TErr>(Errs);
+    public TOk Ok => _ok ?? throw new ResultFailureException<TErr>(Error);
+    public TErr Error => _error ?? throw new ResultSuccessException();
 
-            if (Nullable.GetUnderlyingType(typeof(TOk)) == null && _value is null)
-                throw new InvalidOperationException("Result is in success state, but value is null");
-
-            return _value;
-        }
-    }
-
-    public Errs<TErr> Errs => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error);
-    public bool IsFailure { get; }
+    public bool IsFailure => _ok is null;
     public bool IsSuccess => !IsFailure;
 
-    public TErr Error => ResultCommonLogic.GetErrorWithSuccessGuard(IsFailure, _error)[0];
-
-    private readonly TOk _value;
-    private readonly Errs<TErr>? _error;
-
-    internal Result(bool isFailure, Errs<TErr>? error, TOk? value)
+    internal Result(TOk? ok, TErr? error)
     {
-        IsFailure = ResultCommonLogic.ErrorStateGuard(isFailure, error);
+        if (ok is null && error is null)
+            throw new ArgumentException("Either 'ok' or 'error' must be non-null.");
         _error = error;
-        _value = value ?? default!;
+        _ok = ok;
     }
 
-    public static implicit operator Result<TOk, TErr>(TOk value) => Result.Success<TOk, TErr>(value);
-
-    public static implicit operator Result<TOk, TErr>(Errs<TErr> errors) => Result.Failure<TOk, TErr>(errors);
+    private readonly TOk? _ok;
+    private readonly TErr? _error;
 }
