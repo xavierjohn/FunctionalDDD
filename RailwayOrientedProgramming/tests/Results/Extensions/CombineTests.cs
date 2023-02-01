@@ -149,4 +149,57 @@ public class CombineTests
         validation.Errors[1].Should().Be(new ValidationError.ModelError("Bad 9", string.Empty));
     }
 
+    [Fact]
+    public void Combine_validation_and_unexpected_error_will_return_aggregated_error()
+    {
+        // Arrange
+        var called = false;
+
+        // Act
+        var rHelloWorld = Result.Success("Hello")
+            .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
+            .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
+            .Bind((hello, first, last) =>
+            {
+                return Result.Success($"{hello} {first} {last}");
+            });
+
+        // Assert
+        called.Should().BeFalse();
+        rHelloWorld.IsFailure.Should().BeTrue();
+        rHelloWorld.Error.Should().BeOfType<AggregateError>();
+        var ag = (AggregateError)rHelloWorld.Error;
+        ag.Errors.Should().HaveCount(2);
+        ag.Errors[0].Should().Be(Error.Validation("Bad First", "First"));
+        ag.Errors[1].Should().Be(Error.Unexpected("Server error"));
+
+    }
+
+    [Fact]
+    public void Combine_non_validation_error_will_return_aggregated_error()
+    {
+        // Arrange
+        var called = false;
+
+        // Act
+        var rHelloWorld = Result.Success("Hello")
+            .Combine(Result.Failure<string>(Error.Forbidden("You can't touch this.")))
+            .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
+            .Bind((hello, first, last) =>
+            {
+                called = true;
+                return Result.Success($"{hello} {first} {last}");
+            });
+
+        // Assert
+        called.Should().BeFalse();
+        rHelloWorld.IsFailure.Should().BeTrue();
+        rHelloWorld.Error.Should().BeOfType<AggregateError>();
+        var ag = (AggregateError)rHelloWorld.Error;
+        ag.Errors.Should().HaveCount(2);
+        ag.Errors[0].Should().Be(Error.Forbidden("You can't touch this."));
+        ag.Errors[1].Should().Be(Error.Unexpected("Server error"));
+
+    }
+
 }
