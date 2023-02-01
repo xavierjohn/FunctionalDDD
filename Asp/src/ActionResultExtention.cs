@@ -40,16 +40,16 @@ public static class ActionResultExtention
     {
         return error switch
         {
-            NotFound => (ActionResult<T>)controllerBase.NotFound(error),
-            Validation validation => ValidationErrors<T>(validation, controllerBase),
-            Conflict => (ActionResult<T>)controllerBase.Conflict(error),
-            Unauthorized => (ActionResult<T>)controllerBase.Unauthorized(error),
-            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Message),
-            Unexpected => (ActionResult<T>)controllerBase.StatusCode(500, error),
+            NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
+            ValidationError validation => ValidationErrors<T>(validation, controllerBase),
+            ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
+            UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
+            ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
+            UnexpectedError => (ActionResult<T>)controllerBase.StatusCode(500, error),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }
-    private static ActionResult<T> ValidationErrors<T>(Validation validation, ControllerBase controllerBase)
+    private static ActionResult<T> ValidationErrors<T>(ValidationError validation, ControllerBase controllerBase)
     {
         ModelStateDictionary modelState = new();
         foreach (var error in validation.Errors)

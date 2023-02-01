@@ -53,8 +53,8 @@ public class ParallelTests
 
         // Assert
         r.IsFailure.Should().BeTrue();
-        r.Error.Should().BeOfType<Aggregate>();
-        var aggregate = (Aggregate)r.Error;
+        r.Error.Should().BeOfType<AggregateError>();
+        var aggregate = (AggregateError)r.Error;
         aggregate.Errors.Should().HaveCount(2);
         calledFunction.Should().BeFalse();
         aggregate.Errors.Should().BeEquivalentTo(new List<Error>() {

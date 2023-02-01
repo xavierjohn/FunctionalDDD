@@ -40,7 +40,7 @@ public class FluentTests
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
-        var validationErrors = (Validation)rUser.Error;
+        var validationErrors = (ValidationError)rUser.Error;
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }
@@ -64,7 +64,7 @@ public class FluentTests
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
-        var validationErrors = (Validation)rUser.Error;
+        var validationErrors = (ValidationError)rUser.Error;
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }

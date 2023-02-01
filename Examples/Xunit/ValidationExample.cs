@@ -32,7 +32,7 @@ public class ValidationExample
             });
 
         actual.IsFailure.Should().BeTrue();
-        var validationErrors = (Validation)actual.Error;
+        var validationErrors = (ValidationError)actual.Error;
         validationErrors.Errors.Should().HaveCount(2);
         validationErrors.Errors.Should().BeEquivalentTo(new[]
         {

@@ -1,4 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+using Xunit;
 
 public class CombineTests
 {
@@ -30,10 +31,10 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Error.Should().BeOfType<Validation>();
-        var validation = (Validation)rHelloWorld.Error;
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().Be(new Validation.ModelError("Bad World", "key"));
+        validation.Errors[0].Should().Be(new ValidationError.ModelError("Bad World", "key"));
     }
 
     [Fact]
@@ -66,11 +67,11 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Error.Should().BeOfType<Validation>();
-        var validation = (Validation)rHelloWorld.Error;
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().HaveCount(2);
-        validation.Errors[0].Should().Be(new Validation.ModelError("Bad First", "First"));
-        validation.Errors[1].Should().Be(new Validation.ModelError("Bad Last", "Last"));
+        validation.Errors[0].Should().Be(new ValidationError.ModelError("Bad First", "First"));
+        validation.Errors[1].Should().Be(new ValidationError.ModelError("Bad Last", "Last"));
     }
 
     [Fact]
@@ -116,10 +117,10 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Error.Should().BeOfType<Validation>();
-        var validation = (Validation)rHelloWorld.Error;
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().Be(new Validation.ModelError("Bad 9", string.Empty));
+        validation.Errors[0].Should().Be(new ValidationError.ModelError("Bad 9", string.Empty));
     }
 
     [Fact]
@@ -141,11 +142,11 @@ public class CombineTests
 
         // Assert
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Error.Should().BeOfType<Validation>();
-        var validation = (Validation)rHelloWorld.Error;
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().HaveCount(2);
-        validation.Errors[0].Should().Be(new Validation.ModelError("Bad 3", string.Empty));
-        validation.Errors[1].Should().Be(new Validation.ModelError("Bad 9", string.Empty));
+        validation.Errors[0].Should().Be(new ValidationError.ModelError("Bad 3", string.Empty));
+        validation.Errors[1].Should().Be(new ValidationError.ModelError("Bad 9", string.Empty));
     }
 
 }

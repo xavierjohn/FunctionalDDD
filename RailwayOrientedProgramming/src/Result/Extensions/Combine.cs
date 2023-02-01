@@ -6,24 +6,24 @@ public static partial class ResultExtensions
     {
         if (err is null) return other;
         if (other is null) throw new ArgumentNullException(nameof(other));
-        if (err is Validation validation && other is Validation otherValidation)
+        if (err is ValidationError validation && other is ValidationError otherValidation)
         {
             var validationErrors = validation.Errors.Concat(otherValidation.Errors).ToList();
-            return new Validation(validationErrors, validation.Code);
+            return new ValidationError(validationErrors, validation.Code);
         }
 
         List<Error> errors = new();
         AddError(err);
         AddError(other);
 
-        return new Aggregate(errors);
+        return new AggregateError(errors);
 
         void AddError(Error error)
         {
-            if (error is Aggregate aggregate)
+            if (error is AggregateError aggregate)
                 errors.AddRange(aggregate.Errors);
-            else if (error is Validation validation)
-                errors.AddRange(validation.Errors.Select(e => new Validation(e.Message, e.FieldName, validation.Code)));
+            else if (error is ValidationError validation)
+                errors.AddRange(validation.Errors.Select(e => new ValidationError(e.Message, e.FieldName, validation.Code)));
             else
                 errors.Add(error);
         }

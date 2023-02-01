@@ -1,15 +1,15 @@
 ﻿namespace FunctionalDDD;
 
-public sealed class Aggregate : Error
+public sealed class AggregateError : Error
 {
-    public Aggregate(List<Error> errors, string code) : base(errors[0].Message, code)
+    public AggregateError(List<Error> errors, string code) : base(errors[0].Message, code)
     {
         if (errors.Count < 1)
             throw new ArgumentException("At least one error is required", nameof(errors));
         Errors = errors;
     }
 
-    public Aggregate(List<Error> errors) : this(errors, "aggregate.error")
+    public AggregateError(List<Error> errors) : this(errors, "aggregate.error")
     {
     }
 

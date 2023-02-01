@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using static FunctionalDDD.Validation;
+using static FunctionalDDD.ValidationError;
 
 [DebuggerDisplay("{Message}")]
 #pragma warning disable CA1716 // Identifiers should not match keywords
@@ -34,26 +34,26 @@ public class Error : IEquatable<Error>
     public override int GetHashCode() => Code.GetHashCode();
 
     public static Error Validation(string description, string fieldName = "", string code = "validation.error") =>
-        new Validation(description, fieldName, code);
+        new ValidationError(description, fieldName, code);
 
     public static Error Validation(List<ModelError> modelErrors, string code = "validation.error") =>
-        new Validation(modelErrors, code);
+        new ValidationError(modelErrors, code);
 
     public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
     public static Error Conflict(string description, string code = "conflict.error") =>
-        new Conflict(description, code);
+        new ConflictError(description, code);
 
     public static Error NotFound(string description, string code = "notfound.error") =>
-        new NotFound(description, code);
+        new NotFoundError(description, code);
 
     public static Error Unauthorized(string description, string code = "unauthorized.error") =>
-        new Unauthorized(description, code);
+        new UnauthorizedError(description, code);
 
     public static Error Forbidden(string description, string code = "forbidden.error") =>
-        new Forbidden(description, code);
+        new ForbiddenError(description, code);
 
     public static Error Unexpected(string description, string code = "unexpected.error") =>
-        new Unexpected(description, code);
+        new UnexpectedError(description, code);
 }
 
