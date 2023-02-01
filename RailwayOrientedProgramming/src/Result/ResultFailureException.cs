@@ -1,11 +1,11 @@
 ﻿namespace FunctionalDDD;
-public class ResultFailureException : Exception
+public class ResultFailureException<TErr> : Exception
 {
-    public ErrorList Errors { get; }
+    public TErr Error { get; }
 
-    internal ResultFailureException(ErrorList errors)
+    internal ResultFailureException(TErr error)
         : base(Result.Messages.ValueIsInaccessibleForFailure())
     {
-        Errors = errors;
+        Error = error;
     }
 }

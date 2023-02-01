@@ -1,19 +1,40 @@
-namespace FunctionalDDD;
+﻿namespace FunctionalDDD;
 
 public static partial class ResultExtensions
 {
-    public static Result<(T1, T2)> Combine<T1, T2>(this Result<T1> t1, Result<T2> t2)
+    public static Error Combine(this Error? err, Error other)
     {
-        if (t1.IsFailure || t2.IsFailure)
+        if (err is null) return other;
+        if (other is null) throw new ArgumentNullException(nameof(other));
+        if (err is ValidationError validation && other is ValidationError otherValidation)
         {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (t2.IsFailure)
-                errors.AddRange(t2.Errors);
-            return Result.Failure<(T1, T2)>(errors);
+            var validationErrors = validation.Errors.Concat(otherValidation.Errors).ToList();
+            return new ValidationError(validationErrors, validation.Code);
         }
 
-        return Result.Success((t1.Value, t2.Value));
+        List<Error> errors = new();
+        AddError(err);
+        AddError(other);
+
+        return new AggregateError(errors);
+
+        void AddError(Error error)
+        {
+            if (error is AggregateError aggregate)
+                errors.AddRange(aggregate.Errors);
+            else if (error is ValidationError validation)
+                errors.AddRange(validation.Errors.Select(e => new ValidationError(e.Message, e.FieldName, validation.Code)));
+            else
+                errors.Add(error);
+        }
+    }
+
+    public static Result<(T1, T2), Error> Combine<T1, T2>(this Result<T1, Error> t1, Result<T2, Error> t2)
+    {
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (error is not null) return Result.Failure<(T1, T2), Error>(error);
+        return Result.Success<(T1, T2), Error>((t1.Ok, t2.Ok));
     }
 }

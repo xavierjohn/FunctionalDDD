@@ -1,18 +1,20 @@
 ﻿namespace FunctionalDDD;
 
+using System.Collections.Generic;
 using System.Diagnostics;
+using static FunctionalDDD.ValidationError;
 
 [DebuggerDisplay("{Message}")]
 #pragma warning disable CA1716 // Identifiers should not match keywords
 public class Error : IEquatable<Error>
 #pragma warning restore CA1716 // Identifiers should not match keywords
 {
-    public string Description { get; }
+    public string Message { get; }
     public string Code { get; }
 
-    internal Error(string description, string code)
+    internal Error(string message, string code)
     {
-        Description = description;
+        Message = message;
         Code = code;
     }
 
@@ -31,25 +33,27 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
-    public static Error Validation(string description, string fieldName = "", string code = "validation.error") =>
-        new Validation(description, fieldName, code);
+    public static Error Validation(string message, string fieldName = "", string code = "validation.error") =>
+        new ValidationError(message, fieldName, code);
 
-    public static Error Conflict(string description, string code = "conflict.error") =>
-        new Conflict(description, code);
+    public static Error Validation(List<ModelError> modelErrors, string code = "validation.error") =>
+        new ValidationError(modelErrors, code);
 
-    public static Error NotFound(string description, string code = "notfound.error") =>
-        new NotFound(description, code);
+    public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
-    public static Error Unauthorized(string description, string code = "unauthorized.error") =>
-        new Unauthorized(description, code);
+    public static Error Conflict(string message, string code = "conflict.error") =>
+        new ConflictError(message, code);
 
-    public static Error Forbidden(string description, string code = "forbidden.error") =>
-        new Forbidden(description, code);
+    public static Error NotFound(string message, string code = "notfound.error") =>
+        new NotFoundError(message, code);
 
-    public static Error Unexpected(string description, string code = "unexpected.error") =>
-        new Unexpected(description, code);
+    public static Error Unauthorized(string message, string code = "unauthorized.error") =>
+        new UnauthorizedError(message, code);
 
-    internal static Error Transient(string description, string code = "transient.error") =>
-        new Transient(description, code);
+    public static Error Forbidden(string message, string code = "forbidden.error") =>
+        new ForbiddenError(message, code);
+
+    public static Error Unexpected(string message, string code = "unexpected.error") =>
+        new UnexpectedError(message, code);
 }
 

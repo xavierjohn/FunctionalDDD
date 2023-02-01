@@ -13,10 +13,9 @@ public class RequiredGuid_T_Tests
     {
         var guidId1 = MyGuidId.Create(default);
         guidId1.IsFailure.Should().BeTrue();
-        guidId1.Errors.Should().HaveCount(1);
-        guidId1.Error.Should().BeOfType<Validation>();
-        var validation = (Validation)guidId1.Error;
-        validation.Description.Should().Be("My Guid Id cannot be empty");
+        guidId1.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)guidId1.Error;
+        validation.Message.Should().Be("My Guid Id cannot be empty");
         validation.FieldName.Should().Be("myGuidId");
         validation.Code.Should().Be("validation.error");
     }
@@ -27,8 +26,8 @@ public class RequiredGuid_T_Tests
         var str = Guid.NewGuid().ToString();
         var guidId1 = MyGuidId.Create(Guid.Parse(str));
         guidId1.IsSuccess.Should().BeTrue();
-        guidId1.Value.Should().BeOfType<MyGuidId>();
-        guidId1.Value.Value.Should().Be(Guid.Parse(str));
+        guidId1.Ok.Should().BeOfType<MyGuidId>();
+        guidId1.Ok.Value.Should().Be(Guid.Parse(str));
     }
 
     [Fact]
@@ -38,8 +37,8 @@ public class RequiredGuid_T_Tests
             .Combine(MyGuidId.Create(Guid.NewGuid()));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var trackingId2) = rGuidsIds.Value;
-        guidId1.Value.Should().NotBe(trackingId2.Value);
+        (var guidId1, var guidId2) = rGuidsIds.Ok;
+        guidId1.Value.Should().NotBe(guidId2.Value);
     }
 
     [Fact]
@@ -50,7 +49,7 @@ public class RequiredGuid_T_Tests
             .Combine(MyGuidId.Create(myGuid));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var guidId2) = rGuidsIds.Value;
+        (var guidId1, var guidId2) = rGuidsIds.Ok;
         guidId1.Value.Should().Be(guidId2.Value);
     }
 
@@ -59,7 +58,7 @@ public class RequiredGuid_T_Tests
     {
         // Arrange
         Guid myGuid = Guid.NewGuid();
-        MyGuidId myGuidId1 = MyGuidId.Create(myGuid).Value;
+        MyGuidId myGuidId1 = MyGuidId.Create(myGuid).Ok;
 
         // Act
         Guid primGuid = myGuidId1;
@@ -92,8 +91,8 @@ public class RequiredGuid_T_Tests
         Action act = () => myGuidId1 = (MyGuidId)myGuid;
 
         // Assert
-        act.Should().Throw<ResultFailureException>()
-            .WithMessage("You attempted to access the Value property for a failed result. A failed result has no Value.")
-            .Where(e => e.Errors[0].Description == "My Guid Id cannot be empty");
+        act.Should().Throw<ResultFailureException<Error>>()
+            .WithMessage("You attempted to access the Ok property for a failed result. A failed result has no Value.")
+            .Where(e => e.Error.Message == "My Guid Id cannot be empty");
     }
 }

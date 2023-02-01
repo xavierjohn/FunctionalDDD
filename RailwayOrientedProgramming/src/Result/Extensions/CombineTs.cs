@@ -5,228 +5,179 @@ namespace FunctionalDDD;
 public static partial class ResultExtensions
 {
 
-    public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(this Result<(T1, T2)> t1, Result<T3> tc)
+    public static Result<(T1, T2, T3), Error> Combine<T1, T2, T3>(
+      this Result<(T1, T2), Error> t1, Result<T3, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(this Result<T1> t1, Result<T2> t2, Result<T3> t3)
+    public static Result<(T1, T2, T3), Error> Combine<T1, T2, T3>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            return Result.Failure<(T1, T2, T3)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4)> Combine<T1, T2, T3, T4>(this Result<(T1, T2, T3)> t1, Result<T4> tc)
+    public static Result<(T1, T2, T3, T4), Error> Combine<T1, T2, T3, T4>(
+      this Result<(T1, T2, T3), Error> t1, Result<T4, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3, T4)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4)> Combine<T1, T2, T3, T4>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4)
+    public static Result<(T1, T2, T3, T4), Error> Combine<T1, T2, T3, T4>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3, Result<T4, Error> t4)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            return Result.Failure<(T1, T2, T3, T4)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
+        if (t4.IsFailure) error = error.Combine(t4.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5)> Combine<T1, T2, T3, T4, T5>(this Result<(T1, T2, T3, T4)> t1, Result<T5> tc)
+    public static Result<(T1, T2, T3, T4, T5), Error> Combine<T1, T2, T3, T4, T5>(
+      this Result<(T1, T2, T3, T4), Error> t1, Result<T5, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5)> Combine<T1, T2, T3, T4, T5>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5)
+    public static Result<(T1, T2, T3, T4, T5), Error> Combine<T1, T2, T3, T4, T5>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3, Result<T4, Error> t4, Result<T5, Error> t5)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
+        if (t4.IsFailure) error = error.Combine(t4.Error);
+        if (t5.IsFailure) error = error.Combine(t5.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6)> Combine<T1, T2, T3, T4, T5, T6>(this Result<(T1, T2, T3, T4, T5)> t1, Result<T6> tc)
+    public static Result<(T1, T2, T3, T4, T5, T6), Error> Combine<T1, T2, T3, T4, T5, T6>(
+      this Result<(T1, T2, T3, T4, T5), Error> t1, Result<T6, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6)> Combine<T1, T2, T3, T4, T5, T6>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6)
+    public static Result<(T1, T2, T3, T4, T5, T6), Error> Combine<T1, T2, T3, T4, T5, T6>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3, Result<T4, Error> t4, Result<T5, Error> t5, Result<T6, Error> t6)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
+        if (t4.IsFailure) error = error.Combine(t4.Error);
+        if (t5.IsFailure) error = error.Combine(t5.Error);
+        if (t6.IsFailure) error = error.Combine(t6.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6, T7)> Combine<T1, T2, T3, T4, T5, T6, T7>(this Result<(T1, T2, T3, T4, T5, T6)> t1, Result<T7> tc)
+    public static Result<(T1, T2, T3, T4, T5, T6, T7), Error> Combine<T1, T2, T3, T4, T5, T6, T7>(
+      this Result<(T1, T2, T3, T4, T5, T6), Error> t1, Result<T7, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, t1.Value.Item6, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6, T7), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, t1.Ok.Item6, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6, T7)> Combine<T1, T2, T3, T4, T5, T6, T7>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6, Result<T7> t7)
+    public static Result<(T1, T2, T3, T4, T5, T6, T7), Error> Combine<T1, T2, T3, T4, T5, T6, T7>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3, Result<T4, Error> t4, Result<T5, Error> t5, Result<T6, Error> t6, Result<T7, Error> t7)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure || t7.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            if (t7.IsFailure) errors.AddRange(t7.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
+        if (t4.IsFailure) error = error.Combine(t4.Error);
+        if (t5.IsFailure) error = error.Combine(t5.Error);
+        if (t6.IsFailure) error = error.Combine(t6.Error);
+        if (t7.IsFailure) error = error.Combine(t7.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value, t7.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6, T7)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok, t7.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8)> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(this Result<(T1, T2, T3, T4, T5, T6, T7)> t1, Result<T8> tc)
+    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8), Error> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(
+      this Result<(T1, T2, T3, T4, T5, T6, T7), Error> t1, Result<T8, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, t1.Value.Item6, t1.Value.Item7, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, t1.Ok.Item6, t1.Ok.Item7, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8)> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6, Result<T7> t7, Result<T8> t8)
+    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8), Error> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3, Result<T4, Error> t4, Result<T5, Error> t5, Result<T6, Error> t6, Result<T7, Error> t7, Result<T8, Error> t8)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure || t7.IsFailure || t8.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            if (t7.IsFailure) errors.AddRange(t7.Errors);
-            if (t8.IsFailure) errors.AddRange(t8.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
+        if (t4.IsFailure) error = error.Combine(t4.Error);
+        if (t5.IsFailure) error = error.Combine(t5.Error);
+        if (t6.IsFailure) error = error.Combine(t6.Error);
+        if (t7.IsFailure) error = error.Combine(t7.Error);
+        if (t8.IsFailure) error = error.Combine(t8.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value, t7.Value, t8.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok, t7.Ok, t8.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9)> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this Result<(T1, T2, T3, T4, T5, T6, T7, T8)> t1, Result<T9> tc)
+    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9), Error> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+      this Result<(T1, T2, T3, T4, T5, T6, T7, T8), Error> t1, Result<T9, Error> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(errors);
-        }
-
-        return Result.Success((t1.Value.Item1, t1.Value.Item2, t1.Value.Item3, t1.Value.Item4, t1.Value.Item5, t1.Value.Item6, t1.Value.Item7, t1.Value.Item8, tc.Value));
+        Error? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9), Error>(error);
+        return Result.Success((t1.Ok.Item1, t1.Ok.Item2, t1.Ok.Item3, t1.Ok.Item4, t1.Ok.Item5, t1.Ok.Item6, t1.Ok.Item7, t1.Ok.Item8, tc.Ok));
     }
 
-    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9)> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this Result<T1> t1, Result<T2> t2, Result<T3> t3, Result<T4> t4, Result<T5> t5, Result<T6> t6, Result<T7> t7, Result<T8> t8, Result<T9> t9)
+    public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9), Error> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+       this Result<T1, Error> t1, Result<T2, Error> t2, Result<T3, Error> t3, Result<T4, Error> t4, Result<T5, Error> t5, Result<T6, Error> t6, Result<T7, Error> t7, Result<T8, Error> t8, Result<T9, Error> t9)
     {
-        if (t1.IsFailure || t2.IsFailure || t3.IsFailure || t4.IsFailure || t5.IsFailure || t6.IsFailure || t7.IsFailure || t8.IsFailure || t9.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure) errors.AddRange(t1.Errors);
-            if (t2.IsFailure) errors.AddRange(t2.Errors);
-            if (t3.IsFailure) errors.AddRange(t3.Errors);
-            if (t4.IsFailure) errors.AddRange(t4.Errors);
-            if (t5.IsFailure) errors.AddRange(t5.Errors);
-            if (t6.IsFailure) errors.AddRange(t6.Errors);
-            if (t7.IsFailure) errors.AddRange(t7.Errors);
-            if (t8.IsFailure) errors.AddRange(t8.Errors);
-            if (t9.IsFailure) errors.AddRange(t9.Errors);
-            return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(errors);
-        }
+        Error? error = null;
+        if (t1.IsFailure) error.Combine(t1.Error);
+        if (t2.IsFailure) error = error.Combine(t2.Error);
+        if (t3.IsFailure) error = error.Combine(t3.Error);
+        if (t4.IsFailure) error = error.Combine(t4.Error);
+        if (t5.IsFailure) error = error.Combine(t5.Error);
+        if (t6.IsFailure) error = error.Combine(t6.Error);
+        if (t7.IsFailure) error = error.Combine(t7.Error);
+        if (t8.IsFailure) error = error.Combine(t8.Error);
+        if (t9.IsFailure) error = error.Combine(t9.Error);
 
-        return Result.Success((t1.Value, t2.Value, t3.Value, t4.Value, t5.Value, t6.Value, t7.Value, t8.Value, t9.Value));
+        if (error is not null) return Result.Failure<(T1, T2, T3, T4, T5, T6, T7, T8, T9)>(error);
+        return Result.Success((t1.Ok, t2.Ok, t3.Ok, t4.Ok, t5.Ok, t6.Ok, t7.Ok, t8.Ok, t9.Ok));
     }
 
 

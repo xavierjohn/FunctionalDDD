@@ -53,7 +53,7 @@ using FunctionalDDD;
     {{
     }}
 
-    public static explicit operator {g.ClassName}({g.ClassType} {camelArg}) => Create({camelArg}).Value;
+    public static explicit operator {g.ClassName}({g.ClassType} {camelArg}) => Create({camelArg}).Ok;
 ";
 
                 if (g.ClassType == "Guid")
@@ -61,7 +61,7 @@ using FunctionalDDD;
                     source += $@"
     public static {g.ClassName} CreateUnique() => new(Guid.NewGuid());
 
-    public static Result<{g.ClassName}> Create(Maybe<Guid> requiredGuidOrNothing)
+    public static Result<{g.ClassName}, Error> Create(Maybe<Guid> requiredGuidOrNothing)
     {{
         return requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
@@ -75,7 +75,7 @@ using FunctionalDDD;
                 if (g.ClassType == "String")
                 {
                     source += $@"
-    public static Result<{g.ClassName}> Create(Maybe<string> requiredStringOrNothing)
+    public static Result<{g.ClassName}, Error> Create(Maybe<string> requiredStringOrNothing)
     {{
         return requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)

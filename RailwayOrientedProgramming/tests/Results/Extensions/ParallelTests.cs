@@ -13,7 +13,7 @@ public class ParallelTests
 
         // Assert
         r.IsSuccess.Should().BeTrue();
-        r.Value.Should().Be("HiBye");
+        r.Ok.Should().Be("HiBye");
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class ParallelTests
 
         // Assert
         r.IsSuccess.Should().BeTrue();
-        r.Value.Should().Be("12345");
+        r.Ok.Should().Be("12345");
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class ParallelTests
             .ParallelAsync(Task.FromResult(Result.Success("2")))
             .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Internal Server error."))))
             .ParallelAsync(Task.FromResult(Result.Success("4")))
-            .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Transient("Network unreachable."))))
+            .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Network unreachable."))))
             .BindAsync((a, b, c, d, e) =>
              {
                  calledFunction = true;
@@ -53,11 +53,13 @@ public class ParallelTests
 
         // Assert
         r.IsFailure.Should().BeTrue();
-        r.Errors.Count.Should().Be(2);
+        r.Error.Should().BeOfType<AggregateError>();
+        var aggregate = (AggregateError)r.Error;
+        aggregate.Errors.Should().HaveCount(2);
         calledFunction.Should().BeFalse();
-        r.Errors.Should().BeEquivalentTo(new List<Error>() {
+        aggregate.Errors.Should().BeEquivalentTo(new List<Error>() {
             Error.Unexpected("Internal Server error."),
-            Error.Transient("Network unreachable.")
+            Error.Unexpected("Network unreachable.")
         }, opt => opt.WithStrictOrdering());
     }
 }

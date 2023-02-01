@@ -5,60 +5,55 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 public static class ActionResultExtention
 {
-    public static ActionResult<T> ToActionResult<T>(this Result<T> result, ControllerBase controllerBase)
+    public static ActionResult<T> ToActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
     {
         if (result.IsSuccess)
-            return controllerBase.Ok(result.Value);
+            return controllerBase.Ok(result.Ok);
 
-        return ConvertToHttpError<T>(result.Errors, controllerBase);
+        return ConvertToHttpError<T>(result.Error, controllerBase);
     }
 
-    public static async Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
+    public static async Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T, Error>> resultTask, ControllerBase controllerBase)
     {
-        Result<T> result = await resultTask;
+        Result<T, Error> result = await resultTask;
 
         return result.ToActionResult(controllerBase);
     }
 
-    public static async ValueTask<ActionResult<T>> ToActionResultAsync<T>(this ValueTask<Result<T>> resultTask, ControllerBase controllerBase)
+    public static async ValueTask<ActionResult<T>> ToActionResultAsync<T>(this ValueTask<Result<T, Error>> resultTask, ControllerBase controllerBase)
     {
-        Result<T> result = await resultTask;
+        Result<T, Error> result = await resultTask;
 
         return result.ToActionResult(controllerBase);
     }
 
-    public static ActionResult<T> ToCreatedResult<T>(this Result<T> result, ControllerBase controller, string location)
+    public static ActionResult<T> ToCreatedResult<T>(this Result<T, Error> result, ControllerBase controller, string location)
     {
         if (result.IsSuccess)
-            return controller.Created(location, result.Value);
+            return controller.Created(location, result.Ok);
 
-        return ConvertToHttpError<T>(result.Errors, controller);
+        return ConvertToHttpError<T>(result.Error, controller);
     }
 
 
-    private static ActionResult<T> ConvertToHttpError<T>(ErrorList errors, ControllerBase controllerBase)
+    private static ActionResult<T> ConvertToHttpError<T>(Error error, ControllerBase controllerBase)
     {
-        var error = errors[0];
         return error switch
         {
-            NotFound => (ActionResult<T>)controllerBase.NotFound(error),
-            Validation => ValidationErrors<T>(errors, controllerBase),
-            Conflict => (ActionResult<T>)controllerBase.Conflict(error),
-            Unauthorized => (ActionResult<T>)controllerBase.Unauthorized(error),
-            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Description),
-            Unexpected => (ActionResult<T>)controllerBase.StatusCode(500, error),
-            Transient => (ActionResult<T>)controllerBase.StatusCode(500, error),
+            NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
+            ValidationError validation => ValidationErrors<T>(validation, controllerBase),
+            ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
+            UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
+            ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
+            UnexpectedError => (ActionResult<T>)controllerBase.StatusCode(500, error),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
     }
-    private static ActionResult<T> ValidationErrors<T>(ErrorList errors, ControllerBase controllerBase)
+    private static ActionResult<T> ValidationErrors<T>(ValidationError validation, ControllerBase controllerBase)
     {
         ModelStateDictionary modelState = new();
-        foreach (var error in errors)
-        {
-            if (error is Validation validation)
-                modelState.AddModelError(validation.FieldName, validation.Description);
-        }
+        foreach (var error in validation.Errors)
+            modelState.AddModelError(validation.Message, error.FieldName);
 
         return controllerBase.ValidationProblem(modelState);
     }

@@ -14,7 +14,7 @@ public class ValidationExample
             .Combine(EmailAddress.Create("xavier@somewhereelse.com"))
             .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
-        actual.Value.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
+        actual.Ok.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
     }
 
     [Fact]
@@ -32,10 +32,13 @@ public class ValidationExample
             });
 
         actual.IsFailure.Should().BeTrue();
-        actual.Errors.Should().HaveCount(2);
-        actual.Errors.Should().BeEquivalentTo(new ErrorList(
-            Error.Validation("Last Name cannot be empty", "lastName"),
-            Error.Validation("Email address is not valid", "email")));
+        var validationErrors = (ValidationError)actual.Error;
+        validationErrors.Errors.Should().HaveCount(2);
+        validationErrors.Errors.Should().BeEquivalentTo(new[]
+        {
+            Error.ValidationError("Last Name cannot be empty", "lastName"),
+            Error.ValidationError("Email address is not valid", "email")
+        });
     }
 
 }

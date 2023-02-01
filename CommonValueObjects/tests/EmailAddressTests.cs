@@ -34,6 +34,6 @@ public class EmailAddressTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<EmailAddress>();
+        result.Ok.Should().BeOfType<EmailAddress>();
     }
 }

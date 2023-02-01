@@ -8,13 +8,13 @@ public class FluentTests
     public void Can_create_user()
     {
         var rUser = User.Create(
-            FirstName.Create("John").Value,
-            LastName.Create("Doe").Value,
-            EmailAddress.Create("xavier@somewhere.com").Value,
+            FirstName.Create("John").Ok,
+            LastName.Create("Doe").Ok,
+            EmailAddress.Create("xavier@somewhere.com").Ok,
             "password");
 
         rUser.IsSuccess.Should().BeTrue();
-        var user = rUser.Value;
+        var user = rUser.Ok;
         user.FirstName.Value.Should().Be("John");
         user.LastName.Value.Should().Be("Doe");
         user.Email.Value.Should().Be("xavier@somewhere.com");
@@ -30,9 +30,9 @@ public class FluentTests
         EmailAddress email = default!;
         var expectedValidationErrors = new[]
         {
-            Error.Validation("'First Name' must not be empty.", "FirstName"),
-            Error.Validation("'Last Name' must not be empty.", "LastName"),
-            Error.Validation("'Email' must not be empty.", "Email")
+            Error.ValidationError("'First Name' must not be empty.", "FirstName"),
+            Error.ValidationError("'Last Name' must not be empty.", "LastName"),
+            Error.ValidationError("'Email' must not be empty.", "Email")
         };
 
         // Act
@@ -40,8 +40,9 @@ public class FluentTests
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
-        rUser.Errors.Should().HaveCount(3);
-        rUser.Errors.Should().BeEquivalentTo(expectedValidationErrors);
+        var validationErrors = (ValidationError)rUser.Error;
+        validationErrors.Errors.Should().HaveCount(3);
+        validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }
 
     [Fact]
@@ -50,12 +51,12 @@ public class FluentTests
         // Arrange
         FirstName firstName = default!;
         LastName lastName = default!;
-        EmailAddress email = EmailAddress.Create("xavier@somewhere.com").Value;
+        EmailAddress email = EmailAddress.Create("xavier@somewhere.com").Ok;
         var expectedValidationErrors = new[]
         {
-            Error.Validation("'First Name' must not be empty.", "FirstName"),
-            Error.Validation("'Last Name' must not be empty.","LastName" ),
-            Error.Validation("'Password' must not be empty.", "Password")
+            Error.ValidationError("'First Name' must not be empty.", "FirstName"),
+            Error.ValidationError("'Last Name' must not be empty.","LastName" ),
+            Error.ValidationError("'Password' must not be empty.", "Password")
         };
 
         // Act
@@ -63,7 +64,8 @@ public class FluentTests
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
-        rUser.Errors.Should().HaveCount(3);
-        rUser.Errors.Should().BeEquivalentTo(expectedValidationErrors);
+        var validationErrors = (ValidationError)rUser.Error;
+        validationErrors.Errors.Should().HaveCount(3);
+        validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }
 }

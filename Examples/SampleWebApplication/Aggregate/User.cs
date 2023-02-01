@@ -9,7 +9,7 @@ public class User : AggregateRoot<UserId>
     public EmailAddress Email { get; }
     public string Password { get; }
 
-    public static Result<User> Create(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User, Error> Create(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
         var user = new User(firstName, lastName, email, password);
         return s_validator.ValidateToResult(user);

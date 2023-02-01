@@ -13,7 +13,7 @@ public static partial class ResultExtensions
 
 <#
   void WriteT1Values(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t1.Value.Item{i}")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t1.Ok.Item{i}")));
   }
   
   void WriteIsFailure(int n) {
@@ -21,45 +21,38 @@ public static partial class ResultExtensions
   }
 
   void WriteResultT(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Result<T{i}> t{i}")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Result<T{i}, Err> t{i}")));
   }
 
   void WriteAddFailure(int n) {
-    WriteLine("if (t1.IsFailure) errors.AddRange(t1.Errors);");
+    WriteLine("if (t1.IsFailure) error.Combine(t1.Error);");
     for(var i=2; i <= n; i++)
-        WriteLine($"            if (t{i}.IsFailure) errors.AddRange(t{i}.Errors);");
+        WriteLine($"        if (t{i}.IsFailure) error = error.Combine(t{i}.Error);");
   }
 
   void WriteTValues(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t{i}.Value")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t{i}.Ok")));
   }
 
   for(var i = 3; i <=9; i++) { 
 #>
-    public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(this Result<(<# WriteTs(i - 1); #>)> t1, Result<<# Write("T" + i); #>> tc)
+    public static Result<(<# WriteTs(i); #>), Err> Combine<<# WriteTs(i); #>>(
+      this Result<(<# WriteTs(i - 1); #>), Err> t1, Result<<# Write("T" + i); #>, Err> tc)
     {
-        if (t1.IsFailure || tc.IsFailure)
-        {
-            var errors = new ErrorList();
-            if (t1.IsFailure)
-                errors.AddRange(t1.Errors);
-            if (tc.IsFailure)
-                errors.AddRange(tc.Errors);
-            return Result.Failure<(<# WriteTs(i); #>)>(errors);
-        }
-
-        return Result.Success((<# WriteT1Values(i - 1); #>, tc.Value));
+        Err? error = null;
+        if (t1.IsFailure) error = error.Combine(t1.Error);
+        if (tc.IsFailure) error = error.Combine(tc.Error);
+        if (error is not null) return Result.Failure<(<# WriteTs(i); #>), Err>(error);
+        return Result.Success((<# WriteT1Values(i - 1); #>, tc.Ok));
     }
 
-    public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(this <# WriteResultT(i); #>)
+    public static Result<(<# WriteTs(i); #>), Err> Combine<<# WriteTs(i); #>>(
+       this <# WriteResultT(i); #>)
     {
-        if (<# WriteIsFailure(i); #>)
-        {
-            var errors = new ErrorList();
-            <# WriteAddFailure(i); #>
-            return Result.Failure<(<# WriteTs(i); #>)>(errors);
-        }
+        Err? error = null;
+        <# WriteAddFailure(i); #>
 
+        if (error is not null) return Result.Failure<(<# WriteTs(i); #>)>(error);
         return Result.Success((<# WriteTValues(i); #>));
     }
 

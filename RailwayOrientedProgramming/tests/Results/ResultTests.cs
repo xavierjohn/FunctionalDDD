@@ -10,7 +10,7 @@ public class ResultTests
         var result = Result.Success("Hello");
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Hello");
+        result.Ok.Should().Be("Hello");
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class ResultTests
         var result = await Result.FailureIfAsync(() => Task.FromResult(false), "Hello", Error.Unexpected(string.Empty));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Hello");
+        result.Ok.Should().Be("Hello");
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class ResultTests
         var result = Result.FailureIf(false, val, Error.Unexpected(string.Empty));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(val);
+        result.Ok.Should().Be(val);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class ResultTests
         var result = Result.Success((DateTime?)null);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(null);
+        result.Ok.Should().Be(null);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public class ResultTests
         var result = Result.Success(maybe);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Maybe.None<DateTime>());
+        result.Ok.Should().Be(Maybe.None<DateTime>());
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public class ResultTests
         var result = Result.Success(maybe);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Maybe.None<string>());
+        result.Ok.Should().Be(Maybe.None<string>());
     }
 
     [Fact]
@@ -132,9 +132,9 @@ public class ResultTests
         var hello = "Hello";
 
         // Act
-        Result<string> result = hello;
+        Result<string, Error> result = hello;
 
         // Assert
-        result.Value.Should().Be(hello);
+        result.Ok.Should().Be(hello);
     }
 }
