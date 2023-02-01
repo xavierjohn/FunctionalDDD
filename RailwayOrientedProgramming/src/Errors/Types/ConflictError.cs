@@ -2,7 +2,7 @@
 
 public sealed class ConflictError : Error
 {
-    public ConflictError(string description, string code) : base(description, code)
+    public ConflictError(string message, string code) : base(message, code)
     {
     }
 

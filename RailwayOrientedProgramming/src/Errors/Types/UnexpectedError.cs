@@ -2,7 +2,7 @@
 
 public sealed class UnexpectedError : Error
 {
-    public UnexpectedError(string description, string code) : base(description, code)
+    public UnexpectedError(string message, string code) : base(message, code)
     {
     }
 }
