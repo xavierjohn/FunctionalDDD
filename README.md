@@ -5,14 +5,15 @@
 Functional-like programming with Domain Driven Design library is based on the 
 [CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions).
 
-I wanted the following
-- A reasonable error object that can be returned from functions.
-- A way to handle errors in a functional way.
-- A way to return multiple errors.
+With the following differences.
+
+- Uses an Error object instead of a string to represent errors.
+- Validation error can hold multiple validation errors.
+- Aggregate error can hold multiple errors.
 - A way to convert errors to HTTP errors.
 - Leverage fluent validation and use it to create domain objects.
 - A place to put common domain objects.
-- Railway Oriented programming with parallel tasks.
+- Ability to run parallel tasks.
     
  Let's look at a few examples:
  
@@ -33,12 +34,12 @@ I wanted the following
  The domain layer has the context so it converts `null` object to an error with `ToResultAsync`. 
  The followed error types have been predefined.
  
-- BadRequest (400)
+- Validation (400)
 - Unauthorized (401)
 - Forbidden (403)
 - NotFound (404)
-- Validation (400)
 - Conflict (409)
+- Aggregate (500)
 - Unexpected (500)
  
  The next step `EnsureAsync` fails if the predicate `customer.CanBePromoted` is false.
