@@ -44,7 +44,7 @@ public class AsyncUsageExamples
             .ToResultAsync(Err.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Err.Validation("Need to ask manager"))
             .TapErrorAsync(error => Log(error))
-            .OnFailureCompensateAsync(() => AskManagerAsync(id))
+            .BindErrorAsync(() => AskManagerAsync(id))
             .TapAsync(customer => Log("Manager approved promotion"))
             .TapAsync(customer => customer.PromoteAsync())
             .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
