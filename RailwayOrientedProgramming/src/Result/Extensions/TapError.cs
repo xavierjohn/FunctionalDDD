@@ -16,10 +16,10 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static Result<TOk, Err> TapError<TOk>(this Result<TOk, Err> result, Action<Errs<Err>> action)
+    public static Result<TOk, Err> TapError<TOk>(this Result<TOk, Err> result, Action<Err> action)
     {
         if (result.IsFailure)
-            action(result.Errs);
+            action(result.Error);
 
         return result;
     }
@@ -27,7 +27,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static async Task<Result<TOk, Err>> TapErrorAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Action<Errs<Err>> action)
+    public static async Task<Result<TOk, Err>> TapErrorAsync<TOk>(this Task<Result<TOk, Err>> resultTask, Action<Err> action)
     {
         Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
         return result.TapError(action);

@@ -53,7 +53,7 @@ public class AsyncUsageExamples
         result.Should().Be("Okay");
     }
 
-    static void Log(Errs<Err> message)
+    static void Log(Err error)
     {
     }
 

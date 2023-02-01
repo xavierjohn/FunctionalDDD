@@ -78,7 +78,7 @@ public class EnsureTests
         var sut = Task.FromResult(Result.Success<int?, Err>(null));
 
         var result = await sut.EnsureAsync(value => !value.HasValue,
-            value => Task.FromResult<Errs<Err>>(Err.Unexpected($"should be null but found {value}")));
+            value => Task.FromResult(Err.Unexpected($"should be null but found {value}")));
         result.Should().Be(sut.Result);
     }
 

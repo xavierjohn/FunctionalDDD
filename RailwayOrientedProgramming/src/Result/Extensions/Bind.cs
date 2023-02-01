@@ -8,7 +8,7 @@ public static partial class ResultExtensions
     public static Result<TResult, Err> Bind<TOk, TResult>(this Result<TOk, Err> result, Func<TOk, Result<TResult, Err>> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Errs);
+            return Result.Failure<TResult>(result.Error);
 
         return func(result.Ok);
     }
@@ -78,7 +78,7 @@ public static partial class ResultExtensions
     {
         var result = await resultTask;
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Errs);
+            return Result.Failure<TResult>(result.Error);
 
         var (args1, args2) = result.Ok;
         return func(args1, args2);

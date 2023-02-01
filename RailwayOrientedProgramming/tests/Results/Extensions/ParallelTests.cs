@@ -53,9 +53,11 @@ public class ParallelTests
 
         // Assert
         r.IsFailure.Should().BeTrue();
-        r.Errs.Count.Should().Be(2);
+        r.Error.Should().BeOfType<Aggregate>();
+        var aggregate = (Aggregate)r.Error;
+        aggregate.Errors.Should().HaveCount(2);
         calledFunction.Should().BeFalse();
-        r.Errs.Should().BeEquivalentTo(new List<Err>() {
+        aggregate.Errors.Should().BeEquivalentTo(new List<Err>() {
             Err.Unexpected("Internal Server error."),
             Err.Unexpected("Network unreachable.")
         }, opt => opt.WithStrictOrdering());

@@ -10,9 +10,10 @@ public static class FluentValidationExtension
             return Result.Success<T, Err>(value);
 
         var errors = validationResult.Errors
-            .Select(x => Err.Validation(x.ErrorMessage, x.PropertyName));
+            .Select(x => new Validation.ModelError(x.ErrorMessage, x.PropertyName))
+            .ToList();
 
-        return Result.Failure<T, Err>(new Errs<Err>(errors));
+        return Result.Failure<T, Err>(Err.Validation(errors));
     }
 
     public static Result<T, Err> ValidateToResult<T>(this global::FluentValidation.IValidator<T> validator, T value) =>

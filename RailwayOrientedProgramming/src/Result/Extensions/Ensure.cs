@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Err> Ensure<TOk>(this Result<TOk, Err> result, Func<bool> predicate, Errs<Err> errors)
+    public static Result<TOk, Err> Ensure<TOk>(this Result<TOk, Err> result, Func<bool> predicate, Err errors)
     {
         if (result.IsFailure)
             return result;
@@ -19,7 +19,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Err> Ensure<TOk>(this Result<TOk, Err> result, Func<TOk, bool> predicate, Errs<Err> errors)
+    public static Result<TOk, Err> Ensure<TOk>(this Result<TOk, Err> result, Func<TOk, bool> predicate, Err errors)
     {
         if (result.IsFailure)
             return result;
@@ -33,7 +33,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Err> Ensure<TOk>(this Result<TOk, Err> result, Func<TOk, bool> predicate, Func<TOk, Errs<Err>> errorPredicate)
+    public static Result<TOk, Err> Ensure<TOk>(this Result<TOk, Err> result, Func<TOk, bool> predicate, Func<TOk, Err> errorPredicate)
     {
         if (result.IsFailure)
             return result;

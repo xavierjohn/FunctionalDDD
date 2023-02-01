@@ -5,7 +5,7 @@ public static partial class AsyncResultExtensionsRightOperand
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<Task<bool>> predicate, Errs<Err> errorMessage)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<Task<bool>> predicate, Err errorMessage)
     {
         if (result.IsFailure)
             return result;
@@ -19,7 +19,7 @@ public static partial class AsyncResultExtensionsRightOperand
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<TOk, Task<bool>> predicate, Errs<Err> errorMessage)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<TOk, Task<bool>> predicate, Err errorMessage)
     {
         if (result.IsFailure)
             return result;
@@ -33,7 +33,7 @@ public static partial class AsyncResultExtensionsRightOperand
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<TOk, Task<bool>> predicate, Func<TOk, Errs<Err>> errorPredicate)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<TOk, Task<bool>> predicate, Func<TOk, Err> errorPredicate)
     {
         if (result.IsFailure)
             return result;
@@ -47,7 +47,7 @@ public static partial class AsyncResultExtensionsRightOperand
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<TOk, Task<bool>> predicate, Func<TOk, Task<Errs<Err>>> errorPredicate)
+    public static async Task<Result<TOk, Err>> EnsureAsync<TOk>(this Result<TOk, Err> result, Func<TOk, Task<bool>> predicate, Func<TOk, Task<Err>> errorPredicate)
     {
         if (result.IsFailure)
             return result;

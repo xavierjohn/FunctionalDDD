@@ -1,6 +1,8 @@
 ﻿namespace FunctionalDDD;
 
+using System.Collections.Generic;
 using System.Diagnostics;
+using static FunctionalDDD.Validation;
 
 [DebuggerDisplay("{Description}")]
 public class Err : IEquatable<Err>
@@ -31,6 +33,11 @@ public class Err : IEquatable<Err>
 
     public static Err Validation(string description, string fieldName = "", string code = "validation.error") =>
         new Validation(description, fieldName, code);
+
+    public static Err Validation(List<ModelError> modelErrors, string code = "validation.error") =>
+        new Validation(modelErrors, code);
+
+    public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
     public static Err Conflict(string description, string code = "conflict.error") =>
         new Conflict(description, code);

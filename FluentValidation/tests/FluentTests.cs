@@ -30,9 +30,9 @@ public class FluentTests
         EmailAddress email = default!;
         var expectedValidationErrors = new[]
         {
-            Err.Validation("'First Name' must not be empty.", "FirstName"),
-            Err.Validation("'Last Name' must not be empty.", "LastName"),
-            Err.Validation("'Email' must not be empty.", "Email")
+            Err.ValidationError("'First Name' must not be empty.", "FirstName"),
+            Err.ValidationError("'Last Name' must not be empty.", "LastName"),
+            Err.ValidationError("'Email' must not be empty.", "Email")
         };
 
         // Act
@@ -40,8 +40,9 @@ public class FluentTests
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
-        rUser.Errs.Should().HaveCount(3);
-        rUser.Errs.Should().BeEquivalentTo(expectedValidationErrors);
+        var validationErrors = (Validation)rUser.Error;
+        validationErrors.Errors.Should().HaveCount(3);
+        validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }
 
     [Fact]
@@ -53,9 +54,9 @@ public class FluentTests
         EmailAddress email = EmailAddress.Create("xavier@somewhere.com").Ok;
         var expectedValidationErrors = new[]
         {
-            Err.Validation("'First Name' must not be empty.", "FirstName"),
-            Err.Validation("'Last Name' must not be empty.","LastName" ),
-            Err.Validation("'Password' must not be empty.", "Password")
+            Err.ValidationError("'First Name' must not be empty.", "FirstName"),
+            Err.ValidationError("'Last Name' must not be empty.","LastName" ),
+            Err.ValidationError("'Password' must not be empty.", "Password")
         };
 
         // Act
@@ -63,7 +64,8 @@ public class FluentTests
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
-        rUser.Errs.Should().HaveCount(3);
-        rUser.Errs.Should().BeEquivalentTo(expectedValidationErrors);
+        var validationErrors = (Validation)rUser.Error;
+        validationErrors.Errors.Should().HaveCount(3);
+        validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }
 }
