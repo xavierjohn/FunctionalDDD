@@ -23,7 +23,7 @@ public class CombineTests
     {
         // Arrange
         var rHelloWorld = Result.Success("Hello")
-            .Combine(Result.Failure<string>(Err.Validation("Bad World", "key")))
+            .Combine(Result.Failure<string>(Error.Validation("Bad World", "key")))
             .Bind((hello, world) => Result.Success($"{hello} {world}"));
 
         // Act
@@ -58,8 +58,8 @@ public class CombineTests
     {
         // Arrange
         var rHelloWorld = Result.Success("Hello")
-            .Combine(Result.Failure<string>(Err.Validation("Bad First", "First")))
-            .Combine(Result.Failure<string>(Err.Validation("Bad Last", "Last")))
+            .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
+            .Combine(Result.Failure<string>(Error.Validation("Bad Last", "Last")))
             .Bind((hello, first, last) => Result.Success($"{hello} {first} {last}"));
 
         // Act
@@ -109,7 +109,7 @@ public class CombineTests
             .Combine(Result.Success("6"))
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
-            .Combine(Result.Failure<string>(Err.Validation("Bad 9")))
+            .Combine(Result.Failure<string>(Error.Validation("Bad 9")))
             .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
@@ -128,13 +128,13 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Success("1")
             .Combine(Result.Success("2"))
-            .Combine(Result.Failure<string>(Err.Validation("Bad 3")))
+            .Combine(Result.Failure<string>(Error.Validation("Bad 3")))
             .Combine(Result.Success("4"))
             .Combine(Result.Success("5"))
             .Combine(Result.Success("6"))
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
-            .Combine(Result.Failure<string>(Err.Validation("Bad 9")))
+            .Combine(Result.Failure<string>(Error.Validation("Bad 9")))
             .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act

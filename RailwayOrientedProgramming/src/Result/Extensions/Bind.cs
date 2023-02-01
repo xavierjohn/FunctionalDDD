@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<TResult, Err> Bind<TOk, TResult>(this Result<TOk, Err> result, Func<TOk, Result<TResult, Err>> func)
+    public static Result<TResult, Error> Bind<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, Result<TResult, Error>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -16,7 +16,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Task<Result<TResult, Err>> BindAsync<TOk, TResult>(this Result<TOk, Err> result, Func<TOk, Task<Result<TResult, Err>>> func)
+    public static Task<Result<TResult, Error>> BindAsync<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, Task<Result<TResult, Error>>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error).AsCompletedTask();
@@ -27,43 +27,43 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async Task<Result<TResult, Err>> BindAsync<TOk, TResult>(this Task<Result<TOk, Err>> resultTask, Func<TOk, Task<Result<TResult, Err>>> func)
+    public static async Task<Result<TResult, Error>> BindAsync<TOk, TResult>(this Task<Result<TOk, Error>> resultTask, Func<TOk, Task<Result<TResult, Error>>> func)
     {
-        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
         return await result.BindAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async Task<Result<TResult, Err>> BindAsync<TOk, TResult>(this Task<Result<TOk, Err>> resultTask, Func<TOk, Result<TResult, Err>> func)
+    public static async Task<Result<TResult, Error>> BindAsync<TOk, TResult>(this Task<Result<TOk, Error>> resultTask, Func<TOk, Result<TResult, Error>> func)
     {
-        Result<TOk, Err> result = await resultTask.ConfigureAwait(false);
+        Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
     }
 
     /// <summary>
     ///     Selects result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async ValueTask<Result<TResult, Err>> BindAsync<TOk, TResult>(this ValueTask<Result<TOk, Err>> resultTask, Func<TOk, ValueTask<Result<TResult, Err>>> valueTask)
+    public static async ValueTask<Result<TResult, Error>> BindAsync<TOk, TResult>(this ValueTask<Result<TOk, Error>> resultTask, Func<TOk, ValueTask<Result<TResult, Error>>> valueTask)
     {
-        Result<TOk, Err> result = await resultTask;
+        Result<TOk, Error> result = await resultTask;
         return await result.BindAsync(valueTask);
     }
 
     /// <summary>
     ///     Selects result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async ValueTask<Result<TResult, Err>> BindAsync<TOk, TResult>(this ValueTask<Result<TOk, Err>> resultTask, Func<TOk, Result<TResult, Err>> func)
+    public static async ValueTask<Result<TResult, Error>> BindAsync<TOk, TResult>(this ValueTask<Result<TOk, Error>> resultTask, Func<TOk, Result<TResult, Error>> func)
     {
-        Result<TOk, Err> result = await resultTask;
+        Result<TOk, Error> result = await resultTask;
         return result.Bind(func);
     }
 
     /// <summary>
     ///     Selects result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static ValueTask<Result<TResult, Err>> BindAsync<TOk, TResult>(this Result<TOk, Err> result, Func<TOk, ValueTask<Result<TResult, Err>>> valueTask)
+    public static ValueTask<Result<TResult, Error>> BindAsync<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, ValueTask<Result<TResult, Error>>> valueTask)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
@@ -74,7 +74,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static async Task<Result<TResult, Err>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2), Err>> resultTask, Func<T1, T2, Result<TResult, Err>> func)
+    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2), Error>> resultTask, Func<T1, T2, Result<TResult, Error>> func)
     {
         var result = await resultTask;
         if (result.IsFailure)

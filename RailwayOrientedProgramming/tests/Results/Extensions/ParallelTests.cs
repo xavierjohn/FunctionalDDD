@@ -42,9 +42,9 @@ public class ParallelTests
         // Act
         var r = await Task.FromResult(Result.Success("1"))
             .ParallelAsync(Task.FromResult(Result.Success("2")))
-            .ParallelAsync(Task.FromResult(Result.Failure<string>(Err.Unexpected("Internal Server error."))))
+            .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Internal Server error."))))
             .ParallelAsync(Task.FromResult(Result.Success("4")))
-            .ParallelAsync(Task.FromResult(Result.Failure<string>(Err.Unexpected("Network unreachable."))))
+            .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Network unreachable."))))
             .BindAsync((a, b, c, d, e) =>
              {
                  calledFunction = true;
@@ -57,9 +57,9 @@ public class ParallelTests
         var aggregate = (Aggregate)r.Error;
         aggregate.Errors.Should().HaveCount(2);
         calledFunction.Should().BeFalse();
-        aggregate.Errors.Should().BeEquivalentTo(new List<Err>() {
-            Err.Unexpected("Internal Server error."),
-            Err.Unexpected("Network unreachable.")
+        aggregate.Errors.Should().BeEquivalentTo(new List<Error>() {
+            Error.Unexpected("Internal Server error."),
+            Error.Unexpected("Network unreachable.")
         }, opt => opt.WithStrictOrdering());
     }
 }

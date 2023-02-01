@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD;
 
-public sealed class Unauthorized : Err
+public sealed class Unauthorized : Error
 {
     public Unauthorized(string description, string code) : base(description, code)
     {

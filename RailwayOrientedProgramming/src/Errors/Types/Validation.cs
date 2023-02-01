@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD;
 
-public sealed class Validation : Err
+public sealed class Validation : Error
 {
     public record ModelError(string Message, string FieldName);
 

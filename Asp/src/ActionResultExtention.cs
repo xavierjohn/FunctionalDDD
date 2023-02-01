@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 public static class ActionResultExtention
 {
-    public static ActionResult<T> ToActionResult<T>(this Result<T, Err> result, ControllerBase controllerBase)
+    public static ActionResult<T> ToActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
     {
         if (result.IsSuccess)
             return controllerBase.Ok(result.Ok);
@@ -13,21 +13,21 @@ public static class ActionResultExtention
         return ConvertToHttpError<T>(result.Error, controllerBase);
     }
 
-    public static async Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T, Err>> resultTask, ControllerBase controllerBase)
+    public static async Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T, Error>> resultTask, ControllerBase controllerBase)
     {
-        Result<T, Err> result = await resultTask;
+        Result<T, Error> result = await resultTask;
 
         return result.ToActionResult(controllerBase);
     }
 
-    public static async ValueTask<ActionResult<T>> ToActionResultAsync<T>(this ValueTask<Result<T, Err>> resultTask, ControllerBase controllerBase)
+    public static async ValueTask<ActionResult<T>> ToActionResultAsync<T>(this ValueTask<Result<T, Error>> resultTask, ControllerBase controllerBase)
     {
-        Result<T, Err> result = await resultTask;
+        Result<T, Error> result = await resultTask;
 
         return result.ToActionResult(controllerBase);
     }
 
-    public static ActionResult<T> ToCreatedResult<T>(this Result<T, Err> result, ControllerBase controller, string location)
+    public static ActionResult<T> ToCreatedResult<T>(this Result<T, Error> result, ControllerBase controller, string location)
     {
         if (result.IsSuccess)
             return controller.Created(location, result.Ok);
@@ -36,7 +36,7 @@ public static class ActionResultExtention
     }
 
 
-    private static ActionResult<T> ConvertToHttpError<T>(Err error, ControllerBase controllerBase)
+    private static ActionResult<T> ConvertToHttpError<T>(Error error, ControllerBase controllerBase)
     {
         return error switch
         {
@@ -44,7 +44,7 @@ public static class ActionResultExtention
             Validation validation => ValidationErrors<T>(validation, controllerBase),
             Conflict => (ActionResult<T>)controllerBase.Conflict(error),
             Unauthorized => (ActionResult<T>)controllerBase.Unauthorized(error),
-            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Description),
+            Forbidden => (ActionResult<T>)controllerBase.Forbid(error.Message),
             Unexpected => (ActionResult<T>)controllerBase.StatusCode(500, error),
             _ => throw new NotImplementedException($"Unknown error {error.Code}"),
         };
@@ -53,7 +53,7 @@ public static class ActionResultExtention
     {
         ModelStateDictionary modelState = new();
         foreach (var error in validation.Errors)
-            modelState.AddModelError(validation.Description, error.FieldName);
+            modelState.AddModelError(validation.Message, error.FieldName);
 
         return controllerBase.ValidationProblem(modelState);
     }

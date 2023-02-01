@@ -30,9 +30,9 @@ public class FluentTests
         EmailAddress email = default!;
         var expectedValidationErrors = new[]
         {
-            Err.ValidationError("'First Name' must not be empty.", "FirstName"),
-            Err.ValidationError("'Last Name' must not be empty.", "LastName"),
-            Err.ValidationError("'Email' must not be empty.", "Email")
+            Error.ValidationError("'First Name' must not be empty.", "FirstName"),
+            Error.ValidationError("'Last Name' must not be empty.", "LastName"),
+            Error.ValidationError("'Email' must not be empty.", "Email")
         };
 
         // Act
@@ -54,9 +54,9 @@ public class FluentTests
         EmailAddress email = EmailAddress.Create("xavier@somewhere.com").Ok;
         var expectedValidationErrors = new[]
         {
-            Err.ValidationError("'First Name' must not be empty.", "FirstName"),
-            Err.ValidationError("'Last Name' must not be empty.","LastName" ),
-            Err.ValidationError("'Password' must not be empty.", "Password")
+            Error.ValidationError("'First Name' must not be empty.", "FirstName"),
+            Error.ValidationError("'Last Name' must not be empty.","LastName" ),
+            Error.ValidationError("'Password' must not be empty.", "Password")
         };
 
         // Act

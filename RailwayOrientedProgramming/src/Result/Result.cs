@@ -6,13 +6,13 @@ public partial struct Result
     /// <summary>
     ///     Creates a success result containing the given value.
     /// </summary>
-    public static Result<TOk, Err> Success<TOk>(TOk ok) =>
+    public static Result<TOk, Error> Success<TOk>(TOk ok) =>
         new(false, ok, default);
 
     /// <summary>
     ///     Creates a failure result with the given error.
     /// </summary>
-    public static Result<TOk, Err> Failure<TOk>(Err error) =>
+    public static Result<TOk, Error> Failure<TOk>(Error error) =>
         new(true, default, error);
 
     /// <summary>
@@ -30,24 +30,24 @@ public partial struct Result
     /// <summary>
     ///     Creates a result whose success/failure reflects the supplied condition. Opposite of FailureIf().
     /// </summary>
-    public static Result<TOk, Err> SuccessIf<TOk>(bool isSuccess, in TOk value, Err error)
+    public static Result<TOk, Error> SuccessIf<TOk>(bool isSuccess, in TOk value, Error error)
     {
         return isSuccess
-            ? Success<TOk, Err>(value)
-            : Failure<TOk, Err>(error);
+            ? Success<TOk, Error>(value)
+            : Failure<TOk, Error>(error);
 
     }
 
     /// <summary>
     ///     Creates a result whose success/failure reflects the supplied condition. Opposite of SuccessIf().
     /// </summary>
-    public static Result<TOk, Err> FailureIf<TOk>(bool isFailure, TOk value, Err error)
+    public static Result<TOk, Error> FailureIf<TOk>(bool isFailure, TOk value, Error error)
         => SuccessIf(!isFailure, value, error);
 
     /// <summary>
     ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of SuccessIf().
     /// </summary>
-    public static Result<TOk, Err> FailureIf<TOk>(Func<bool> failurePredicate, in TOk value, Err error)
+    public static Result<TOk, Error> FailureIf<TOk>(Func<bool> failurePredicate, in TOk value, Error error)
         => SuccessIf(!failurePredicate(), value, error);
 
     /// <summary>
@@ -76,7 +76,7 @@ public partial struct Result
     /// <summary>
     ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of FailureIf().
     /// </summary>
-    public static async Task<Result<TOk, Err>> SuccessIfAsync<TOk>(Func<Task<bool>> predicate, TOk value, Err error)
+    public static async Task<Result<TOk, Error>> SuccessIfAsync<TOk>(Func<Task<bool>> predicate, TOk value, Error error)
     {
         bool isSuccess = await predicate().ConfigureAwait(false);
         return SuccessIf(isSuccess, value, error);
@@ -85,7 +85,7 @@ public partial struct Result
     /// <summary>
     ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of SuccessIf().
     /// </summary>
-    public static async Task<Result<TOk, Err>> FailureIfAsync<TOk>(Func<Task<bool>> failurePredicate, TOk value, Err error)
+    public static async Task<Result<TOk, Error>> FailureIfAsync<TOk>(Func<Task<bool>> failurePredicate, TOk value, Error error)
     {
         bool isFailure = await failurePredicate().ConfigureAwait(false);
         return SuccessIf(!isFailure, value, error);
