@@ -1,0 +1,32 @@
+
+POST {{host}}/authentication/register
+Content-Type: application/json
+
+{
+    "firstName":"Xavier",
+    "lastName":"John",
+    "email":"someone@somewhere.com",
+    "password":"Amiko1232!"
+}
+
+###
+POST {{host}}/authentication/registerCreated
+Content-Type: application/json
+
+{
+    "firstName":"Xavier",
+    "lastName":"John",
+    "email":"someone@somewhere.com",
+    "password":"Amiko1232!"
+}
+
+###
+POST {{host}}/authentication/registerAccepted
+Content-Type: application/json
+
+{
+    "firstName":"Xavier",
+    "lastName":"John",
+    "email":"someone@somewhere.com",
+    "password":"Amiko1232!"
+}
