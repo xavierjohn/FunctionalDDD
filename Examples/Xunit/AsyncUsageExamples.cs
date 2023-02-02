@@ -13,7 +13,7 @@ public class AsyncUsageExamples
         var result = await GetByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .TapAsync(customer => customer.Promote())
+            .BindAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
 
@@ -28,7 +28,7 @@ public class AsyncUsageExamples
         var result = await GetByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .TapAsync(customer => customer.PromoteAsync())
+            .BindAsync(customer => customer.PromoteAsync())
             .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
 
@@ -43,10 +43,10 @@ public class AsyncUsageExamples
         var result = await GetByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .TapErrorAsync(error => Log(error))
+            .BindErrorAsync(error => Log(error))
             .BindErrorAsync(() => AskManagerAsync(id))
-            .TapAsync(customer => Log("Manager approved promotion"))
-            .TapAsync(customer => customer.PromoteAsync())
+            .BindAsync(customer => Log("Manager approved promotion"))
+            .BindAsync(customer => customer.PromoteAsync())
             .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
 
