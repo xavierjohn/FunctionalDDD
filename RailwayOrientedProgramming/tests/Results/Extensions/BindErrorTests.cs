@@ -2,7 +2,7 @@
 
 using FunctionalDDD;
 
-public class OnFailureCompensateTests
+public class BindErrorTests
 {
     bool _compensatingFunctionCalled;
 
