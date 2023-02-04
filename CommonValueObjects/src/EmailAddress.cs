@@ -6,7 +6,7 @@ public partial class EmailAddress : SimpleValueObject<string>
 {
     private EmailAddress(string value) : base(value) { }
 
-    public static Result<EmailAddress, Error> Create(string emailString, string? fieldName = null)
+    public static Result<EmailAddress, Error> New(string emailString, string? fieldName = null)
     {
         if (emailString != null)
         {

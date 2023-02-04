@@ -11,7 +11,7 @@ public class RequiredGuid_T_Tests
     [Fact]
     public void Cannot_create_empty_RequiredGuid()
     {
-        var guidId1 = MyGuidId.Create(default);
+        var guidId1 = MyGuidId.New(default);
         guidId1.IsError.Should().BeTrue();
         guidId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)guidId1.Error;
@@ -24,7 +24,7 @@ public class RequiredGuid_T_Tests
     public void Can_create_RequiredGuid()
     {
         var str = Guid.NewGuid().ToString();
-        var guidId1 = MyGuidId.Create(Guid.Parse(str));
+        var guidId1 = MyGuidId.New(Guid.Parse(str));
         guidId1.IsOk.Should().BeTrue();
         guidId1.Ok.Should().BeOfType<MyGuidId>();
         guidId1.Ok.Value.Should().Be(Guid.Parse(str));
@@ -33,8 +33,8 @@ public class RequiredGuid_T_Tests
     [Fact]
     public void Two_RequiredGuid_with_different_value_should_be__not_equal()
     {
-        var rGuidsIds = MyGuidId.Create(Guid.NewGuid())
-            .Combine(MyGuidId.Create(Guid.NewGuid()));
+        var rGuidsIds = MyGuidId.New(Guid.NewGuid())
+            .Combine(MyGuidId.New(Guid.NewGuid()));
 
         rGuidsIds.IsOk.Should().BeTrue();
         (var guidId1, var guidId2) = rGuidsIds.Ok;
@@ -45,8 +45,8 @@ public class RequiredGuid_T_Tests
     public void Two_RequiredGuid_with_same_value_should_be_equal()
     {
         var myGuid = Guid.NewGuid();
-        var rGuidsIds = MyGuidId.Create(myGuid)
-            .Combine(MyGuidId.Create(myGuid));
+        var rGuidsIds = MyGuidId.New(myGuid)
+            .Combine(MyGuidId.New(myGuid));
 
         rGuidsIds.IsOk.Should().BeTrue();
         (var guidId1, var guidId2) = rGuidsIds.Ok;
@@ -58,7 +58,7 @@ public class RequiredGuid_T_Tests
     {
         // Arrange
         Guid myGuid = Guid.NewGuid();
-        MyGuidId myGuidId1 = MyGuidId.Create(myGuid).Ok;
+        MyGuidId myGuidId1 = MyGuidId.New(myGuid).Ok;
 
         // Act
         Guid primGuid = myGuidId1;
