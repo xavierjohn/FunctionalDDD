@@ -24,7 +24,7 @@ With the following differences.
        .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
        .TapAsync(customer => customer.Promote())
        .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-       .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+       .UnwrapAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
  ```
 
  
@@ -48,7 +48,7 @@ With the following differences.
  
  `IfOkAsync` is used to call functions that returns `Result` and the return value is important.
  
- `FinallyAsync` is used to return a value. It is used to convert `Result` to a value. It get called in success and failed cases.
+ `UnwrapAsync` is used to return a value. It is used to convert `Result` to a value. It get called in success and failed cases.
 
  ### Example 2 Validation
  ```csharp

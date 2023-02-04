@@ -15,7 +15,7 @@ public class AsyncUsageExamples
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .IfOkAsync(customer => customer.Promote())
             .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+            .UnwrapAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
 
         result.Should().Be("Okay");
     }
@@ -30,7 +30,7 @@ public class AsyncUsageExamples
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .IfOkAsync(customer => customer.PromoteAsync())
             .IfOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+            .UnwrapAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
 
         result.Should().Be("Okay");
     }
@@ -48,7 +48,7 @@ public class AsyncUsageExamples
             .IfOkAsync(customer => Log("Manager approved promotion"))
             .IfOkAsync(customer => customer.PromoteAsync())
             .IfOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+            .UnwrapAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
 
         result.Should().Be("Okay");
     }
