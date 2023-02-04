@@ -34,9 +34,9 @@ With the following differences.
  If `Maybe<Customer>` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted. 
  If not return a `Validation` error.
  
- If Result is `Ok`, then `IfOkAsync` will execute the `Promote` method and then send an email.
+ If there is no error, `IfOkAsync` will execute the `Promote` method and then send an email.
 
- Finally `UnwrapAsync` will return a string. If the result is `Ok` then it will return "Okay" otherwise it will return the error message.
+ Finally `UnwrapAsync` will call the given functions with underlying object or error.
  
 
  ### Example 2 Validation
@@ -48,7 +48,7 @@ With the following differences.
     .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 
- `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects are `Failure`.
+ `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects have failed.
  
  ### Example 3 Fluent Validation
  ```csharp
@@ -84,7 +84,8 @@ With the following differences.
     };
 }
  ```
-
+ `InlineValidator` does the [FluentValidation](https://docs.fluentvalidation.net)
+ 
  Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more examples.
 
  ## Documentation
