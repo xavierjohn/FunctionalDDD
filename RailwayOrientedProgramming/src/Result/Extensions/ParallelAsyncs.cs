@@ -10,12 +10,12 @@ public static partial class ResultExtensions
         Task<Result<T3, Error>> task
         ) => (tasks.Item1, tasks.Item2, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>) tasks,
         Func<T1, T2, T3, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result).IfOk(func);
     }
 
     public static (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>) ParallelAsync<T1, T2, T3, T4>(
@@ -23,12 +23,12 @@ public static partial class ResultExtensions
         Task<Result<T4, Error>> task
         ) => (tasks.Item1, tasks.Item2, tasks.Item3, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, T4, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, T4, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>) tasks,
         Func<T1, T2, T3, T4, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result).IfOk(func);
     }
 
     public static (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>) ParallelAsync<T1, T2, T3, T4, T5>(
@@ -36,12 +36,12 @@ public static partial class ResultExtensions
         Task<Result<T5, Error>> task
         ) => (tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, T4, T5, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, T4, T5, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>) tasks,
         Func<T1, T2, T3, T4, T5, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result).IfOk(func);
     }
 
     public static (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>) ParallelAsync<T1, T2, T3, T4, T5, T6>(
@@ -49,12 +49,12 @@ public static partial class ResultExtensions
         Task<Result<T6, Error>> task
         ) => (tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, T4, T5, T6, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, T4, T5, T6, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>) tasks,
         Func<T1, T2, T3, T4, T5, T6, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result).IfOk(func);
     }
 
     public static (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>, Task<Result<T7, Error>>) ParallelAsync<T1, T2, T3, T4, T5, T6, T7>(
@@ -62,12 +62,12 @@ public static partial class ResultExtensions
         Task<Result<T7, Error>> task
         ) => (tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, T4, T5, T6, T7, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, T4, T5, T6, T7, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>, Task<Result<T7, Error>>) tasks,
         Func<T1, T2, T3, T4, T5, T6, T7, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6, tasks.Item7);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result, tasks.Item7.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result, tasks.Item7.Result).IfOk(func);
     }
 
     public static (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>, Task<Result<T7, Error>>, Task<Result<T8, Error>>) ParallelAsync<T1, T2, T3, T4, T5, T6, T7, T8>(
@@ -75,12 +75,12 @@ public static partial class ResultExtensions
         Task<Result<T8, Error>> task
         ) => (tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6, tasks.Item7, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>, Task<Result<T7, Error>>, Task<Result<T8, Error>>) tasks,
         Func<T1, T2, T3, T4, T5, T6, T7, T8, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6, tasks.Item7, tasks.Item8);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result, tasks.Item7.Result, tasks.Item8.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result, tasks.Item7.Result, tasks.Item8.Result).IfOk(func);
     }
 
     public static (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>, Task<Result<T7, Error>>, Task<Result<T8, Error>>, Task<Result<T9, Error>>) ParallelAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
@@ -88,12 +88,12 @@ public static partial class ResultExtensions
         Task<Result<T9, Error>> task
         ) => (tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6, tasks.Item7, tasks.Item8, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(
         this (Task<Result<T1, Error>>, Task<Result<T2, Error>>, Task<Result<T3, Error>>, Task<Result<T4, Error>>, Task<Result<T5, Error>>, Task<Result<T6, Error>>, Task<Result<T7, Error>>, Task<Result<T8, Error>>, Task<Result<T9, Error>>) tasks,
         Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2, tasks.Item3, tasks.Item4, tasks.Item5, tasks.Item6, tasks.Item7, tasks.Item8, tasks.Item9);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result, tasks.Item7.Result, tasks.Item8.Result, tasks.Item9.Result).Bind(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result, tasks.Item3.Result, tasks.Item4.Result, tasks.Item5.Result, tasks.Item6.Result, tasks.Item7.Result, tasks.Item8.Result, tasks.Item9.Result).IfOk(func);
     }
 
 }

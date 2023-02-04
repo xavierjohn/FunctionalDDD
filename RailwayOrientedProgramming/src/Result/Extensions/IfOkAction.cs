@@ -5,9 +5,9 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static Result<TOk, Error> BindError<TOk>(this Result<TOk, Error> result, Action action)
+    public static Result<TOk, Error> IfOk<TOk>(this Result<TOk, Error> result, Action action)
     {
-        if (result.IsFailure)
+        if (result.IsOk)
             action();
 
         return result;
@@ -16,10 +16,10 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static Result<TOk, Error> BindError<TOk>(this Result<TOk, Error> result, Action<Error> action)
+    public static Result<TOk, Error> IfOk<TOk>(this Result<TOk, Error> result, Action<TOk> action)
     {
-        if (result.IsFailure)
-            action(result.Error);
+        if (result.IsOk)
+            action(result.Ok);
 
         return result;
     }
@@ -27,9 +27,9 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static async Task<Result<TOk, Error>> BindErrorAsync<TOk>(this Task<Result<TOk, Error>> resultTask, Action<Error> action)
+    public static async Task<Result<TOk, Error>> IfOkAsync<TOk>(this Task<Result<TOk, Error>> resultTask, Action<TOk> action)
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
-        return result.BindError(action);
+        return result.IfOk(action);
     }
 }

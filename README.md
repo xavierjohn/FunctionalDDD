@@ -23,8 +23,8 @@ With the following differences.
        .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
        .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
        .TapAsync(customer => customer.Promote())
-       .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-       .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+       .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+       .UnwrapAsync(ok => "Okay", error => error.Message);
  ```
 
  
@@ -46,9 +46,9 @@ With the following differences.
  
  `TapAsync` is used to call functions that does not return `Result` or the return value is not important.
  
- `BindAsync` is used to call functions that returns `Result` and the return value is important.
+ `IfOkAsync` is used to call functions that returns `Result` and the return value is important.
  
- `FinallyAsync` is used to return a value. It is used to convert `Result` to a value. It get called in success and failed cases.
+ `UnwrapAsync` is used to return a value. It is used to convert `Result` to a value. It get called in success and failed cases.
 
  ### Example 2 Validation
  ```csharp
@@ -56,7 +56,7 @@ With the following differences.
             .Combine(FirstName.Create("Xavier"))
             .Combine(LastName.Create("John"))
             .Combine(EmailAddress.Create("xavier@somewhereelse.com"))
-            .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+            .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 
  `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects are `Failure`.

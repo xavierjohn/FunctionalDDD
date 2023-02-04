@@ -22,7 +22,7 @@ public class EnsureTests
         var result = sut.Ensure(() => false, Error.Unexpected("predicate failed"));
 
         result.Should().NotBe(sut);
-        result.IsFailure.Should().BeTrue();
+        result.IsError.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("predicate failed"));
     }
 
@@ -56,7 +56,7 @@ public class EnsureTests
         var result = await sut.EnsureAsync(() => Task.FromResult(false), Error.Unexpected("predicate problems"));
 
         result.Should().NotBe(sut);
-        result.IsFailure.Should().BeTrue();
+        result.IsError.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("predicate problems"));
     }
 
@@ -111,7 +111,7 @@ public class EnsureTests
         var result = sut.Ensure(i => false, Error.Unexpected("test error"));
 
         result.Should().NotBe(sut);
-        result.IsFailure.Should().BeTrue();
+        result.IsError.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("test error"));
     }
 
@@ -147,7 +147,7 @@ public class EnsureTests
         var result = await sut.EnsureAsync(i => Task.FromResult(false), Error.Unexpected("test ensure error"));
 
         result.Should().NotBe(sut);
-        result.IsFailure.Should().BeTrue();
+        result.IsError.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("test ensure error"));
     }
 
@@ -184,7 +184,7 @@ public class EnsureTests
         var result = await sut.EnsureAsync(l => Task.FromResult(false), Error.Unexpected("test ensure error"));
 
         result.Should().NotBe(sut);
-        result.IsFailure.Should().BeTrue();
+        result.IsError.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("test ensure error"));
     }
 
@@ -219,7 +219,7 @@ public class EnsureTests
 
         var result = initialResult.Ensure(() => Result.Success<string, Error>("Success message"));
 
-        result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded");
+        result.IsOk.Should().BeTrue("Initial result and predicate succeeded");
         result.Ok.Should().Be("Initial message");
     }
 
@@ -230,7 +230,7 @@ public class EnsureTests
 
         var result = initialResult.Ensure(() => Result.Failure<string, Error>(Error.Unexpected("Error message")));
 
-        result.IsSuccess.Should().BeFalse("Predicate is failure result");
+        result.IsOk.Should().BeFalse("Predicate is failure result");
         result.Error.Should().Be(Error.Unexpected("Error message"));
     }
 
@@ -241,7 +241,7 @@ public class EnsureTests
 
         var result = initialResult.Ensure(() => Result.Success<string, Error>("Success message"));
 
-        result.IsSuccess.Should().BeFalse("Initial result is failure result");
+        result.IsOk.Should().BeFalse("Initial result is failure result");
         result.Error.Should().Be(Error.Unexpected("Initial Error message"));
     }
 
@@ -252,7 +252,7 @@ public class EnsureTests
 
         var result = initialResult.Ensure(() => Result.Failure<string, Error>(Error.Unexpected("Error message")));
 
-        result.IsSuccess.Should().BeFalse("Initial result is failure result");
+        result.IsOk.Should().BeFalse("Initial result is failure result");
         result.Error.Should().Be(Error.Unexpected("Initial Error message"));
     }
 
@@ -263,7 +263,7 @@ public class EnsureTests
 
         var result = initialResult.Ensure(_ => Result.Failure<string, Error>(Error.Unexpected("Error Message")));
 
-        result.IsSuccess.Should().BeFalse("Predicate is failure result");
+        result.IsOk.Should().BeFalse("Predicate is failure result");
         result.Error.Should().Be(Error.Unexpected("Error Message"));
     }
 
@@ -274,7 +274,7 @@ public class EnsureTests
 
         var result = initialResult.Ensure(_ => Result.Success<string, Error>("Success Message"));
 
-        result.IsSuccess.Should().BeTrue("Initial result and predicate succeeded");
+        result.IsOk.Should().BeTrue("Initial result and predicate succeeded");
         ;
         result.Ok.Should().Be("Initial Success message");
     }

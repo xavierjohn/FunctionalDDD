@@ -12,7 +12,7 @@ public class ValidationExample
             .Combine(FirstName.Create("Xavier"))
             .Combine(LastName.Create("John"))
             .Combine(EmailAddress.Create("xavier@somewhereelse.com"))
-            .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+            .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
         actual.Ok.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
     }
@@ -25,13 +25,13 @@ public class ValidationExample
             .Combine(FirstName.Create("Xavier"))
             .Combine(LastName.Create(string.Empty))
             .Combine(EmailAddress.Create("xavier @ somewhereelse.com"))
-            .Bind((email, firstName, lastName, anotherEmail) =>
+            .IfOk((email, firstName, lastName, anotherEmail) =>
             {
                 true.Should().BeFalse("this code should not get executed");
                 return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));
             });
 
-        actual.IsFailure.Should().BeTrue();
+        actual.IsError.Should().BeTrue();
         var validationErrors = (ValidationError)actual.Error;
         validationErrors.Errors.Should().HaveCount(2);
         validationErrors.Errors.Should().BeEquivalentTo(new[]

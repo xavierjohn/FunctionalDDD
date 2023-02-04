@@ -12,7 +12,7 @@ public class AuthenticationController : ControllerBase
         FirstName.Create(request.firstName)
         .Combine(LastName.Create(request.lastName))
         .Combine(EmailAddress.Create(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.password))
+        .IfOk((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.password))
         .ToOkActionResult(this);
 
     [HttpPost("[action]")]
@@ -20,8 +20,8 @@ public class AuthenticationController : ControllerBase
         FirstName.Create(request.firstName)
         .Combine(LastName.Create(request.lastName))
         .Combine(EmailAddress.Create(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.password))
-        .Finally(result => result.IsSuccess
+        .IfOk((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.password))
+        .Unwrap(result => result.IsOk
             ? CreatedAtAction("Get", new { name = result.Ok.FirstName }, result.Ok)
             : result.ToErrorActionResult(this));
 
@@ -30,8 +30,8 @@ public class AuthenticationController : ControllerBase
         FirstName.Create(request.firstName)
         .Combine(LastName.Create(request.lastName))
         .Combine(EmailAddress.Create(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.password))
-        .Finally(result => result.IsSuccess
+        .IfOk((firstName, lastName, email) => SampleWebApplication.User.Create(firstName, lastName, email, request.password))
+        .Unwrap(result => result.IsOk
             ? AcceptedAtAction("Get", new { name = result.Ok.FirstName }, result.Ok)
             : result.ToErrorActionResult(this));
 

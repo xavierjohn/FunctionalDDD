@@ -11,7 +11,7 @@ public class RequiredString_T_Tests
     public void Cannot_create_empty_RequiredString()
     {
         var trackingId1 = TrackingId.Create("");
-        trackingId1.IsFailure.Should().BeTrue();
+        trackingId1.IsError.Should().BeTrue();
         trackingId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)trackingId1.Error;
         validation.Message.Should().Be("Tracking Id cannot be empty");
@@ -23,7 +23,7 @@ public class RequiredString_T_Tests
     public void Can_create_RequiredString()
     {
         var trackingId1 = TrackingId.Create("32141sd");
-        trackingId1.IsSuccess.Should().BeTrue();
+        trackingId1.IsOk.Should().BeTrue();
         trackingId1.Ok.Should().BeOfType<TrackingId>();
         trackingId1.Ok.Value.Should().Be("32141sd");
     }
@@ -34,7 +34,7 @@ public class RequiredString_T_Tests
         var rTrackingIds = TrackingId.Create("Value1")
             .Combine(TrackingId.Create("Value2"));
 
-        rTrackingIds.IsSuccess.Should().BeTrue();
+        rTrackingIds.IsOk.Should().BeTrue();
         (var trackingId1, var trackingId2) = rTrackingIds.Ok;
         trackingId1.Value.Should().NotBe(trackingId2.Value);
     }
@@ -45,7 +45,7 @@ public class RequiredString_T_Tests
         var rTrackingIds = TrackingId.Create("SameValue")
             .Combine(TrackingId.Create("SameValue"));
 
-        rTrackingIds.IsSuccess.Should().BeTrue();
+        rTrackingIds.IsOk.Should().BeTrue();
         (var trackingId1, var trackingId2) = rTrackingIds.Ok;
         trackingId1.Value.Should().Be(trackingId2.Value);
     }

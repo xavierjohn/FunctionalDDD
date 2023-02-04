@@ -10,7 +10,7 @@ public static partial class AsyncResultExtensionsBothOperands
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (!await predicate(result.Ok).ConfigureAwait(false))
@@ -26,7 +26,7 @@ public static partial class AsyncResultExtensionsBothOperands
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (!await predicate(result.Ok).ConfigureAwait(false))
@@ -42,7 +42,7 @@ public static partial class AsyncResultExtensionsBothOperands
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (!await predicate(result.Ok).ConfigureAwait(false))
@@ -58,12 +58,12 @@ public static partial class AsyncResultExtensionsBothOperands
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         var predicateResult = await predicate();
 
-        if (predicateResult.IsFailure)
+        if (predicateResult.IsError)
             return Result.Failure<TOk, Error>(predicateResult.Error);
 
         return result;
@@ -76,12 +76,12 @@ public static partial class AsyncResultExtensionsBothOperands
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         var predicateResult = await predicate(result.Ok);
 
-        if (predicateResult.IsFailure)
+        if (predicateResult.IsError)
             return Result.Failure<TOk, Error>(predicateResult.Error);
 
         return result;

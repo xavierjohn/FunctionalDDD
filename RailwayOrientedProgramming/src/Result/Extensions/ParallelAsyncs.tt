@@ -13,7 +13,7 @@ public static partial class ResultExtensions
 
 <#
   void WriteTaskResult(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}, Err>>")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}, Error>>")));
   }
   
   void WriteTaskItem(int n) {
@@ -28,15 +28,15 @@ public static partial class ResultExtensions
 #>
     public static (<# WriteTaskResult(i); #>) ParallelAsync<<# WriteTs(i); #>>(
         this (<# WriteTaskResult(i - 1); #>) tasks,
-        Task<Result<T<#=i#>, Err>> task
+        Task<Result<T<#=i#>, Error>> task
         ) => (<# WriteTaskItem(i - 1); #>, task);
 
-    public static async Task<Result<TResult, Err>> BindAsync<<# WriteTs(i); #>, TResult>(
+    public static async Task<Result<TResult, Error>> IfOkAsync<<# WriteTs(i); #>, TResult>(
         this (<# WriteTaskResult(i); #>) tasks,
-        Func<<# WriteTs(i); #>, Result<TResult, Err>> func)
+        Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
     {
         await Task.WhenAll(<# WriteTaskItem(i); #>);
-        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
+        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).IfOk(func);
     }
 
 <#

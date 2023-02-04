@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<bool> predicate, Error errors)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (!predicate())
@@ -21,7 +21,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, bool> predicate, Error errors)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (!predicate(result.Ok))
@@ -35,7 +35,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (!predicate(result.Ok))
@@ -50,12 +50,12 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<Result<TOk, Error>> predicate)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         var predicateResult = predicate();
 
-        if (predicateResult.IsFailure)
+        if (predicateResult.IsError)
             return Result.Failure<TOk, Error>(predicateResult.Error);
 
         return result;
@@ -66,12 +66,12 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, Result<TOk, Error>> predicate)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         var predicateResult = predicate(result.Ok);
 
-        if (predicateResult.IsFailure)
+        if (predicateResult.IsError)
             return Result.Failure<TOk, Error>(predicateResult.Error);
 
         return result;

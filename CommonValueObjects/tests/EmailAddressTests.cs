@@ -19,7 +19,7 @@ public class EmailAddressTests
         var result = EmailAddress.Create(email, "school email");
 
         // Assert
-        result.IsFailure.Should().BeTrue();
+        result.IsError.Should().BeTrue();
         result.Error.Should().Be(Error.Validation("Email address is not valid", "school email"));
     }
 
@@ -33,7 +33,7 @@ public class EmailAddressTests
         var result = EmailAddress.Create(email, "school email");
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsOk.Should().BeTrue();
         result.Ok.Should().BeOfType<EmailAddress>();
     }
 }

@@ -7,7 +7,7 @@ public static class ActionResultExtention
 {
     public static ActionResult<T> ToOkActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
     {
-        if (result.IsSuccess)
+        if (result.IsOk)
             return controllerBase.Ok(result.Ok);
 
         return result.ToErrorActionResult(controllerBase);

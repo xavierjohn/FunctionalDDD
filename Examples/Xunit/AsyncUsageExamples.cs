@@ -10,12 +10,12 @@ public class AsyncUsageExamples
     {
         var id = 1;
 
-        var result = await GetByIdAsync(id)
+        var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .BindAsync(customer => customer.Promote())
-            .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+            .IfOkAsync(customer => customer.Promote())
+            .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+            .UnwrapAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
     }
@@ -25,12 +25,12 @@ public class AsyncUsageExamples
     {
         var id = 1;
 
-        var result = await GetByIdAsync(id)
+        var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .BindAsync(customer => customer.PromoteAsync())
-            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+            .IfOkAsync(customer => customer.PromoteAsync())
+            .IfOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .UnwrapAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
     }
@@ -40,15 +40,15 @@ public class AsyncUsageExamples
     {
         var id = 1;
 
-        var result = await GetByIdAsync(id)
+        var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .BindErrorAsync(error => Log(error))
-            .BindErrorAsync(() => AskManagerAsync(id))
-            .BindAsync(customer => Log("Manager approved promotion"))
-            .BindAsync(customer => customer.PromoteAsync())
-            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+            .IfErrorAsync(error => Log(error))
+            .IfErrorAsync(() => AskManagerAsync(id))
+            .IfOkAsync(customer => Log("Manager approved promotion"))
+            .IfOkAsync(customer => customer.PromoteAsync())
+            .IfOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .UnwrapAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
     }
@@ -63,7 +63,7 @@ public class AsyncUsageExamples
 
     static Task<Result<Customer, Error>> AskManagerAsync(long id) => Task.FromResult(Result.Success<Customer, Error>(new Customer()));
 
-    public static Task<Maybe<Customer>> GetByIdAsync(long id) => Task.FromResult((Maybe<Customer>)new Customer());
+    public static Task<Maybe<Customer>> GetCustomerByIdAsync(long id) => Task.FromResult((Maybe<Customer>)new Customer());
 
     public class Customer
     {
