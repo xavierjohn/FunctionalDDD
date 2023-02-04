@@ -91,7 +91,7 @@ With the following differences.
  ## Documentation
  
  ### [Result](RailwayOrientedProgramming/src/Result/Result{TOk,TErr}.cs)
- Result object holds the result of an operation. It can be either `Ok` or `Failure`.
+ Result object holds the result of an operation. It can be either `Ok` or `Error`.
  It is defined as
  
  ```csharp
@@ -117,14 +117,14 @@ With the following differences.
 
  ### Ensure
  Ensure calls the given function if the result is in `Ok` state.
- If the function return false, the attached error is returned.
+ If the function returns false, the attached error is returned.
 
  ### Map
  Map calls the given function if the result is in `Ok` state.
  The return value is wrapped in `Result` as Ok.
  
  ### Combine
- Combine combines multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects are `Failure`.
+ Combine combines multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects have failed.
  If all the errors are of type `ValidationError`, then it will return a `ValidationError` with all the errors. 
  Otherwise it will return an `AggregatedError`
  
