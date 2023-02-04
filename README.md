@@ -24,7 +24,7 @@ With the following differences.
        .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
        .TapAsync(customer => customer.Promote())
        .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-       .UnwrapAsync(result => result.IsSuccess ? "Okay" : result.Error.Message);
+       .UnwrapAsync(ok => "Okay", error => error.Message);
  ```
 
  

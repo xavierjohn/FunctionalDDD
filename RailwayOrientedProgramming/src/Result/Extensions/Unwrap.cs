@@ -57,4 +57,21 @@ public static partial class ResultExtensions
     {
         return await valueTask(result);
     }
+
+    public static TOut Unwrap<TIn, TOut>(this Result<TIn, Error> result,
+        Func<TIn, TOut> funcOk,
+        Func<Error, TOut> funcError)
+    {
+        return result.IsSuccess
+            ? funcOk(result.Ok)
+            : funcError(result.Error);
+    }
+
+    public static async Task<TOut> UnwrapAsync<TIn, TOut>(this Task<Result<TIn, Error>> resultTask,
+        Func<TIn, TOut> funcOk,
+        Func<Error, TOut> funcError)
+    {
+        Result<TIn, Error> result = await resultTask.ConfigureAwait(false);
+        return result.Unwrap(funcOk, funcError);
+    }
 }
