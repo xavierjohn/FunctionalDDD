@@ -62,7 +62,7 @@ public static partial class ResultExtensions
         Func<TIn, TOut> funcOk,
         Func<Error, TOut> funcError)
     {
-        return result.IsSuccess
+        return result.IsOk
             ? funcOk(result.Ok)
             : funcError(result.Error);
     }

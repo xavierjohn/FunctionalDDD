@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> IfOk<TOk>(this Result<TOk, Error> result, Action action)
     {
-        if (result.IsSuccess)
+        if (result.IsOk)
             action();
 
         return result;
@@ -18,7 +18,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> IfOk<TOk>(this Result<TOk, Error> result, Action<TOk> action)
     {
-        if (result.IsSuccess)
+        if (result.IsOk)
             action(result.Ok);
 
         return result;

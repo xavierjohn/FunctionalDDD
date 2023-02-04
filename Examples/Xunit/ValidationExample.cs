@@ -31,7 +31,7 @@ public class ValidationExample
                 return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));
             });
 
-        actual.IsFailure.Should().BeTrue();
+        actual.IsError.Should().BeTrue();
         var validationErrors = (ValidationError)actual.Error;
         validationErrors.Errors.Should().HaveCount(2);
         validationErrors.Errors.Should().BeEquivalentTo(new[]

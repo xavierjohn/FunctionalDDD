@@ -26,7 +26,7 @@ public static partial class ResultExtensions
         this Result<(<# WriteTs(i); #>), Error> result
         , Func<<# WriteTs(i); #>, TResult> func)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return Result.Failure<TResult, Error>(result.Error);
 
         var (<# WriteArgs(i); #>) = result.Ok;

@@ -12,7 +12,7 @@ public class RequiredGuid_T_Tests
     public void Cannot_create_empty_RequiredGuid()
     {
         var guidId1 = MyGuidId.Create(default);
-        guidId1.IsFailure.Should().BeTrue();
+        guidId1.IsError.Should().BeTrue();
         guidId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)guidId1.Error;
         validation.Message.Should().Be("My Guid Id cannot be empty");
@@ -25,7 +25,7 @@ public class RequiredGuid_T_Tests
     {
         var str = Guid.NewGuid().ToString();
         var guidId1 = MyGuidId.Create(Guid.Parse(str));
-        guidId1.IsSuccess.Should().BeTrue();
+        guidId1.IsOk.Should().BeTrue();
         guidId1.Ok.Should().BeOfType<MyGuidId>();
         guidId1.Ok.Value.Should().Be(Guid.Parse(str));
     }
@@ -36,7 +36,7 @@ public class RequiredGuid_T_Tests
         var rGuidsIds = MyGuidId.Create(Guid.NewGuid())
             .Combine(MyGuidId.Create(Guid.NewGuid()));
 
-        rGuidsIds.IsSuccess.Should().BeTrue();
+        rGuidsIds.IsOk.Should().BeTrue();
         (var guidId1, var guidId2) = rGuidsIds.Ok;
         guidId1.Value.Should().NotBe(guidId2.Value);
     }
@@ -48,7 +48,7 @@ public class RequiredGuid_T_Tests
         var rGuidsIds = MyGuidId.Create(myGuid)
             .Combine(MyGuidId.Create(myGuid));
 
-        rGuidsIds.IsSuccess.Should().BeTrue();
+        rGuidsIds.IsOk.Should().BeTrue();
         (var guidId1, var guidId2) = rGuidsIds.Ok;
         guidId1.Value.Should().Be(guidId2.Value);
     }

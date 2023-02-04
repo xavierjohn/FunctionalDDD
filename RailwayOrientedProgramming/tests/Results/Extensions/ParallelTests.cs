@@ -12,7 +12,7 @@ public class ParallelTests
             .IfOkAsync((a, b) => Result.Success(a + b));
 
         // Assert
-        r.IsSuccess.Should().BeTrue();
+        r.IsOk.Should().BeTrue();
         r.Ok.Should().Be("HiBye");
     }
 
@@ -29,7 +29,7 @@ public class ParallelTests
             .IfOkAsync((a, b, c, d, e) => Result.Success(a + b + c + d + e));
 
         // Assert
-        r.IsSuccess.Should().BeTrue();
+        r.IsOk.Should().BeTrue();
         r.Ok.Should().Be("12345");
     }
 
@@ -52,7 +52,7 @@ public class ParallelTests
              });
 
         // Assert
-        r.IsFailure.Should().BeTrue();
+        r.IsError.Should().BeTrue();
         r.Error.Should().BeOfType<AggregateError>();
         var aggregate = (AggregateError)r.Error;
         aggregate.Errors.Should().HaveCount(2);

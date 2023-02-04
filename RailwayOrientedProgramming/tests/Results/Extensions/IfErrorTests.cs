@@ -19,7 +19,7 @@ public class IfErrorTests
         Result<string, Error> output = input.IfError(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be("Success");
     }
 
@@ -35,7 +35,7 @@ public class IfErrorTests
         Result<string, Error> output = input.IfError(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be("Compensated Success");
     }
 
@@ -51,7 +51,7 @@ public class IfErrorTests
         Result<string, Error> output = input.IfError(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
-        output.IsFailure.Should().BeTrue();
+        output.IsError.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
     #endregion
@@ -64,7 +64,7 @@ public class IfErrorTests
         Result<string, Error> output = await input.IfErrorAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be("Success");
     }
 
@@ -75,7 +75,7 @@ public class IfErrorTests
         Result<string, Error> output = await input.IfErrorAsync(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be("Compensated Success");
     }
 
@@ -86,7 +86,7 @@ public class IfErrorTests
         Result<string, Error> output = await input.IfErrorAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
-        output.IsFailure.Should().BeTrue();
+        output.IsError.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
     #endregion
@@ -99,7 +99,7 @@ public class IfErrorTests
         Result<string, Error> output = await input.IfErrorAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeFalse();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be("Success");
     }
 
@@ -110,7 +110,7 @@ public class IfErrorTests
         Result<string, Error> output = await input.IfErrorAsync(GetSuccessResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be("Compensated Success");
     }
 
@@ -121,7 +121,7 @@ public class IfErrorTests
         Result<string, Error> output = await input.IfErrorAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
-        output.IsFailure.Should().BeTrue();
+        output.IsError.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
     #endregion

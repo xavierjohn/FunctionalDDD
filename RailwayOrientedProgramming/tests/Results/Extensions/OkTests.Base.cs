@@ -128,14 +128,14 @@ public abstract class OkTestsBase : TestBase
     protected void AssertFailure(Result<K, Error> output)
     {
         _funcExecuted.Should().BeFalse();
-        output.IsFailure.Should().BeTrue();
+        output.IsError.Should().BeTrue();
         output.Error.Should().Be(Error1);
     }
 
     protected void AssertSuccess(Result<K, Error> output)
     {
         _funcExecuted.Should().BeTrue();
-        output.IsSuccess.Should().BeTrue();
+        output.IsOk.Should().BeTrue();
         output.Ok.Should().Be(K.Value);
     }
 

@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TResult, Error> IfOk<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, Result<TResult, Error>> func)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return Result.Failure<TResult>(result.Error);
 
         return func(result.Ok);
@@ -18,7 +18,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Task<Result<TResult, Error>> IfOkAsync<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, Task<Result<TResult, Error>>> func)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return Result.Failure<TResult>(result.Error).AsCompletedTask();
 
         return func(result.Ok);
@@ -65,7 +65,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static ValueTask<Result<TResult, Error>> IfOkAsync<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, ValueTask<Result<TResult, Error>>> valueTask)
     {
-        if (result.IsFailure)
+        if (result.IsError)
             return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
 
         return valueTask(result.Ok);
@@ -77,7 +77,7 @@ public static partial class ResultExtensions
     public static async Task<Result<TResult, Error>> IfOkAsync<T1, T2, TResult>(this Task<Result<(T1, T2), Error>> resultTask, Func<T1, T2, Result<TResult, Error>> func)
     {
         var result = await resultTask;
-        if (result.IsFailure)
+        if (result.IsError)
             return Result.Failure<TResult>(result.Error);
 
         var (args1, args2) = result.Ok;

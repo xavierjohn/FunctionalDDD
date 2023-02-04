@@ -27,7 +27,7 @@ public static partial class AsyncResultExtensionsLeftOperand
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         return result.Ensure(predicate, errorPredicate);
@@ -40,7 +40,7 @@ public static partial class AsyncResultExtensionsLeftOperand
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsFailure)
+        if (result.IsError)
             return result;
 
         if (predicate(result.Ok))

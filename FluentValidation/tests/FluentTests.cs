@@ -13,7 +13,7 @@ public class FluentTests
             EmailAddress.Create("xavier@somewhere.com").Ok,
             "password");
 
-        rUser.IsSuccess.Should().BeTrue();
+        rUser.IsOk.Should().BeTrue();
         var user = rUser.Ok;
         user.FirstName.Value.Should().Be("John");
         user.LastName.Value.Should().Be("Doe");
@@ -39,7 +39,7 @@ public class FluentTests
         var rUser = User.Create(firstName, lastName, email, "password");
 
         // Assert
-        rUser.IsFailure.Should().BeTrue();
+        rUser.IsError.Should().BeTrue();
         var validationErrors = (ValidationError)rUser.Error;
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
@@ -63,7 +63,7 @@ public class FluentTests
         var rUser = User.Create(firstName, lastName, email, string.Empty);
 
         // Assert
-        rUser.IsFailure.Should().BeTrue();
+        rUser.IsError.Should().BeTrue();
         var validationErrors = (ValidationError)rUser.Error;
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
