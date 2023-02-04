@@ -2,7 +2,7 @@
 
 using FunctionalDDD;
 
-public class BindErrorTests
+public class IfErrorTests
 {
     bool _compensatingFunctionCalled;
 
@@ -16,7 +16,7 @@ public class BindErrorTests
     public void Result_success_then_compensate_func_does_not_execute()
     {
         Result<string, Error> input = Result.Success("Success");
-        Result<string, Error> output = input.BindError(GetErrorResult);
+        Result<string, Error> output = input.IfError(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -32,7 +32,7 @@ public class BindErrorTests
     public void Result_failure_and_compensate_func_does_execute_and_succeed()
     {
         Result<string, Error> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string, Error> output = input.BindError(GetSuccessResult);
+        Result<string, Error> output = input.IfError(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -48,7 +48,7 @@ public class BindErrorTests
     public void Result_failure_and_compensate_func_does_execute_and_fail()
     {
         Result<string, Error> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string, Error> output = input.BindError(GetErrorResult);
+        Result<string, Error> output = input.IfError(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -61,7 +61,7 @@ public class BindErrorTests
     public async Task Task_Result_success_and_compensate_func_does_not_execute()
     {
         Task<Result<string, Error>> input = Task.FromResult(Result.Success("Success"));
-        Result<string, Error> output = await input.BindErrorAsync(GetErrorResult);
+        Result<string, Error> output = await input.IfErrorAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -72,7 +72,7 @@ public class BindErrorTests
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_succeed()
     {
         Task<Result<string, Error>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string, Error> output = await input.BindErrorAsync(GetSuccessResult);
+        Result<string, Error> output = await input.IfErrorAsync(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -83,7 +83,7 @@ public class BindErrorTests
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_fail()
     {
         Task<Result<string, Error>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string, Error> output = await input.BindErrorAsync(GetErrorResult);
+        Result<string, Error> output = await input.IfErrorAsync(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
@@ -96,7 +96,7 @@ public class BindErrorTests
     public async Task Task_Result_success_and_compensate_async_func_does_not_execute()
     {
         Task<Result<string, Error>> input = Task.FromResult(Result.Success("Success"));
-        Result<string, Error> output = await input.BindErrorAsync(GetErrorResultAsync);
+        Result<string, Error> output = await input.IfErrorAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -107,7 +107,7 @@ public class BindErrorTests
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_succeed()
     {
         Task<Result<string, Error>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string, Error> output = await input.BindErrorAsync(GetSuccessResultAsync);
+        Result<string, Error> output = await input.IfErrorAsync(GetSuccessResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -118,7 +118,7 @@ public class BindErrorTests
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_fail()
     {
         Task<Result<string, Error>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string, Error> output = await input.BindErrorAsync(GetErrorResultAsync);
+        Result<string, Error> output = await input.IfErrorAsync(GetErrorResultAsync);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();

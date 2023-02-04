@@ -31,7 +31,7 @@
       <None Update="Result\Extensions\BindTs.tt">
          <Generator>TextTemplatingFileGenerator</Generator>
          <LastGenOutput>BindTs.cs</LastGenOutput>
-         <DependentUpon>Bind.cs</DependentUpon>
+         <DependentUpon>IfOkResult.cs</DependentUpon>
       </None>
       <None Update="Result\Extensions\CombineTs.tt">
          <Generator>TextTemplatingFileGenerator</Generator>
