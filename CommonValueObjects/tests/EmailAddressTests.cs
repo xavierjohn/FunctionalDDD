@@ -16,7 +16,7 @@ public class EmailAddressTests
     public void Cannot_create_invalid_email(string email)
     {
         // Arrange
-        var result = EmailAddress.Create(email, "school email");
+        var result = EmailAddress.New(email, "school email");
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -30,7 +30,7 @@ public class EmailAddressTests
     public void Can_create_valid_email(string email)
     {
         // Arrange
-        var result = EmailAddress.Create(email, "school email");
+        var result = EmailAddress.New(email, "school email");
 
         // Assert
         result.IsOk.Should().BeTrue();

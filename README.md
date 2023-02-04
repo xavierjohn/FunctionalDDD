@@ -52,10 +52,10 @@ With the following differences.
 
  ### Example 2 Validation
  ```csharp
- EmailAddress.Create("xavier@somewhere.com")
-            .Combine(FirstName.Create("Xavier"))
-            .Combine(LastName.Create("John"))
-            .Combine(EmailAddress.Create("xavier@somewhereelse.com"))
+ EmailAddress.New("xavier@somewhere.com")
+            .Combine(FirstName.New("Xavier"))
+            .Combine(LastName.New("John"))
+            .Combine(EmailAddress.New("xavier@somewhereelse.com"))
             .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 
@@ -70,7 +70,7 @@ With the following differences.
     public EmailAddress Email { get; }
     public string Password { get; }
 
-    public static Result<User> Create(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
         var user = new User(firstName, lastName, email, password);
         return s_validator.ValidateToResult(user);

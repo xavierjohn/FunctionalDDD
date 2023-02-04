@@ -8,10 +8,10 @@ public class ValidationExample
     public void Validation_successful_Test()
     {
 
-        var actual = EmailAddress.Create("xavier@somewhere.com")
-            .Combine(FirstName.Create("Xavier"))
-            .Combine(LastName.Create("John"))
-            .Combine(EmailAddress.Create("xavier@somewhereelse.com"))
+        var actual = EmailAddress.New("xavier@somewhere.com")
+            .Combine(FirstName.New("Xavier"))
+            .Combine(LastName.New("John"))
+            .Combine(EmailAddress.New("xavier@somewhereelse.com"))
             .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
         actual.Ok.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
@@ -21,10 +21,10 @@ public class ValidationExample
     public void Validation_failed_Test()
     {
 
-        var actual = EmailAddress.Create("xavier@somewhere.com")
-            .Combine(FirstName.Create("Xavier"))
-            .Combine(LastName.Create(string.Empty))
-            .Combine(EmailAddress.Create("xavier @ somewhereelse.com"))
+        var actual = EmailAddress.New("xavier@somewhere.com")
+            .Combine(FirstName.New("Xavier"))
+            .Combine(LastName.New(string.Empty))
+            .Combine(EmailAddress.New("xavier @ somewhereelse.com"))
             .IfOk((email, firstName, lastName, anotherEmail) =>
             {
                 true.Should().BeFalse("this code should not get executed");
