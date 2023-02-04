@@ -22,7 +22,7 @@ With the following differences.
  await GetCustomerByIdAsync(id)
        .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
        .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-       .TapAsync(customer => customer.Promote())
+       .IfOkAsync(customer => customer.Promote())
        .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
        .UnwrapAsync(ok => "Okay", error => error.Message);
  ```
