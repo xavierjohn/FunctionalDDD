@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
    <ItemGroup>
-      <Compile Update="Result\Extensions\BindTs.cs">
+      <Compile Update="Result\Extensions\IfOkayTs.cs">
          <DesignTime>True</DesignTime>
          <AutoGen>True</AutoGen>
-         <DependentUpon>BindTs.tt</DependentUpon>
+         <DependentUpon>IfOkayTs.tt</DependentUpon>
       </Compile>
       <Compile Update="Result\Extensions\CombineTs.cs">
          <DesignTime>True</DesignTime>
@@ -28,10 +28,9 @@
    </ItemGroup>
 
    <ItemGroup>
-      <None Update="Result\Extensions\BindTs.tt">
+      <None Update="Result\Extensions\IfOkayTs.tt">
          <Generator>TextTemplatingFileGenerator</Generator>
-         <LastGenOutput>BindTs.cs</LastGenOutput>
-         <DependentUpon>IfOkResult.cs</DependentUpon>
+         <LastGenOutput>IfOkayTs.cs</LastGenOutput>
       </None>
       <None Update="Result\Extensions\CombineTs.tt">
          <Generator>TextTemplatingFileGenerator</Generator>

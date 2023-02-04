@@ -23,9 +23,9 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<TResult, Err> IfOk<<# WriteTs(i); #>, TResult>(
-        this Result<(<# WriteTs(i); #>), Err> result
-        , Func<<# WriteTs(i); #>, Result<TResult, Err>> func)
+    public static Result<TResult, Error> IfOk<<# WriteTs(i); #>, TResult>(
+        this Result<(<# WriteTs(i); #>), Error> result
+        , Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
