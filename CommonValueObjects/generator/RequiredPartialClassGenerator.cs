@@ -59,7 +59,7 @@ using FunctionalDDD;
                 if (g.ClassType == "Guid")
                 {
                     source += $@"
-    public static {g.ClassName} CreateUnique() => new(Guid.NewGuid());
+    public static {g.ClassName} NewUnique() => new(Guid.NewGuid());
 
     public static Result<{g.ClassName}, Error> New(Maybe<Guid> requiredGuidOrNothing) =>
         requiredGuidOrNothing
