@@ -1,54 +1,60 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
-   <ItemGroup>
-      <Compile Update="Result\Extensions\IfOkayTs.cs">
-         <DesignTime>True</DesignTime>
-         <AutoGen>True</AutoGen>
-         <DependentUpon>IfOkayTs.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Result\Extensions\CombineTs.cs">
-         <DesignTime>True</DesignTime>
-         <AutoGen>True</AutoGen>
-         <DependentUpon>CombineTs.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Result\Extensions\MapTs.cs">
-         <DesignTime>True</DesignTime>
-         <AutoGen>True</AutoGen>
-         <DependentUpon>MapTs.tt</DependentUpon>
-      </Compile>
+  <ItemGroup>
+    <Compile Update="Result\Extensions\IfOkayTs.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>IfOkayTs.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\CombineTs.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CombineTs.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\MapTs.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MapTs.tt</DependentUpon>
+    </Compile>
 
-      <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
+    <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
 
-      <Compile Update="Result\Extensions\ParallelAsyncs.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>ParallelAsyncs.tt</DependentUpon>
-      </Compile>
-      <Compile Update="Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
-   </ItemGroup>
+    <Compile Update="Result\Extensions\ParallelAsyncs.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ParallelAsyncs.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
+  </ItemGroup>
 
-   <ItemGroup>
-      <None Update="Result\Extensions\IfOkayTs.tt">
-         <Generator>TextTemplatingFileGenerator</Generator>
-         <LastGenOutput>IfOkayTs.cs</LastGenOutput>
-      </None>
-      <None Update="Result\Extensions\CombineTs.tt">
-         <Generator>TextTemplatingFileGenerator</Generator>
-         <LastGenOutput>CombineTs.cs</LastGenOutput>
-         <DependentUpon>Combine.cs</DependentUpon>
-      </None>
-      <None Update="Result\Extensions\MapTs.tt">
-         <Generator>TextTemplatingFileGenerator</Generator>
-         <LastGenOutput>MapTs.cs</LastGenOutput>
-         <DependentUpon>Map.cs</DependentUpon>
-      </None>
-      <None Update="Result\Extensions\ParallelAsyncs.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-        <LastGenOutput>ParallelAsyncs.cs</LastGenOutput>
-      </None>
-   </ItemGroup>
+  <ItemGroup>
+    <None Update="Result\Extensions\IfOkayTs.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>IfOkayTs.cs</LastGenOutput>
+    </None>
+    <None Update="Result\Extensions\CombineTs.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CombineTs.cs</LastGenOutput>
+      <DependentUpon>Combine.cs</DependentUpon>
+    </None>
+    <None Update="Result\Extensions\MapTs.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MapTs.cs</LastGenOutput>
+      <DependentUpon>Map.cs</DependentUpon>
+    </None>
+    <None Update="Result\Extensions\ParallelAsyncs.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ParallelAsyncs.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
 
-   <ItemGroup>
-      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-   </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
 </Project>
