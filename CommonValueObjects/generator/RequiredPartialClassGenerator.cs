@@ -61,13 +61,11 @@ using FunctionalDDD;
                     source += $@"
     public static {g.ClassName} CreateUnique() => new(Guid.NewGuid());
 
-    public static Result<{g.ClassName}, Error> New(Maybe<Guid> requiredGuidOrNothing)
-    {{
-        return requiredGuidOrNothing
+    public static Result<{g.ClassName}, Error> New(Maybe<Guid> requiredGuidOrNothing) =>
+        requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
             .Map(guid => new {g.ClassName}(guid));
-    }}
 }}
 ";
                 }
@@ -75,12 +73,10 @@ using FunctionalDDD;
                 if (g.ClassType == "String")
                 {
                     source += $@"
-    public static Result<{g.ClassName}, Error> New(Maybe<string> requiredStringOrNothing)
-    {{
-        return requiredStringOrNothing
+    public static Result<{g.ClassName}, Error> New(Maybe<string> requiredStringOrNothing) =>
+        requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new {g.ClassName}(str));
-    }}
 }}
 ";
                 }

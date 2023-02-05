@@ -27,9 +27,8 @@ public static class ActionResultExtention
         return result.ToOkActionResult(controllerBase);
     }
 
-    public static ActionResult<T> ToErrorActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
+    public static ActionResult<T> ToErrorActionResult<T>(this Error error, ControllerBase controllerBase)
     {
-        var error = result.Error;
         return error switch
         {
             NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
@@ -42,10 +41,15 @@ public static class ActionResultExtention
         };
     }
 
+    public static ActionResult<T> ToErrorActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
+    {
+        var error = result.Error;
+        return error.ToErrorActionResult<T>(controllerBase);
+    }
+
     public static async Task<ActionResult<T>> ToErrorActionResultAsync<T>(this Task<Result<T, Error>> resultTask, ControllerBase controllerBase)
     {
-        Result<T, Error> result = await resultTask;
-
+        var result = await resultTask;
         return result.ToErrorActionResult(controllerBase);
     }
 
