@@ -26,6 +26,16 @@ public class AuthenticationController : ControllerBase
             : result.ToErrorActionResult(this));
 
     [HttpPost("[action]")]
+    public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =>
+        FirstName.New(request.firstName)
+        .Combine(LastName.New(request.lastName))
+        .Combine(EmailAddress.New(request.email))
+        .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .Unwrap(
+            ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
+            err => err.ToErrorActionResult<User>(this));
+
+    [HttpPost("[action]")]
     public ActionResult<User> RegisterAccepted([FromBody] RegisterRequest request) =>
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))

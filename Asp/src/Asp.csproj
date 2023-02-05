@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
-	</ItemGroup>
-	<ItemGroup>
-	  <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
-	</ItemGroup>
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
+  </ItemGroup>
 </Project>

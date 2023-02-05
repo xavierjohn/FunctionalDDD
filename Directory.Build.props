@@ -13,6 +13,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>Latest</LangVersion>
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup  Label="Build">
