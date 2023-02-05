@@ -2,8 +2,8 @@
 
 This library will help convert Error objects to ASP.NET Core ActionResult.
 
--`ToOkActionResult`
--`ToErrorActionResult`
+- ToOkActionResult
+- ToErrorActionResult
 
 ## ToOkActionResult
 
