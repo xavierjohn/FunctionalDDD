@@ -23,7 +23,8 @@ Let's look at a few examples:
  ```csharp
 await GetCustomerByIdAsync(id)
    .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-   .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
+   .EnsureAsync(customer => customer.CanBePromoted,
+      Error.Validation("The customer has the highest status possible"))
    .IfOkAsync(customer => customer.Promote())
    .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
    .UnwrapAsync(ok => "Okay", error => error.Message);
@@ -47,7 +48,8 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
     .Combine(EmailAddress.New("xavier@somewhereelse.com"))
-    .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+    .IfOk((email, firstName, lastName, anotherEmail) =>
+       Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 
  `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects have failed.
@@ -60,16 +62,16 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
     public FirstName FirstName { get; }
     public LastName LastName { get; }
     public EmailAddress Email { get; }
-    public string Password { get; }
 
-    public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email)
     {
-        var user = new User(firstName, lastName, email, password);
+        var user = new User(firstName, lastName, email);
         return s_validator.ValidateToResult(user);
     }
 
 
-    private User(FirstName firstName, LastName lastName, EmailAddress email, string password) : base(UserId.CreateUnique())
+    private User(FirstName firstName, LastName lastName, EmailAddress email)
+    : base(UserId.CreateUnique())
     {
         FirstName = firstName;
         LastName = lastName;
