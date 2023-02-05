@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
 	<ItemGroup>
+        <None Include="../README.md" Pack="true" <PackagePath>\</PackagePath>/>
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
 	</ItemGroup>
 	<ItemGroup>
