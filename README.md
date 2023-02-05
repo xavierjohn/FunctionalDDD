@@ -71,12 +71,11 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
 
 
     private User(FirstName firstName, LastName lastName, EmailAddress email)
-    : base(UserId.CreateUnique())
+    : base(UserId.NewUnique())
     {
         FirstName = firstName;
         LastName = lastName;
         Email = email;
-        Password = password;
     }
 
     // Fluent Validation
@@ -85,7 +84,6 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
         v => v.RuleFor(x => x.Email).NotNull(),
-        v => v.RuleFor(x => x.Password).NotEmpty()
     };
 }
  ```

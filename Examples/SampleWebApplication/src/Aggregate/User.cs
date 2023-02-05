@@ -16,7 +16,8 @@ public class User : AggregateRoot<UserId>
     }
 
 
-    private User(FirstName firstName, LastName lastName, EmailAddress email, string password) : base(UserId.CreateUnique())
+    private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
+        : base(UserId.NewUnique())
     {
         FirstName = firstName;
         LastName = lastName;
