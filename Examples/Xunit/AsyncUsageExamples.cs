@@ -43,7 +43,7 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .IfErrorAsync(error => Log(error))
+            .IfErrorTapAsync(error => Log(error))
             .IfErrorAsync(() => AskManagerAsync(id))
             .IfOkAsync(customer => Log("Manager approved promotion"))
             .IfOkAsync(customer => customer.PromoteAsync())
