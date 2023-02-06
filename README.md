@@ -8,11 +8,11 @@ With the following differences.
 - Uses an Error object instead of a string to represent errors.
 - Validation error can hold multiple validation errors.
 - Aggregate error can hold multiple errors.
-- A way to convert errors to HTTP errors.
+- A way to convert FunctionalDDD.Error to HTTP errors (ActionResult).
 - Leverage fluent validation and use it to create domain objects.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
-- More intuitive function names.
+- More intuitive function names. (hopefully, it's subjective so leave comments in discussion. Naming is a pain.)
 
 ## Examples
 
