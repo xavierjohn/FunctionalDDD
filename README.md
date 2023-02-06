@@ -8,11 +8,11 @@ With the following differences.
 - Uses an Error object instead of a string to represent errors.
 - Validation error can hold multiple validation errors.
 - Aggregate error can hold multiple errors.
-- A way to convert errors to HTTP errors.
+- A way to convert FunctionalDDD.Error to HTTP errors (ActionResult).
 - Leverage fluent validation and use it to create domain objects.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
-- More intuitive function names.
+- More intuitive function names. (hopefully, it's subjective so leave comments in discussion. Naming is a pain.)
 
 ## Examples
 
@@ -25,7 +25,7 @@ await GetCustomerByIdAsync(id)
    .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
    .EnsureAsync(customer => customer.CanBePromoted,
       Error.Validation("The customer has the highest status possible"))
-   .IfOkAsync(customer => customer.Promote())
+   .IfOkTapAsync(customer => customer.Promote())
    .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
    .UnwrapAsync(ok => "Okay", error => error.Message);
  ```
@@ -37,7 +37,7 @@ If `Maybe<Customer>` returned `None`, then `ToResultAsync` will convert it to `R
 If `Maybe<Customer>` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
  If not return a `Validation` error.
 
-If there is no error, `IfOkAsync` will execute the `Promote` method and then send an email.
+If there is no error, `IfOkTapAsync` will execute the `Promote` method and then send an email.
 
 Finally `UnwrapAsync` will call the given functions with underlying object or error.
 
@@ -66,7 +66,7 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
     public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email)
     {
         var user = new User(firstName, lastName, email);
-        return s_validator.ValidateToResult(user);
+        return Validator.ValidateToResult(user);
     }
 
 
@@ -79,11 +79,12 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
     }
 
     // Fluent Validation
-    static readonly InlineValidator<User> s_validator = new()
+    private static readonly InlineValidator<User> Validator = new()
     {
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
         v => v.RuleFor(x => x.Email).NotNull(),
+        v => v.RuleFor(x => x.Password).NotEmpty()
     };
 }
  ```

@@ -12,7 +12,7 @@ public class User : AggregateRoot<UserId>
     public static Result<User, Error> New(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
         var user = new User(firstName, lastName, email, password);
-        return s_validator.ValidateToResult(user);
+        return Validator.ValidateToResult(user);
     }
 
 
@@ -25,7 +25,7 @@ public class User : AggregateRoot<UserId>
         Password = password;
     }
 
-    static readonly InlineValidator<User> s_validator = new()
+    private static readonly InlineValidator<User> Validator = new()
     {
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
