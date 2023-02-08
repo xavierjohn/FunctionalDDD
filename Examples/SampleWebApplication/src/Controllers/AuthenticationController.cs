@@ -12,7 +12,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .ToOkActionResult(this);
 
     [HttpPost("[action]")]
@@ -20,7 +20,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .Unwrap(result => result.IsOk
             ? CreatedAtAction("Get", new { name = result.Ok.FirstName }, result.Ok)
             : result.ToErrorActionResult(this));
@@ -30,7 +30,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .Unwrap(
             ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
             err => err.ToErrorActionResult<User>(this));
@@ -40,7 +40,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .Unwrap(result => result.IsOk
             ? AcceptedAtAction("Get", new { name = result.Ok.FirstName }, result.Ok)
             : result.ToErrorActionResult(this));

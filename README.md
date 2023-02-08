@@ -48,7 +48,7 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
     .Combine(EmailAddress.New("xavier@somewhereelse.com"))
-    .IfOk((email, firstName, lastName, anotherEmail) =>
+    .OnOk((email, firstName, lastName, anotherEmail) =>
        Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 

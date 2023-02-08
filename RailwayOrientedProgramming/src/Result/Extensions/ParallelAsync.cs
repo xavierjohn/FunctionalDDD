@@ -10,6 +10,6 @@ public static partial class ResultExtensions
         Func<T1, T2, Result<TResult, Error>> func)
     {
         await Task.WhenAll(tasks.Item1, tasks.Item2);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result).IfOk(func);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result).OnOk(func);
     }
 }

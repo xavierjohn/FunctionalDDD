@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<TResult, Error> IfOk<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, Result<TResult, Error>> func)
+    public static Result<TResult, Error> OnOk<TOk, TResult>(this Result<TOk, Error> result, Func<TOk, Result<TResult, Error>> func)
     {
         if (result.IsError)
             return Result.Failure<TResult>(result.Error);
@@ -39,7 +39,7 @@ public static partial class ResultExtensions
     public static async Task<Result<TResult, Error>> IfOkAsync<TOk, TResult>(this Task<Result<TOk, Error>> resultTask, Func<TOk, Result<TResult, Error>> func)
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
-        return result.IfOk(func);
+        return result.OnOk(func);
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public static partial class ResultExtensions
     public static async ValueTask<Result<TResult, Error>> IfOkAsync<TOk, TResult>(this ValueTask<Result<TOk, Error>> resultTask, Func<TOk, Result<TResult, Error>> func)
     {
         Result<TOk, Error> result = await resultTask;
-        return result.IfOk(func);
+        return result.OnOk(func);
     }
 
     /// <summary>

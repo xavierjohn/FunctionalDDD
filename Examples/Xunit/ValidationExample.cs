@@ -12,7 +12,7 @@ public class ValidationExample
             .Combine(FirstName.New("Xavier"))
             .Combine(LastName.New("John"))
             .Combine(EmailAddress.New("xavier@somewhereelse.com"))
-            .IfOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+            .OnOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
         actual.Ok.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
     }
@@ -25,7 +25,7 @@ public class ValidationExample
             .Combine(FirstName.New("Xavier"))
             .Combine(LastName.New(string.Empty))
             .Combine(EmailAddress.New("xavier @ somewhereelse.com"))
-            .IfOk((email, firstName, lastName, anotherEmail) =>
+            .OnOk((email, firstName, lastName, anotherEmail) =>
             {
                 true.Should().BeFalse("this code should not get executed");
                 return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));

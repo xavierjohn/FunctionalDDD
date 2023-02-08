@@ -40,13 +40,14 @@ Maybe object holds a value or nothing. It is defined as
 
 ### Functions
 
-### IfOk
+### OnOk
 
-IfOk calls the given function if the result is in `Ok` state.
+OnOk calls the given function if the result is in `Ok` state.
 
-### IfError
+### OnError
 
- IfError calls the given function if the result is in `Error` state.
+ OnError calls the given function if the result is in `Error` state.
+ It given an oppertunity to compensate for the error and return Okay.
 
 ### Ensure
 

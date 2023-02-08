@@ -36,7 +36,7 @@ public static partial class ResultExtensions
         Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
     {
         await Task.WhenAll(<# WriteTaskItem(i); #>);
-        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).IfOk(func);
+        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).OnOk(func);
     }
 
 <#

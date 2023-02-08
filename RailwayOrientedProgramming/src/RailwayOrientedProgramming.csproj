@@ -3,14 +3,14 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../README.md" Pack="true" PackagePath="\"/>
+    <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Result\Extensions\IfOkayTs.cs">
+    <Compile Update="Result\Extensions\OnOkayTs.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>IfOkayTs.tt</DependentUpon>
+      <DependentUpon>OnOkayTs.tt</DependentUpon>
     </Compile>
     <Compile Update="Result\Extensions\CombineTs.cs">
       <DesignTime>True</DesignTime>
@@ -34,9 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Result\Extensions\IfOkayTs.tt">
+    <None Update="Result\Extensions\OnOkayTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>IfOkayTs.cs</LastGenOutput>
+      <LastGenOutput>OnOkayTs.cs</LastGenOutput>
     </None>
     <None Update="Result\Extensions\CombineTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>

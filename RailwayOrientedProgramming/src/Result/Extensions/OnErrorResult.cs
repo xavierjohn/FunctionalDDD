@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
-    public static Result<T, Error> IfError<T>(this Result<T, Error> result, Func<Result<T, Error>> func)
+    public static Result<T, Error> OnError<T>(this Result<T, Error> result, Func<Result<T, Error>> func)
     {
         if (result.IsOk)
             return result;
@@ -19,7 +19,7 @@ public static partial class ResultExtensions
     public static async Task<Result<T, Error>> IfErrorAsync<T>(this Task<Result<T, Error>> resultTask, Func<Result<T, Error>> func)
     {
         Result<T, Error> result = await resultTask.ConfigureAwait(false);
-        return result.IfError(func);
+        return result.OnError(func);
     }
 
     /// <summary>
