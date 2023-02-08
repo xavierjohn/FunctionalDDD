@@ -31,7 +31,7 @@ public static partial class ResultExtensions
         Task<Result<T<#=i#>, Error>> task
         ) => (<# WriteTaskItem(i - 1); #>, task);
 
-    public static async Task<Result<TResult, Error>> IfOkAsync<<# WriteTs(i); #>, TResult>(
+    public static async Task<Result<TResult, Error>> OnOkAsync<<# WriteTs(i); #>, TResult>(
         this (<# WriteTaskResult(i); #>) tasks,
         Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
     {

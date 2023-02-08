@@ -10,12 +10,6 @@
 
 		<Compile Update="Results\Extensions\OnOkTests.Task.cs" DependentUpon="OnOkTests.cs" />
 		<Compile Update="Results\Extensions\BindsTests.Task.*.cs" DependentUpon="BindTests.Task.cs" />
-		<Compile Update="Results\Extensions\BindsTests.Task.Left.cs">
-		  <DependentUpon>OnOkTests.Task.cs</DependentUpon>
-		</Compile>
-		<Compile Update="Results\Extensions\BindsTests.Task.Right.cs">
-		  <DependentUpon>OnOkTests.Task.cs</DependentUpon>
-		</Compile>
 		<Compile Update="Results\Extensions\OnOkTests.ValueTask.cs" DependentUpon="OnOkTests.cs" />
 		<Compile Update="Results\Extensions\BindsTests.ValueTask.*.cs" DependentUpon="BindTests.ValueTask.cs" />
 	</ItemGroup>

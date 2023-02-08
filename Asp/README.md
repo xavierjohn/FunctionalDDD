@@ -47,7 +47,7 @@ public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =
     .Combine(LastName.New(request.lastName))
     .Combine(EmailAddress.New(request.email))
     .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
-    .Unwrap(
+    .Finally(
         ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
         err => err.ToErrorActionResult<User>(this));
 ```
