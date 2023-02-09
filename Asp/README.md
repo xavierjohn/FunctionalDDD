@@ -34,7 +34,7 @@ public ActionResult<User> Register([FromBody] RegisterRequest request) =>
     FirstName.New(request.firstName)
     .Combine(LastName.New(request.lastName))
     .Combine(EmailAddress.New(request.email))
-    .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+    .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
     .ToOkActionResult(this);
 ```
 
@@ -46,8 +46,8 @@ public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =
     FirstName.New(request.firstName)
     .Combine(LastName.New(request.lastName))
     .Combine(EmailAddress.New(request.email))
-    .IfOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
-    .Unwrap(
+    .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+    .Finally(
         ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
         err => err.ToErrorActionResult<User>(this));
 ```

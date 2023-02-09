@@ -9,7 +9,7 @@ public class ParallelTests
         // Act
         var r = await Task.FromResult(Result.Success("Hi"))
             .ParallelAsync(Task.FromResult(Result.Success("Bye")))
-            .IfOkAsync((a, b) => Result.Success(a + b));
+            .OnOkAsync((a, b) => Result.Success(a + b));
 
         // Assert
         r.IsOk.Should().BeTrue();
@@ -26,7 +26,7 @@ public class ParallelTests
             .ParallelAsync(Task.FromResult(Result.Success("3")))
             .ParallelAsync(Task.FromResult(Result.Success("4")))
             .ParallelAsync(Task.FromResult(Result.Success("5")))
-            .IfOkAsync((a, b, c, d, e) => Result.Success(a + b + c + d + e));
+            .OnOkAsync((a, b, c, d, e) => Result.Success(a + b + c + d + e));
 
         // Assert
         r.IsOk.Should().BeTrue();
@@ -45,7 +45,7 @@ public class ParallelTests
             .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Internal Server error."))))
             .ParallelAsync(Task.FromResult(Result.Success("4")))
             .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Network unreachable."))))
-            .IfOkAsync((a, b, c, d, e) =>
+            .OnOkAsync((a, b, c, d, e) =>
              {
                  calledFunction = true;
                  return Result.Success(a + b + c + d + e);

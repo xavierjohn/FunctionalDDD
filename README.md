@@ -26,8 +26,8 @@ await GetCustomerByIdAsync(id)
    .EnsureAsync(customer => customer.CanBePromoted,
       Error.Validation("The customer has the highest status possible"))
    .IfOkTapAsync(customer => customer.Promote())
-   .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-   .UnwrapAsync(ok => "Okay", error => error.Message);
+   .OnOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+   .FinallyAsync(ok => "Okay", error => error.Message);
  ```
 
 `GetCustomerByIdAsync` is a repository method that will return a `Maybe<Customer>`.
@@ -39,7 +39,7 @@ If `Maybe<Customer>` returned a customer, then `EnsureAsync` is called to check 
 
 If there is no error, `IfOkTapAsync` will execute the `Promote` method and then send an email.
 
-Finally `UnwrapAsync` will call the given functions with underlying object or error.
+Finally `FinallyAsync` will call the given functions with underlying object or error.
 
 ### Example 2 Validation
 
@@ -48,7 +48,7 @@ Finally `UnwrapAsync` will call the given functions with underlying object or er
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
     .Combine(EmailAddress.New("xavier@somewhereelse.com"))
-    .IfOk((email, firstName, lastName, anotherEmail) =>
+    .OnOk((email, firstName, lastName, anotherEmail) =>
        Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 

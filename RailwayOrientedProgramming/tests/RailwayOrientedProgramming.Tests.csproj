@@ -8,24 +8,18 @@
 		<Compile Update="Results\Extensions\EnsureTests.Task.cs" DependentUpon="EnsureTests.cs" />
 		<Compile Update="Results\Extensions\EnsureTests.Task.*.cs" DependentUpon="EnsureTests.Task.cs" />
 
-		<Compile Update="Results\Extensions\IfOkTests.Task.cs" DependentUpon="IfOkTests.cs" />
+		<Compile Update="Results\Extensions\OnOkTests.Task.cs" DependentUpon="OnOkTests.cs" />
 		<Compile Update="Results\Extensions\BindsTests.Task.*.cs" DependentUpon="BindTests.Task.cs" />
-		<Compile Update="Results\Extensions\BindsTests.Task.Left.cs">
-		  <DependentUpon>IfOkTests.Task.cs</DependentUpon>
-		</Compile>
-		<Compile Update="Results\Extensions\BindsTests.Task.Right.cs">
-		  <DependentUpon>IfOkTests.Task.cs</DependentUpon>
-		</Compile>
-		<Compile Update="Results\Extensions\IfOkTests.ValueTask.cs" DependentUpon="IfOkTests.cs" />
+		<Compile Update="Results\Extensions\OnOkTests.ValueTask.cs" DependentUpon="OnOkTests.cs" />
 		<Compile Update="Results\Extensions\BindsTests.ValueTask.*.cs" DependentUpon="BindTests.ValueTask.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Compile Update="Results\Extensions\BindsTests.ValueTask.Left.cs">
-	    <DependentUpon>IfOkTests.ValueTask.cs</DependentUpon>
+	    <DependentUpon>OnOkTests.ValueTask.cs</DependentUpon>
 	  </Compile>
 	  <Compile Update="Results\Extensions\BindsTests.ValueTask.Right.cs">
-	    <DependentUpon>IfOkTests.ValueTask.cs</DependentUpon>
+	    <DependentUpon>OnOkTests.ValueTask.cs</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 </Project>

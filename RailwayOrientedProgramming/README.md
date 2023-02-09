@@ -40,13 +40,14 @@ Maybe object holds a value or nothing. It is defined as
 
 ### Functions
 
-### IfOk
+### OnOk
 
-IfOk calls the given function if the result is in `Ok` state.
+OnOk calls the given function if the result is in `Ok` state.
 
-### IfError
+### OnError
 
- IfError calls the given function if the result is in `Error` state.
+ OnError calls the given function if the result is in `Error` state.
+ It given an oppertunity to compensate for the error and return Okay.
 
 ### Ensure
 
@@ -66,11 +67,11 @@ IfOk calls the given function if the result is in `Ok` state.
 
 ### ParallelAsync
 
- Parallel runs multiple tasks in parallel and returns multiple tasks. `IfOkAsync` will await all the task and call the given function.
+ Parallel runs multiple tasks in parallel and returns multiple tasks. `OnOkAsync` will await all the task and call the given function.
 
 ### Unwarp
 
- Unwrap unwraps the `Result` and returns the `Ok` value or the error.
+ Finally unwraps the `Result` and returns the `Ok` value or the error.
 
 ### Maybe
 

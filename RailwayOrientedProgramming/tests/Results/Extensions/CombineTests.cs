@@ -9,7 +9,7 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Success("World"))
-            .IfOk((hello, world) => Result.Success($"{hello} {world}"));
+            .OnOk((hello, world) => Result.Success($"{hello} {world}"));
 
         // Act
 
@@ -25,7 +25,7 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad World", "key")))
-            .IfOk((hello, world) => Result.Success($"{hello} {world}"));
+            .OnOk((hello, world) => Result.Success($"{hello} {world}"));
 
         // Act
 
@@ -44,7 +44,7 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Success("First"))
             .Combine(Result.Success("Last"))
-            .IfOk((hello, first, last) => Result.Success($"{hello} {first} {last}"));
+            .OnOk((hello, first, last) => Result.Success($"{hello} {first} {last}"));
 
         // Act
 
@@ -61,7 +61,7 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
             .Combine(Result.Failure<string>(Error.Validation("Bad Last", "Last")))
-            .IfOk((hello, first, last) => Result.Success($"{hello} {first} {last}"));
+            .OnOk((hello, first, last) => Result.Success($"{hello} {first} {last}"));
 
         // Act
 
@@ -87,7 +87,7 @@ public class CombineTests
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
             .Combine(Result.Success("9"))
-            .IfOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
+            .OnOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
 
         // Act
@@ -111,7 +111,7 @@ public class CombineTests
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
             .Combine(Result.Failure<string>(Error.Validation("Bad 9")))
-            .IfOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
+            .OnOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
 
@@ -136,7 +136,7 @@ public class CombineTests
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
             .Combine(Result.Failure<string>(Error.Validation("Bad 9")))
-            .IfOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
+            .OnOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
 
@@ -159,7 +159,7 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
             .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
-            .IfOk((hello, first, last) =>
+            .OnOk((hello, first, last) =>
             {
                 return Result.Success($"{hello} {first} {last}");
             });
@@ -185,7 +185,7 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Forbidden("You can't touch this.")))
             .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
-            .IfOk((hello, first, last) =>
+            .OnOk((hello, first, last) =>
             {
                 called = true;
                 return Result.Success($"{hello} {first} {last}");

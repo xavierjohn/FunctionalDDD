@@ -14,8 +14,8 @@ public class AsyncUsageExamples
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .IfOkTapAsync(customer => customer.Promote())
-            .IfOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-            .UnwrapAsync(ok => "Okay", error => error.Message);
+            .OnOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+            .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
     }
@@ -29,8 +29,8 @@ public class AsyncUsageExamples
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .IfOkTapAsync(customer => customer.PromoteAsync())
-            .IfOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .UnwrapAsync(ok => "Okay", error => error.Message);
+            .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
     }
@@ -44,11 +44,11 @@ public class AsyncUsageExamples
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
             .IfErrorTapAsync(error => Log(error))
-            .IfErrorAsync(() => AskManagerAsync(id))
+            .OnErrorAsync(() => AskManagerAsync(id))
             .IfOkTapAsync(customer => Log("Manager approved promotion"))
             .IfOkTapAsync(customer => customer.PromoteAsync())
-            .IfOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .UnwrapAsync(ok => "Okay", error => error.Message);
+            .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
     }
