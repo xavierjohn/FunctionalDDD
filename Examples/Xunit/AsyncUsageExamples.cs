@@ -13,7 +13,7 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .IfOkTapAsync(customer => customer.Promote())
+            .OnOkTapAsync(customer => customer.Promote())
             .OnOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
@@ -28,7 +28,7 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .IfOkTapAsync(customer => customer.PromoteAsync())
+            .OnOkTapAsync(customer => customer.PromoteAsync())
             .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
@@ -43,10 +43,10 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .IfErrorTapAsync(error => Log(error))
+            .OnErrorTapAsync(error => Log(error))
             .OnErrorAsync(() => AskManagerAsync(id))
-            .IfOkTapAsync(customer => Log("Manager approved promotion"))
-            .IfOkTapAsync(customer => customer.PromoteAsync())
+            .OnOkTapAsync(customer => Log("Manager approved promotion"))
+            .OnOkTapAsync(customer => customer.PromoteAsync())
             .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 

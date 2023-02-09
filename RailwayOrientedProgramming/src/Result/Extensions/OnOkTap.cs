@@ -27,7 +27,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static async Task<Result<TOk, Error>> IfOkTapAsync<TOk>(this Task<Result<TOk, Error>> resultTask, Action<TOk> action)
+    public static async Task<Result<TOk, Error>> OnOkTapAsync<TOk>(this Task<Result<TOk, Error>> resultTask, Action<TOk> action)
     {
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
         return result.IfOkTap(action);
