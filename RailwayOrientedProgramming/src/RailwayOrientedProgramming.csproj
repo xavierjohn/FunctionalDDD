@@ -7,6 +7,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
+      <DependentUpon>Ensure.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\Ensure.ValueTask.Left.cs">
+      <DependentUpon>Ensure.ValueTask.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\Ensure.ValueTask.Right.cs">
+      <DependentUpon>Ensure.ValueTask.cs</DependentUpon>
+    </Compile>
     <Compile Update="Result\Extensions\OnOkayTs.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

@@ -32,4 +32,48 @@ public static partial class ResultExtensions
         Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
         return result.IfOkTap(action);
     }
+
+    /// <summary>
+    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<Task> func)
+    {
+        if (result.IsOk)
+            await func().ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<TOk, Task> func)
+    {
+        if (result.IsOk)
+            await func(result.Ok).ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<ValueTask> func)
+    {
+        if (result.IsOk)
+            await func().ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<TOk, ValueTask> func)
+    {
+        if (result.IsOk)
+            await func(result.Ok).ConfigureAwait(false);
+
+        return result;
+    }
 }
