@@ -3,12 +3,12 @@
 using FunctionalDDD;
 using RailwayOrientedProgramming.Tests.Results;
 
-public abstract class OkTestsBase : TestBase
+public abstract class BindBase : TestBase
 {
     private bool _funcExecuted;
     protected T? FuncParam { get; set; }
 
-    protected OkTestsBase()
+    protected BindBase()
     {
         _funcExecuted = false;
         FuncParam = null;

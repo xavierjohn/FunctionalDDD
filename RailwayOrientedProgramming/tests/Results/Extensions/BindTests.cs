@@ -2,7 +2,7 @@
 
 using FunctionalDDD;
 
-public class OnOkTests : OkTestsBase
+public class BindTests : BindBase
 {
 
     [Fact]

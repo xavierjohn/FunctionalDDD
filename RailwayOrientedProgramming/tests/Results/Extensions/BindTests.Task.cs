@@ -3,7 +3,7 @@
 using FunctionalDDD;
 using RailwayOrientedProgramming.Tests.Results.Extensions;
 
-public class BindTests_Task : OkTestsBase
+public class BindTests_Task : BindBase
 {
     [Fact]
     public async Task Bind_Task_T_K_returns_failure_and_does_not_execute_func()
