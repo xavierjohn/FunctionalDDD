@@ -14,7 +14,7 @@ public class AsyncUsageExamples
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .OnOkTapAsync(customer => customer.Promote())
-            .OnOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+            .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
@@ -29,7 +29,7 @@ public class AsyncUsageExamples
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .OnOkTapAsync(customer => customer.PromoteAsync())
-            .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
@@ -47,7 +47,7 @@ public class AsyncUsageExamples
             .OnErrorAsync(() => AskManagerAsync(id))
             .OnOkTapAsync(customer => Log("Manager approved promotion"))
             .OnOkTapAsync(customer => customer.PromoteAsync())
-            .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");

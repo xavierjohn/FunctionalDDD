@@ -26,7 +26,7 @@ await GetCustomerByIdAsync(id)
    .EnsureAsync(customer => customer.CanBePromoted,
       Error.Validation("The customer has the highest status possible"))
    .OnOkTapAsync(customer => customer.Promote())
-   .OnOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+   .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
    .FinallyAsync(ok => "Okay", error => error.Message);
  ```
 
@@ -48,7 +48,7 @@ Finally `FinallyAsync` will call the given functions with underlying object or e
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
     .Combine(EmailAddress.New("xavier@somewhereelse.com"))
-    .OnOk((email, firstName, lastName, anotherEmail) =>
+    .Bind((email, firstName, lastName, anotherEmail) =>
        Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
  ```
 

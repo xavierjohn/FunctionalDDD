@@ -12,7 +12,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .ToOkActionResult(this);
 
     [HttpPost("[action]")]
@@ -20,7 +20,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .Finally(result => result.IsSuccess
             ? CreatedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
             : result.ToErrorActionResult(this));
@@ -30,7 +30,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .Finally(
             ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
             err => err.ToErrorActionResult<User>(this));
@@ -40,7 +40,7 @@ public class AuthenticationController : ControllerBase
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
-        .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
         .Finally(result => result.IsSuccess
             ? AcceptedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
             : result.ToErrorActionResult(this));
