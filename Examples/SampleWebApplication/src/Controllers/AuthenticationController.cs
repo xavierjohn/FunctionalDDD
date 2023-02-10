@@ -21,8 +21,8 @@ public class AuthenticationController : ControllerBase
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
         .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
-        .Finally(result => result.IsOk
-            ? CreatedAtAction("Get", new { name = result.Ok.FirstName }, result.Ok)
+        .Finally(result => result.IsSuccess
+            ? CreatedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
             : result.ToErrorActionResult(this));
 
     [HttpPost("[action]")]
@@ -41,8 +41,8 @@ public class AuthenticationController : ControllerBase
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
         .OnOk((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
-        .Finally(result => result.IsOk
-            ? AcceptedAtAction("Get", new { name = result.Ok.FirstName }, result.Ok)
+        .Finally(result => result.IsSuccess
+            ? AcceptedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
             : result.ToErrorActionResult(this));
 
     [HttpGet("[action]")]

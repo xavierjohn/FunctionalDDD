@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> IfErrorTap<TOk>(this Result<TOk, Error> result, Action action)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             action();
 
         return result;
@@ -18,7 +18,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> IfErrorTap<TOk>(this Result<TOk, Error> result, Action<Error> action)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             action(result.Error);
 
         return result;

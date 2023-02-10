@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<bool> predicate, Error errors)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             return result;
 
         if (!predicate())
@@ -21,10 +21,10 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, bool> predicate, Error errors)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             return result;
 
-        if (!predicate(result.Ok))
+        if (!predicate(result.Value))
             return Result.Failure<TOk, Error>(errors);
 
         return result;
@@ -35,11 +35,11 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             return result;
 
-        if (!predicate(result.Ok))
-            return Result.Failure<TOk, Error>(errorPredicate(result.Ok));
+        if (!predicate(result.Value))
+            return Result.Failure<TOk, Error>(errorPredicate(result.Value));
 
         return result;
     }
@@ -50,12 +50,12 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<Result<TOk, Error>> predicate)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             return result;
 
         var predicateResult = predicate();
 
-        if (predicateResult.IsError)
+        if (predicateResult.IsFailure)
             return Result.Failure<TOk, Error>(predicateResult.Error);
 
         return result;
@@ -66,12 +66,12 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, Result<TOk, Error>> predicate)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             return result;
 
-        var predicateResult = predicate(result.Ok);
+        var predicateResult = predicate(result.Value);
 
-        if (predicateResult.IsError)
+        if (predicateResult.IsFailure)
             return Result.Failure<TOk, Error>(predicateResult.Error);
 
         return result;

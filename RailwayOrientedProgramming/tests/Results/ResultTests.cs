@@ -9,8 +9,8 @@ public class ResultTests
     {
         var result = Result.Success("Hello");
 
-        result.IsOk.Should().BeTrue();
-        result.Ok.Should().Be("Hello");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Hello");
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class ResultTests
     {
         var result = Result.Success(default(string));
 
-        result.IsOk.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class ResultTests
     {
         var result = Result.Failure<string>(Error.Validation("Bad first name"));
 
-        result.IsError.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Validation("Bad first name"));
     }
 
@@ -36,7 +36,7 @@ public class ResultTests
     {
         var result = Result.FailureIf(false, "Hello", Error.Validation("Bad first name"));
 
-        result.IsOk.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class ResultTests
     {
         var result = Result.FailureIf(() => false, string.Empty, Error.Unexpected(string.Empty));
 
-        result.IsOk.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class ResultTests
     {
         var result = Result.FailureIf(() => true, "Hello", Error.Unexpected("You can't touch this."));
 
-        result.IsError.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("You can't touch this."));
     }
 
@@ -61,8 +61,8 @@ public class ResultTests
     {
         var result = await Result.FailureIfAsync(() => Task.FromResult(false), "Hello", Error.Unexpected(string.Empty));
 
-        result.IsOk.Should().BeTrue();
-        result.Ok.Should().Be("Hello");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Hello");
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class ResultTests
     {
         var result = await Result.FailureIfAsync(() => Task.FromResult(true), "Hello", Error.Unexpected("You can't touch this."));
 
-        result.IsError.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("You can't touch this."));
     }
 
@@ -80,8 +80,8 @@ public class ResultTests
         byte val = 7;
         var result = Result.FailureIf(false, val, Error.Unexpected(string.Empty));
 
-        result.IsOk.Should().BeTrue();
-        result.Ok.Should().Be(val);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(val);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class ResultTests
         var val = .56;
         var result = Result.FailureIf(true, val, Error.Unexpected("simple result error"));
 
-        result.IsError.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("simple result error"));
     }
 
@@ -99,8 +99,8 @@ public class ResultTests
     {
         var result = Result.Success((DateTime?)null);
 
-        result.IsOk.Should().BeTrue();
-        result.Ok.Should().Be(null);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(null);
     }
 
     [Fact]
@@ -110,8 +110,8 @@ public class ResultTests
 
         var result = Result.Success(maybe);
 
-        result.IsOk.Should().BeTrue();
-        result.Ok.Should().Be(Maybe.None<DateTime>());
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Maybe.None<DateTime>());
     }
 
     [Fact]
@@ -121,8 +121,8 @@ public class ResultTests
 
         var result = Result.Success(maybe);
 
-        result.IsOk.Should().BeTrue();
-        result.Ok.Should().Be(Maybe.None<string>());
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Maybe.None<string>());
     }
 
     [Fact]
@@ -135,6 +135,6 @@ public class ResultTests
         Result<string, Error> result = hello;
 
         // Assert
-        result.Ok.Should().Be(hello);
+        result.Value.Should().Be(hello);
     }
 }

@@ -14,7 +14,7 @@ public class ValidationExample
             .Combine(EmailAddress.New("xavier@somewhereelse.com"))
             .OnOk((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
-        actual.Ok.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
+        actual.Value.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class ValidationExample
                 return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));
             });
 
-        actual.IsError.Should().BeTrue();
+        actual.IsFailure.Should().BeTrue();
         var validationErrors = (ValidationError)actual.Error;
         validationErrors.Errors.Should().HaveCount(2);
         validationErrors.Errors.Should().BeEquivalentTo(new[]

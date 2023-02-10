@@ -1,26 +1,26 @@
 ﻿namespace FunctionalDDD;
-public readonly struct Result<TOk, TErr>
+public readonly struct Result<TValue, TError>
 {
-    public TOk Ok => IsError ? throw new ResultFailureException<TErr>(Error) : _ok!;
-    public TErr Error => _error ?? throw new ResultSuccessException();
+    public TValue Value => IsFailure ? throw new ResultFailureException<TError>(Error) : _value!;
+    public TError Error => _error ?? throw new ResultSuccessException();
 
-    public bool IsError { get; }
-    public bool IsOk => !IsError;
+    public bool IsFailure { get; }
+    public bool IsSuccess => !IsFailure;
 
-    public static implicit operator Result<TOk, TErr>(TOk value) => Result.Success<TOk, TErr>(value);
+    public static implicit operator Result<TValue, TError>(TValue value) => Result.Success<TValue, TError>(value);
 
-    public static implicit operator Result<TOk, TErr>(TErr errors) => Result.Failure<TOk, TErr>(errors);
+    public static implicit operator Result<TValue, TError>(TError errors) => Result.Failure<TValue, TError>(errors);
 
-    internal Result(bool isFailure, TOk? ok, TErr? error)
+    internal Result(bool isFailure, TValue? ok, TError? error)
     {
         if (isFailure && error is null)
             throw new ArgumentException("If 'isFailure' is true, 'error' must not be null.");
 
-        IsError = isFailure;
+        IsFailure = isFailure;
         _error = error;
-        _ok = ok;
+        _value = ok;
     }
 
-    private readonly TOk? _ok;
-    private readonly TErr? _error;
+    private readonly TValue? _value;
+    private readonly TError? _error;
 }

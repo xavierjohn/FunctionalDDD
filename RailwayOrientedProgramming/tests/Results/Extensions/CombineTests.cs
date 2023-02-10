@@ -14,8 +14,8 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsOk.Should().BeTrue();
-        var helloWorld = rHelloWorld.Ok;
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("Hello World");
     }
 
@@ -30,7 +30,7 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().ContainSingle();
@@ -49,8 +49,8 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsOk.Should().BeTrue();
-        var helloWorld = rHelloWorld.Ok;
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("Hello First Last");
     }
 
@@ -66,7 +66,7 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().HaveCount(2);
@@ -93,8 +93,8 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsOk.Should().BeTrue();
-        var helloWorld = rHelloWorld.Ok;
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("123456789");
     }
 
@@ -116,7 +116,7 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().ContainSingle();
@@ -141,7 +141,7 @@ public class CombineTests
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().HaveCount(2);
@@ -166,7 +166,7 @@ public class CombineTests
 
         // Assert
         called.Should().BeFalse();
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<AggregateError>();
         var ag = (AggregateError)rHelloWorld.Error;
         ag.Errors.Should().HaveCount(2);
@@ -193,7 +193,7 @@ public class CombineTests
 
         // Assert
         called.Should().BeFalse();
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<AggregateError>();
         var ag = (AggregateError)rHelloWorld.Error;
         ag.Errors.Should().HaveCount(2);

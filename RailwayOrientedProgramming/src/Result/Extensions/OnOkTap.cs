@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> IfOkTap<TOk>(this Result<TOk, Error> result, Action action)
     {
-        if (result.IsOk)
+        if (result.IsSuccess)
             action();
 
         return result;
@@ -18,8 +18,8 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOk, Error> IfOkTap<TOk>(this Result<TOk, Error> result, Action<TOk> action)
     {
-        if (result.IsOk)
-            action(result.Ok);
+        if (result.IsSuccess)
+            action(result.Value);
 
         return result;
     }
@@ -38,7 +38,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static async Task<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<Task> func)
     {
-        if (result.IsOk)
+        if (result.IsSuccess)
             await func().ConfigureAwait(false);
 
         return result;
@@ -49,8 +49,8 @@ public static partial class ResultExtensions
     /// </summary>
     public static async Task<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<TOk, Task> func)
     {
-        if (result.IsOk)
-            await func(result.Ok).ConfigureAwait(false);
+        if (result.IsSuccess)
+            await func(result.Value).ConfigureAwait(false);
 
         return result;
     }
@@ -60,7 +60,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static async ValueTask<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<ValueTask> func)
     {
-        if (result.IsOk)
+        if (result.IsSuccess)
             await func().ConfigureAwait(false);
 
         return result;
@@ -71,8 +71,8 @@ public static partial class ResultExtensions
     /// </summary>
     public static async ValueTask<Result<TOk, TError>> OnOkTapAsync<TOk, TError>(this Result<TOk, TError> result, Func<TOk, ValueTask> func)
     {
-        if (result.IsOk)
-            await func(result.Ok).ConfigureAwait(false);
+        if (result.IsSuccess)
+            await func(result.Value).ConfigureAwait(false);
 
         return result;
     }

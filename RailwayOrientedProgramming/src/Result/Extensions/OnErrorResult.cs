@@ -7,7 +7,7 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<T, Error> OnError<T>(this Result<T, Error> result, Func<Result<T, Error>> func)
     {
-        if (result.IsOk)
+        if (result.IsSuccess)
             return result;
 
         return func();
@@ -28,7 +28,7 @@ public static partial class ResultExtensions
     public static async Task<Result<T, Error>> OnErrorAsync<T>(this Task<Result<T, Error>> resultTask, Func<Task<Result<T, Error>>> funcAsync)
     {
         Result<T, Error> result = await resultTask.ConfigureAwait(false);
-        if (result.IsOk)
+        if (result.IsSuccess)
             return result;
 
         return await funcAsync();

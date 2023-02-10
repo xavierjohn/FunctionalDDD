@@ -8,13 +8,13 @@ public class FluentTests
     public void Can_create_user()
     {
         var rUser = User.New(
-            FirstName.New("John").Ok,
-            LastName.New("Doe").Ok,
-            EmailAddress.New("xavier@somewhere.com").Ok,
+            FirstName.New("John").Value,
+            LastName.New("Doe").Value,
+            EmailAddress.New("xavier@somewhere.com").Value,
             "password");
 
-        rUser.IsOk.Should().BeTrue();
-        var user = rUser.Ok;
+        rUser.IsSuccess.Should().BeTrue();
+        var user = rUser.Value;
         user.FirstName.Value.Should().Be("John");
         user.LastName.Value.Should().Be("Doe");
         user.Email.Value.Should().Be("xavier@somewhere.com");
@@ -39,7 +39,7 @@ public class FluentTests
         var rUser = User.New(firstName, lastName, email, "password");
 
         // Assert
-        rUser.IsError.Should().BeTrue();
+        rUser.IsFailure.Should().BeTrue();
         var validationErrors = (ValidationError)rUser.Error;
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
@@ -51,7 +51,7 @@ public class FluentTests
         // Arrange
         FirstName firstName = default!;
         LastName lastName = default!;
-        EmailAddress email = EmailAddress.New("xavier@somewhere.com").Ok;
+        EmailAddress email = EmailAddress.New("xavier@somewhere.com").Value;
         var expectedValidationErrors = new[]
         {
             Error.ValidationError("'First Name' must not be empty.", "FirstName"),
@@ -63,7 +63,7 @@ public class FluentTests
         var rUser = User.New(firstName, lastName, email, string.Empty);
 
         // Assert
-        rUser.IsError.Should().BeTrue();
+        rUser.IsFailure.Should().BeTrue();
         var validationErrors = (ValidationError)rUser.Error;
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
