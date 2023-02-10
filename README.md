@@ -25,7 +25,7 @@ await GetCustomerByIdAsync(id)
    .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
    .EnsureAsync(customer => customer.CanBePromoted,
       Error.Validation("The customer has the highest status possible"))
-   .OnOkTapAsync(customer => customer.Promote())
+   .TeeAsync(customer => customer.Promote())
    .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
    .FinallyAsync(ok => "Okay", error => error.Message);
  ```
@@ -37,7 +37,7 @@ If `Maybe<Customer>` returned `None`, then `ToResultAsync` will convert it to `R
 If `Maybe<Customer>` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
  If not return a `Validation` error.
 
-If there is no error, `OnOkTapAsync` will execute the `Promote` method and then send an email.
+If there is no error, `TeeAsync` will execute the `Promote` method and then send an email.
 
 Finally `FinallyAsync` will call the given functions with underlying object or error.
 
