@@ -7,10 +7,10 @@ public static partial class ResultExtensions
     /// </summary>
     public static Result<TOut, Error> Map<TIn, TOut>(this Result<TIn, Error> result, Func<TIn, TOut> func)
     {
-        if (result.IsError)
+        if (result.IsFailure)
             return Result.Failure<TOut, Error>(result.Error);
 
-        return Result.Success<TOut, Error>(func(result.Ok));
+        return Result.Success<TOut, Error>(func(result.Value));
     }
 
     /// <summary>
@@ -20,10 +20,10 @@ public static partial class ResultExtensions
     {
         Result<TIn, Error> result = await resultTask.ConfigureAwait(false);
 
-        if (result.IsError)
+        if (result.IsFailure)
             return Result.Failure<TOut, Error>(result.Error);
 
-        TOut value = await func(result.Ok).ConfigureAwait(false);
+        TOut value = await func(result.Value).ConfigureAwait(false);
 
         return Result.Success<TOut, Error>(value);
     }
@@ -32,10 +32,10 @@ public static partial class ResultExtensions
     {
         Result<TIn, Error> result = await resultTask;
 
-        if (result.IsError)
+        if (result.IsFailure)
             return Result.Failure<TOut, Error>(result.Error);
 
-        TOut value = func(result.Ok);
+        TOut value = func(result.Value);
 
         return Result.Success<TOut, Error>(value);
     }
@@ -47,10 +47,10 @@ public static partial class ResultExtensions
     {
         Result<TIn, Error> result = await resultTask;
 
-        if (result.IsError)
+        if (result.IsFailure)
             return Result.Failure<TOut, Error>(result.Error);
 
-        TOut value = await valueTask(result.Ok);
+        TOut value = await valueTask(result.Value);
 
         return Result.Success<TOut, Error>(value);
     }
@@ -59,10 +59,10 @@ public static partial class ResultExtensions
     {
         Result<TIn, Error> result = await resultTask;
 
-        if (result.IsError)
+        if (result.IsFailure)
             return Result.Failure<TOut, Error>(result.Error);
 
-        TOut value = func(result.Ok);
+        TOut value = func(result.Value);
 
         return Result.Success<TOut, Error>(value);
     }

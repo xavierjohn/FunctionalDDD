@@ -13,8 +13,8 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .IfOkTapAsync(customer => customer.Promote())
-            .OnOkAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+            .TeeAsync(customer => customer.Promote())
+            .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
@@ -28,8 +28,8 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .IfOkTapAsync(customer => customer.PromoteAsync())
-            .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .TeeAsync(customer => customer.PromoteAsync())
+            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");
@@ -43,11 +43,11 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .IfErrorTapAsync(error => Log(error))
+            .OnErrorTapAsync(error => Log(error))
             .OnErrorAsync(() => AskManagerAsync(id))
-            .IfOkTapAsync(customer => Log("Manager approved promotion"))
-            .IfOkTapAsync(customer => customer.PromoteAsync())
-            .OnOkAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .TeeAsync(customer => Log("Manager approved promotion"))
+            .TeeAsync(customer => customer.PromoteAsync())
+            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
         result.Should().Be("Okay");

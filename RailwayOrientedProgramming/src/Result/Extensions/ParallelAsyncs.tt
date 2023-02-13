@@ -31,12 +31,12 @@ public static partial class ResultExtensions
         Task<Result<T<#=i#>, Error>> task
         ) => (<# WriteTaskItem(i - 1); #>, task);
 
-    public static async Task<Result<TResult, Error>> OnOkAsync<<# WriteTs(i); #>, TResult>(
+    public static async Task<Result<TResult, Error>> BindAsync<<# WriteTs(i); #>, TResult>(
         this (<# WriteTaskResult(i); #>) tasks,
         Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
     {
         await Task.WhenAll(<# WriteTaskItem(i); #>);
-        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).OnOk(func);
+        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
     }
 
 <#

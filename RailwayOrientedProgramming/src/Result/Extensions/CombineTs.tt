@@ -13,15 +13,11 @@ public static partial class ResultExtensions
 
 <#
   void WriteT1Values(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t1.Ok.Item{i}")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t1.Value.Item{i}")));
   }
   
-  void WriteIsFailure(int n) {
-    Write(String.Join(" || ", Enumerable.Range(1, n).Select(i => $"t{i}.IsFailure")));
-  }
-
   void WriteResultT(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Result<T{i}, Err> t{i}")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Result<T{i}, Error> t{i}")));
   }
 
   void WriteAddFailure(int n) {
@@ -31,25 +27,25 @@ public static partial class ResultExtensions
   }
 
   void WriteTValues(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t{i}.Ok")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t{i}.Value")));
   }
 
   for(var i = 3; i <=9; i++) { 
 #>
-    public static Result<(<# WriteTs(i); #>), Err> Combine<<# WriteTs(i); #>>(
-      this Result<(<# WriteTs(i - 1); #>), Err> t1, Result<<# Write("T" + i); #>, Err> tc)
+    public static Result<(<# WriteTs(i); #>), Error> Combine<<# WriteTs(i); #>>(
+      this Result<(<# WriteTs(i - 1); #>), Error> t1, Result<<# Write("T" + i); #>, Error> tc)
     {
-        Err? error = null;
+        Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (tc.IsFailure) error = error.Combine(tc.Error);
-        if (error is not null) return Result.Failure<(<# WriteTs(i); #>), Err>(error);
-        return Result.Success((<# WriteT1Values(i - 1); #>, tc.Ok));
+        if (error is not null) return Result.Failure<(<# WriteTs(i); #>), Error>(error);
+        return Result.Success((<# WriteT1Values(i - 1); #>, tc.Value));
     }
 
-    public static Result<(<# WriteTs(i); #>), Err> Combine<<# WriteTs(i); #>>(
+    public static Result<(<# WriteTs(i); #>), Error> Combine<<# WriteTs(i); #>>(
        this <# WriteResultT(i); #>)
     {
-        Err? error = null;
+        Error? error = null;
         <# WriteAddFailure(i); #>
 
         if (error is not null) return Result.Failure<(<# WriteTs(i); #>)>(error);

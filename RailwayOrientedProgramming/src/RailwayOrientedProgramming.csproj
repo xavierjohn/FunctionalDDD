@@ -7,10 +7,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Result\Extensions\OnOkayTs.cs">
+    <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
+      <DependentUpon>Ensure.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\Ensure.ValueTask.Left.cs">
+      <DependentUpon>Ensure.ValueTask.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\Ensure.ValueTask.Right.cs">
+      <DependentUpon>Ensure.ValueTask.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\BindTs.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>OnOkayTs.tt</DependentUpon>
+      <DependentUpon>BindTs.tt</DependentUpon>
     </Compile>
     <Compile Update="Result\Extensions\CombineTs.cs">
       <DesignTime>True</DesignTime>
@@ -34,9 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Result\Extensions\OnOkayTs.tt">
+    <None Update="Result\Extensions\BindTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>OnOkayTs.cs</LastGenOutput>
+      <LastGenOutput>BindTs.cs</LastGenOutput>
     </None>
     <None Update="Result\Extensions\CombineTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>

@@ -68,7 +68,7 @@ public static partial class ResultExtensions
     public static TOut Finally<TIn, TOut>(this Result<TIn, Error> result,
         Func<TIn, TOut> funcOk,
         Func<Error, TOut> funcError) =>
-        result.IsOk ? funcOk(result.Ok) : funcError(result.Error);
+        result.IsSuccess ? funcOk(result.Value) : funcError(result.Error);
 
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn, Error>> resultTask,
         Func<TIn, TOut> funcOk,

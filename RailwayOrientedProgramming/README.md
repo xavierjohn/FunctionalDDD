@@ -40,24 +40,24 @@ Maybe object holds a value or nothing. It is defined as
 
 ### Functions
 
-### OnOk
+### Bind
 
-OnOk calls the given function if the result is in `Ok` state.
+Bind calls the given function if the result is in success state.
 
 ### OnError
 
- OnError calls the given function if the result is in `Error` state.
- It given an oppertunity to compensate for the error and return Okay.
+ OnError calls the given function if the result is in error state.
+ It given an oppertunity to compensate for the error and return success.
 
 ### Ensure
 
- Ensure calls the given function if the result is in `Ok` state.
+ Ensure calls the given function if the result is in success state.
  If the function returns false, the attached error is returned.
 
 ### Map
 
- Map calls the given function if the result is in `Ok` state.
- The return value is wrapped in `Result` as Ok.
+ Map calls the given function if the result is in success state.
+ The return value is wrapped in `Result` as success.
 
 ### Combine
 
@@ -67,11 +67,11 @@ OnOk calls the given function if the result is in `Ok` state.
 
 ### ParallelAsync
 
- Parallel runs multiple tasks in parallel and returns multiple tasks. `OnOkAsync` will await all the task and call the given function.
+ Parallel runs multiple tasks in parallel and returns multiple tasks. `BindAsync` will await all the task and call the given function.
 
 ### Unwarp
 
- Finally unwraps the `Result` and returns the `Ok` value or the error.
+ Finally unwraps the `Result` and returns the success value or the error.
 
 ### Maybe
 

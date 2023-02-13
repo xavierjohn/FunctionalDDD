@@ -9,13 +9,13 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Success("World"))
-            .OnOk((hello, world) => Result.Success($"{hello} {world}"));
+            .Bind((hello, world) => Result.Success($"{hello} {world}"));
 
         // Act
 
         // Assert
-        rHelloWorld.IsOk.Should().BeTrue();
-        var helloWorld = rHelloWorld.Ok;
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("Hello World");
     }
 
@@ -25,12 +25,12 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad World", "key")))
-            .OnOk((hello, world) => Result.Success($"{hello} {world}"));
+            .Bind((hello, world) => Result.Success($"{hello} {world}"));
 
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().ContainSingle();
@@ -44,13 +44,13 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Success("First"))
             .Combine(Result.Success("Last"))
-            .OnOk((hello, first, last) => Result.Success($"{hello} {first} {last}"));
+            .Bind((hello, first, last) => Result.Success($"{hello} {first} {last}"));
 
         // Act
 
         // Assert
-        rHelloWorld.IsOk.Should().BeTrue();
-        var helloWorld = rHelloWorld.Ok;
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("Hello First Last");
     }
 
@@ -61,12 +61,12 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
             .Combine(Result.Failure<string>(Error.Validation("Bad Last", "Last")))
-            .OnOk((hello, first, last) => Result.Success($"{hello} {first} {last}"));
+            .Bind((hello, first, last) => Result.Success($"{hello} {first} {last}"));
 
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().HaveCount(2);
@@ -87,14 +87,14 @@ public class CombineTests
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
             .Combine(Result.Success("9"))
-            .OnOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
+            .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
 
         // Act
 
         // Assert
-        rHelloWorld.IsOk.Should().BeTrue();
-        var helloWorld = rHelloWorld.Ok;
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("123456789");
     }
 
@@ -111,12 +111,12 @@ public class CombineTests
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
             .Combine(Result.Failure<string>(Error.Validation("Bad 9")))
-            .OnOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
+            .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().ContainSingle();
@@ -136,12 +136,12 @@ public class CombineTests
             .Combine(Result.Success("7"))
             .Combine(Result.Success("8"))
             .Combine(Result.Failure<string>(Error.Validation("Bad 9")))
-            .OnOk((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
+            .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
 
         // Assert
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
         validation.Errors.Should().HaveCount(2);
@@ -159,14 +159,14 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
             .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
-            .OnOk((hello, first, last) =>
+            .Bind((hello, first, last) =>
             {
                 return Result.Success($"{hello} {first} {last}");
             });
 
         // Assert
         called.Should().BeFalse();
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<AggregateError>();
         var ag = (AggregateError)rHelloWorld.Error;
         ag.Errors.Should().HaveCount(2);
@@ -185,7 +185,7 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Forbidden("You can't touch this.")))
             .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
-            .OnOk((hello, first, last) =>
+            .Bind((hello, first, last) =>
             {
                 called = true;
                 return Result.Success($"{hello} {first} {last}");
@@ -193,7 +193,7 @@ public class CombineTests
 
         // Assert
         called.Should().BeFalse();
-        rHelloWorld.IsError.Should().BeTrue();
+        rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<AggregateError>();
         var ag = (AggregateError)rHelloWorld.Error;
         ag.Errors.Should().HaveCount(2);

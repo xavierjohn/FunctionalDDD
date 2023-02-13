@@ -3,12 +3,12 @@
 using FunctionalDDD;
 using RailwayOrientedProgramming.Tests.Results;
 
-public abstract class OkTestsBase : TestBase
+public abstract class BindBase : TestBase
 {
     private bool _funcExecuted;
     protected T? FuncParam { get; set; }
 
-    protected OkTestsBase()
+    protected BindBase()
     {
         _funcExecuted = false;
         FuncParam = null;
@@ -128,15 +128,15 @@ public abstract class OkTestsBase : TestBase
     protected void AssertFailure(Result<K, Error> output)
     {
         _funcExecuted.Should().BeFalse();
-        output.IsError.Should().BeTrue();
+        output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error1);
     }
 
     protected void AssertSuccess(Result<K, Error> output)
     {
         _funcExecuted.Should().BeTrue();
-        output.IsOk.Should().BeTrue();
-        output.Ok.Should().Be(K.Value);
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be(K.Value);
     }
 
     protected Task<Result<T, Error>> Task_Success_T_E()
