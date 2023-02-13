@@ -92,7 +92,7 @@ public class RequiredGuid_T_Tests
 
         // Assert
         act.Should().Throw<ResultFailureException<Error>>()
-            .WithMessage("You attempted to access the Ok property for a failed result. A failed result has no Value.")
+            .WithMessage("You attempted to access the Value for a failed result. A failed result has no Value.")
             .Where(e => e.Error.Message == "My Guid Id cannot be empty");
     }
 }

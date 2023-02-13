@@ -30,7 +30,7 @@ public partial class TrackingId : RequiredString<TrackingId>
     {
     }
 
-    public static explicit operator TrackingId(String trackingId) => New(trackingId).Ok;
+    public static explicit operator TrackingId(String trackingId) => New(trackingId).Value;
 
     public static Result<TrackingId, Error> New(Maybe<string> requiredStringOrNothing)
         requiredStringOrNothing
