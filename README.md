@@ -12,7 +12,6 @@ With the following differences.
 - Leverage fluent validation and use it to create domain objects.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
-- More intuitive function names. (hopefully, it's subjective so leave comments in discussion. Naming is a pain.)
 
 ## Examples
 

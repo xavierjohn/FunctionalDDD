@@ -2,7 +2,7 @@
 
 using FunctionalDDD;
 
-public class OnErrorTests
+public class CompensateTests
 {
     bool _compensatingFunctionCalled;
 
@@ -16,7 +16,7 @@ public class OnErrorTests
     public void Result_success_then_compensate_func_does_not_execute()
     {
         Result<string, Error> input = Result.Success("Success");
-        Result<string, Error> output = input.OnError(GetErrorResult);
+        Result<string, Error> output = input.Compensate(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
@@ -32,7 +32,7 @@ public class OnErrorTests
     public void Result_failure_and_compensate_func_does_execute_and_succeed()
     {
         Result<string, Error> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string, Error> output = input.OnError(GetSuccessResult);
+        Result<string, Error> output = input.Compensate(GetSuccessResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
@@ -48,7 +48,7 @@ public class OnErrorTests
     public void Result_failure_and_compensate_func_does_execute_and_fail()
     {
         Result<string, Error> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string, Error> output = input.OnError(GetErrorResult);
+        Result<string, Error> output = input.Compensate(GetErrorResult);
 
         _compensatingFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
