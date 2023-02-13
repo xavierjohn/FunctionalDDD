@@ -4,21 +4,21 @@
 
 ### [Result](RailwayOrientedProgramming/src/Result/Result{TOk,TErr}.cs)
 
- Result object holds the result of an operation. It can be either `Ok` or `Error`.
+ Result object holds the result of an operation or `Error`
  It is defined as
 
 ```csharp
- public readonly struct Result<TOk, TErr>
+public readonly struct Result<TValue, TError>
 {
-    public TOk Ok => IsError ? throw new ResultFailureException<TErr>(Error) : _ok!;
-    public TErr Error => _error ?? throw new ResultSuccessException();
+    public TValue Value => IsFailure ? throw new ResultFailureException<TError>(Error) : _value!;
+    public TError Error => _error ?? throw new ResultSuccessException();
 
-    public bool IsError { get; }
-    public bool IsOk => !IsError;
-    
-    public static implicit operator Result<TOk, TErr>(TOk value) => Result.Success<TOk, TErr>(value);
+    public bool IsFailure { get; }
+    public bool IsSuccess => !IsFailure;
 
-    public static implicit operator Result<TOk, TErr>(TErr errors) => Result.Failure<TOk, TErr>(errors);
+    public static implicit operator Result<TValue, TError>(TValue value) => Result.Success<TValue, TError>(value);
+
+    public static implicit operator Result<TValue, TError>(TError errors) => Result.Failure<TValue, TError>(errors);
  }
  ```
 
@@ -44,10 +44,9 @@ Maybe object holds a value or nothing. It is defined as
 
 Bind calls the given function if the result is in success state.
 
-### OnError
+### Compensate
 
- OnError calls the given function if the result is in error state.
- It given an oppertunity to compensate for the error and return success.
+ Compensate for failed result by calling the given function.
 
 ### Ensure
 
@@ -69,7 +68,7 @@ Bind calls the given function if the result is in success state.
 
  Parallel runs multiple tasks in parallel and returns multiple tasks. `BindAsync` will await all the task and call the given function.
 
-### Unwarp
+### Finally
 
  Finally unwraps the `Result` and returns the success value or the error.
 
