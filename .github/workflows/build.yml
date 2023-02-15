@@ -23,7 +23,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: '7.0.103'
 
     - name: Restore dependencies
       run: dotnet restore
@@ -32,7 +32,7 @@ jobs:
       run: dotnet build --no-restore -c Release
 
     - name: Test
-      run: dotnet test --no-build  -l "console;verbosity=normal" -c Release -f net7.0
+      run: dotnet test --no-build  -l "console;verbosity=normal" -c Release
 
     - name: Pack
       if: ${{ success() && !github.base_ref }}
