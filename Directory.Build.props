@@ -1,5 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
   <PropertyGroup Label="General">
     <Authors>Xavier John</Authors>
     <Company>$(Authors)</Company>
@@ -16,6 +16,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/xavierjohn/FunctionalDDD</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup  Label="Build">
