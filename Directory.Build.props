@@ -14,6 +14,8 @@
     <LangVersion>Latest</LangVersion>
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup  Label="Build">
