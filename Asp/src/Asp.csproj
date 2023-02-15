@@ -3,8 +3,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../README.md" Pack="true" PackagePath="\"/>
+    <None Include="../README.md" Pack="true" PackagePath="\" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
