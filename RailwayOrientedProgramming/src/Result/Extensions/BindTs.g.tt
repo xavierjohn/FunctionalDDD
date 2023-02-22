@@ -3,8 +3,9 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ output extension=".g.cs" #>
+<#@ output extension=".cs" #>
 <#@ include file="CommonFunction.t4" #>
+
 // Generated code
 namespace FunctionalDDD;
 
@@ -20,18 +21,19 @@ public static partial class ResultExtensions
 #>
 
     /// <summary>
-    ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
+    ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
-    public static Result<TResult, Error> Map<<# WriteTs(i); #>, TResult>(
+    public static Result<TResult, Error> Bind<<# WriteTs(i); #>, TResult>(
         this Result<(<# WriteTs(i); #>), Error> result
-        , Func<<# WriteTs(i); #>, TResult> func)
+        , Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult, Error>(result.Error);
+            return Result.Failure<TResult>(result.Error);
 
         var (<# WriteArgs(i); #>) = result.Value;
-        return Result.Success<TResult, Error>(func(<# WriteArgs(i); #>));
+        return func(<# WriteArgs(i); #>);
     }
+
 <#
  }
 #>
