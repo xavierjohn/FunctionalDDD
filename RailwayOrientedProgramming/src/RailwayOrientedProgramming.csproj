@@ -6,17 +6,47 @@
     <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <!-- Default VisualStudioVersion to 15 (VS2017) -->
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
-    <!-- Determinate VSToolsPath -->
+  <!-- T4 build support for .NET Core (Begin) -->
+
+  <ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
+    <DotNetCliToolReference Include="T5.TextTransform.Tool" Version="1.1.0-*" />
+    <TextTemplate Include="**\*.Generated.tt" />
+    <Generated Include="**\*.Generated.cs" />
+  </ItemGroup>
+
+  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild" Condition="'$(MSBuildRuntimeType)'=='Core'">
+    <ItemGroup>
+      <Compile Remove="**\*.cs" />
+    </ItemGroup>
+    <Exec WorkingDirectory="$(ProjectDir)" Command="dotnet tt %(TextTemplate.Identity)" />
+    <ItemGroup>
+      <Compile Include="**\*.cs" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="TextTemplateClean" AfterTargets="Clean">
+    <Delete Files="@(Generated)" />
+  </Target>
+
+  <!-- T4 build support for .NET Core (End) -->
+
+
+  <!-- T4 build support for Visual Studio (Begin) -->
+
+  <PropertyGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <!-- Run T4 generation if there are outdated files -->
-    <TransformOnBuild>True</TransformOnBuild>
-    <TransformOutOfDateOnly>True</TransformOutOfDateOnly>
+    <!-- This is what will cause the templates to be transformed when the project is built (default is false) -->
+    <TransformOnBuild>true</TransformOnBuild>
+    <!-- Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false) -->
+    <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
+    <!-- Set to false to transform files even if the output appears to be up-to-date (default is true)  -->
+    <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
   </PropertyGroup>
-  <!-- Import TextTemplating target -->
-  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" />
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" Condition="'$(MSBuildRuntimeType)'=='Full'" />
+  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(MSBuildRuntimeType)'=='Full'" />
+
+  <!-- T4 build support for Visual Studio (End) -->
   
   <ItemGroup>
     <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
