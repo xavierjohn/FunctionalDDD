@@ -16,25 +16,26 @@
     <Compile Update="Result\Extensions\Ensure.ValueTask.Right.cs">
       <DependentUpon>Ensure.ValueTask.cs</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\BindTs.cs">
+    <Compile Update="Result\Extensions\BindTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>BindTs.tt</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\CombineTs.cs">
+    <Compile Update="Result\Extensions\CombineTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>CombineTs.tt</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\MapTs.cs">
+
+    <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
+
+    <Compile Update="Result\Extensions\MapTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MapTs.tt</DependentUpon>
     </Compile>
 
-    <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
-
-    <Compile Update="Result\Extensions\ParallelAsyncs.cs">
+    <Compile Update="Result\Extensions\ParallelAsyncs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>ParallelAsyncs.tt</DependentUpon>
@@ -45,21 +46,21 @@
   <ItemGroup>
     <None Update="Result\Extensions\BindTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>BindTs.cs</LastGenOutput>
+      <LastGenOutput>BindTs.g.cs</LastGenOutput>
     </None>
     <None Update="Result\Extensions\CombineTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CombineTs.cs</LastGenOutput>
+      <LastGenOutput>CombineTs.g.cs</LastGenOutput>
       <DependentUpon>Combine.cs</DependentUpon>
     </None>
     <None Update="Result\Extensions\MapTs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>MapTs.cs</LastGenOutput>
+      <LastGenOutput>MapTs.g.cs</LastGenOutput>
       <DependentUpon>Map.cs</DependentUpon>
     </None>
     <None Update="Result\Extensions\ParallelAsyncs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ParallelAsyncs.cs</LastGenOutput>
+      <LastGenOutput>ParallelAsyncs.g.cs</LastGenOutput>
     </None>
   </ItemGroup>
 

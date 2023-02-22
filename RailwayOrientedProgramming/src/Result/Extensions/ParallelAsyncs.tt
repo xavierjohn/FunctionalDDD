@@ -3,7 +3,7 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ output extension=".cs" #>
+<#@ output extension=".g.cs" #>
 <#@ include file="CommonFunction.t4" #>
 // Generated code
 namespace FunctionalDDD;
