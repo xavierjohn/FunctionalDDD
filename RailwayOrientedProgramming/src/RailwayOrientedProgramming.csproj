@@ -5,6 +5,9 @@
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="T4.Build" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
@@ -16,50 +19,49 @@
     <Compile Update="Result\Extensions\Ensure.ValueTask.Right.cs">
       <DependentUpon>Ensure.ValueTask.cs</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\BindTs.cs">
+    <Compile Update="Result\Extensions\BindTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>BindTs.tt</DependentUpon>
+      <DependentUpon>BindTs.g.tt</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\CombineTs.cs">
+    <Compile Update="Result\Extensions\CombineTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>CombineTs.tt</DependentUpon>
-    </Compile>
-    <Compile Update="Result\Extensions\MapTs.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>MapTs.tt</DependentUpon>
+      <DependentUpon>CombineTs.g.tt</DependentUpon>
     </Compile>
 
     <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
 
-    <Compile Update="Result\Extensions\ParallelAsyncs.cs">
+    <Compile Update="Result\Extensions\MapTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>ParallelAsyncs.tt</DependentUpon>
+      <DependentUpon>MapTs.g.tt</DependentUpon>
+    </Compile>
+
+    <Compile Update="Result\Extensions\ParallelAsyncs.g.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ParallelAsyncs.g.tt</DependentUpon>
     </Compile>
     <Compile Update="Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Result\Extensions\BindTs.tt">
+    <None Update="Result\Extensions\BindTs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>BindTs.cs</LastGenOutput>
+      <LastGenOutput>BindTs.g.cs</LastGenOutput>
     </None>
-    <None Update="Result\Extensions\CombineTs.tt">
+    <None Update="Result\Extensions\CombineTs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CombineTs.cs</LastGenOutput>
-      <DependentUpon>Combine.cs</DependentUpon>
+      <LastGenOutput>CombineTs.g.cs</LastGenOutput>
     </None>
-    <None Update="Result\Extensions\MapTs.tt">
+    <None Update="Result\Extensions\MapTs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>MapTs.cs</LastGenOutput>
-      <DependentUpon>Map.cs</DependentUpon>
+      <LastGenOutput>MapTs.g.cs</LastGenOutput>
     </None>
-    <None Update="Result\Extensions\ParallelAsyncs.tt">
+    <None Update="Result\Extensions\ParallelAsyncs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ParallelAsyncs.cs</LastGenOutput>
+      <LastGenOutput>ParallelAsyncs.g.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
