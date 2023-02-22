@@ -28,9 +28,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Install dotnet-t4
-      run: dotnet tool install dotnet-t4 --global
-
     - name: Build
       run: dotnet build --no-restore -c Release
 
