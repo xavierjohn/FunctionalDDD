@@ -6,6 +6,18 @@
     <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- Default VisualStudioVersion to 15 (VS2017) -->
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
+    <!-- Determinate VSToolsPath -->
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <!-- Run T4 generation if there are outdated files -->
+    <TransformOnBuild>True</TransformOnBuild>
+    <TransformOutOfDateOnly>True</TransformOutOfDateOnly>
+  </PropertyGroup>
+  <!-- Import TextTemplating target -->
+  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" />
+  
   <ItemGroup>
     <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
       <DependentUpon>Ensure.cs</DependentUpon>
