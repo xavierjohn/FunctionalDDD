@@ -13,6 +13,38 @@ With the following differences.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
 
+## NuGet Packages
+
+- **Railway Oriented Programming**
+
+  <div>Adds the ability to chain functions.</div>
+  
+  [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
+
+- **Fluent Validation**
+
+  <div>Extension method to convert fluent validation errors to ROP Result</div>
+
+  [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)
+  
+- **Common Value Objects**
+
+  <div>Helps create simple value objects like Email, Required String & Required Guid</div>
+
+  [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects)
+
+- **Common Value Objects Generator**
+
+  <div>Source code generator for boiler plate code needed for Required String & Required Guid</div>
+
+  [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator)
+
+- **Domain Driven Design**
+
+  <div>Has DDD base type like AggregateRoot & ValueObject</div>
+
+  [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
+
 ## Examples
 
 Let's look at a few examples:
