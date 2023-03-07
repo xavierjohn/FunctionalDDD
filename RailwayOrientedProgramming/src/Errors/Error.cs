@@ -9,13 +9,22 @@ using static FunctionalDDD.ValidationError;
 public class Error : IEquatable<Error>
 #pragma warning restore CA1716 // Identifiers should not match keywords
 {
-    public string Message { get; }
     public string Code { get; }
 
-    internal Error(string message, string code)
+    public string Message { get; }
+
+    public string? Target { get; }
+
+    public Error(string message, string code)
     {
         Message = message;
         Code = code;
+    }
+    public Error(string message, string code, string target)
+    {
+        Message = message;
+        Code = code;
+        Target = target;
     }
 
     public bool Equals(Error? other)

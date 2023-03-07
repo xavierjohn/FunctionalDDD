@@ -30,3 +30,13 @@ Content-Type: application/json
     "email":"someone@somewhere.com",
     "password":"Amiko1232!"
 }
+
+### Bad Request
+POST {{host}}/authentication/registerCreated
+Content-Type: application/json
+
+{
+    "firstName":"Xavier",
+    "email":"someone@somewhere.com",
+    "password":"Amiko1232!"
+}
