@@ -2,10 +2,6 @@
 
 public static partial class NullableExtensions
 {
-    public static bool HasNoValue<T>(in this T? nullable)
-        where T : struct => !nullable.HasValue;
-    public static bool HasNoValue<T>(this T? obj) => obj == null;
-
     public static Result<T, Error> ToResult<T>(in this T? nullable, Error error)
         where T : struct
     {
@@ -15,25 +11,39 @@ public static partial class NullableExtensions
         return Result.Success<T, Error>(nullable.Value);
     }
     public static Result<T, Error> ToResult<T>(this T? obj, Error error)
-        where T : struct
+        where T : class
     {
         if (obj == null)
             return Result.Failure<T, Error>(error);
 
-        return Result.Success<T, Error>(obj.Value);
+        return Result.Success<T, Error>(obj);
     }
 
-    //public static async Task<Result<TOk, Error>> ToResultAsync<TOk>(this Task<Maybe<TOk>> maybeTask, Error errors)
-    //    where TOk : notnull
-    //{
-    //    var maybe = await maybeTask.ConfigureAwait(false);
-    //    return maybe.ToResult(errors);
-    //}
+    public static async Task<Result<T, Error>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
+        where T : struct
+    {
+        var nullable = await nullableTask.ConfigureAwait(false);
+        return nullable.ToResult(errors);
+    }
 
-    //public static async ValueTask<Result<TOk, Error>> ToResultAsync<TOk>(this ValueTask<Maybe<TOk>> maybeTask, Error errors)
-    //    where TOk : notnull
-    //{
-    //    Maybe<TOk> maybe = await maybeTask;
-    //    return maybe.ToResult(errors);
-    //}
+    public static async ValueTask<Result<T, Error>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
+        where T : struct
+    {
+        var nullable = await nullableTask;
+        return nullable.ToResult(errors);
+    }
+
+    public static async Task<Result<T, Error>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
+    where T : class
+    {
+        var nullable = await nullableTask.ConfigureAwait(false);
+        return nullable.ToResult(errors);
+    }
+
+    public static async ValueTask<Result<T, Error>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
+        where T : class
+    {
+        var nullable = await nullableTask;
+        return nullable.ToResult(errors);
+    }
 }

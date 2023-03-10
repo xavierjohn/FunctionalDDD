@@ -63,7 +63,16 @@ public class AsyncUsageExamples
 
     static Task<Result<Customer, Error>> AskManagerAsync(long id) => Task.FromResult(Result.Success<Customer, Error>(new Customer()));
 
-    public static Task<Maybe<Customer>> GetCustomerByIdAsync(long id) => Task.FromResult((Maybe<Customer>)new Customer());
+    public static Task<Customer?> GetCustomerByIdAsync(long id)
+    {
+        var customer = id switch
+        {
+            1 => new Customer(),
+            _ => null
+        };
+
+        return Task.FromResult(customer);
+    }
 
     public class Customer
     {
