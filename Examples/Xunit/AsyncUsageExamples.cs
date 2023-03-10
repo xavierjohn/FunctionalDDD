@@ -27,10 +27,10 @@ public class AsyncUsageExamples
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-            .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .TeeAsync(customer => customer.PromoteAsync())
-            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(ok => "Okay", error => error.Message);
+            .EnsureAsync(static customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
+            .TeeAsync(static customer => customer.PromoteAsync())
+            .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .FinallyAsync(static ok => "Okay", static error => error.Message);
 
         result.Should().Be("Okay");
     }
@@ -43,12 +43,12 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .OnErrorTapAsync(error => Log(error))
+            .OnErrorTapAsync(Log)
             .OnErrorAsync(() => AskManagerAsync(id))
-            .TeeAsync(customer => Log("Manager approved promotion"))
-            .TeeAsync(customer => customer.PromoteAsync())
-            .BindAsync(customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(ok => "Okay", error => error.Message);
+            .TeeAsync(static customer => Log("Manager approved promotion"))
+            .TeeAsync(static customer => customer.PromoteAsync())
+            .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
+            .FinallyAsync(static ok => "Okay", static error => error.Message);
 
         result.Should().Be("Okay");
     }
