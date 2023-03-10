@@ -62,7 +62,7 @@ public class NullableExtensionTests
     }
 
     [Fact]
-    public async Task Convert_async_nullable_class_to_result_pass()
+    public async Task Convert_task_nullable_class_to_result_pass()
     {
         // Arrange
         MyClass? my = null;
@@ -78,11 +78,42 @@ public class NullableExtensionTests
     }
 
     [Fact]
-    public async Task Convert_async_nullable_class_to_result_fail()
+    public async Task Convert_task_nullable_class_to_result_fail()
     {
         // Arrange
         MyClass? my = null;
         var myClassTask = Task.FromResult(my);
+
+        // Act
+        var result = await myClassTask.ToResultAsync(Error.Validation("MyClass is not set."));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.Validation("MyClass is not set."));
+    }
+
+    [Fact]
+    public async Task Convert_valuetask_nullable_class_to_result_pass()
+    {
+        // Arrange
+        MyClass? my = null;
+        my = new MyClass();
+        var myClassTask = ValueTask.FromResult(my);
+
+        // Act
+        var result = await myClassTask.ToResultAsync(Error.Validation("MyClass is not set."));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(my);
+    }
+
+    [Fact]
+    public async Task Convert_valuetask_nullable_class_to_result_fail()
+    {
+        // Arrange
+        MyClass? my = null;
+        var myClassTask = ValueTask.FromResult(my);
 
         // Act
         var result = await myClassTask.ToResultAsync(Error.Validation("MyClass is not set."));

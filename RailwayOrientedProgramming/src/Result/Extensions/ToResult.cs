@@ -25,14 +25,6 @@ public static partial class NullableExtensions
         var nullable = await nullableTask.ConfigureAwait(false);
         return nullable.ToResult(errors);
     }
-
-    public static async ValueTask<Result<T, Error>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
-        where T : struct
-    {
-        var nullable = await nullableTask;
-        return nullable.ToResult(errors);
-    }
-
     public static async Task<Result<T, Error>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
     where T : class
     {
@@ -41,9 +33,16 @@ public static partial class NullableExtensions
     }
 
     public static async ValueTask<Result<T, Error>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
+        where T : struct
+    {
+        var nullable = await nullableTask.ConfigureAwait(false);
+        return nullable.ToResult(errors);
+    }
+
+    public static async ValueTask<Result<T, Error>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
         where T : class
     {
-        var nullable = await nullableTask;
+        var nullable = await nullableTask.ConfigureAwait(false);
         return nullable.ToResult(errors);
     }
 }
