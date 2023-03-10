@@ -21,8 +21,8 @@ public class MaybeExamples
     {
         // Arrange
         Maybe<string> fruit1 = Maybe.None<string>();
-        Maybe<string> fruit2 = default; // reference type
-        Maybe<int> fruit3 = default; // reference type
+        Maybe<string> fruit2 = null; // reference type
+        Maybe<int> fruit3 = default; // value type
 
         // Assert
         fruit1.Should().BeOfType<Maybe<string>>();
