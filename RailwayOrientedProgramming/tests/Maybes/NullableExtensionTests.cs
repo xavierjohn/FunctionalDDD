@@ -65,8 +65,8 @@ public class NullableExtensionTests
     public async Task Convert_async_nullable_class_to_result_pass()
     {
         // Arrange
-        var my = default(MyClass);
-        my = new();
+        MyClass? my = null;
+        my = new MyClass();
         var myClassTask = Task.FromResult(my);
 
         // Act
@@ -81,7 +81,8 @@ public class NullableExtensionTests
     public async Task Convert_async_nullable_class_to_result_fail()
     {
         // Arrange
-        var myClassTask = Task.FromResult(default(MyClass));
+        MyClass? my = null;
+        var myClassTask = Task.FromResult(my);
 
         // Act
         var result = await myClassTask.ToResultAsync(Error.Validation("MyClass is not set."));
