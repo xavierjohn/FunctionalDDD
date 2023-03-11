@@ -25,6 +25,7 @@ public static partial class NullableExtensions
         var nullable = await nullableTask.ConfigureAwait(false);
         return nullable.ToResult(errors);
     }
+
     public static async Task<Result<T, Error>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
     where T : class
     {
