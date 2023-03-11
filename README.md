@@ -61,11 +61,11 @@ await GetCustomerByIdAsync(id)
    .FinallyAsync(ok => "Okay", error => error.Message);
  ```
 
-`GetCustomerByIdAsync` is a repository method that will return a `Maybe<Customer>`.
+`GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
 
-If `Maybe<Customer>` returned `None`, then `ToResultAsync` will convert it to `Result` type with the error.
+If `GetCustomerByIdAsync` returned `null`, then `ToResultAsync` will convert it to `Result` type with the error.
 
-If `Maybe<Customer>` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
+If `GetCustomerByIdAsync` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
  If not return a `Validation` error.
 
 If there is no error, `TeeAsync` will execute the `Promote` method and then send an email.

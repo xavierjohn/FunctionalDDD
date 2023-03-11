@@ -77,7 +77,7 @@ public static partial class ResultExtensions
         return result;
     }
 
-    public static Result<string, Error> EnsureNotNullOrWhiteSpace(this Maybe<string> maybe, Error error) =>
-        maybe.ToResult(error)
+    public static Result<string, Error> EnsureNotNullOrWhiteSpace(this string? str, Error error) =>
+        str.ToResult(error)
                 .Ensure(name => !string.IsNullOrWhiteSpace(name), error);
 }
