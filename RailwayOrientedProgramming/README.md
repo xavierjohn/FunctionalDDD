@@ -22,22 +22,6 @@ public readonly struct Result<TValue, TError>
  }
  ```
 
-### [Maybe](RailwayOrientedProgramming\src\Maybe\Maybe{T}.cs)
-
-Maybe object holds a value or nothing. It is defined as
-
-```csharp
- public readonly struct Maybe<T> :
-    IEquatable<T>,
-    IEquatable<Maybe<T>>
-    where T : notnull
-{
-   public T Value;
-   public bool HasValue;
-   public bool HasNoValue;
-}
-```
-
 ### Functions
 
 ### Bind
@@ -71,12 +55,3 @@ Bind calls the given function if the result is in success state.
 ### Finally
 
  Finally unwraps the `Result` and returns the success value or the error.
-
-### Maybe
-
- Maybe states if it contains a value or not.
- It has the following methods:
-
-- HasValue - returns true if it has a value.
-- HasNoValue - returns true if it does not have a value.
-- Value - returns the value if it has a value. Otherwise `InvalidOperationException`

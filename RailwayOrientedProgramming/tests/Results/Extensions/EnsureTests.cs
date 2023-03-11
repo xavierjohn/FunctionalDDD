@@ -278,4 +278,15 @@ public class EnsureTests
         ;
         result.Value.Should().Be("Initial Success message");
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(" ")]
+    public void Ensure_string_is_not_whitespace(string? str)
+    {
+        var result = str.EnsureNotNullOrWhiteSpace(Error.Unexpected("test error"));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.Unexpected("test error"));
+    }
 }
