@@ -1,5 +1,6 @@
 ﻿namespace FunctionalDDD;
 public abstract class Entity<TId>
+    where TId : notnull
 {
     public TId Id { get; init; }
 
@@ -19,7 +20,7 @@ public abstract class Entity<TId>
         return Id.Equals(other.Id);
     }
 
-    public static bool operator ==(Entity<TId> a, Entity<TId> b)
+    public static bool operator ==(Entity<TId>? a, Entity<TId>? b)
     {
         if (a is null && b is null)
             return true;
@@ -30,14 +31,8 @@ public abstract class Entity<TId>
         return a.Equals(b);
     }
 
-    public static bool operator !=(Entity<TId> a, Entity<TId> b)
-    {
-        return !(a == b);
-    }
+    public static bool operator !=(Entity<TId>? a, Entity<TId>? b) => !(a == b);
 
-    public override int GetHashCode()
-    {
-        return (ToString() + Id).GetHashCode();
-    }
+    public override int GetHashCode() => HashCode.Combine(this, Id);
 }
 
