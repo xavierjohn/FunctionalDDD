@@ -5,13 +5,7 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
 
     protected abstract IEnumerable<IComparable> GetEqualityComponents();
 
-    public override bool Equals(object? obj)
-    {
-        if (obj is ValueObject valueObject)
-            return Equals(valueObject);
-        else
-            return false;
-    }
+    public override bool Equals(object? obj) => Equals(obj as ValueObject);
 
     public bool Equals(ValueObject? other)
     {
