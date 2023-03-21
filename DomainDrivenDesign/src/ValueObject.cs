@@ -1,5 +1,5 @@
 ﻿namespace FunctionalDDD;
-public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEquatable<ValueObject>
+public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueObject>
 {
     private int? _cachedHashCode;
 
@@ -34,19 +34,17 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
         return _cachedHashCode.Value;
     }
 
-    public virtual int CompareTo(object? obj)
-    {
-        if (obj == null)
-            throw new ArgumentNullException(nameof(obj));
 
+    public virtual int CompareTo(ValueObject? other)
+    {
+        if (other == null)
+            throw new ArgumentNullException(nameof(other));
         var thisType = GetType();
-        var otherType = obj.GetType();
+        var otherType = other.GetType();
 
         if (thisType != otherType)
             throw new ArgumentException($"Cannot compare objects of different types: {thisType} and {otherType}");
 
-
-        var other = (ValueObject)obj;
 
         object[] components = GetEqualityComponents().ToArray();
         object[] otherComponents = other.GetEqualityComponents().ToArray();
@@ -59,11 +57,6 @@ public abstract class ValueObject : IComparable, IComparable<ValueObject>, IEqua
         }
 
         return 0;
-    }
-
-    public virtual int CompareTo(ValueObject? other)
-    {
-        return CompareTo(other as object);
     }
 
     private static int CompareComponents(object? object1, object? object2)
