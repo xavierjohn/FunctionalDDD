@@ -38,7 +38,22 @@ public class ValueObjectTests
 
         // Assert
         moneys.Should().Equal(new List<Money> { one, two, three });
+    }
 
+    [Fact]
+    public void VO_supports_orderby()
+    {
+        // Arrange
+        var one = new Money(1);
+        var two = new Money(2);
+        var three = new Money(3);
+        var moneys = new[] { two, one, three };
+
+        // Act
+        var orderedMoney = moneys.OrderBy(r => r);
+
+        // Assert
+        orderedMoney.Should().Equal(new List<Money> { one, two, three });
     }
 
     [Fact]
