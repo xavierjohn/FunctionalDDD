@@ -2,7 +2,7 @@
 
 public sealed class UnauthorizedError : Error
 {
-    public UnauthorizedError(string message, string code) : base(message, code)
+    public UnauthorizedError(string message, string code, string? target = null) : base(message, code, target)
     {
     }
 }

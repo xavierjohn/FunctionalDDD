@@ -20,7 +20,7 @@ public class Error : IEquatable<Error>
         Message = message;
         Code = code;
     }
-    public Error(string message, string code, string target)
+    public Error(string message, string code, string? target)
     {
         Message = message;
         Code = code;
@@ -50,19 +50,19 @@ public class Error : IEquatable<Error>
 
     public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
-    public static Error Conflict(string message, string code = "conflict.error") =>
-        new ConflictError(message, code);
+    public static Error Conflict(string message, string code = "conflict.error", string? target = null) =>
+        new ConflictError(message, code, target);
 
-    public static Error NotFound(string message, string code = "notfound.error") =>
-        new NotFoundError(message, code);
+    public static Error NotFound(string message, string code = "notfound.error", string? target = null) =>
+        new NotFoundError(message, code, target);
 
-    public static Error Unauthorized(string message, string code = "unauthorized.error") =>
-        new UnauthorizedError(message, code);
+    public static Error Unauthorized(string message, string code = "unauthorized.error", string? target = null) =>
+        new UnauthorizedError(message, code, target);
 
-    public static Error Forbidden(string message, string code = "forbidden.error") =>
-        new ForbiddenError(message, code);
+    public static Error Forbidden(string message, string code = "forbidden.error", string? target = null) =>
+        new ForbiddenError(message, code, target);
 
-    public static Error Unexpected(string message, string code = "unexpected.error") =>
-        new UnexpectedError(message, code);
+    public static Error Unexpected(string message, string code = "unexpected.error", string? target = null) =>
+        new UnexpectedError(message, code, target);
 }
 
