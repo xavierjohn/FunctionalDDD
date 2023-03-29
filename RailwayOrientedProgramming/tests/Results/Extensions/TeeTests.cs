@@ -4,11 +4,6 @@ public class TeeTests : TestBase
 {
     protected bool ActionExecuted { get; set; }
 
-    protected TeeTests()
-    {
-        ActionExecuted = false;
-    }
-
     protected void Action()
     {
         ActionExecuted = true;
