@@ -91,7 +91,7 @@ public class RequiredGuid_T_Tests
         Action act = () => myGuidId1 = (MyGuidId)myGuid;
 
         // Assert
-        act.Should().Throw<ResultFailureException<Error>>()
+        act.Should().Throw<ResultFailureException>()
             .WithMessage("You attempted to access the Value for a failed result. A failed result has no Value.")
             .Where(e => e.Error.Message == "My Guid Id cannot be empty");
     }

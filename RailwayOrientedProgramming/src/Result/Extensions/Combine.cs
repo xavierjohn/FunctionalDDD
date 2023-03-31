@@ -29,12 +29,12 @@ public static partial class ResultExtensions
         }
     }
 
-    public static Result<(T1, T2), Error> Combine<T1, T2>(this Result<T1, Error> t1, Result<T2, Error> t2)
+    public static Result<(T1, T2)> Combine<T1, T2>(this Result<T1> t1, Result<T2> t2)
     {
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Failure<(T1, T2), Error>(error);
-        return Result.Success<(T1, T2), Error>((t1.Value, t2.Value));
+        if (error is not null) return Result.Failure<(T1, T2)>(error);
+        return Result.Success<(T1, T2)>((t1.Value, t2.Value));
     }
 }

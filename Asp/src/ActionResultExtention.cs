@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 public static class ActionResultExtention
 {
-    public static ActionResult<T> ToOkActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
+    public static ActionResult<T> ToOkActionResult<T>(this Result<T> result, ControllerBase controllerBase)
     {
         if (result.IsSuccess)
             return controllerBase.Ok(result.Value);
@@ -13,16 +13,16 @@ public static class ActionResultExtention
         return result.ToErrorActionResult(controllerBase);
     }
 
-    public static async Task<ActionResult<T>> ToOkActionResultAsync<T>(this Task<Result<T, Error>> resultTask, ControllerBase controllerBase)
+    public static async Task<ActionResult<T>> ToOkActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
     {
-        Result<T, Error> result = await resultTask;
+        Result<T> result = await resultTask;
 
         return result.ToOkActionResult(controllerBase);
     }
 
-    public static async ValueTask<ActionResult<T>> ToOkActionResultAsync<T>(this ValueTask<Result<T, Error>> resultTask, ControllerBase controllerBase)
+    public static async ValueTask<ActionResult<T>> ToOkActionResultAsync<T>(this ValueTask<Result<T>> resultTask, ControllerBase controllerBase)
     {
-        Result<T, Error> result = await resultTask;
+        Result<T> result = await resultTask;
 
         return result.ToOkActionResult(controllerBase);
     }
@@ -41,21 +41,21 @@ public static class ActionResultExtention
         };
     }
 
-    public static ActionResult<T> ToErrorActionResult<T>(this Result<T, Error> result, ControllerBase controllerBase)
+    public static ActionResult<T> ToErrorActionResult<T>(this Result<T> result, ControllerBase controllerBase)
     {
         var error = result.Error;
         return error.ToErrorActionResult<T>(controllerBase);
     }
 
-    public static async Task<ActionResult<T>> ToErrorActionResultAsync<T>(this Task<Result<T, Error>> resultTask, ControllerBase controllerBase)
+    public static async Task<ActionResult<T>> ToErrorActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
     {
         var result = await resultTask;
         return result.ToErrorActionResult(controllerBase);
     }
 
-    public static async ValueTask<ActionResult<T>> ToErrorActionResultAsync<T>(this ValueTask<Result<T, Error>> resultTask, ControllerBase controllerBase)
+    public static async ValueTask<ActionResult<T>> ToErrorActionResultAsync<T>(this ValueTask<Result<T>> resultTask, ControllerBase controllerBase)
     {
-        Result<T, Error> result = await resultTask;
+        Result<T> result = await resultTask;
 
         return result.ToErrorActionResult(controllerBase);
     }

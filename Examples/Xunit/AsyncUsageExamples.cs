@@ -61,7 +61,7 @@ public class AsyncUsageExamples
     {
     }
 
-    static Task<Result<Customer, Error>> AskManagerAsync(long id) => Task.FromResult(Result.Success<Customer, Error>(new Customer()));
+    static Task<Result<Customer>> AskManagerAsync(long id) => Task.FromResult(Result.Success<Customer>(new Customer()));
 
     public static Task<Customer?> GetCustomerByIdAsync(long id)
     {
@@ -94,8 +94,8 @@ public class AsyncUsageExamples
 
     public class EmailGateway
     {
-        public static Result<Unit, Error> SendPromotionNotification(string email) => Result.Success<Unit, Error>(new Unit());
+        public static Result<Unit> SendPromotionNotification(string email) => Result.Success<Unit>(new Unit());
 
-        public static Task<Result<Unit, Error>> SendPromotionNotificationAsync(string email) => Task.FromResult(SendPromotionNotification(email));
+        public static Task<Result<Unit>> SendPromotionNotificationAsync(string email) => Task.FromResult(SendPromotionNotification(email));
     }
 }

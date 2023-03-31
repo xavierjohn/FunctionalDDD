@@ -5,13 +5,13 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<bool> predicate, Error errors)
+    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<bool> predicate, Error errors)
     {
         if (result.IsFailure)
             return result;
 
         if (!predicate())
-            return Result.Failure<TOk, Error>(errors);
+            return Result.Failure<TOk>(errors);
 
         return result;
     }
@@ -19,13 +19,13 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, bool> predicate, Error errors)
+    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<TOk, bool> predicate, Error error)
     {
         if (result.IsFailure)
             return result;
 
         if (!predicate(result.Value))
-            return Result.Failure<TOk, Error>(errors);
+            return Result.Failure<TOk>(error);
 
         return result;
     }
@@ -33,13 +33,13 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate)
+    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate)
     {
         if (result.IsFailure)
             return result;
 
         if (!predicate(result.Value))
-            return Result.Failure<TOk, Error>(errorPredicate(result.Value));
+            return Result.Failure<TOk>(errorPredicate(result.Value));
 
         return result;
     }
@@ -48,7 +48,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<Result<TOk, Error>> predicate)
+    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<Result<TOk>> predicate)
     {
         if (result.IsFailure)
             return result;
@@ -56,7 +56,7 @@ public static partial class ResultExtensions
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk, Error>(predicateResult.Error);
+            return Result.Failure<TOk>(predicateResult.Error);
 
         return result;
     }
@@ -64,7 +64,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static Result<TOk, Error> Ensure<TOk>(this Result<TOk, Error> result, Func<TOk, Result<TOk, Error>> predicate)
+    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<TOk, Result<TOk>> predicate)
     {
         if (result.IsFailure)
             return result;
@@ -72,12 +72,12 @@ public static partial class ResultExtensions
         var predicateResult = predicate(result.Value);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk, Error>(predicateResult.Error);
+            return Result.Failure<TOk>(predicateResult.Error);
 
         return result;
     }
 
-    public static Result<string, Error> EnsureNotNullOrWhiteSpace(this string? str, Error error) =>
+    public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error) =>
         str.ToResult(error)
                 .Ensure(name => !string.IsNullOrWhiteSpace(name), error);
 }

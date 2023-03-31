@@ -5,7 +5,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static Result<TOk, Error> TeeError<TOk>(this Result<TOk, Error> result, Action action)
+    public static Result<TOk> TeeError<TOk>(this Result<TOk> result, Action action)
     {
         if (result.IsFailure)
             action();
@@ -16,7 +16,7 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static Result<TOk, Error> TeeError<TOk>(this Result<TOk, Error> result, Action<Error> action)
+    public static Result<TOk> TeeError<TOk>(this Result<TOk> result, Action<Error> action)
     {
         if (result.IsFailure)
             action(result.Error);
@@ -27,9 +27,9 @@ public static partial class ResultExtensions
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>
-    public static async Task<Result<TOk, Error>> OnErrorTapAsync<TOk>(this Task<Result<TOk, Error>> resultTask, Action<Error> action)
+    public static async Task<Result<TOk>> OnErrorTapAsync<TOk>(this Task<Result<TOk>> resultTask, Action<Error> action)
     {
-        Result<TOk, Error> result = await resultTask.ConfigureAwait(false);
+        Result<TOk> result = await resultTask.ConfigureAwait(false);
         return result.TeeError(action);
     }
 }
