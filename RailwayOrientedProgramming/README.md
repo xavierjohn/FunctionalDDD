@@ -2,23 +2,23 @@
 
 ## Structs
 
-### [Result](RailwayOrientedProgramming/src/Result/Result{TOk,TErr}.cs)
+### [Result](RailwayOrientedProgramming/src/Result/Result{TValue}.cs)
 
  Result object holds the result of an operation or `Error`
  It is defined as
 
 ```csharp
-public readonly struct Result<TValue, TError>
+public readonly struct Result<TValue>
 {
-    public TValue Value => IsFailure ? throw new ResultFailureException<TError>(Error) : _value!;
-    public TError Error => _error ?? throw new ResultSuccessException();
+    public TValue Value => IsFailure ? throw new ResultFailureException(Error) : _value!;
+    public Error Error => _error ?? throw new ResultSuccessException();
 
     public bool IsFailure { get; }
     public bool IsSuccess => !IsFailure;
 
-    public static implicit operator Result<TValue, TError>(TValue value) => Result.Success<TValue, TError>(value);
+    public static implicit operator Result<TValue>(TValue value) => Result.Success(value);
 
-    public static implicit operator Result<TValue, TError>(TError errors) => Result.Failure<TValue, TError>(errors);
+    public static implicit operator Result<TValue>(Error error) => Result.Failure<TValue>(error);
  }
  ```
 
@@ -26,7 +26,11 @@ public readonly struct Result<TValue, TError>
 
 ### Bind
 
-Bind calls the given function if the result is in success state.
+Bind calls the given function if the result is in success state and return the new result.
+
+### Tee
+
+Tee calls the given function if the result is in success state and returns the same result.
 
 ### Compensate
 

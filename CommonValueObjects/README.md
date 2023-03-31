@@ -32,7 +32,7 @@ public partial class TrackingId : RequiredString<TrackingId>
 
     public static explicit operator TrackingId(String trackingId) => New(trackingId).Value;
 
-    public static Result<TrackingId, Error> New(string? requiredStringOrNothing)
+    public static Result<TrackingId> New(string? requiredStringOrNothing)
         requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new TrackingId(str));

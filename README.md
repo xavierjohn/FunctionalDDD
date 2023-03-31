@@ -13,6 +13,10 @@ With the following differences.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
 
+Here is a YouTube video that explains several of the methods in this library.
+
+[![Functional DDD](https://img.youtube.com/vi/45yk2nuRjj8/0.jpg)](https://youtu.be/45yk2nuRjj8?t=682)
+
 ## NuGet Packages
 
 - **Railway Oriented Programming**
