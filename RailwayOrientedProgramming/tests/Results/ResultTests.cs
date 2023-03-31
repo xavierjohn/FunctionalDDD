@@ -110,7 +110,7 @@ public class ResultTests
         var hello = "Hello";
 
         // Act
-        Result<string, Error> result = hello;
+        Result<string> result = hello;
 
         // Assert
         result.Value.Should().Be(hello);

@@ -43,7 +43,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public void Tee_T_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = result.Tee(Action);
 
@@ -56,7 +56,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public void Tee_T_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = result.Tee(Action);
 
@@ -70,9 +70,9 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tee_Task_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        Result<T, Error> returned = await result.AsTask().TeeAsync(Action);
+        Result<T> returned = await result.AsTask().TeeAsync(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -83,7 +83,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tee_Task_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsTask().TeeAsync(Action);
 
@@ -96,7 +96,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tee_Task_Left_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsTask().TeeAsync(Action);
 
@@ -109,7 +109,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Left_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsTask().TeeAsync(Action_T);
 
@@ -122,7 +122,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Left_T_E_executes_task_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsTask().TeeAsync(Task_Action_T);
 
@@ -135,7 +135,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Right_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.TeeAsync(Task_Action);
 
@@ -148,7 +148,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Right_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.TeeAsync(Task_Action_T);
 
@@ -163,7 +163,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsValueTask().TeeAsync(ValueTask_Action);
 
@@ -176,7 +176,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsValueTask().TeeAsync(ValueTask_Action_T);
 
@@ -189,7 +189,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Left_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsValueTask().TeeAsync(Action);
 
@@ -202,7 +202,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Left_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.AsValueTask().TeeAsync(Action_T);
 
@@ -215,7 +215,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Right_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.TeeAsync(ValueTask_Action);
 
@@ -228,7 +228,7 @@ public class TeeTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Right_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T, Error> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
         var returned = await result.TeeAsync(ValueTask_Action_T);
 

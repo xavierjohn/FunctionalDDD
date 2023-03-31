@@ -13,7 +13,7 @@ public static partial class ResultExtensions
 
 <#
   void WriteTaskResult(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}, Error>>")));
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}>>")));
   }
   
   void WriteTaskItem(int n) {
@@ -28,12 +28,12 @@ public static partial class ResultExtensions
 #>
     public static (<# WriteTaskResult(i); #>) ParallelAsync<<# WriteTs(i); #>>(
         this (<# WriteTaskResult(i - 1); #>) tasks,
-        Task<Result<T<#=i#>, Error>> task
+        Task<Result<T<#=i#>>> task
         ) => (<# WriteTaskItem(i - 1); #>, task);
 
-    public static async Task<Result<TResult, Error>> BindAsync<<# WriteTs(i); #>, TResult>(
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
         this (<# WriteTaskResult(i); #>) tasks,
-        Func<<# WriteTs(i); #>, Result<TResult, Error>> func)
+        Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
         await Task.WhenAll(<# WriteTaskItem(i); #>);
         return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);

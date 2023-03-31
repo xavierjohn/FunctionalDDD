@@ -6,7 +6,7 @@ public partial class EmailAddress : SimpleValueObject<string>
 {
     private EmailAddress(string value) : base(value) { }
 
-    public static Result<EmailAddress, Error> New(string emailString, string? fieldName = null)
+    public static Result<EmailAddress> New(string emailString, string? fieldName = null)
     {
         if (emailString != null)
         {
@@ -14,7 +14,7 @@ public partial class EmailAddress : SimpleValueObject<string>
             if (isEmail) return new EmailAddress(emailString);
         }
 
-        return Result.Failure<EmailAddress, Error>(Error.Validation("Email address is not valid", fieldName?.ToCamelCase() ?? "email"));
+        return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid", fieldName?.ToCamelCase() ?? "email"));
     }
 
     [GeneratedRegex("\\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\\Z", RegexOptions.IgnoreCase, "en-US")]

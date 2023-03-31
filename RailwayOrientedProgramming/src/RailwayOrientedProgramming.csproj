@@ -38,6 +38,12 @@
       <DependentUpon>MapTs.g.tt</DependentUpon>
     </Compile>
 
+    <Compile Update="Result\Extensions\ParallelAsyncs.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ParallelAsyncs.g.tt</DependentUpon>
+    </Compile>
+
     <Compile Update="Result\Extensions\ParallelAsyncs.g.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
