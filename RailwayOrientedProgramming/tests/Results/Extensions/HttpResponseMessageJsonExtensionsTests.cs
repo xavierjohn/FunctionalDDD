@@ -62,4 +62,17 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assert
         await act.Should().ThrowAsync<JsonException>();
     }
+
+    [Fact]
+    public async Task Will_throw_Exception_for_Internal_Server_Error()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
+
+        // Act
+        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<Person>(_notFoundError);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
 }
