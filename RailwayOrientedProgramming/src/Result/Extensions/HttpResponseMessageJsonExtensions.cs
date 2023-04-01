@@ -15,9 +15,6 @@ public static class HttpResponseMessageJsonExtensions
         response.EnsureSuccessStatusCode();
 
         var t = await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (t is null)
-            return Result.Failure<T>(notFoundError);
-
-        return Result.Success(t);
+        return (t is null) ? Result.Failure<T>(notFoundError) : Result.Success(t);
     }
 }
