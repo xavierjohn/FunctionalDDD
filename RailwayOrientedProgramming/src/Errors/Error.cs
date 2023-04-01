@@ -42,27 +42,27 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
-    public static Error Validation(string message, string fieldName = "", string code = "validation.error") =>
-        new ValidationError(message, fieldName, code);
+    public static ValidationError Validation(string message, string fieldName = "", string code = "validation.error") =>
+        new(message, fieldName, code);
 
-    public static Error Validation(List<ModelError> modelErrors, string code = "validation.error") =>
-        new ValidationError(modelErrors, code);
+    public static ValidationError Validation(List<ModelError> modelErrors, string code = "validation.error") =>
+        new(modelErrors, code);
 
     public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
-    public static Error Conflict(string message, string code = "conflict.error", string? target = null) =>
-        new ConflictError(message, code, target);
+    public static ConflictError Conflict(string message, string code = "conflict.error", string? target = null) =>
+        new(message, code, target);
 
-    public static Error NotFound(string message, string code = "notfound.error", string? target = null) =>
-        new NotFoundError(message, code, target);
+    public static NotFoundError NotFound(string message, string code = "notfound.error", string? target = null) =>
+        new(message, code, target);
 
-    public static Error Unauthorized(string message, string code = "unauthorized.error", string? target = null) =>
-        new UnauthorizedError(message, code, target);
+    public static UnauthorizedError Unauthorized(string message, string code = "unauthorized.error", string? target = null) =>
+        new(message, code, target);
 
-    public static Error Forbidden(string message, string code = "forbidden.error", string? target = null) =>
-        new ForbiddenError(message, code, target);
+    public static ForbiddenError Forbidden(string message, string code = "forbidden.error", string? target = null) =>
+        new(message, code, target);
 
-    public static Error Unexpected(string message, string code = "unexpected.error", string? target = null) =>
-        new UnexpectedError(message, code, target);
+    public static UnexpectedError Unexpected(string message, string code = "unexpected.error", string? target = null) =>
+        new(message, code, target);
 }
 
