@@ -7,12 +7,6 @@ using System.Text.Json;
 
 public class HttpResponseMessageJsonExtensionsTests
 {
-    public class Person
-    {
-        public string firstName { get; set; } = string.Empty;
-        public int age { get; set; }
-    }
-
     readonly NotFoundError _notFoundError = Error.NotFound("Person not found");
 
     [Fact]
@@ -21,11 +15,11 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assign
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
-            Content = JsonContent.Create(new Person() { firstName = "Xavier", age = 50 })
+            Content = JsonContent.Create(new CamelPerson() { firstName = "Xavier", age = 50 })
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<Person>(_notFoundError);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -40,7 +34,7 @@ public class HttpResponseMessageJsonExtensionsTests
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<Person>(_notFoundError);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -57,7 +51,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<Person>(_notFoundError);
+        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
@@ -70,9 +64,52 @@ public class HttpResponseMessageJsonExtensionsTests
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<Person>(_notFoundError);
+        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
 
         // Assert
         await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Deserialize_is_case_sensitive(bool propertyNameCaseInsensitive)
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new CamelPerson() { firstName = "Xavier", age = 50 })
+        };
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = propertyNameCaseInsensitive
+        };
+
+        // Act
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError, options);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        if (propertyNameCaseInsensitive)
+        {
+            result.Value.FirstName.Should().Be("Xavier");
+            result.Value.Age.Should().Be(50);
+        }
+        else
+        {
+            result.Value.FirstName.Should().Be(string.Empty);
+            result.Value.Age.Should().Be(0);
+        }
+    }
+
+    public class CamelPerson
+    {
+        public string firstName { get; set; } = string.Empty;
+        public int age { get; set; }
+    }
+    public class PascalPerson
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 }

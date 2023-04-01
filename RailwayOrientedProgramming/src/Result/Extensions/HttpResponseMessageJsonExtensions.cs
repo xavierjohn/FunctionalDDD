@@ -1,12 +1,20 @@
 ﻿namespace FunctionalDDD;
 
 using System.Net.Http.Json;
+using System.Text.Json;
 
 public static class HttpResponseMessageJsonExtensions
 {
+    public static Task<Result<T>> ReadResultWithNotFoundAsync<T>(
+        this HttpResponseMessage response,
+        NotFoundError notFoundError,
+        CancellationToken cancellationToken = default)
+    => response.ReadResultWithNotFoundAsync<T>(notFoundError, null, cancellationToken);
+
     public static async Task<Result<T>> ReadResultWithNotFoundAsync<T>(
         this HttpResponseMessage response,
         NotFoundError notFoundError,
+        JsonSerializerOptions? jsonSerializerOptions,
         CancellationToken cancellationToken = default)
     {
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -14,7 +22,7 @@ public static class HttpResponseMessageJsonExtensions
 
         response.EnsureSuccessStatusCode();
 
-        var t = await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken).ConfigureAwait(false);
+        var t = await response.Content.ReadFromJsonAsync<T>(jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
         return (t is null) ? Result.Failure<T>(notFoundError) : Result.Success(t);
     }
 }
