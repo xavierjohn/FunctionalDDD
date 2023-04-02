@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD;
 
-public static partial class NullableExtensions
+public static class NullableExtensions
 {
     public static Result<T> ToResult<T>(in this T? nullable, Error error)
         where T : struct
