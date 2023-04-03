@@ -102,6 +102,40 @@ public class HttpResponseMessageJsonExtensionsTests
         }
     }
 
+    [Fact]
+    public async Task When_HttpResponseMessage_is_Task_Will_read_http_content_as_result()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new CamelPerson() { firstName = "Xavier", age = 50 })
+        };
+        var task = Task.FromResult(httpResponseMessage);
+
+        // Act
+        var result = await task.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.firstName.Should().Be("Xavier");
+        result.Value.age.Should().Be(50);
+    }
+
+    [Fact]
+    public async Task When_HttpResponseMessage_is_Task_and_NotFound_will_return_NotFound()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
+        var task = Task.FromResult(httpResponseMessage);
+
+        // Act
+        var result = await task.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(_notFoundError);
+    }
+
     public class CamelPerson
     {
         public string firstName { get; set; } = string.Empty;
