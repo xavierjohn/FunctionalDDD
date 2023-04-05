@@ -4,10 +4,13 @@ using System.Net;
 using System.Threading.Tasks;
 using FunctionalDDD;
 using System.Text.Json;
+using System.Text;
 
 public class HttpResponseMessageJsonExtensionsTests
 {
     readonly NotFoundError _notFoundError = Error.NotFound("Person not found");
+
+    private bool _callbackCalled;
 
     [Fact]
     public async Task Will_read_http_content_as_result()
@@ -15,11 +18,11 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assign
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
-            Content = JsonContent.Create(new CamelPerson() { firstName = "Xavier", age = 50 })
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 })
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -34,7 +37,7 @@ public class HttpResponseMessageJsonExtensionsTests
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -51,7 +54,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError);
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
@@ -64,7 +67,7 @@ public class HttpResponseMessageJsonExtensionsTests
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError);
 
         // Assert
         await act.Should().ThrowAsync<HttpRequestException>();
@@ -78,7 +81,7 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assign
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
-            Content = JsonContent.Create(new CamelPerson() { firstName = "Xavier", age = 50 })
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 })
         };
         var options = new JsonSerializerOptions
         {
@@ -108,12 +111,12 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assign
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
-            Content = JsonContent.Create(new CamelPerson() { firstName = "Xavier", age = 50 })
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 })
         };
         var task = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+        var result = await task.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -129,7 +132,7 @@ public class HttpResponseMessageJsonExtensionsTests
         var task = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError);
+        var result = await task.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -155,7 +158,7 @@ public class HttpResponseMessageJsonExtensionsTests
         }
 
         // Act
-        var result = await httpResponseMessage.ReadResultAsync<CamelPerson>(CallbackFailedStatusCode);
+        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson>(CallbackFailedStatusCode);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -169,28 +172,42 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assign
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
-            Content = JsonContent.Create(new CamelPerson() { firstName = "Chris", age = 18 })
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 })
         };
 
-        var callbackCalled = false;
-        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            callbackCalled = true;
-            return Error.NotFound("Bad request");
-        }
-
         // Act
-        var result = await httpResponseMessage.ReadResultAsync<CamelPerson>(CallbackFailedStatusCode);
+        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson>(CallbackFailedStatusCode);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        callbackCalled.Should().BeFalse();
+        _callbackCalled.Should().BeFalse();
         result.Value.firstName.Should().Be("Chris");
         result.Value.age.Should().Be(18);
     }
 
-    public class CamelPerson
+    [Fact]
+    public async Task Will_throw_exception_for_null_JSON()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent("null", Encoding.UTF8, "application/json")
+        };
+
+        // Act
+        Func<Task> act = async () => await httpResponseMessage.ReadResultAsync<camelcasePerson>(CallbackFailedStatusCode);
+
+        // Assert
+        await act.Should().ThrowAsync<JsonException>();
+    }
+
+    private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response)
+    {
+        _callbackCalled = true;
+        return Task.FromResult((Error)Error.NotFound("Bad request"));
+    }
+
+    public class camelcasePerson
     {
         public string firstName { get; set; } = string.Empty;
         public int age { get; set; }
