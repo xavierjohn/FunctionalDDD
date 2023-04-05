@@ -70,31 +70,6 @@ public class HttpResponseMessageJsonExtensionsTests
         await act.Should().ThrowAsync<HttpRequestException>();
     }
 
-    [Fact]
-    public async Task Will_throw_Exception_for_Bad_Request()
-    {
-        // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
-        {
-            Content = new StringContent("Expected space invaders.")
-        };
-
-        var callbackCalled = false;
-        async Task callbackFailedStatusCode(HttpResponseMessage response)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().Be("Expected space invaders.");
-            callbackCalled = true;
-        }
-
-        // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError, callbackFailedStatusCode);
-
-        // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
-        callbackCalled.Should().BeTrue();
-    }
-
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -159,6 +134,60 @@ public class HttpResponseMessageJsonExtensionsTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(_notFoundError);
+    }
+
+    [Fact]
+    public async Task Will_callback_on_failure()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("Expected space invaders.")
+        };
+
+        var callbackCalled = false;
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().Be("Expected space invaders.");
+            callbackCalled = true;
+            return Error.NotFound("Bad request");
+        }
+
+        // Act
+        var result = await httpResponseMessage.ReadResultAsync<CamelPerson>(CallbackFailedStatusCode);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.NotFound("Bad request"));
+        callbackCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Will_not_callback_on_success()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new CamelPerson() { firstName = "Chris", age = 18 })
+        };
+
+        var callbackCalled = false;
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            callbackCalled = true;
+            return Error.NotFound("Bad request");
+        }
+
+        // Act
+        var result = await httpResponseMessage.ReadResultAsync<CamelPerson>(CallbackFailedStatusCode);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        callbackCalled.Should().BeFalse();
+        result.Value.firstName.Should().Be("Chris");
+        result.Value.age.Should().Be(18);
     }
 
     public class CamelPerson
