@@ -70,6 +70,31 @@ public class HttpResponseMessageJsonExtensionsTests
         await act.Should().ThrowAsync<HttpRequestException>();
     }
 
+    [Fact]
+    public async Task Will_throw_Exception_for_Bad_Request()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("Expected space invaders.")
+        };
+
+        var callbackCalled = false;
+        async Task callbackFailedStatusCode(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().Be("Expected space invaders.");
+            callbackCalled = true;
+        }
+
+        // Act
+        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<CamelPerson>(_notFoundError, callbackFailedStatusCode);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+        callbackCalled.Should().BeTrue();
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -86,7 +111,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError, options);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError, jsonSerializerOptions: options);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
