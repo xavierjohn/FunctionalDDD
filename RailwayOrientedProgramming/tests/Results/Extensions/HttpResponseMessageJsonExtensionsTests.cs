@@ -89,7 +89,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError, jsonSerializerOptions: options);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError, options);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
