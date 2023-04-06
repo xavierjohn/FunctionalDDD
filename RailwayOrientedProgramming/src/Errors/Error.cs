@@ -48,6 +48,9 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(List<ModelError> modelErrors, string code = "validation.error") =>
         new(modelErrors, code);
 
+    public static BadRequestError BadRequest(string message, string code = "badrequest.error", string? target = null) =>
+        new(message, code, target);
+
     public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
     public static ConflictError Conflict(string message, string code = "conflict.error", string? target = null) =>
