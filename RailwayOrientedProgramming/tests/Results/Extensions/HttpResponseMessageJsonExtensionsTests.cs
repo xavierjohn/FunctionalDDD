@@ -149,16 +149,17 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         var callbackCalled = false;
-        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response)
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string value)
         {
             var content = await response.Content.ReadAsStringAsync();
             content.Should().Be("Expected space invaders.");
+            value.Should().Be("Hello");
             callbackCalled = true;
             return Error.NotFound("Bad request");
         }
 
         // Act
-        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson>(CallbackFailedStatusCode);
+        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Hello");
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -176,7 +177,56 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson>(CallbackFailedStatusCode);
+        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Common");
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _callbackCalled.Should().BeFalse();
+        result.Value.firstName.Should().Be("Chris");
+        result.Value.age.Should().Be(18);
+    }
+
+    [Fact]
+    public async Task Will_task_callback_on_failure()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("Expected space invaders.")
+        };
+        var task = Task.FromResult(httpResponseMessage);
+
+        var callbackCalled = false;
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, int value)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().Be("Expected space invaders.");
+            value.Should().Be(5);
+            callbackCalled = true;
+            return Error.NotFound("Bad request");
+        }
+
+        // Act
+        var result = await task.ReadResultAsync<camelcasePerson, int>(CallbackFailedStatusCode, 5);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.NotFound("Bad request"));
+        callbackCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Will_task_not_callback_on_success()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 })
+        };
+        var task = Task.FromResult(httpResponseMessage);
+
+        // Act
+        var result = await task.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Common");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -195,15 +245,16 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultAsync<camelcasePerson>(CallbackFailedStatusCode);
+        Func<Task> act = async () => await httpResponseMessage.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Common");
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
     }
 
-    private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response)
+    private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string value)
     {
         _callbackCalled = true;
+        value.Should().Be("Common");
         return Task.FromResult((Error)Error.NotFound("Bad request"));
     }
 

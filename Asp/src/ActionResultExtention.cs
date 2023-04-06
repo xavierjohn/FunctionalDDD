@@ -33,6 +33,7 @@ public static class ActionResultExtention
         {
             NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
             ValidationError validation => ValidationErrors<T>(validation, controllerBase),
+            BadRequestError badRequest => (ActionResult<T>)controllerBase.BadRequest(badRequest),
             ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
             UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
             ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
