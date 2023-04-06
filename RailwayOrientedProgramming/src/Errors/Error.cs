@@ -49,7 +49,7 @@ public class Error : IEquatable<Error>
         new(modelErrors, code);
 
     public static BadRequestError BadRequest(string message, string code = "badrequest.error", string? target = null) =>
-    new(message, code, target);
+        new(message, code, target);
 
     public static ModelError ValidationError(string message, string fieldName = "") => new ModelError(message, fieldName);
 
