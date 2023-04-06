@@ -149,11 +149,11 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         var callbackCalled = false;
-        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string value)
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context)
         {
             var content = await response.Content.ReadAsStringAsync();
             content.Should().Be("Expected space invaders.");
-            value.Should().Be("Hello");
+            context.Should().Be("Hello");
             callbackCalled = true;
             return Error.NotFound("Bad request");
         }
@@ -197,11 +197,11 @@ public class HttpResponseMessageJsonExtensionsTests
         var task = Task.FromResult(httpResponseMessage);
 
         var callbackCalled = false;
-        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, int value)
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, int context)
         {
             var content = await response.Content.ReadAsStringAsync();
             content.Should().Be("Expected space invaders.");
-            value.Should().Be(5);
+            context.Should().Be(5);
             callbackCalled = true;
             return Error.NotFound("Bad request");
         }
@@ -251,10 +251,10 @@ public class HttpResponseMessageJsonExtensionsTests
         await act.Should().ThrowAsync<JsonException>();
     }
 
-    private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string value)
+    private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context)
     {
         _callbackCalled = true;
-        value.Should().Be("Common");
+        context.Should().Be("Common");
         return Task.FromResult((Error)Error.NotFound("Bad request"));
     }
 
