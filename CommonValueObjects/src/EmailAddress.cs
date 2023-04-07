@@ -8,7 +8,7 @@ public partial class EmailAddress : SimpleValueObject<string>
 
     public static Result<EmailAddress> New(string emailString, string? fieldName = null)
     {
-        if (emailString != null)
+        if (emailString is not null)
         {
             var isEmail = EmailRegEx().IsMatch(emailString);
             if (isEmail) return new EmailAddress(emailString);

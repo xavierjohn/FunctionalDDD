@@ -8,7 +8,7 @@ public abstract class Entity<TId>
 
     public override bool Equals(object? obj)
     {
-        if (!(obj is Entity<TId> other))
+        if (obj is not Entity<TId> other)
             return false;
 
         if (ReferenceEquals(this, other))
