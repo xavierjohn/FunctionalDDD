@@ -144,14 +144,16 @@ var result = await _httpClient.GetAsync($"person/{id}")
 Or handle errors yourself by using a callback.
   
   ```csharp
-  async Task<Error> _callback(HttpResponseMessage response, int personId)
+async ValueTask<Error> FailureHandling(HttpResponseMessage response, int personId)
 {
     var content = await response.Content.ReadAsStringAsync();
     // Log/Handle error
-    return Error.NotFound("Bad request");
+    _logger.LogError("Person API Failed: code :{code}, message:{message}", response.StatusCode, content);
+    return Error.NotFound("Person not found");
 }
 
-var result = await task.ReadResultAsync<Person, int>(_callback, 5);
+var result = await _httpClient.GetAsync($"person/{id}")
+    .ReadResultAsync<Person, int>(FailureHandling, 5);
 
   ```
 
