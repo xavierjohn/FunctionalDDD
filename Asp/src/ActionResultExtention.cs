@@ -15,15 +15,13 @@ public static class ActionResultExtention
 
     public static async Task<ActionResult<T>> ToOkActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
     {
-        Result<T> result = await resultTask;
-
+        var result = await resultTask;
         return result.ToOkActionResult(controllerBase);
     }
 
     public static async ValueTask<ActionResult<T>> ToOkActionResultAsync<T>(this ValueTask<Result<T>> resultTask, ControllerBase controllerBase)
     {
-        Result<T> result = await resultTask;
-
+        var result = await resultTask;
         return result.ToOkActionResult(controllerBase);
     }
 

@@ -1,5 +1,7 @@
 # Functional DDD
 
+![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
+
 Functional-like programming with Domain Driven Design library is based on the
 [CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions).
 
