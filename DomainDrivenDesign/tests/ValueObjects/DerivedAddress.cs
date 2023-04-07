@@ -10,7 +10,7 @@ internal class DerivedAddress : Address
 
     protected override IEnumerable<IComparable> GetEqualityComponents()
     {
-        foreach (string s in base.GetEqualityComponents())
+        foreach (var s in base.GetEqualityComponents())
         {
             yield return s;
         }
