@@ -137,7 +137,7 @@ var r = await _sender.Send(new StudentInformationQuery(studentId)
 ### Example 5 Read HTTP response as Result
 
 ```csharp
-var result = await _httpClient.GetAsync("https://www.google.com")
+var result = await _httpClient.GetAsync($"person/{id}")
     .ReadResultWithNotFoundAsync<Person>(Error.NotFound("Person not found"));
 ```
 
