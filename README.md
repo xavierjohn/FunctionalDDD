@@ -6,14 +6,14 @@ Functional-like programming with Domain Driven Design library is based on the
 With the following differences.
 
 - Uses an Error object instead of a string to represent errors.
-- Validation error can hold multiple validation errors.
-- Aggregate error can hold multiple errors.
+- Validation errors can hold multiple validation errors.
+- Aggregate errors can hold multiple errors.
 - A way to convert FunctionalDDD.Error to HTTP errors (ActionResult).
 - Leverage fluent validation and use it to create domain objects.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
 
-Here is a YouTube video that explains several of the methods in this library.
+Here is a YouTube video explaining several of this library's methods.
 
 [![Functional DDD](https://img.youtube.com/vi/45yk2nuRjj8/0.jpg)](https://youtu.be/45yk2nuRjj8?t=682)
 
@@ -39,7 +39,7 @@ Here is a YouTube video that explains several of the methods in this library.
 
 - **Common Value Objects Generator**
 
-  <div>Source code generator for boiler plate code needed for Required String & Required Guid</div>
+  <div>Source code generator for boilerplate code needed for Required String & Required Guid</div>
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator)
 
@@ -70,11 +70,11 @@ await GetCustomerByIdAsync(id)
 If `GetCustomerByIdAsync` returned `null`, then `ToResultAsync` will convert it to `Result` type with the error.
 
 If `GetCustomerByIdAsync` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
- If not return a `Validation` error.
+ If not, return a `Validation` error.
 
 If there is no error, `TeeAsync` will execute the `Promote` method and then send an email.
 
-Finally `FinallyAsync` will call the given functions with underlying object or error.
+Finally, `FinallyAsync` will call the given functions with an underlying object or error.
 
 ### Example 2 Validation
 
@@ -86,7 +86,7 @@ Finally `FinallyAsync` will call the given functions with underlying object or e
        Result.Success(string.Join(" ", firstName, lastName, email)));
  ```
 
- `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects have failed. Avoiding primitive obsession prevents writing parameters out of order.
+ `Combine` is used to combine multiple `Result` objects. If any of the' Result' objects have failed, it will return a `Result` with all the errors. Avoiding primitive obsession prevents writing parameters out of order.
 
 ### Example 3 Fluent Validation
 
