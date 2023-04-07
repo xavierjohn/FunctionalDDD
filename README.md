@@ -82,12 +82,11 @@ Finally `FinallyAsync` will call the given functions with underlying object or e
  EmailAddress.New("xavier@somewhere.com")
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
-    .Combine(EmailAddress.New("xavier@somewhereelse.com"))
-    .Bind((email, firstName, lastName, anotherEmail) =>
-       Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+    .Bind((email, firstName, lastName) =>
+       Result.Success(string.Join(" ", firstName, lastName, email)));
  ```
 
- `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects have failed.
+ `Combine` is used to combine multiple `Result` objects. It will return a `Result` with all the errors if any of the `Result` objects have failed. Avoiding primitive obsession prevents writing parameters out of order.
 
 ### Example 3 Fluent Validation
 
@@ -119,11 +118,41 @@ Finally `FinallyAsync` will call the given functions with underlying object or e
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
         v => v.RuleFor(x => x.Email).NotNull(),
-        v => v.RuleFor(x => x.Password).NotEmpty()
     };
 }
  ```
 
 `InlineValidator` does the [FluentValidation](https://docs.fluentvalidation.net)
+
+### Example 4 Parallel Tasks
+
+```csharp
+var r = await _sender.Send(new StudentInformationQuery(studentId)
+    .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId))
+    .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId))
+    .BindAsync((studentInformation, studentGrades, checkoutBooks)
+       => PrepareReport(studentInformation, studentGrades, checkoutBooks));
+```
+
+### Example 5 Read HTTP response as Result
+
+```csharp
+var result = await _httpClient.GetAsync("https://www.google.com")
+    .ReadResultWithNotFoundAsync<Person>(Error.NotFound("Person not found"));
+```
+
+Or handle errors yourself by using a callback.
+  
+  ```csharp
+  async Task<Error> _callback(HttpResponseMessage response, int personId)
+{
+    var content = await response.Content.ReadAsStringAsync();
+    // Log/Handle error
+    return Error.NotFound("Bad request");
+}
+
+var result = await task.ReadResultAsync<Person, int>(_callback, 5);
+
+  ```
 
 Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more examples.

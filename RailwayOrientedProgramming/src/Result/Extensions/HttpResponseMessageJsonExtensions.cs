@@ -46,7 +46,7 @@ public static class HttpResponseMessageJsonExtensions
 
     public static async Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
         this HttpResponseMessage response,
-        Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
+        Func<HttpResponseMessage, TContext, ValueTask<Error>> callbackFailedStatusCode,
         TContext context,
         JsonSerializerOptions? jsonSerializerOptions,
         CancellationToken cancellationToken = default)
@@ -64,14 +64,14 @@ public static class HttpResponseMessageJsonExtensions
 
     public static Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
         this HttpResponseMessage response,
-        Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
+        Func<HttpResponseMessage, TContext, ValueTask<Error>> callbackFailedStatusCode,
         TContext context,
         CancellationToken cancellationToken = default)
             => response.ReadResultAsync<TValue, TContext>(callbackFailedStatusCode, context, null, cancellationToken);
 
     public static async Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
         this Task<HttpResponseMessage> responseTask,
-        Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
+        Func<HttpResponseMessage, TContext, ValueTask<Error>> callbackFailedStatusCode,
         TContext context,
         JsonSerializerOptions? jsonSerializerOptions,
         CancellationToken cancellationToken = default)
@@ -83,7 +83,7 @@ public static class HttpResponseMessageJsonExtensions
 
     public static Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
         this Task<HttpResponseMessage> responseTask,
-        Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
+        Func<HttpResponseMessage, TContext, ValueTask<Error>> callbackFailedStatusCode,
         TContext context,
         CancellationToken cancellationToken = default)
                 => responseTask.ReadResultAsync<TValue, TContext>(callbackFailedStatusCode, context, null, cancellationToken);
