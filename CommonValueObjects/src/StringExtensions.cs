@@ -1,8 +1,6 @@
 ﻿namespace FunctionalDDD;
 
-using System.Text;
-
-internal static class StringExtenstions
+internal static class StringExtensions
 {
     public static string ToCamelCase(this string str)
     {

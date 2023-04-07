@@ -3,7 +3,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-public static class ActionResultExtention
+public static class ActionResultExtensions
 {
     public static ActionResult<T> ToOkActionResult<T>(this Result<T> result, ControllerBase controllerBase)
     {
@@ -26,19 +26,17 @@ public static class ActionResultExtention
     }
 
     public static ActionResult<T> ToErrorActionResult<T>(this Error error, ControllerBase controllerBase)
+    => error switch
     {
-        return error switch
-        {
-            NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
-            ValidationError validation => ValidationErrors<T>(validation, controllerBase),
-            BadRequestError => (ActionResult<T>)controllerBase.BadRequest(error),
-            ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
-            UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
-            ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
-            UnexpectedError => (ActionResult<T>)controllerBase.StatusCode(500, error),
-            _ => throw new NotImplementedException($"Unknown error {error.Code}"),
-        };
-    }
+        NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
+        ValidationError validation => ValidationErrors<T>(validation, controllerBase),
+        BadRequestError => (ActionResult<T>)controllerBase.BadRequest(error),
+        ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
+        UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
+        ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
+        UnexpectedError => (ActionResult<T>)controllerBase.StatusCode(500, error),
+        _ => throw new NotImplementedException($"Unknown error {error.Code}"),
+    };
 
     public static ActionResult<T> ToErrorActionResult<T>(this Result<T> result, ControllerBase controllerBase)
     {
@@ -54,8 +52,7 @@ public static class ActionResultExtention
 
     public static async ValueTask<ActionResult<T>> ToErrorActionResultAsync<T>(this ValueTask<Result<T>> resultTask, ControllerBase controllerBase)
     {
-        Result<T> result = await resultTask;
-
+        var result = await resultTask;
         return result.ToErrorActionResult(controllerBase);
     }
 
@@ -67,5 +64,4 @@ public static class ActionResultExtention
 
         return controllerBase.ValidationProblem(modelState);
     }
-
 }
