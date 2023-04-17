@@ -1,5 +1,7 @@
 # Functional DDD
 
+![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
+
 Functional-like programming with Domain Driven Design library is based on the
 [CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions).
 
@@ -21,31 +23,31 @@ Here is a YouTube video explaining several of this library's methods.
 
 - **Railway Oriented Programming**
 
-  <div>Adds the ability to chain functions.</div>
-  
+  Adds the ability to chain functions.
+
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
 
 - **Fluent Validation**
 
-  <div>Extension method to convert fluent validation errors to ROP Result</div>
+  Extension method to convert fluent validation errors to ROP Result.
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)
   
 - **Common Value Objects**
 
-  <div>Helps create simple value objects like Email, Required String & Required Guid</div>
+  Helps create simple value objects like Email, Required String & Required Guid.
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects)
 
 - **Common Value Objects Generator**
 
-  <div>Source code generator for boilerplate code needed for Required String & Required Guid</div>
+  Source code generator for boilerplate code needed for Required String & Required Guid.
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator)
 
 - **Domain Driven Design**
 
-  <div>Has DDD base type like AggregateRoot & ValueObject</div>
+  Has DDD base type like AggregateRoot & ValueObject.
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
 

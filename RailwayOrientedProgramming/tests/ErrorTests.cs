@@ -45,7 +45,7 @@ public class ErrorTests
 
         // Assert
         error.Message.Should().Be("message");
-        error.Code.Should().Be("notfound.error");
+        error.Code.Should().Be("not.found.error");
         error.Should().BeOfType<NotFoundError>();
         error.Target.Should().BeNull();
     }
