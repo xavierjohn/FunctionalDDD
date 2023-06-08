@@ -77,4 +77,12 @@ public static partial class ResultExtensions
         Result<TIn> result = await resultTask.ConfigureAwait(false);
         return result.Finally(funcOk, funcError);
     }
+
+    public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask,
+    Func<TIn, TOut> funcOk,
+    Func<Error, TOut> funcError)
+    {
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
+        return result.Finally(funcOk, funcError);
+    }
 }
