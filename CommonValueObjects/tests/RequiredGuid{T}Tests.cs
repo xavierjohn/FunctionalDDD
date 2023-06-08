@@ -1,6 +1,7 @@
 ﻿namespace CommonValueObjects.Tests;
 using System;
 using FunctionalDDD;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public partial class MyGuidId : RequiredGuid<MyGuidId>
 {
@@ -11,11 +12,11 @@ public class RequiredGuid_T_Tests
     [Fact]
     public void Cannot_create_empty_RequiredGuid()
     {
-        var guidId1 = MyGuidId.New(default);
+        var guidId1 = MyGuidId.New(default(Guid));
         guidId1.IsFailure.Should().BeTrue();
         guidId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)guidId1.Error;
-        validation.Message.Should().Be("My Guid Id cannot be empty");
+        validation.Message.Should().Be("My Guid Id cannot be empty.");
         validation.FieldName.Should().Be("myGuidId");
         validation.Code.Should().Be("validation.error");
     }
@@ -93,6 +94,48 @@ public class RequiredGuid_T_Tests
         // Assert
         act.Should().Throw<ResultFailureException>()
             .WithMessage("You attempted to access the Value for a failed result. A failed result has no Value.")
-            .Where(e => e.Error.Message == "My Guid Id cannot be empty");
+            .Where(e => e.Error.Message == "My Guid Id cannot be empty.");
+    }
+
+    [Fact]
+    public void Can_create_RequiredGuid_from_valid_string()
+    {
+        // Arrange
+        var guid = Guid.NewGuid();
+
+        // Act
+        var myGuidResult = MyGuidId.New(guid.ToString());
+
+        // Assert
+        myGuidResult.IsSuccess.Should().BeTrue();
+        myGuidResult.Value.Value.Should().Be(guid);
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_invalid_string()
+    {
+        // Act
+        var myGuidResult = MyGuidId.New("invalid");
+
+        // Assert
+        myGuidResult.IsFailure.Should().BeTrue();
+        myGuidResult.Error.Should().BeOfType<ValidationError>();
+        ValidationError ve = (ValidationError)myGuidResult.Error;
+        ve.Message.Should().Be("string is not in valid format.");
+        ve.FieldName.Should().Be("myGuidId");
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_null_string()
+    {
+        // Act
+        var myGuidResult = MyGuidId.New(default(string));
+
+        // Assert
+        myGuidResult.IsFailure.Should().BeTrue();
+        myGuidResult.Error.Should().BeOfType<ValidationError>();
+        ValidationError ve = (ValidationError)myGuidResult.Error;
+        ve.Message.Should().Be("My Guid Id cannot be empty.");
+        ve.FieldName.Should().Be("myGuidId");
     }
 }
