@@ -74,6 +74,7 @@ using FunctionalDDD;
          return stringOrNull
             .ToResult(CannotBeEmptyError)
             .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation(""string is not in valid format."", ""{g.ClassName.ToCamelCase()}""))
+            .Ensure(_ => parsedGuid != Guid.Empty, CannotBeEmptyError)
             .Map(guid => new {g.ClassName}(parsedGuid));
     }}
 }}
