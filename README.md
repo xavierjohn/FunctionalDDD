@@ -89,7 +89,7 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
 
 ### Multi-Expression Evaluation
 
-```csharp
+```csharp"sal
  EmailAddress.New("xavier@somewhere.com")
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
