@@ -48,7 +48,7 @@ using FunctionalDDD;
 #nullable enable
 {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : Required{g.ClassType}<{g.ClassName}>
 {{
-    protected static readonly Error CannotBeEmptyError = Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty"", ""{g.ClassName.ToCamelCase()}"");
+    protected static readonly Error CannotBeEmptyError = Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", ""{g.ClassName.ToCamelCase()}"");
 
     private {g.ClassName}({g.ClassType} value) : base(value)
     {{
@@ -67,6 +67,15 @@ using FunctionalDDD;
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
             .Map(guid => new {g.ClassName}(guid));
+
+    public static Result<{g.ClassName}> New(string? stringOrNull)
+    {{
+         Guid parsedGuid = Guid.Empty;
+         return stringOrNull
+            .ToResult(CannotBeEmptyError)
+            .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation(""string is not in valid format."", ""{g.ClassName.ToCamelCase()}""))
+            .Map(guid => new {g.ClassName}(parsedGuid));
+    }}
 }}
 ";
                 }
