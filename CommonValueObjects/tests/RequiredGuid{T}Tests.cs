@@ -111,11 +111,13 @@ public class RequiredGuid_T_Tests
         myGuidResult.Value.Value.Should().Be(guid);
     }
 
-    [Fact]
-    public void Cannot_create_RequiredGuid_from_invalid_string()
+    [Theory]
+    [InlineData("")]
+    [InlineData("Invalid")]
+    public void Cannot_create_RequiredGuid_from_invalid_string(string value)
     {
         // Act
-        var myGuidResult = MyGuidId.New("invalid");
+        var myGuidResult = MyGuidId.New(value);
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();
@@ -125,11 +127,13 @@ public class RequiredGuid_T_Tests
         ve.FieldName.Should().Be("myGuidId");
     }
 
-    [Fact]
-    public void Cannot_create_RequiredGuid_from_null_string()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("00000000-0000-0000-0000-000000000000")]
+    public void Cannot_create_RequiredGuid_from_empty_string(string? value)
     {
         // Act
-        var myGuidResult = MyGuidId.New(default(string));
+        var myGuidResult = MyGuidId.New(value);
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();
