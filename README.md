@@ -1,17 +1,26 @@
 # Functional DDD
 
+Functional Domain Driven Design (FDDD) is an approach that combines the benefits of Domain Driven Design
+(DDD) with the power of functional programming. DDD advocates modeling based on the reality of business 
+as relevant to your use cases, and emphasizes a common language to talk about these problems. 
+Functional programming, on the other hand, allows you to write code in a more declarative fashion, 
+making it easier to test and reason about.
+
+## FunctionalDDD NuGet Package
+
 ![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
 
-Functional-like programming with Domain Driven Design library is based on the
-[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions).
+The extensions offered within this package are based on the
+[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) library, which has a focus on
+writing C# code with functional principles. 
 
-With the following differences.
+Noteworthy differences and new features supported by the FunctionalDDD library are as follows:
 
-- Uses an Error object instead of a string to represent errors.
+- Use of an Error object instead of a string to represent errors.
 - Validation errors can hold multiple validation errors.
 - Aggregate errors can hold multiple errors.
-- A way to convert FunctionalDDD.Error to HTTP errors (ActionResult).
-- Leverage fluent validation and use it to create domain objects.
+- A method to convert FunctionalDDD Error to HTTP errors (ActionResult).
+- Fluent validation usage to create domain objects.
 - Source code generation for simple domain value objects.
 - Ability to run parallel tasks.
 
@@ -55,7 +64,7 @@ Here is a YouTube video explaining several of this library's methods.
 
 Let's look at a few examples:
 
-### Example 1 Async
+### Expression Evaluation and Error Handling
 
  ```csharp
 await GetCustomerByIdAsync(id)
@@ -69,7 +78,7 @@ await GetCustomerByIdAsync(id)
 
 `GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
 
-If `GetCustomerByIdAsync` returned `null`, then `ToResultAsync` will convert it to `Result` type with the error.
+If `GetCustomerByIdAsync` returns `null`, then `ToResultAsync` will convert it to a `Result` type which contains the error.
 
 If `GetCustomerByIdAsync` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
  If not, return a `Validation` error.
@@ -78,9 +87,9 @@ If there is no error, `TeeAsync` will execute the `Promote` method and then send
 
 Finally, `FinallyAsync` will call the given functions with an underlying object or error.
 
-### Example 2 Validation
+### Multi-Expression Evaluation
 
-```csharp
+```csharp"sal
  EmailAddress.New("xavier@somewhere.com")
     .Combine(FirstName.New("Xavier"))
     .Combine(LastName.New("John"))
@@ -88,9 +97,9 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
        Result.Success(string.Join(" ", firstName, lastName, email)));
  ```
 
- `Combine` is used to combine multiple `Result` objects. If any of the' Result' objects have failed, it will return a `Result` with all the errors. Avoiding primitive obsession prevents writing parameters out of order.
+ `Combine` is used to combine multiple `Result` objects. If any of the `Result` objects have failed, it will return a `Result` containing each of the errors which arose during evaluation. Avoiding primitive obsession prevents writing parameters out of order.
 
-### Example 3 Fluent Validation
+### Fluent Validation
 
 ```csharp
  public class User : AggregateRoot<UserId>
@@ -126,7 +135,7 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
 
 `InlineValidator` does the [FluentValidation](https://docs.fluentvalidation.net)
 
-### Example 4 Parallel Tasks
+### Running Parallel Tasks
 
 ```csharp
 var r = await _sender.Send(new StudentInformationQuery(studentId)
@@ -136,7 +145,7 @@ var r = await _sender.Send(new StudentInformationQuery(studentId)
        => PrepareReport(studentInformation, studentGrades, checkoutBooks));
 ```
 
-### Example 5 Read HTTP response as Result
+### Read HTTP response as Result
 
 ```csharp
 var result = await _httpClient.GetAsync($"person/{id}")
@@ -159,4 +168,4 @@ var result = await _httpClient.GetAsync($"person/{id}")
 
   ```
 
-Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more examples.
+Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
