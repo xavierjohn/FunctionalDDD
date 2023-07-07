@@ -35,6 +35,7 @@
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
     <RootNamespace>FunctionalDDD.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <AssemblyName>FunctionalDDD.$(MSBuildProjectName)</AssemblyName>
+    <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
 
   <!-- Test projects. -->
