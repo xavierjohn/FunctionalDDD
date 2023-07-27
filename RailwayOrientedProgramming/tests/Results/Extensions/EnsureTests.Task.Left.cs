@@ -42,7 +42,7 @@ public class EnsureTests_Task_Left
     [Fact]
     public async Task Ensure_Task_Left_with_errorPredicate_does_not_execute_error_predicate_when_predicate_passes()
     {
-        var tResult = Task.FromResult(Result.Success<int?>(null));
+        var tResult = Task.FromResult(Result.Success<int?>(default(int?)));
 
         Result<int?> result = await tResult.EnsureAsync(value => !value.HasValue, value => Error.Validation($"should be null but found {value}"));
 

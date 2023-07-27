@@ -14,6 +14,15 @@ public class ResultTests
     }
 
     [Fact]
+    public void Success_argument_via_callback()
+    {
+        var result = Result.Success(() => "Hello");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Hello");
+    }
+
+    [Fact]
     public void Success_argument_is_null_Success_result_expected()
     {
         var result = Result.Success(default(string));
@@ -22,9 +31,18 @@ public class ResultTests
     }
 
     [Fact]
-    public void Fail_argument_is_not_default_Fail_result_expected()
+    public void Failure_returns_failed_result()
     {
         var result = Result.Failure<string>(Error.Validation("Bad first name"));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.Validation("Bad first name"));
+    }
+
+    [Fact]
+    public void Failure_returns_failed_result_via_callback()
+    {
+        var result = Result.Failure<string>(() => Error.Validation("Bad first name"));
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Validation("Bad first name"));
