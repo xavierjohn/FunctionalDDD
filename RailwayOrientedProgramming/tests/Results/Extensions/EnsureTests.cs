@@ -75,7 +75,7 @@ public class EnsureTests
     [Fact]
     public async Task Ensure_task_source_result_is_success_predicate_is_passed_error_predicate_is_not_invoked()
     {
-        var sut = Task.FromResult(Result.Success<int?>(null));
+        var sut = Task.FromResult(Result.Success<int?>(default(int)));
 
         var result = await sut.EnsureAsync(value => !value.HasValue,
             value => Task.FromResult((Error)Error.Unexpected($"should be null but found {value}")));

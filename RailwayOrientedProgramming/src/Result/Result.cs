@@ -10,10 +10,28 @@ public partial struct Result
         new(false, ok, default);
 
     /// <summary>
+    ///     Creates a success result containing the given value.
+    /// </summary>
+    public static Result<TOk> Success<TOk>(Func<TOk> fok)
+    {
+        TOk ok = fok();
+        return new(false, ok, default);
+    }
+
+    /// <summary>
     ///     Creates a failure result with the given error.
     /// </summary>
     public static Result<TOk> Failure<TOk>(Error error) =>
         new(true, default, error);
+
+    /// <summary>
+    ///     Creates a failure result with the given error.
+    /// </summary>
+    public static Result<TOk> Failure<TOk>(Func<Error> error)
+    {
+        Error err = error();
+        return new(true, default, err);
+    }
 
     /// <summary>
     ///     Creates a result whose success/failure reflects the supplied condition. Opposite of FailureIf().
