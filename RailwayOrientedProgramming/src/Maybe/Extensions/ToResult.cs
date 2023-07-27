@@ -2,11 +2,11 @@
 
 public static partial class MaybeExtensions
 {
-    public static Result<TOk> ToResult<TOk>(in this Maybe<TOk> maybe, Error ferror)
+    public static Result<TOk> ToResult<TOk>(in this Maybe<TOk> maybe, Error error)
         where TOk : notnull
     {
         if (maybe.HasNoValue)
-            return Result.Failure<TOk>(ferror);
+            return Result.Failure<TOk>(error);
 
         return Result.Success(maybe.GetValueOrThrow());
     }
