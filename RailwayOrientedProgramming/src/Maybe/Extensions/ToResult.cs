@@ -11,18 +11,18 @@ public static partial class MaybeExtensions
         return Result.Success(maybe.GetValueOrThrow());
     }
 
-    public static async Task<Result<TOk>> ToResultAsync<TOk>(this Task<Maybe<TOk>> maybeTask, Error errors)
+    public static async Task<Result<TOk>> ToResultAsync<TOk>(this Task<Maybe<TOk>> maybeTask, Error error)
         where TOk : notnull
     {
         var maybe = await maybeTask.ConfigureAwait(false);
-        return maybe.ToResult(errors);
+        return maybe.ToResult(error);
     }
 
-    public static async ValueTask<Result<TOk>> ToResultAsync<TOk>(this ValueTask<Maybe<TOk>> maybeTask, Error ferror)
+    public static async ValueTask<Result<TOk>> ToResultAsync<TOk>(this ValueTask<Maybe<TOk>> maybeTask, Error error)
         where TOk : notnull
     {
         Maybe<TOk> maybe = await maybeTask;
-        return maybe.ToResult(ferror);
+        return maybe.ToResult(error);
     }
 
     public static Result<TOk> ToResult<TOk>(in this Maybe<TOk> maybe, Func<Error> ferror)
