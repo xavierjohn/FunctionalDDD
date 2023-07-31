@@ -12,7 +12,6 @@ using Microsoft.Net.Http.Headers;
 /// Common unites are bytes, items or seconds.
 public class PartialObjectResult : ObjectResult
 {
-    private const int DefaultStatusCode = StatusCodes.Status206PartialContent;
     private readonly string _contentRangeHeaderValue;
 
     /// <summary>
@@ -26,7 +25,7 @@ public class PartialObjectResult : ObjectResult
         : base(value)
     {
         _contentRangeHeaderValue = (new ContentRangeHeaderValue(from, to, totalLength) { Unit = "items" }).ToString();
-        StatusCode = DefaultStatusCode;
+        StatusCode = StatusCodes.Status206PartialContent;
     }
 
     /// <inheritdoc />
