@@ -12,6 +12,20 @@ public static class ActionResultExtensions
 
         return result.ToErrorActionResult(controllerBase);
     }
+    public static ActionResult<T> ToPartialOrOkActionResult<T>(this Result<T> result, ControllerBase controllerBase, long from, long to, long totalLength)
+    {
+        if (result.IsSuccess)
+        {
+            var partialResult = to - from + 1 != totalLength;
+            if (partialResult)
+                return new PartialObjectResult(from, to, totalLength, result.Value);
+
+            return controllerBase.Ok(result.Value);
+        }
+
+        var error = result.Error;
+        return error.ToErrorActionResult<T>(controllerBase);
+    }
 
     public static async Task<ActionResult<T>> ToOkActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controllerBase)
     {

@@ -1,4 +1,6 @@
-namespace SampleWebApplication.Controllers;
+﻿namespace SampleWebApplication.Controllers;
+
+using FunctionalDDD;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -18,14 +20,15 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
-    {
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = s_summaries[Random.Shared.Next(s_summaries.Length)]
-        })
-        .ToArray();
-    }
+    public ActionResult<WeatherForecast[]> Get() =>
+        Result.Success(() =>
+            {
+                return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+                {
+                    Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                    TemperatureC = Random.Shared.Next(-20, 55),
+                    Summary = s_summaries[Random.Shared.Next(s_summaries.Length)]
+                }).ToArray();
+            })
+        .ToPartialOrOkActionResult(this, 0, 3, 5);
 }
