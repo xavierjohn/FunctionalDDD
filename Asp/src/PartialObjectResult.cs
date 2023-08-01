@@ -9,7 +9,7 @@ using Microsoft.Net.Http.Headers;
 /// Content-Range: <unit> <range-start>-<range-end>/*
 /// Content-Range: <unit> */<size>
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
-/// Common unites are bytes, items or seconds.
+/// Common units are bytes, items or seconds.
 public class PartialObjectResult : ObjectResult
 {
     private readonly string _contentRangeHeaderValue;
