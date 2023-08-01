@@ -48,6 +48,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DomainDrivenDesign.Tests", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebApplication", "Examples\SampleWebApplication\src\SampleWebApplication.csproj", "{CF8D3111-D81B-40C9-8C93-F35BB72B1F2C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asp.Tests", "Asp\tests\Asp.Tests.csproj", "{7061CA5B-6866-4434-835D-8D9B546D4D3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +104,10 @@ Global
 		{CF8D3111-D81B-40C9-8C93-F35BB72B1F2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF8D3111-D81B-40C9-8C93-F35BB72B1F2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF8D3111-D81B-40C9-8C93-F35BB72B1F2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -119,6 +125,7 @@ Global
 		{24B449C0-DC03-43E7-A3FE-1263AEA4F600} = {828D4C8B-EE27-4ECD-8C89-8D4FD7E67BD6}
 		{CE118AEC-92AC-4A40-9660-037D2ABF0120} = {828D4C8B-EE27-4ECD-8C89-8D4FD7E67BD6}
 		{CF8D3111-D81B-40C9-8C93-F35BB72B1F2C} = {BD9AFC47-1336-443C-9EBE-3CF52A128194}
+		{7061CA5B-6866-4434-835D-8D9B546D4D3C} = {1E3022F4-1620-4087-A015-7FFF0906AE14}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B687416C-3313-4018-820C-DD90FD4367E9}
