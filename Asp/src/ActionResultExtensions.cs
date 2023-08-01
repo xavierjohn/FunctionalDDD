@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Net.Http.Headers;
 
 public static class ActionResultExtensions
 {
@@ -12,6 +13,22 @@ public static class ActionResultExtensions
 
         return result.ToErrorActionResult(controllerBase);
     }
+    public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(this Result<TIn> result, ControllerBase controllerBase, Func<TIn, (ContentRangeHeaderValue, TOut)> func)
+    {
+        if (result.IsSuccess)
+        {
+            var (contentRangeHeaderValue, tout) = func(result.Value);
+            var partialResult = contentRangeHeaderValue.To - contentRangeHeaderValue.From + 1 != contentRangeHeaderValue.Length;
+            if (partialResult)
+                return new PartialObjectResult(contentRangeHeaderValue, tout);
+
+            return controllerBase.Ok(result.Value);
+        }
+
+        var error = result.Error;
+        return error.ToErrorActionResult<TOut>(controllerBase);
+    }
+
     public static ActionResult<T> ToPartialOrOkActionResult<T>(this Result<T> result, ControllerBase controllerBase, long from, long to, long totalLength)
     {
         if (result.IsSuccess)

@@ -28,6 +28,18 @@ public class PartialObjectResult : ObjectResult
         StatusCode = StatusCodes.Status206PartialContent;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PartialObjectResult"/> class.
+    /// </summary>
+    /// <param name="contentRangeHeaderValue">Content range header value.</param>
+    /// <param name="value">Items</param>
+    public PartialObjectResult(ContentRangeHeaderValue contentRangeHeaderValue, object? value)
+        : base(value)
+    {
+        _contentRangeHeaderValue = contentRangeHeaderValue.ToString();
+        StatusCode = StatusCodes.Status206PartialContent;
+    }
+
     /// <inheritdoc />
     public override void OnFormatting(ActionContext context)
     {
