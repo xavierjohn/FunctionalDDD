@@ -149,7 +149,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         var callbackCalled = false;
-        async ValueTask<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context)
+        async Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context)
         {
             var content = await response.Content.ReadAsStringAsync();
             content.Should().Be("Expected space invaders.");
@@ -178,7 +178,7 @@ public class HttpResponseMessageJsonExtensionsTests
         var task = Task.FromResult(httpResponseMessage);
 
         var callbackCalled = false;
-        async ValueTask<Error> Callback(HttpResponseMessage response, int context)
+        async Task<Error> Callback(HttpResponseMessage response, int context)
         {
             var content = await response.Content.ReadAsStringAsync();
             content.Should().Be("Expected space invaders.");
@@ -251,11 +251,11 @@ public class HttpResponseMessageJsonExtensionsTests
         await act.Should().ThrowAsync<JsonException>();
     }
 
-    private ValueTask<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context)
+    private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context)
     {
         _callbackCalled = true;
         context.Should().Be("Common");
-        return ValueTask.FromResult((Error)Error.NotFound("Bad request"));
+        return Task.FromResult((Error)Error.NotFound("Bad request"));
     }
 
     public class camelcasePerson
