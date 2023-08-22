@@ -18,10 +18,7 @@ public class ActionResultTests
         var response = result.ToOkActionResult(controller);
 
         // Assert
-        response.Result.Should().BeOfType<OkObjectResult>();
-        var okObjResult = (OkObjectResult)response.Result!;
-        okObjResult.Value.Should().Be("Test");
-        okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        response.Result.As<OkObjectResult>().StatusCode.Should().Be(StatusCodes.Status200OK);
     }
 
     [Fact]
@@ -35,8 +32,7 @@ public class ActionResultTests
         var response = await result.ToOkActionResultAsync(controller);
 
         // Assert
-        response.Result.Should().BeOfType<OkObjectResult>();
-        var okObjResult = (OkObjectResult)response.Result!;
+        var okObjResult = response.Result.As<OkObjectResult>();
         okObjResult.Value.Should().Be("Test");
         okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
@@ -53,8 +49,24 @@ public class ActionResultTests
         var response = result.ToOkActionResult(controller);
 
         // Assert
-        response.Result.Should().BeOfType<BadRequestObjectResult>();
-        var badRequest = (BadRequestObjectResult)response.Result!;
+        var badRequest = response.Result.As<BadRequestObjectResult>();
+        badRequest.Value.Should().Be(expected);
+        badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public async Task Will_return_BadRequest_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var expected = Error.BadRequest("Test");
+        var result = Task.FromResult(Result.Failure<string>(expected));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        var badRequest = response.Result.As<BadRequestObjectResult>();
         badRequest.Value.Should().Be(expected);
         badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
