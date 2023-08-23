@@ -12,7 +12,7 @@ using Microsoft.Net.Http.Headers;
 /// Common units are bytes, items or seconds.
 public class PartialObjectResult : ObjectResult
 {
-    private readonly string _contentRangeHeaderValue;
+    private readonly ContentRangeHeaderValue _contentRangeHeaderValue;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PartialObjectResult"/> class.
@@ -24,7 +24,7 @@ public class PartialObjectResult : ObjectResult
     public PartialObjectResult(long from, long to, long totalLength, object? value)
         : base(value)
     {
-        _contentRangeHeaderValue = (new ContentRangeHeaderValue(from, to, totalLength) { Unit = "items" }).ToString();
+        _contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, totalLength) { Unit = "items" };
         StatusCode = StatusCodes.Status206PartialContent;
     }
 
@@ -36,9 +36,11 @@ public class PartialObjectResult : ObjectResult
     public PartialObjectResult(ContentRangeHeaderValue contentRangeHeaderValue, object? value)
         : base(value)
     {
-        _contentRangeHeaderValue = contentRangeHeaderValue.ToString();
+        _contentRangeHeaderValue = contentRangeHeaderValue;
         StatusCode = StatusCodes.Status206PartialContent;
     }
+
+    public ContentRangeHeaderValue ContentRangeHeaderValue { get => _contentRangeHeaderValue; }
 
     /// <inheritdoc />
     public override void OnFormatting(ActionContext context)
@@ -47,6 +49,6 @@ public class PartialObjectResult : ObjectResult
 
         base.OnFormatting(context);
 
-        context.HttpContext.Response.Headers[HeaderNames.ContentRange] = _contentRangeHeaderValue;
+        context.HttpContext.Response.Headers[HeaderNames.ContentRange] = _contentRangeHeaderValue.ToString();
     }
 }
