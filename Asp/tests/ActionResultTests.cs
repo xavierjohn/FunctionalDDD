@@ -88,6 +88,7 @@ public class ActionResultTests
         partialResult.ContentRangeHeaderValue.From.Should().Be(4);
         partialResult.ContentRangeHeaderValue.To.Should().Be(10);
         partialResult.ContentRangeHeaderValue.Length.Should().Be(15);
+        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("items");
     }
 
     [Fact]
