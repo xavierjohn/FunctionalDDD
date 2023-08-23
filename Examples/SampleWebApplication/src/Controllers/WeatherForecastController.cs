@@ -1,7 +1,11 @@
-namespace SampleWebApplication.Controllers;
+﻿namespace SampleWebApplication.Controllers;
+
+using FunctionalDDD;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 [ApiController]
+[Produces("application/json")]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
@@ -18,14 +22,30 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    public ActionResult<WeatherForecast[]> Get()
     {
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        long from = 0;
+        long to = 4;
+        var strRange = Request.Headers[HeaderNames.Range].FirstOrDefault();
+        if (RangeHeaderValue.TryParse(strRange, out var range))
         {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = s_summaries[Random.Shared.Next(s_summaries.Length)]
-        })
-        .ToArray();
+            var firstRange = range.Ranges.First();
+            from = firstRange.From ?? from;
+            to = firstRange.To ?? to;
+        }
+        return Result.Success(() =>
+            {
+                var allData = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+                {
+                    Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                    TemperatureC = Random.Shared.Next(-20, 55),
+                    Summary = s_summaries[Random.Shared.Next(s_summaries.Length)]
+                }).ToArray();
+
+                WeatherForecast[] data = allData.Skip((int)from).Take((int)(to - from + 1)).ToArray();
+                var contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, allData.Length) { Unit = "items" };
+                return (RangedValue: contentRangeHeaderValue, Data: data);
+            })
+        .ToPartialOrOkActionResult(this, static r => r);
     }
 }

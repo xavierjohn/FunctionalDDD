@@ -160,7 +160,7 @@ public class FinallyTests
     }
 
     [Fact]
-    public async ValueTask FinallyAsync_ValueTask_executes_action_on_result()
+    public async Task FinallyAsync_ValueTask_executes_action_on_result()
     {
         // Arrange
         var result = ValueTask.FromResult(Result.Success("Success"));
@@ -181,7 +181,7 @@ public class FinallyTests
     }
 
     [Fact]
-    public async ValueTask FinallyAsync_ValueTask_executes_Okay()
+    public async Task FinallyAsync_ValueTask_executes_Okay()
     {
         // Arrange
         var result = ValueTask.FromResult(Result.Success("Success"));
@@ -210,7 +210,7 @@ public class FinallyTests
 
 
     [Fact]
-    public async ValueTask FinallyAsync_ValueTask_executes_Error()
+    public async Task FinallyAsync_ValueTask_executes_Error()
     {
         // Arrange
         var result = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Something is wrong.")));

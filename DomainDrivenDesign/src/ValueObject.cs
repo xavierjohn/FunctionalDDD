@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+namespace FunctionalDDD;
 public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueObject>
 {
     private int? _cachedHashCode;
@@ -15,7 +15,6 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
 
         return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
-
 
     public override int GetHashCode()
     {
