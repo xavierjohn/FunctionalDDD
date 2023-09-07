@@ -1,6 +1,6 @@
 ﻿namespace SampleWebApplication.Model;
 
-public record RegisterRequest(
+public record RegisterUserRequest(
     string firstName,
     string lastName,
     string email,

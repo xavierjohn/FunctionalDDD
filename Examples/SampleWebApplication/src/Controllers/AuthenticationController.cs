@@ -8,7 +8,7 @@ using SampleWebApplication.Model;
 public class AuthenticationController : ControllerBase
 {
     [HttpPost("[action]")]
-    public ActionResult<User> Register([FromBody] RegisterRequest request) =>
+    public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
@@ -16,7 +16,7 @@ public class AuthenticationController : ControllerBase
         .ToOkActionResult(this);
 
     [HttpPost("[action]")]
-    public ActionResult<User> RegisterCreated([FromBody] RegisterRequest request) =>
+    public ActionResult<User> RegisterCreated([FromBody] RegisterUserRequest request) =>
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
@@ -26,7 +26,7 @@ public class AuthenticationController : ControllerBase
             : result.ToErrorActionResult(this));
 
     [HttpPost("[action]")]
-    public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =>
+    public ActionResult<User> RegisterCreated2([FromBody] RegisterUserRequest request) =>
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
@@ -36,7 +36,7 @@ public class AuthenticationController : ControllerBase
             err => err.ToErrorActionResult<User>(this));
 
     [HttpPost("[action]")]
-    public ActionResult<User> RegisterAccepted([FromBody] RegisterRequest request) =>
+    public ActionResult<User> RegisterAccepted([FromBody] RegisterUserRequest request) =>
         FirstName.New(request.firstName)
         .Combine(LastName.New(request.lastName))
         .Combine(EmailAddress.New(request.email))
@@ -47,4 +47,10 @@ public class AuthenticationController : ControllerBase
 
     [HttpGet("[action]")]
     public ActionResult<string> Get(string name) => Ok($"Hello {name}!");
+
+    [HttpDelete("[action]/{id}")]
+    public ActionResult<Unit> Delete(string id) =>
+        UserId.New(id).Finally(
+            ok => NoContent(),
+            err => err.ToErrorActionResult<Unit>(this));
 }
