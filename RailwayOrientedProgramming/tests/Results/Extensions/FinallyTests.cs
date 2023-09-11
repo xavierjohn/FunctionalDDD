@@ -1,5 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
+using FunctionalDDD.RailwayOrientedProgramming;
+
 public class FinallyTests
 {
 

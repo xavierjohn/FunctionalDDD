@@ -1,4 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+
+using FunctionalDDD.RailwayOrientedProgramming;
 using Xunit;
 
 public class CombineTests

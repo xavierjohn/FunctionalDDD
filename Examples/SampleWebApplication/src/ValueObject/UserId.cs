@@ -1,6 +1,6 @@
 ﻿namespace SampleWebApplication;
 
-using FunctionalDDD;
+using FunctionalDDD.CommonValueObjects;
 
 public partial class UserId : RequiredGuid<UserId>
 {

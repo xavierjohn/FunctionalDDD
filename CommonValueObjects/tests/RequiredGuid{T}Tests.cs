@@ -1,7 +1,7 @@
 ﻿namespace CommonValueObjects.Tests;
 using System;
-using FunctionalDDD;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public partial class MyGuidId : RequiredGuid<MyGuidId>
 {

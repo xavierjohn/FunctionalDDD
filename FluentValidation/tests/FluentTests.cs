@@ -1,6 +1,7 @@
 ﻿namespace FluentValidationExt.Tests;
 
-using FunctionalDDD;
+using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public class FluentTests
 {
