@@ -1,6 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Maybes;
 
-using FunctionalDDD;
 using FunctionalDDD.RailwayOrientedProgramming;
 
 public class EqualityTests

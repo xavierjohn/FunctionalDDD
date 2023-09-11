@@ -1,6 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Maybes.Extensions;
 
-using FunctionalDDD;
 using FunctionalDDD.RailwayOrientedProgramming;
 using RailwayOrientedProgramming.Tests.Results;
 

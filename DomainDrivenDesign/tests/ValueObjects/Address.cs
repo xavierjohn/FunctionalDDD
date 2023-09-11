@@ -1,6 +1,6 @@
 ﻿namespace DomainDrivenDesign.Tests.ValueObjects;
 
-using FunctionalDDD;
+using FunctionalDDD.DomainDivenDesign;
 
 internal class Address : ValueObject
 {

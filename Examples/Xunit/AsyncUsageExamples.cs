@@ -1,6 +1,5 @@
 ﻿
 namespace Example.Tests;
-using FunctionalDDD;
 using FunctionalDDD.RailwayOrientedProgramming;
 using Xunit;
 

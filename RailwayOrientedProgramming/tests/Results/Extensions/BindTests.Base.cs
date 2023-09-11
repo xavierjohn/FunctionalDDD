@@ -1,6 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDDD;
 using FunctionalDDD.RailwayOrientedProgramming;
 using RailwayOrientedProgramming.Tests.Results;
 

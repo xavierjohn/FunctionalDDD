@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+﻿namespace SourceGenerator;
 
 using System.Text;
 
