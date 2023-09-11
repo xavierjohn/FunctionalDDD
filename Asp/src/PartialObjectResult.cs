@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 
 /// The Content-Range response HTTP header indicates where in a full body message a partial message belongs.
-/// Content-Range: <unit> <range-start>-<range-end>/<size>
-/// Content-Range: <unit> <range-start>-<range-end>/*
-/// Content-Range: <unit> */<size>
+/// Content-Range: &lt;unit&gt; &lt;range-start&gt;-&lt;range-end&gt;/&lt;size&gt;
+/// Content-Range: &lt;unit&gt; &lt;range-start&gt;-&lt;range-end&gt;/*
+/// Content-Range: &lt;unit&gt; */&lt;size&gt;>
 /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
 /// Common units are bytes, items or seconds.
 public class PartialObjectResult : ObjectResult
