@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.FluentValidation;
 
 using System.Linq;
 using FunctionalDDD.RailwayOrientedProgramming;
