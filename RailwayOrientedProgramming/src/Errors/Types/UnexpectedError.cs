@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public sealed class UnexpectedError : Error
 {

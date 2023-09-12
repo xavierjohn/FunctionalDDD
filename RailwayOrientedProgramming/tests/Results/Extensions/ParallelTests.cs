@@ -1,6 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 using Xunit;
 public class ParallelTests
 {

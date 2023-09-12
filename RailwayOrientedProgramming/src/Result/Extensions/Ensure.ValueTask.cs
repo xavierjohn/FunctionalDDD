@@ -1,5 +1,6 @@
 ﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public static partial class AsyncResultExtensionsBothOperands
 {

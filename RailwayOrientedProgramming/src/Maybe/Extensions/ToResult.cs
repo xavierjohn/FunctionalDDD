@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
+
 public static partial class MaybeExtensions
 {
     public static Result<TOk> ToResult<TOk>(in this Maybe<TOk> maybe, Error error)

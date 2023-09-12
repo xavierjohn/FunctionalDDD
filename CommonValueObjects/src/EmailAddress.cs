@@ -3,6 +3,7 @@
 using System.Text.RegularExpressions;
 using FunctionalDDD.DomainDivenDesign;
 using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public partial class EmailAddress : SimpleValueObject<string>
 {

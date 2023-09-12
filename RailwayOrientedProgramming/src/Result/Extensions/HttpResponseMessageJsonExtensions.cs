@@ -2,6 +2,7 @@
 
 using System.Net.Http.Json;
 using System.Text.Json;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public static class HttpResponseMessageJsonExtensions
 {

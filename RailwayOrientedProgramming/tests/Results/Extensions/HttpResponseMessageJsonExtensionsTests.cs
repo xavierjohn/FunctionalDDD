@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
 using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public class HttpResponseMessageJsonExtensionsTests
 {

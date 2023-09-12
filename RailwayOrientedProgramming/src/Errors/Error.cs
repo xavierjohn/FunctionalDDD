@@ -1,8 +1,8 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using static FunctionalDDD.RailwayOrientedProgramming.ValidationError;
+using static FunctionalDDD.RailwayOrientedProgramming.Errors.ValidationError;
 
 [DebuggerDisplay("{Message}")]
 #pragma warning disable CA1716 // Identifiers should not match keywords

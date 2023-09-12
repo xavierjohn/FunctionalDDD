@@ -7,6 +7,7 @@
 <#@ include file="CommonFunction.t4" #>
 // Generated code
 namespace FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 #nullable enable
 
 public static partial class ResultExtensions

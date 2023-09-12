@@ -2,6 +2,7 @@
 using System;
 using FunctionalDDD.CommonValueObjects;
 using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public partial class MyGuidId : RequiredGuid<MyGuidId>
 {

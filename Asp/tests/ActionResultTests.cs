@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public class ActionResultTests
 {

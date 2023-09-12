@@ -1,6 +1,7 @@
 ﻿
 namespace Example.Tests;
 using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 using Xunit;
 
 public class AsyncUsageExamples
