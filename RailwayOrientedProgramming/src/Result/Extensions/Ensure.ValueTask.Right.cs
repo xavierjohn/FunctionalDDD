@@ -2,7 +2,7 @@
 
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
-public static partial class AsyncResultExtensions
+public static partial class ResultExtensions
 {
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
