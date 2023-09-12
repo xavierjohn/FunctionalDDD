@@ -1,5 +1,5 @@
 ﻿namespace DomainDrivenDesign.Tests.ValueObjects;
-using FunctionalDDD;
+using FunctionalDDD.DomainDivenDesign;
 
 internal class Money : SimpleValueObject<decimal>
 {

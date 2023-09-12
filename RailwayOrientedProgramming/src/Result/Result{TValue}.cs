@@ -1,4 +1,7 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
+
 public readonly struct Result<TValue>
 {
     public TValue Value => IsFailure ? throw new ResultFailureException(Error) : _value!;

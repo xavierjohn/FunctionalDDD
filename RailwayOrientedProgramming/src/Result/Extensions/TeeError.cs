@@ -1,6 +1,8 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
+
+public static partial class TeeErrorExtensions
 {
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.

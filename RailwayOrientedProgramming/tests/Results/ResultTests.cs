@@ -1,6 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results;
 
-using FunctionalDDD;
+using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public class ResultTests
 {

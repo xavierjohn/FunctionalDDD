@@ -1,6 +1,8 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
+
+public static partial class FinallyExtensions
 {
     /// <summary>
     ///     Passes the result to the given function (regardless of success/failure state) to yield a final output value.

@@ -1,7 +1,7 @@
 ﻿namespace DomainDrivenDesign.Tests.ValueObjects;
 
 using System.Collections.Generic;
-using FunctionalDDD;
+using FunctionalDDD.DomainDivenDesign;
 
 public class SimpleValueObjectTests
 {

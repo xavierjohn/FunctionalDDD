@@ -1,9 +1,10 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class BindExtensions
 {
     /// <summary>
-    ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
+    ///     The Bind function returns a new Result from a specified function if the current Result is in a successful state.
+    ///     If the current Result is in a failed state, the Bind function returns the current failed Result.
     /// </summary>
     public static Result<TResult> Bind<TOk, TResult>(this Result<TOk> result, Func<TOk, Result<TResult>> func)
     {

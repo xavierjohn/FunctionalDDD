@@ -1,4 +1,6 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public static class NullableExtensions
 {

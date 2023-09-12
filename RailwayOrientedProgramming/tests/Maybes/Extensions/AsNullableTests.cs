@@ -1,6 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Maybes.Extensions;
 
-using FunctionalDDD;
+using FunctionalDDD.RailwayOrientedProgramming;
 
 public class AsNullableTests
 {

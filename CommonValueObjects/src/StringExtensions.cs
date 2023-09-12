@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.CommonValueObjects;
 
 internal static class StringExtensions
 {

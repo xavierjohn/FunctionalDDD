@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
 internal static class ValueTaskExtensions
 {

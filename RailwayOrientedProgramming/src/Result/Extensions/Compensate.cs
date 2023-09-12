@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class CompensateExtensions
 {
     /// <summary>
     /// Compensate for failed result by calling the given function.
@@ -16,7 +16,7 @@ public static partial class ResultExtensions
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
-    public static async Task<Result<T>> OnErrorAsync<T>(this Task<Result<T>> resultTask, Func<Result<T>> func)
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Result<T>> func)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
         return result.Compensate(func);
@@ -25,7 +25,7 @@ public static partial class ResultExtensions
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
-    public static async Task<Result<T>> OnErrorAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)

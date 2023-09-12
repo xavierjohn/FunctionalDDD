@@ -1,6 +1,8 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class AsyncResultExtensionsRightOperand
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
+
+public static partial class EnsureExtensions
 {
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.

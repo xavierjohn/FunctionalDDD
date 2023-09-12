@@ -1,5 +1,6 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 using System.Threading.Tasks;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public partial struct Result
 {

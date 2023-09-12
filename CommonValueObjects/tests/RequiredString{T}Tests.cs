@@ -1,5 +1,8 @@
 ﻿namespace CommonValueObjects.Tests;
-using FunctionalDDD;
+
+using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public partial class TrackingId : RequiredString<TrackingId>
 {

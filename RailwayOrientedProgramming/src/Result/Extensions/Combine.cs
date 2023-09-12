@@ -1,6 +1,8 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
+
+public static partial class CombineExtensions
 {
     public static Error Combine(this Error? err, Error other)
     {

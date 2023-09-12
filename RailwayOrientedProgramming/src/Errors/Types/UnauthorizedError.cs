@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD;
+﻿namespace FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public sealed class UnauthorizedError : Error
 {

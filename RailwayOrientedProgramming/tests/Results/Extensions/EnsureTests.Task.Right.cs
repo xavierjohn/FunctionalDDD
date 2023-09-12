@@ -1,6 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
 
-using FunctionalDDD;
+using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public class EnsureTests_Task_Right
 {

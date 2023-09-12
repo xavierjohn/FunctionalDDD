@@ -2,9 +2,10 @@
 using System.Net.Http.Json;
 using System.Net;
 using System.Threading.Tasks;
-using FunctionalDDD;
 using System.Text.Json;
 using System.Text;
+using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 public class HttpResponseMessageJsonExtensionsTests
 {

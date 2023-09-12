@@ -1,6 +1,7 @@
 ﻿
 namespace Example.Tests;
-using FunctionalDDD;
+using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.RailwayOrientedProgramming.Errors;
 using Xunit;
 
 public class AsyncUsageExamples
@@ -44,7 +45,7 @@ public class AsyncUsageExamples
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
             .OnErrorTapAsync(Log)
-            .OnErrorAsync(() => AskManagerAsync(id))
+            .CompensateAsync(() => AskManagerAsync(id))
             .TeeAsync(static customer => Log("Manager approved promotion"))
             .TeeAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))

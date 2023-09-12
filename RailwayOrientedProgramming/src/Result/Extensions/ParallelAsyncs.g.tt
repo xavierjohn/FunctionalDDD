@@ -6,9 +6,9 @@
 <#@ output extension=".cs" #>
 <#@ include file="CommonFunction.t4" #>
 // Generated code
-namespace FunctionalDDD;
+namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class ParallelExtensions
 {
 
 <#
