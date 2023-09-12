@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class BindExtensions
 {
     /// <summary>
     ///     The Bind function returns a new Result from a specified function if the current Result is in a successful state.

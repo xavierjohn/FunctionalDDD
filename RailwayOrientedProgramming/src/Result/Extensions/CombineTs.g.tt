@@ -10,7 +10,7 @@ namespace FunctionalDDD.RailwayOrientedProgramming;
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 #nullable enable
 
-public static partial class ResultExtensions
+public static partial class CombineExtensions
 {
 
 <#

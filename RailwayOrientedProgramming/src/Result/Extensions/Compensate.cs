@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class CompensateExtensions
 {
     /// <summary>
     /// Compensate for failed result by calling the given function.
