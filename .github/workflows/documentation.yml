@@ -1,4 +1,7 @@
-# Your GitHub workflow file under .github/workflows/
+name: Publish documentation.
+
+on:
+  workflow_dispatch:
 
 jobs:
   publish-docs:
