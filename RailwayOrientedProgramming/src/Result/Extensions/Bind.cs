@@ -13,7 +13,10 @@ public static partial class BindExtensions
 
         return func(result.Value);
     }
+}
 
+public static partial class BindAsyncExtensions
+{
     public static Task<Result<TResult>> BindAsync<TOk, TResult>(this Result<TOk> result, Func<TOk, Task<Result<TResult>>> func)
     {
         if (result.IsFailure)

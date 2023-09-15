@@ -19,7 +19,6 @@ public static partial class BindExtensions
 
   for(var i = 2; i <=9; i++) { 
 #>
-
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
@@ -48,7 +47,12 @@ public static partial class BindExtensions
   void WriteTaskItemResult(int n) {
      Write(String.Join(", ", Enumerable.Range(2, n - 1).Select(i => $"tasks.Item{i}.Result")));
   }
+#>
+}
 
+public static partial class BindAsyncExtensions
+{
+<#  
   for(var i = 3; i <= 9; i++) { 
 #>
 
