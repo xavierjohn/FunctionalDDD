@@ -31,14 +31,6 @@ public static partial class ParallelExtensions
         Task<Result<T<#=i#>>> task
         ) => (<# WriteTaskItem(i - 1); #>, task);
 
-    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
-        this (<# WriteTaskResult(i); #>) tasks,
-        Func<<# WriteTs(i); #>, Result<TResult>> func)
-    {
-        await Task.WhenAll(<# WriteTaskItem(i); #>);
-        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
-    }
-
 <#
  }
 #>

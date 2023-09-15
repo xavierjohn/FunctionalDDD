@@ -36,6 +36,31 @@ public static partial class BindExtensions
 
 <#
  }
+
+   void WriteTaskResult(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}>>")));
+  }
+  
+  void WriteTaskItem(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"tasks.Item{i}")));
+  }
+  
+  void WriteTaskItemResult(int n) {
+     Write(String.Join(", ", Enumerable.Range(2, n - 1).Select(i => $"tasks.Item{i}.Result")));
+  }
+
+  for(var i = 3; i <= 9; i++) { 
 #>
 
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this (<# WriteTaskResult(i); #>) tasks,
+        Func<<# WriteTs(i); #>, Result<TResult>> func)
+    {
+        await Task.WhenAll(<# WriteTaskItem(i); #>);
+        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
+    }
+
+<#
+ }
+#>
 }

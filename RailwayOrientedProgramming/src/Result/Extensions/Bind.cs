@@ -63,4 +63,12 @@ public static partial class BindExtensions
         var (args1, args2) = result.Value;
         return func(args1, args2);
     }
+
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this (Task<Result<T1>>, Task<Result<T2>>) tasks,
+        Func<T1, T2, Result<TResult>> func)
+    {
+        await Task.WhenAll(tasks.Item1, tasks.Item2);
+        return tasks.Item1.Result.Combine(tasks.Item2.Result).Bind(func);
+    }
 }
