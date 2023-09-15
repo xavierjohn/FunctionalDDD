@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Net.Http.Headers;
 
+/// <summary>
+/// These extension methods are used to convert the Result object to ActionResult.
+/// </summary>
 public static class ActionResultExtensions
 {
     /// <summary>

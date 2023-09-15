@@ -51,3 +51,8 @@ public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =
         ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
         err => err.ToErrorActionResult<User>(this));
 ```
+
+## ToPartialOrOkActionResult
+ToPartialOrOkActionResult can be used to support pagination.
+The function takes in three parameters to, from and length and based on the values
+will return PartialContent (206) or Okay(200) per [RFC9110](https://www.rfc-editor.org/rfc/rfc9110#field.content-range)

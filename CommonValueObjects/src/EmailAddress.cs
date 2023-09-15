@@ -5,7 +5,7 @@ using FunctionalDDD.DomainDivenDesign;
 using FunctionalDDD.RailwayOrientedProgramming;
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
-public partial class EmailAddress : SimpleValueObject<string>
+public class EmailAddress : SimpleValueObject<string>
 {
     private EmailAddress(string value) : base(value) { }
 
