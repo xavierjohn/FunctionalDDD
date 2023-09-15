@@ -8,7 +8,7 @@
 // Generated code
 namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ParallelExtensions
+public static partial class ParallelExtensionsAsync
 {
 
 <#
@@ -20,10 +20,6 @@ public static partial class ParallelExtensions
      Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"tasks.Item{i}")));
   }
   
-  void WriteTaskItemResult(int n) {
-     Write(String.Join(", ", Enumerable.Range(2, n - 1).Select(i => $"tasks.Item{i}.Result")));
-  }
-
   for(var i = 3; i <= 9; i++) { 
 #>
     public static (<# WriteTaskResult(i); #>) ParallelAsync<<# WriteTs(i); #>>(

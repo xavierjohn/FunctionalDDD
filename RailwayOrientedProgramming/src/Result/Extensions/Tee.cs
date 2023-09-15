@@ -27,7 +27,14 @@ public static class TeeExtensions
 
         return result;
     }
+}
 
+/// <summary>
+/// Executes the given action if the calling result is a success. Returns the calling result.
+/// It is useful to execute functions that don't have a return type or return type can be ignored.
+/// </summary>
+public static class TeeExtensionsAsync
+{
     /// <summary>
     ///     Executes the given action if the calling result is a success. Returns the calling result.
     /// </summary>

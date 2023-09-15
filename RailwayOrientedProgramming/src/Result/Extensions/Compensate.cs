@@ -13,7 +13,7 @@ public static class CompensateExtensions
         return func();
     }
 }
-public static class CompensateAsyncExtensions
+public static class CompensateExtensionsAsync
 {
     /// <summary>
     /// Compensate for failed result by calling the given function.

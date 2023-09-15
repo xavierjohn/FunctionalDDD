@@ -3,11 +3,11 @@
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
 /// <summary>
-/// Executes the given action if the calling result is a failure. Returns the calling result.
+/// Executes the given action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.
 /// </summary>
 public static class TeeErrorExtensions
 {
-    public static Result<TOk> TeeError<TOk>(this Result<TOk> result, Action action)
+    public static Result<TValue> TeeError<TValue>(this Result<TValue> result, Action action)
     {
         if (result.IsFailure)
             action();
@@ -15,17 +15,23 @@ public static class TeeErrorExtensions
         return result;
     }
 
-    public static Result<TOk> TeeError<TOk>(this Result<TOk> result, Action<Error> action)
+    public static Result<TValue> TeeError<TValue>(this Result<TValue> result, Action<Error> action)
     {
         if (result.IsFailure)
             action(result.Error);
 
         return result;
     }
+}
 
-    public static async Task<Result<TOk>> TeeErrorAsync<TOk>(this Task<Result<TOk>> resultTask, Action<Error> action)
+/// <summary>
+/// Executes the given action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.
+/// </summary>
+public static class TeeErrorExtensionsAsync
+{
+    public static async Task<Result<TValue>> TeeErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Action<Error> action)
     {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.TeeError(action);
     }
 }

@@ -2,15 +2,41 @@
 
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
-public static partial class FinallyExtensions
+/// <summary>
+/// Finally extensions are used to terminate the chain and return the final value.
+/// </summary>
+public static class FinallyExtensions
 {
     /// <summary>
-    ///     Passes the result to the given function (regardless of success/failure state) to yield a final output value.
+    /// Passes the result to the given function (regardless of success/failure state) to yield a final output value.
     /// </summary>
-    public static TOut Finally<TIn, TOut>(this Result<TIn> result,
-        Func<Result<TIn>, TOut> func)
+    /// <typeparam name="TIn">Type of the data contained within Result object.</typeparam>
+    /// <typeparam name="TOut">Return type</typeparam>
+    /// <param name="result">The <see cref="Result{TValue}"/>.</param>
+    /// <param name="func">A delegate that processes the <see cref="Result{TValue}"/> and provides the final value.</param>
+    /// <returns></returns>
+
+    public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<Result<TIn>, TOut> func)
         => func(result);
 
+    /// <summary>
+    /// Passes the result to the given function (regardless of success/failure state) to yield a final output value.
+    /// </summary>
+    /// <typeparam name="TIn">Type of the data contained within Result object.</typeparam>
+    /// <typeparam name="TOut">Return type</typeparam>
+    /// <param name="result">The <see cref="Result{TValue}"/>.</param>
+    /// <param name="funcOk">A delegate the success value.</param>
+    /// <param name="funcError">A delegate that returns the error.</param>
+    /// <returns>The final result of type TOut</returns>
+    public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError)
+        => result.IsSuccess ? funcOk(result.Value) : funcError(result.Error);
+}
+
+/// <summary>
+/// Finally extensions are used to terminate the chain and return the final value.
+/// </summary>
+public static class FinallyExtensionsAsync
+{
     /// <summary>
     ///     Passes the result to the given function (regardless of success/failure state) to yield a final output value.
     /// </summary>
@@ -66,11 +92,6 @@ public static partial class FinallyExtensions
     {
         return await valueTask(result);
     }
-
-    public static TOut Finally<TIn, TOut>(this Result<TIn> result,
-        Func<TIn, TOut> funcOk,
-        Func<Error, TOut> funcError) =>
-        result.IsSuccess ? funcOk(result.Value) : funcError(result.Error);
 
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
         Func<TIn, TOut> funcOk,

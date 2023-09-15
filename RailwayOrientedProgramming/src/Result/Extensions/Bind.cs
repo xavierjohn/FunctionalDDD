@@ -15,7 +15,7 @@ public static partial class BindExtensions
     }
 }
 
-public static partial class BindAsyncExtensions
+public static partial class BindExtensionsAsync
 {
     public static Task<Result<TResult>> BindAsync<TOk, TResult>(this Result<TOk> result, Func<TOk, Task<Result<TResult>>> func)
     {
