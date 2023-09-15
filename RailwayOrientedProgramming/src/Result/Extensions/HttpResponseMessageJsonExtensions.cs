@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
-public static class HttpResponseMessageJsonExtensions
+public static class HttpResponseMessageJsonExtensionsAsync
 {
     public static async Task<Result<T>> ReadResultWithNotFoundAsync<T>(
         this HttpResponseMessage response,
