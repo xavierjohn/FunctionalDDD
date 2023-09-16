@@ -1,6 +1,5 @@
 # Functional DDD
 
-
 Functional programming, railway-oriented programming, and domain-driven design are three concepts that can work together to create robust and reliable software.
 
 Functional programming is a programming paradigm that emphasizes the use of pure functions,
@@ -16,6 +15,7 @@ This approach can make error handling more explicit and easier to reason about.
 Domain-driven design is an approach to software development that focuses on understanding the problem domain and creating a model that accurately represents it.
 This model is then used to guide the design and implementation of the software.
 By focusing on the problem domain, developers can create software that is more closely aligned with the needs of the users and the business.
+To learn more about DDD, check out the course [Domain-Driven Design in Practice](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents).
 
 When combined, functional programming, railway-oriented programming, and domain-driven design can lead to software that is both robust and reliable.
 By using pure functions, developers can create code that is easier to reason about and test.

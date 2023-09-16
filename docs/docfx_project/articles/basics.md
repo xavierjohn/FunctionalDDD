@@ -1,6 +1,6 @@
 # The basics
 
-## Avoid primitive obsession
+## Avoiding primitive obsession
 
 To ensure type safety for parameters in C# code, it's important to avoid primitive obsession. Passing strings as parameters can lead to errors, such as accidentally switching the order of the first and last names. For example, the `CreatePerson` function could be called with `lastName` as the first parameter and `firstName` as the second, resulting in a person with the wrong name.
 
@@ -17,8 +17,8 @@ var person = CreatePerson(lastName, firstName);
 
 This would result in a person with the first name of "Smith" and the last name of "John".
 
-To avoid this problem we need type safety for the parameters. We can achieve this by creating a class for each parameter.
-In this case we need `FirstName` and `LastName` classes. 
+To avoid this problem we need type safety for the parameters. We can achieve this by creating a class for different domain types.
+In this case we need `FirstName` and `LastName` classes.
 In Domain Driven Design, objects have to be in a valid state at all time so we need to validate the parameters before creating an instance of the class.
 Often that check is as simple as checking if the string is null or empty. To avoid, writing the same validation code over and over again, we can use the `RequiredString` class.
 
@@ -74,6 +74,15 @@ If by mistake the developer passes the parameters in the wrong order, the compil
 The Result is a generic class and can be used to hold any type of value or error.
 The need to handle failure after each method call can be tedious so the `Result` class has a few extension methods to help with that.
 
+First, let us look at the definition of the `Result` class:
+
+[!code-csharp[](../../../RailwayOrientedProgramming/src/Result/Result{TValue}.cs#L11-L32)]
+
+This class help chain functions on the success or error path in a concept called [Railway Oriented Programming](https://fsharpforfunandprofit.com/rop/).
+If the Result is in failed state, accessing the Value property will throw an exception. Similarly, if the Result is in success state, accessing the Error property will throw an exception.
+
+Next let us look at some of the extension methods.
+
 ## Combine extension method
 
 We need to combine the result of `FirstName.New` and `LastName.New` to create a person. This can be achieved by using the `Combine` method.
@@ -110,4 +119,4 @@ string result = FirstName.New("John")
 
 ## Conclusion
 
-The basic idea is to have strongly typed classes with built in validation to avoid primitive obsession. Use the `Result` class to wrap the values so that it can be chained to other functions and maintain readability.
+To prevent incorrect parameter assignment, it is recommended to use strongly typed classes that are always in a valid state. Additionally, to improve code readability, consider applying the railway-oriented programming model.
