@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.CommonValueObjects;
 
-using FunctionalDDD.DomainDivenDesign;
+using FunctionalDDD.DomainDrivenDesign;
 
 public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
     where T : RequiredGuid<T>

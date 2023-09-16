@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class MapExtensions
 {
     /// <summary>
     ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
@@ -12,6 +12,10 @@ public static partial class ResultExtensions
 
         return Result.Success<TOut>(func(result.Value));
     }
+
+}
+public static class MapExtensionsAsync
+{
 
     /// <summary>
     ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.

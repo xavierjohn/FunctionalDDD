@@ -2,7 +2,7 @@
 
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 
-public static partial class EnsureExtensions
+public static class EnsureExtensions
 {
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.

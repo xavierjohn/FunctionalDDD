@@ -18,7 +18,7 @@
       "disableDefaultFilter": false,
       "noRestore": false,
       "namespaceLayout": "nested",
-      "memberLayout": "separatePages",
+      "memberLayout": "samePage",
       "EnumSortOrder": "alphabetic",
       "allowCompilationErrors": false
     }

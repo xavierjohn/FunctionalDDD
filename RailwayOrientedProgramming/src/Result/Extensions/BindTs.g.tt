@@ -19,7 +19,6 @@ public static partial class BindExtensions
 
   for(var i = 2; i <=9; i++) { 
 #>
-
     /// <summary>
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
@@ -36,6 +35,36 @@ public static partial class BindExtensions
 
 <#
  }
+
+   void WriteTaskResult(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}>>")));
+  }
+  
+  void WriteTaskItem(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"tasks.Item{i}")));
+  }
+  
+  void WriteTaskItemResult(int n) {
+     Write(String.Join(", ", Enumerable.Range(2, n - 1).Select(i => $"tasks.Item{i}.Result")));
+  }
+#>
+}
+
+public static partial class BindExtensionsAsync
+{
+<#  
+  for(var i = 3; i <= 9; i++) { 
 #>
 
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this (<# WriteTaskResult(i); #>) tasks,
+        Func<<# WriteTs(i); #>, Result<TResult>> func)
+    {
+        await Task.WhenAll(<# WriteTaskItem(i); #>);
+        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
+    }
+
+<#
+ }
+#>
 }

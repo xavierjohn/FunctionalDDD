@@ -8,7 +8,7 @@
 // Generated code
 namespace FunctionalDDD.RailwayOrientedProgramming;
 
-public static partial class ResultExtensions
+public static partial class MapExtensions
 {
 
 <#

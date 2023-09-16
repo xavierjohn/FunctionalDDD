@@ -20,7 +20,9 @@ public static class NullableExtensions
 
         return Result.Success<T>(obj);
     }
-
+}
+public static class NullableExtensionsAsync
+{
     public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
         where T : struct
     {

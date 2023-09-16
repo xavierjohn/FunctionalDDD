@@ -1,4 +1,4 @@
-namespace FunctionalDDD.DomainDivenDesign;
+namespace FunctionalDDD.DomainDrivenDesign;
 public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueObject>
 {
     private int? _cachedHashCode;
