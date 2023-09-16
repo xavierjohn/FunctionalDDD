@@ -1,10 +1,12 @@
 # Functional DDD
 
+
 Functional programming, railway-oriented programming, and domain-driven design are three concepts that can work together to create robust and reliable software.
 
 Functional programming is a programming paradigm that emphasizes the use of pure functions,
 which are functions that take in inputs and produce outputs without any side effects.
 This approach can lead to code that is easier to understand, test, and maintain.
+To get to know more about the principles behind it, check out the [Applying Functional Principles in C# Pluralsight course](https://enterprisecraftsmanship.com/ps-func).
 
 Railway-oriented programming is an approach to error handling that is based on the idea of a railway track.
 In this approach, the code is divided into a series of functions that represent different steps along the railway track.
@@ -70,7 +72,7 @@ Here is a YouTube video explaining several of this library's methods.
 
 Let's look at a few examples:
 
-### Expression Evaluation and Error Handling
+### Compose multiple operations in a single chain
 
  ```csharp
 await GetCustomerByIdAsync(id)
