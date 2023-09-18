@@ -1,7 +1,6 @@
 # The basics
 
-## Avoiding primitive obsession
-
+Let us learn some basics of the library by looking at "Avoiding primitive obsession" as a scenario and building up from there.
 To ensure type safety for parameters in C# code, it's important to avoid primitive obsession. Passing strings as parameters can lead to errors, such as accidentally switching the order of the first and last names. For example, the `CreatePerson` function could be called with `lastName` as the first parameter and `firstName` as the second, resulting in a person with the wrong name.
 
 ```csharp
