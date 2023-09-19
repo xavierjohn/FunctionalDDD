@@ -8,7 +8,8 @@
             "RailwayOrientedProgramming/src/RailwayOrientedProgramming.csproj",
             "DomainDrivenDesign/src/DomainDrivenDesign.csproj",
             "FluentValidation/src/FluentValidation.csproj",
-            "Asp/src/Asp.csproj"
+            "Asp/src/Asp.csproj",
+            "CommonValueObjects/src/CommonValueObjects.csproj"
           ]
         }
       ],
