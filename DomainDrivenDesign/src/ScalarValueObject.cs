@@ -1,10 +1,10 @@
 ﻿namespace FunctionalDDD.Domain;
-public abstract class SimpleValueObject<T> : ValueObject
+public abstract class ScalarValueObject<T> : ValueObject
     where T : IComparable
 {
     public T Value { get; }
 
-    protected SimpleValueObject(T value) => Value = value;
+    protected ScalarValueObject(T value) => Value = value;
 
     protected override IEnumerable<IComparable> GetEqualityComponents()
     {
@@ -13,5 +13,5 @@ public abstract class SimpleValueObject<T> : ValueObject
 
     public override string ToString() => Value?.ToString() ?? string.Empty;
 
-    public static implicit operator T(SimpleValueObject<T> valueObject) => valueObject.Value;
+    public static implicit operator T(ScalarValueObject<T> valueObject) => valueObject.Value;
 }

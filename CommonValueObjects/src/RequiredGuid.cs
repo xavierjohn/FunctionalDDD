@@ -1,5 +1,5 @@
 ﻿namespace FunctionalDDD.Domain;
-public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
+public abstract class RequiredGuid<T> : ScalarValueObject<Guid>
     where T : RequiredGuid<T>
 {
 

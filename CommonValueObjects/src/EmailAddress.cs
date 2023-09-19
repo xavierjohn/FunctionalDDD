@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 
-public partial class EmailAddress : SimpleValueObject<string>
+public partial class EmailAddress : ScalarValueObject<string>
 {
     private EmailAddress(string value) : base(value) { }
 
