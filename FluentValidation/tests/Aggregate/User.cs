@@ -1,9 +1,7 @@
 ﻿namespace FluentValidationExt.Tests;
 using FluentValidation;
-using FunctionalDDD.FluentValidation;
-using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD.Domain;
+using FunctionalDDD.Results;
 
 internal class User : AggregateRoot<UserId>
 {

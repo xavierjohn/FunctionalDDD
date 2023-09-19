@@ -1,7 +1,7 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDDD.Results.Asp;
 
-using FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results;
+using FunctionalDDD.Results.Errors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Net.Http.Headers;

@@ -1,6 +1,6 @@
 ﻿namespace FluentValidationExt.Tests;
 
-using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.Domain;
 
 internal partial class UserId : RequiredGuid<UserId>
 {

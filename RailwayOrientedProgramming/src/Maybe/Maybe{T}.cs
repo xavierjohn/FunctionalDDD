@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 
 using System.Diagnostics.CodeAnalysis;
 

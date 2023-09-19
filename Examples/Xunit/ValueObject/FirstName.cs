@@ -1,6 +1,6 @@
 ﻿namespace Example;
 
-using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.Domain;
 
 internal partial class FirstName : RequiredString<FirstName>
 {

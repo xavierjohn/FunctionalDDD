@@ -6,8 +6,8 @@
 <#@ output extension=".cs" #>
 <#@ include file="CommonFunction.t4" #>
 // Generated code
-namespace FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+namespace FunctionalDDD.Results;
+using FunctionalDDD.Results.Errors;
 #nullable enable
 
 public static partial class CombineExtensions

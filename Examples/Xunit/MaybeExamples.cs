@@ -1,6 +1,6 @@
 ﻿namespace Example.Tests;
 
-using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.Results;
 using Xunit;
 public class MaybeExamples
 {

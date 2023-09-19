@@ -1,9 +1,8 @@
-﻿namespace FunctionalDDD.CommonValueObjects;
+﻿namespace FunctionalDDD.Domain;
 
 using System.Text.RegularExpressions;
-using FunctionalDDD.DomainDrivenDesign;
-using FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results;
+using FunctionalDDD.Results.Errors;
 
 public partial class EmailAddress : SimpleValueObject<string>
 {
@@ -20,6 +19,7 @@ public partial class EmailAddress : SimpleValueObject<string>
         return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", fieldName?.ToCamelCase() ?? "email"));
     }
 
-    [GeneratedRegex("\\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\\Z", RegexOptions.IgnoreCase, "en-US")]
+    [GeneratedRegex("\\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\\Z",
+        RegexOptions.IgnoreCase)]
     private static partial Regex EmailRegEx();
 }

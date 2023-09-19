@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 using System.Threading.Tasks;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results.Errors;
 
 /// <summary>
 /// Static methods to create the <see cref="Result{TValue}"/> object.

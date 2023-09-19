@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 
 /// <summary>
 /// Executes the given action if the calling result is a success. Returns the calling result.

@@ -1,6 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results;
 
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results.Errors;
 
 public abstract class TestBase
 {

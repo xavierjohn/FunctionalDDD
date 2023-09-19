@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results.Errors;
 
 /// <summary>
 /// Attempted to access the Value for a failed result. A failed result has no Value.

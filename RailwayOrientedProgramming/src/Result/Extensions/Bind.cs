@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 
 /// <summary>
 ///     The Bind function returns a new Result from a specified function if the current Result is in a successful state.
