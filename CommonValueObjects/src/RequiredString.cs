@@ -1,18 +1,19 @@
 ﻿namespace FunctionalDDD.Domain;
 /// <summary>
-/// Represents a required string value object.
-/// 
+/// Create a typed class that represents a required string value object.
+/// </summary>
+/// <typeparam name="TValue"></typeparam>
+/// <seealso cref="ScalarValueObject{TValue}"/>
 /// <example>
 /// This example shows how to create a strongly named Value Object FirstName that checks for null or empty string.
 /// <code>
 /// partial class FirstName : RequiredString&lt;FirstName&gt;
 /// </code>
+/// **Note** The partial keyword is required to allow the code generator to add the generated methods.
 /// </example>
-/// </summary>
-/// <typeparam name="T"></typeparam>
-/// <seealso cref="ValueObject"/>
-public abstract class RequiredString<T> : ScalarValueObject<string>
-    where T : RequiredString<T>
+
+public abstract class RequiredString<TValue> : ScalarValueObject<string>
+    where TValue : RequiredString<TValue>
 {
     protected RequiredString(string value) : base(value)
     {

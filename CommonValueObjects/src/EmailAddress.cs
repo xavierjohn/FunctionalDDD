@@ -4,6 +4,9 @@ using System.Text.RegularExpressions;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 
+/// <summary>
+/// Represents an email address value object. It checks for valid email address.
+/// </summary>
 public partial class EmailAddress : ScalarValueObject<string>
 {
     private EmailAddress(string value) : base(value) { }

@@ -1,4 +1,45 @@
 namespace FunctionalDDD.Domain;
+/// <summary>
+/// Create a typed class that represents a value object.
+/// The class calls the abstract method GetEqualityComponents to get the components to compare.
+/// </summary>
+/// <example>
+/// <code>
+/// class Address : ValueObject
+/// {
+///     public string Street { get; }
+///     public string City { get; }
+///
+///     public Address(string street, string city)
+///     {
+///         Street = street;
+///         City = city;
+///     }
+///
+///     protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+///     {
+///         yield return Street;
+///         yield return City;
+///     }
+/// }
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// class DerivedAddress : Address
+/// {
+///     public string Country { get; }
+///     public DerivedAddress(string street, string city, string country) : base(street, city) => Country = country;
+///
+///     protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+///     {
+///         foreach (var s in base.GetEqualityComponents())
+///             yield return s;
+///         yield return City;
+///     }
+/// }
+/// </code>
+/// </example>
 public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueObject>
 {
     private int? _cachedHashCode;
