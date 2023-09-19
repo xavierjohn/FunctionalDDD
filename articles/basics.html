@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>The basics </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="The basics ">
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/basics.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+  </head>
+
+  <script type="module">
+    import options from './../public/main.js'
+    import { init } from './../public/docfx.min.js'
+    init(options)
+  </script>
+
+  <script>
+    const theme = localStorage.getItem('theme') || 'auto'
+    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+  </script>
+
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="the-basics">The basics</h1>
+
+<p>Let us learn some basics of the library by looking at &quot;Avoiding primitive obsession&quot; as a scenario and building up from there.
+To ensure type safety for parameters in C# code, it's important to avoid primitive obsession. Passing strings as parameters can lead to errors, such as accidentally switching the order of the first and last names. For example, the <code>CreatePerson</code> function could be called with <code>lastName</code> as the first parameter and <code>firstName</code> as the second, resulting in a person with the wrong name.</p>
+<pre><code class="lang-csharp">Person CreatePerson(string firstName, string lastName)
+{
+    return new Person(firstName, lastName);
+}
+
+var firstName = &quot;John&quot;;
+var lastName = &quot;Smith&quot;;
+var person = CreatePerson(lastName, firstName);
+</code></pre>
+<p>This would result in a person with the first name of &quot;Smith&quot; and the last name of &quot;John&quot;.</p>
+<p>To avoid this problem we need type safety for the parameters. We can achieve this by creating a class for different domain types.
+In this case we need <code>FirstName</code> and <code>LastName</code> classes.
+In Domain Driven Design, objects have to be in a valid state at all time so we need to validate the parameters before creating an instance of the class.
+Often that check is as simple as checking if the string is null or empty. To avoid, writing the same validation code over and over again, we can use the <code>RequiredString</code> class.</p>
+<p>Let us see how we can use it:</p>
+<pre><code class="lang-csharp">public partial class FirstName : RequiredString&lt;FirstName&gt;
+{
+}
+
+public partial class LastName : RequiredString&lt;LastName&gt;
+{
+}
+
+Person CreatePerson(FirstName firstName, LastName lastName)
+{
+    return new Person(firstName, lastName);
+}
+</code></pre>
+<p>The class has to be partial so that the source code generator can add the <code>New</code> method to it.
+Now let us use it:</p>
+<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.New(&quot;John&quot;);
+</code></pre>
+<p>The <code>New</code> method returns a <code>Result</code> type and based on the input it can be either <code>Success</code> or <code>Failure</code> so we need to handle the failure case.
+Here is a possible solution:</p>
+<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.New(&quot;John&quot;);
+if (firstNameResult.IsFailure)
+{
+    Console.WriteLine(firstNameResult.Error);
+    return;
+}
+
+Result&lt;LastName&gt; lastNameResult = LastName.New(&quot;Smith&quot;);
+if (lastNameResult.IsFailure)
+{
+    Console.WriteLine(lastNameResult.Error);
+    return;
+}
+
+var person = CreatePerson(firstNameResult.Value, lastNameResult.Value);
+</code></pre>
+<p>If by mistake the developer passes the parameters in the wrong order, the compiler will catch it.</p>
+<h2 id="resulttvalue-class">Result{TValue} class</h2>
+<p>The Result is a generic class and can be used to hold any type of value or error.
+The need to handle failure after each method call can be tedious so the <code>Result</code> class has a few extension methods to help with that.</p>
+<p>First, let us look at the definition of the <code>Result</code> class:</p>
+<pre><code class="lang-csharp">/// &lt;summary&gt;
+/// Gets the underlying Value if Result is in success state.
+/// &lt;/summary&gt;
+/// &lt;exception cref=&quot;ResultFailureException&quot;&gt;Attempted to access the Value for a failed result.&lt;/exception&gt;
+public TValue Value =&gt; IsFailure ? throw new ResultFailureException(Error) : _value!;
+
+/// &lt;summary&gt;
+/// Gets the Error object if Result is in failed state.
+/// &lt;/summary&gt;
+/// &lt;exception cref=&quot;ResultSuccessException&quot;&gt;Attempted to access the Error property for a successful result.&lt;/exception&gt;
+public Error Error =&gt; _error ?? throw new ResultSuccessException();
+
+/// &lt;summary&gt;
+/// Check if result is in failure state.
+/// &lt;/summary&gt;
+public bool IsFailure { get; }
+
+/// &lt;summary&gt;
+/// Check if result is in success state.
+/// &lt;/summary&gt;
+public bool IsSuccess =&gt; !IsFailure;
+
+</code></pre>
+<p>This class help chain functions on the success or error path in a concept called <a href="https://fsharpforfunandprofit.com/rop/">Railway Oriented Programming</a>.
+If the Result is in failed state, accessing the Value property will throw an exception. Similarly, if the Result is in success state, accessing the Error property will throw an exception.</p>
+<p>Next let us look at some of the extension methods.</p>
+<h2 id="combine-extension-method">Combine extension method</h2>
+<p>We need to combine the result of <code>FirstName.New</code> and <code>LastName.New</code> to create a person. This can be achieved by using the <code>Combine</code> method.</p>
+<pre><code class="lang-csharp">var result = FirstName.New(&quot;John&quot;)
+    .Combine(LastName.New(&quot;Smith&quot;));
+</code></pre>
+<p>The resulting result will either contain validation errors from the <code>FirstName</code> and/or <code>LastName</code> class, or a success with a tuple containing both values.</p>
+<h2 id="bind-extension-method">Bind extension method</h2>
+<p>We need a method to call <code>CreatePerson</code> with the values from the <code>FirstName</code> and <code>LastName</code> classes if the result is in a success state. This can be achieved by using the <code>Bind</code> method.</p>
+<pre><code class="lang-csharp">var result = FirstName.New(&quot;John&quot;)
+    .Combine(LastName.New(&quot;Smith&quot;))
+    .Bind((firstName, lastName) =&gt; CreatePerson(firstName, lastName));
+</code></pre>
+<p>The result will either contain validation errors from the <code>FirstName</code> and/or <code>LastName</code> class, or a success with a <code>Person</code> object. It is possible <code>CreatePerson</code> can fail, in which case the <code>Result</code> will contain the error.</p>
+<h2 id="finally-extension-method">Finally extension method</h2>
+<p>So far we still have a <code>Result</code> type and we need to unwrap it to get the underlying value. This can be achieved by using the <code>Finally</code> method.</p>
+<pre><code class="lang-csharp">string result = FirstName.New(&quot;John&quot;)
+    .Combine(LastName.New(&quot;Smith&quot;))
+    .Bind((firstName, lastName) =&gt; CreatePerson(firstName, lastName))
+    .Finally(ok =&gt; &quot;Okay: Person created&quot;, error =&gt; error.Message);
+</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>To prevent incorrect parameter assignment, it is recommended to use strongly typed classes that are always in a valid state. Additionally, to improve code readability, consider applying the railway-oriented programming model.</p>
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/basics.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+        
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
