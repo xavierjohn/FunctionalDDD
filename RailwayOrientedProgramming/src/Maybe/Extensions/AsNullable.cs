@@ -1,5 +1,5 @@
 ﻿
-namespace FunctionalDDD.RailwayOrientedProgramming;
+namespace FunctionalDDD.Results;
 
 public static partial class MaybeExtensions
 {

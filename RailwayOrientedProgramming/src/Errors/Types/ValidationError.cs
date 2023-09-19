@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming.Errors;
+﻿namespace FunctionalDDD.Results.Errors;
 
 public sealed class ValidationError : Error
 {

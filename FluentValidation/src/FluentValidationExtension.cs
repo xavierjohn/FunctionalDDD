@@ -1,8 +1,8 @@
 ﻿namespace FunctionalDDD.FluentValidation;
 
 using System.Linq;
-using FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results;
+using FunctionalDDD.Results.Errors;
 
 public static class FluentValidationExtension
 {

@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
 using System;
-using FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results;
+using FunctionalDDD.Results.Errors;
 using Xunit;
 
 public class MaybeExtensionTests

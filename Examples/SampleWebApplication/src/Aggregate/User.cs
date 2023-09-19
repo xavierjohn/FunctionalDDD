@@ -2,7 +2,7 @@
 using FluentValidation;
 using FunctionalDDD.FluentValidation;
 using FunctionalDDD.CommonValueObjects;
-using FunctionalDDD.RailwayOrientedProgramming;
+using FunctionalDDD.Results;
 using FunctionalDDD.Domain;
 
 public class User : AggregateRoot<UserId>

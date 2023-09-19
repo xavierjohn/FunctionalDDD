@@ -2,8 +2,8 @@
 
 using System.Text.RegularExpressions;
 using FunctionalDDD.Domain;
-using FunctionalDDD.RailwayOrientedProgramming;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results;
+using FunctionalDDD.Results.Errors;
 
 public partial class EmailAddress : SimpleValueObject<string>
 {

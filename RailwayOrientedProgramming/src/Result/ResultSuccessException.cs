@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 
 /// <summary>
 /// Attempted to access the Error property for a successful result. A successful result has no Error.

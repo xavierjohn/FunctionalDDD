@@ -1,8 +1,8 @@
-﻿namespace FunctionalDDD.RailwayOrientedProgramming;
+﻿namespace FunctionalDDD.Results;
 
 using System.Net.Http.Json;
 using System.Text.Json;
-using FunctionalDDD.RailwayOrientedProgramming.Errors;
+using FunctionalDDD.Results.Errors;
 
 public static class HttpResponseMessageJsonExtensionsAsync
 {
