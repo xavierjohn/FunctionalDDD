@@ -5,7 +5,7 @@ using FunctionalDDD.Domain;
 
 public class SimpleValueObjectTests
 {
-    internal class PasswordSimple : SimpleValueObject<string>
+    internal class PasswordSimple : ScalarValueObject<string>
     {
         public PasswordSimple(string value) : base(value)
         {
@@ -19,7 +19,7 @@ public class SimpleValueObjectTests
         }
     }
 
-    internal class MoneySimple : SimpleValueObject<decimal>
+    internal class MoneySimple : ScalarValueObject<decimal>
     {
         public MoneySimple(decimal value) : base(value)
         {

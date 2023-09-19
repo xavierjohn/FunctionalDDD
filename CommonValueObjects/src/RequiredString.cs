@@ -11,7 +11,7 @@
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <seealso cref="ValueObject"/>
-public abstract class RequiredString<T> : SimpleValueObject<string>
+public abstract class RequiredString<T> : ScalarValueObject<string>
     where T : RequiredString<T>
 {
     protected RequiredString(string value) : base(value)
