@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.CommonValueObjects;
+﻿namespace FunctionalDDD.Domain.ValueObjects;
 
 using System.Text.RegularExpressions;
 using FunctionalDDD.Domain;

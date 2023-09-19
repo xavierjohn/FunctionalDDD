@@ -1,7 +1,7 @@
 ﻿namespace SampleWebApplication.Controllers;
 
 using FunctionalDDD.Asp;
-using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.Domain.ValueObjects;
 using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
 using SampleWebApplication.Model;

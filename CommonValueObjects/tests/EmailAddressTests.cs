@@ -1,6 +1,6 @@
 ﻿namespace CommonValueObjects.Tests;
 
-using FunctionalDDD.CommonValueObjects;
+using FunctionalDDD.Domain.ValueObjects;
 using FunctionalDDD.Results.Errors;
 
 public class EmailAddressTests

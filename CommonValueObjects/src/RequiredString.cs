@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.CommonValueObjects;
+﻿namespace FunctionalDDD.Domain.ValueObjects;
 
 using FunctionalDDD.Domain;
 
