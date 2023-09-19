@@ -2,7 +2,6 @@
 using FluentValidation;
 using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
-using FunctionalDDD.Results.FluentValidation;
 
 public class User : AggregateRoot<UserId>
 {
