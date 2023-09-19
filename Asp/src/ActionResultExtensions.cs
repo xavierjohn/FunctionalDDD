@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDDD.Results.Asp;
 
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;

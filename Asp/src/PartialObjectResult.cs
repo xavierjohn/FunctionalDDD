@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDDD.Results.Asp;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
