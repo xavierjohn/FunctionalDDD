@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.DomainDrivenDesign;
+﻿namespace FunctionalDDD.Domain;
 public abstract class Entity<TId>
     where TId : notnull
 {

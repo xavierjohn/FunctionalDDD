@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDDD.CommonValueObjects;
 
 using System.Text.RegularExpressions;
-using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD.Domain;
 using FunctionalDDD.RailwayOrientedProgramming;
 using FunctionalDDD.RailwayOrientedProgramming.Errors;
 

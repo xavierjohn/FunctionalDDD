@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.CommonValueObjects;
 
-using FunctionalDDD.DomainDrivenDesign;
+using FunctionalDDD.Domain;
 
 /// <summary>
 /// Represents a required string value object.
