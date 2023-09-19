@@ -101,32 +101,33 @@ Classes
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Domain.EmailAddress.html">EmailAddress</a></dt>
-      <dd></dd>
+      <dd><p>Represents an email address value object. It checks for valid email address.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Domain.Entity-1.html">Entity&lt;TId&gt;</a></dt>
       <dd></dd>
     </dl>
     <dl class="jumplist">
-      <dt><a class="xref" href="FunctionalDDD.Domain.RequiredGuid-1.html">RequiredGuid&lt;T&gt;</a></dt>
-      <dd></dd>
+      <dt><a class="xref" href="FunctionalDDD.Domain.RequiredGuid-1.html">RequiredGuid&lt;TValue&gt;</a></dt>
+      <dd><p>Create a typed class that represents a required Guid value object.</p>
+</dd>
     </dl>
     <dl class="jumplist">
-      <dt><a class="xref" href="FunctionalDDD.Domain.RequiredString-1.html">RequiredString&lt;T&gt;</a></dt>
-      <dd><p>Represents a required string value object.</p>
-<example>
-This example shows how to create a strongly named Value Object FirstName that checks for null or empty string.
-<pre><code class="lang-csharp">partial class FirstName : RequiredString&lt;FirstName&gt;</code></pre>
-</example>
+      <dt><a class="xref" href="FunctionalDDD.Domain.RequiredString-1.html">RequiredString&lt;TValue&gt;</a></dt>
+      <dd><p>Create a typed class that represents a required string value object.</p>
 </dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Domain.ScalarValueObject-1.html">ScalarValueObject&lt;T&gt;</a></dt>
-      <dd></dd>
+      <dd><p>Create a typed class that represents a single scalar value object.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Domain.ValueObject.html">ValueObject</a></dt>
-      <dd></dd>
+      <dd><p>Create a typed class that represents a value object.
+The class calls the abstract method GetEqualityComponents to get the components to compare.</p>
+</dd>
     </dl>
 
 

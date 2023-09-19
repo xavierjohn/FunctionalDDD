@@ -17,7 +17,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDDD_Domain_ValueObject.md&amp;value=---%0Auid%3A%20FunctionalDDD.Domain.ValueObject%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/more_documentation/apiSpec/new?filename=FunctionalDDD_Domain_ValueObject.md&amp;value=---%0Auid%3A%20FunctionalDDD.Domain.ValueObject%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -90,7 +90,7 @@
 
   <h1 id="FunctionalDDD_Domain_ValueObject" data-uid="FunctionalDDD.Domain.ValueObject" class="text-break">
     Class ValueObject
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L2"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L43"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -98,7 +98,9 @@
   <dl><dt>Assembly</dt><dd>FunctionalDDD.DomainDrivenDesign.dll</dd></dl>
   </div>
 
-  <div class="markdown summary"></div>
+  <div class="markdown summary"><p>Create a typed class that represents a value object.
+The class calls the abstract method GetEqualityComponents to get the components to compare.</p>
+</div>
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
@@ -163,6 +165,38 @@
   </dd></dl>
 
 
+  <h2 id="FunctionalDDD_Domain_ValueObject_examples">Examples</h2>
+  <pre><code class="lang-csharp">class Address : ValueObject
+{
+    public string Street { get; }
+    public string City { get; }
+
+    public Address(string street, string city)
+    {
+        Street = street;
+        City = city;
+    }
+
+    protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+    {
+        yield return Street;
+        yield return City;
+    }
+}</code></pre>
+
+  <pre><code class="lang-csharp">class DerivedAddress : Address
+{
+    public string Country { get; }
+    public DerivedAddress(string street, string city, string country) : base(street, city) =&gt; Country = country;
+
+    protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+    {
+        foreach (var s in base.GetEqualityComponents())
+            yield return s;
+        yield return City;
+    }
+}</code></pre>
+
 
 
 
@@ -174,7 +208,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_CompareTo_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.CompareTo(FunctionalDDD.Domain.ValueObject)">
   CompareTo(ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L31"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L72"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Compares the current instance with another object of the same type and returns an integer that indicates whether the current instance precedes, follows, or occurs in the same position in the sort order as the other object.</p>
@@ -214,7 +248,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_Equals_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.Equals(FunctionalDDD.Domain.ValueObject)">
   Equals(ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L10"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L51"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Indicates whether the current object is equal to another object of the same type.</p>
@@ -253,7 +287,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_Equals_System_Object_" data-uid="FunctionalDDD.Domain.ValueObject.Equals(System.Object)">
   Equals(object?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L8"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L49"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Determines whether the specified object is equal to the current object.</p>
@@ -292,7 +326,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_GetEqualityComponents" data-uid="FunctionalDDD.Domain.ValueObject.GetEqualityComponents">
   GetEqualityComponents()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L6"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L47"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -323,7 +357,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_GetHashCode" data-uid="FunctionalDDD.Domain.ValueObject.GetHashCode">
   GetHashCode()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L19"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L60"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Serves as the default hash function.</p>
@@ -360,7 +394,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_Equality_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_Equality(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
   operator ==(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L72"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L113"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -398,7 +432,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_GreaterThan_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_GreaterThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
   operator &gt;(ValueObject, ValueObject)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L95"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L136"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -436,7 +470,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_GreaterThanOrEqual_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_GreaterThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
   operator &gt;=(ValueObject, ValueObject)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L100"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L141"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -474,7 +508,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_Inequality_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_Inequality(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
   operator !=(ValueObject, ValueObject)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L83"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L124"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -512,7 +546,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_LessThan_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_LessThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
   operator &lt;(ValueObject, ValueObject)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L85"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L126"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -550,7 +584,7 @@
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_LessThanOrEqual_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_LessThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
   operator &lt;=(ValueObject, ValueObject)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L90"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L131"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -588,7 +622,7 @@
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L2" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/ValueObject.cs/#L43" class="edit-link">Edit this page</a>
         </div>
 
         

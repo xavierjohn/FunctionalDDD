@@ -2,10 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class RequiredGuid&lt;T&gt;
+      <title>Class RequiredGuid&lt;TValue&gt;
  </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class RequiredGuid&lt;T&gt;
+      <meta name="title" content="Class RequiredGuid&lt;TValue&gt;
  ">
       
       <link rel="icon" href="../favicon.ico">
@@ -17,7 +17,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDDD_Domain_RequiredGuid_1.md&amp;value=---%0Auid%3A%20FunctionalDDD.Domain.RequiredGuid%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/more_documentation/apiSpec/new?filename=FunctionalDDD_Domain_RequiredGuid_1.md&amp;value=---%0Auid%3A%20FunctionalDDD.Domain.RequiredGuid%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -89,8 +89,8 @@
 
 
   <h1 id="FunctionalDDD_Domain_RequiredGuid_1" data-uid="FunctionalDDD.Domain.RequiredGuid`1" class="text-break">
-    Class RequiredGuid&lt;T&gt;
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/RequiredGuid.cs/#L2"><i class="bi bi-code-slash"></i></a>
+    Class RequiredGuid&lt;TValue&gt;
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/CommonValueObjects/src/RequiredGuid.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -98,18 +98,19 @@
   <dl><dt>Assembly</dt><dd>FunctionalDDD.CommonValueObjects.dll</dd></dl>
   </div>
 
-  <div class="markdown summary"></div>
+  <div class="markdown summary"><p>Create a typed class that represents a required Guid value object.</p>
+</div>
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public abstract class RequiredGuid&lt;T&gt; : ScalarValueObject&lt;Guid&gt;, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt; where T : RequiredGuid&lt;T&gt;</code></pre>
+    <pre><code class="lang-csharp hljs">public abstract class RequiredGuid&lt;TValue&gt; : ScalarValueObject&lt;Guid&gt;, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt; where TValue : RequiredGuid&lt;TValue&gt;</code></pre>
   </div>
 
 
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>T</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -119,7 +120,7 @@
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
       <div><a class="xref" href="FunctionalDDD.Domain.ValueObject.html">ValueObject</a></div>
       <div><a class="xref" href="FunctionalDDD.Domain.ScalarValueObject-1.html">ScalarValueObject</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.guid">Guid</a>&gt;</div>
-      <div><span class="xref">RequiredGuid&lt;T&gt;</span></div>
+      <div><span class="xref">RequiredGuid&lt;TValue&gt;</span></div>
     </dd>
   </dl>
 
@@ -182,6 +183,11 @@
   </dd></dl>
 
 
+  <h2 id="FunctionalDDD_Domain_RequiredGuid_1_examples">Examples</h2>
+  <p>This example shows how to create a strongly named Value Object MenuId that cannot have default Guid value.</p>
+<pre><code class="lang-csharp">partial class MenuId : RequiredGuid&lt;FirstName&gt;</code></pre>
+<p><strong>Note</strong> The partial keyword is required to allow the code generator to add the generated methods.</p>
+
 
 
 
@@ -193,7 +199,7 @@
 
   <h3 id="FunctionalDDD_Domain_RequiredGuid_1__ctor_System_Guid_" data-uid="FunctionalDDD.Domain.RequiredGuid`1.#ctor(System.Guid)">
   RequiredGuid(Guid)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/RequiredGuid.cs/#L6"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/CommonValueObjects/src/RequiredGuid.cs/#L18"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -218,13 +224,23 @@
 
 
 
+  <dl class="typelist seealso">
+    <dt>See Also</dt>
+    <dd>
+    <div><a class="xref" href="FunctionalDDD.Domain.ScalarValueObject-1.html">ScalarValueObject</a>&lt;T&gt;</div>
+    </dd>
+  </dl>
 
 
+  <h2 id="seealso">See Also</h2>
+  <div class="seealso">
+      <div><a class="xref" href="FunctionalDDD.Domain.ScalarValueObject-1.html">ScalarValueObject</a>&lt;T&gt;</div>
+  </div>
 
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/RequiredGuid.cs/#L2" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/CommonValueObjects/src/RequiredGuid.cs/#L14" class="edit-link">Edit this page</a>
         </div>
 
         
