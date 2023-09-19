@@ -2,10 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class SimpleValueObject&lt;T&gt;
+      <title>Class ScalarValueObject&lt;T&gt;
  </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class SimpleValueObject&lt;T&gt;
+      <meta name="title" content="Class ScalarValueObject&lt;T&gt;
  ">
       
       <link rel="icon" href="../favicon.ico">
@@ -17,7 +17,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDDD_Domain_SimpleValueObject_1.md&amp;value=---%0Auid%3A%20FunctionalDDD.Domain.SimpleValueObject%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDDD_Domain_ScalarValueObject_1.md&amp;value=---%0Auid%3A%20FunctionalDDD.Domain.ScalarValueObject%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -84,13 +84,13 @@
           <nav id="breadcrumb"></nav>
         </div>
 
-        <article data-uid="FunctionalDDD.Domain.SimpleValueObject`1">
+        <article data-uid="FunctionalDDD.Domain.ScalarValueObject`1">
 
 
 
-  <h1 id="FunctionalDDD_Domain_SimpleValueObject_1" data-uid="FunctionalDDD.Domain.SimpleValueObject`1" class="text-break">
-    Class SimpleValueObject&lt;T&gt;
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L2"><i class="bi bi-code-slash"></i></a>
+  <h1 id="FunctionalDDD_Domain_ScalarValueObject_1" data-uid="FunctionalDDD.Domain.ScalarValueObject`1" class="text-break">
+    Class ScalarValueObject&lt;T&gt;
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L2"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -102,7 +102,7 @@
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public abstract class SimpleValueObject&lt;T&gt; : ValueObject, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt; where T : IComparable</code></pre>
+    <pre><code class="lang-csharp hljs">public abstract class ScalarValueObject&lt;T&gt; : ValueObject, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt; where T : IComparable</code></pre>
   </div>
 
 
@@ -118,7 +118,7 @@
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
       <div><a class="xref" href="FunctionalDDD.Domain.ValueObject.html">ValueObject</a></div>
-      <div><span class="xref">SimpleValueObject&lt;T&gt;</span></div>
+      <div><span class="xref">ScalarValueObject&lt;T&gt;</span></div>
     </dd>
   </dl>
 
@@ -187,18 +187,18 @@
 </h2>
 
 
-  <a id="FunctionalDDD_Domain_SimpleValueObject_1__ctor_" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.#ctor*"></a>
+  <a id="FunctionalDDD_Domain_ScalarValueObject_1__ctor_" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.#ctor*"></a>
 
-  <h3 id="FunctionalDDD_Domain_SimpleValueObject_1__ctor__0_" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.#ctor(`0)">
-  SimpleValueObject(T)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L7"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDDD_Domain_ScalarValueObject_1__ctor__0_" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.#ctor(`0)">
+  ScalarValueObject(T)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L7"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">protected SimpleValueObject(T value)</code></pre>
+    <pre><code class="lang-csharp hljs">protected ScalarValueObject(T value)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -222,11 +222,11 @@
 </h2>
 
 
-  <a id="FunctionalDDD_Domain_SimpleValueObject_1_Value_" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.Value*"></a>
+  <a id="FunctionalDDD_Domain_ScalarValueObject_1_Value_" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.Value*"></a>
 
-  <h3 id="FunctionalDDD_Domain_SimpleValueObject_1_Value" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.Value">
+  <h3 id="FunctionalDDD_Domain_ScalarValueObject_1_Value" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.Value">
   Value
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L5"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L5"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -257,11 +257,11 @@
 </h2>
 
 
-  <a id="FunctionalDDD_Domain_SimpleValueObject_1_GetEqualityComponents_" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.GetEqualityComponents*"></a>
+  <a id="FunctionalDDD_Domain_ScalarValueObject_1_GetEqualityComponents_" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.GetEqualityComponents*"></a>
 
-  <h3 id="FunctionalDDD_Domain_SimpleValueObject_1_GetEqualityComponents" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.GetEqualityComponents">
+  <h3 id="FunctionalDDD_Domain_ScalarValueObject_1_GetEqualityComponents" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.GetEqualityComponents">
   GetEqualityComponents()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L9"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L9"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -288,11 +288,11 @@
 
 
 
-  <a id="FunctionalDDD_Domain_SimpleValueObject_1_ToString_" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.ToString*"></a>
+  <a id="FunctionalDDD_Domain_ScalarValueObject_1_ToString_" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.ToString*"></a>
 
-  <h3 id="FunctionalDDD_Domain_SimpleValueObject_1_ToString" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.ToString">
+  <h3 id="FunctionalDDD_Domain_ScalarValueObject_1_ToString" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.ToString">
   ToString()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L14"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Returns a string that represents the current object.</p>
@@ -325,23 +325,23 @@
 </h2>
 
 
-  <a id="FunctionalDDD_Domain_SimpleValueObject_1_op_Implicit_" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.op_Implicit*"></a>
+  <a id="FunctionalDDD_Domain_ScalarValueObject_1_op_Implicit_" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.op_Implicit*"></a>
 
-  <h3 id="FunctionalDDD_Domain_SimpleValueObject_1_op_Implicit_FunctionalDDD_Domain_SimpleValueObject__0____0" data-uid="FunctionalDDD.Domain.SimpleValueObject`1.op_Implicit(FunctionalDDD.Domain.SimpleValueObject{`0})~`0">
-  implicit operator T(SimpleValueObject&lt;T&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L16"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDDD_Domain_ScalarValueObject_1_op_Implicit_FunctionalDDD_Domain_ScalarValueObject__0____0" data-uid="FunctionalDDD.Domain.ScalarValueObject`1.op_Implicit(FunctionalDDD.Domain.ScalarValueObject{`0})~`0">
+  implicit operator T(ScalarValueObject&lt;T&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L16"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static implicit operator T(SimpleValueObject&lt;T&gt; valueObject)</code></pre>
+    <pre><code class="lang-csharp hljs">public static implicit operator T(ScalarValueObject&lt;T&gt; valueObject)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>valueObject</code> <a class="xref" href="FunctionalDDD.Domain.SimpleValueObject-1.html">SimpleValueObject</a>&lt;T&gt;</dt>
+    <dt><code>valueObject</code> <a class="xref" href="FunctionalDDD.Domain.ScalarValueObject-1.html">ScalarValueObject</a>&lt;T&gt;</dt>
     <dd></dd>
   </dl>
 
@@ -365,7 +365,7 @@
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/SimpleValueObject.cs/#L2" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ScalarValueObject.cs/#L2" class="edit-link">Edit this page</a>
         </div>
 
         

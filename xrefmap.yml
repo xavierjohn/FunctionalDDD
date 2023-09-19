@@ -234,104 +234,104 @@ references:
   fullName.vb: FunctionalDDD.Domain.RequiredString(Of T).New
   nameWithType: RequiredString<T>.RequiredString
   nameWithType.vb: RequiredString(Of T).New
-- uid: FunctionalDDD.Domain.SimpleValueObject`1
-  name: SimpleValueObject<T>
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html
-  commentId: T:FunctionalDDD.Domain.SimpleValueObject`1
-  name.vb: SimpleValueObject(Of T)
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T)
-  nameWithType: SimpleValueObject<T>
-  nameWithType.vb: SimpleValueObject(Of T)
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.#ctor(`0)
-  name: SimpleValueObject(T)
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1__ctor__0_
-  commentId: M:FunctionalDDD.Domain.SimpleValueObject`1.#ctor(`0)
+- uid: FunctionalDDD.Domain.ScalarValueObject`1
+  name: ScalarValueObject<T>
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html
+  commentId: T:FunctionalDDD.Domain.ScalarValueObject`1
+  name.vb: ScalarValueObject(Of T)
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T)
+  nameWithType: ScalarValueObject<T>
+  nameWithType.vb: ScalarValueObject(Of T)
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.#ctor(`0)
+  name: ScalarValueObject(T)
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1__ctor__0_
+  commentId: M:FunctionalDDD.Domain.ScalarValueObject`1.#ctor(`0)
   name.vb: New(T)
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.SimpleValueObject(T)
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).New(T)
-  nameWithType: SimpleValueObject<T>.SimpleValueObject(T)
-  nameWithType.vb: SimpleValueObject(Of T).New(T)
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.#ctor*
-  name: SimpleValueObject
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1__ctor_
-  commentId: Overload:FunctionalDDD.Domain.SimpleValueObject`1.#ctor
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.ScalarValueObject(T)
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).New(T)
+  nameWithType: ScalarValueObject<T>.ScalarValueObject(T)
+  nameWithType.vb: ScalarValueObject(Of T).New(T)
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.#ctor*
+  name: ScalarValueObject
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1__ctor_
+  commentId: Overload:FunctionalDDD.Domain.ScalarValueObject`1.#ctor
   isSpec: "True"
   name.vb: New
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.SimpleValueObject
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).New
-  nameWithType: SimpleValueObject<T>.SimpleValueObject
-  nameWithType.vb: SimpleValueObject(Of T).New
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.GetEqualityComponents
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.ScalarValueObject
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).New
+  nameWithType: ScalarValueObject<T>.ScalarValueObject
+  nameWithType.vb: ScalarValueObject(Of T).New
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.GetEqualityComponents
   name: GetEqualityComponents()
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_GetEqualityComponents
-  commentId: M:FunctionalDDD.Domain.SimpleValueObject`1.GetEqualityComponents
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.GetEqualityComponents()
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).GetEqualityComponents()
-  nameWithType: SimpleValueObject<T>.GetEqualityComponents()
-  nameWithType.vb: SimpleValueObject(Of T).GetEqualityComponents()
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.GetEqualityComponents*
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_GetEqualityComponents
+  commentId: M:FunctionalDDD.Domain.ScalarValueObject`1.GetEqualityComponents
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.GetEqualityComponents()
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).GetEqualityComponents()
+  nameWithType: ScalarValueObject<T>.GetEqualityComponents()
+  nameWithType.vb: ScalarValueObject(Of T).GetEqualityComponents()
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.GetEqualityComponents*
   name: GetEqualityComponents
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_GetEqualityComponents_
-  commentId: Overload:FunctionalDDD.Domain.SimpleValueObject`1.GetEqualityComponents
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_GetEqualityComponents_
+  commentId: Overload:FunctionalDDD.Domain.ScalarValueObject`1.GetEqualityComponents
   isSpec: "True"
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.GetEqualityComponents
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).GetEqualityComponents
-  nameWithType: SimpleValueObject<T>.GetEqualityComponents
-  nameWithType.vb: SimpleValueObject(Of T).GetEqualityComponents
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.ToString
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.GetEqualityComponents
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).GetEqualityComponents
+  nameWithType: ScalarValueObject<T>.GetEqualityComponents
+  nameWithType.vb: ScalarValueObject(Of T).GetEqualityComponents
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.ToString
   name: ToString()
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_ToString
-  commentId: M:FunctionalDDD.Domain.SimpleValueObject`1.ToString
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.ToString()
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).ToString()
-  nameWithType: SimpleValueObject<T>.ToString()
-  nameWithType.vb: SimpleValueObject(Of T).ToString()
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.ToString*
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_ToString
+  commentId: M:FunctionalDDD.Domain.ScalarValueObject`1.ToString
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.ToString()
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).ToString()
+  nameWithType: ScalarValueObject<T>.ToString()
+  nameWithType.vb: ScalarValueObject(Of T).ToString()
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.ToString*
   name: ToString
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_ToString_
-  commentId: Overload:FunctionalDDD.Domain.SimpleValueObject`1.ToString
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_ToString_
+  commentId: Overload:FunctionalDDD.Domain.ScalarValueObject`1.ToString
   isSpec: "True"
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.ToString
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).ToString
-  nameWithType: SimpleValueObject<T>.ToString
-  nameWithType.vb: SimpleValueObject(Of T).ToString
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.Value
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.ToString
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).ToString
+  nameWithType: ScalarValueObject<T>.ToString
+  nameWithType.vb: ScalarValueObject(Of T).ToString
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.Value
   name: Value
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_Value
-  commentId: P:FunctionalDDD.Domain.SimpleValueObject`1.Value
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.Value
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).Value
-  nameWithType: SimpleValueObject<T>.Value
-  nameWithType.vb: SimpleValueObject(Of T).Value
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.Value*
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_Value
+  commentId: P:FunctionalDDD.Domain.ScalarValueObject`1.Value
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.Value
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).Value
+  nameWithType: ScalarValueObject<T>.Value
+  nameWithType.vb: ScalarValueObject(Of T).Value
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.Value*
   name: Value
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_Value_
-  commentId: Overload:FunctionalDDD.Domain.SimpleValueObject`1.Value
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_Value_
+  commentId: Overload:FunctionalDDD.Domain.ScalarValueObject`1.Value
   isSpec: "True"
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.Value
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).Value
-  nameWithType: SimpleValueObject<T>.Value
-  nameWithType.vb: SimpleValueObject(Of T).Value
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.op_Implicit(FunctionalDDD.Domain.SimpleValueObject{`0})~`0
-  name: implicit operator T(SimpleValueObject<T>)
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_op_Implicit_FunctionalDDD_Domain_SimpleValueObject__0____0
-  commentId: M:FunctionalDDD.Domain.SimpleValueObject`1.op_Implicit(FunctionalDDD.Domain.SimpleValueObject{`0})~`0
-  name.vb: CType(SimpleValueObject(Of T))
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.implicit operator T(FunctionalDDD.Domain.SimpleValueObject<T>)
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).CType(FunctionalDDD.Domain.SimpleValueObject(Of T))
-  nameWithType: SimpleValueObject<T>.implicit operator T(SimpleValueObject<T>)
-  nameWithType.vb: SimpleValueObject(Of T).CType(SimpleValueObject(Of T))
-- uid: FunctionalDDD.Domain.SimpleValueObject`1.op_Implicit*
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.Value
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).Value
+  nameWithType: ScalarValueObject<T>.Value
+  nameWithType.vb: ScalarValueObject(Of T).Value
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.op_Implicit(FunctionalDDD.Domain.ScalarValueObject{`0})~`0
+  name: implicit operator T(ScalarValueObject<T>)
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_op_Implicit_FunctionalDDD_Domain_ScalarValueObject__0____0
+  commentId: M:FunctionalDDD.Domain.ScalarValueObject`1.op_Implicit(FunctionalDDD.Domain.ScalarValueObject{`0})~`0
+  name.vb: CType(ScalarValueObject(Of T))
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.implicit operator T(FunctionalDDD.Domain.ScalarValueObject<T>)
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).CType(FunctionalDDD.Domain.ScalarValueObject(Of T))
+  nameWithType: ScalarValueObject<T>.implicit operator T(ScalarValueObject<T>)
+  nameWithType.vb: ScalarValueObject(Of T).CType(ScalarValueObject(Of T))
+- uid: FunctionalDDD.Domain.ScalarValueObject`1.op_Implicit*
   name: implicit operator
-  href: api/FunctionalDDD.Domain.SimpleValueObject-1.html#FunctionalDDD_Domain_SimpleValueObject_1_op_Implicit_
-  commentId: Overload:FunctionalDDD.Domain.SimpleValueObject`1.op_Implicit
+  href: api/FunctionalDDD.Domain.ScalarValueObject-1.html#FunctionalDDD_Domain_ScalarValueObject_1_op_Implicit_
+  commentId: Overload:FunctionalDDD.Domain.ScalarValueObject`1.op_Implicit
   isSpec: "True"
   name.vb: CType
-  fullName: FunctionalDDD.Domain.SimpleValueObject<T>.implicit operator
-  fullName.vb: FunctionalDDD.Domain.SimpleValueObject(Of T).CType
-  nameWithType: SimpleValueObject<T>.implicit operator
-  nameWithType.vb: SimpleValueObject(Of T).CType
+  fullName: FunctionalDDD.Domain.ScalarValueObject<T>.implicit operator
+  fullName.vb: FunctionalDDD.Domain.ScalarValueObject(Of T).CType
+  nameWithType: ScalarValueObject<T>.implicit operator
+  nameWithType.vb: ScalarValueObject(Of T).CType
 - uid: FunctionalDDD.Domain.ValueObject
   name: ValueObject
   href: api/FunctionalDDD.Domain.ValueObject.html

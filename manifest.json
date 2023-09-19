@@ -55,10 +55,10 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.SimpleValueObject-1.yml",
+      "source_relative_path": "api/FunctionalDDD.Domain.ScalarValueObject-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.SimpleValueObject-1.html"
+          "relative_path": "api/FunctionalDDD.Domain.ScalarValueObject-1.html"
         }
       },
       "version": ""
