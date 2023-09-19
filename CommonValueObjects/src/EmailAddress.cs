@@ -1,7 +1,6 @@
-﻿namespace FunctionalDDD.Domain.ValueObjects;
+﻿namespace FunctionalDDD.Domain;
 
 using System.Text.RegularExpressions;
-using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 

@@ -1,6 +1,5 @@
 ﻿namespace SampleWebApplication;
 using FluentValidation;
-using FunctionalDDD.Domain.ValueObjects;
 using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.FluentValidation;

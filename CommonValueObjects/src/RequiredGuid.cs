@@ -1,7 +1,4 @@
-﻿namespace FunctionalDDD.Domain.ValueObjects;
-
-using FunctionalDDD.Domain;
-
+﻿namespace FunctionalDDD.Domain;
 public abstract class RequiredGuid<T> : SimpleValueObject<Guid>
     where T : RequiredGuid<T>
 {

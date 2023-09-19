@@ -1,6 +1,6 @@
 ﻿namespace FluentValidationExt.Tests;
 
-using FunctionalDDD.Domain.ValueObjects;
+using FunctionalDDD.Domain;
 
 internal partial class LastName : RequiredString<LastName>
 {

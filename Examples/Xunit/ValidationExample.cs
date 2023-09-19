@@ -1,6 +1,6 @@
 ﻿namespace Example;
 
-using FunctionalDDD.Domain.ValueObjects;
+using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 

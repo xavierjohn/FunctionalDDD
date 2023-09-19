@@ -1,7 +1,4 @@
-﻿namespace FunctionalDDD.Domain.ValueObjects;
-
-using FunctionalDDD.Domain;
-
+﻿namespace FunctionalDDD.Domain;
 /// <summary>
 /// Represents a required string value object.
 /// 
