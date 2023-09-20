@@ -39,7 +39,8 @@ using FunctionalDDD.Results.Errors;
 ///        v =&gt; v.RuleFor(x =&gt; x.FirstName).NotNull(),
 ///        v =&gt; v.RuleFor(x =&gt; x.LastName).NotNull(),
 ///        v =&gt; v.RuleFor(x =&gt; x.Email).NotNull(),
-///        v =&gt; v.RuleFor(x =&gt; x.Password).NotEmpty()
+///        v =&gt; v.RuleFor(x => x.Password).Matches("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])(?=.{8,})")
+///              .WithMessage("'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.")
 ///    };
 ///}
 /// </code>

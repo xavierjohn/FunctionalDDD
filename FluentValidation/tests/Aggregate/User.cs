@@ -31,6 +31,7 @@ internal class User : AggregateRoot<UserId>
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
         v => v.RuleFor(x => x.Email).NotNull(),
-        v => v.RuleFor(x => x.Password).NotEmpty()
+        v => v.RuleFor(x => x.Password).Matches("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])(?=.{8,})")
+                .WithMessage("'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.")
     };
 }
