@@ -1,13 +1,13 @@
 ﻿namespace FunctionalDDD.Results;
 
 /// <summary>
-/// Executes the given action if the calling result is a success. Returns the calling result.
+///     Executes the given action if the starting result is a success. Returns the starting result.
 /// It is useful to execute functions that don't have a return type or return type can be ignored.
 /// </summary>
 public static class TeeExtensions
 {
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static Result<TOk> Tee<TOk>(this Result<TOk> result, Action action)
     {
@@ -18,7 +18,7 @@ public static class TeeExtensions
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static Result<TOk> Tee<TOk>(this Result<TOk> result, Action<TOk> action)
     {
@@ -30,13 +30,13 @@ public static class TeeExtensions
 }
 
 /// <summary>
-/// Executes the given action if the calling result is a success. Returns the calling result.
+///     Executes the given action if the starting result is a success. Returns the starting result.
 /// It is useful to execute functions that don't have a return type or return type can be ignored.
 /// </summary>
 public static class TeeExtensionsAsync
 {
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async Task<Result<TOk>> TeeAsync<TOk>(this Task<Result<TOk>> resultTask, Action action)
     {
@@ -45,7 +45,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async Task<Result<TOk>> TeeAsync<TOk>(this Task<Result<TOk>> resultTask, Action<TOk> action)
     {
@@ -54,7 +54,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the calling result is a success. Returns the starting result.
     /// </summary>
     public static async Task<Result<TOk>> TeeAsync<TOk>(this Result<TOk> result, Func<Task> func)
     {
@@ -65,7 +65,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async Task<Result<TOk>> TeeAsync<TOk>(this Task<Result<TOk>> resultTask, Func<Task> func)
     {
@@ -78,7 +78,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async Task<Result<TOk>> TeeAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, Task> func)
     {
@@ -90,7 +90,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async Task<Result<TOk>> TeeAsync<TOk>(this Result<TOk> result, Func<TOk, Task> func)
     {
@@ -101,7 +101,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<TOk>> TeeAsync<TOk>(this Result<TOk> result, Func<ValueTask> func)
     {
@@ -112,7 +112,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<TOk>> TeeAsync<TOk>(this Result<TOk> result, Func<TOk, ValueTask> func)
     {
@@ -123,7 +123,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<TOk>> TeeAsync<TOk>(this ValueTask<Result<TOk>> resultTask, Func<ValueTask> valueTask)
     {
@@ -136,7 +136,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<TOk>> TeeAsync<TOk>(this ValueTask<Result<TOk>> resultTask, Func<TOk, ValueTask> valueTask)
     {
@@ -149,7 +149,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<TOk>> TeeAsync<TOk>(this ValueTask<Result<TOk>> resultTask, Action action)
     {
@@ -158,7 +158,7 @@ public static class TeeExtensionsAsync
     }
 
     /// <summary>
-    ///     Executes the given action if the calling result is a success. Returns the calling result.
+    ///     Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<TOk>> TeeAsync<TOk>(this ValueTask<Result<TOk>> resultTask, Action<TOk> action)
     {

@@ -1,10 +1,10 @@
 ﻿namespace FunctionalDDD.Results;
 
+/// <summary>
+/// If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.
+/// </summary>
 public static partial class MapExtensions
 {
-    /// <summary>
-    ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
-    /// </summary>
     public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> func)
     {
         if (result.IsFailure)
@@ -17,9 +17,6 @@ public static partial class MapExtensions
 public static class MapExtensionsAsync
 {
 
-    /// <summary>
-    ///     Creates a new result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
-    /// </summary>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
@@ -44,9 +41,6 @@ public static class MapExtensionsAsync
         return Result.Success<TOut>(value);
     }
 
-    /// <summary>
-    ///     Creates a new result from the return value of a given valueTask action. If the calling Result is a failure, a new failure result is returned instead.
-    /// </summary>
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> valueTask)
     {
         Result<TIn> result = await resultTask;

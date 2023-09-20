@@ -2,55 +2,46 @@
 
 using FunctionalDDD.Results.Errors;
 
+/// <summary>
+///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+/// </summary>
 public static class EnsureExtensions
 {
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
-    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<bool> predicate, Error errors)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error errors)
     {
         if (result.IsFailure)
             return result;
 
         if (!predicate())
-            return Result.Failure<TOk>(errors);
+            return Result.Failure<TValue>(errors);
 
         return result;
     }
 
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
-    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<TOk, bool> predicate, Error error)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
         if (result.IsFailure)
             return result;
 
         if (!predicate(result.Value))
-            return Result.Failure<TOk>(error);
+            return Result.Failure<TValue>(error);
 
         return result;
     }
 
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
-    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
         if (result.IsFailure)
             return result;
 
         if (!predicate(result.Value))
-            return Result.Failure<TOk>(errorPredicate(result.Value));
+            return Result.Failure<TValue>(errorPredicate(result.Value));
 
         return result;
     }
 
 
-    /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
-    /// </summary>
-    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<Result<TOk>> predicate)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
         if (result.IsFailure)
             return result;
@@ -58,15 +49,12 @@ public static class EnsureExtensions
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk>(predicateResult.Error);
+            return Result.Failure<TValue>(predicateResult.Error);
 
         return result;
     }
 
-    /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
-    /// </summary>
-    public static Result<TOk> Ensure<TOk>(this Result<TOk> result, Func<TOk, Result<TOk>> predicate)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, Result<TValue>> predicate)
     {
         if (result.IsFailure)
             return result;
@@ -74,7 +62,7 @@ public static class EnsureExtensions
         var predicateResult = predicate(result.Value);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk>(predicateResult.Error);
+            return Result.Failure<TValue>(predicateResult.Error);
 
         return result;
     }
