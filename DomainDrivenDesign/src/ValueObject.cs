@@ -1,7 +1,11 @@
-namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDDD.Domain;
 /// <summary>
-/// Create a typed class that represents a value object.
-/// The class calls the abstract method GetEqualityComponents to get the components to compare.
+/// A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
+/// It is a small, simple object that encapsulates a concept from your problem domain.
+/// Unlike an entity, a value object does not have a unique identity and is immutable. 
+/// Value objects support and enrich the ubiquitous language of your domain.
+/// 
+/// Value objects compare equality based on property specified in the GetEqualityComponents method.
 /// </summary>
 /// <example>
 /// <code>

@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.Domain;
 /// <summary>
-/// Create a typed class that represents a required string value object.
+/// Create a strongly typed string value object that checks for null or empty string.
 /// </summary>
 /// <typeparam name="TValue"></typeparam>
 /// <seealso cref="ScalarValueObject{TValue}"/>

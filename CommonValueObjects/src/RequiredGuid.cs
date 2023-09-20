@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDDD.Domain;
 /// <summary>
-/// Create a typed class that represents a required Guid value object.
+/// Create a strongly typed Guid value object that cannot have default Guid value.
 /// </summary>
 /// <typeparam name="TValue"></typeparam>
 /// <seealso cref="ScalarValueObject{TValue}"/>
