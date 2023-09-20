@@ -1,5 +1,8 @@
 ﻿namespace FunctionalDDD.Results;
 
+/// <summary>
+/// Compensate for failed result by calling the given function.
+/// </summary>
 public static class CompensateExtensions
 {
     /// <summary>
@@ -13,6 +16,10 @@ public static class CompensateExtensions
         return func();
     }
 }
+
+/// <summary>
+/// Compensate for failed result by calling the given function.
+/// </summary>
 public static class CompensateExtensionsAsync
 {
     /// <summary>

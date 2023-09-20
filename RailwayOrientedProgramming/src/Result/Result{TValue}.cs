@@ -3,7 +3,7 @@
 using FunctionalDDD.Results.Errors;
 
 /// <summary>
-/// This class is used to create a Result object that contains a value or an error.
+/// The Result type used in functional programming languages to represent a success value or an error.
 /// </summary>
 /// <typeparam name="TValue"></typeparam>
 public readonly struct Result<TValue>

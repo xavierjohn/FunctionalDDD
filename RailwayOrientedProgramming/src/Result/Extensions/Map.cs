@@ -12,8 +12,11 @@ public static partial class MapExtensions
 
         return Result.Success<TOut>(func(result.Value));
     }
-
 }
+
+/// <summary>
+/// If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.
+/// </summary>
 public static class MapExtensionsAsync
 {
 

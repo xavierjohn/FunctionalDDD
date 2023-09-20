@@ -2,35 +2,19 @@
 
 using FunctionalDDD.Results.Errors;
 
+/// <summary>
+/// Combines two or more <see cref="Result{TValue}"/> into one tuple containing all the Results.
+/// </summary>
 public static partial class CombineExtensions
 {
-    public static Error Combine(this Error? err, Error other)
-    {
-        if (err is null) return other;
-        if (other is null) throw new ArgumentNullException(nameof(other));
-        if (err is ValidationError validation && other is ValidationError otherValidation)
-        {
-            var validationErrors = validation.Errors.Concat(otherValidation.Errors).ToList();
-            return new ValidationError(validationErrors, validation.Code);
-        }
-
-        List<Error> errors = new();
-        AddError(err);
-        AddError(other);
-
-        return new AggregateError(errors);
-
-        void AddError(Error error)
-        {
-            if (error is AggregateError aggregate)
-                errors.AddRange(aggregate.Errors);
-            else if (error is ValidationError validation)
-                errors.AddRange(validation.Errors.Select(e => new ValidationError(e.Message, e.FieldName, validation.Code)));
-            else
-                errors.Add(error);
-        }
-    }
-
+    /// <summary>
+    /// Combine two <see cref="Result{TValue}"/> into one <see cref="Tuple"/> containing all the Results.
+    /// </summary>
+    /// <typeparam name="T1"></typeparam>
+    /// <typeparam name="T2"></typeparam>
+    /// <param name="t1"></param>
+    /// <param name="t2"></param>
+    /// <returns>Tuple containing both the results.</returns>
     public static Result<(T1, T2)> Combine<T1, T2>(this Result<T1> t1, Result<T2> t2)
     {
         Error? error = null;
