@@ -46,6 +46,13 @@ using FunctionalDDD.Results.Errors;
 /// </example>
 public static class FunctionalDDDValidationExtension
 {
+    /// <summary>
+    /// Convert ValidationResult to <see cref="Result{T}"/>."/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="validationResult"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public static Result<T> ToResult<T>(this ValidationResult validationResult, T value)
     {
         if (validationResult.IsValid)
@@ -58,6 +65,13 @@ public static class FunctionalDDDValidationExtension
         return Result.Failure<T>(Error.Validation(errors));
     }
 
+    /// <summary>
+    /// Calls the FluentValidation Validate function and converts the result to <see cref="Result{T}"/>."/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="validator"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public static Result<T> ValidateToResult<T>(this IValidator<T> validator, T value) =>
         validator.Validate(value).ToResult(value);
 }
