@@ -108,13 +108,15 @@ Classes
 </h3>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.BindExtensions.html">BindExtensions</a></dt>
-      <dd><p>The Bind function returns a new Result from a specified function if the current Result is in a successful state.
-If the current Result is in a failed state, the Bind function returns the current failed Result.</p>
+      <dd><p>If the starting Result is a success, the Bind function will return a new Result from the given function.
+Otherwise, the Bind function will return the starting failed Result.</p>
 </dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.BindExtensionsAsync.html">BindExtensionsAsync</a></dt>
-      <dd></dd>
+      <dd><p>If the starting Result is a success, the Bind function will return a new Result from the given function.
+Otherwise, the Bind function will return the starting failed Result.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.CombineExtensions.html">CombineExtensions</a></dt>
@@ -130,7 +132,8 @@ If the current Result is in a failed state, the Bind function returns the curren
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.EnsureExtensions.html">EnsureExtensions</a></dt>
-      <dd></dd>
+      <dd><p>Returns a new failure result if the predicate is false. Otherwise returns the starting result.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.EnsureExtensionsAsync.html">EnsureExtensionsAsync</a></dt>
@@ -138,12 +141,12 @@ If the current Result is in a failed state, the Bind function returns the curren
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.FinallyExtensions.html">FinallyExtensions</a></dt>
-      <dd><p>Finally extensions are used to terminate the chain and return the final value.</p>
+      <dd><p>Passes the result to the given function (regardless of success/failure state) to yield a final output value.</p>
 </dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.FinallyExtensionsAsync.html">FinallyExtensionsAsync</a></dt>
-      <dd><p>Finally extensions are used to terminate the chain and return the final value.</p>
+      <dd><p>Passes the result to the given function (regardless of success/failure state) to yield a final output value.</p>
 </dd>
     </dl>
     <dl class="jumplist">
@@ -156,7 +159,8 @@ If the current Result is in a failed state, the Bind function returns the curren
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.MapExtensions.html">MapExtensions</a></dt>
-      <dd></dd>
+      <dd><p>If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.MapExtensionsAsync.html">MapExtensionsAsync</a></dt>
@@ -213,14 +217,16 @@ If the current Result is in a failed state, the Bind function returns the curren
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.TeeExtensions.html">TeeExtensions</a></dt>
-      <dd><p>Executes the given action if the calling result is a success. Returns the calling result.
-It is useful to execute functions that don't have a return type or return type can be ignored.</p>
+      <dd><pre><code>Executes the given action if the starting result is a success. Returns the starting result.
+</code></pre>
+<p>It is useful to execute functions that don't have a return type or return type can be ignored.</p>
 </dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.TeeExtensionsAsync.html">TeeExtensionsAsync</a></dt>
-      <dd><p>Executes the given action if the calling result is a success. Returns the calling result.
-It is useful to execute functions that don't have a return type or return type can be ignored.</p>
+      <dd><pre><code>Executes the given action if the starting result is a success. Returns the starting result.
+</code></pre>
+<p>It is useful to execute functions that don't have a return type or return type can be ignored.</p>
 </dd>
     </dl>
     <h3 id="structs">
