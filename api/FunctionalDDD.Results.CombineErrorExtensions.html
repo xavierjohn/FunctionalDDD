@@ -2,10 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class CompensateExtensions
+      <title>Class CombineErrorExtensions
  </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class CompensateExtensions
+      <meta name="title" content="Class CombineErrorExtensions
  ">
       
       <link rel="icon" href="../favicon.ico">
@@ -17,7 +17,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/more_documentation/apiSpec/new?filename=FunctionalDDD_Results_CompensateExtensions.md&amp;value=---%0Auid%3A%20FunctionalDDD.Results.CompensateExtensions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/more_documentation/apiSpec/new?filename=FunctionalDDD_Results_CombineErrorExtensions.md&amp;value=---%0Auid%3A%20FunctionalDDD.Results.CombineErrorExtensions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -84,13 +84,13 @@
           <nav id="breadcrumb"></nav>
         </div>
 
-        <article data-uid="FunctionalDDD.Results.CompensateExtensions">
+        <article data-uid="FunctionalDDD.Results.CombineErrorExtensions">
 
 
 
-  <h1 id="FunctionalDDD_Results_CompensateExtensions" data-uid="FunctionalDDD.Results.CompensateExtensions" class="text-break">
-    Class CompensateExtensions
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Compensate.cs/#L6"><i class="bi bi-code-slash"></i></a>
+  <h1 id="FunctionalDDD_Results_CombineErrorExtensions" data-uid="FunctionalDDD.Results.CombineErrorExtensions" class="text-break">
+    Class CombineErrorExtensions
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/CombineError.cs/#L10"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -98,12 +98,14 @@
   <dl><dt>Assembly</dt><dd>FunctionalDDD.RailwayOrientedProgramming.dll</dd></dl>
   </div>
 
-  <div class="markdown summary"><p>Compensate for failed result by calling the given function.</p>
+  <div class="markdown summary"><p>Combine errors into one.
+If both the errors types are <a class="xref" href="FunctionalDDD.Results.Errors.ValidationError.html">ValidationError</a>, the validation errors will be merged.
+Otherwise, the errors will be wrapped into an <a class="xref" href="FunctionalDDD.Results.Errors.AggregateError.html">AggregateError</a>.</p>
 </div>
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static class CompensateExtensions</code></pre>
+    <pre><code class="lang-csharp hljs">public static class CombineErrorExtensions</code></pre>
   </div>
 
 
@@ -113,7 +115,7 @@
     <dt>Inheritance</dt>
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
-      <div><span class="xref">CompensateExtensions</span></div>
+      <div><span class="xref">CombineErrorExtensions</span></div>
     </dd>
   </dl>
 
@@ -154,47 +156,49 @@
 </h2>
 
 
-  <a id="FunctionalDDD_Results_CompensateExtensions_Compensate_" data-uid="FunctionalDDD.Results.CompensateExtensions.Compensate*"></a>
+  <a id="FunctionalDDD_Results_CombineErrorExtensions_Combine_" data-uid="FunctionalDDD.Results.CombineErrorExtensions.Combine*"></a>
 
-  <h3 id="FunctionalDDD_Results_CompensateExtensions_Compensate__1_FunctionalDDD_Results_Result___0__System_Func_FunctionalDDD_Results_Result___0___" data-uid="FunctionalDDD.Results.CompensateExtensions.Compensate``1(FunctionalDDD.Results.Result{``0},System.Func{FunctionalDDD.Results.Result{``0}})">
-  Compensate&lt;T&gt;(Result&lt;T&gt;, Func&lt;Result&lt;T&gt;&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Compensate.cs/#L11"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDDD_Results_CombineErrorExtensions_Combine_FunctionalDDD_Results_Errors_Error_FunctionalDDD_Results_Errors_Error_" data-uid="FunctionalDDD.Results.CombineErrorExtensions.Combine(FunctionalDDD.Results.Errors.Error,FunctionalDDD.Results.Errors.Error)">
+  Combine(Error?, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/CombineError.cs/#L21"><i class="bi bi-code-slash"></i></a>
   </h3>
 
-  <div class="markdown level1 summary"><p>Compensate for failed result by calling the given function.</p>
+  <div class="markdown level1 summary"><p>Combine two errors into one.
+If both the errors types are <a class="xref" href="FunctionalDDD.Results.Errors.ValidationError.html">ValidationError</a>, the errors will be merged.
+Otherwise, the errors will be wrapped in an <a class="xref" href="FunctionalDDD.Results.Errors.AggregateError.html">AggregateError</a>.</p>
 </div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;T&gt; Compensate&lt;T&gt;(this Result&lt;T&gt; result, Func&lt;Result&lt;T&gt;&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Error Combine(this Error? thisError, Error otherError)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;T&gt;</dt>
+    <dt><code>thisError</code> <a class="xref" href="FunctionalDDD.Results.Errors.Error.html">Error</a></dt>
     <dd></dd>
-    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;T&gt;&gt;</dt>
+    <dt><code>otherError</code> <a class="xref" href="FunctionalDDD.Results.Errors.Error.html">Error</a></dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;T&gt;</dt>
+    <dt><a class="xref" href="FunctionalDDD.Results.Errors.Error.html">Error</a></dt>
     <dd></dd>
   </dl>
 
-  <h4 class="section">Type Parameters</h4>
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
   <dl class="parameters">
-    <dt><code>T</code></dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
     <dd></dd>
   </dl>
-
-
-
-
-
-
-
 
 
 
@@ -202,7 +206,7 @@
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Compensate.cs/#L6" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/CombineError.cs/#L10" class="edit-link">Edit this page</a>
         </div>
 
         

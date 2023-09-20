@@ -155,6 +155,16 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Results.CombineErrorExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Results.CombineErrorExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDDD.Results.CombineExtensions.yml",
       "output": {
         ".html": {

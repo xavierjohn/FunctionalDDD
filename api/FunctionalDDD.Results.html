@@ -119,16 +119,26 @@ Otherwise, the Bind function will return the starting failed Result.</p>
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDDD.Results.CombineErrorExtensions.html">CombineErrorExtensions</a></dt>
+      <dd><p>Combine errors into one.
+If both the errors types are <a class="xref" href="FunctionalDDD.Results.Errors.ValidationError.html">ValidationError</a>, the validation errors will be merged.
+Otherwise, the errors will be wrapped into an <a class="xref" href="FunctionalDDD.Results.Errors.AggregateError.html">AggregateError</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.CombineExtensions.html">CombineExtensions</a></dt>
-      <dd></dd>
+      <dd><p>Combines two or more <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a> into one tuple containing all the Results.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.CompensateExtensions.html">CompensateExtensions</a></dt>
-      <dd></dd>
+      <dd><p>Compensate for failed result by calling the given function.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.CompensateExtensionsAsync.html">CompensateExtensionsAsync</a></dt>
-      <dd></dd>
+      <dd><p>Compensate for failed result by calling the given function.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.EnsureExtensions.html">EnsureExtensions</a></dt>
@@ -137,7 +147,8 @@ Otherwise, the Bind function will return the starting failed Result.</p>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.EnsureExtensionsAsync.html">EnsureExtensionsAsync</a></dt>
-      <dd></dd>
+      <dd><p>Returns a new failure result if the predicate is false. Otherwise returns the starting result.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.FinallyExtensions.html">FinallyExtensions</a></dt>
@@ -160,11 +171,13 @@ Otherwise, the Bind function will return the starting failed Result.</p>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.MapExtensionsAsync.html">MapExtensionsAsync</a></dt>
-      <dd></dd>
+      <dd><p>If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.Maybe.html">Maybe</a></dt>
-      <dd></dd>
+      <dd><p>Contains static methods to create a <a class="xref" href="FunctionalDDD.Results.Maybe-1.html">Maybe&lt;T&gt;</a> object.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.MaybeExtensions.html">MaybeExtensions</a></dt>
@@ -184,7 +197,8 @@ Otherwise, the Bind function will return the starting failed Result.</p>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.ParallelExtensionsAsync.html">ParallelExtensionsAsync</a></dt>
-      <dd></dd>
+      <dd><p>Execute tasks in parallel and return a <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.tuple">Tuple</a> of <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a> tasks.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.Result.html">Result</a></dt>
@@ -203,16 +217,14 @@ Otherwise, the Bind function will return the starting failed Result.</p>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.TeeExtensions.html">TeeExtensions</a></dt>
-      <dd><pre><code>Executes the given action if the starting result is a success. Returns the starting result.
-</code></pre>
-<p>It is useful to execute functions that don't have a return type or return type can be ignored.</p>
+      <dd><p>Executes the given action if the starting result is a success. Returns the starting result.
+It is useful to execute functions that don't have a return type or return type can be ignored.</p>
 </dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.TeeExtensionsAsync.html">TeeExtensionsAsync</a></dt>
-      <dd><pre><code>Executes the given action if the starting result is a success. Returns the starting result.
-</code></pre>
-<p>It is useful to execute functions that don't have a return type or return type can be ignored.</p>
+      <dd><p>Executes the given action if the starting result is a success. Returns the starting result.
+It is useful to execute functions that don't have a return type or return type can be ignored.</p>
 </dd>
     </dl>
     <h3 id="structs">
@@ -220,11 +232,12 @@ Structs
 </h3>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.Maybe-1.html">Maybe&lt;T&gt;</a></dt>
-      <dd></dd>
+      <dd><p>The Maybe type used in functional programming languages to represent an optional value.</p>
+</dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a></dt>
-      <dd><p>This class is used to create a Result object that contains a value or an error.</p>
+      <dd><p>The Result type used in functional programming languages to represent a success value or an error.</p>
 </dd>
     </dl>
     <dl class="jumplist">

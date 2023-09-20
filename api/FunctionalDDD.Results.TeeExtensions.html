@@ -98,9 +98,8 @@
   <dl><dt>Assembly</dt><dd>FunctionalDDD.RailwayOrientedProgramming.dll</dd></dl>
   </div>
 
-  <div class="markdown summary"><pre><code>Executes the given action if the starting result is a success. Returns the starting result.
-</code></pre>
-<p>It is useful to execute functions that don't have a return type or return type can be ignored.</p>
+  <div class="markdown summary"><p>Executes the given action if the starting result is a success. Returns the starting result.
+It is useful to execute functions that don't have a return type or return type can be ignored.</p>
 </div>
   <div class="markdown conceptual"></div>
 
@@ -159,7 +158,7 @@
   <a id="FunctionalDDD_Results_TeeExtensions_Tee_" data-uid="FunctionalDDD.Results.TeeExtensions.Tee*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensions_Tee__1_FunctionalDDD_Results_Result___0__System_Action_" data-uid="FunctionalDDD.Results.TeeExtensions.Tee``1(FunctionalDDD.Results.Result{``0},System.Action)">
-  Tee&lt;TOk&gt;(Result&lt;TOk&gt;, Action)
+  Tee&lt;TValue&gt;(Result&lt;TValue&gt;, Action)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L12"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -168,12 +167,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;TOk&gt; Tee&lt;TOk&gt;(this Result&lt;TOk&gt; result, Action action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; Tee&lt;TValue&gt;(this Result&lt;TValue&gt; result, Action action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
     <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action">Action</a></dt>
     <dd></dd>
@@ -181,13 +180,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -203,7 +202,7 @@
   <a id="FunctionalDDD_Results_TeeExtensions_Tee_" data-uid="FunctionalDDD.Results.TeeExtensions.Tee*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensions_Tee__1_FunctionalDDD_Results_Result___0__System_Action___0__" data-uid="FunctionalDDD.Results.TeeExtensions.Tee``1(FunctionalDDD.Results.Result{``0},System.Action{``0})">
-  Tee&lt;TOk&gt;(Result&lt;TOk&gt;, Action&lt;TOk&gt;)
+  Tee&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;TValue&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L23"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -212,26 +211,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;TOk&gt; Tee&lt;TOk&gt;(this Result&lt;TOk&gt; result, Action&lt;TOk&gt; action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; Tee&lt;TValue&gt;(this Result&lt;TValue&gt; result, Action&lt;TValue&gt; action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
-    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;TOk&gt;</dt>
+    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;TValue&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 

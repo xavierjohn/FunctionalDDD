@@ -98,9 +98,8 @@
   <dl><dt>Assembly</dt><dd>FunctionalDDD.RailwayOrientedProgramming.dll</dd></dl>
   </div>
 
-  <div class="markdown summary"><pre><code>Executes the given action if the starting result is a success. Returns the starting result.
-</code></pre>
-<p>It is useful to execute functions that don't have a return type or return type can be ignored.</p>
+  <div class="markdown summary"><p>Executes the given action if the starting result is a success. Returns the starting result.
+It is useful to execute functions that don't have a return type or return type can be ignored.</p>
 </div>
   <div class="markdown conceptual"></div>
 
@@ -159,7 +158,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func_System_Threading_Tasks_Task__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.Task})">
-  TeeAsync&lt;TOk&gt;(Result&lt;TOk&gt;, Func&lt;Task&gt;)
+  TeeAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Task&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L59"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -168,12 +167,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Result&lt;TOk&gt; result, Func&lt;Task&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Result&lt;TValue&gt; result, Func&lt;Task&gt; func)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
     <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a>&gt;</dt>
     <dd></dd>
@@ -181,13 +180,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -203,7 +202,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func_System_Threading_Tasks_ValueTask__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.ValueTask})">
-  TeeAsync&lt;TOk&gt;(Result&lt;TOk&gt;, Func&lt;ValueTask&gt;)
+  TeeAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;ValueTask&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L106"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -212,12 +211,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Result&lt;TOk&gt; result, Func&lt;ValueTask&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Result&lt;TValue&gt; result, Func&lt;ValueTask&gt; func)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
     <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask">ValueTask</a>&gt;</dt>
     <dd></dd>
@@ -225,13 +224,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -247,7 +246,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func___0_System_Threading_Tasks_Task__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.Task})">
-  TeeAsync&lt;TOk&gt;(Result&lt;TOk&gt;, Func&lt;TOk, Task&gt;)
+  TeeAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L95"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -256,26 +255,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Result&lt;TOk&gt; result, Func&lt;TOk, Task&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Result&lt;TValue&gt; result, Func&lt;TValue, Task&gt; func)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
-    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TOk, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a>&gt;</dt>
+    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TValue, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a>&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -291,7 +290,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func___0_System_Threading_Tasks_ValueTask__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.ValueTask})">
-  TeeAsync&lt;TOk&gt;(Result&lt;TOk&gt;, Func&lt;TOk, ValueTask&gt;)
+  TeeAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L117"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -300,26 +299,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Result&lt;TOk&gt; result, Func&lt;TOk, ValueTask&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Result&lt;TValue&gt; result, Func&lt;TValue, ValueTask&gt; func)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;</dt>
+    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
     <dd></dd>
-    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TOk, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask">ValueTask</a>&gt;</dt>
+    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TValue, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask">ValueTask</a>&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -335,7 +334,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action)">
-  TeeAsync&lt;TOk&gt;(Task&lt;Result&lt;TOk&gt;&gt;, Action)
+  TeeAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, Action)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L41"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -344,12 +343,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Task&lt;Result&lt;TOk&gt;&gt; resultTask, Action action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, Action action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
     <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action">Action</a></dt>
     <dd></dd>
@@ -357,13 +356,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -379,7 +378,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action___0__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{``0})">
-  TeeAsync&lt;TOk&gt;(Task&lt;Result&lt;TOk&gt;&gt;, Action&lt;TOk&gt;)
+  TeeAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, Action&lt;TValue&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L50"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -388,26 +387,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Task&lt;Result&lt;TOk&gt;&gt; resultTask, Action&lt;TOk&gt; action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, Action&lt;TValue&gt; action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
-    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;TOk&gt;</dt>
+    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;TValue&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -423,7 +422,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Func_System_Threading_Tasks_Task__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.Task})">
-  TeeAsync&lt;TOk&gt;(Task&lt;Result&lt;TOk&gt;&gt;, Func&lt;Task&gt;)
+  TeeAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, Func&lt;Task&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L70"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -432,12 +431,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Task&lt;Result&lt;TOk&gt;&gt; resultTask, Func&lt;Task&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, Func&lt;Task&gt; func)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
     <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a>&gt;</dt>
     <dd></dd>
@@ -445,13 +444,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -467,7 +466,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Func___0_System_Threading_Tasks_Task__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.Task})">
-  TeeAsync&lt;TOk&gt;(Task&lt;Result&lt;TOk&gt;&gt;, Func&lt;TOk, Task&gt;)
+  TeeAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, Func&lt;TValue, Task&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L83"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -476,26 +475,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this Task&lt;Result&lt;TOk&gt;&gt; resultTask, Func&lt;TOk, Task&gt; func)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, Func&lt;TValue, Task&gt; func)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
-    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TOk, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a>&gt;</dt>
+    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TValue, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a>&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -511,7 +510,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Action_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action)">
-  TeeAsync&lt;TOk&gt;(ValueTask&lt;Result&lt;TOk&gt;&gt;, Action)
+  TeeAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, Action)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L154"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -520,12 +519,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this ValueTask&lt;Result&lt;TOk&gt;&gt; resultTask, Action action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, Action action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
     <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action">Action</a></dt>
     <dd></dd>
@@ -533,13 +532,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -555,7 +554,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Action___0__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action{``0})">
-  TeeAsync&lt;TOk&gt;(ValueTask&lt;Result&lt;TOk&gt;&gt;, Action&lt;TOk&gt;)
+  TeeAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, Action&lt;TValue&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L163"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -564,26 +563,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this ValueTask&lt;Result&lt;TOk&gt;&gt; resultTask, Action&lt;TOk&gt; action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, Action&lt;TValue&gt; action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
-    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;TOk&gt;</dt>
+    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;TValue&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -599,7 +598,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Func_System_Threading_Tasks_ValueTask__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.ValueTask})">
-  TeeAsync&lt;TOk&gt;(ValueTask&lt;Result&lt;TOk&gt;&gt;, Func&lt;ValueTask&gt;)
+  TeeAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, Func&lt;ValueTask&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L128"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -608,12 +607,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this ValueTask&lt;Result&lt;TOk&gt;&gt; resultTask, Func&lt;ValueTask&gt; valueTask)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, Func&lt;ValueTask&gt; valueTask)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
     <dt><code>valueTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask">ValueTask</a>&gt;</dt>
     <dd></dd>
@@ -621,13 +620,13 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
@@ -643,7 +642,7 @@
   <a id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*"></a>
 
   <h3 id="FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Func___0_System_Threading_Tasks_ValueTask__" data-uid="FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.ValueTask})">
-  TeeAsync&lt;TOk&gt;(ValueTask&lt;Result&lt;TOk&gt;&gt;, Func&lt;TOk, ValueTask&gt;)
+  TeeAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, Func&lt;TValue, ValueTask&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/RailwayOrientedProgramming/src/Result/Extensions/Tee.cs/#L141"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -652,26 +651,26 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TOk&gt;&gt; TeeAsync&lt;TOk&gt;(this ValueTask&lt;Result&lt;TOk&gt;&gt; resultTask, Func&lt;TOk, ValueTask&gt; valueTask)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;Result&lt;TValue&gt;&gt; TeeAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, Func&lt;TValue, ValueTask&gt; valueTask)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
-    <dt><code>valueTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TOk, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask">ValueTask</a>&gt;</dt>
+    <dt><code>valueTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TValue, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask">ValueTask</a>&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOk&gt;&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Type Parameters</h4>
   <dl class="parameters">
-    <dt><code>TOk</code></dt>
+    <dt><code>TValue</code></dt>
     <dd></dd>
   </dl>
 
