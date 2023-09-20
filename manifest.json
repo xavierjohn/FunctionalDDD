@@ -5,6 +5,16 @@
   "files": [
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Domain.Aggregate-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Domain.Aggregate-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDDD.Domain.AggregateRoot-1.yml",
       "output": {
         ".html": {
@@ -19,16 +29,6 @@
       "output": {
         ".html": {
           "relative_path": "api/FunctionalDDD.Domain.EmailAddress.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.Entity-1.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.Entity-1.html"
         }
       },
       "version": ""
