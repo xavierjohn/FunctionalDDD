@@ -145,14 +145,14 @@ The need to handle failure after each method call can be tedious so the <code>Re
 <pre><code class="lang-csharp">/// &lt;summary&gt;
 /// Gets the underlying Value if Result is in success state.
 /// &lt;/summary&gt;
-/// &lt;exception cref=&quot;ResultFailureException&quot;&gt;Attempted to access the Value for a failed result.&lt;/exception&gt;
-public TValue Value =&gt; IsFailure ? throw new ResultFailureException(Error) : _value!;
+/// &lt;exception cref=&quot;InvalidOperationException&quot;&gt;Attempted to access the Value for a failed result.&lt;/exception&gt;
+public TValue Value =&gt; IsFailure ? throw new InvalidOperationException(&quot;Attempted to access the Value for a failed result. A failed result has no Value.&quot;) : _value!;
 
 /// &lt;summary&gt;
 /// Gets the Error object if Result is in failed state.
 /// &lt;/summary&gt;
-/// &lt;exception cref=&quot;ResultSuccessException&quot;&gt;Attempted to access the Error property for a successful result.&lt;/exception&gt;
-public Error Error =&gt; _error ?? throw new ResultSuccessException();
+/// &lt;exception cref=&quot;InvalidOperationException&quot;&gt;Attempted to access the Error property for a successful result.&lt;/exception&gt;
+public Error Error =&gt; _error ?? throw new InvalidOperationException(&quot;Attempted to access the Error property for a successful result.A successful result has no Error.&quot;);
 
 /// &lt;summary&gt;
 /// Check if result is in failure state.

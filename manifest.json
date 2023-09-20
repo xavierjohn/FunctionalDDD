@@ -5,6 +5,26 @@
   "files": [
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FluentValidation.FunctionalDDDValidationExtension.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FluentValidation.FunctionalDDDValidationExtension.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FluentValidation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FluentValidation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDDD.Domain.Aggregate-1.yml",
       "output": {
         ".html": {
@@ -315,16 +335,6 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.FluentValidationExtension.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.FluentValidationExtension.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDDD.Results.HttpResponseMessageJsonExtensionsAsync.yml",
       "output": {
         ".html": {
@@ -439,26 +449,6 @@
       "output": {
         ".html": {
           "relative_path": "api/FunctionalDDD.Results.Result.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.ResultFailureException.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.ResultFailureException.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.ResultSuccessException.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.ResultSuccessException.html"
         }
       },
       "version": ""

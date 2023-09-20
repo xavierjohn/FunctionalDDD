@@ -1,6 +1,50 @@
 ### YamlMime:XRefMap
 sorted: true
 references:
+- uid: FluentValidation
+  name: FluentValidation
+  href: api/FluentValidation.html
+  commentId: N:FluentValidation
+  fullName: FluentValidation
+  nameWithType: FluentValidation
+- uid: FluentValidation.FunctionalDDDValidationExtension
+  name: FunctionalDDDValidationExtension
+  href: api/FluentValidation.FunctionalDDDValidationExtension.html
+  commentId: T:FluentValidation.FunctionalDDDValidationExtension
+  fullName: FluentValidation.FunctionalDDDValidationExtension
+  nameWithType: FunctionalDDDValidationExtension
+- uid: FluentValidation.FunctionalDDDValidationExtension.ToResult*
+  name: ToResult
+  href: api/FluentValidation.FunctionalDDDValidationExtension.html#FluentValidation_FunctionalDDDValidationExtension_ToResult_
+  commentId: Overload:FluentValidation.FunctionalDDDValidationExtension.ToResult
+  isSpec: "True"
+  fullName: FluentValidation.FunctionalDDDValidationExtension.ToResult
+  nameWithType: FunctionalDDDValidationExtension.ToResult
+- uid: FluentValidation.FunctionalDDDValidationExtension.ToResult``1(FluentValidation.Results.ValidationResult,``0)
+  name: ToResult<T>(ValidationResult, T)
+  href: api/FluentValidation.FunctionalDDDValidationExtension.html#FluentValidation_FunctionalDDDValidationExtension_ToResult__1_FluentValidation_Results_ValidationResult___0_
+  commentId: M:FluentValidation.FunctionalDDDValidationExtension.ToResult``1(FluentValidation.Results.ValidationResult,``0)
+  name.vb: ToResult(Of T)(ValidationResult, T)
+  fullName: FluentValidation.FunctionalDDDValidationExtension.ToResult<T>(FluentValidation.Results.ValidationResult, T)
+  fullName.vb: FluentValidation.FunctionalDDDValidationExtension.ToResult(Of T)(FluentValidation.Results.ValidationResult, T)
+  nameWithType: FunctionalDDDValidationExtension.ToResult<T>(ValidationResult, T)
+  nameWithType.vb: FunctionalDDDValidationExtension.ToResult(Of T)(ValidationResult, T)
+- uid: FluentValidation.FunctionalDDDValidationExtension.ValidateToResult*
+  name: ValidateToResult
+  href: api/FluentValidation.FunctionalDDDValidationExtension.html#FluentValidation_FunctionalDDDValidationExtension_ValidateToResult_
+  commentId: Overload:FluentValidation.FunctionalDDDValidationExtension.ValidateToResult
+  isSpec: "True"
+  fullName: FluentValidation.FunctionalDDDValidationExtension.ValidateToResult
+  nameWithType: FunctionalDDDValidationExtension.ValidateToResult
+- uid: FluentValidation.FunctionalDDDValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0)
+  name: ValidateToResult<T>(IValidator<T>, T)
+  href: api/FluentValidation.FunctionalDDDValidationExtension.html#FluentValidation_FunctionalDDDValidationExtension_ValidateToResult__1_FluentValidation_IValidator___0____0_
+  commentId: M:FluentValidation.FunctionalDDDValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0)
+  name.vb: ValidateToResult(Of T)(IValidator(Of T), T)
+  fullName: FluentValidation.FunctionalDDDValidationExtension.ValidateToResult<T>(FluentValidation.IValidator<T>, T)
+  fullName.vb: FluentValidation.FunctionalDDDValidationExtension.ValidateToResult(Of T)(FluentValidation.IValidator(Of T), T)
+  nameWithType: FunctionalDDDValidationExtension.ValidateToResult<T>(IValidator<T>, T)
+  nameWithType.vb: FunctionalDDDValidationExtension.ValidateToResult(Of T)(IValidator(Of T), T)
 - uid: FunctionalDDD
   name: FunctionalDDD
   href: api/FunctionalDDD.html
@@ -2000,44 +2044,6 @@ references:
   fullName.vb: FunctionalDDD.Results.FinallyExtensionsAsync.FinallyAsync(Of TIn, TOut)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TIn)), System.Func(Of TIn, TOut), System.Func(Of FunctionalDDD.Results.Errors.Error, TOut))
   nameWithType: FinallyExtensionsAsync.FinallyAsync<TIn, TOut>(ValueTask<Result<TIn>>, Func<TIn, TOut>, Func<Error, TOut>)
   nameWithType.vb: FinallyExtensionsAsync.FinallyAsync(Of TIn, TOut)(ValueTask(Of Result(Of TIn)), Func(Of TIn, TOut), Func(Of Error, TOut))
-- uid: FunctionalDDD.Results.FluentValidationExtension
-  name: FluentValidationExtension
-  href: api/FunctionalDDD.Results.FluentValidationExtension.html
-  commentId: T:FunctionalDDD.Results.FluentValidationExtension
-  fullName: FunctionalDDD.Results.FluentValidationExtension
-  nameWithType: FluentValidationExtension
-- uid: FunctionalDDD.Results.FluentValidationExtension.ToResult*
-  name: ToResult
-  href: api/FunctionalDDD.Results.FluentValidationExtension.html#FunctionalDDD_Results_FluentValidationExtension_ToResult_
-  commentId: Overload:FunctionalDDD.Results.FluentValidationExtension.ToResult
-  isSpec: "True"
-  fullName: FunctionalDDD.Results.FluentValidationExtension.ToResult
-  nameWithType: FluentValidationExtension.ToResult
-- uid: FunctionalDDD.Results.FluentValidationExtension.ToResult``1(FluentValidation.Results.ValidationResult,``0)
-  name: ToResult<T>(ValidationResult, T)
-  href: api/FunctionalDDD.Results.FluentValidationExtension.html#FunctionalDDD_Results_FluentValidationExtension_ToResult__1_FluentValidation_Results_ValidationResult___0_
-  commentId: M:FunctionalDDD.Results.FluentValidationExtension.ToResult``1(FluentValidation.Results.ValidationResult,``0)
-  name.vb: ToResult(Of T)(ValidationResult, T)
-  fullName: FunctionalDDD.Results.FluentValidationExtension.ToResult<T>(FluentValidation.Results.ValidationResult, T)
-  fullName.vb: FunctionalDDD.Results.FluentValidationExtension.ToResult(Of T)(FluentValidation.Results.ValidationResult, T)
-  nameWithType: FluentValidationExtension.ToResult<T>(ValidationResult, T)
-  nameWithType.vb: FluentValidationExtension.ToResult(Of T)(ValidationResult, T)
-- uid: FunctionalDDD.Results.FluentValidationExtension.ValidateToResult*
-  name: ValidateToResult
-  href: api/FunctionalDDD.Results.FluentValidationExtension.html#FunctionalDDD_Results_FluentValidationExtension_ValidateToResult_
-  commentId: Overload:FunctionalDDD.Results.FluentValidationExtension.ValidateToResult
-  isSpec: "True"
-  fullName: FunctionalDDD.Results.FluentValidationExtension.ValidateToResult
-  nameWithType: FluentValidationExtension.ValidateToResult
-- uid: FunctionalDDD.Results.FluentValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0)
-  name: ValidateToResult<T>(IValidator<T>, T)
-  href: api/FunctionalDDD.Results.FluentValidationExtension.html#FunctionalDDD_Results_FluentValidationExtension_ValidateToResult__1_FluentValidation_IValidator___0____0_
-  commentId: M:FunctionalDDD.Results.FluentValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0)
-  name.vb: ValidateToResult(Of T)(IValidator(Of T), T)
-  fullName: FunctionalDDD.Results.FluentValidationExtension.ValidateToResult<T>(FluentValidation.IValidator<T>, T)
-  fullName.vb: FunctionalDDD.Results.FluentValidationExtension.ValidateToResult(Of T)(FluentValidation.IValidator(Of T), T)
-  nameWithType: FluentValidationExtension.ValidateToResult<T>(IValidator<T>, T)
-  nameWithType.vb: FluentValidationExtension.ValidateToResult(Of T)(IValidator(Of T), T)
 - uid: FunctionalDDD.Results.HttpResponseMessageJsonExtensionsAsync
   name: HttpResponseMessageJsonExtensionsAsync
   href: api/FunctionalDDD.Results.HttpResponseMessageJsonExtensionsAsync.html
@@ -2766,50 +2772,50 @@ references:
   fullName: FunctionalDDD.Results.Result.FailureIfAsync
   nameWithType: Result.FailureIfAsync
 - uid: FunctionalDDD.Results.Result.FailureIfAsync``1(System.Func{System.Threading.Tasks.Task{System.Boolean}},``0,FunctionalDDD.Results.Errors.Error)
-  name: FailureIfAsync<TOk>(Func<Task<bool>>, TOk, Error)
+  name: FailureIfAsync<TValue>(Func<Task<bool>>, TValue, Error)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_FailureIfAsync__1_System_Func_System_Threading_Tasks_Task_System_Boolean_____0_FunctionalDDD_Results_Errors_Error_
   commentId: M:FunctionalDDD.Results.Result.FailureIfAsync``1(System.Func{System.Threading.Tasks.Task{System.Boolean}},``0,FunctionalDDD.Results.Errors.Error)
-  name.vb: FailureIfAsync(Of TOk)(Func(Of Task(Of Boolean)), TOk, Error)
-  fullName: FunctionalDDD.Results.Result.FailureIfAsync<TOk>(System.Func<System.Threading.Tasks.Task<bool>>, TOk, FunctionalDDD.Results.Errors.Error)
-  fullName.vb: FunctionalDDD.Results.Result.FailureIfAsync(Of TOk)(System.Func(Of System.Threading.Tasks.Task(Of Boolean)), TOk, FunctionalDDD.Results.Errors.Error)
-  nameWithType: Result.FailureIfAsync<TOk>(Func<Task<bool>>, TOk, Error)
-  nameWithType.vb: Result.FailureIfAsync(Of TOk)(Func(Of Task(Of Boolean)), TOk, Error)
+  name.vb: FailureIfAsync(Of TValue)(Func(Of Task(Of Boolean)), TValue, Error)
+  fullName: FunctionalDDD.Results.Result.FailureIfAsync<TValue>(System.Func<System.Threading.Tasks.Task<bool>>, TValue, FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.FailureIfAsync(Of TValue)(System.Func(Of System.Threading.Tasks.Task(Of Boolean)), TValue, FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.FailureIfAsync<TValue>(Func<Task<bool>>, TValue, Error)
+  nameWithType.vb: Result.FailureIfAsync(Of TValue)(Func(Of Task(Of Boolean)), TValue, Error)
 - uid: FunctionalDDD.Results.Result.FailureIf``1(System.Boolean,``0,FunctionalDDD.Results.Errors.Error)
-  name: FailureIf<TOk>(bool, TOk, Error)
+  name: FailureIf<TValue>(bool, TValue, Error)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_FailureIf__1_System_Boolean___0_FunctionalDDD_Results_Errors_Error_
   commentId: M:FunctionalDDD.Results.Result.FailureIf``1(System.Boolean,``0,FunctionalDDD.Results.Errors.Error)
-  name.vb: FailureIf(Of TOk)(Boolean, TOk, Error)
-  fullName: FunctionalDDD.Results.Result.FailureIf<TOk>(bool, TOk, FunctionalDDD.Results.Errors.Error)
-  fullName.vb: FunctionalDDD.Results.Result.FailureIf(Of TOk)(Boolean, TOk, FunctionalDDD.Results.Errors.Error)
-  nameWithType: Result.FailureIf<TOk>(bool, TOk, Error)
-  nameWithType.vb: Result.FailureIf(Of TOk)(Boolean, TOk, Error)
+  name.vb: FailureIf(Of TValue)(Boolean, TValue, Error)
+  fullName: FunctionalDDD.Results.Result.FailureIf<TValue>(bool, TValue, FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.FailureIf(Of TValue)(Boolean, TValue, FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.FailureIf<TValue>(bool, TValue, Error)
+  nameWithType.vb: Result.FailureIf(Of TValue)(Boolean, TValue, Error)
 - uid: FunctionalDDD.Results.Result.FailureIf``1(System.Func{System.Boolean},``0@,FunctionalDDD.Results.Errors.Error)
-  name: FailureIf<TOk>(Func<bool>, in TOk, Error)
+  name: FailureIf<TValue>(Func<bool>, in TValue, Error)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_FailureIf__1_System_Func_System_Boolean____0__FunctionalDDD_Results_Errors_Error_
   commentId: M:FunctionalDDD.Results.Result.FailureIf``1(System.Func{System.Boolean},``0@,FunctionalDDD.Results.Errors.Error)
-  name.vb: FailureIf(Of TOk)(Func(Of Boolean), TOk, Error)
-  fullName: FunctionalDDD.Results.Result.FailureIf<TOk>(System.Func<bool>, in TOk, FunctionalDDD.Results.Errors.Error)
-  fullName.vb: FunctionalDDD.Results.Result.FailureIf(Of TOk)(System.Func(Of Boolean), TOk, FunctionalDDD.Results.Errors.Error)
-  nameWithType: Result.FailureIf<TOk>(Func<bool>, in TOk, Error)
-  nameWithType.vb: Result.FailureIf(Of TOk)(Func(Of Boolean), TOk, Error)
+  name.vb: FailureIf(Of TValue)(Func(Of Boolean), TValue, Error)
+  fullName: FunctionalDDD.Results.Result.FailureIf<TValue>(System.Func<bool>, in TValue, FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.FailureIf(Of TValue)(System.Func(Of Boolean), TValue, FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.FailureIf<TValue>(Func<bool>, in TValue, Error)
+  nameWithType.vb: Result.FailureIf(Of TValue)(Func(Of Boolean), TValue, Error)
 - uid: FunctionalDDD.Results.Result.Failure``1(FunctionalDDD.Results.Errors.Error)
-  name: Failure<TOk>(Error)
+  name: Failure<TValue>(Error)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_Failure__1_FunctionalDDD_Results_Errors_Error_
   commentId: M:FunctionalDDD.Results.Result.Failure``1(FunctionalDDD.Results.Errors.Error)
-  name.vb: Failure(Of TOk)(Error)
-  fullName: FunctionalDDD.Results.Result.Failure<TOk>(FunctionalDDD.Results.Errors.Error)
-  fullName.vb: FunctionalDDD.Results.Result.Failure(Of TOk)(FunctionalDDD.Results.Errors.Error)
-  nameWithType: Result.Failure<TOk>(Error)
-  nameWithType.vb: Result.Failure(Of TOk)(Error)
+  name.vb: Failure(Of TValue)(Error)
+  fullName: FunctionalDDD.Results.Result.Failure<TValue>(FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.Failure(Of TValue)(FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.Failure<TValue>(Error)
+  nameWithType.vb: Result.Failure(Of TValue)(Error)
 - uid: FunctionalDDD.Results.Result.Failure``1(System.Func{FunctionalDDD.Results.Errors.Error})
-  name: Failure<TOk>(Func<Error>)
+  name: Failure<TValue>(Func<Error>)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_Failure__1_System_Func_FunctionalDDD_Results_Errors_Error__
   commentId: M:FunctionalDDD.Results.Result.Failure``1(System.Func{FunctionalDDD.Results.Errors.Error})
-  name.vb: Failure(Of TOk)(Func(Of Error))
-  fullName: FunctionalDDD.Results.Result.Failure<TOk>(System.Func<FunctionalDDD.Results.Errors.Error>)
-  fullName.vb: FunctionalDDD.Results.Result.Failure(Of TOk)(System.Func(Of FunctionalDDD.Results.Errors.Error))
-  nameWithType: Result.Failure<TOk>(Func<Error>)
-  nameWithType.vb: Result.Failure(Of TOk)(Func(Of Error))
+  name.vb: Failure(Of TValue)(Func(Of Error))
+  fullName: FunctionalDDD.Results.Result.Failure<TValue>(System.Func<FunctionalDDD.Results.Errors.Error>)
+  fullName.vb: FunctionalDDD.Results.Result.Failure(Of TValue)(System.Func(Of FunctionalDDD.Results.Errors.Error))
+  nameWithType: Result.Failure<TValue>(Func<Error>)
+  nameWithType.vb: Result.Failure(Of TValue)(Func(Of Error))
 - uid: FunctionalDDD.Results.Result.Success*
   name: Success
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_Success_
@@ -2832,66 +2838,41 @@ references:
   fullName: FunctionalDDD.Results.Result.SuccessIfAsync
   nameWithType: Result.SuccessIfAsync
 - uid: FunctionalDDD.Results.Result.SuccessIfAsync``1(System.Func{System.Threading.Tasks.Task{System.Boolean}},``0,FunctionalDDD.Results.Errors.Error)
-  name: SuccessIfAsync<TOk>(Func<Task<bool>>, TOk, Error)
+  name: SuccessIfAsync<TValue>(Func<Task<bool>>, TValue, Error)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_SuccessIfAsync__1_System_Func_System_Threading_Tasks_Task_System_Boolean_____0_FunctionalDDD_Results_Errors_Error_
   commentId: M:FunctionalDDD.Results.Result.SuccessIfAsync``1(System.Func{System.Threading.Tasks.Task{System.Boolean}},``0,FunctionalDDD.Results.Errors.Error)
-  name.vb: SuccessIfAsync(Of TOk)(Func(Of Task(Of Boolean)), TOk, Error)
-  fullName: FunctionalDDD.Results.Result.SuccessIfAsync<TOk>(System.Func<System.Threading.Tasks.Task<bool>>, TOk, FunctionalDDD.Results.Errors.Error)
-  fullName.vb: FunctionalDDD.Results.Result.SuccessIfAsync(Of TOk)(System.Func(Of System.Threading.Tasks.Task(Of Boolean)), TOk, FunctionalDDD.Results.Errors.Error)
-  nameWithType: Result.SuccessIfAsync<TOk>(Func<Task<bool>>, TOk, Error)
-  nameWithType.vb: Result.SuccessIfAsync(Of TOk)(Func(Of Task(Of Boolean)), TOk, Error)
+  name.vb: SuccessIfAsync(Of TValue)(Func(Of Task(Of Boolean)), TValue, Error)
+  fullName: FunctionalDDD.Results.Result.SuccessIfAsync<TValue>(System.Func<System.Threading.Tasks.Task<bool>>, TValue, FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.SuccessIfAsync(Of TValue)(System.Func(Of System.Threading.Tasks.Task(Of Boolean)), TValue, FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.SuccessIfAsync<TValue>(Func<Task<bool>>, TValue, Error)
+  nameWithType.vb: Result.SuccessIfAsync(Of TValue)(Func(Of Task(Of Boolean)), TValue, Error)
 - uid: FunctionalDDD.Results.Result.SuccessIf``1(System.Boolean,``0@,FunctionalDDD.Results.Errors.Error)
-  name: SuccessIf<TOk>(bool, in TOk, Error)
+  name: SuccessIf<TValue>(bool, in TValue, Error)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_SuccessIf__1_System_Boolean___0__FunctionalDDD_Results_Errors_Error_
   commentId: M:FunctionalDDD.Results.Result.SuccessIf``1(System.Boolean,``0@,FunctionalDDD.Results.Errors.Error)
-  name.vb: SuccessIf(Of TOk)(Boolean, TOk, Error)
-  fullName: FunctionalDDD.Results.Result.SuccessIf<TOk>(bool, in TOk, FunctionalDDD.Results.Errors.Error)
-  fullName.vb: FunctionalDDD.Results.Result.SuccessIf(Of TOk)(Boolean, TOk, FunctionalDDD.Results.Errors.Error)
-  nameWithType: Result.SuccessIf<TOk>(bool, in TOk, Error)
-  nameWithType.vb: Result.SuccessIf(Of TOk)(Boolean, TOk, Error)
+  name.vb: SuccessIf(Of TValue)(Boolean, TValue, Error)
+  fullName: FunctionalDDD.Results.Result.SuccessIf<TValue>(bool, in TValue, FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.SuccessIf(Of TValue)(Boolean, TValue, FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.SuccessIf<TValue>(bool, in TValue, Error)
+  nameWithType.vb: Result.SuccessIf(Of TValue)(Boolean, TValue, Error)
 - uid: FunctionalDDD.Results.Result.Success``1(System.Func{``0})
-  name: Success<TOk>(Func<TOk>)
+  name: Success<TValue>(Func<TValue>)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_Success__1_System_Func___0__
   commentId: M:FunctionalDDD.Results.Result.Success``1(System.Func{``0})
-  name.vb: Success(Of TOk)(Func(Of TOk))
-  fullName: FunctionalDDD.Results.Result.Success<TOk>(System.Func<TOk>)
-  fullName.vb: FunctionalDDD.Results.Result.Success(Of TOk)(System.Func(Of TOk))
-  nameWithType: Result.Success<TOk>(Func<TOk>)
-  nameWithType.vb: Result.Success(Of TOk)(Func(Of TOk))
+  name.vb: Success(Of TValue)(Func(Of TValue))
+  fullName: FunctionalDDD.Results.Result.Success<TValue>(System.Func<TValue>)
+  fullName.vb: FunctionalDDD.Results.Result.Success(Of TValue)(System.Func(Of TValue))
+  nameWithType: Result.Success<TValue>(Func<TValue>)
+  nameWithType.vb: Result.Success(Of TValue)(Func(Of TValue))
 - uid: FunctionalDDD.Results.Result.Success``1(``0)
-  name: Success<TOk>(TOk)
+  name: Success<TValue>(TValue)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_Success__1___0_
   commentId: M:FunctionalDDD.Results.Result.Success``1(``0)
-  name.vb: Success(Of TOk)(TOk)
-  fullName: FunctionalDDD.Results.Result.Success<TOk>(TOk)
-  fullName.vb: FunctionalDDD.Results.Result.Success(Of TOk)(TOk)
-  nameWithType: Result.Success<TOk>(TOk)
-  nameWithType.vb: Result.Success(Of TOk)(TOk)
-- uid: FunctionalDDD.Results.ResultFailureException
-  name: ResultFailureException
-  href: api/FunctionalDDD.Results.ResultFailureException.html
-  commentId: T:FunctionalDDD.Results.ResultFailureException
-  fullName: FunctionalDDD.Results.ResultFailureException
-  nameWithType: ResultFailureException
-- uid: FunctionalDDD.Results.ResultFailureException.Error
-  name: Error
-  href: api/FunctionalDDD.Results.ResultFailureException.html#FunctionalDDD_Results_ResultFailureException_Error
-  commentId: P:FunctionalDDD.Results.ResultFailureException.Error
-  fullName: FunctionalDDD.Results.ResultFailureException.Error
-  nameWithType: ResultFailureException.Error
-- uid: FunctionalDDD.Results.ResultFailureException.Error*
-  name: Error
-  href: api/FunctionalDDD.Results.ResultFailureException.html#FunctionalDDD_Results_ResultFailureException_Error_
-  commentId: Overload:FunctionalDDD.Results.ResultFailureException.Error
-  isSpec: "True"
-  fullName: FunctionalDDD.Results.ResultFailureException.Error
-  nameWithType: ResultFailureException.Error
-- uid: FunctionalDDD.Results.ResultSuccessException
-  name: ResultSuccessException
-  href: api/FunctionalDDD.Results.ResultSuccessException.html
-  commentId: T:FunctionalDDD.Results.ResultSuccessException
-  fullName: FunctionalDDD.Results.ResultSuccessException
-  nameWithType: ResultSuccessException
+  name.vb: Success(Of TValue)(TValue)
+  fullName: FunctionalDDD.Results.Result.Success<TValue>(TValue)
+  fullName.vb: FunctionalDDD.Results.Result.Success(Of TValue)(TValue)
+  nameWithType: Result.Success<TValue>(TValue)
+  nameWithType.vb: Result.Success(Of TValue)(TValue)
 - uid: FunctionalDDD.Results.Result`1
   name: Result<TValue>
   href: api/FunctionalDDD.Results.Result-1.html
