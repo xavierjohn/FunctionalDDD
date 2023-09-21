@@ -2,7 +2,9 @@
 
 Bringing the functional programming paradigm to C#.
 
-## Functional Programming
+<br/>
+
+## Functional Programming with [Railway Oriented Programming](https://blog.logrocket.com/what-is-railway-oriented-programming/)
 
 ### [Result](xref:FunctionalDDD.Results.Result`1)
 
@@ -12,9 +14,9 @@ The Result type used in functional programming languages to represent a success 
 
 The Maybe type used in functional programming languages to represent an optional value.
 
+<br/>
 
-
-## Domain Driven Design
+## [Domain Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design)
 
 ### [Aggregate](xref:FunctionalDDD.Domain.Aggregate`1)
 
