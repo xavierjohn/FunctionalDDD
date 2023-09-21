@@ -90,7 +90,7 @@
 
   <h1 id="FunctionalDDD_Domain_Aggregate_1" data-uid="FunctionalDDD.Domain.Aggregate`1" class="text-break">
     Class Aggregate&lt;TId&gt;
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L8"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L9"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -99,13 +99,13 @@
   </div>
 
   <div class="markdown summary"><p>A DDD aggregate is a cluster of domain objects that can be treated as a single unit.
-An aggregate will have one of its component objects be the aggregate root.Any references from outside the aggregate should only go to the aggregate root.
+Any references from outside the aggregate should only go to the aggregate root.
 The root can thus ensure the integrity of the aggregate as a whole.</p>
 </div>
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public abstract class Aggregate&lt;TId&gt; where TId : notnull</code></pre>
+    <pre><code class="lang-csharp hljs">public abstract class Aggregate&lt;TId&gt; : Entity&lt;TId&gt; where TId : notnull</code></pre>
   </div>
 
 
@@ -120,21 +120,25 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
     <dt>Inheritance</dt>
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="FunctionalDDD.Domain.Entity-1.html">Entity</a>&lt;TId&gt;</div>
       <div><span class="xref">Aggregate&lt;TId&gt;</span></div>
     </dd>
   </dl>
 
 
-  <dl class="typelist derived">
-    <dt>Derived</dt>
-    <dd>
-      <div><a class="xref" href="FunctionalDDD.Domain.AggregateRoot-1.html">AggregateRoot&lt;TId&gt;</a></div>
-    </dd>
-  </dl>
 
   <dl class="typelist derived">
     <dt>Inherited Members</dt>
     <dd>
+    <div>
+      <a class="xref" href="FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_Id">Entity&lt;TId&gt;.Id</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_Equals_System_Object_">Entity&lt;TId&gt;.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_GetHashCode">Entity&lt;TId&gt;.GetHashCode()</a>
+    </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
     </div>
@@ -175,7 +179,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
   <h3 id="FunctionalDDD_Domain_Aggregate_1__ctor__0_" data-uid="FunctionalDDD.Domain.Aggregate`1.#ctor(`0)">
   Aggregate(TId)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L13"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L12"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -202,202 +206,11 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
 
 
-  <h2 class="section" id="properties">Properties
-</h2>
-
-
-  <a id="FunctionalDDD_Domain_Aggregate_1_Id_" data-uid="FunctionalDDD.Domain.Aggregate`1.Id*"></a>
-
-  <h3 id="FunctionalDDD_Domain_Aggregate_1_Id" data-uid="FunctionalDDD.Domain.Aggregate`1.Id">
-  Id
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L11"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public TId Id { get; init; }</code></pre>
-  </div>
-
-
-
-
-
-  <h4 class="section">Property Value</h4>
-  <dl class="parameters">
-    <dt><span class="xref">TId</span></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-  <h2 class="section" id="methods">Methods
-</h2>
-
-
-  <a id="FunctionalDDD_Domain_Aggregate_1_Equals_" data-uid="FunctionalDDD.Domain.Aggregate`1.Equals*"></a>
-
-  <h3 id="FunctionalDDD_Domain_Aggregate_1_Equals_System_Object_" data-uid="FunctionalDDD.Domain.Aggregate`1.Equals(System.Object)">
-  Equals(object?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L15"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"><p>Determines whether the specified object is equal to the current object.</p>
-</div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public override bool Equals(object? obj)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>obj</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></dt>
-    <dd><p>The object to compare with the current object.</p>
-</dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
-    <dd><p><a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a> if the specified object  is equal to the current object; otherwise, <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">false</a>.</p>
-</dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDDD_Domain_Aggregate_1_GetHashCode_" data-uid="FunctionalDDD.Domain.Aggregate`1.GetHashCode*"></a>
-
-  <h3 id="FunctionalDDD_Domain_Aggregate_1_GetHashCode" data-uid="FunctionalDDD.Domain.Aggregate`1.GetHashCode">
-  GetHashCode()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L42"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"><p>Serves as the default hash function.</p>
-</div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public override int GetHashCode()</code></pre>
-  </div>
-
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
-    <dd><p>A hash code for the current object.</p>
-</dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-
-  <h2 class="section" id="operators">Operators
-</h2>
-
-
-  <a id="FunctionalDDD_Domain_Aggregate_1_op_Equality_" data-uid="FunctionalDDD.Domain.Aggregate`1.op_Equality*"></a>
-
-  <h3 id="FunctionalDDD_Domain_Aggregate_1_op_Equality_FunctionalDDD_Domain_Aggregate__0__FunctionalDDD_Domain_Aggregate__0__" data-uid="FunctionalDDD.Domain.Aggregate`1.op_Equality(FunctionalDDD.Domain.Aggregate{`0},FunctionalDDD.Domain.Aggregate{`0})">
-  operator ==(Aggregate&lt;TId&gt;?, Aggregate&lt;TId&gt;?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L29"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator ==(Aggregate&lt;TId&gt;? a, Aggregate&lt;TId&gt;? b)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>a</code> <a class="xref" href="FunctionalDDD.Domain.Aggregate-1.html">Aggregate</a>&lt;TId&gt;</dt>
-    <dd></dd>
-    <dt><code>b</code> <a class="xref" href="FunctionalDDD.Domain.Aggregate-1.html">Aggregate</a>&lt;TId&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDDD_Domain_Aggregate_1_op_Inequality_" data-uid="FunctionalDDD.Domain.Aggregate`1.op_Inequality*"></a>
-
-  <h3 id="FunctionalDDD_Domain_Aggregate_1_op_Inequality_FunctionalDDD_Domain_Aggregate__0__FunctionalDDD_Domain_Aggregate__0__" data-uid="FunctionalDDD.Domain.Aggregate`1.op_Inequality(FunctionalDDD.Domain.Aggregate{`0},FunctionalDDD.Domain.Aggregate{`0})">
-  operator !=(Aggregate&lt;TId&gt;?, Aggregate&lt;TId&gt;?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L40"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator !=(Aggregate&lt;TId&gt;? a, Aggregate&lt;TId&gt;? b)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>a</code> <a class="xref" href="FunctionalDDD.Domain.Aggregate-1.html">Aggregate</a>&lt;TId&gt;</dt>
-    <dd></dd>
-    <dt><code>b</code> <a class="xref" href="FunctionalDDD.Domain.Aggregate-1.html">Aggregate</a>&lt;TId&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-
 
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L8" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/DomainDrivenDesign/src/Aggregate.cs/#L9" class="edit-link">Edit this page</a>
         </div>
 
         

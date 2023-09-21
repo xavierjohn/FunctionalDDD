@@ -54,34 +54,6 @@ references:
   commentId: N:FunctionalDDD.Domain
   fullName: FunctionalDDD.Domain
   nameWithType: FunctionalDDD.Domain
-- uid: FunctionalDDD.Domain.AggregateRoot`1
-  name: AggregateRoot<TId>
-  href: api/FunctionalDDD.Domain.AggregateRoot-1.html
-  commentId: T:FunctionalDDD.Domain.AggregateRoot`1
-  name.vb: AggregateRoot(Of TId)
-  fullName: FunctionalDDD.Domain.AggregateRoot<TId>
-  fullName.vb: FunctionalDDD.Domain.AggregateRoot(Of TId)
-  nameWithType: AggregateRoot<TId>
-  nameWithType.vb: AggregateRoot(Of TId)
-- uid: FunctionalDDD.Domain.AggregateRoot`1.#ctor(`0)
-  name: AggregateRoot(TId)
-  href: api/FunctionalDDD.Domain.AggregateRoot-1.html#FunctionalDDD_Domain_AggregateRoot_1__ctor__0_
-  commentId: M:FunctionalDDD.Domain.AggregateRoot`1.#ctor(`0)
-  name.vb: New(TId)
-  fullName: FunctionalDDD.Domain.AggregateRoot<TId>.AggregateRoot(TId)
-  fullName.vb: FunctionalDDD.Domain.AggregateRoot(Of TId).New(TId)
-  nameWithType: AggregateRoot<TId>.AggregateRoot(TId)
-  nameWithType.vb: AggregateRoot(Of TId).New(TId)
-- uid: FunctionalDDD.Domain.AggregateRoot`1.#ctor*
-  name: AggregateRoot
-  href: api/FunctionalDDD.Domain.AggregateRoot-1.html#FunctionalDDD_Domain_AggregateRoot_1__ctor_
-  commentId: Overload:FunctionalDDD.Domain.AggregateRoot`1.#ctor
-  isSpec: "True"
-  name.vb: New
-  fullName: FunctionalDDD.Domain.AggregateRoot<TId>.AggregateRoot
-  fullName.vb: FunctionalDDD.Domain.AggregateRoot(Of TId).New
-  nameWithType: AggregateRoot<TId>.AggregateRoot
-  nameWithType.vb: AggregateRoot(Of TId).New
 - uid: FunctionalDDD.Domain.Aggregate`1
   name: Aggregate<TId>
   href: api/FunctionalDDD.Domain.Aggregate-1.html
@@ -110,96 +82,6 @@ references:
   fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).New
   nameWithType: Aggregate<TId>.Aggregate
   nameWithType.vb: Aggregate(Of TId).New
-- uid: FunctionalDDD.Domain.Aggregate`1.Equals(System.Object)
-  name: Equals(object?)
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_Equals_System_Object_
-  commentId: M:FunctionalDDD.Domain.Aggregate`1.Equals(System.Object)
-  name.vb: Equals(Object)
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.Equals(object?)
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).Equals(Object)
-  nameWithType: Aggregate<TId>.Equals(object?)
-  nameWithType.vb: Aggregate(Of TId).Equals(Object)
-- uid: FunctionalDDD.Domain.Aggregate`1.Equals*
-  name: Equals
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_Equals_
-  commentId: Overload:FunctionalDDD.Domain.Aggregate`1.Equals
-  isSpec: "True"
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.Equals
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).Equals
-  nameWithType: Aggregate<TId>.Equals
-  nameWithType.vb: Aggregate(Of TId).Equals
-- uid: FunctionalDDD.Domain.Aggregate`1.GetHashCode
-  name: GetHashCode()
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_GetHashCode
-  commentId: M:FunctionalDDD.Domain.Aggregate`1.GetHashCode
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.GetHashCode()
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).GetHashCode()
-  nameWithType: Aggregate<TId>.GetHashCode()
-  nameWithType.vb: Aggregate(Of TId).GetHashCode()
-- uid: FunctionalDDD.Domain.Aggregate`1.GetHashCode*
-  name: GetHashCode
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_GetHashCode_
-  commentId: Overload:FunctionalDDD.Domain.Aggregate`1.GetHashCode
-  isSpec: "True"
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.GetHashCode
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).GetHashCode
-  nameWithType: Aggregate<TId>.GetHashCode
-  nameWithType.vb: Aggregate(Of TId).GetHashCode
-- uid: FunctionalDDD.Domain.Aggregate`1.Id
-  name: Id
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_Id
-  commentId: P:FunctionalDDD.Domain.Aggregate`1.Id
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.Id
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).Id
-  nameWithType: Aggregate<TId>.Id
-  nameWithType.vb: Aggregate(Of TId).Id
-- uid: FunctionalDDD.Domain.Aggregate`1.Id*
-  name: Id
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_Id_
-  commentId: Overload:FunctionalDDD.Domain.Aggregate`1.Id
-  isSpec: "True"
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.Id
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).Id
-  nameWithType: Aggregate<TId>.Id
-  nameWithType.vb: Aggregate(Of TId).Id
-- uid: FunctionalDDD.Domain.Aggregate`1.op_Equality(FunctionalDDD.Domain.Aggregate{`0},FunctionalDDD.Domain.Aggregate{`0})
-  name: operator ==(Aggregate<TId>?, Aggregate<TId>?)
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_op_Equality_FunctionalDDD_Domain_Aggregate__0__FunctionalDDD_Domain_Aggregate__0__
-  commentId: M:FunctionalDDD.Domain.Aggregate`1.op_Equality(FunctionalDDD.Domain.Aggregate{`0},FunctionalDDD.Domain.Aggregate{`0})
-  name.vb: =(Aggregate(Of TId), Aggregate(Of TId))
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.operator ==(FunctionalDDD.Domain.Aggregate<TId>?, FunctionalDDD.Domain.Aggregate<TId>?)
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).=(FunctionalDDD.Domain.Aggregate(Of TId), FunctionalDDD.Domain.Aggregate(Of TId))
-  nameWithType: Aggregate<TId>.operator ==(Aggregate<TId>?, Aggregate<TId>?)
-  nameWithType.vb: Aggregate(Of TId).=(Aggregate(Of TId), Aggregate(Of TId))
-- uid: FunctionalDDD.Domain.Aggregate`1.op_Equality*
-  name: operator ==
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_op_Equality_
-  commentId: Overload:FunctionalDDD.Domain.Aggregate`1.op_Equality
-  isSpec: "True"
-  name.vb: =
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.operator ==
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).=
-  nameWithType: Aggregate<TId>.operator ==
-  nameWithType.vb: Aggregate(Of TId).=
-- uid: FunctionalDDD.Domain.Aggregate`1.op_Inequality(FunctionalDDD.Domain.Aggregate{`0},FunctionalDDD.Domain.Aggregate{`0})
-  name: operator !=(Aggregate<TId>?, Aggregate<TId>?)
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_op_Inequality_FunctionalDDD_Domain_Aggregate__0__FunctionalDDD_Domain_Aggregate__0__
-  commentId: M:FunctionalDDD.Domain.Aggregate`1.op_Inequality(FunctionalDDD.Domain.Aggregate{`0},FunctionalDDD.Domain.Aggregate{`0})
-  name.vb: <>(Aggregate(Of TId), Aggregate(Of TId))
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.operator !=(FunctionalDDD.Domain.Aggregate<TId>?, FunctionalDDD.Domain.Aggregate<TId>?)
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).<>(FunctionalDDD.Domain.Aggregate(Of TId), FunctionalDDD.Domain.Aggregate(Of TId))
-  nameWithType: Aggregate<TId>.operator !=(Aggregate<TId>?, Aggregate<TId>?)
-  nameWithType.vb: Aggregate(Of TId).<>(Aggregate(Of TId), Aggregate(Of TId))
-- uid: FunctionalDDD.Domain.Aggregate`1.op_Inequality*
-  name: operator !=
-  href: api/FunctionalDDD.Domain.Aggregate-1.html#FunctionalDDD_Domain_Aggregate_1_op_Inequality_
-  commentId: Overload:FunctionalDDD.Domain.Aggregate`1.op_Inequality
-  isSpec: "True"
-  name.vb: <>
-  fullName: FunctionalDDD.Domain.Aggregate<TId>.operator !=
-  fullName.vb: FunctionalDDD.Domain.Aggregate(Of TId).<>
-  nameWithType: Aggregate<TId>.operator !=
-  nameWithType.vb: Aggregate(Of TId).<>
 - uid: FunctionalDDD.Domain.EmailAddress
   name: EmailAddress
   href: api/FunctionalDDD.Domain.EmailAddress.html
@@ -222,6 +104,124 @@ references:
   isSpec: "True"
   fullName: FunctionalDDD.Domain.EmailAddress.New
   nameWithType: EmailAddress.New
+- uid: FunctionalDDD.Domain.Entity`1
+  name: Entity<TId>
+  href: api/FunctionalDDD.Domain.Entity-1.html
+  commentId: T:FunctionalDDD.Domain.Entity`1
+  name.vb: Entity(Of TId)
+  fullName: FunctionalDDD.Domain.Entity<TId>
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId)
+  nameWithType: Entity<TId>
+  nameWithType.vb: Entity(Of TId)
+- uid: FunctionalDDD.Domain.Entity`1.#ctor(`0)
+  name: Entity(TId)
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1__ctor__0_
+  commentId: M:FunctionalDDD.Domain.Entity`1.#ctor(`0)
+  name.vb: New(TId)
+  fullName: FunctionalDDD.Domain.Entity<TId>.Entity(TId)
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).New(TId)
+  nameWithType: Entity<TId>.Entity(TId)
+  nameWithType.vb: Entity(Of TId).New(TId)
+- uid: FunctionalDDD.Domain.Entity`1.#ctor*
+  name: Entity
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1__ctor_
+  commentId: Overload:FunctionalDDD.Domain.Entity`1.#ctor
+  isSpec: "True"
+  name.vb: New
+  fullName: FunctionalDDD.Domain.Entity<TId>.Entity
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).New
+  nameWithType: Entity<TId>.Entity
+  nameWithType.vb: Entity(Of TId).New
+- uid: FunctionalDDD.Domain.Entity`1.Equals(System.Object)
+  name: Equals(object?)
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_Equals_System_Object_
+  commentId: M:FunctionalDDD.Domain.Entity`1.Equals(System.Object)
+  name.vb: Equals(Object)
+  fullName: FunctionalDDD.Domain.Entity<TId>.Equals(object?)
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).Equals(Object)
+  nameWithType: Entity<TId>.Equals(object?)
+  nameWithType.vb: Entity(Of TId).Equals(Object)
+- uid: FunctionalDDD.Domain.Entity`1.Equals*
+  name: Equals
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_Equals_
+  commentId: Overload:FunctionalDDD.Domain.Entity`1.Equals
+  isSpec: "True"
+  fullName: FunctionalDDD.Domain.Entity<TId>.Equals
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).Equals
+  nameWithType: Entity<TId>.Equals
+  nameWithType.vb: Entity(Of TId).Equals
+- uid: FunctionalDDD.Domain.Entity`1.GetHashCode
+  name: GetHashCode()
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_GetHashCode
+  commentId: M:FunctionalDDD.Domain.Entity`1.GetHashCode
+  fullName: FunctionalDDD.Domain.Entity<TId>.GetHashCode()
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).GetHashCode()
+  nameWithType: Entity<TId>.GetHashCode()
+  nameWithType.vb: Entity(Of TId).GetHashCode()
+- uid: FunctionalDDD.Domain.Entity`1.GetHashCode*
+  name: GetHashCode
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_GetHashCode_
+  commentId: Overload:FunctionalDDD.Domain.Entity`1.GetHashCode
+  isSpec: "True"
+  fullName: FunctionalDDD.Domain.Entity<TId>.GetHashCode
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).GetHashCode
+  nameWithType: Entity<TId>.GetHashCode
+  nameWithType.vb: Entity(Of TId).GetHashCode
+- uid: FunctionalDDD.Domain.Entity`1.Id
+  name: Id
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_Id
+  commentId: P:FunctionalDDD.Domain.Entity`1.Id
+  fullName: FunctionalDDD.Domain.Entity<TId>.Id
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).Id
+  nameWithType: Entity<TId>.Id
+  nameWithType.vb: Entity(Of TId).Id
+- uid: FunctionalDDD.Domain.Entity`1.Id*
+  name: Id
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_Id_
+  commentId: Overload:FunctionalDDD.Domain.Entity`1.Id
+  isSpec: "True"
+  fullName: FunctionalDDD.Domain.Entity<TId>.Id
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).Id
+  nameWithType: Entity<TId>.Id
+  nameWithType.vb: Entity(Of TId).Id
+- uid: FunctionalDDD.Domain.Entity`1.op_Equality(FunctionalDDD.Domain.Entity{`0},FunctionalDDD.Domain.Entity{`0})
+  name: operator ==(Entity<TId>?, Entity<TId>?)
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_op_Equality_FunctionalDDD_Domain_Entity__0__FunctionalDDD_Domain_Entity__0__
+  commentId: M:FunctionalDDD.Domain.Entity`1.op_Equality(FunctionalDDD.Domain.Entity{`0},FunctionalDDD.Domain.Entity{`0})
+  name.vb: =(Entity(Of TId), Entity(Of TId))
+  fullName: FunctionalDDD.Domain.Entity<TId>.operator ==(FunctionalDDD.Domain.Entity<TId>?, FunctionalDDD.Domain.Entity<TId>?)
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).=(FunctionalDDD.Domain.Entity(Of TId), FunctionalDDD.Domain.Entity(Of TId))
+  nameWithType: Entity<TId>.operator ==(Entity<TId>?, Entity<TId>?)
+  nameWithType.vb: Entity(Of TId).=(Entity(Of TId), Entity(Of TId))
+- uid: FunctionalDDD.Domain.Entity`1.op_Equality*
+  name: operator ==
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_op_Equality_
+  commentId: Overload:FunctionalDDD.Domain.Entity`1.op_Equality
+  isSpec: "True"
+  name.vb: =
+  fullName: FunctionalDDD.Domain.Entity<TId>.operator ==
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).=
+  nameWithType: Entity<TId>.operator ==
+  nameWithType.vb: Entity(Of TId).=
+- uid: FunctionalDDD.Domain.Entity`1.op_Inequality(FunctionalDDD.Domain.Entity{`0},FunctionalDDD.Domain.Entity{`0})
+  name: operator !=(Entity<TId>?, Entity<TId>?)
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_op_Inequality_FunctionalDDD_Domain_Entity__0__FunctionalDDD_Domain_Entity__0__
+  commentId: M:FunctionalDDD.Domain.Entity`1.op_Inequality(FunctionalDDD.Domain.Entity{`0},FunctionalDDD.Domain.Entity{`0})
+  name.vb: <>(Entity(Of TId), Entity(Of TId))
+  fullName: FunctionalDDD.Domain.Entity<TId>.operator !=(FunctionalDDD.Domain.Entity<TId>?, FunctionalDDD.Domain.Entity<TId>?)
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).<>(FunctionalDDD.Domain.Entity(Of TId), FunctionalDDD.Domain.Entity(Of TId))
+  nameWithType: Entity<TId>.operator !=(Entity<TId>?, Entity<TId>?)
+  nameWithType.vb: Entity(Of TId).<>(Entity(Of TId), Entity(Of TId))
+- uid: FunctionalDDD.Domain.Entity`1.op_Inequality*
+  name: operator !=
+  href: api/FunctionalDDD.Domain.Entity-1.html#FunctionalDDD_Domain_Entity_1_op_Inequality_
+  commentId: Overload:FunctionalDDD.Domain.Entity`1.op_Inequality
+  isSpec: "True"
+  name.vb: <>
+  fullName: FunctionalDDD.Domain.Entity<TId>.operator !=
+  fullName.vb: FunctionalDDD.Domain.Entity(Of TId).<>
+  nameWithType: Entity<TId>.operator !=
+  nameWithType.vb: Entity(Of TId).<>
 - uid: FunctionalDDD.Domain.RequiredGuid`1
   name: RequiredGuid<TValue>
   href: api/FunctionalDDD.Domain.RequiredGuid-1.html

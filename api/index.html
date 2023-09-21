@@ -86,6 +86,20 @@
 <h1 id="api-documentation-for-functionalddd-library">API Documentation for FunctionalDDD Library</h1>
 
 <p>Bringing the functional programming paradigm to C#.</p>
+<h2 id="functional-programming">Functional Programming</h2>
+<h3 id="result"><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a></h3>
+<p>The Result type used in functional programming languages to represent a success value or an error.</p>
+<h3 id="maybe"><a class="xref" href="FunctionalDDD.Results.Maybe-1.html">Maybe</a></h3>
+<p>The Maybe type used in functional programming languages to represent an optional value.</p>
+<h2 id="domain-driven-design">Domain Driven Design</h2>
+<h3 id="aggregate"><a class="xref" href="FunctionalDDD.Domain.Aggregate-1.html">Aggregate</a></h3>
+<p>A DDD aggregate is a cluster of domain objects that can be treated as a single unit. An aggregate will have one of its component objects be the aggregate root.Any references from outside the aggregate should only go to the aggregate root. The root can thus ensure the integrity of the aggregate as a whole.</p>
+<p><a href="https://martinfowler.com/bliki/DDD_Aggregate.html">For more details</a></p>
+<h3 id="valueobject"><a class="xref" href="FunctionalDDD.Domain.ValueObject.html">ValueObject</a></h3>
+<p>A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
+It is a small, simple object that encapsulates a concept from your problem domain.
+Unlike an aggregate, a value object does not have a unique identity and is immutable.
+Value objects support and enrich the ubiquitous language of your domain.</p>
 </article>
 
         <div class="contribution d-print-none">

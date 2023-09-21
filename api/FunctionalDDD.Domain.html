@@ -96,22 +96,20 @@
 Classes
 </h3>
     <dl class="jumplist">
-      <dt><a class="xref" href="FunctionalDDD.Domain.AggregateRoot-1.html">AggregateRoot&lt;TId&gt;</a></dt>
-      <dd><p>A DDD aggregate is a cluster of domain objects that can be treated as a single unit.
-An aggregate will have one of its component objects be the aggregate root.Any references from outside the aggregate should only go to the aggregate root.
-The root can thus ensure the integrity of the aggregate as a whole.</p>
-</dd>
-    </dl>
-    <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Domain.Aggregate-1.html">Aggregate&lt;TId&gt;</a></dt>
       <dd><p>A DDD aggregate is a cluster of domain objects that can be treated as a single unit.
-An aggregate will have one of its component objects be the aggregate root.Any references from outside the aggregate should only go to the aggregate root.
+Any references from outside the aggregate should only go to the aggregate root.
 The root can thus ensure the integrity of the aggregate as a whole.</p>
 </dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDDD.Domain.EmailAddress.html">EmailAddress</a></dt>
       <dd><p>Represents an email address value object. It checks for valid email address.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDDD.Domain.Entity-1.html">Entity&lt;TId&gt;</a></dt>
+      <dd><p>Entity is an object who's identity is defined by its Id.</p>
 </dd>
     </dl>
     <dl class="jumplist">
@@ -133,7 +131,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
       <dt><a class="xref" href="FunctionalDDD.Domain.ValueObject.html">ValueObject</a></dt>
       <dd><p>A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
 It is a small, simple object that encapsulates a concept from your problem domain.
-Unlike an entity, a value object does not have a unique identity and is immutable.
+Unlike an aggregate, a value object does not have a unique identity and is immutable.
 Value objects support and enrich the ubiquitous language of your domain.</p>
 <p>Value objects compare equality based on property specified in the GetEqualityComponents method.</p>
 </dd>

@@ -35,20 +35,20 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.AggregateRoot-1.yml",
+      "source_relative_path": "api/FunctionalDDD.Domain.EmailAddress.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.AggregateRoot-1.html"
+          "relative_path": "api/FunctionalDDD.Domain.EmailAddress.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.EmailAddress.yml",
+      "source_relative_path": "api/FunctionalDDD.Domain.Entity-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.EmailAddress.html"
+          "relative_path": "api/FunctionalDDD.Domain.Entity-1.html"
         }
       },
       "version": ""
