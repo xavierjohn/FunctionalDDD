@@ -11,7 +11,7 @@ using FunctionalDDD.Results.Errors;
 /// <example>
 /// Validation of an user object using FluentValidation:
 /// <code>
-/// class User : AggregateRoot&lt;UserId&gt;
+/// class User : Aggregate&lt;UserId&gt;
 ///{
 ///    public FirstName FirstName { get; }
 ///    public LastName LastName { get; }
