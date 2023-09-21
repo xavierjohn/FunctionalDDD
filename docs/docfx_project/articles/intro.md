@@ -8,7 +8,7 @@ Functional code can be written using the library's provided functions to control
 
 ### Domain Driven Design
 
-The library's classes can be utilized to create AggregateRoot and ValueObject classes, with Fluent Validation available to validate all domain properties and ensure they remain in a valid state.
+The library's classes can be utilized to create Aggregate and ValueObject classes, with Fluent Validation available to validate all domain properties and ensure they remain in a valid state.
 
 
 ### Common error classes

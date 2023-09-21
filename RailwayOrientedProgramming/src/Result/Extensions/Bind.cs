@@ -1,12 +1,12 @@
 ﻿namespace FunctionalDDD.Results;
 
 /// <summary>
-///     The Bind function returns a new Result from a specified function if the current Result is in a successful state.
-///     If the current Result is in a failed state, the Bind function returns the current failed Result.
+/// If the starting Result is a success, the Bind function will return a new Result from the given function.
+/// Otherwise, the Bind function will return the starting failed Result.
 /// </summary>
 public static partial class BindExtensions
 {
-    public static Result<TResult> Bind<TOk, TResult>(this Result<TOk> result, Func<TOk, Result<TResult>> func)
+    public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -15,9 +15,13 @@ public static partial class BindExtensions
     }
 }
 
+/// <summary>
+/// If the starting Result is a success, the Bind function will return a new Result from the given function.
+/// Otherwise, the Bind function will return the starting failed Result.
+/// </summary>
 public static partial class BindExtensionsAsync
 {
-    public static Task<Result<TResult>> BindAsync<TOk, TResult>(this Result<TOk> result, Func<TOk, Task<Result<TResult>>> func)
+    public static Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error).AsCompletedTask();
@@ -25,31 +29,31 @@ public static partial class BindExtensionsAsync
         return func(result.Value);
     }
 
-    public static async Task<Result<TResult>> BindAsync<TOk, TResult>(this Task<Result<TOk>> resultTask, Func<TOk, Task<Result<TResult>>> func)
+    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, Task<Result<TResult>>> func)
     {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.BindAsync(func).ConfigureAwait(false);
     }
 
-    public static async Task<Result<TResult>> BindAsync<TOk, TResult>(this Task<Result<TOk>> resultTask, Func<TOk, Result<TResult>> func)
+    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, Result<TResult>> func)
     {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
     }
 
-    public static async ValueTask<Result<TResult>> BindAsync<TOk, TResult>(this ValueTask<Result<TOk>> resultTask, Func<TOk, ValueTask<Result<TResult>>> valueTask)
+    public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this ValueTask<Result<TValue>> resultTask, Func<TValue, ValueTask<Result<TResult>>> valueTask)
     {
-        Result<TOk> result = await resultTask;
+        Result<TValue> result = await resultTask;
         return await result.BindAsync(valueTask);
     }
 
-    public static async ValueTask<Result<TResult>> BindAsync<TOk, TResult>(this ValueTask<Result<TOk>> resultTask, Func<TOk, Result<TResult>> func)
+    public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this ValueTask<Result<TValue>> resultTask, Func<TValue, Result<TResult>> func)
     {
-        Result<TOk> result = await resultTask;
+        Result<TValue> result = await resultTask;
         return result.Bind(func);
     }
 
-    public static ValueTask<Result<TResult>> BindAsync<TOk, TResult>(this Result<TOk> result, Func<TOk, ValueTask<Result<TResult>>> valueTask)
+    public static ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, ValueTask<Result<TResult>>> valueTask)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error).AsCompletedValueTask();

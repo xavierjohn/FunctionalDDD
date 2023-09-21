@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using FunctionalDDD.Domain;
 
-public class SimpleValueObjectTests
+public class ScalarValueObjectTests
 {
     internal class PasswordSimple : ScalarValueObject<string>
     {

@@ -2,6 +2,9 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+/// <summary>
+/// The Maybe type used in functional programming languages to represent an optional value.
+/// </summary>
 public readonly struct Maybe<T> :
     IEquatable<T>,
     IEquatable<Maybe<T>>

@@ -1,4 +1,8 @@
 ﻿namespace FunctionalDDD.Domain;
+/// <summary>
+/// Entity is an object who's identity is defined by its Id.
+/// </summary>
+/// <typeparam name="TId"></typeparam>
 public abstract class Entity<TId>
     where TId : notnull
 {

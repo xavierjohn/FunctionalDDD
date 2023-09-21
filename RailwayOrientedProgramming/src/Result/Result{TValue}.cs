@@ -3,7 +3,7 @@
 using FunctionalDDD.Results.Errors;
 
 /// <summary>
-/// This class is used to create a Result object that contains a value or an error.
+/// The Result type used in functional programming languages to represent a success value or an error.
 /// </summary>
 /// <typeparam name="TValue"></typeparam>
 public readonly struct Result<TValue>
@@ -11,14 +11,14 @@ public readonly struct Result<TValue>
     /// <summary>
     /// Gets the underlying Value if Result is in success state.
     /// </summary>
-    /// <exception cref="ResultFailureException">Attempted to access the Value for a failed result.</exception>
-    public TValue Value => IsFailure ? throw new ResultFailureException(Error) : _value!;
+    /// <exception cref="InvalidOperationException">Attempted to access the Value for a failed result.</exception>
+    public TValue Value => IsFailure ? throw new InvalidOperationException("Attempted to access the Value for a failed result. A failed result has no Value.") : _value!;
 
     /// <summary>
     /// Gets the Error object if Result is in failed state.
     /// </summary>
-    /// <exception cref="ResultSuccessException">Attempted to access the Error property for a successful result.</exception>
-    public Error Error => _error ?? throw new ResultSuccessException();
+    /// <exception cref="InvalidOperationException">Attempted to access the Error property for a successful result.</exception>
+    public Error Error => _error ?? throw new InvalidOperationException("Attempted to access the Error property for a successful result.A successful result has no Error.");
 
     /// <summary>
     /// Check if result is in failure state.

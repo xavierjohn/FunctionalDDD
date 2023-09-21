@@ -5,6 +5,8 @@ using FunctionalDDD.Results.Errors;
 
 public class FluentTests
 {
+    private const string StrongPassword = "P@ssw0rd";
+
     [Fact]
     public void Can_create_user()
     {
@@ -12,14 +14,14 @@ public class FluentTests
             FirstName.New("John").Value,
             LastName.New("Doe").Value,
             EmailAddress.New("xavier@somewhere.com").Value,
-            "password");
+            StrongPassword);
 
         rUser.IsSuccess.Should().BeTrue();
         var user = rUser.Value;
         user.FirstName.Value.Should().Be("John");
         user.LastName.Value.Should().Be("Doe");
         user.Email.Value.Should().Be("xavier@somewhere.com");
-        user.Password.Should().Be("password");
+        user.Password.Should().Be(StrongPassword);
     }
 
     [Fact]
@@ -37,7 +39,7 @@ public class FluentTests
         };
 
         // Act
-        var rUser = User.New(firstName, lastName, email, "password");
+        var rUser = User.New(firstName, lastName, email, StrongPassword);
 
         // Assert
         rUser.IsFailure.Should().BeTrue();
@@ -57,11 +59,11 @@ public class FluentTests
         {
             Error.ValidationError("'First Name' must not be empty.", "FirstName"),
             Error.ValidationError("'Last Name' must not be empty.","LastName" ),
-            Error.ValidationError("'Password' must not be empty.", "Password")
+            Error.ValidationError("'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.", "Password")
         };
 
         // Act
-        var rUser = User.New(firstName, lastName, email, string.Empty);
+        var rUser = User.New(firstName, lastName, email, "WeakPassword");
 
         // Assert
         rUser.IsFailure.Should().BeTrue();

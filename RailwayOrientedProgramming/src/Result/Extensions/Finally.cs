@@ -3,7 +3,7 @@
 using FunctionalDDD.Results.Errors;
 
 /// <summary>
-/// Finally extensions are used to terminate the chain and return the final value.
+/// Passes the result to the given function (regardless of success/failure state) to yield a final output value.
 /// </summary>
 public static class FinallyExtensions
 {
@@ -25,7 +25,7 @@ public static class FinallyExtensions
     /// <typeparam name="TIn">Type of the data contained within Result object.</typeparam>
     /// <typeparam name="TOut">Return type</typeparam>
     /// <param name="result">The <see cref="Result{TValue}"/>.</param>
-    /// <param name="funcOk">A delegate the success value.</param>
+    /// <param name="funcOk">A delegate that return the success value.</param>
     /// <param name="funcError">A delegate that returns the error.</param>
     /// <returns>The final result of type TOut</returns>
     public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError)
@@ -33,7 +33,7 @@ public static class FinallyExtensions
 }
 
 /// <summary>
-/// Finally extensions are used to terminate the chain and return the final value.
+/// Passes the result to the given function (regardless of success/failure state) to yield a final output value.
 /// </summary>
 public static class FinallyExtensionsAsync
 {

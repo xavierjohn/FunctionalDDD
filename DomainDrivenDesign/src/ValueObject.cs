@@ -1,4 +1,49 @@
-namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDDD.Domain;
+/// <summary>
+/// A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
+/// It is a small, simple object that encapsulates a concept from your problem domain.
+/// Unlike an aggregate, a value object does not have a unique identity and is immutable. 
+/// Value objects support and enrich the ubiquitous language of your domain.
+/// 
+/// Value objects compare equality based on property specified in the GetEqualityComponents method.
+/// </summary>
+/// <example>
+/// <code>
+/// class Address : ValueObject
+/// {
+///     public string Street { get; }
+///     public string City { get; }
+///
+///     public Address(string street, string city)
+///     {
+///         Street = street;
+///         City = city;
+///     }
+///
+///     protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+///     {
+///         yield return Street;
+///         yield return City;
+///     }
+/// }
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// class DerivedAddress : Address
+/// {
+///     public string Country { get; }
+///     public DerivedAddress(string street, string city, string country) : base(street, city) => Country = country;
+///
+///     protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+///     {
+///         foreach (var s in base.GetEqualityComponents())
+///             yield return s;
+///         yield return City;
+///     }
+/// }
+/// </code>
+/// </example>
 public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueObject>
 {
     private int? _cachedHashCode;

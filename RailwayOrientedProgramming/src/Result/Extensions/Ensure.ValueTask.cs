@@ -2,6 +2,9 @@
 
 using FunctionalDDD.Results.Errors;
 
+/// <summary>
+///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+/// </summary>
 public static partial class EnsureExtensionsAsync
 {
     /// <summary>
