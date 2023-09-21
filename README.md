@@ -110,7 +110,7 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
 ### Fluent Validation
 
 ```csharp
- public class User : AggregateRoot<UserId>
+ public class User : Aggregate<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }
@@ -163,7 +163,7 @@ var result = await _httpClient.GetAsync($"person/{id}")
 Or handle errors yourself by using a callback.
   
   ```csharp
-async ValueTask<Error> FailureHandling(HttpResponseMessage response, int personId)
+async Task<Error> FailureHandling(HttpResponseMessage response, int personId)
 {
     var content = await response.Content.ReadAsStringAsync();
     // Log/Handle error
