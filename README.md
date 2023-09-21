@@ -64,7 +64,7 @@ Here is a YouTube video explaining several of this library's methods.
 
 - **Domain Driven Design**
 
-  Has DDD base type like AggregateRoot & ValueObject.
+  Has DDD base type like Aggregate & ValueObject.
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
 
