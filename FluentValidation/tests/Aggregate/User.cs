@@ -3,7 +3,7 @@ using FluentValidation;
 using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 
-internal class User : AggregateRoot<UserId>
+internal class User : Aggregate<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }
