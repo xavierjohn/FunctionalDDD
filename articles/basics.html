@@ -15,7 +15,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/docs/docfx_project/articles/basics.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/next_changes/docs/docfx_project/articles/basics.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -146,23 +146,23 @@ The need to handle failure after each method call can be tedious so the <code>Re
 /// Gets the underlying Value if Result is in success state.
 /// &lt;/summary&gt;
 /// &lt;exception cref=&quot;InvalidOperationException&quot;&gt;Attempted to access the Value for a failed result.&lt;/exception&gt;
-public TValue Value =&gt; IsFailure ? throw new InvalidOperationException(&quot;Attempted to access the Value for a failed result. A failed result has no Value.&quot;) : _value!;
+public TValue Value =&gt; IsSuccess ? _value! : throw new InvalidOperationException(&quot;Attempted to access the Value for a failed result. A failed result has no Value.&quot;);
 
 /// &lt;summary&gt;
 /// Gets the Error object if Result is in failed state.
 /// &lt;/summary&gt;
 /// &lt;exception cref=&quot;InvalidOperationException&quot;&gt;Attempted to access the Error property for a successful result.&lt;/exception&gt;
-public Error Error =&gt; _error ?? throw new InvalidOperationException(&quot;Attempted to access the Error property for a successful result.A successful result has no Error.&quot;);
-
-/// &lt;summary&gt;
-/// Check if result is in failure state.
-/// &lt;/summary&gt;
-public bool IsFailure { get; }
+public Error Error =&gt; IsFailure ? _error! : throw new InvalidOperationException(&quot;Attempted to access the Error property for a successful result.A successful result has no Error.&quot;);
 
 /// &lt;summary&gt;
 /// Check if result is in success state.
 /// &lt;/summary&gt;
 public bool IsSuccess =&gt; !IsFailure;
+
+/// &lt;summary&gt;
+/// Check if result is in failure state.
+/// &lt;/summary&gt;
+public bool IsFailure { get; }
 
 </code></pre>
 <p>This class help chain functions on the success or error path in a concept called <a href="https://fsharpforfunandprofit.com/rop/">Railway Oriented Programming</a>.
@@ -193,7 +193,7 @@ If the Result is in failed state, accessing the Value property will throw an exc
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/docs/docfx_project/articles/basics.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/next_changes/docs/docfx_project/articles/basics.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

@@ -15,7 +15,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/docs/docfx_project/articles/examples.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/next_changes/docs/docfx_project/articles/examples.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -109,27 +109,26 @@ If not, return a <code>Validation</code> error.</p>
        Result.Success(string.Join(&quot; &quot;, firstName, lastName, email)));
 </code></pre>
 <p><code>Combine</code> is used to combine multiple <code>Result</code> objects. If any of the <code>Result</code> objects have failed, it will return a <code>Result</code> containing each of the errors which arose during evaluation. Avoiding primitive obsession prevents using parameters out of order.</p>
-<h2 id="fluent-validation">Fluent Validation</h2>
-<p>The API layer can reuse the Domain validation logic to return <code>BadRequest</code> with the validation errors.</p>
+<h2 id="validation">Validation</h2>
+<p>This library supports validation using <a href="https://docs.fluentvalidation.net">FluentValidation</a>.
+The API layer can reuse the Domain validation logic to return <code>BadRequest</code> with the validation errors.</p>
 <pre><code class="lang-csharp"> public class User : Aggregate&lt;UserId&gt;
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }
-    public EmailAddress Email { get; }
 
-    public static Result&lt;User&gt; New(FirstName firstName, LastName lastName, EmailAddress email)
+    public static Result&lt;User&gt; New(FirstName firstName, LastName lastName)
     {
-        var user = new User(firstName, lastName, email);
+        var user = new User(firstName, lastName);
         return Validator.ValidateToResult(user);
     }
 
 
-    private User(FirstName firstName, LastName lastName, EmailAddress email)
+    private User(FirstName firstName, LastName lastName)
     : base(UserId.NewUnique())
     {
         FirstName = firstName;
         LastName = lastName;
-        Email = email;
     }
 
     // Fluent Validation
@@ -137,7 +136,6 @@ If not, return a <code>Validation</code> error.</p>
     {
         v =&gt; v.RuleFor(x =&gt; x.FirstName).NotNull(),
         v =&gt; v.RuleFor(x =&gt; x.LastName).NotNull(),
-        v =&gt; v.RuleFor(x =&gt; x.Email).NotNull(),
     };
 }
 </code></pre>
@@ -170,11 +168,12 @@ Transfer-Encoding: chunked
        =&gt; PrepareReport(studentInformation, studentGrades, checkoutBooks));
 </code></pre>
 <h2 id="read-http-response-as-result">Read HTTP response as Result</h2>
+<p>Handles HTTP NotFound and throws for all other failures.</p>
 <pre><code class="lang-csharp">var result = await _httpClient.GetAsync($&quot;person/{id}&quot;)
     .ReadResultWithNotFoundAsync&lt;Person&gt;(Error.NotFound(&quot;Person not found&quot;));
 </code></pre>
-<p>Or handle errors yourself by using a callback.</p>
-<pre><code class="lang-csharp">async Task&lt;Error&gt; FailureHandling(HttpResponseMessage response, int personId)
+<p>Or handle the errors yourself by using a callback.</p>
+<pre><code class="lang-csharp">async Task&lt;Error&gt; FailureCallback(HttpResponseMessage response, int personId)
 {
   var content = await response.Content.ReadAsStringAsync();
   // Log/Handle error
@@ -183,14 +182,14 @@ Transfer-Encoding: chunked
 }
 
 var result = await _httpClient.GetAsync($&quot;person/{id}&quot;)
-  .ReadResultAsync&lt;Person, int&gt;(FailureHandling, 5);
+  .ReadResultAsync&lt;Person, int&gt;(FailureCallback, 5);
 
 </code></pre>
 <p>Look at the <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples">examples folder</a> for more sample use cases.</p>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/more_documentation/docs/docfx_project/articles/examples.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/next_changes/docs/docfx_project/articles/examples.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>
