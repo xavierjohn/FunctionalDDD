@@ -37,8 +37,9 @@ If there is no error, `TeeAsync` will execute the `Promote` method and then send
 
  `Combine` is used to combine multiple `Result` objects. If any of the `Result` objects have failed, it will return a `Result` containing each of the errors which arose during evaluation. Avoiding primitive obsession prevents using parameters out of order.
 
-## Fluent Validation
+## Validation
 
+This library supports validation using [FluentValidation](https://docs.fluentvalidation.net).
 The API layer can reuse the Domain validation logic to return `BadRequest` with the validation errors.
 
 ```csharp
@@ -46,21 +47,19 @@ The API layer can reuse the Domain validation logic to return `BadRequest` with 
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }
-    public EmailAddress Email { get; }
 
-    public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email)
+    public static Result<User> New(FirstName firstName, LastName lastName)
     {
-        var user = new User(firstName, lastName, email);
+        var user = new User(firstName, lastName);
         return Validator.ValidateToResult(user);
     }
 
 
-    private User(FirstName firstName, LastName lastName, EmailAddress email)
+    private User(FirstName firstName, LastName lastName)
     : base(UserId.NewUnique())
     {
         FirstName = firstName;
         LastName = lastName;
-        Email = email;
     }
 
     // Fluent Validation
@@ -68,7 +67,6 @@ The API layer can reuse the Domain validation logic to return `BadRequest` with 
     {
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
-        v => v.RuleFor(x => x.Email).NotNull(),
     };
 }
  ```
@@ -110,15 +108,17 @@ var r = await _sender.Send(new StudentInformationQuery(studentId)
 
 ## Read HTTP response as Result
 
+Handles HTTP NotFound and throws for all other failures.
+
 ```csharp
 var result = await _httpClient.GetAsync($"person/{id}")
     .ReadResultWithNotFoundAsync<Person>(Error.NotFound("Person not found"));
 ```
 
-Or handle errors yourself by using a callback.
+Or handle the errors yourself by using a callback.
   
   ```csharp
-async Task<Error> FailureHandling(HttpResponseMessage response, int personId)
+async Task<Error> FailureCallback(HttpResponseMessage response, int personId)
 {
     var content = await response.Content.ReadAsStringAsync();
     // Log/Handle error
@@ -127,7 +127,7 @@ async Task<Error> FailureHandling(HttpResponseMessage response, int personId)
 }
 
 var result = await _httpClient.GetAsync($"person/{id}")
-    .ReadResultAsync<Person, int>(FailureHandling, 5);
+    .ReadResultAsync<Person, int>(FailureCallback, 5);
 
   ```
 
