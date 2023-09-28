@@ -58,17 +58,51 @@ public static class ActionResultExtensions
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
-    /// <para>
-    /// For Example:<br/>
-    /// <see cref="ValidationError"/> returns <see cref="BadRequestObjectResult"/> <br/>
-    /// <see cref="NotFoundError"/> returns <see cref="NotFoundObjectResult"/> <br/>
-    /// </para>
     /// </summary>
     /// <typeparam name="TValue">The type of the <see cref="ActionResult{TValue}"/></typeparam>
-    /// <param name="error">The error object.</param>
+    /// <param name="error">The domain error object.</param>
     /// <param name="controllerBase">The controller object.</param>
-    /// <returns><see cref="ActionResult{TValue}"/> </returns>
-    /// <exception cref="NotImplementedException">Thrown if the error type is unknown.</exception>
+    /// <returns>
+    ///     <para>Converts domain errors to failed <see cref="ObjectResult"/>:</para>
+    ///     <list type="table">
+    ///         <listheader>
+    ///             <term>Domain Error</term>
+    ///             <description>HTTP error</description>
+    ///         </listheader>
+    ///         <item>
+    ///             <term><see cref="NotFoundError"/></term>
+    ///             <description><see cref="ControllerBase.NotFound()"/></description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ValidationError"/></term>
+    ///             <description><see cref="ControllerBase.ValidationProblem()"/></description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="BadRequestError"/></term>
+    ///             <description><see cref="ControllerBase.BadRequest()"/></description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ConflictError"/></term>
+    ///             <description><see cref="ControllerBase.Conflict()"/></description>
+    ///         </item>    
+    ///         <item>
+    ///             <term><see cref="UnauthorizedError"/></term>
+    ///             <description><see cref="ControllerBase.Unauthorized()"/></description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ForbiddenError"/></term>
+    ///             <description><see cref="ControllerBase.Forbid()"/></description>
+    ///         </item>    
+    ///         <item>
+    ///             <term><see cref="UnexpectedError"/></term>
+    ///             <description>500 Internal Server Error</description>
+    ///         </item>
+    ///         <item>
+    ///             <term>Everything else</term>
+    ///             <description>500 Internal Server Error</description>
+    ///         </item>
+    ///     </list>
+    /// </returns>
     public static ActionResult<TValue> ToErrorActionResult<TValue>(this Error error, ControllerBase controllerBase)
     => error switch
     {
@@ -79,7 +113,7 @@ public static class ActionResultExtensions
         UnauthorizedError => (ActionResult<TValue>)controllerBase.Unauthorized(error),
         ForbiddenError => (ActionResult<TValue>)controllerBase.Forbid(error.Message),
         UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(500, error),
-        _ => throw new NotImplementedException($"Unknown error {error.Code}"),
+        _ => (ActionResult<TValue>)controllerBase.StatusCode(500, error),
     };
 
     /// <summary>
@@ -108,8 +142,8 @@ public static class ActionResultExtensions
     }
 
     /// <summary>
-    /// Returns partial status code (206) when partial result is returned. 
-    /// Returns Okay status code (200) when all data is returned.
+    /// <para>If <paramref name="result"/> is in success state, returns Okay (200) or Partial (206) status code based on the <see cref="ContentRangeHeaderValue"/>.</para>
+    /// <para>If <paramref name="result"/> is in failed state, returns a failed <see cref="ObjectResult"/> based on mapping <see cref="ToErrorActionResult"/>.</para>
     /// </summary>
     /// <typeparam name="TIn"></typeparam>
     /// <typeparam name="TOut"></typeparam>
