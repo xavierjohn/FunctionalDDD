@@ -10,11 +10,11 @@
 ```csharp
 public readonly struct Result<TValue>
 {
-    public TValue Value => IsFailure ? throw new ResultFailureException(Error) : _value!;
-    public Error Error => _error ?? throw new ResultSuccessException();
+    public TValue Value => IsSuccess ? _value! : throw new InvalidOperationException;
+    public Error Error => IsFailure ? _error! : throw new InvalidOperationException;
 
-    public bool IsFailure { get; }
     public bool IsSuccess => !IsFailure;
+    public bool IsFailure { get; }
 
     public static implicit operator Result<TValue>(TValue value) => Result.Success(value);
 

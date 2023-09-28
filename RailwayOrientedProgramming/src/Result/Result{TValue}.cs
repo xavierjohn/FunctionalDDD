@@ -12,23 +12,23 @@ public readonly struct Result<TValue>
     /// Gets the underlying Value if Result is in success state.
     /// </summary>
     /// <exception cref="InvalidOperationException">Attempted to access the Value for a failed result.</exception>
-    public TValue Value => IsFailure ? throw new InvalidOperationException("Attempted to access the Value for a failed result. A failed result has no Value.") : _value!;
+    public TValue Value => IsSuccess ? _value! : throw new InvalidOperationException("Attempted to access the Value for a failed result. A failed result has no Value.");
 
     /// <summary>
     /// Gets the Error object if Result is in failed state.
     /// </summary>
     /// <exception cref="InvalidOperationException">Attempted to access the Error property for a successful result.</exception>
-    public Error Error => _error ?? throw new InvalidOperationException("Attempted to access the Error property for a successful result.A successful result has no Error.");
-
-    /// <summary>
-    /// Check if result is in failure state.
-    /// </summary>
-    public bool IsFailure { get; }
+    public Error Error => IsFailure ? _error! : throw new InvalidOperationException("Attempted to access the Error property for a successful result.A successful result has no Error.");
 
     /// <summary>
     /// Check if result is in success state.
     /// </summary>
     public bool IsSuccess => !IsFailure;
+
+    /// <summary>
+    /// Check if result is in failure state.
+    /// </summary>
+    public bool IsFailure { get; }
 
     /// <summary>
     /// Implicit operator to convert a value to a success <see cref="Result{TValue}"/>
