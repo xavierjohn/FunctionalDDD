@@ -15,7 +15,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/intro.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/why/docs/docfx_project/articles/intro.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -86,11 +86,21 @@
 <h1 id="why-use-this-library">Why use this library?</h1>
 
 <h3 id="functional-programming">Functional programming</h3>
-<p>Functional code can be written using the library's provided functions to control program execution flow based on success or error track.</p>
+<p>Railway Oriented Programming is a coding concept that involves using a library's built-in functions to control program execution flow based on success or error track. By doing so, functional code can be written that allows for chaining of functions without the need for error checking.</p>
 <h3 id="domain-driven-design">Domain Driven Design</h3>
-<p>The library's classes can be utilized to create Aggregate and ValueObject classes, with Fluent Validation available to validate all domain properties and ensure they remain in a valid state.</p>
-<h3 id="common-error-classes">Common error classes</h3>
-<p>The library can automatically translate common domain failures to their respective HTTP errors using its provided error classes.</p>
+<p>Using the library's classes, it is possible to create Aggregate, Entity, and ValueObject classes. These classes can be validated using Fluent Validation to ensure that all domain properties are in a valid state. For simple ValueObjects with a single value, ScalarValueObject can be used. If the only requirement for a ValueObject is that the value is not null or empty, RequiredString can be utilized.</p>
+<h3 id="error-classes">Error classes</h3>
+<p>The library includes a set of common error classes that can be returned by your domain. Additionally, the library supports automatic mapping of these errors to corresponding HTTP errors.</p>
+<ul>
+<li>ValidationError</li>
+<li>NotFoundError</li>
+<li>ForbiddenError</li>
+<li>UnauthorizedError</li>
+<li>ConflictError</li>
+<li>BadRequestError</li>
+<li>UnauthorizedError</li>
+<li>AggregateError</li>
+</ul>
 <h3 id="reuse-domain-object-validation-rules-at-the-api-layer">Reuse Domain object validation rules at the API layer</h3>
 <p>As far as I know, this library is unique in its ability to reuse domain validation rules at the presentation layer to return errors in HTTP standard format. If the domain returns a validation failure, the library will translate it to HTTP BadRequest with the failure details. Additionally, if the domain returns a record not found, the library will translate it to HTTP NotFound.</p>
 <h3 id="pagination-over-several-objects">Pagination over several objects</h3>
@@ -102,7 +112,7 @@
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/intro.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/why/docs/docfx_project/articles/intro.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>
