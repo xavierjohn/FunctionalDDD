@@ -29,34 +29,6 @@ public static class ActionResultExtensions
     }
 
     /// <summary>
-    /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.<br/>
-    /// Otherwise it returns the error code corresponding to the failure error object.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="result">The result object.</param>
-    /// <param name="controllerBase">The controller object.</param>
-    /// <returns><see cref="ActionResult{TValue}"/> </returns>
-    public static async Task<ActionResult<TValue>> ToOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
-    {
-        var result = await resultTask;
-        return result.ToOkActionResult(controllerBase);
-    }
-
-    /// <summary>
-    /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.<br/>
-    /// Otherwise it returns the error code corresponding to the failure error object.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="result">The result object.</param>
-    /// <param name="controllerBase">The controller object.</param>
-    /// <returns><see cref="ActionResult{TValue}"/></returns>
-    public static async ValueTask<ActionResult<TValue>> ToOkActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
-    {
-        var result = await resultTask;
-        return result.ToOkActionResult(controllerBase);
-    }
-
-    /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
     /// </summary>
     /// <typeparam name="TValue">The type of the <see cref="ActionResult{TValue}"/></typeparam>
@@ -192,18 +164,6 @@ public static class ActionResultExtensions
 
         var error = result.Error;
         return error.ToErrorActionResult<TValue>(controllerBase);
-    }
-
-    public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
-    {
-        var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
-    }
-
-    public static async ValueTask<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
-    {
-        var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
     }
 
     private static ActionResult<TValue> ValidationErrors<TValue>(ValidationError validation, ControllerBase controllerBase)
