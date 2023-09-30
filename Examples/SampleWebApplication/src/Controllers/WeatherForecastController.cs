@@ -34,7 +34,7 @@ public class WeatherForecastController : ControllerBase
             from = firstRange.From ?? from;
             to = firstRange.To ?? to;
         }
-        return Result.Success(() =>
+        return Result.Success<(ContentRangeHeaderValue, WeatherForecast[])>(() =>
             {
                 var allData = Enumerable.Range(1, 5).Select(index => new WeatherForecast
                 {
@@ -45,8 +45,8 @@ public class WeatherForecastController : ControllerBase
 
                 WeatherForecast[] data = allData.Skip((int)from).Take((int)(to - from + 1)).ToArray();
                 var contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, allData.Length) { Unit = "items" };
-                return new ContentRangeAndData<WeatherForecast[]>(contentRangeHeaderValue, data);
+                return new(contentRangeHeaderValue, data);
             })
-        .ToPartialOrOkActionResult(this, static r => r);
+        .ToPartialOrOkActionResult(this, static r => r.Item1, static r => r.Item2);
     }
 }

@@ -62,25 +62,40 @@ public static class ActionResultExtensionsAsync
     /// <param name="controllerBase"></param>
     /// <param name="func"></param>
     /// <returns></returns>
-    public static async Task<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
+    public static async Task<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(
+        this Task<Result<TIn>> resultTask,
+        ControllerBase controllerBase,
+        Func<TIn, ContentRangeHeaderValue> funcRange,
+        Func<TIn, TOut> funcValue)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, func);
+        return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
     }
 
-    public static async ValueTask<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
+    public static async ValueTask<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(
+    this ValueTask<Result<TIn>> resultTask,
+    ControllerBase controllerBase,
+    Func<TIn, ContentRangeHeaderValue> funcRange,
+    Func<TIn, TOut> funcValue)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, func);
+        return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
     }
 
-    public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
+
+    public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
+        this Task<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        long from, long to, long totalLength)
     {
         var result = await resultTask;
         return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
     }
 
-    public static async ValueTask<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
+    public static async ValueTask<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
+        this ValueTask<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        long from, long to, long totalLength)
     {
         var result = await resultTask;
         return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);

@@ -72,11 +72,10 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, r =>
-        {
-            var contentRangeHeaderValue = new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" };
-            return new ContentRangeAndData<string>(contentRangeHeaderValue, r);
-        });
+        var response = await result.ToPartialOrOkActionResultAsync(
+            controller,
+            r => new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" },
+            r => r);
 
         // Assert
         var partialResult = response.Result.As<PartialObjectResult>();
@@ -112,11 +111,10 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, r =>
-        {
-            var contentRangeHeaderValue = new ContentRangeHeaderValue(0, 9, 10) { Unit = "items" };
-            return new ContentRangeAndData<string>(contentRangeHeaderValue, r);
-        });
+        var response = await result.ToPartialOrOkActionResultAsync(
+            controller,
+            r => new ContentRangeHeaderValue(0, 9, 10) { Unit = "items" },
+            r => r);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();

@@ -114,32 +114,6 @@ public static class ActionResultExtensions
     }
 
     /// <summary>
-    /// <para>If <paramref name="result"/> is in success state, returns Okay (200) or Partial (206) status code based on the <see cref="ContentRangeHeaderValue"/>.</para>
-    /// <para>If <paramref name="result"/> is in failed state, returns a failed <see cref="ObjectResult"/> based on mapping <see cref="ToErrorActionResult"/>.</para>
-    /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <param name="result">The result object.</param>
-    /// <param name="controllerBase">Controller object.</param>
-    /// <param name="func">Callback function that returns the range and data.</param>
-    /// <returns><see cref="ActionResult{TValue}"/> </returns>
-    public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(this Result<TIn> result, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
-    {
-        if (result.IsSuccess)
-        {
-            var cd = func(result.Value);
-            var partialResult = cd.ContentRangeHeaderValue.To - cd.ContentRangeHeaderValue.From + 1 != cd.ContentRangeHeaderValue.Length;
-            if (partialResult)
-                return new PartialObjectResult(cd.ContentRangeHeaderValue, cd.Data);
-
-            return controllerBase.Ok(result.Value);
-        }
-
-        var error = result.Error;
-        return error.ToErrorActionResult<TOut>(controllerBase);
-    }
-
-    /// <summary>
     /// Returns partial status code (206) and adds header <see cref="ContentRangeHeaderValue "/>  when partial result is returned.
     /// Otherwise returns Okay (200).
     /// 
@@ -149,21 +123,42 @@ public static class ActionResultExtensions
     /// <param name="controllerBase">Controller object.</param>
     /// <param name="from">The start of the range.</param>
     /// <param name="to">The end of the range.</param>
-    /// <param name="totalLength">The total number of items.</param>
+    /// <param name="length">The total number of items.</param>
     /// <returns></returns>
-    public static ActionResult<TValue> ToPartialOrOkActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase, long from, long to, long totalLength)
+    public static ActionResult<TValue> ToPartialOrOkActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase, long from, long to, long length)
     {
         if (result.IsSuccess)
         {
-            var partialResult = to - from + 1 != totalLength;
+            var partialResult = to - from + 1 != length;
             if (partialResult)
-                return new PartialObjectResult(from, to, totalLength, result.Value);
+                return new PartialObjectResult(from, to, length, result.Value);
 
             return controllerBase.Ok(result.Value);
         }
 
         var error = result.Error;
         return error.ToErrorActionResult<TValue>(controllerBase);
+    }
+
+    public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(
+        this Result<TIn> result,
+        ControllerBase controllerBase,
+        Func<TIn, ContentRangeHeaderValue> funcRange,
+        Func<TIn, TOut> funcValue)
+    {
+        if (result.IsSuccess)
+        {
+            var contentRange = funcRange(result.Value);
+            var value = funcValue(result.Value);
+            var partialResult = contentRange.To - contentRange.From + 1 != contentRange.Length;
+            if (partialResult)
+                return new PartialObjectResult(contentRange, value);
+
+            return controllerBase.Ok(value);
+        }
+
+        var error = result.Error;
+        return error.ToErrorActionResult<TOut>(controllerBase);
     }
 
     private static ActionResult<TValue> ValidationErrors<TValue>(ValidationError validation, ControllerBase controllerBase)

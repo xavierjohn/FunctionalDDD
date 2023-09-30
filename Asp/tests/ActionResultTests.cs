@@ -50,20 +50,34 @@ public class ActionResultTests
         var result = Result.Success("Test");
 
         // Act
-        var response = result.ToPartialOrOkActionResult(controller, r =>
-        {
-            var contentRangeHeaderValue = new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" };
-            return new ContentRangeAndData<string>(contentRangeHeaderValue, r);
-        });
+        var response = result.ToPartialOrOkActionResult(controller,
+            static r => new ContentRangeHeaderValue(4, 10, 15) { Unit = "stones" },
+            static r => "Replaced");
 
         // Assert
         var partialResult = response.Result.As<PartialObjectResult>();
-        partialResult.Value.Should().Be("Test");
+        partialResult.Value.Should().Be("Replaced");
         partialResult.StatusCode.Should().Be(StatusCodes.Status206PartialContent);
         partialResult.ContentRangeHeaderValue.From.Should().Be(4);
         partialResult.ContentRangeHeaderValue.To.Should().Be(10);
         partialResult.ContentRangeHeaderValue.Length.Should().Be(15);
-        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("items");
+        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("stones");
+    }
+
+    [Fact]
+    public void ToPartialOrOkActionResult_will_not_call_callback_functions_if_result_in_failed_state()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var result = Result.Failure<string>(Error.NotFound("Can't find it"));
+
+        // Act
+        var response = result.ToPartialOrOkActionResult<string, string>(controller,
+            static r => throw new InvalidOperationException(),
+            static r => throw new InvalidOperationException());
+
+        // Assert
+        response.Result.As<NotFoundObjectResult>().StatusCode.Should().Be(StatusCodes.Status404NotFound);
     }
 
     [Fact]
