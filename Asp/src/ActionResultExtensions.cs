@@ -114,9 +114,12 @@ public static class ActionResultExtensions
     }
 
     /// <summary>
-    /// Returns partial status code (206) and adds header <see cref="ContentRangeHeaderValue "/>  when partial result is returned.
-    /// Otherwise returns Okay (200).
-    /// 
+    /// If <see cref="Result{TValue}"/> is in success state this extension method returns
+    /// <list type="bullet">
+    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
+    /// <item><description>Okay (200) status for complete results.</description></item>
+    /// </list>
+    /// Otherwise it returns the error code corresponding to the failure error object.
     /// </summary>
     /// <typeparam name="TValue"></typeparam>
     /// <param name="result">The result object.</param>
@@ -140,6 +143,21 @@ public static class ActionResultExtensions
         return error.ToErrorActionResult<TValue>(controllerBase);
     }
 
+    /// <summary>
+    /// If <see cref="Result{TIn}"/> is in success state this extension method returns
+    /// <list type="bullet">
+    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
+    /// <item><description>Okay (200) status for complete results.</description></item>
+    /// </list>
+    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// </summary>
+    /// <typeparam name="TIn"></typeparam>
+    /// <typeparam name="TOut"></typeparam>
+    /// <param name="result"></param>
+    /// <param name="controllerBase"></param>
+    /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
+    /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
+    /// <returns></returns>
     public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(
         this Result<TIn> result,
         ControllerBase controllerBase,
