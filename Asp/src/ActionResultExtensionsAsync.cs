@@ -68,6 +68,12 @@ public static class ActionResultExtensionsAsync
         return result.ToPartialOrOkActionResult(controllerBase, func);
     }
 
+    public static async ValueTask<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
+    {
+        var result = await resultTask;
+        return result.ToPartialOrOkActionResult(controllerBase, func);
+    }
+
     public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
     {
         var result = await resultTask;

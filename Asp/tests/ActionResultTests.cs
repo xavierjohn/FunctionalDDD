@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using FunctionalDDD.Results.Errors;
+using Microsoft.Net.Http.Headers;
 
 public class ActionResultTests
 {
@@ -22,22 +23,6 @@ public class ActionResultTests
 
         // Assert
         response.Result.As<OkObjectResult>().StatusCode.Should().Be(StatusCodes.Status200OK);
-    }
-
-    [Fact]
-    public async Task Will_return_Ok_Result_Async()
-    {
-        // Arrange
-        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var result = Task.FromResult(Result.Success("Test"));
-
-        // Act
-        var response = await result.ToOkActionResultAsync(controller);
-
-        // Assert
-        var okObjResult = response.Result.As<OkObjectResult>();
-        okObjResult.Value.Should().Be("Test");
-        okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
 
     [Fact]
@@ -58,31 +43,18 @@ public class ActionResultTests
     }
 
     [Fact]
-    public async Task Will_return_BadRequest_Result_Async()
+    public void ToPartialOrOkActionResult_will_return_partial_status_code_when_results_are_partial_callback()
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var expected = Error.BadRequest("Test");
-        var result = Task.FromResult(Result.Failure<string>(expected));
+        var result = Result.Success("Test");
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
-
-        // Assert
-        var badRequest = response.Result.As<BadRequestObjectResult>();
-        badRequest.Value.Should().Be(expected);
-        badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-    }
-
-    [Fact]
-    public async Task ToPartialOrOkActionResultAsync_will_return_partial_status_code_when_results_are_partial()
-    {
-        // Arrange
-        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var result = Task.FromResult(Result.Success("Test"));
-
-        // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, 4, 10, 15);
+        var response = result.ToPartialOrOkActionResult(controller, r =>
+        {
+            var contentRangeHeaderValue = new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" };
+            return new ContentRangeAndData<string>(contentRangeHeaderValue, r);
+        });
 
         // Assert
         var partialResult = response.Result.As<PartialObjectResult>();
@@ -95,18 +67,19 @@ public class ActionResultTests
     }
 
     [Fact]
-    public async Task ToPartialOrOkActionResultAsync_will_return_Okay_status_code_when_results_are_complete()
+    public void ToPartialOrOkActionResult_will_return_Okay_status_code_when_results_are_complete()
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var result = Task.FromResult(Result.Success("Test"));
+        var result = Result.Success("Test");
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, 0, 9, 10);
+        var response = result.ToPartialOrOkActionResult(controller, 0, 9, 10);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();
         okObjResult.Value.Should().Be("Test");
         okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
+
 }
