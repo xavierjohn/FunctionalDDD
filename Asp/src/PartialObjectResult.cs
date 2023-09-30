@@ -1,8 +1,8 @@
 ﻿namespace FunctionalDDD.Results.Asp;
 
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// Represents an <see cref="ObjectResult"/> that returns a <see cref="StatusCodes.Status206PartialContent"/> response
@@ -47,6 +47,6 @@ public class PartialObjectResult : ObjectResult
 
         base.OnFormatting(context);
 
-        context.HttpContext.Response.Headers[HeaderNames.ContentRange] = _contentRangeHeaderValue.ToString();
+        context.HttpContext.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.ContentRange] = _contentRangeHeaderValue.ToString();
     }
 }

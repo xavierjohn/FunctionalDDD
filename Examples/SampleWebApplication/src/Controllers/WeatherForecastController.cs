@@ -3,7 +3,7 @@
 using FunctionalDDD.Results.Asp;
 using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
+using System.Net.Http.Headers;
 
 [ApiController]
 [Produces("application/json")]
@@ -27,14 +27,14 @@ public class WeatherForecastController : ControllerBase
     {
         long from = 0;
         long to = 4;
-        var strRange = Request.Headers[HeaderNames.Range].FirstOrDefault();
+        var strRange = Request.Headers[Microsoft.Net.Http.Headers.HeaderNames.Range].FirstOrDefault();
         if (RangeHeaderValue.TryParse(strRange, out var range))
         {
             var firstRange = range.Ranges.First();
             from = firstRange.From ?? from;
             to = firstRange.To ?? to;
         }
-        return Result.Success(() =>
+        return Result.Success<(ContentRangeHeaderValue, WeatherForecast[])>(() =>
             {
                 var allData = Enumerable.Range(1, 5).Select(index => new WeatherForecast
                 {
@@ -45,8 +45,8 @@ public class WeatherForecastController : ControllerBase
 
                 WeatherForecast[] data = allData.Skip((int)from).Take((int)(to - from + 1)).ToArray();
                 var contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, allData.Length) { Unit = "items" };
-                return new ContentRangeAndData<WeatherForecast[]>(contentRangeHeaderValue, data);
+                return new(contentRangeHeaderValue, data);
             })
-        .ToPartialOrOkActionResult(this, static r => r);
+        .ToPartialOrOkActionResult(this, static r => r.Item1, static r => r.Item2);
     }
 }

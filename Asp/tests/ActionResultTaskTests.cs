@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using FunctionalDDD.Results.Errors;
-using Microsoft.Net.Http.Headers;
+using System.Net.Http.Headers;
 
 public class ActionResultTaskTests
 {
@@ -61,7 +61,7 @@ public class ActionResultTaskTests
         partialResult.ContentRangeHeaderValue.From.Should().Be(4);
         partialResult.ContentRangeHeaderValue.To.Should().Be(10);
         partialResult.ContentRangeHeaderValue.Length.Should().Be(15);
-        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("items");
+        partialResult.ContentRangeHeaderValue.Unit.Should().Be("items");
     }
 
     [Fact]
@@ -72,11 +72,9 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, r =>
-        {
-            var contentRangeHeaderValue = new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" };
-            return new ContentRangeAndData<string>(contentRangeHeaderValue, r);
-        });
+        var response = await result.ToPartialOrOkActionResultAsync(controller,
+            r => new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" },
+            r => r);
 
         // Assert
         var partialResult = response.Result.As<PartialObjectResult>();
@@ -85,7 +83,7 @@ public class ActionResultTaskTests
         partialResult.ContentRangeHeaderValue.From.Should().Be(4);
         partialResult.ContentRangeHeaderValue.To.Should().Be(10);
         partialResult.ContentRangeHeaderValue.Length.Should().Be(15);
-        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("items");
+        partialResult.ContentRangeHeaderValue.Unit.Should().Be("items");
     }
 
     [Fact]
@@ -112,11 +110,10 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, r =>
-        {
-            var contentRangeHeaderValue = new ContentRangeHeaderValue(0, 9, 10) { Unit = "items" };
-            return new ContentRangeAndData<string>(contentRangeHeaderValue, r);
-        });
+        var response = await result.ToPartialOrOkActionResultAsync(
+            controller,
+            r => new ContentRangeHeaderValue(0, 9, 10) { Unit = "items" },
+            r => r);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();

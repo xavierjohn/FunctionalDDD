@@ -1,8 +1,8 @@
 ﻿namespace FunctionalDDD.Results.Asp;
 
+using System.Net.Http.Headers;
 using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// These extension methods are used to convert the Result object to ActionResult.
@@ -53,34 +53,69 @@ public static class ActionResultExtensionsAsync
 
 
     /// <summary>
-    /// <para>If <paramref name="result"/> is in success state, returns Okay (200) or Partial (206) status code based on the <see cref="ContentRangeHeaderValue"/>.</para>
-    /// <para>If <paramref name="result"/> is in failed state, returns a failed <see cref="ObjectResult"/> based on mapping <see cref="ActionResultExtensions.ToErrorActionResult"/>.</para>
+    /// If <see cref="Result{TIn}"/> is in success state this extension method returns
+    /// <list type="bullet">
+    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
+    /// <item><description>Okay (200) status for complete results.</description></item>
+    /// </list>
+    /// Otherwise it returns the error code corresponding to the failure error object.
     /// </summary>
     /// <typeparam name="TIn"></typeparam>
     /// <typeparam name="TOut"></typeparam>
-    /// <param name="resultTask"></param>
+    /// <param name="result"></param>
     /// <param name="controllerBase"></param>
-    /// <param name="func"></param>
+    /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
+    /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
     /// <returns></returns>
-    public static async Task<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
+    public static async Task<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(
+        this Task<Result<TIn>> resultTask,
+        ControllerBase controllerBase,
+        Func<TIn, ContentRangeHeaderValue> funcRange,
+        Func<TIn, TOut> funcValue)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, func);
+        return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
     }
 
-    public static async ValueTask<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
+    /// <summary>
+    /// If <see cref="Result{TIn}"/> is in success state this extension method returns
+    /// <list type="bullet">
+    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
+    /// <item><description>Okay (200) status for complete results.</description></item>
+    /// </list>
+    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// </summary>
+    /// <typeparam name="TIn"></typeparam>
+    /// <typeparam name="TOut"></typeparam>
+    /// <param name="result"></param>
+    /// <param name="controllerBase"></param>
+    /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
+    /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
+    /// <returns></returns>
+    public static async ValueTask<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(
+    this ValueTask<Result<TIn>> resultTask,
+    ControllerBase controllerBase,
+    Func<TIn, ContentRangeHeaderValue> funcRange,
+    Func<TIn, TOut> funcValue)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, func);
+        return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
     }
 
-    public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
+
+    public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
+        this Task<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        long from, long to, long totalLength)
     {
         var result = await resultTask;
         return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
     }
 
-    public static async ValueTask<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)
+    public static async ValueTask<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
+        this ValueTask<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        long from, long to, long totalLength)
     {
         var result = await resultTask;
         return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
