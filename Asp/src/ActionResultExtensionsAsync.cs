@@ -2,6 +2,7 @@
 
 using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// These extension methods are used to convert the Result object to ActionResult.
@@ -48,6 +49,23 @@ public static class ActionResultExtensionsAsync
     {
         var result = await resultTask;
         return result.ToErrorActionResult(controllerBase);
+    }
+
+
+    /// <summary>
+    /// <para>If <paramref name="result"/> is in success state, returns Okay (200) or Partial (206) status code based on the <see cref="ContentRangeHeaderValue"/>.</para>
+    /// <para>If <paramref name="result"/> is in failed state, returns a failed <see cref="ObjectResult"/> based on mapping <see cref="ActionResultExtensions.ToErrorActionResult"/>.</para>
+    /// </summary>
+    /// <typeparam name="TIn"></typeparam>
+    /// <typeparam name="TOut"></typeparam>
+    /// <param name="resultTask"></param>
+    /// <param name="controllerBase"></param>
+    /// <param name="func"></param>
+    /// <returns></returns>
+    public static async Task<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
+    {
+        var result = await resultTask;
+        return result.ToPartialOrOkActionResult(controllerBase, func);
     }
 
     public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase, long from, long to, long totalLength)

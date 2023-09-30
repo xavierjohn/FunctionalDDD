@@ -45,7 +45,7 @@ public class WeatherForecastController : ControllerBase
 
                 WeatherForecast[] data = allData.Skip((int)from).Take((int)(to - from + 1)).ToArray();
                 var contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, allData.Length) { Unit = "items" };
-                return (RangedValue: contentRangeHeaderValue, Data: data);
+                return new ContentRangeAndData<WeatherForecast[]>(contentRangeHeaderValue, data);
             })
         .ToPartialOrOkActionResult(this, static r => r);
     }

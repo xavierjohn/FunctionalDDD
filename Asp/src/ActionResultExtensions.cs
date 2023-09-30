@@ -123,14 +123,14 @@ public static class ActionResultExtensions
     /// <param name="controllerBase">Controller object.</param>
     /// <param name="func">Callback function that returns the range and data.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
-    public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(this Result<TIn> result, ControllerBase controllerBase, Func<TIn, (ContentRangeHeaderValue, TOut)> func)
+    public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(this Result<TIn> result, ControllerBase controllerBase, Func<TIn, ContentRangeAndData<TOut>> func)
     {
         if (result.IsSuccess)
         {
-            var (contentRangeHeaderValue, tout) = func(result.Value);
-            var partialResult = contentRangeHeaderValue.To - contentRangeHeaderValue.From + 1 != contentRangeHeaderValue.Length;
+            var cd = func(result.Value);
+            var partialResult = cd.ContentRangeHeaderValue.To - cd.ContentRangeHeaderValue.From + 1 != cd.ContentRangeHeaderValue.Length;
             if (partialResult)
-                return new PartialObjectResult(contentRangeHeaderValue, tout);
+                return new PartialObjectResult(cd.ContentRangeHeaderValue, cd.Data);
 
             return controllerBase.Ok(result.Value);
         }
