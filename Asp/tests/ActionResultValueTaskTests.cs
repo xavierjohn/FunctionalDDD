@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using FunctionalDDD.Results.Errors;
-using Microsoft.Net.Http.Headers;
+using System.Net.Http.Headers;
 
 public class ActionResultValueTaskTests
 {
@@ -61,7 +61,7 @@ public class ActionResultValueTaskTests
         partialResult.ContentRangeHeaderValue.From.Should().Be(4);
         partialResult.ContentRangeHeaderValue.To.Should().Be(10);
         partialResult.ContentRangeHeaderValue.Length.Should().Be(15);
-        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("items");
+        partialResult.ContentRangeHeaderValue.Unit.Should().Be("items");
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class ActionResultValueTaskTests
         partialResult.ContentRangeHeaderValue.From.Should().Be(4);
         partialResult.ContentRangeHeaderValue.To.Should().Be(10);
         partialResult.ContentRangeHeaderValue.Length.Should().Be(15);
-        partialResult.ContentRangeHeaderValue.Unit.Value.Should().Be("items");
+        partialResult.ContentRangeHeaderValue.Unit.Should().Be("items");
     }
 
     [Fact]

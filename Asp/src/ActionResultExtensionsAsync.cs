@@ -1,8 +1,8 @@
 ﻿namespace FunctionalDDD.Results.Asp;
 
+using System.Net.Http.Headers;
 using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
 
 /// <summary>
 /// These extension methods are used to convert the Result object to ActionResult.

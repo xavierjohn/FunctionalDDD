@@ -3,7 +3,7 @@
 using FunctionalDDD.Results.Asp;
 using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
+using System.Net.Http.Headers;
 
 [ApiController]
 [Produces("application/json")]
@@ -27,7 +27,7 @@ public class WeatherForecastController : ControllerBase
     {
         long from = 0;
         long to = 4;
-        var strRange = Request.Headers[HeaderNames.Range].FirstOrDefault();
+        var strRange = Request.Headers[Microsoft.Net.Http.Headers.HeaderNames.Range].FirstOrDefault();
         if (RangeHeaderValue.TryParse(strRange, out var range))
         {
             var firstRange = range.Ranges.First();
