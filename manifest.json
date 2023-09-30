@@ -115,6 +115,26 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDDD.Results.Asp.PartialObjectResult.yml",
       "output": {
         ".html": {
