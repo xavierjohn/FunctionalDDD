@@ -663,15 +663,15 @@ references:
   fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult(Of TValue)(FunctionalDDD.Results.Result(Of TValue), Microsoft.AspNetCore.Mvc.ControllerBase, Long, Long, Long)
   nameWithType: ActionResultExtensions.ToPartialOrOkActionResult<TValue>(Result<TValue>, ControllerBase, long, long, long)
   nameWithType.vb: ActionResultExtensions.ToPartialOrOkActionResult(Of TValue)(Result(Of TValue), ControllerBase, Long, Long, Long)
-- uid: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult``2(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,FunctionalDDD.Results.Asp.ContentRangeAndData{``1}})
-  name: ToPartialOrOkActionResult<TIn, TOut>(Result<TIn>, ControllerBase, Func<TIn, ContentRangeAndData<TOut>>)
-  href: api/FunctionalDDD.Results.Asp.ActionResultExtensions.html#FunctionalDDD_Results_Asp_ActionResultExtensions_ToPartialOrOkActionResult__2_FunctionalDDD_Results_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_FunctionalDDD_Results_Asp_ContentRangeAndData___1___
-  commentId: M:FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult``2(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,FunctionalDDD.Results.Asp.ContentRangeAndData{``1}})
-  name.vb: ToPartialOrOkActionResult(Of TIn, TOut)(Result(Of TIn), ControllerBase, Func(Of TIn, ContentRangeAndData(Of TOut)))
-  fullName: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult<TIn, TOut>(FunctionalDDD.Results.Result<TIn>, Microsoft.AspNetCore.Mvc.ControllerBase, System.Func<TIn, FunctionalDDD.Results.Asp.ContentRangeAndData<TOut>>)
-  fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult(Of TIn, TOut)(FunctionalDDD.Results.Result(Of TIn), Microsoft.AspNetCore.Mvc.ControllerBase, System.Func(Of TIn, FunctionalDDD.Results.Asp.ContentRangeAndData(Of TOut)))
-  nameWithType: ActionResultExtensions.ToPartialOrOkActionResult<TIn, TOut>(Result<TIn>, ControllerBase, Func<TIn, ContentRangeAndData<TOut>>)
-  nameWithType.vb: ActionResultExtensions.ToPartialOrOkActionResult(Of TIn, TOut)(Result(Of TIn), ControllerBase, Func(Of TIn, ContentRangeAndData(Of TOut)))
+- uid: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult``2(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})
+  name: ToPartialOrOkActionResult<TIn, TOut>(Result<TIn>, ControllerBase, Func<TIn, ContentRangeHeaderValue>, Func<TIn, TOut>)
+  href: api/FunctionalDDD.Results.Asp.ActionResultExtensions.html#FunctionalDDD_Results_Asp_ActionResultExtensions_ToPartialOrOkActionResult__2_FunctionalDDD_Results_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__
+  commentId: M:FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult``2(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})
+  name.vb: ToPartialOrOkActionResult(Of TIn, TOut)(Result(Of TIn), ControllerBase, Func(Of TIn, ContentRangeHeaderValue), Func(Of TIn, TOut))
+  fullName: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult<TIn, TOut>(FunctionalDDD.Results.Result<TIn>, Microsoft.AspNetCore.Mvc.ControllerBase, System.Func<TIn, System.Net.Http.Headers.ContentRangeHeaderValue>, System.Func<TIn, TOut>)
+  fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensions.ToPartialOrOkActionResult(Of TIn, TOut)(FunctionalDDD.Results.Result(Of TIn), Microsoft.AspNetCore.Mvc.ControllerBase, System.Func(Of TIn, System.Net.Http.Headers.ContentRangeHeaderValue), System.Func(Of TIn, TOut))
+  nameWithType: ActionResultExtensions.ToPartialOrOkActionResult<TIn, TOut>(Result<TIn>, ControllerBase, Func<TIn, ContentRangeHeaderValue>, Func<TIn, TOut>)
+  nameWithType.vb: ActionResultExtensions.ToPartialOrOkActionResult(Of TIn, TOut)(Result(Of TIn), ControllerBase, Func(Of TIn, ContentRangeHeaderValue), Func(Of TIn, TOut))
 - uid: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync
   name: ActionResultExtensionsAsync
   href: api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html
@@ -753,101 +753,30 @@ references:
   fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), Microsoft.AspNetCore.Mvc.ControllerBase, Long, Long, Long)
   nameWithType: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TValue>(ValueTask<Result<TValue>>, ControllerBase, long, long, long)
   nameWithType.vb: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TValue)(ValueTask(Of Result(Of TValue)), ControllerBase, Long, Long, Long)
-- uid: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,FunctionalDDD.Results.Asp.ContentRangeAndData{``1}})
-  name: ToPartialOrOkActionResultAsync<TIn, TOut>(Task<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeAndData<TOut>>)
-  href: api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html#FunctionalDDD_Results_Asp_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__2_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_FunctionalDDD_Results_Asp_ContentRangeAndData___1___
-  commentId: M:FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,FunctionalDDD.Results.Asp.ContentRangeAndData{``1}})
-  name.vb: ToPartialOrOkActionResultAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeAndData(Of TOut)))
-  fullName: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TIn>>, Microsoft.AspNetCore.Mvc.ControllerBase, System.Func<TIn, FunctionalDDD.Results.Asp.ContentRangeAndData<TOut>>)
-  fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TIn)), Microsoft.AspNetCore.Mvc.ControllerBase, System.Func(Of TIn, FunctionalDDD.Results.Asp.ContentRangeAndData(Of TOut)))
-  nameWithType: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(Task<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeAndData<TOut>>)
-  nameWithType.vb: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeAndData(Of TOut)))
-- uid: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,FunctionalDDD.Results.Asp.ContentRangeAndData{``1}})
-  name: ToPartialOrOkActionResultAsync<TIn, TOut>(ValueTask<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeAndData<TOut>>)
-  href: api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html#FunctionalDDD_Results_Asp_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__2_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_FunctionalDDD_Results_Asp_ContentRangeAndData___1___
-  commentId: M:FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,FunctionalDDD.Results.Asp.ContentRangeAndData{``1}})
-  name.vb: ToPartialOrOkActionResultAsync(Of TIn, TOut)(ValueTask(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeAndData(Of TOut)))
-  fullName: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TIn>>, Microsoft.AspNetCore.Mvc.ControllerBase, System.Func<TIn, FunctionalDDD.Results.Asp.ContentRangeAndData<TOut>>)
-  fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TIn)), Microsoft.AspNetCore.Mvc.ControllerBase, System.Func(Of TIn, FunctionalDDD.Results.Asp.ContentRangeAndData(Of TOut)))
-  nameWithType: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(ValueTask<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeAndData<TOut>>)
-  nameWithType.vb: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(ValueTask(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeAndData(Of TOut)))
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1
-  name: ContentRangeAndData<TValue>
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html
-  commentId: T:FunctionalDDD.Results.Asp.ContentRangeAndData`1
-  name.vb: ContentRangeAndData(Of TValue)
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue)
-  nameWithType: ContentRangeAndData<TValue>
-  nameWithType.vb: ContentRangeAndData(Of TValue)
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1.#ctor(Microsoft.Net.Http.Headers.ContentRangeHeaderValue,`0)
-  name: ContentRangeAndData(ContentRangeHeaderValue, TValue)
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html#FunctionalDDD_Results_Asp_ContentRangeAndData_1__ctor_Microsoft_Net_Http_Headers_ContentRangeHeaderValue__0_
-  commentId: M:FunctionalDDD.Results.Asp.ContentRangeAndData`1.#ctor(Microsoft.Net.Http.Headers.ContentRangeHeaderValue,`0)
-  name.vb: New(ContentRangeHeaderValue, TValue)
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>.ContentRangeAndData(Microsoft.Net.Http.Headers.ContentRangeHeaderValue, TValue)
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue).New(Microsoft.Net.Http.Headers.ContentRangeHeaderValue, TValue)
-  nameWithType: ContentRangeAndData<TValue>.ContentRangeAndData(ContentRangeHeaderValue, TValue)
-  nameWithType.vb: ContentRangeAndData(Of TValue).New(ContentRangeHeaderValue, TValue)
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1.#ctor*
-  name: ContentRangeAndData
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html#FunctionalDDD_Results_Asp_ContentRangeAndData_1__ctor_
-  commentId: Overload:FunctionalDDD.Results.Asp.ContentRangeAndData`1.#ctor
-  isSpec: "True"
-  name.vb: New
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>.ContentRangeAndData
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue).New
-  nameWithType: ContentRangeAndData<TValue>.ContentRangeAndData
-  nameWithType.vb: ContentRangeAndData(Of TValue).New
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1.ContentRangeHeaderValue
-  name: ContentRangeHeaderValue
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html#FunctionalDDD_Results_Asp_ContentRangeAndData_1_ContentRangeHeaderValue
-  commentId: P:FunctionalDDD.Results.Asp.ContentRangeAndData`1.ContentRangeHeaderValue
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>.ContentRangeHeaderValue
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue).ContentRangeHeaderValue
-  nameWithType: ContentRangeAndData<TValue>.ContentRangeHeaderValue
-  nameWithType.vb: ContentRangeAndData(Of TValue).ContentRangeHeaderValue
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1.ContentRangeHeaderValue*
-  name: ContentRangeHeaderValue
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html#FunctionalDDD_Results_Asp_ContentRangeAndData_1_ContentRangeHeaderValue_
-  commentId: Overload:FunctionalDDD.Results.Asp.ContentRangeAndData`1.ContentRangeHeaderValue
-  isSpec: "True"
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>.ContentRangeHeaderValue
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue).ContentRangeHeaderValue
-  nameWithType: ContentRangeAndData<TValue>.ContentRangeHeaderValue
-  nameWithType.vb: ContentRangeAndData(Of TValue).ContentRangeHeaderValue
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1.Data
-  name: Data
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html#FunctionalDDD_Results_Asp_ContentRangeAndData_1_Data
-  commentId: P:FunctionalDDD.Results.Asp.ContentRangeAndData`1.Data
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>.Data
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue).Data
-  nameWithType: ContentRangeAndData<TValue>.Data
-  nameWithType.vb: ContentRangeAndData(Of TValue).Data
-- uid: FunctionalDDD.Results.Asp.ContentRangeAndData`1.Data*
-  name: Data
-  href: api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html#FunctionalDDD_Results_Asp_ContentRangeAndData_1_Data_
-  commentId: Overload:FunctionalDDD.Results.Asp.ContentRangeAndData`1.Data
-  isSpec: "True"
-  fullName: FunctionalDDD.Results.Asp.ContentRangeAndData<TValue>.Data
-  fullName.vb: FunctionalDDD.Results.Asp.ContentRangeAndData(Of TValue).Data
-  nameWithType: ContentRangeAndData<TValue>.Data
-  nameWithType.vb: ContentRangeAndData(Of TValue).Data
+- uid: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})
+  name: ToPartialOrOkActionResultAsync<TIn, TOut>(Task<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeHeaderValue>, Func<TIn, TOut>)
+  href: api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html#FunctionalDDD_Results_Asp_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__2_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__
+  commentId: M:FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})
+  name.vb: ToPartialOrOkActionResultAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeHeaderValue), Func(Of TIn, TOut))
+  fullName: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TIn>>, Microsoft.AspNetCore.Mvc.ControllerBase, System.Func<TIn, System.Net.Http.Headers.ContentRangeHeaderValue>, System.Func<TIn, TOut>)
+  fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TIn)), Microsoft.AspNetCore.Mvc.ControllerBase, System.Func(Of TIn, System.Net.Http.Headers.ContentRangeHeaderValue), System.Func(Of TIn, TOut))
+  nameWithType: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(Task<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeHeaderValue>, Func<TIn, TOut>)
+  nameWithType.vb: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeHeaderValue), Func(Of TIn, TOut))
+- uid: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})
+  name: ToPartialOrOkActionResultAsync<TIn, TOut>(ValueTask<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeHeaderValue>, Func<TIn, TOut>)
+  href: api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html#FunctionalDDD_Results_Asp_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__2_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__
+  commentId: M:FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})
+  name.vb: ToPartialOrOkActionResultAsync(Of TIn, TOut)(ValueTask(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeHeaderValue), Func(Of TIn, TOut))
+  fullName: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TIn>>, Microsoft.AspNetCore.Mvc.ControllerBase, System.Func<TIn, System.Net.Http.Headers.ContentRangeHeaderValue>, System.Func<TIn, TOut>)
+  fullName.vb: FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TIn)), Microsoft.AspNetCore.Mvc.ControllerBase, System.Func(Of TIn, System.Net.Http.Headers.ContentRangeHeaderValue), System.Func(Of TIn, TOut))
+  nameWithType: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync<TIn, TOut>(ValueTask<Result<TIn>>, ControllerBase, Func<TIn, ContentRangeHeaderValue>, Func<TIn, TOut>)
+  nameWithType.vb: ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync(Of TIn, TOut)(ValueTask(Of Result(Of TIn)), ControllerBase, Func(Of TIn, ContentRangeHeaderValue), Func(Of TIn, TOut))
 - uid: FunctionalDDD.Results.Asp.PartialObjectResult
   name: PartialObjectResult
   href: api/FunctionalDDD.Results.Asp.PartialObjectResult.html
   commentId: T:FunctionalDDD.Results.Asp.PartialObjectResult
   fullName: FunctionalDDD.Results.Asp.PartialObjectResult
   nameWithType: PartialObjectResult
-- uid: FunctionalDDD.Results.Asp.PartialObjectResult.#ctor(Microsoft.Net.Http.Headers.ContentRangeHeaderValue,System.Object)
-  name: PartialObjectResult(ContentRangeHeaderValue, object?)
-  href: api/FunctionalDDD.Results.Asp.PartialObjectResult.html#FunctionalDDD_Results_Asp_PartialObjectResult__ctor_Microsoft_Net_Http_Headers_ContentRangeHeaderValue_System_Object_
-  commentId: M:FunctionalDDD.Results.Asp.PartialObjectResult.#ctor(Microsoft.Net.Http.Headers.ContentRangeHeaderValue,System.Object)
-  name.vb: New(ContentRangeHeaderValue, Object)
-  fullName: FunctionalDDD.Results.Asp.PartialObjectResult.PartialObjectResult(Microsoft.Net.Http.Headers.ContentRangeHeaderValue, object?)
-  fullName.vb: FunctionalDDD.Results.Asp.PartialObjectResult.New(Microsoft.Net.Http.Headers.ContentRangeHeaderValue, Object)
-  nameWithType: PartialObjectResult.PartialObjectResult(ContentRangeHeaderValue, object?)
-  nameWithType.vb: PartialObjectResult.New(ContentRangeHeaderValue, Object)
 - uid: FunctionalDDD.Results.Asp.PartialObjectResult.#ctor(System.Int64,System.Int64,System.Int64,System.Object)
   name: PartialObjectResult(long, long, long, object?)
   href: api/FunctionalDDD.Results.Asp.PartialObjectResult.html#FunctionalDDD_Results_Asp_PartialObjectResult__ctor_System_Int64_System_Int64_System_Int64_System_Object_
@@ -857,6 +786,15 @@ references:
   fullName.vb: FunctionalDDD.Results.Asp.PartialObjectResult.New(Long, Long, Long, Object)
   nameWithType: PartialObjectResult.PartialObjectResult(long, long, long, object?)
   nameWithType.vb: PartialObjectResult.New(Long, Long, Long, Object)
+- uid: FunctionalDDD.Results.Asp.PartialObjectResult.#ctor(System.Net.Http.Headers.ContentRangeHeaderValue,System.Object)
+  name: PartialObjectResult(ContentRangeHeaderValue, object?)
+  href: api/FunctionalDDD.Results.Asp.PartialObjectResult.html#FunctionalDDD_Results_Asp_PartialObjectResult__ctor_System_Net_Http_Headers_ContentRangeHeaderValue_System_Object_
+  commentId: M:FunctionalDDD.Results.Asp.PartialObjectResult.#ctor(System.Net.Http.Headers.ContentRangeHeaderValue,System.Object)
+  name.vb: New(ContentRangeHeaderValue, Object)
+  fullName: FunctionalDDD.Results.Asp.PartialObjectResult.PartialObjectResult(System.Net.Http.Headers.ContentRangeHeaderValue, object?)
+  fullName.vb: FunctionalDDD.Results.Asp.PartialObjectResult.New(System.Net.Http.Headers.ContentRangeHeaderValue, Object)
+  nameWithType: PartialObjectResult.PartialObjectResult(ContentRangeHeaderValue, object?)
+  nameWithType.vb: PartialObjectResult.New(ContentRangeHeaderValue, Object)
 - uid: FunctionalDDD.Results.Asp.PartialObjectResult.#ctor*
   name: PartialObjectResult
   href: api/FunctionalDDD.Results.Asp.PartialObjectResult.html#FunctionalDDD_Results_Asp_PartialObjectResult__ctor_

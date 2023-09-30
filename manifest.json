@@ -1,5 +1,4 @@
 {
-  "homepages": [],
   "source_base_path": "/home/runner/work/FunctionalDDD/FunctionalDDD/docs/docfx_project",
   "xrefmap": "xrefmap.yml",
   "files": [
@@ -119,16 +118,6 @@
       "output": {
         ".html": {
           "relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Asp.ContentRangeAndData-1.html"
         }
       },
       "version": ""
@@ -643,7 +632,6 @@
       "version": ""
     }
   ],
-  "version_info": {},
   "groups": [
     {
       "xrefmap": "xrefmap.yml"
