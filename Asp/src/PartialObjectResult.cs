@@ -15,14 +15,16 @@ public class PartialObjectResult : ObjectResult
     /// <summary>
     /// Initializes a new instance of the <see cref="PartialObjectResult"/> class.
     /// </summary>
-    /// <param name="from">From index.</param>
-    /// <param name="to">To index.</param>
-    /// <param name="totalLength">Total number of items.</param>
+    /// <param name="rangeStart">An integer in the given unit indicating the start position (zero-indexed & inclusive) of the request range.</param>
+    /// <param name="rangeEnd">An integer in the given unit indicating the end position (zero-indexed & inclusive) of the requested range.</param>
+    /// <param name="totalLength">Optional total number of items.</param>
     /// <param name="value">Items</param>
-    public PartialObjectResult(long from, long to, long totalLength, object? value)
+    public PartialObjectResult(long rangeStart, long rangeEnd, long? totalLength, object? value)
         : base(value)
     {
-        _contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, totalLength) { Unit = "items" };
+        _contentRangeHeaderValue = totalLength == null
+            ? new ContentRangeHeaderValue(rangeStart, rangeEnd) { Unit = "items" }
+            : new ContentRangeHeaderValue(rangeStart, rangeEnd, totalLength.Value) { Unit = "items" };
         StatusCode = StatusCodes.Status206PartialContent;
     }
 

@@ -45,11 +45,12 @@ public class HttpPartialObjectResultTest
     }
 
     [Theory]
-    [MemberData(nameof(ValuesData))]
-    public async Task SetsStatusCode(object value)
+    [InlineData(0, 3, 10, "items 0-3/10")]
+    [InlineData(2, 5, null, "items 2-5/*")]
+    public async Task SetContentRangeHeader(int rangeStart, int rangeEnd, int? totalLength, string expected)
     {
         // Arrange
-        var result = new PartialObjectResult(0, 3, 10, value);
+        var result = new PartialObjectResult(rangeStart, rangeEnd, totalLength, "Hello There");
 
         var httpContext = new DefaultHttpContext
         {
@@ -62,7 +63,7 @@ public class HttpPartialObjectResultTest
 
         // Assert
         httpContext.Response.StatusCode.Should().Be(StatusCodes.Status206PartialContent);
-        httpContext.Response.Headers["Content-Range"].ToString().Should().Be("items 0-3/10");
+        httpContext.Response.Headers["Content-Range"].ToString().Should().Be(expected);
     }
 
     private static IServiceProvider CreateServices()
