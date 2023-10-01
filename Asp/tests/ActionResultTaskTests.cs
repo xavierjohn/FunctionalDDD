@@ -1,7 +1,7 @@
 ﻿namespace Asp.Tests;
 
 using FunctionalDDD.Results;
-using FunctionalDDD.Results.Asp;
+using FunctionalDDD.Asp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

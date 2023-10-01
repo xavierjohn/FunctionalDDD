@@ -1,7 +1,7 @@
 ﻿namespace Asp.Tests;
 
 using System.Net.Http.Headers;
-using FunctionalDDD.Results.Asp;
+using FunctionalDDD.Asp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;

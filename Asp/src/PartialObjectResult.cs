@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results.Asp;
+﻿namespace FunctionalDDD.Asp;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
@@ -15,8 +15,8 @@ public class PartialObjectResult : ObjectResult
     /// <summary>
     /// Initializes a new instance of the <see cref="PartialObjectResult"/> class.
     /// </summary>
-    /// <param name="rangeStart">An integer in the given unit indicating the start position (zero-indexed & inclusive) of the request range.</param>
-    /// <param name="rangeEnd">An integer in the given unit indicating the end position (zero-indexed & inclusive) of the requested range.</param>
+    /// <param name="rangeStart">An integer in the given unit indicating the start position (zero-indexed &amp; inclusive) of the request range.</param>
+    /// <param name="rangeEnd">An integer in the given unit indicating the end position (zero-indexed &amp; inclusive) of the requested range.</param>
     /// <param name="totalLength">Optional total number of items.</param>
     /// <param name="value">Items</param>
     public PartialObjectResult(long rangeStart, long rangeEnd, long? totalLength, object? value)
