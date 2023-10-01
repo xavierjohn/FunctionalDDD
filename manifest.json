@@ -24,6 +24,46 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Asp.ActionResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Asp.ActionResultExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Asp.ActionResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Asp.ActionResultExtensionsAsync.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Asp.PartialObjectResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Asp.PartialObjectResult.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDDD.Asp.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDDD.Asp.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDDD.Domain.Aggregate-1.yml",
       "output": {
         ".html": {
@@ -98,46 +138,6 @@
       "output": {
         ".html": {
           "relative_path": "api/FunctionalDDD.Domain.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensions.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensions.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Asp.ActionResultExtensionsAsync.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Asp.PartialObjectResult.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Asp.PartialObjectResult.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Asp.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Asp.html"
         }
       },
       "version": ""
