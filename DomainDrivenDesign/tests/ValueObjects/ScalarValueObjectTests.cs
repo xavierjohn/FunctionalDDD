@@ -73,6 +73,7 @@ public class ScalarValueObjectTests
 
         // Act & Assert
         (password == null).Should().BeTrue();
+        (password == default(PasswordSimple)).Should().BeTrue();
         (password != null).Should().BeFalse();
         (null != password).Should().BeFalse();
         (password < null).Should().BeFalse();

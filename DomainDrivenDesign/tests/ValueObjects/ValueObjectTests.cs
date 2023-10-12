@@ -33,6 +33,7 @@ public class ValueObjectTests
 
         // Act & Assert
         (address1 == null).Should().BeTrue();
+        (address1 == default(Address)).Should().BeTrue();
         (address1 != null).Should().BeFalse();
         (null != address1).Should().BeFalse();
         (address1 < null).Should().BeFalse();
