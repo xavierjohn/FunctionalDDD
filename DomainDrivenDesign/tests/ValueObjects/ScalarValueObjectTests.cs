@@ -31,7 +31,7 @@ public class ScalarValueObjectTests
     }
 
     [Fact]
-    public void Two_SVO_of_the_same_content_are_equal()
+    public void Two_ScalarValueObject_of_the_same_content_are_equal()
     {
         var password1 = new PasswordSimple("Password");
         var password2 = new PasswordSimple("Password");
@@ -43,7 +43,7 @@ public class ScalarValueObjectTests
     }
 
     [Fact]
-    public void Two_SVO_of_the_different_content_are_not_equal()
+    public void Two_ScalarValueObject_of_the_different_content_are_not_equal()
     {
         var password1 = new PasswordSimple("Password1");
         var password2 = new PasswordSimple("Password2");
@@ -55,7 +55,7 @@ public class ScalarValueObjectTests
     }
 
     [Fact]
-    public void Derived_simple_value_objects_are_not_equal()
+    public void Derived_ScalarValueObject_are_not_equal()
     {
         var password = new PasswordSimple("Password");
         var derivedPassword = new DerivedPasswordSimple("Password");
@@ -66,7 +66,21 @@ public class ScalarValueObjectTests
     }
 
     [Fact]
-    public void SVO_is_sorted()
+    public void NullAble_ScalarValueObject_can_be_compared()
+    {
+        // Arrange
+        PasswordSimple? password = default;
+
+        // Act & Assert
+        (password == null).Should().BeTrue();
+        (password != null).Should().BeFalse();
+        (null != password).Should().BeFalse();
+        (password < null).Should().BeFalse();
+        (password > null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ScalarValueObject_is_sorted()
     {
         // Arrange
         var one = new MoneySimple(1);
