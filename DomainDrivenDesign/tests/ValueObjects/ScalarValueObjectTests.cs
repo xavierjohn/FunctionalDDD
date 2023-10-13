@@ -66,7 +66,7 @@ public class ScalarValueObjectTests
     }
 
     [Fact]
-    public void NullAble_ScalarValueObject_can_be_compared()
+    public void NullAble_ScalarValueObject_can_be_compared_to_null()
     {
         // Arrange
         PasswordSimple? password = default;

@@ -26,7 +26,7 @@ public class ValueObjectTests
     }
 
     [Fact]
-    public void NullAble_value_object_can_be_compared()
+    public void NullAble_value_object_can_be_compared_to_null()
     {
         // Arrange
         Address? address1 = default;
