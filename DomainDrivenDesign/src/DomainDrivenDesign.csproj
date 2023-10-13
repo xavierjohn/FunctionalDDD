@@ -1,5 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>FunctionalDDD.Domain</RootNamespace>
+    <Description>
+      Using the library's classes, it is possible to create Aggregate, Entity, and ValueObject classes. These classes can be validated using Fluent Validation to ensure that all domain properties are in a valid state. For simple ValueObjects with a single value, ScalarValueObject can be used. If the only requirement for a ValueObject is that the value is not null or empty, RequiredString can be utilized.
+    </Description>
   </PropertyGroup>
 </Project>
