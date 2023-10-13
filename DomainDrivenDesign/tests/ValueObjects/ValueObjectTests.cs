@@ -1,11 +1,12 @@
 ﻿namespace DomainDrivenDesign.Tests.ValueObjects;
 
 using FluentAssertions;
+using Xunit;
 
 public class ValueObjectTests
 {
     [Fact]
-    public void Two_VO_of_the_same_content_are_equal()
+    public void Two_ValueObject_of_the_same_content_are_equal()
     {
         var address1 = new Address("Street", "City");
         var address2 = new Address("Street", "City");
@@ -25,7 +26,22 @@ public class ValueObjectTests
     }
 
     [Fact]
-    public void VO_is_sorted()
+    public void NullAble_value_object_can_be_compared_to_null()
+    {
+        // Arrange
+        Address? address1 = default;
+
+        // Act & Assert
+        (address1 == null).Should().BeTrue();
+        (address1 == default(Address)).Should().BeTrue();
+        (address1 != null).Should().BeFalse();
+        (null != address1).Should().BeFalse();
+        (address1 < null).Should().BeFalse();
+        (address1 > null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValueObject_is_sorted()
     {
         // Arrange
         var one = new Money(1);
@@ -41,7 +57,7 @@ public class ValueObjectTests
     }
 
     [Fact]
-    public void VO_supports_orderby()
+    public void ValueObject_supports_orderby()
     {
         // Arrange
         var one = new Money(1);

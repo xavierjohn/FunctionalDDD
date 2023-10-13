@@ -125,24 +125,24 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
         return a.Equals(b);
     }
 
-    public static bool operator !=(ValueObject a, ValueObject b) => !(a == b);
+    public static bool operator !=(ValueObject? a, ValueObject? b) => !(a == b);
 
-    public static bool operator <(ValueObject left, ValueObject right)
+    public static bool operator <(ValueObject? left, ValueObject? right)
     {
         return ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
     }
 
-    public static bool operator <=(ValueObject left, ValueObject right)
+    public static bool operator <=(ValueObject? left, ValueObject? right)
     {
         return ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
     }
 
-    public static bool operator >(ValueObject left, ValueObject right)
+    public static bool operator >(ValueObject? left, ValueObject? right)
     {
         return !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
     }
 
-    public static bool operator >=(ValueObject left, ValueObject right)
+    public static bool operator >=(ValueObject? left, ValueObject? right)
     {
         return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
     }
