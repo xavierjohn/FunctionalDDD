@@ -15,6 +15,7 @@ public class OptionalTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeOfType<Maybe<ZipCode>>();
         result.Value.Value.Zip.Should().Be(zipCode);
     }
 
@@ -29,6 +30,7 @@ public class OptionalTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeOfType<Maybe<ZipCode>>();
         result.Value.HasNoValue.Should().BeTrue();
     }
 
@@ -44,6 +46,7 @@ public class OptionalTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<BadRequestError>();
+        result.Error.Message.Should().Be("Invalid ZipCode.");
     }
 
     class ZipCode
