@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests;
+﻿namespace RailwayOrientedProgramming.Tests.Maybes;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 
@@ -55,7 +55,7 @@ public class OptionalTests
 
         private ZipCode(string zipCode) => Zip = zipCode;
 
-        public static Result<ZipCode> New(string? zipCode)
+        public static Result<ZipCode> New(string zipCode)
         {
             if (string.IsNullOrEmpty(zipCode)) return Result.Failure<ZipCode>(Error.BadRequest("ZipCode is required."));
             if (zipCode.Length != 5) return Result.Failure<ZipCode>(Error.BadRequest("Invalid ZipCode."));
