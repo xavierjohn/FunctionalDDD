@@ -11,7 +11,7 @@ public class OptionalTests
         string? zipCode = "92874";
 
         // Act
-        var result = OptionalExtenstions.Optional(zipCode, ZipCode.New);
+        var result = Maybe.Optional(zipCode, ZipCode.New);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -25,7 +25,7 @@ public class OptionalTests
         string? zipCode = null;
 
         // Act
-        var result = OptionalExtenstions.Optional(zipCode, ZipCode.New);
+        var result = Maybe.Optional(zipCode, ZipCode.New);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -39,7 +39,7 @@ public class OptionalTests
         string? zipCode = "Hi";
 
         // Act
-        var result = OptionalExtenstions.Optional(zipCode, ZipCode.New);
+        var result = Maybe.Optional(zipCode, ZipCode.New);
 
         // Assert
         result.IsFailure.Should().BeTrue();

@@ -19,4 +19,13 @@ public static class Maybe
     /// <param name="value"></param>
     /// <returns>A <see cref="Maybe{T}"/> object with the value.</returns>
     public static Maybe<T> From<T>(T? value) where T : notnull => new(value);
+
+    public static Result<Maybe<TOut>> Optional<TIn, TOut>(TIn? value, Func<TIn, Result<TOut>> function)
+    where TOut : notnull
+    {
+        if (value is null)
+            return Maybe.None<TOut>();
+
+        return function(value).Map(r => Maybe.From(r));
+    }
 }
