@@ -1,5 +1,6 @@
 ﻿namespace Example;
 
+using System.Runtime.InteropServices;
 using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
@@ -43,4 +44,23 @@ public class ValidationExample
         });
     }
 
+    [Fact]
+    public void Convert_optional_primitive_type_to_concrete_objects()
+    {
+        string email = "xavier@somewhere.com";
+        string? firstName = null;
+        string? lastName = "Deva";
+
+        var actual = EmailAddress.New(email)
+            .Combine(Maybe.Optional(firstName, FirstName.New))
+            .Combine(Maybe.Optional(lastName, LastName.New))
+            .Bind(Add);
+
+        actual.Value.Should().Be("xavier@somewhere.com  Deva");
+
+        static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
+        {
+            return emailAddress + " " + firstname + " " + lastname;
+        }
+    }
 }

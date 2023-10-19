@@ -84,5 +84,5 @@ public readonly struct Maybe<T> :
 
     public override int GetHashCode() => _value?.GetHashCode() ?? 0;
 
-    public override string ToString() => _value?.ToString() ?? NoValue;
+    public override string ToString() => _value?.ToString() ?? string.Empty;
 }

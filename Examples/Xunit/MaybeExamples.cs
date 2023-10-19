@@ -96,7 +96,7 @@ public class MaybeExamples
 
         // Assert
         apple.ToString().Should().Be("apple");
-        noFruit.ToString().Should().Be("Maybe has no value.");
+        noFruit.ToString().Should().Be(string.Empty);
     }
 
     [Fact]
