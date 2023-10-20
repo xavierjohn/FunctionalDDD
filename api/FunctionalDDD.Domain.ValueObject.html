@@ -31,11 +31,7 @@
       <meta name="loc:copy" content="Copy">
   </head>
 
-  <script type="module">
-    import options from './../public/main.js'
-    import { init } from './../public/docfx.min.js'
-    init(options)
-  </script>
+  <script type="module" src="./../public/docfx.min.js"></script>
 
   <script>
     const theme = localStorage.getItem('theme') || 'auto'
@@ -434,7 +430,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <a id="FunctionalDDD_Domain_ValueObject_op_GreaterThan_" data-uid="FunctionalDDD.Domain.ValueObject.op_GreaterThan*"></a>
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_GreaterThan_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_GreaterThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
-  operator &gt;(ValueObject, ValueObject)
+  operator &gt;(ValueObject?, ValueObject?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L140"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -442,7 +438,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator &gt;(ValueObject left, ValueObject right)</code></pre>
+    <pre><code class="lang-csharp hljs">public static bool operator &gt;(ValueObject? left, ValueObject? right)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -472,7 +468,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <a id="FunctionalDDD_Domain_ValueObject_op_GreaterThanOrEqual_" data-uid="FunctionalDDD.Domain.ValueObject.op_GreaterThanOrEqual*"></a>
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_GreaterThanOrEqual_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_GreaterThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
-  operator &gt;=(ValueObject, ValueObject)
+  operator &gt;=(ValueObject?, ValueObject?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L145"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -480,7 +476,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator &gt;=(ValueObject left, ValueObject right)</code></pre>
+    <pre><code class="lang-csharp hljs">public static bool operator &gt;=(ValueObject? left, ValueObject? right)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -510,7 +506,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <a id="FunctionalDDD_Domain_ValueObject_op_Inequality_" data-uid="FunctionalDDD.Domain.ValueObject.op_Inequality*"></a>
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_Inequality_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_Inequality(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
-  operator !=(ValueObject, ValueObject)
+  operator !=(ValueObject?, ValueObject?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L128"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -518,7 +514,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator !=(ValueObject a, ValueObject b)</code></pre>
+    <pre><code class="lang-csharp hljs">public static bool operator !=(ValueObject? a, ValueObject? b)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -548,7 +544,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <a id="FunctionalDDD_Domain_ValueObject_op_LessThan_" data-uid="FunctionalDDD.Domain.ValueObject.op_LessThan*"></a>
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_LessThan_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_LessThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
-  operator &lt;(ValueObject, ValueObject)
+  operator &lt;(ValueObject?, ValueObject?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L130"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -556,7 +552,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator &lt;(ValueObject left, ValueObject right)</code></pre>
+    <pre><code class="lang-csharp hljs">public static bool operator &lt;(ValueObject? left, ValueObject? right)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -586,7 +582,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <a id="FunctionalDDD_Domain_ValueObject_op_LessThanOrEqual_" data-uid="FunctionalDDD.Domain.ValueObject.op_LessThanOrEqual*"></a>
 
   <h3 id="FunctionalDDD_Domain_ValueObject_op_LessThanOrEqual_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_" data-uid="FunctionalDDD.Domain.ValueObject.op_LessThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)">
-  operator &lt;=(ValueObject, ValueObject)
+  operator &lt;=(ValueObject?, ValueObject?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L135"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -594,7 +590,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static bool operator &lt;=(ValueObject left, ValueObject right)</code></pre>
+    <pre><code class="lang-csharp hljs">public static bool operator &lt;=(ValueObject? left, ValueObject? right)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -628,7 +624,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
           <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L47" class="edit-link">Edit this page</a>
         </div>
 
-        
+
       </div>
 
       <div class="affix">

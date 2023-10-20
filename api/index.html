@@ -29,11 +29,7 @@
       <meta name="loc:copy" content="Copy">
   </head>
 
-  <script type="module">
-    import options from './../public/main.js'
-    import { init } from './../public/docfx.min.js'
-    init(options)
-  </script>
+  <script type="module" src="./../public/docfx.min.js"></script>
 
   <script>
     const theme = localStorage.getItem('theme') || 'auto'
@@ -102,6 +98,7 @@
 It is a small, simple object that encapsulates a concept from your problem domain.
 Unlike an aggregate, a value object does not have a unique identity and is immutable.
 Value objects support and enrich the ubiquitous language of your domain.</p>
+
 </article>
 
         <div class="contribution d-print-none">
@@ -109,7 +106,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>
-        
+
       </div>
 
       <div class="affix">

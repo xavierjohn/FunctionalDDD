@@ -731,13 +731,13 @@ references:
   nameWithType: ValueObject.operator ==
   nameWithType.vb: ValueObject.=
 - uid: FunctionalDDD.Domain.ValueObject.op_GreaterThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
-  name: operator >(ValueObject, ValueObject)
+  name: operator >(ValueObject?, ValueObject?)
   href: api/FunctionalDDD.Domain.ValueObject.html#FunctionalDDD_Domain_ValueObject_op_GreaterThan_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_
   commentId: M:FunctionalDDD.Domain.ValueObject.op_GreaterThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
   name.vb: '>(ValueObject, ValueObject)'
-  fullName: FunctionalDDD.Domain.ValueObject.operator >(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
+  fullName: FunctionalDDD.Domain.ValueObject.operator >(FunctionalDDD.Domain.ValueObject?, FunctionalDDD.Domain.ValueObject?)
   fullName.vb: FunctionalDDD.Domain.ValueObject.>(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
-  nameWithType: ValueObject.operator >(ValueObject, ValueObject)
+  nameWithType: ValueObject.operator >(ValueObject?, ValueObject?)
   nameWithType.vb: ValueObject.>(ValueObject, ValueObject)
 - uid: FunctionalDDD.Domain.ValueObject.op_GreaterThan*
   name: operator >
@@ -750,13 +750,13 @@ references:
   nameWithType: ValueObject.operator >
   nameWithType.vb: ValueObject.>
 - uid: FunctionalDDD.Domain.ValueObject.op_GreaterThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
-  name: operator >=(ValueObject, ValueObject)
+  name: operator >=(ValueObject?, ValueObject?)
   href: api/FunctionalDDD.Domain.ValueObject.html#FunctionalDDD_Domain_ValueObject_op_GreaterThanOrEqual_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_
   commentId: M:FunctionalDDD.Domain.ValueObject.op_GreaterThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
   name.vb: '>=(ValueObject, ValueObject)'
-  fullName: FunctionalDDD.Domain.ValueObject.operator >=(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
+  fullName: FunctionalDDD.Domain.ValueObject.operator >=(FunctionalDDD.Domain.ValueObject?, FunctionalDDD.Domain.ValueObject?)
   fullName.vb: FunctionalDDD.Domain.ValueObject.>=(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
-  nameWithType: ValueObject.operator >=(ValueObject, ValueObject)
+  nameWithType: ValueObject.operator >=(ValueObject?, ValueObject?)
   nameWithType.vb: ValueObject.>=(ValueObject, ValueObject)
 - uid: FunctionalDDD.Domain.ValueObject.op_GreaterThanOrEqual*
   name: operator >=
@@ -769,13 +769,13 @@ references:
   nameWithType: ValueObject.operator >=
   nameWithType.vb: ValueObject.>=
 - uid: FunctionalDDD.Domain.ValueObject.op_Inequality(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
-  name: operator !=(ValueObject, ValueObject)
+  name: operator !=(ValueObject?, ValueObject?)
   href: api/FunctionalDDD.Domain.ValueObject.html#FunctionalDDD_Domain_ValueObject_op_Inequality_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_
   commentId: M:FunctionalDDD.Domain.ValueObject.op_Inequality(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
   name.vb: <>(ValueObject, ValueObject)
-  fullName: FunctionalDDD.Domain.ValueObject.operator !=(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
+  fullName: FunctionalDDD.Domain.ValueObject.operator !=(FunctionalDDD.Domain.ValueObject?, FunctionalDDD.Domain.ValueObject?)
   fullName.vb: FunctionalDDD.Domain.ValueObject.<>(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
-  nameWithType: ValueObject.operator !=(ValueObject, ValueObject)
+  nameWithType: ValueObject.operator !=(ValueObject?, ValueObject?)
   nameWithType.vb: ValueObject.<>(ValueObject, ValueObject)
 - uid: FunctionalDDD.Domain.ValueObject.op_Inequality*
   name: operator !=
@@ -788,13 +788,13 @@ references:
   nameWithType: ValueObject.operator !=
   nameWithType.vb: ValueObject.<>
 - uid: FunctionalDDD.Domain.ValueObject.op_LessThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
-  name: operator <(ValueObject, ValueObject)
+  name: operator <(ValueObject?, ValueObject?)
   href: api/FunctionalDDD.Domain.ValueObject.html#FunctionalDDD_Domain_ValueObject_op_LessThan_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_
   commentId: M:FunctionalDDD.Domain.ValueObject.op_LessThan(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
   name.vb: <(ValueObject, ValueObject)
-  fullName: FunctionalDDD.Domain.ValueObject.operator <(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
+  fullName: FunctionalDDD.Domain.ValueObject.operator <(FunctionalDDD.Domain.ValueObject?, FunctionalDDD.Domain.ValueObject?)
   fullName.vb: FunctionalDDD.Domain.ValueObject.<(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
-  nameWithType: ValueObject.operator <(ValueObject, ValueObject)
+  nameWithType: ValueObject.operator <(ValueObject?, ValueObject?)
   nameWithType.vb: ValueObject.<(ValueObject, ValueObject)
 - uid: FunctionalDDD.Domain.ValueObject.op_LessThan*
   name: operator <
@@ -807,13 +807,13 @@ references:
   nameWithType: ValueObject.operator <
   nameWithType.vb: ValueObject.<
 - uid: FunctionalDDD.Domain.ValueObject.op_LessThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
-  name: operator <=(ValueObject, ValueObject)
+  name: operator <=(ValueObject?, ValueObject?)
   href: api/FunctionalDDD.Domain.ValueObject.html#FunctionalDDD_Domain_ValueObject_op_LessThanOrEqual_FunctionalDDD_Domain_ValueObject_FunctionalDDD_Domain_ValueObject_
   commentId: M:FunctionalDDD.Domain.ValueObject.op_LessThanOrEqual(FunctionalDDD.Domain.ValueObject,FunctionalDDD.Domain.ValueObject)
   name.vb: <=(ValueObject, ValueObject)
-  fullName: FunctionalDDD.Domain.ValueObject.operator <=(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
+  fullName: FunctionalDDD.Domain.ValueObject.operator <=(FunctionalDDD.Domain.ValueObject?, FunctionalDDD.Domain.ValueObject?)
   fullName.vb: FunctionalDDD.Domain.ValueObject.<=(FunctionalDDD.Domain.ValueObject, FunctionalDDD.Domain.ValueObject)
-  nameWithType: ValueObject.operator <=(ValueObject, ValueObject)
+  nameWithType: ValueObject.operator <=(ValueObject?, ValueObject?)
   nameWithType.vb: ValueObject.<=(ValueObject, ValueObject)
 - uid: FunctionalDDD.Domain.ValueObject.op_LessThanOrEqual*
   name: operator <=
@@ -2307,6 +2307,22 @@ references:
   fullName.vb: FunctionalDDD.Results.Maybe.None(Of T)()
   nameWithType: Maybe.None<T>()
   nameWithType.vb: Maybe.None(Of T)()
+- uid: FunctionalDDD.Results.Maybe.Optional*
+  name: Optional
+  href: api/FunctionalDDD.Results.Maybe.html#FunctionalDDD_Results_Maybe_Optional_
+  commentId: Overload:FunctionalDDD.Results.Maybe.Optional
+  isSpec: "True"
+  fullName: FunctionalDDD.Results.Maybe.Optional
+  nameWithType: Maybe.Optional
+- uid: FunctionalDDD.Results.Maybe.Optional``2(``0,System.Func{``0,FunctionalDDD.Results.Result{``1}})
+  name: Optional<TIn, TOut>(TIn?, Func<TIn, Result<TOut>>)
+  href: api/FunctionalDDD.Results.Maybe.html#FunctionalDDD_Results_Maybe_Optional__2___0_System_Func___0_FunctionalDDD_Results_Result___1___
+  commentId: M:FunctionalDDD.Results.Maybe.Optional``2(``0,System.Func{``0,FunctionalDDD.Results.Result{``1}})
+  name.vb: Optional(Of TIn, TOut)(TIn, Func(Of TIn, Result(Of TOut)))
+  fullName: FunctionalDDD.Results.Maybe.Optional<TIn, TOut>(TIn?, System.Func<TIn, FunctionalDDD.Results.Result<TOut>>)
+  fullName.vb: FunctionalDDD.Results.Maybe.Optional(Of TIn, TOut)(TIn, System.Func(Of TIn, FunctionalDDD.Results.Result(Of TOut)))
+  nameWithType: Maybe.Optional<TIn, TOut>(TIn?, Func<TIn, Result<TOut>>)
+  nameWithType.vb: Maybe.Optional(Of TIn, TOut)(TIn, Func(Of TIn, Result(Of TOut)))
 - uid: FunctionalDDD.Results.MaybeExtensions
   name: MaybeExtensions
   href: api/FunctionalDDD.Results.MaybeExtensions.html

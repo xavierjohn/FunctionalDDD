@@ -31,11 +31,7 @@
       <meta name="loc:copy" content="Copy">
   </head>
 
-  <script type="module">
-    import options from './../public/main.js'
-    import { init } from './../public/docfx.min.js'
-    init(options)
-  </script>
+  <script type="module" src="./../public/docfx.min.js"></script>
 
   <script>
     const theme = localStorage.getItem('theme') || 'auto'
@@ -235,6 +231,61 @@
 
 
 
+  <a id="FunctionalDDD_Results_Maybe_Optional_" data-uid="FunctionalDDD.Results.Maybe.Optional*"></a>
+
+  <h3 id="FunctionalDDD_Results_Maybe_Optional__2___0_System_Func___0_FunctionalDDD_Results_Result___1___" data-uid="FunctionalDDD.Results.Maybe.Optional``2(``0,System.Func{``0,FunctionalDDD.Results.Result{``1}})">
+  Optional&lt;TIn, TOut&gt;(TIn?, Func&lt;TIn, Result&lt;TOut&gt;&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Maybe/Maybe.cs/#L59"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Helps convert optional primite types to strongly typed object.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;Maybe&lt;TOut&gt;&gt; Optional&lt;TIn, TOut&gt;(TIn? value, Func&lt;TIn, Result&lt;TOut&gt;&gt; function) where TOut : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <span class="xref">TIn</span></dt>
+    <dd></dd>
+    <dt><code>function</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TIn, <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TOut&gt;&gt;</dt>
+    <dd><p>A function that can validate the input and return a <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a></p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDDD.Results.Maybe-1.html">Maybe</a>&lt;TOut&gt;&gt;</dt>
+    <dd><table><thead><tr><th class="term">State</th><th class="description">Return</th></tr></thead><tbody><tr><td class="term">Value is null</td><td class="description">Maybe.None&lt;<code class="typeparamref">TOut</code>&gt;</td></tr><tr><td class="term">Value is not null and <code class="paramref">function</code> returned Result.Success</td><td class="description">Maybe.From( the <code class="typeparamref">TOut</code> value from <code class="paramref">function</code>)</td></tr><tr><td class="term">Value is not null and <code class="paramref">function</code> returned Result.Failure</td><td class="description">The <a class="xref" href="FunctionalDDD.Results.Errors.Error.html">Error</a> from the <code class="paramref">function</code> return value.</td></tr></tbody></table>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TIn</code></dt>
+    <dd></dd>
+    <dt><code>TOut</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDDD_Results_Maybe_Optional__2___0_System_Func___0_FunctionalDDD_Results_Result___1____examples">Examples</h4>
+  <p>This code snippet demonstrates how to transform an optional string representing a zipcode into a strongly typed Zipcode Maybe object.
+If the string is null, the method returns a Maybe of None.
+Otherwise, it invokes the specified function and, if the function's result is successful, it wraps the result in a Maybe object.
+If the function fails, the method returns the failure.  This lets the given function run validation on the input data.</p>
+<pre><code class="lang-csharp">var result = Maybe.Optional(zipCode, ZipCode.New);</code></pre>
+
+
+
+
+
+
 
 </article>
 
@@ -242,7 +293,7 @@
           <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Maybe/Maybe.cs/#L6" class="edit-link">Edit this page</a>
         </div>
 
-        
+
       </div>
 
       <div class="affix">

@@ -29,11 +29,7 @@
       <meta name="loc:copy" content="Copy">
   </head>
 
-  <script type="module">
-    import options from './../public/main.js'
-    import { init } from './../public/docfx.min.js'
-    init(options)
-  </script>
+  <script type="module" src="./../public/docfx.min.js"></script>
 
   <script>
     const theme = localStorage.getItem('theme') || 'auto'
@@ -109,6 +105,7 @@
 <p>To avoid passing around strings, it is recommended to use RequiredString to obtain strongly typed properties. The source code generator will automate the implementation process. There are also other ValueObject classes available to use.</p>
 <h3 id="parallel-execution">Parallel Execution</h3>
 <p>Need to fetch data from several sources in parallel while maintaining ROP style of programming? This library can do that.</p>
+
 </article>
 
         <div class="contribution d-print-none">
@@ -116,7 +113,7 @@
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>
-        
+
       </div>
 
       <div class="affix">
