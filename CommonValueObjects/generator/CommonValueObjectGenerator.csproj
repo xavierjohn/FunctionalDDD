@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <PropertyGroup>
+    <Description>Source code generator for Value Objects.</Description>
+  </PropertyGroup>
    <PropertyGroup>
       <!-- 👇 Source generators must target netstandard 2.0 -->
       <TargetFramework>netstandard2.0</TargetFramework>
