@@ -57,13 +57,13 @@ public class MaybeTests
     }
 
     [Fact]
-    public void ToString_returns_No_Value_if_no_value()
+    public void ToString_returns_Empty_String_for_no_value()
     {
         Maybe<MyClass> maybe = null;
 
         var str = maybe.ToString();
 
-        str.Should().Be("Maybe has no value.");
+        str.Should().Be(string.Empty);
     }
 
     [Fact]

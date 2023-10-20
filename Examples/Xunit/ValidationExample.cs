@@ -43,4 +43,46 @@ public class ValidationExample
         });
     }
 
+    [Fact]
+    public void Convert_optional_primitive_type_to_concrete_objects()
+    {
+        string? firstName = null;
+        string email = "xavier@somewhere.com";
+        string? lastName = "Deva";
+
+        var actual = EmailAddress.New(email)
+            .Combine(Maybe.Optional(firstName, FirstName.New))
+            .Combine(Maybe.Optional(lastName, LastName.New))
+            .Bind(Add);
+
+        actual.Value.Should().Be("xavier@somewhere.com  Deva");
+
+        static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
+        {
+            return emailAddress + " " + firstname + " " + lastname;
+        }
+    }
+
+    [Fact]
+    public void Convert_optional_primitive_type_to_concrete_objects_failure()
+    {
+        string? firstName = string.Empty;
+        string email = "xavier@somewhere.com";
+        string? lastName = "Deva";
+
+        var actual = EmailAddress.New(email)
+            .Combine(Maybe.Optional(firstName, FirstName.New))
+            .Combine(Maybe.Optional(lastName, LastName.New))
+            .Bind(Add);
+
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().BeOfType<ValidationError>();
+        var validationError = (ValidationError)actual.Error;
+        validationError.Message.Should().Be("First Name cannot be empty.");
+
+        static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
+        {
+            return emailAddress + " " + firstname + " " + lastname;
+        }
+    }
 }
