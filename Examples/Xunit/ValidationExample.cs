@@ -1,6 +1,5 @@
 ﻿namespace Example;
 
-using System.Runtime.InteropServices;
 using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
