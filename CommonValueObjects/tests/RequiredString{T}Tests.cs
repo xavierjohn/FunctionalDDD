@@ -32,7 +32,7 @@ public class RequiredString_T_Tests
     }
 
     [Fact]
-    public void Two_RequiredString_with_different_value_should_be__not_equal()
+    public void Two_RequiredString_with_different_value_should_be_not_equal()
     {
         var rTrackingIds = TrackingId.New("Value1")
             .Combine(TrackingId.New("Value2"));
@@ -76,6 +76,19 @@ public class RequiredString_T_Tests
 
         // Assert
         trackingId1.Should().Be(TrackingId.New("32141sd").Value);
+    }
+
+    [Fact]
+    public void Can_use_ToString()
+    {
+        // Arrange
+        TrackingId trackingId1 = TrackingId.New("32141sd").Value;
+
+        // Act
+        var strTracking = trackingId1.ToString();
+
+        // Assert
+        strTracking.Should().Be("32141sd");
     }
 
     [Fact]
