@@ -56,6 +56,20 @@ public class RequiredGuid_T_Tests
     }
 
     [Fact]
+    public void Can_use_ToString()
+    {
+        // Arrange
+        var guid = Guid.NewGuid();
+        var myGuid = MyGuidId.New(guid).Value;
+
+        // Act
+        var actual = myGuid.ToString();
+
+        // Assert
+        actual.Should().Be(guid.ToString());
+    }
+
+    [Fact]
     public void Can_implicitly_cast_to_guid()
     {
         // Arrange
@@ -108,7 +122,7 @@ public class RequiredGuid_T_Tests
 
         // Assert
         myGuidResult.IsSuccess.Should().BeTrue();
-        myGuidResult.Value.Value.Should().Be(guid);
+        (myGuidResult.Value == guid).Should().BeTrue();
     }
 
     [Theory]
