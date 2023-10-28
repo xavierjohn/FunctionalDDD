@@ -14,7 +14,7 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .TeeAsync(customer => customer.Promote())
+            .TapAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .FinallyAsync(ok => "Okay", error => error.Message);
 
@@ -29,7 +29,7 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(static customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
-            .TeeAsync(static customer => customer.PromoteAsync())
+            .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(static ok => "Okay", static error => error.Message);
 
@@ -44,10 +44,10 @@ public class AsyncUsageExamples
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .TeeErrorAsync(Log)
+            .TapErrorAsync(Log)
             .CompensateAsync(() => AskManagerAsync(id))
-            .TeeAsync(static customer => Log("Manager approved promotion"))
-            .TeeAsync(static customer => customer.PromoteAsync())
+            .TapAsync(static customer => Log("Manager approved promotion"))
+            .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .FinallyAsync(static ok => "Okay", static error => error.Message);
 

@@ -2,7 +2,7 @@
 
 using FunctionalDDD.Results;
 
-public class TeeTests : TestBase
+public class TapTests : TestBase
 {
     protected bool ActionExecuted { get; set; }
 
@@ -43,11 +43,11 @@ public class TeeTests : TestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Tee_T_executes_action_on_result_success_and_returns_self(bool isSuccess)
+    public void Tap_T_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = result.Tee(Action);
+        var returned = result.Tap(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -56,11 +56,24 @@ public class TeeTests : TestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Tee_T_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
+    public void Tap_T_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = result.Tee(Action);
+        var returned = result.Tap(Action_T);
+
+        ActionExecuted.Should().Be(isSuccess);
+        result.Should().Be(returned);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Tap_T1_T2_executes_action_on_result_success_and_returns_self(bool isSuccess)
+    {
+        Result<(T, K)> result = Result.SuccessIf(isSuccess, T.Value, K.Value, Error1);
+
+        var returned = result.Tap(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -70,11 +83,11 @@ public class TeeTests : TestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Tee_Task_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
+    public async Task Tap_Task_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        Result<T> returned = await result.AsTask().TeeAsync(Action);
+        Result<T> returned = await result.AsTask().TapAsync(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -83,11 +96,11 @@ public class TeeTests : TestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Tee_Task_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
+    public async Task Tap_Task_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsTask().TeeAsync(Action);
+        var returned = await result.AsTask().TapAsync(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -96,11 +109,11 @@ public class TeeTests : TestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Tee_Task_Left_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
+    public async Task Tap_Task_Left_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsTask().TeeAsync(Action);
+        var returned = await result.AsTask().TapAsync(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -113,7 +126,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsTask().TeeAsync(Action_T);
+        var returned = await result.AsTask().TapAsync(Action_T);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -126,7 +139,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsTask().TeeAsync(Task_Action_T);
+        var returned = await result.AsTask().TapAsync(Task_Action_T);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -139,7 +152,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.TeeAsync(Task_Action);
+        var returned = await result.TapAsync(Task_Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -152,7 +165,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.TeeAsync(Task_Action_T);
+        var returned = await result.TapAsync(Task_Action_T);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -167,7 +180,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsValueTask().TeeAsync(ValueTask_Action);
+        var returned = await result.AsValueTask().TapAsync(ValueTask_Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -180,7 +193,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsValueTask().TeeAsync(ValueTask_Action_T);
+        var returned = await result.AsValueTask().TapAsync(ValueTask_Action_T);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -193,7 +206,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsValueTask().TeeAsync(Action);
+        var returned = await result.AsValueTask().TapAsync(Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -206,7 +219,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.AsValueTask().TeeAsync(Action_T);
+        var returned = await result.AsValueTask().TapAsync(Action_T);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -219,7 +232,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.TeeAsync(ValueTask_Action);
+        var returned = await result.TapAsync(ValueTask_Action);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
@@ -232,7 +245,7 @@ public class TeeTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
-        var returned = await result.TeeAsync(ValueTask_Action_T);
+        var returned = await result.TapAsync(ValueTask_Action_T);
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);

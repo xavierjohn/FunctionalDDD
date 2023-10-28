@@ -44,9 +44,9 @@ Maybe object holds a value or nothing. It is defined as
 
 Bind calls the given function if the result is in success state and return the new result.
 
-### Tee
+### Tap
 
-Tee calls the given function if the result is in success state and returns the same result.
+Tap calls the given function if the result is in success state and returns the same result.
 
 ### Compensate
 

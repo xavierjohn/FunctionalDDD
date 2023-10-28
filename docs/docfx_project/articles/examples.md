@@ -9,7 +9,7 @@ await GetCustomerByIdAsync(id)
    .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
    .EnsureAsync(customer => customer.CanBePromoted,
       Error.Validation("The customer has the highest status possible"))
-   .TeeAsync(customer => customer.Promote())
+   .TapAsync(customer => customer.Promote())
    .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
    .FinallyAsync(ok => "Okay", error => error.Message);
  ```
@@ -21,7 +21,7 @@ If `GetCustomerByIdAsync` returns `null`, then `ToResultAsync` will convert it t
 If `GetCustomerByIdAsync` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
 If not, return a `Validation` error.
 
-If there is no error, `TeeAsync` will execute the `Promote` method and then send an email.
+If there is no error, `TapAsync` will execute the `Promote` method and then send an email.
 
 `FinallyAsync` will terminate the chain and return a `string` if there is no error, otherwise it will return the error message.
 

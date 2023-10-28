@@ -26,7 +26,7 @@ public class RequiredStringTests
     public void Can_create_RequiredString()
     {
         TrackingId.New("32141sd")
-            .Tee(trackingId =>
+            .Tap(trackingId =>
             {
                 trackingId.Should().BeOfType<TrackingId>();
                 trackingId.ToString().Should().Be("32141sd");
@@ -35,28 +35,26 @@ public class RequiredStringTests
     }
 
     [Fact]
-    public void Two_RequiredString_with_different_value_should_be_not_equal()
-    {
-        var rTrackingIds = TrackingId.New("Value1")
-            .Combine(TrackingId.New("Value2"));
-
-        rTrackingIds.IsSuccess.Should().BeTrue();
-        (var trackingId1, var trackingId2) = rTrackingIds.Value;
-        (trackingId1 != trackingId2).Should().BeTrue();
-        trackingId1.Equals(trackingId2).Should().BeFalse();
-    }
+    public void Two_RequiredString_with_same_value_should_be_equal() =>
+        TrackingId.New("SameValue")
+            .Combine(TrackingId.New("SameValue"))
+            .Tap((tr1, tr2) =>
+            {
+                (tr1 == tr2).Should().BeTrue();
+                tr1.Equals(tr2).Should().BeTrue();
+            })
+            .IsSuccess.Should().BeTrue();
 
     [Fact]
-    public void Two_RequiredString_with_same_value_should_be_equal()
-    {
-        var rTrackingIds = TrackingId.New("SameValue")
-            .Combine(TrackingId.New("SameValue"));
-
-        rTrackingIds.IsSuccess.Should().BeTrue();
-        (var trackingId1, var trackingId2) = rTrackingIds.Value;
-        (trackingId1 == trackingId2).Should().BeTrue();
-        trackingId1.Equals(trackingId2).Should().BeTrue();
-    }
+    public void Two_RequiredString_with_different_value_should_be_not_equal() =>
+        TrackingId.New("Value1")
+            .Combine(TrackingId.New("Value2"))
+            .Tap((tr1, tr2) =>
+             {
+                 (tr1 != tr2).Should().BeTrue();
+                 tr1.Equals(tr2).Should().BeFalse();
+             })
+            .IsSuccess.Should().BeTrue();
 
     [Fact]
     public void Can_implicitly_cast_to_string()
