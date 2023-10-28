@@ -8,7 +8,7 @@ public partial class EmployeeId : RequiredGuid
 {
 }
 
-public class RequiredGuid_T_Tests
+public class RequiredGuidTests
 {
     [Fact]
     public void Cannot_create_empty_RequiredGuid()
@@ -23,14 +23,30 @@ public class RequiredGuid_T_Tests
     }
 
     [Fact]
-    public void Can_create_RequiredGuid()
+    public void Can_create_RequiredGuid_from_Guid()
     {
-        var str = Guid.NewGuid().ToString();
-        EmployeeId.New(Guid.Parse(str))
+        var guid = Guid.NewGuid();
+        EmployeeId.New(guid)
             .Tee(empId =>
             {
                 empId.Should().BeOfType<EmployeeId>();
-                empId.ToString().Should().Be(str);
+                ((Guid)empId).Should().Be(guid);
+            })
+            .IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Can_create_RequiredGuid_from_valid_string()
+    {
+        // Arrange
+        var strGuid = Guid.NewGuid().ToString();
+
+        // Act
+        EmployeeId.New(strGuid)
+            .Tee(empId =>
+            {
+                empId.Should().BeOfType<EmployeeId>();
+                empId.ToString().Should().Be(strGuid);
             })
             .IsSuccess.Should().BeTrue();
     }
@@ -44,6 +60,7 @@ public class RequiredGuid_T_Tests
         rGuidsIds.IsSuccess.Should().BeTrue();
         (EmployeeId guidId1, EmployeeId guidId2) = rGuidsIds.Value;
         (guidId1 != guidId2).Should().BeTrue();
+        guidId1.Equals(guidId2).Should().BeFalse();
     }
 
     [Fact]
@@ -56,6 +73,7 @@ public class RequiredGuid_T_Tests
         rGuidsIds.IsSuccess.Should().BeTrue();
         (EmployeeId guidId1, EmployeeId guidId2) = rGuidsIds.Value;
         (guidId1 == guidId2).Should().BeTrue();
+        guidId1.Equals(guidId2).Should().BeTrue();
     }
 
     [Fact]
@@ -112,18 +130,6 @@ public class RequiredGuid_T_Tests
         // Assert
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Attempted to access the Value for a failed result. A failed result has no Value.");
-    }
-
-    [Fact]
-    public void Can_create_RequiredGuid_from_valid_string()
-    {
-        // Arrange
-        var strGuid = Guid.NewGuid().ToString();
-
-        // Act
-        EmployeeId.New(strGuid)
-            .Tee(empId => empId.ToString().Should().Be(strGuid))
-            .IsSuccess.Should().BeTrue();
     }
 
     [Theory]
