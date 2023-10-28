@@ -4,7 +4,7 @@ using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 
-public partial class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString
 {
 }
 

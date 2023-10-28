@@ -2,6 +2,6 @@
 
 using FunctionalDDD.Domain;
 
-internal partial class FirstName : RequiredString<FirstName>
+internal partial class FirstName : RequiredString
 {
 }

@@ -2,6 +2,6 @@
 
 using FunctionalDDD.Domain;
 
-internal partial class UserId : RequiredGuid<UserId>
+internal partial class UserId : RequiredGuid
 {
 }

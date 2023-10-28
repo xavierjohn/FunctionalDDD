@@ -11,8 +11,7 @@
 /// </code>
 /// **Note** The partial keyword is required to allow the code generator to add the generated methods.
 /// </example>
-public abstract class RequiredGuid<TValue> : ScalarValueObject<Guid>
-    where TValue : RequiredGuid<TValue>
+public abstract class RequiredGuid : ScalarValueObject<Guid>
 {
 
     protected RequiredGuid(Guid value) : base(value)

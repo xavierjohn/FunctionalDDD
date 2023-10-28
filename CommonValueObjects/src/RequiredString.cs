@@ -12,8 +12,7 @@
 /// **Note** The partial keyword is required to allow the code generator to add the generated methods.
 /// </example>
 
-public abstract class RequiredString<TValue> : ScalarValueObject<string>
-    where TValue : RequiredString<TValue>
+public abstract class RequiredString : ScalarValueObject<string>
 {
     protected RequiredString(string value) : base(value)
     {
