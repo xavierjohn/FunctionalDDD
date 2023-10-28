@@ -14,7 +14,7 @@ generator can do the rest.
 Here is an example of how to use `RequiredString`:
 
 ```csharp
-public partial class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString
 {
 }
 ```
@@ -22,19 +22,59 @@ public partial class TrackingId : RequiredString<TrackingId>
 The source code generator will generate the following
 
 ```csharp
-public partial class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString
 {
-    protected static readonly Error CannotBeEmptyError = Error.Validation("Tracking Id cannot be empty", "trackingId");
+    protected static readonly Error CannotBeEmptyError = Error.Validation("Tracking Id cannot be empty.", "trackingId");
 
-    private TrackingId(String value) : base(value)
+    private TrackingId(string value) : base(value)
     {
     }
 
-    public static explicit operator TrackingId(String trackingId) => New(trackingId).Value;
+    public static explicit operator TrackingId(string trackingId) => New(trackingId).Value;
 
-    public static Result<TrackingId> New(string? requiredStringOrNothing)
+    public static Result<TrackingId> New(string? requiredStringOrNothing) =>
         requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new TrackingId(str));
+}
+```
+Here is an example of how to use `RequiredGuid`:
+
+```csharp
+public partial class EmployeeId : RequiredGuid
+{
+}
+```
+
+The source code generator will generate the following
+
+```csharp
+public partial class EmployeeId : RequiredGuid
+{
+    protected static readonly Error CannotBeEmptyError = Error.Validation("Employee Id cannot be empty.", "employeeId");
+
+    private EmployeeId(Guid value) : base(value)
+    {
+    }
+
+    public static explicit operator EmployeeId(Guid employeeId) => New(employeeId).Value;
+
+    public static EmployeeId NewUnique() => new(Guid.NewGuid());
+
+    public static Result<EmployeeId> New(Guid? requiredGuidOrNothing) =>
+        requiredGuidOrNothing
+            .ToResult(CannotBeEmptyError)
+            .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
+            .Map(guid => new EmployeeId(guid));
+
+    public static Result<EmployeeId> New(string? stringOrNull)
+    {
+         Guid parsedGuid = Guid.Empty;
+         return stringOrNull
+            .ToResult(CannotBeEmptyError)
+            .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation("string is not in valid format.", "employeeId"))
+            .Ensure(_ => parsedGuid != Guid.Empty, CannotBeEmptyError)
+            .Map(guid => new EmployeeId(parsedGuid));
+    }
 }
 ```

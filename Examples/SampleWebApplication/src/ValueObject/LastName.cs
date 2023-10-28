@@ -2,6 +2,6 @@
 
 using FunctionalDDD.Domain;
 
-public partial class LastName : RequiredString<LastName>
+public partial class LastName : RequiredString
 {
 }

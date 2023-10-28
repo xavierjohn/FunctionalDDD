@@ -4,16 +4,16 @@ using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 
-public partial class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString
 {
 }
 
-public class RequiredString_T_Tests
+public class RequiredStringTests
 {
     [Fact]
     public void Cannot_create_empty_RequiredString()
     {
-        var trackingId1 = TrackingId.New("");
+        var trackingId1 = TrackingId.New(string.Empty);
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)trackingId1.Error;
@@ -25,10 +25,13 @@ public class RequiredString_T_Tests
     [Fact]
     public void Can_create_RequiredString()
     {
-        var trackingId1 = TrackingId.New("32141sd");
-        trackingId1.IsSuccess.Should().BeTrue();
-        trackingId1.Value.Should().BeOfType<TrackingId>();
-        trackingId1.Value.Value.Should().Be("32141sd");
+        TrackingId.New("32141sd")
+            .Tee(trackingId =>
+            {
+                trackingId.Should().BeOfType<TrackingId>();
+                trackingId.ToString().Should().Be("32141sd");
+            })
+            .IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -39,7 +42,8 @@ public class RequiredString_T_Tests
 
         rTrackingIds.IsSuccess.Should().BeTrue();
         (var trackingId1, var trackingId2) = rTrackingIds.Value;
-        trackingId1.Value.Should().NotBe(trackingId2.Value);
+        (trackingId1 != trackingId2).Should().BeTrue();
+        trackingId1.Equals(trackingId2).Should().BeFalse();
     }
 
     [Fact]
@@ -50,7 +54,8 @@ public class RequiredString_T_Tests
 
         rTrackingIds.IsSuccess.Should().BeTrue();
         (var trackingId1, var trackingId2) = rTrackingIds.Value;
-        trackingId1.Value.Should().Be(trackingId2.Value);
+        (trackingId1 == trackingId2).Should().BeTrue();
+        trackingId1.Equals(trackingId2).Should().BeTrue();
     }
 
     [Fact]
