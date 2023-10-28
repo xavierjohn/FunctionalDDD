@@ -484,62 +484,56 @@ references:
   fullName.vb: FunctionalDDD.Domain.Entity(Of TId).<>
   nameWithType: Entity<TId>.operator !=
   nameWithType.vb: Entity(Of TId).<>
-- uid: FunctionalDDD.Domain.RequiredGuid`1
-  name: RequiredGuid<TValue>
-  href: api/FunctionalDDD.Domain.RequiredGuid-1.html
-  commentId: T:FunctionalDDD.Domain.RequiredGuid`1
-  name.vb: RequiredGuid(Of TValue)
-  fullName: FunctionalDDD.Domain.RequiredGuid<TValue>
-  fullName.vb: FunctionalDDD.Domain.RequiredGuid(Of TValue)
-  nameWithType: RequiredGuid<TValue>
-  nameWithType.vb: RequiredGuid(Of TValue)
-- uid: FunctionalDDD.Domain.RequiredGuid`1.#ctor(System.Guid)
-  name: RequiredGuid(Guid)
-  href: api/FunctionalDDD.Domain.RequiredGuid-1.html#FunctionalDDD_Domain_RequiredGuid_1__ctor_System_Guid_
-  commentId: M:FunctionalDDD.Domain.RequiredGuid`1.#ctor(System.Guid)
-  name.vb: New(Guid)
-  fullName: FunctionalDDD.Domain.RequiredGuid<TValue>.RequiredGuid(System.Guid)
-  fullName.vb: FunctionalDDD.Domain.RequiredGuid(Of TValue).New(System.Guid)
-  nameWithType: RequiredGuid<TValue>.RequiredGuid(Guid)
-  nameWithType.vb: RequiredGuid(Of TValue).New(Guid)
-- uid: FunctionalDDD.Domain.RequiredGuid`1.#ctor*
+- uid: FunctionalDDD.Domain.RequiredGuid
   name: RequiredGuid
-  href: api/FunctionalDDD.Domain.RequiredGuid-1.html#FunctionalDDD_Domain_RequiredGuid_1__ctor_
-  commentId: Overload:FunctionalDDD.Domain.RequiredGuid`1.#ctor
+  href: api/FunctionalDDD.Domain.RequiredGuid.html
+  commentId: T:FunctionalDDD.Domain.RequiredGuid
+  fullName: FunctionalDDD.Domain.RequiredGuid
+  nameWithType: RequiredGuid
+- uid: FunctionalDDD.Domain.RequiredGuid.#ctor(System.Guid)
+  name: RequiredGuid(Guid)
+  href: api/FunctionalDDD.Domain.RequiredGuid.html#FunctionalDDD_Domain_RequiredGuid__ctor_System_Guid_
+  commentId: M:FunctionalDDD.Domain.RequiredGuid.#ctor(System.Guid)
+  name.vb: New(Guid)
+  fullName: FunctionalDDD.Domain.RequiredGuid.RequiredGuid(System.Guid)
+  fullName.vb: FunctionalDDD.Domain.RequiredGuid.New(System.Guid)
+  nameWithType: RequiredGuid.RequiredGuid(Guid)
+  nameWithType.vb: RequiredGuid.New(Guid)
+- uid: FunctionalDDD.Domain.RequiredGuid.#ctor*
+  name: RequiredGuid
+  href: api/FunctionalDDD.Domain.RequiredGuid.html#FunctionalDDD_Domain_RequiredGuid__ctor_
+  commentId: Overload:FunctionalDDD.Domain.RequiredGuid.#ctor
   isSpec: "True"
   name.vb: New
-  fullName: FunctionalDDD.Domain.RequiredGuid<TValue>.RequiredGuid
-  fullName.vb: FunctionalDDD.Domain.RequiredGuid(Of TValue).New
-  nameWithType: RequiredGuid<TValue>.RequiredGuid
-  nameWithType.vb: RequiredGuid(Of TValue).New
-- uid: FunctionalDDD.Domain.RequiredString`1
-  name: RequiredString<TValue>
-  href: api/FunctionalDDD.Domain.RequiredString-1.html
-  commentId: T:FunctionalDDD.Domain.RequiredString`1
-  name.vb: RequiredString(Of TValue)
-  fullName: FunctionalDDD.Domain.RequiredString<TValue>
-  fullName.vb: FunctionalDDD.Domain.RequiredString(Of TValue)
-  nameWithType: RequiredString<TValue>
-  nameWithType.vb: RequiredString(Of TValue)
-- uid: FunctionalDDD.Domain.RequiredString`1.#ctor(System.String)
-  name: RequiredString(string)
-  href: api/FunctionalDDD.Domain.RequiredString-1.html#FunctionalDDD_Domain_RequiredString_1__ctor_System_String_
-  commentId: M:FunctionalDDD.Domain.RequiredString`1.#ctor(System.String)
-  name.vb: New(String)
-  fullName: FunctionalDDD.Domain.RequiredString<TValue>.RequiredString(string)
-  fullName.vb: FunctionalDDD.Domain.RequiredString(Of TValue).New(String)
-  nameWithType: RequiredString<TValue>.RequiredString(string)
-  nameWithType.vb: RequiredString(Of TValue).New(String)
-- uid: FunctionalDDD.Domain.RequiredString`1.#ctor*
+  fullName: FunctionalDDD.Domain.RequiredGuid.RequiredGuid
+  fullName.vb: FunctionalDDD.Domain.RequiredGuid.New
+  nameWithType: RequiredGuid.RequiredGuid
+  nameWithType.vb: RequiredGuid.New
+- uid: FunctionalDDD.Domain.RequiredString
   name: RequiredString
-  href: api/FunctionalDDD.Domain.RequiredString-1.html#FunctionalDDD_Domain_RequiredString_1__ctor_
-  commentId: Overload:FunctionalDDD.Domain.RequiredString`1.#ctor
+  href: api/FunctionalDDD.Domain.RequiredString.html
+  commentId: T:FunctionalDDD.Domain.RequiredString
+  fullName: FunctionalDDD.Domain.RequiredString
+  nameWithType: RequiredString
+- uid: FunctionalDDD.Domain.RequiredString.#ctor(System.String)
+  name: RequiredString(string)
+  href: api/FunctionalDDD.Domain.RequiredString.html#FunctionalDDD_Domain_RequiredString__ctor_System_String_
+  commentId: M:FunctionalDDD.Domain.RequiredString.#ctor(System.String)
+  name.vb: New(String)
+  fullName: FunctionalDDD.Domain.RequiredString.RequiredString(string)
+  fullName.vb: FunctionalDDD.Domain.RequiredString.New(String)
+  nameWithType: RequiredString.RequiredString(string)
+  nameWithType.vb: RequiredString.New(String)
+- uid: FunctionalDDD.Domain.RequiredString.#ctor*
+  name: RequiredString
+  href: api/FunctionalDDD.Domain.RequiredString.html#FunctionalDDD_Domain_RequiredString__ctor_
+  commentId: Overload:FunctionalDDD.Domain.RequiredString.#ctor
   isSpec: "True"
   name.vb: New
-  fullName: FunctionalDDD.Domain.RequiredString<TValue>.RequiredString
-  fullName.vb: FunctionalDDD.Domain.RequiredString(Of TValue).New
-  nameWithType: RequiredString<TValue>.RequiredString
-  nameWithType.vb: RequiredString(Of TValue).New
+  fullName: FunctionalDDD.Domain.RequiredString.RequiredString
+  fullName.vb: FunctionalDDD.Domain.RequiredString.New
+  nameWithType: RequiredString.RequiredString
+  nameWithType.vb: RequiredString.New
 - uid: FunctionalDDD.Domain.ScalarValueObject`1
   name: ScalarValueObject<T>
   href: api/FunctionalDDD.Domain.ScalarValueObject-1.html
