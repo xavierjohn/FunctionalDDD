@@ -26,7 +26,7 @@ public class RequiredStringTests
     public void Can_create_RequiredString()
     {
         TrackingId.New("32141sd")
-            .Tee(trackingId =>
+            .Tap(trackingId =>
             {
                 trackingId.Should().BeOfType<TrackingId>();
                 trackingId.ToString().Should().Be("32141sd");

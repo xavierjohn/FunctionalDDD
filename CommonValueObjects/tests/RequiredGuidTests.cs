@@ -27,7 +27,7 @@ public class RequiredGuidTests
     {
         var guid = Guid.NewGuid();
         EmployeeId.New(guid)
-            .Tee(empId =>
+            .Tap(empId =>
             {
                 empId.Should().BeOfType<EmployeeId>();
                 ((Guid)empId).Should().Be(guid);
@@ -43,7 +43,7 @@ public class RequiredGuidTests
 
         // Act
         EmployeeId.New(strGuid)
-            .Tee(empId =>
+            .Tap(empId =>
             {
                 empId.Should().BeOfType<EmployeeId>();
                 empId.ToString().Should().Be(strGuid);
