@@ -3,7 +3,7 @@
 /// <summary>
 /// Compensate for failed result by calling the given function.
 /// </summary>
-public static class CompensaTapxtensions
+public static class CompensateExtensions
 {
     /// <summary>
     /// Compensate for failed result by calling the given function.
@@ -20,7 +20,7 @@ public static class CompensaTapxtensions
 /// <summary>
 /// Compensate for failed result by calling the given function.
 /// </summary>
-public static class CompensaTapxtensionsAsync
+public static class CompensateExtensionsAsync
 {
     /// <summary>
     /// Compensate for failed result by calling the given function.
