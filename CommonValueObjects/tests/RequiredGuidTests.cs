@@ -26,21 +26,24 @@ public class RequiredGuid_T_Tests
     public void Can_create_RequiredGuid()
     {
         var str = Guid.NewGuid().ToString();
-        var guidId1 = EmployeeId.New(Guid.Parse(str));
-        guidId1.IsSuccess.Should().BeTrue();
-        guidId1.Value.Should().BeOfType<EmployeeId>();
-        guidId1.Value.Value.Should().Be(Guid.Parse(str));
+        EmployeeId.New(Guid.Parse(str))
+            .Tee(empId =>
+            {
+                empId.Should().BeOfType<EmployeeId>();
+                empId.ToString().Should().Be(str);
+            })
+            .IsSuccess.Should().BeTrue();
     }
 
     [Fact]
-    public void Two_RequiredGuid_with_different_value_should_be__not_equal()
+    public void Two_RequiredGuid_with_different_values_should_not_be_equal()
     {
         var rGuidsIds = EmployeeId.New(Guid.NewGuid())
             .Combine(EmployeeId.New(Guid.NewGuid()));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var guidId2) = rGuidsIds.Value;
-        guidId1.Value.Should().NotBe(guidId2.Value);
+        (EmployeeId guidId1, EmployeeId guidId2) = rGuidsIds.Value;
+        (guidId1 != guidId2).Should().BeTrue();
     }
 
     [Fact]
@@ -51,8 +54,8 @@ public class RequiredGuid_T_Tests
             .Combine(EmployeeId.New(myGuid));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
-        (var guidId1, var guidId2) = rGuidsIds.Value;
-        guidId1.Value.Should().Be(guidId2.Value);
+        (EmployeeId guidId1, EmployeeId guidId2) = rGuidsIds.Value;
+        (guidId1 == guidId2).Should().BeTrue();
     }
 
     [Fact]
@@ -115,14 +118,12 @@ public class RequiredGuid_T_Tests
     public void Can_create_RequiredGuid_from_valid_string()
     {
         // Arrange
-        var guid = Guid.NewGuid();
+        var strGuid = Guid.NewGuid().ToString();
 
         // Act
-        var myGuidResult = EmployeeId.New(guid.ToString());
-
-        // Assert
-        myGuidResult.IsSuccess.Should().BeTrue();
-        (myGuidResult.Value == guid).Should().BeTrue();
+        EmployeeId.New(strGuid)
+            .Tee(empId => empId.ToString().Should().Be(strGuid))
+            .IsSuccess.Should().BeTrue();
     }
 
     [Theory]
