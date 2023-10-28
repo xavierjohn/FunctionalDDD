@@ -2927,6 +2927,15 @@ references:
   fullName.vb: FunctionalDDD.Results.Result.SuccessIf(Of TValue)(Boolean, TValue, FunctionalDDD.Results.Errors.Error)
   nameWithType: Result.SuccessIf<TValue>(bool, in TValue, Error)
   nameWithType.vb: Result.SuccessIf(Of TValue)(Boolean, TValue, Error)
+- uid: FunctionalDDD.Results.Result.SuccessIf``2(System.Boolean,``0@,``1@,FunctionalDDD.Results.Errors.Error)
+  name: SuccessIf<T1, T2>(bool, in T1, in T2, Error)
+  href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_SuccessIf__2_System_Boolean___0____1__FunctionalDDD_Results_Errors_Error_
+  commentId: M:FunctionalDDD.Results.Result.SuccessIf``2(System.Boolean,``0@,``1@,FunctionalDDD.Results.Errors.Error)
+  name.vb: SuccessIf(Of T1, T2)(Boolean, T1, T2, Error)
+  fullName: FunctionalDDD.Results.Result.SuccessIf<T1, T2>(bool, in T1, in T2, FunctionalDDD.Results.Errors.Error)
+  fullName.vb: FunctionalDDD.Results.Result.SuccessIf(Of T1, T2)(Boolean, T1, T2, FunctionalDDD.Results.Errors.Error)
+  nameWithType: Result.SuccessIf<T1, T2>(bool, in T1, in T2, Error)
+  nameWithType.vb: Result.SuccessIf(Of T1, T2)(Boolean, T1, T2, Error)
 - uid: FunctionalDDD.Results.Result.Success``1(System.Func{``0})
   name: Success<TValue>(Func<TValue>)
   href: api/FunctionalDDD.Results.Result.html#FunctionalDDD_Results_Result_Success__1_System_Func___0__
@@ -3050,211 +3059,238 @@ references:
   fullName.vb: FunctionalDDD.Results.Result(Of TValue).CType
   nameWithType: Result<TValue>.implicit operator
   nameWithType.vb: Result(Of TValue).CType
-- uid: FunctionalDDD.Results.TeeErrorExtensions
-  name: TeeErrorExtensions
-  href: api/FunctionalDDD.Results.TeeErrorExtensions.html
-  commentId: T:FunctionalDDD.Results.TeeErrorExtensions
-  fullName: FunctionalDDD.Results.TeeErrorExtensions
-  nameWithType: TeeErrorExtensions
-- uid: FunctionalDDD.Results.TeeErrorExtensions.TeeError*
-  name: TeeError
-  href: api/FunctionalDDD.Results.TeeErrorExtensions.html#FunctionalDDD_Results_TeeErrorExtensions_TeeError_
-  commentId: Overload:FunctionalDDD.Results.TeeErrorExtensions.TeeError
+- uid: FunctionalDDD.Results.TapErrorExtensions
+  name: TapErrorExtensions
+  href: api/FunctionalDDD.Results.TapErrorExtensions.html
+  commentId: T:FunctionalDDD.Results.TapErrorExtensions
+  fullName: FunctionalDDD.Results.TapErrorExtensions
+  nameWithType: TapErrorExtensions
+- uid: FunctionalDDD.Results.TapErrorExtensions.TapError*
+  name: TapError
+  href: api/FunctionalDDD.Results.TapErrorExtensions.html#FunctionalDDD_Results_TapErrorExtensions_TapError_
+  commentId: Overload:FunctionalDDD.Results.TapErrorExtensions.TapError
   isSpec: "True"
-  fullName: FunctionalDDD.Results.TeeErrorExtensions.TeeError
-  nameWithType: TeeErrorExtensions.TeeError
-- uid: FunctionalDDD.Results.TeeErrorExtensions.TeeError``1(FunctionalDDD.Results.Result{``0},System.Action)
-  name: TeeError<TValue>(Result<TValue>, Action)
-  href: api/FunctionalDDD.Results.TeeErrorExtensions.html#FunctionalDDD_Results_TeeErrorExtensions_TeeError__1_FunctionalDDD_Results_Result___0__System_Action_
-  commentId: M:FunctionalDDD.Results.TeeErrorExtensions.TeeError``1(FunctionalDDD.Results.Result{``0},System.Action)
-  name.vb: TeeError(Of TValue)(Result(Of TValue), Action)
-  fullName: FunctionalDDD.Results.TeeErrorExtensions.TeeError<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action)
-  fullName.vb: FunctionalDDD.Results.TeeErrorExtensions.TeeError(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action)
-  nameWithType: TeeErrorExtensions.TeeError<TValue>(Result<TValue>, Action)
-  nameWithType.vb: TeeErrorExtensions.TeeError(Of TValue)(Result(Of TValue), Action)
-- uid: FunctionalDDD.Results.TeeErrorExtensions.TeeError``1(FunctionalDDD.Results.Result{``0},System.Action{FunctionalDDD.Results.Errors.Error})
-  name: TeeError<TValue>(Result<TValue>, Action<Error>)
-  href: api/FunctionalDDD.Results.TeeErrorExtensions.html#FunctionalDDD_Results_TeeErrorExtensions_TeeError__1_FunctionalDDD_Results_Result___0__System_Action_FunctionalDDD_Results_Errors_Error__
-  commentId: M:FunctionalDDD.Results.TeeErrorExtensions.TeeError``1(FunctionalDDD.Results.Result{``0},System.Action{FunctionalDDD.Results.Errors.Error})
-  name.vb: TeeError(Of TValue)(Result(Of TValue), Action(Of Error))
-  fullName: FunctionalDDD.Results.TeeErrorExtensions.TeeError<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action<FunctionalDDD.Results.Errors.Error>)
-  fullName.vb: FunctionalDDD.Results.TeeErrorExtensions.TeeError(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action(Of FunctionalDDD.Results.Errors.Error))
-  nameWithType: TeeErrorExtensions.TeeError<TValue>(Result<TValue>, Action<Error>)
-  nameWithType.vb: TeeErrorExtensions.TeeError(Of TValue)(Result(Of TValue), Action(Of Error))
-- uid: FunctionalDDD.Results.TeeErrorExtensionsAsync
-  name: TeeErrorExtensionsAsync
-  href: api/FunctionalDDD.Results.TeeErrorExtensionsAsync.html
-  commentId: T:FunctionalDDD.Results.TeeErrorExtensionsAsync
-  fullName: FunctionalDDD.Results.TeeErrorExtensionsAsync
-  nameWithType: TeeErrorExtensionsAsync
-- uid: FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync*
-  name: TeeErrorAsync
-  href: api/FunctionalDDD.Results.TeeErrorExtensionsAsync.html#FunctionalDDD_Results_TeeErrorExtensionsAsync_TeeErrorAsync_
-  commentId: Overload:FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync
+  fullName: FunctionalDDD.Results.TapErrorExtensions.TapError
+  nameWithType: TapErrorExtensions.TapError
+- uid: FunctionalDDD.Results.TapErrorExtensions.TapError``1(FunctionalDDD.Results.Result{``0},System.Action)
+  name: TapError<TValue>(Result<TValue>, Action)
+  href: api/FunctionalDDD.Results.TapErrorExtensions.html#FunctionalDDD_Results_TapErrorExtensions_TapError__1_FunctionalDDD_Results_Result___0__System_Action_
+  commentId: M:FunctionalDDD.Results.TapErrorExtensions.TapError``1(FunctionalDDD.Results.Result{``0},System.Action)
+  name.vb: TapError(Of TValue)(Result(Of TValue), Action)
+  fullName: FunctionalDDD.Results.TapErrorExtensions.TapError<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action)
+  fullName.vb: FunctionalDDD.Results.TapErrorExtensions.TapError(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action)
+  nameWithType: TapErrorExtensions.TapError<TValue>(Result<TValue>, Action)
+  nameWithType.vb: TapErrorExtensions.TapError(Of TValue)(Result(Of TValue), Action)
+- uid: FunctionalDDD.Results.TapErrorExtensions.TapError``1(FunctionalDDD.Results.Result{``0},System.Action{FunctionalDDD.Results.Errors.Error})
+  name: TapError<TValue>(Result<TValue>, Action<Error>)
+  href: api/FunctionalDDD.Results.TapErrorExtensions.html#FunctionalDDD_Results_TapErrorExtensions_TapError__1_FunctionalDDD_Results_Result___0__System_Action_FunctionalDDD_Results_Errors_Error__
+  commentId: M:FunctionalDDD.Results.TapErrorExtensions.TapError``1(FunctionalDDD.Results.Result{``0},System.Action{FunctionalDDD.Results.Errors.Error})
+  name.vb: TapError(Of TValue)(Result(Of TValue), Action(Of Error))
+  fullName: FunctionalDDD.Results.TapErrorExtensions.TapError<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action<FunctionalDDD.Results.Errors.Error>)
+  fullName.vb: FunctionalDDD.Results.TapErrorExtensions.TapError(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action(Of FunctionalDDD.Results.Errors.Error))
+  nameWithType: TapErrorExtensions.TapError<TValue>(Result<TValue>, Action<Error>)
+  nameWithType.vb: TapErrorExtensions.TapError(Of TValue)(Result(Of TValue), Action(Of Error))
+- uid: FunctionalDDD.Results.TapErrorExtensionsAsync
+  name: TapErrorExtensionsAsync
+  href: api/FunctionalDDD.Results.TapErrorExtensionsAsync.html
+  commentId: T:FunctionalDDD.Results.TapErrorExtensionsAsync
+  fullName: FunctionalDDD.Results.TapErrorExtensionsAsync
+  nameWithType: TapErrorExtensionsAsync
+- uid: FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync*
+  name: TapErrorAsync
+  href: api/FunctionalDDD.Results.TapErrorExtensionsAsync.html#FunctionalDDD_Results_TapErrorExtensionsAsync_TapErrorAsync_
+  commentId: Overload:FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync
   isSpec: "True"
-  fullName: FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync
-  nameWithType: TeeErrorExtensionsAsync.TeeErrorAsync
-- uid: FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{FunctionalDDD.Results.Errors.Error})
-  name: TeeErrorAsync<TValue>(Task<Result<TValue>>, Action<Error>)
-  href: api/FunctionalDDD.Results.TeeErrorExtensionsAsync.html#FunctionalDDD_Results_TeeErrorExtensionsAsync_TeeErrorAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action_FunctionalDDD_Results_Errors_Error__
-  commentId: M:FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{FunctionalDDD.Results.Errors.Error})
-  name.vb: TeeErrorAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of Error))
-  fullName: FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Action<FunctionalDDD.Results.Errors.Error>)
-  fullName.vb: FunctionalDDD.Results.TeeErrorExtensionsAsync.TeeErrorAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Action(Of FunctionalDDD.Results.Errors.Error))
-  nameWithType: TeeErrorExtensionsAsync.TeeErrorAsync<TValue>(Task<Result<TValue>>, Action<Error>)
-  nameWithType.vb: TeeErrorExtensionsAsync.TeeErrorAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of Error))
-- uid: FunctionalDDD.Results.TeeExtensions
-  name: TeeExtensions
-  href: api/FunctionalDDD.Results.TeeExtensions.html
-  commentId: T:FunctionalDDD.Results.TeeExtensions
-  fullName: FunctionalDDD.Results.TeeExtensions
-  nameWithType: TeeExtensions
-- uid: FunctionalDDD.Results.TeeExtensions.Tee*
-  name: Tee
-  href: api/FunctionalDDD.Results.TeeExtensions.html#FunctionalDDD_Results_TeeExtensions_Tee_
-  commentId: Overload:FunctionalDDD.Results.TeeExtensions.Tee
+  fullName: FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync
+  nameWithType: TapErrorExtensionsAsync.TapErrorAsync
+- uid: FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{FunctionalDDD.Results.Errors.Error})
+  name: TapErrorAsync<TValue>(Task<Result<TValue>>, Action<Error>)
+  href: api/FunctionalDDD.Results.TapErrorExtensionsAsync.html#FunctionalDDD_Results_TapErrorExtensionsAsync_TapErrorAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action_FunctionalDDD_Results_Errors_Error__
+  commentId: M:FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{FunctionalDDD.Results.Errors.Error})
+  name.vb: TapErrorAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of Error))
+  fullName: FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Action<FunctionalDDD.Results.Errors.Error>)
+  fullName.vb: FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Action(Of FunctionalDDD.Results.Errors.Error))
+  nameWithType: TapErrorExtensionsAsync.TapErrorAsync<TValue>(Task<Result<TValue>>, Action<Error>)
+  nameWithType.vb: TapErrorExtensionsAsync.TapErrorAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of Error))
+- uid: FunctionalDDD.Results.TapExtensions
+  name: TapExtensions
+  href: api/FunctionalDDD.Results.TapExtensions.html
+  commentId: T:FunctionalDDD.Results.TapExtensions
+  fullName: FunctionalDDD.Results.TapExtensions
+  nameWithType: TapExtensions
+- uid: FunctionalDDD.Results.TapExtensions.Tap*
+  name: Tap
+  href: api/FunctionalDDD.Results.TapExtensions.html#FunctionalDDD_Results_TapExtensions_Tap_
+  commentId: Overload:FunctionalDDD.Results.TapExtensions.Tap
   isSpec: "True"
-  fullName: FunctionalDDD.Results.TeeExtensions.Tee
-  nameWithType: TeeExtensions.Tee
-- uid: FunctionalDDD.Results.TeeExtensions.Tee``1(FunctionalDDD.Results.Result{``0},System.Action)
-  name: Tee<TValue>(Result<TValue>, Action)
-  href: api/FunctionalDDD.Results.TeeExtensions.html#FunctionalDDD_Results_TeeExtensions_Tee__1_FunctionalDDD_Results_Result___0__System_Action_
-  commentId: M:FunctionalDDD.Results.TeeExtensions.Tee``1(FunctionalDDD.Results.Result{``0},System.Action)
-  name.vb: Tee(Of TValue)(Result(Of TValue), Action)
-  fullName: FunctionalDDD.Results.TeeExtensions.Tee<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action)
-  fullName.vb: FunctionalDDD.Results.TeeExtensions.Tee(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action)
-  nameWithType: TeeExtensions.Tee<TValue>(Result<TValue>, Action)
-  nameWithType.vb: TeeExtensions.Tee(Of TValue)(Result(Of TValue), Action)
-- uid: FunctionalDDD.Results.TeeExtensions.Tee``1(FunctionalDDD.Results.Result{``0},System.Action{``0})
-  name: Tee<TValue>(Result<TValue>, Action<TValue>)
-  href: api/FunctionalDDD.Results.TeeExtensions.html#FunctionalDDD_Results_TeeExtensions_Tee__1_FunctionalDDD_Results_Result___0__System_Action___0__
-  commentId: M:FunctionalDDD.Results.TeeExtensions.Tee``1(FunctionalDDD.Results.Result{``0},System.Action{``0})
-  name.vb: Tee(Of TValue)(Result(Of TValue), Action(Of TValue))
-  fullName: FunctionalDDD.Results.TeeExtensions.Tee<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action<TValue>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensions.Tee(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action(Of TValue))
-  nameWithType: TeeExtensions.Tee<TValue>(Result<TValue>, Action<TValue>)
-  nameWithType.vb: TeeExtensions.Tee(Of TValue)(Result(Of TValue), Action(Of TValue))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync
-  name: TeeExtensionsAsync
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html
-  commentId: T:FunctionalDDD.Results.TeeExtensionsAsync
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync
-  nameWithType: TeeExtensionsAsync
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync*
-  name: TeeAsync
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync_
-  commentId: Overload:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync
+  fullName: FunctionalDDD.Results.TapExtensions.Tap
+  nameWithType: TapExtensions.Tap
+- uid: FunctionalDDD.Results.TapExtensions.Tap``1(FunctionalDDD.Results.Result{``0},System.Action)
+  name: Tap<TValue>(Result<TValue>, Action)
+  href: api/FunctionalDDD.Results.TapExtensions.html#FunctionalDDD_Results_TapExtensions_Tap__1_FunctionalDDD_Results_Result___0__System_Action_
+  commentId: M:FunctionalDDD.Results.TapExtensions.Tap``1(FunctionalDDD.Results.Result{``0},System.Action)
+  name.vb: Tap(Of TValue)(Result(Of TValue), Action)
+  fullName: FunctionalDDD.Results.TapExtensions.Tap<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action)
+  fullName.vb: FunctionalDDD.Results.TapExtensions.Tap(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action)
+  nameWithType: TapExtensions.Tap<TValue>(Result<TValue>, Action)
+  nameWithType.vb: TapExtensions.Tap(Of TValue)(Result(Of TValue), Action)
+- uid: FunctionalDDD.Results.TapExtensions.Tap``1(FunctionalDDD.Results.Result{``0},System.Action{``0})
+  name: Tap<TValue>(Result<TValue>, Action<TValue>)
+  href: api/FunctionalDDD.Results.TapExtensions.html#FunctionalDDD_Results_TapExtensions_Tap__1_FunctionalDDD_Results_Result___0__System_Action___0__
+  commentId: M:FunctionalDDD.Results.TapExtensions.Tap``1(FunctionalDDD.Results.Result{``0},System.Action{``0})
+  name.vb: Tap(Of TValue)(Result(Of TValue), Action(Of TValue))
+  fullName: FunctionalDDD.Results.TapExtensions.Tap<TValue>(FunctionalDDD.Results.Result<TValue>, System.Action<TValue>)
+  fullName.vb: FunctionalDDD.Results.TapExtensions.Tap(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Action(Of TValue))
+  nameWithType: TapExtensions.Tap<TValue>(Result<TValue>, Action<TValue>)
+  nameWithType.vb: TapExtensions.Tap(Of TValue)(Result(Of TValue), Action(Of TValue))
+- uid: FunctionalDDD.Results.TapExtensions.Tap``2(FunctionalDDD.Results.Result{System.ValueTuple{``0,``1}},System.Action{``0,``1})
+  name: Tap<T1, T2>(Result<(T1, T2)>, Action<T1, T2>)
+  href: api/FunctionalDDD.Results.TapExtensions.html#FunctionalDDD_Results_TapExtensions_Tap__2_FunctionalDDD_Results_Result_System_ValueTuple___0___1___System_Action___0___1__
+  commentId: M:FunctionalDDD.Results.TapExtensions.Tap``2(FunctionalDDD.Results.Result{System.ValueTuple{``0,``1}},System.Action{``0,``1})
+  name.vb: Tap(Of T1, T2)(Result(Of (T1, T2)), Action(Of T1, T2))
+  fullName: FunctionalDDD.Results.TapExtensions.Tap<T1, T2>(FunctionalDDD.Results.Result<(T1, T2)>, System.Action<T1, T2>)
+  fullName.vb: FunctionalDDD.Results.TapExtensions.Tap(Of T1, T2)(FunctionalDDD.Results.Result(Of (T1, T2)), System.Action(Of T1, T2))
+  nameWithType: TapExtensions.Tap<T1, T2>(Result<(T1, T2)>, Action<T1, T2>)
+  nameWithType.vb: TapExtensions.Tap(Of T1, T2)(Result(Of (T1, T2)), Action(Of T1, T2))
+- uid: FunctionalDDD.Results.TapExtensionsAsync
+  name: TapExtensionsAsync
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html
+  commentId: T:FunctionalDDD.Results.TapExtensionsAsync
+  fullName: FunctionalDDD.Results.TapExtensionsAsync
+  nameWithType: TapExtensionsAsync
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync*
+  name: TapAsync
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync_
+  commentId: Overload:FunctionalDDD.Results.TapExtensionsAsync.TapAsync
   isSpec: "True"
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync
-  nameWithType: TeeExtensionsAsync.TeeAsync
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.Task})
-  name: TeeAsync<TValue>(Result<TValue>, Func<Task>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func_System_Threading_Tasks_Task__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.Task})
-  name.vb: TeeAsync(Of TValue)(Result(Of TValue), Func(Of Task))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<System.Threading.Tasks.Task>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of System.Threading.Tasks.Task))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Result<TValue>, Func<Task>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Result(Of TValue), Func(Of Task))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.ValueTask})
-  name: TeeAsync<TValue>(Result<TValue>, Func<ValueTask>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func_System_Threading_Tasks_ValueTask__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.ValueTask})
-  name.vb: TeeAsync(Of TValue)(Result(Of TValue), Func(Of ValueTask))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<System.Threading.Tasks.ValueTask>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of System.Threading.Tasks.ValueTask))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Result<TValue>, Func<ValueTask>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Result(Of TValue), Func(Of ValueTask))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.Task})
-  name: TeeAsync<TValue>(Result<TValue>, Func<TValue, Task>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func___0_System_Threading_Tasks_Task__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.Task})
-  name.vb: TeeAsync(Of TValue)(Result(Of TValue), Func(Of TValue, Task))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<TValue, System.Threading.Tasks.Task>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of TValue, System.Threading.Tasks.Task))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Result<TValue>, Func<TValue, Task>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Result(Of TValue), Func(Of TValue, Task))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.ValueTask})
-  name: TeeAsync<TValue>(Result<TValue>, Func<TValue, ValueTask>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_FunctionalDDD_Results_Result___0__System_Func___0_System_Threading_Tasks_ValueTask__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.ValueTask})
-  name.vb: TeeAsync(Of TValue)(Result(Of TValue), Func(Of TValue, ValueTask))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<TValue, System.Threading.Tasks.ValueTask>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of TValue, System.Threading.Tasks.ValueTask))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Result<TValue>, Func<TValue, ValueTask>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Result(Of TValue), Func(Of TValue, ValueTask))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action)
-  name: TeeAsync<TValue>(Task<Result<TValue>>, Action)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action_
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action)
-  name.vb: TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Action)
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Action)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Action)
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Task<Result<TValue>>, Action)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Action)
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{``0})
-  name: TeeAsync<TValue>(Task<Result<TValue>>, Action<TValue>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action___0__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{``0})
-  name.vb: TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of TValue))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Action<TValue>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Action(Of TValue))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Task<Result<TValue>>, Action<TValue>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of TValue))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.Task})
-  name: TeeAsync<TValue>(Task<Result<TValue>>, Func<Task>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Func_System_Threading_Tasks_Task__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.Task})
-  name.vb: TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of Task))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Func<System.Threading.Tasks.Task>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of System.Threading.Tasks.Task))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Task<Result<TValue>>, Func<Task>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of Task))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.Task})
-  name: TeeAsync<TValue>(Task<Result<TValue>>, Func<TValue, Task>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Func___0_System_Threading_Tasks_Task__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.Task})
-  name.vb: TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of TValue, Task))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Func<TValue, System.Threading.Tasks.Task>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of TValue, System.Threading.Tasks.Task))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(Task<Result<TValue>>, Func<TValue, Task>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of TValue, Task))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action)
-  name: TeeAsync<TValue>(ValueTask<Result<TValue>>, Action)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Action_
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action)
-  name.vb: TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action)
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Action)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Action)
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(ValueTask<Result<TValue>>, Action)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action)
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action{``0})
-  name: TeeAsync<TValue>(ValueTask<Result<TValue>>, Action<TValue>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Action___0__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action{``0})
-  name.vb: TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action(Of TValue))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Action<TValue>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Action(Of TValue))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(ValueTask<Result<TValue>>, Action<TValue>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action(Of TValue))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.ValueTask})
-  name: TeeAsync<TValue>(ValueTask<Result<TValue>>, Func<ValueTask>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Func_System_Threading_Tasks_ValueTask__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.ValueTask})
-  name.vb: TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of ValueTask))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Func<System.Threading.Tasks.ValueTask>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of System.Threading.Tasks.ValueTask))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(ValueTask<Result<TValue>>, Func<ValueTask>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of ValueTask))
-- uid: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.ValueTask})
-  name: TeeAsync<TValue>(ValueTask<Result<TValue>>, Func<TValue, ValueTask>)
-  href: api/FunctionalDDD.Results.TeeExtensionsAsync.html#FunctionalDDD_Results_TeeExtensionsAsync_TeeAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Func___0_System_Threading_Tasks_ValueTask__
-  commentId: M:FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.ValueTask})
-  name.vb: TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of TValue, ValueTask))
-  fullName: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Func<TValue, System.Threading.Tasks.ValueTask>)
-  fullName.vb: FunctionalDDD.Results.TeeExtensionsAsync.TeeAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of TValue, System.Threading.Tasks.ValueTask))
-  nameWithType: TeeExtensionsAsync.TeeAsync<TValue>(ValueTask<Result<TValue>>, Func<TValue, ValueTask>)
-  nameWithType.vb: TeeExtensionsAsync.TeeAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of TValue, ValueTask))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync
+  nameWithType: TapExtensionsAsync.TapAsync
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.Task})
+  name: TapAsync<TValue>(Result<TValue>, Func<Task>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_FunctionalDDD_Results_Result___0__System_Func_System_Threading_Tasks_Task__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.Task})
+  name.vb: TapAsync(Of TValue)(Result(Of TValue), Func(Of Task))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<System.Threading.Tasks.Task>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of System.Threading.Tasks.Task))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Result<TValue>, Func<Task>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Result(Of TValue), Func(Of Task))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.ValueTask})
+  name: TapAsync<TValue>(Result<TValue>, Func<ValueTask>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_FunctionalDDD_Results_Result___0__System_Func_System_Threading_Tasks_ValueTask__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{System.Threading.Tasks.ValueTask})
+  name.vb: TapAsync(Of TValue)(Result(Of TValue), Func(Of ValueTask))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<System.Threading.Tasks.ValueTask>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of System.Threading.Tasks.ValueTask))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Result<TValue>, Func<ValueTask>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Result(Of TValue), Func(Of ValueTask))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.Task})
+  name: TapAsync<TValue>(Result<TValue>, Func<TValue, Task>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_FunctionalDDD_Results_Result___0__System_Func___0_System_Threading_Tasks_Task__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.Task})
+  name.vb: TapAsync(Of TValue)(Result(Of TValue), Func(Of TValue, Task))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<TValue, System.Threading.Tasks.Task>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of TValue, System.Threading.Tasks.Task))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Result<TValue>, Func<TValue, Task>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Result(Of TValue), Func(Of TValue, Task))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.ValueTask})
+  name: TapAsync<TValue>(Result<TValue>, Func<TValue, ValueTask>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_FunctionalDDD_Results_Result___0__System_Func___0_System_Threading_Tasks_ValueTask__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(FunctionalDDD.Results.Result{``0},System.Func{``0,System.Threading.Tasks.ValueTask})
+  name.vb: TapAsync(Of TValue)(Result(Of TValue), Func(Of TValue, ValueTask))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(FunctionalDDD.Results.Result<TValue>, System.Func<TValue, System.Threading.Tasks.ValueTask>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(FunctionalDDD.Results.Result(Of TValue), System.Func(Of TValue, System.Threading.Tasks.ValueTask))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Result<TValue>, Func<TValue, ValueTask>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Result(Of TValue), Func(Of TValue, ValueTask))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action)
+  name: TapAsync<TValue>(Task<Result<TValue>>, Action)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action_
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action)
+  name.vb: TapAsync(Of TValue)(Task(Of Result(Of TValue)), Action)
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Action)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Action)
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Task<Result<TValue>>, Action)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Task(Of Result(Of TValue)), Action)
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{``0})
+  name: TapAsync<TValue>(Task<Result<TValue>>, Action<TValue>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action___0__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{``0})
+  name.vb: TapAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of TValue))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Action<TValue>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Action(Of TValue))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Task<Result<TValue>>, Action<TValue>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Task(Of Result(Of TValue)), Action(Of TValue))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.Task})
+  name: TapAsync<TValue>(Task<Result<TValue>>, Func<Task>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Func_System_Threading_Tasks_Task__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.Task})
+  name.vb: TapAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of Task))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Func<System.Threading.Tasks.Task>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of System.Threading.Tasks.Task))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Task<Result<TValue>>, Func<Task>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of Task))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.Task})
+  name: TapAsync<TValue>(Task<Result<TValue>>, Func<TValue, Task>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Func___0_System_Threading_Tasks_Task__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.Task})
+  name.vb: TapAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of TValue, Task))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<TValue>>, System.Func<TValue, System.Threading.Tasks.Task>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of TValue, System.Threading.Tasks.Task))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(Task<Result<TValue>>, Func<TValue, Task>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(Task(Of Result(Of TValue)), Func(Of TValue, Task))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action)
+  name: TapAsync<TValue>(ValueTask<Result<TValue>>, Action)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Action_
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action)
+  name.vb: TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action)
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Action)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Action)
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(ValueTask<Result<TValue>>, Action)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action)
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action{``0})
+  name: TapAsync<TValue>(ValueTask<Result<TValue>>, Action<TValue>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Action___0__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Action{``0})
+  name.vb: TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action(Of TValue))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Action<TValue>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Action(Of TValue))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(ValueTask<Result<TValue>>, Action<TValue>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Action(Of TValue))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.ValueTask})
+  name: TapAsync<TValue>(ValueTask<Result<TValue>>, Func<ValueTask>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Func_System_Threading_Tasks_ValueTask__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{System.Threading.Tasks.ValueTask})
+  name.vb: TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of ValueTask))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Func<System.Threading.Tasks.ValueTask>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of System.Threading.Tasks.ValueTask))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(ValueTask<Result<TValue>>, Func<ValueTask>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of ValueTask))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.ValueTask})
+  name: TapAsync<TValue>(ValueTask<Result<TValue>>, Func<TValue, ValueTask>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___System_Func___0_System_Threading_Tasks_ValueTask__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},System.Func{``0,System.Threading.Tasks.ValueTask})
+  name.vb: TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of TValue, ValueTask))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<TValue>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<TValue>>, System.Func<TValue, System.Threading.Tasks.ValueTask>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of TValue)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of TValue)), System.Func(Of TValue, System.Threading.Tasks.ValueTask))
+  nameWithType: TapExtensionsAsync.TapAsync<TValue>(ValueTask<Result<TValue>>, Func<TValue, ValueTask>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of TValue)(ValueTask(Of Result(Of TValue)), Func(Of TValue, ValueTask))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``2(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{System.ValueTuple{``0,``1}}},System.Action{``0,``1})
+  name: TapAsync<T1, T2>(Task<Result<(T1, T2)>>, Action<T1, T2>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__2_System_Threading_Tasks_Task_FunctionalDDD_Results_Result_System_ValueTuple___0___1____System_Action___0___1__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``2(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{System.ValueTuple{``0,``1}}},System.Action{``0,``1})
+  name.vb: TapAsync(Of T1, T2)(Task(Of Result(Of (T1, T2))), Action(Of T1, T2))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<T1, T2>(System.Threading.Tasks.Task<FunctionalDDD.Results.Result<(T1, T2)>>, System.Action<T1, T2>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of T1, T2)(System.Threading.Tasks.Task(Of FunctionalDDD.Results.Result(Of (T1, T2))), System.Action(Of T1, T2))
+  nameWithType: TapExtensionsAsync.TapAsync<T1, T2>(Task<Result<(T1, T2)>>, Action<T1, T2>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of T1, T2)(Task(Of Result(Of (T1, T2))), Action(Of T1, T2))
+- uid: FunctionalDDD.Results.TapExtensionsAsync.TapAsync``2(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{System.ValueTuple{``0,``1}}},System.Action{``0,``1})
+  name: TapAsync<T1, T2>(ValueTask<Result<(T1, T2)>>, Action<T1, T2>)
+  href: api/FunctionalDDD.Results.TapExtensionsAsync.html#FunctionalDDD_Results_TapExtensionsAsync_TapAsync__2_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result_System_ValueTuple___0___1____System_Action___0___1__
+  commentId: M:FunctionalDDD.Results.TapExtensionsAsync.TapAsync``2(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{System.ValueTuple{``0,``1}}},System.Action{``0,``1})
+  name.vb: TapAsync(Of T1, T2)(ValueTask(Of Result(Of (T1, T2))), Action(Of T1, T2))
+  fullName: FunctionalDDD.Results.TapExtensionsAsync.TapAsync<T1, T2>(System.Threading.Tasks.ValueTask<FunctionalDDD.Results.Result<(T1, T2)>>, System.Action<T1, T2>)
+  fullName.vb: FunctionalDDD.Results.TapExtensionsAsync.TapAsync(Of T1, T2)(System.Threading.Tasks.ValueTask(Of FunctionalDDD.Results.Result(Of (T1, T2))), System.Action(Of T1, T2))
+  nameWithType: TapExtensionsAsync.TapAsync<T1, T2>(ValueTask<Result<(T1, T2)>>, Action<T1, T2>)
+  nameWithType.vb: TapExtensionsAsync.TapAsync(Of T1, T2)(ValueTask(Of Result(Of (T1, T2))), Action(Of T1, T2))
 - uid: FunctionalDDD.Results.Unit
   name: Unit
   href: api/FunctionalDDD.Results.Unit.html

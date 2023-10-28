@@ -87,7 +87,7 @@
   .ToResultAsync(Error.NotFound(&quot;Customer with such Id is not found: &quot; + id))
   .EnsureAsync(customer =&gt; customer.CanBePromoted,
      Error.Validation(&quot;The customer has the highest status possible&quot;))
-  .TeeAsync(customer =&gt; customer.Promote())
+  .TapAsync(customer =&gt; customer.Promote())
   .BindAsync(customer =&gt; EmailGateway.SendPromotionNotification(customer.Email))
   .FinallyAsync(ok =&gt; &quot;Okay&quot;, error =&gt; error.Message);
 </code></pre>
@@ -95,7 +95,7 @@
 <p>If <code>GetCustomerByIdAsync</code> returns <code>null</code>, then <code>ToResultAsync</code> will convert it to a <code>Result</code> type which contains the error.</p>
 <p>If <code>GetCustomerByIdAsync</code> returned a customer, then <code>EnsureAsync</code> is called to check if the customer can be promoted.
 If not, return a <code>Validation</code> error.</p>
-<p>If there is no error, <code>TeeAsync</code> will execute the <code>Promote</code> method and then send an email.</p>
+<p>If there is no error, <code>TapAsync</code> will execute the <code>Promote</code> method and then send an email.</p>
 <p><code>FinallyAsync</code> will terminate the chain and return a <code>string</code> if there is no error, otherwise it will return the error message.</p>
 <h2 id="multi-expression-evaluation">Multi-Expression Evaluation</h2>
 <pre><code class="lang-csharp"> EmailAddress.New(&quot;xavier@somewhere.com&quot;)

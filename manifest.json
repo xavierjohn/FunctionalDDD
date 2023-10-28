@@ -474,40 +474,40 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TeeErrorExtensions.yml",
+      "source_relative_path": "api/FunctionalDDD.Results.TapErrorExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TeeErrorExtensions.html"
+          "relative_path": "api/FunctionalDDD.Results.TapErrorExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TeeErrorExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDDD.Results.TapErrorExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TeeErrorExtensionsAsync.html"
+          "relative_path": "api/FunctionalDDD.Results.TapErrorExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TeeExtensions.yml",
+      "source_relative_path": "api/FunctionalDDD.Results.TapExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TeeExtensions.html"
+          "relative_path": "api/FunctionalDDD.Results.TapExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TeeExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDDD.Results.TapExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TeeExtensionsAsync.html"
+          "relative_path": "api/FunctionalDDD.Results.TapExtensionsAsync.html"
         }
       },
       "version": ""

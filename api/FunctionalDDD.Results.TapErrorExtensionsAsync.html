@@ -2,10 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class TeeErrorExtensions
+      <title>Class TapErrorExtensionsAsync
  </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class TeeErrorExtensions
+      <meta name="title" content="Class TapErrorExtensionsAsync
  ">
       
       <link rel="icon" href="../favicon.ico">
@@ -17,7 +17,7 @@
       
       
       
-      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDDD_Results_TeeErrorExtensions.md&amp;value=---%0Auid%3A%20FunctionalDDD.Results.TeeErrorExtensions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDDD_Results_TapErrorExtensionsAsync.md&amp;value=---%0Auid%3A%20FunctionalDDD.Results.TapErrorExtensionsAsync%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -80,13 +80,13 @@
           <nav id="breadcrumb"></nav>
         </div>
 
-        <article data-uid="FunctionalDDD.Results.TeeErrorExtensions">
+        <article data-uid="FunctionalDDD.Results.TapErrorExtensionsAsync">
 
 
 
-  <h1 id="FunctionalDDD_Results_TeeErrorExtensions" data-uid="FunctionalDDD.Results.TeeErrorExtensions" class="text-break">
-    Class TeeErrorExtensions
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TeeError.cs/#L8"><i class="bi bi-code-slash"></i></a>
+  <h1 id="FunctionalDDD_Results_TapErrorExtensionsAsync" data-uid="FunctionalDDD.Results.TapErrorExtensionsAsync" class="text-break">
+    Class TapErrorExtensionsAsync
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TapError.cs/#L30"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -99,7 +99,7 @@
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static class TeeErrorExtensions</code></pre>
+    <pre><code class="lang-csharp hljs">public static class TapErrorExtensionsAsync</code></pre>
   </div>
 
 
@@ -109,7 +109,7 @@
     <dt>Inheritance</dt>
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
-      <div><span class="xref">TeeErrorExtensions</span></div>
+      <div><span class="xref">TapErrorExtensionsAsync</span></div>
     </dd>
   </dl>
 
@@ -150,66 +150,23 @@
 </h2>
 
 
-  <a id="FunctionalDDD_Results_TeeErrorExtensions_TeeError_" data-uid="FunctionalDDD.Results.TeeErrorExtensions.TeeError*"></a>
+  <a id="FunctionalDDD_Results_TapErrorExtensionsAsync_TapErrorAsync_" data-uid="FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync*"></a>
 
-  <h3 id="FunctionalDDD_Results_TeeErrorExtensions_TeeError__1_FunctionalDDD_Results_Result___0__System_Action_" data-uid="FunctionalDDD.Results.TeeErrorExtensions.TeeError``1(FunctionalDDD.Results.Result{``0},System.Action)">
-  TeeError&lt;TValue&gt;(Result&lt;TValue&gt;, Action)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TeeError.cs/#L10"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDDD_Results_TapErrorExtensionsAsync_TapErrorAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___System_Action_FunctionalDDD_Results_Errors_Error__" data-uid="FunctionalDDD.Results.TapErrorExtensionsAsync.TapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},System.Action{FunctionalDDD.Results.Errors.Error})">
+  TapErrorAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, Action&lt;Error&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TapError.cs/#L32"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; TeeError&lt;TValue&gt;(this Result&lt;TValue&gt; result, Action action)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; TapErrorAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, Action&lt;Error&gt; action)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
-    <dd></dd>
-    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action">Action</a></dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Type Parameters</h4>
-  <dl class="parameters">
-    <dt><code>TValue</code></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDDD_Results_TeeErrorExtensions_TeeError_" data-uid="FunctionalDDD.Results.TeeErrorExtensions.TeeError*"></a>
-
-  <h3 id="FunctionalDDD_Results_TeeErrorExtensions_TeeError__1_FunctionalDDD_Results_Result___0__System_Action_FunctionalDDD_Results_Errors_Error__" data-uid="FunctionalDDD.Results.TeeErrorExtensions.TeeError``1(FunctionalDDD.Results.Result{``0},System.Action{FunctionalDDD.Results.Errors.Error})">
-  TeeError&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;Error&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TeeError.cs/#L18"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; TeeError&lt;TValue&gt;(this Result&lt;TValue&gt; result, Action&lt;Error&gt; action)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
     <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-1">Action</a>&lt;<a class="xref" href="FunctionalDDD.Results.Errors.Error.html">Error</a>&gt;</dt>
     <dd></dd>
@@ -217,7 +174,7 @@
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDDD.Results.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
     <dd></dd>
   </dl>
 
@@ -240,7 +197,7 @@
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TeeError.cs/#L8" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/TapError.cs/#L30" class="edit-link">Edit this page</a>
         </div>
 
 
