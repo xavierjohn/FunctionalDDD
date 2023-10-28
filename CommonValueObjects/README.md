@@ -38,3 +38,43 @@ public partial class TrackingId : RequiredString
             .Map(str => new TrackingId(str));
 }
 ```
+Here is an example of how to use `RequiredGuid`:
+
+```csharp
+public partial class EmployeeId : RequiredGuid
+{
+}
+```
+
+The source code generator will generate the following
+
+```csharp
+public partial class EmployeeId : RequiredGuid
+{
+    protected static readonly Error CannotBeEmptyError = Error.Validation("Employee Id cannot be empty.", "employeeId");
+
+    private EmployeeId(Guid value) : base(value)
+    {
+    }
+
+    public static explicit operator EmployeeId(Guid employeeId) => New(employeeId).Value;
+
+    public static EmployeeId NewUnique() => new(Guid.NewGuid());
+
+    public static Result<EmployeeId> New(Guid? requiredGuidOrNothing) =>
+        requiredGuidOrNothing
+            .ToResult(CannotBeEmptyError)
+            .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
+            .Map(guid => new EmployeeId(guid));
+
+    public static Result<EmployeeId> New(string? stringOrNull)
+    {
+         Guid parsedGuid = Guid.Empty;
+         return stringOrNull
+            .ToResult(CannotBeEmptyError)
+            .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation("string is not in valid format.", "employeeId"))
+            .Ensure(_ => parsedGuid != Guid.Empty, CannotBeEmptyError)
+            .Map(guid => new EmployeeId(parsedGuid));
+    }
+}
+```

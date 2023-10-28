@@ -4,7 +4,7 @@ using FunctionalDDD.Domain;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
 
-public partial class MyGuidId : RequiredGuid
+public partial class EmployeeId : RequiredGuid
 {
 }
 
@@ -13,12 +13,12 @@ public class RequiredGuid_T_Tests
     [Fact]
     public void Cannot_create_empty_RequiredGuid()
     {
-        var guidId1 = MyGuidId.New(default(Guid));
+        var guidId1 = EmployeeId.New(default(Guid));
         guidId1.IsFailure.Should().BeTrue();
         guidId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)guidId1.Error;
-        validation.Message.Should().Be("My Guid Id cannot be empty.");
-        validation.FieldName.Should().Be("myGuidId");
+        validation.Message.Should().Be("Employee Id cannot be empty.");
+        validation.FieldName.Should().Be("employeeId");
         validation.Code.Should().Be("validation.error");
     }
 
@@ -26,17 +26,17 @@ public class RequiredGuid_T_Tests
     public void Can_create_RequiredGuid()
     {
         var str = Guid.NewGuid().ToString();
-        var guidId1 = MyGuidId.New(Guid.Parse(str));
+        var guidId1 = EmployeeId.New(Guid.Parse(str));
         guidId1.IsSuccess.Should().BeTrue();
-        guidId1.Value.Should().BeOfType<MyGuidId>();
+        guidId1.Value.Should().BeOfType<EmployeeId>();
         guidId1.Value.Value.Should().Be(Guid.Parse(str));
     }
 
     [Fact]
     public void Two_RequiredGuid_with_different_value_should_be__not_equal()
     {
-        var rGuidsIds = MyGuidId.New(Guid.NewGuid())
-            .Combine(MyGuidId.New(Guid.NewGuid()));
+        var rGuidsIds = EmployeeId.New(Guid.NewGuid())
+            .Combine(EmployeeId.New(Guid.NewGuid()));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
         (var guidId1, var guidId2) = rGuidsIds.Value;
@@ -47,8 +47,8 @@ public class RequiredGuid_T_Tests
     public void Two_RequiredGuid_with_same_value_should_be_equal()
     {
         var myGuid = Guid.NewGuid();
-        var rGuidsIds = MyGuidId.New(myGuid)
-            .Combine(MyGuidId.New(myGuid));
+        var rGuidsIds = EmployeeId.New(myGuid)
+            .Combine(EmployeeId.New(myGuid));
 
         rGuidsIds.IsSuccess.Should().BeTrue();
         (var guidId1, var guidId2) = rGuidsIds.Value;
@@ -60,7 +60,7 @@ public class RequiredGuid_T_Tests
     {
         // Arrange
         var guid = Guid.NewGuid();
-        var myGuid = MyGuidId.New(guid).Value;
+        var myGuid = EmployeeId.New(guid).Value;
 
         // Act
         var actual = myGuid.ToString();
@@ -74,7 +74,7 @@ public class RequiredGuid_T_Tests
     {
         // Arrange
         Guid myGuid = Guid.NewGuid();
-        MyGuidId myGuidId1 = MyGuidId.New(myGuid).Value;
+        EmployeeId myGuidId1 = EmployeeId.New(myGuid).Value;
 
         // Act
         Guid primGuid = myGuidId1;
@@ -90,7 +90,7 @@ public class RequiredGuid_T_Tests
         Guid myGuid = Guid.NewGuid();
 
         // Act
-        MyGuidId myGuidId1 = (MyGuidId)myGuid;
+        EmployeeId myGuidId1 = (EmployeeId)myGuid;
 
         // Assert
         myGuidId1.Value.Should().Be(myGuid);
@@ -101,10 +101,10 @@ public class RequiredGuid_T_Tests
     {
         // Arrange
         Guid myGuid = default;
-        MyGuidId myGuidId1;
+        EmployeeId myGuidId1;
 
         // Act
-        Action act = () => myGuidId1 = (MyGuidId)myGuid;
+        Action act = () => myGuidId1 = (EmployeeId)myGuid;
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
@@ -118,7 +118,7 @@ public class RequiredGuid_T_Tests
         var guid = Guid.NewGuid();
 
         // Act
-        var myGuidResult = MyGuidId.New(guid.ToString());
+        var myGuidResult = EmployeeId.New(guid.ToString());
 
         // Assert
         myGuidResult.IsSuccess.Should().BeTrue();
@@ -131,14 +131,14 @@ public class RequiredGuid_T_Tests
     public void Cannot_create_RequiredGuid_from_invalid_string(string value)
     {
         // Act
-        var myGuidResult = MyGuidId.New(value);
+        var myGuidResult = EmployeeId.New(value);
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();
         myGuidResult.Error.Should().BeOfType<ValidationError>();
         ValidationError ve = (ValidationError)myGuidResult.Error;
         ve.Message.Should().Be("string is not in valid format.");
-        ve.FieldName.Should().Be("myGuidId");
+        ve.FieldName.Should().Be("employeeId");
     }
 
     [Theory]
@@ -147,13 +147,13 @@ public class RequiredGuid_T_Tests
     public void Cannot_create_RequiredGuid_from_empty_string(string? value)
     {
         // Act
-        var myGuidResult = MyGuidId.New(value);
+        var myGuidResult = EmployeeId.New(value);
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();
         myGuidResult.Error.Should().BeOfType<ValidationError>();
         ValidationError ve = (ValidationError)myGuidResult.Error;
-        ve.Message.Should().Be("My Guid Id cannot be empty.");
-        ve.FieldName.Should().Be("myGuidId");
+        ve.Message.Should().Be("Employee Id cannot be empty.");
+        ve.FieldName.Should().Be("employeeId");
     }
 }
