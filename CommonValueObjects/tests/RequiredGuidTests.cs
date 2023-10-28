@@ -52,28 +52,28 @@ public class RequiredGuidTests
     }
 
     [Fact]
-    public void Two_RequiredGuid_with_different_values_should_not_be_equal()
-    {
-        var rGuidsIds = EmployeeId.New(Guid.NewGuid())
-            .Combine(EmployeeId.New(Guid.NewGuid()));
-
-        rGuidsIds.IsSuccess.Should().BeTrue();
-        (EmployeeId guidId1, EmployeeId guidId2) = rGuidsIds.Value;
-        (guidId1 != guidId2).Should().BeTrue();
-        guidId1.Equals(guidId2).Should().BeFalse();
-    }
+    public void Two_RequiredGuid_with_different_values_should_not_be_equal() =>
+        EmployeeId.New(Guid.NewGuid())
+            .Combine(EmployeeId.New(Guid.NewGuid()))
+            .Tap((emp1, emp2) =>
+            {
+                (emp1 != emp2).Should().BeTrue();
+                emp1.Equals(emp2).Should().BeFalse();
+            })
+            .IsSuccess.Should().BeTrue();
 
     [Fact]
     public void Two_RequiredGuid_with_same_value_should_be_equal()
     {
         var myGuid = Guid.NewGuid();
-        var rGuidsIds = EmployeeId.New(myGuid)
-            .Combine(EmployeeId.New(myGuid));
-
-        rGuidsIds.IsSuccess.Should().BeTrue();
-        (EmployeeId guidId1, EmployeeId guidId2) = rGuidsIds.Value;
-        (guidId1 == guidId2).Should().BeTrue();
-        guidId1.Equals(guidId2).Should().BeTrue();
+        EmployeeId.New(myGuid)
+            .Combine(EmployeeId.New(myGuid))
+            .Tap((emp1, emp2) =>
+            {
+                (emp1 == emp2).Should().BeTrue();
+                emp1.Equals(emp2).Should().BeTrue();
+            })
+            .IsSuccess.Should().BeTrue();
     }
 
     [Fact]

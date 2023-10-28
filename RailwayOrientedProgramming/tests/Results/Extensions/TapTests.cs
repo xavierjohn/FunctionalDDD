@@ -60,6 +60,19 @@ public class TapTests : TestBase
     {
         Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
 
+        var returned = result.Tap(Action_T);
+
+        ActionExecuted.Should().Be(isSuccess);
+        result.Should().Be(returned);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Tap_T1_T2_executes_action_on_result_success_and_returns_self(bool isSuccess)
+    {
+        Result<(T, K)> result = Result.SuccessIf(isSuccess, T.Value, K.Value, Error1);
+
         var returned = result.Tap(Action);
 
         ActionExecuted.Should().Be(isSuccess);

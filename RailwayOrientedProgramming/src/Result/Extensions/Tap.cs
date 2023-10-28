@@ -27,6 +27,18 @@ public static class TapExtensions
 
         return result;
     }
+
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static Result<(T1, T2)> Tap<T1, T2>(this Result<(T1, T2)> result, Action<T1, T2> action)
+    {
+        if (result.IsFailure)
+            return result;
+        var (args1, args2) = result.Value;
+        action(args1, args2);
+        return result;
+    }
 }
 
 /// <summary>
@@ -165,4 +177,23 @@ public static class TapExtensionsAsync
         Result<TValue> result = await resultTask;
         return result.Tap(action);
     }
+
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async Task<Result<(T1, T2)>> TapAsync<T1, T2>(this Task<Result<(T1, T2)>> resultTask, Action<T1, T2> action)
+    {
+        var result = await resultTask;
+        return result.Tap(action);
+    }
+
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async ValueTask<Result<(T1, T2)>> TapAsync<T1, T2>(this ValueTask<Result<(T1, T2)>> resultTask, Action<T1, T2> action)
+    {
+        var result = await resultTask;
+        return result.Tap(action);
+    }
+
 }
