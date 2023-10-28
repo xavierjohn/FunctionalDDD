@@ -14,7 +14,7 @@ generator can do the rest.
 Here is an example of how to use `RequiredString`:
 
 ```csharp
-public partial class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString
 {
 }
 ```
@@ -22,17 +22,17 @@ public partial class TrackingId : RequiredString<TrackingId>
 The source code generator will generate the following
 
 ```csharp
-public partial class TrackingId : RequiredString<TrackingId>
+public partial class TrackingId : RequiredString
 {
-    protected static readonly Error CannotBeEmptyError = Error.Validation("Tracking Id cannot be empty", "trackingId");
+    protected static readonly Error CannotBeEmptyError = Error.Validation("Tracking Id cannot be empty.", "trackingId");
 
-    private TrackingId(String value) : base(value)
+    private TrackingId(string value) : base(value)
     {
     }
 
-    public static explicit operator TrackingId(String trackingId) => New(trackingId).Value;
+    public static explicit operator TrackingId(string trackingId) => New(trackingId).Value;
 
-    public static Result<TrackingId> New(string? requiredStringOrNothing)
+    public static Result<TrackingId> New(string? requiredStringOrNothing) =>
         requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new TrackingId(str));
