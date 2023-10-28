@@ -170,8 +170,8 @@ public class CombineTests
         // Assert
         called.Should().BeFalse();
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Error.Should().BeOfType<AggregaTaprror>();
-        var ag = (AggregaTaprror)rHelloWorld.Error;
+        rHelloWorld.Error.Should().BeOfType<AggregateError>();
+        var ag = (AggregateError)rHelloWorld.Error;
         ag.Errors.Should().HaveCount(2);
         ag.Errors[0].Should().Be(Error.Validation("Bad First", "First"));
         ag.Errors[1].Should().Be(Error.Unexpected("Server error"));
@@ -197,8 +197,8 @@ public class CombineTests
         // Assert
         called.Should().BeFalse();
         rHelloWorld.IsFailure.Should().BeTrue();
-        rHelloWorld.Error.Should().BeOfType<AggregaTaprror>();
-        var ag = (AggregaTaprror)rHelloWorld.Error;
+        rHelloWorld.Error.Should().BeOfType<AggregateError>();
+        var ag = (AggregateError)rHelloWorld.Error;
         ag.Errors.Should().HaveCount(2);
         ag.Errors[0].Should().Be(Error.Forbidden("You can't touch this."));
         ag.Errors[1].Should().Be(Error.Unexpected("Server error"));
