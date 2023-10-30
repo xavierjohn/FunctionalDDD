@@ -17,7 +17,7 @@ public class ResultsBenchmark
         FirstName.New("Xavier")
             .Combine(EmailAddress.New("xavier@somewhere.com"))
             .Finally(
-                ok => "Success",
+                ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
                 error => error.Message
             );
 
@@ -29,21 +29,19 @@ public class ResultsBenchmark
         if (firstName.IsFailure)
             error = firstName.Error;
 
+        Result<EmailAddress>? emailAddress = null;
         if (error is null)
         {
-            var emailAddress = EmailAddress.New("xavier@somewhere.com");
-            if (emailAddress.IsFailure)
+            emailAddress = EmailAddress.New("xavier@somewhere.com");
+            if (emailAddress.Value.IsFailure)
             {
                 if (error is null)
-                    error = emailAddress.Error;
+                    error = emailAddress.Value.Error;
                 else
-                {
-                    error.Combine(emailAddress.Error);
-                }
+                    error.Combine(emailAddress.Value.Error);
             }
         }
 
-        return error is null ? "Success" : error.Message;
-
+        return error is null ? firstName.ToString() + " " + emailAddress?.ToString() : error.Message;
     }
 }
