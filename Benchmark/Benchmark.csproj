@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Benchmark</AssemblyName>
+    <RootNamespace>Benchmark</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="..\CommonValueObjects\src\CommonValueObjects.csproj" />
+  </ItemGroup>
+</Project>
