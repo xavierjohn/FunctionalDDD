@@ -38,25 +38,25 @@ Person CreatePerson(FirstName firstName, LastName lastName)
 }
 ```
 
-The class has to be partial so that the source code generator can add the `New` method to it.
+The class has to be partial so that the source code generator can add the `TryCreate` method to it.
 Now let us use it:
 
 ```csharp
-Result<FirstName> firstNameResult = FirstName.New("John");
+Result<FirstName> firstNameResult = FirstName.TryCreate("John");
 ```
 
-The `New` method returns a `Result` type and based on the input it can be either `Success` or `Failure` so we need to handle the failure case.
+The `TryCreate` method returns a `Result` type and based on the input it can be either `Success` or `Failure` so we need to handle the failure case.
 Here is a possible solution:
 
 ```csharp
-Result<FirstName> firstNameResult = FirstName.New("John");
+Result<FirstName> firstNameResult = FirstName.TryCreate("John");
 if (firstNameResult.IsFailure)
 {
     Console.WriteLine(firstNameResult.Error);
     return;
 }
 
-Result<LastName> lastNameResult = LastName.New("Smith");
+Result<LastName> lastNameResult = LastName.TryCreate("Smith");
 if (lastNameResult.IsFailure)
 {
     Console.WriteLine(lastNameResult.Error);
@@ -84,11 +84,11 @@ Next let us look at some of the extension methods.
 
 ## Combine extension method
 
-We need to combine the result of `FirstName.New` and `LastName.New` to create a person. This can be achieved by using the `Combine` method.
+We need to combine the result of `FirstName.TryCreate` and `LastName.TryCreate` to create a person. This can be achieved by using the `Combine` method.
 
 ```csharp
-var result = FirstName.New("John")
-    .Combine(LastName.New("Smith"));
+var result = FirstName.TryCreate("John")
+    .Combine(LastName.TryCreate("Smith"));
 ```
 
 The resulting result will either contain validation errors from the `FirstName` and/or `LastName` class, or a success with a tuple containing both values.
@@ -98,8 +98,8 @@ The resulting result will either contain validation errors from the `FirstName` 
 We need a method to call `CreatePerson` with the values from the `FirstName` and `LastName` classes if the result is in a success state. This can be achieved by using the `Bind` method.
 
 ```csharp
-var result = FirstName.New("John")
-    .Combine(LastName.New("Smith"))
+var result = FirstName.TryCreate("John")
+    .Combine(LastName.TryCreate("Smith"))
     .Bind((firstName, lastName) => CreatePerson(firstName, lastName));
 ```
 
@@ -110,8 +110,8 @@ The result will either contain validation errors from the `FirstName` and/or `La
 So far we still have a `Result` type and we need to unwrap it to get the underlying value. This can be achieved by using the `Finally` method.
 
 ```csharp
-string result = FirstName.New("John")
-    .Combine(LastName.New("Smith"))
+string result = FirstName.TryCreate("John")
+    .Combine(LastName.TryCreate("Smith"))
     .Bind((firstName, lastName) => CreatePerson(firstName, lastName))
     .Finally(ok => "Okay: Person created", error => error.Message);
 ```
