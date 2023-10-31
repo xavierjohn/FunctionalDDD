@@ -5,10 +5,21 @@ using FunctionalDDD.Results;
 
 /// <summary>
 /// Benchmark ROP vs If.
-/// | Method   | Mean     | Error   | StdDev  | Gen0   | Allocated |
-/// |--------- |---------:|--------:|--------:|-------:|----------:|
-/// | RopStyle | 144.9 ns | 1.90 ns | 1.68 ns | 0.0229 |     144 B |
-/// | IfStyle  | 147.3 ns | 2.90 ns | 3.22 ns | 0.0637 |     400 B |
+/// Run 1
+/// | Method        | Mean      | Error    | StdDev   | Gen0   | Allocated |
+/// |-------------- |----------:|---------:|---------:|-------:|----------:|
+/// | RopStyleHappy | 147.62 ns | 1.529 ns | 1.430 ns | 0.0229 |     144 B |
+/// | IfStyleHappy  | 126.27 ns | 0.916 ns | 0.812 ns | 0.0229 |     144 B |
+/// | RopStyleSad   |  77.76 ns | 1.169 ns | 1.093 ns | 0.0331 |     208 B |
+/// | IfStyleSad    |  72.32 ns | 1.400 ns | 1.309 ns | 0.0331 |     208 B |
+/// 
+/// Run 2
+/// | Method        | Mean      | Error    | StdDev   | Gen0   | Allocated |
+/// |-------------- |----------:|---------:|---------:|-------:|----------:|
+/// | RopStyleHappy | 145.82 ns | 2.058 ns | 1.825 ns | 0.0229 |     144 B |
+/// | IfStyleHappy  | 123.99 ns | 2.309 ns | 2.047 ns | 0.0229 |     144 B |
+/// | RopStyleSad   |  79.50 ns | 1.395 ns | 1.305 ns | 0.0331 |     208 B |
+/// | IfStyleSad    |  73.71 ns | 1.151 ns | 0.961 ns | 0.0331 |     208 B |
 /// </summary>
 
 public partial class FirstName : RequiredString
@@ -21,7 +32,7 @@ public partial class FirstName : RequiredString
 public class BenchmarkROP
 {
     [Benchmark]
-    public string RopStyle() =>
+    public string RopStyleHappy() =>
         FirstName.New("Xavier")
             .Combine(EmailAddress.New("xavier@somewhere.com"))
             .Finally(
@@ -30,15 +41,39 @@ public class BenchmarkROP
             );
 
     [Benchmark]
-    public string IfStyle()
+    public string IfStyleHappy()
     {
         var firstName = FirstName.New("Xavier");
         var emailAddress = EmailAddress.New("xavier@somewhere.com");
         if (firstName.IsSuccess && emailAddress.IsSuccess)
-            return firstName.ToString() + " " + emailAddress.ToString();
+            return firstName.Value.ToString() + " " + emailAddress.Value.ToString();
 
         var error = firstName.IsFailure ? firstName.Error : emailAddress.Error;
         if (emailAddress.IsFailure)
+            error = error.Combine(emailAddress.Error);
+
+        return error.Message;
+    }
+
+    [Benchmark]
+    public string RopStyleSad() =>
+    FirstName.New("Xavier")
+        .Combine(EmailAddress.New("bad email"))
+        .Finally(
+            ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
+            error => error.Message
+        );
+
+    [Benchmark]
+    public string IfStyleSad()
+    {
+        var firstName = FirstName.New("Xavier");
+        var emailAddress = EmailAddress.New("bad email");
+        if (firstName.IsSuccess && emailAddress.IsSuccess)
+            return firstName.ToString() + " " + emailAddress.ToString();
+
+        var error = firstName.IsFailure ? firstName.Error : emailAddress.Error;
+        if (firstName.IsFailure && emailAddress.IsFailure)
             error = error.Combine(emailAddress.Error);
 
         return error.Message;
