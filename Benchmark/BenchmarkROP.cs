@@ -43,14 +43,14 @@ public class BenchmarkROP
     [Benchmark]
     public string IfStyleHappy()
     {
-        var firstName = FirstName.TryCreate("Xavier");
-        var emailAddress = EmailAddress.TryCreate("xavier@somewhere.com");
-        if (firstName.IsSuccess && emailAddress.IsSuccess)
-            return firstName.Value.ToString() + " " + emailAddress.Value.ToString();
+        var rFirstName = FirstName.TryCreate("Xavier");
+        var rEmailAddress = EmailAddress.TryCreate("xavier@somewhere.com");
+        if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
+            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
 
-        var error = firstName.IsFailure ? firstName.Error : emailAddress.Error;
-        if (emailAddress.IsFailure)
-            error = error.Combine(emailAddress.Error);
+        var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
+        if (rEmailAddress.IsFailure)
+            error = error.Combine(rEmailAddress.Error);
 
         return error.Message;
     }
@@ -67,14 +67,14 @@ public class BenchmarkROP
     [Benchmark]
     public string IfStyleSad()
     {
-        var firstName = FirstName.TryCreate("Xavier");
-        var emailAddress = EmailAddress.TryCreate("bad email");
-        if (firstName.IsSuccess && emailAddress.IsSuccess)
-            return firstName.ToString() + " " + emailAddress.ToString();
+        var rFirstName = FirstName.TryCreate("Xavier");
+        var rEmailAddress = EmailAddress.TryCreate("bad email");
+        if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
+            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
 
-        var error = firstName.IsFailure ? firstName.Error : emailAddress.Error;
-        if (firstName.IsFailure && emailAddress.IsFailure)
-            error = error.Combine(emailAddress.Error);
+        var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
+        if (rFirstName.IsFailure && rEmailAddress.IsFailure)
+            error = error.Combine(rEmailAddress.Error);
 
         return error.Message;
     }
