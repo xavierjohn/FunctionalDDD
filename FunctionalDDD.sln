@@ -50,6 +50,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebApplication", "Exa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asp.Tests", "Asp\tests\Asp.Tests.csproj", "{7061CA5B-6866-4434-835D-8D9B546D4D3C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmark", "Benchmark", "{85ACCD77-5B35-4AE7-BF04-C47E7E5AB720}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{7A46BDC2-5A31-4B5F-BD4A-34655B004447}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,6 +112,10 @@ Global
 		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7061CA5B-6866-4434-835D-8D9B546D4D3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A46BDC2-5A31-4B5F-BD4A-34655B004447}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A46BDC2-5A31-4B5F-BD4A-34655B004447}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A46BDC2-5A31-4B5F-BD4A-34655B004447}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A46BDC2-5A31-4B5F-BD4A-34655B004447}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,6 +134,7 @@ Global
 		{CE118AEC-92AC-4A40-9660-037D2ABF0120} = {828D4C8B-EE27-4ECD-8C89-8D4FD7E67BD6}
 		{CF8D3111-D81B-40C9-8C93-F35BB72B1F2C} = {BD9AFC47-1336-443C-9EBE-3CF52A128194}
 		{7061CA5B-6866-4434-835D-8D9B546D4D3C} = {1E3022F4-1620-4087-A015-7FFF0906AE14}
+		{7A46BDC2-5A31-4B5F-BD4A-34655B004447} = {85ACCD77-5B35-4AE7-BF04-C47E7E5AB720}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B687416C-3313-4018-820C-DD90FD4367E9}
