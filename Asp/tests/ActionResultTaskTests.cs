@@ -51,13 +51,17 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var result = Task.FromResult(Result.Failure<string>(Error.Forbidden("You are not authorized.")));
+        var expected = Error.Forbidden("You are not authorized.");
+        var result = Task.FromResult(Result.Failure<string>(expected));
 
         // Act
         var response = await result.ToOkActionResultAsync(controller);
 
         // Assert
-        response.Result.Should().BeOfType<ForbidResult>();
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().Be(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
     }
 
     [Fact]

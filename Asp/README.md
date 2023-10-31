@@ -19,9 +19,9 @@ The mapping is as follows
     ValidationError validation => ValidationErrors<T>(validation, controllerBase),
     ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
     UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
-    ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
-    UnexpectedError => (ActionResult<T>)controllerBase.StatusCode(500, error),
-    _ => throw new NotImplementedException($"Unknown error {error.Code}"),
+    ForbiddenError => (ActionResult<T>)controllerBase.StatusCode(StatusCodes.Status403Forbidden, error),
+    UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
+    _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
 ```
 
 ## Example
