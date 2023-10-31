@@ -279,7 +279,7 @@
 If the string is null, the method returns a Maybe of None.
 Otherwise, it invokes the specified function and, if the function's result is successful, it wraps the result in a Maybe object.
 If the function fails, the method returns the failure.  This lets the given function run validation on the input data.</p>
-<pre><code class="lang-csharp">var result = Maybe.Optional(zipCode, ZipCode.New);</code></pre>
+<pre><code class="lang-csharp">var result = Maybe.Optional(zipCode, ZipCode.TryCreate);</code></pre>
 
 
 

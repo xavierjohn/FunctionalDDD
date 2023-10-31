@@ -86,7 +86,7 @@
 
   <h1 id="FunctionalDDD_Asp_ActionResultExtensions" data-uid="FunctionalDDD.Asp.ActionResultExtensions" class="text-break">
     Class ActionResultExtensions
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L13"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -155,7 +155,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToErrorActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDDD_Results_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToErrorActionResultAsync``1(System.Threading.Tasks.Task{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase)">
   ToErrorActionResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L104"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L105"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -198,7 +198,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToErrorActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDDD_Results_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToErrorActionResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDDD.Results.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase)">
   ToErrorActionResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L110"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L111"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -241,7 +241,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToErrorActionResult__1_FunctionalDDD_Results_Errors_Error_Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToErrorActionResult``1(FunctionalDDD.Results.Errors.Error,Microsoft.AspNetCore.Mvc.ControllerBase)">
   ToErrorActionResult&lt;TValue&gt;(Error, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L78"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L79"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p><a class="xref" href="FunctionalDDD.Results.Errors.Error.html">Error</a> extension method that maps domain errors to failed <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.objectresult">ObjectResult</a> using <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a>.</p>
@@ -266,7 +266,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
   <dl class="parameters">
     <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;</dt>
     <dd><p>Converts domain errors to failed <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.objectresult">ObjectResult</a>:</p>
-<table><thead><tr><th class="term">Domain Error</th><th class="description">HTTP error</th></tr></thead><tbody><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.NotFoundError.html">NotFoundError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.notfound#microsoft-aspnetcore-mvc-controllerbase-notfound">NotFound()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.ValidationError.html">ValidationError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.validationproblem#microsoft-aspnetcore-mvc-controllerbase-validationproblem">ValidationProblem()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.BadRequestError.html">BadRequestError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.badrequest#microsoft-aspnetcore-mvc-controllerbase-badrequest">BadRequest()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.ConflictError.html">ConflictError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.conflict#microsoft-aspnetcore-mvc-controllerbase-conflict">Conflict()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.UnauthorizedError.html">UnauthorizedError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.unauthorized#microsoft-aspnetcore-mvc-controllerbase-unauthorized">Unauthorized()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.ForbiddenError.html">ForbiddenError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.forbid#microsoft-aspnetcore-mvc-controllerbase-forbid">Forbid()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.UnexpectedError.html">UnexpectedError</a></td><td class="description">500 Internal Server Error</td></tr><tr><td class="term">Everything else</td><td class="description">500 Internal Server Error</td></tr></tbody></table>
+<table><thead><tr><th class="term">Domain Error</th><th class="description">HTTP error</th></tr></thead><tbody><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.NotFoundError.html">NotFoundError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.notfound#microsoft-aspnetcore-mvc-controllerbase-notfound">NotFound()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.ValidationError.html">ValidationError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.validationproblem#microsoft-aspnetcore-mvc-controllerbase-validationproblem">ValidationProblem()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.BadRequestError.html">BadRequestError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.badrequest#microsoft-aspnetcore-mvc-controllerbase-badrequest">BadRequest()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.ConflictError.html">ConflictError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.conflict#microsoft-aspnetcore-mvc-controllerbase-conflict">Conflict()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.UnauthorizedError.html">UnauthorizedError</a></td><td class="description"><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase.unauthorized#microsoft-aspnetcore-mvc-controllerbase-unauthorized">Unauthorized()</a></td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.ForbiddenError.html">ForbiddenError</a></td><td class="description">403 Forbidden</td></tr><tr><td class="term"><a class="xref" href="FunctionalDDD.Results.Errors.UnexpectedError.html">UnexpectedError</a></td><td class="description">500 Internal Server Error</td></tr><tr><td class="term">Everything else</td><td class="description">500 Internal Server Error</td></tr></tbody></table>
 </dd>
   </dl>
 
@@ -290,7 +290,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToErrorActionResult__1_FunctionalDDD_Results_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToErrorActionResult``1(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase)">
   ToErrorActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L98"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L99"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a> extension method that maps domain errors to failed <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.objectresult">ObjectResult</a> using <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a>.</p>
@@ -334,7 +334,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToOkActionResult__1_FunctionalDDD_Results_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToOkActionResult``1(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase)">
   ToOkActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L23"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L24"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p><a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a> extension method that returns Okay (200) status if the result is in success state.
@@ -383,7 +383,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToPartialOrOkActionResult__1_FunctionalDDD_Results_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToPartialOrOkActionResult``1(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
   ToPartialOrOkActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase, long, long, long)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L131"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L132"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>If <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a> is in success state this extension method returns</p>
@@ -440,7 +440,7 @@ Otherwise it returns the error code corresponding to the failure error object.
 
   <h3 id="FunctionalDDD_Asp_ActionResultExtensions_ToPartialOrOkActionResult__2_FunctionalDDD_Results_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDDD.Asp.ActionResultExtensions.ToPartialOrOkActionResult``2(FunctionalDDD.Results.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
   ToPartialOrOkActionResult&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L161"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L162"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>If <a class="xref" href="FunctionalDDD.Results.Result-1.html">Result&lt;TValue&gt;</a> is in success state this extension method returns</p>
@@ -494,7 +494,7 @@ Otherwise it returns the error code corresponding to the failure error object.
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L13" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L14" class="edit-link">Edit this page</a>
         </div>
 
 

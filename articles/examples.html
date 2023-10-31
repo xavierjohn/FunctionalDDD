@@ -98,9 +98,9 @@ If not, return a <code>Validation</code> error.</p>
 <p>If there is no error, <code>TapAsync</code> will execute the <code>Promote</code> method and then send an email.</p>
 <p><code>FinallyAsync</code> will terminate the chain and return a <code>string</code> if there is no error, otherwise it will return the error message.</p>
 <h2 id="multi-expression-evaluation">Multi-Expression Evaluation</h2>
-<pre><code class="lang-csharp"> EmailAddress.New(&quot;xavier@somewhere.com&quot;)
-    .Combine(FirstName.New(&quot;Xavier&quot;))
-    .Combine(LastName.New(&quot;John&quot;))
+<pre><code class="lang-csharp"> EmailAddress.TryCreate(&quot;xavier@somewhere.com&quot;)
+    .Combine(FirstName.TryCreate(&quot;Xavier&quot;))
+    .Combine(LastName.TryCreate(&quot;John&quot;))
     .Bind((email, firstName, lastName) =&gt;
        Result.Success(string.Join(&quot; &quot;, firstName, lastName, email)));
 </code></pre>
@@ -113,7 +113,7 @@ The API layer can reuse the Domain validation logic to return <code>BadRequest</
     public FirstName FirstName { get; }
     public LastName LastName { get; }
 
-    public static Result&lt;User&gt; New(FirstName firstName, LastName lastName)
+    public static Result&lt;User&gt; TryCreate(FirstName firstName, LastName lastName)
     {
         var user = new User(firstName, lastName);
         return Validator.ValidateToResult(user);

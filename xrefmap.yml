@@ -350,22 +350,22 @@ references:
   commentId: T:FunctionalDDD.Domain.EmailAddress
   fullName: FunctionalDDD.Domain.EmailAddress
   nameWithType: EmailAddress
-- uid: FunctionalDDD.Domain.EmailAddress.New(System.String,System.String)
-  name: New(string, string?)
-  href: api/FunctionalDDD.Domain.EmailAddress.html#FunctionalDDD_Domain_EmailAddress_New_System_String_System_String_
-  commentId: M:FunctionalDDD.Domain.EmailAddress.New(System.String,System.String)
-  name.vb: New(String, String)
-  fullName: FunctionalDDD.Domain.EmailAddress.New(string, string?)
-  fullName.vb: FunctionalDDD.Domain.EmailAddress.New(String, String)
-  nameWithType: EmailAddress.New(string, string?)
-  nameWithType.vb: EmailAddress.New(String, String)
-- uid: FunctionalDDD.Domain.EmailAddress.New*
-  name: New
-  href: api/FunctionalDDD.Domain.EmailAddress.html#FunctionalDDD_Domain_EmailAddress_New_
-  commentId: Overload:FunctionalDDD.Domain.EmailAddress.New
+- uid: FunctionalDDD.Domain.EmailAddress.TryCreate(System.String,System.String)
+  name: TryCreate(string, string?)
+  href: api/FunctionalDDD.Domain.EmailAddress.html#FunctionalDDD_Domain_EmailAddress_TryCreate_System_String_System_String_
+  commentId: M:FunctionalDDD.Domain.EmailAddress.TryCreate(System.String,System.String)
+  name.vb: TryCreate(String, String)
+  fullName: FunctionalDDD.Domain.EmailAddress.TryCreate(string, string?)
+  fullName.vb: FunctionalDDD.Domain.EmailAddress.TryCreate(String, String)
+  nameWithType: EmailAddress.TryCreate(string, string?)
+  nameWithType.vb: EmailAddress.TryCreate(String, String)
+- uid: FunctionalDDD.Domain.EmailAddress.TryCreate*
+  name: TryCreate
+  href: api/FunctionalDDD.Domain.EmailAddress.html#FunctionalDDD_Domain_EmailAddress_TryCreate_
+  commentId: Overload:FunctionalDDD.Domain.EmailAddress.TryCreate
   isSpec: "True"
-  fullName: FunctionalDDD.Domain.EmailAddress.New
-  nameWithType: EmailAddress.New
+  fullName: FunctionalDDD.Domain.EmailAddress.TryCreate
+  nameWithType: EmailAddress.TryCreate
 - uid: FunctionalDDD.Domain.Entity`1
   name: Entity<TId>
   href: api/FunctionalDDD.Domain.Entity-1.html

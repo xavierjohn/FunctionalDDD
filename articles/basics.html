@@ -111,20 +111,20 @@ Person CreatePerson(FirstName firstName, LastName lastName)
     return new Person(firstName, lastName);
 }
 </code></pre>
-<p>The class has to be partial so that the source code generator can add the <code>New</code> method to it.
+<p>The class has to be partial so that the source code generator can add the <code>TryCreate</code> method to it.
 Now let us use it:</p>
-<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.New(&quot;John&quot;);
+<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.TryCreate(&quot;John&quot;);
 </code></pre>
-<p>The <code>New</code> method returns a <code>Result</code> type and based on the input it can be either <code>Success</code> or <code>Failure</code> so we need to handle the failure case.
+<p>The <code>TryCreate</code> method returns a <code>Result</code> type and based on the input it can be either <code>Success</code> or <code>Failure</code> so we need to handle the failure case.
 Here is a possible solution:</p>
-<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.New(&quot;John&quot;);
+<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.TryCreate(&quot;John&quot;);
 if (firstNameResult.IsFailure)
 {
     Console.WriteLine(firstNameResult.Error);
     return;
 }
 
-Result&lt;LastName&gt; lastNameResult = LastName.New(&quot;Smith&quot;);
+Result&lt;LastName&gt; lastNameResult = LastName.TryCreate(&quot;Smith&quot;);
 if (lastNameResult.IsFailure)
 {
     Console.WriteLine(lastNameResult.Error);
@@ -165,22 +165,22 @@ public bool IsFailure { get; }
 If the Result is in failed state, accessing the Value property will throw an exception. Similarly, if the Result is in success state, accessing the Error property will throw an exception.</p>
 <p>Next let us look at some of the extension methods.</p>
 <h2 id="combine-extension-method">Combine extension method</h2>
-<p>We need to combine the result of <code>FirstName.New</code> and <code>LastName.New</code> to create a person. This can be achieved by using the <code>Combine</code> method.</p>
-<pre><code class="lang-csharp">var result = FirstName.New(&quot;John&quot;)
-    .Combine(LastName.New(&quot;Smith&quot;));
+<p>We need to combine the result of <code>FirstName.TryCreate</code> and <code>LastName.TryCreate</code> to create a person. This can be achieved by using the <code>Combine</code> method.</p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;));
 </code></pre>
 <p>The resulting result will either contain validation errors from the <code>FirstName</code> and/or <code>LastName</code> class, or a success with a tuple containing both values.</p>
 <h2 id="bind-extension-method">Bind extension method</h2>
 <p>We need a method to call <code>CreatePerson</code> with the values from the <code>FirstName</code> and <code>LastName</code> classes if the result is in a success state. This can be achieved by using the <code>Bind</code> method.</p>
-<pre><code class="lang-csharp">var result = FirstName.New(&quot;John&quot;)
-    .Combine(LastName.New(&quot;Smith&quot;))
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;))
     .Bind((firstName, lastName) =&gt; CreatePerson(firstName, lastName));
 </code></pre>
 <p>The result will either contain validation errors from the <code>FirstName</code> and/or <code>LastName</code> class, or a success with a <code>Person</code> object. It is possible <code>CreatePerson</code> can fail, in which case the <code>Result</code> will contain the error.</p>
 <h2 id="finally-extension-method">Finally extension method</h2>
 <p>So far we still have a <code>Result</code> type and we need to unwrap it to get the underlying value. This can be achieved by using the <code>Finally</code> method.</p>
-<pre><code class="lang-csharp">string result = FirstName.New(&quot;John&quot;)
-    .Combine(LastName.New(&quot;Smith&quot;))
+<pre><code class="lang-csharp">string result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;))
     .Bind((firstName, lastName) =&gt; CreatePerson(firstName, lastName))
     .Finally(ok =&gt; &quot;Okay: Person created&quot;, error =&gt; error.Message);
 </code></pre>
