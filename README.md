@@ -98,9 +98,9 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
 ### Multi-Expression Evaluation
 
 ```csharp"sal
- EmailAddress.New("xavier@somewhere.com")
-    .Combine(FirstName.New("Xavier"))
-    .Combine(LastName.New("John"))
+ EmailAddress.TryCreate("xavier@somewhere.com")
+    .Combine(FirstName.TryCreate("Xavier"))
+    .Combine(LastName.TryCreate("John"))
     .Bind((email, firstName, lastName) =>
        Result.Success(string.Join(" ", firstName, lastName, email)));
  ```
@@ -116,7 +116,7 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
     public LastName LastName { get; }
     public EmailAddress Email { get; }
 
-    public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email)
+    public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email)
     {
         var user = new User(firstName, lastName, email);
         return Validator.ValidateToResult(user);

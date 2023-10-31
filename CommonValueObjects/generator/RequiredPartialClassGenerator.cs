@@ -69,7 +69,7 @@ using FunctionalDDD.Results;
     {{
     }}
 
-    public static explicit operator {g.ClassName}({classType} {camelArg}) => New({camelArg}).Value;
+    public static explicit operator {g.ClassName}({classType} {camelArg}) => TryCreate({camelArg}).Value;
 ";
 
                 if (g.ClassBase == "RequiredGuid")
@@ -77,13 +77,13 @@ using FunctionalDDD.Results;
                     source += $@"
     public static {g.ClassName} NewUnique() => new(Guid.NewGuid());
 
-    public static Result<{g.ClassName}> New(Guid? requiredGuidOrNothing) =>
+    public static Result<{g.ClassName}> TryCreate(Guid? requiredGuidOrNothing) =>
         requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
             .Map(guid => new {g.ClassName}(guid));
 
-    public static Result<{g.ClassName}> New(string? stringOrNull)
+    public static Result<{g.ClassName}> TryCreate(string? stringOrNull)
     {{
          Guid parsedGuid = Guid.Empty;
          return stringOrNull
@@ -99,7 +99,7 @@ using FunctionalDDD.Results;
                 if (g.ClassBase == "RequiredString")
                 {
                     source += $@"
-    public static Result<{g.ClassName}> New(string? requiredStringOrNothing) =>
+    public static Result<{g.ClassName}> TryCreate(string? requiredStringOrNothing) =>
         requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new {g.ClassName}(str));

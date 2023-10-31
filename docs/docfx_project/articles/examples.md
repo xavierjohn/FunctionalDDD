@@ -28,9 +28,9 @@ If there is no error, `TapAsync` will execute the `Promote` method and then send
 ## Multi-Expression Evaluation
 
 ```csharp
- EmailAddress.New("xavier@somewhere.com")
-    .Combine(FirstName.New("Xavier"))
-    .Combine(LastName.New("John"))
+ EmailAddress.TryCreate("xavier@somewhere.com")
+    .Combine(FirstName.TryCreate("Xavier"))
+    .Combine(LastName.TryCreate("John"))
     .Bind((email, firstName, lastName) =>
        Result.Success(string.Join(" ", firstName, lastName, email)));
  ```
@@ -48,7 +48,7 @@ The API layer can reuse the Domain validation logic to return `BadRequest` with 
     public FirstName FirstName { get; }
     public LastName LastName { get; }
 
-    public static Result<User> New(FirstName firstName, LastName lastName)
+    public static Result<User> TryCreate(FirstName firstName, LastName lastName)
     {
         var user = new User(firstName, lastName);
         return Validator.ValidateToResult(user);

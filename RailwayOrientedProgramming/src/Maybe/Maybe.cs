@@ -53,7 +53,7 @@ public static class Maybe
     /// Otherwise, it invokes the specified function and, if the function's result is successful, it wraps the result in a Maybe object.
     /// If the function fails, the method returns the failure.  This lets the given function run validation on the input data.
     /// <code>
-    /// var result = Maybe.Optional(zipCode, ZipCode.New);
+    /// var result = Maybe.Optional(zipCode, ZipCode.TryCreate);
     /// </code>
     /// </example>
     public static Result<Maybe<TOut>> Optional<TIn, TOut>(TIn? value, Func<TIn, Result<TOut>> function)

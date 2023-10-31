@@ -33,8 +33,8 @@ public class BenchmarkROP
 {
     [Benchmark]
     public string RopStyleHappy() =>
-        FirstName.New("Xavier")
-            .Combine(EmailAddress.New("xavier@somewhere.com"))
+        FirstName.TryCreate("Xavier")
+            .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
             .Finally(
                 ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
                 error => error.Message
@@ -43,22 +43,22 @@ public class BenchmarkROP
     [Benchmark]
     public string IfStyleHappy()
     {
-        var firstName = FirstName.New("Xavier");
-        var emailAddress = EmailAddress.New("xavier@somewhere.com");
-        if (firstName.IsSuccess && emailAddress.IsSuccess)
-            return firstName.Value.ToString() + " " + emailAddress.Value.ToString();
+        var rFirstName = FirstName.TryCreate("Xavier");
+        var rEmailAddress = EmailAddress.TryCreate("xavier@somewhere.com");
+        if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
+            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
 
-        var error = firstName.IsFailure ? firstName.Error : emailAddress.Error;
-        if (emailAddress.IsFailure)
-            error = error.Combine(emailAddress.Error);
+        var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
+        if (rEmailAddress.IsFailure)
+            error = error.Combine(rEmailAddress.Error);
 
         return error.Message;
     }
 
     [Benchmark]
     public string RopStyleSad() =>
-    FirstName.New("Xavier")
-        .Combine(EmailAddress.New("bad email"))
+    FirstName.TryCreate("Xavier")
+        .Combine(EmailAddress.TryCreate("bad email"))
         .Finally(
             ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
             error => error.Message
@@ -67,14 +67,14 @@ public class BenchmarkROP
     [Benchmark]
     public string IfStyleSad()
     {
-        var firstName = FirstName.New("Xavier");
-        var emailAddress = EmailAddress.New("bad email");
-        if (firstName.IsSuccess && emailAddress.IsSuccess)
-            return firstName.ToString() + " " + emailAddress.ToString();
+        var rFirstName = FirstName.TryCreate("Xavier");
+        var rEmailAddress = EmailAddress.TryCreate("bad email");
+        if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
+            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
 
-        var error = firstName.IsFailure ? firstName.Error : emailAddress.Error;
-        if (firstName.IsFailure && emailAddress.IsFailure)
-            error = error.Combine(emailAddress.Error);
+        var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
+        if (rFirstName.IsFailure && rEmailAddress.IsFailure)
+            error = error.Combine(rEmailAddress.Error);
 
         return error.Message;
     }

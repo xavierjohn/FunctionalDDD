@@ -22,6 +22,7 @@ public class ActionResultTaskTests
         var response = await result.ToOkActionResultAsync(controller);
 
         // Assert
+        response.Result.Should().BeOfType<OkObjectResult>();
         var okObjResult = response.Result.As<OkObjectResult>();
         okObjResult.Value.Should().Be("Test");
         okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
@@ -39,9 +40,28 @@ public class ActionResultTaskTests
         var response = await result.ToOkActionResultAsync(controller);
 
         // Assert
+        response.Result.Should().BeOfType<BadRequestObjectResult>();
         var badRequest = response.Result.As<BadRequestObjectResult>();
         badRequest.Value.Should().Be(expected);
         badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public async Task Will_return_Forbidden_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var expected = Error.Forbidden("You are not authorized.");
+        var result = Task.FromResult(Result.Failure<string>(expected));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().Be(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
     }
 
     [Fact]

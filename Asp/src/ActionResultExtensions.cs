@@ -3,6 +3,7 @@
 using System.Net.Http.Headers;
 using FunctionalDDD.Results;
 using FunctionalDDD.Results.Errors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -63,7 +64,7 @@ public static class ActionResultExtensions
     ///         </item>
     ///         <item>
     ///             <term><see cref="ForbiddenError"/></term>
-    ///             <description><see cref="ControllerBase.Forbid()"/></description>
+    ///             <description>403 Forbidden</description>
     ///         </item>    
     ///         <item>
     ///             <term><see cref="UnexpectedError"/></term>
@@ -83,9 +84,9 @@ public static class ActionResultExtensions
         BadRequestError => (ActionResult<TValue>)controllerBase.BadRequest(error),
         ConflictError => (ActionResult<TValue>)controllerBase.Conflict(error),
         UnauthorizedError => (ActionResult<TValue>)controllerBase.Unauthorized(error),
-        ForbiddenError => (ActionResult<TValue>)controllerBase.Forbid(error.Message),
-        UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(500, error),
-        _ => (ActionResult<TValue>)controllerBase.StatusCode(500, error),
+        ForbiddenError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status403Forbidden, error),
+        UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
+        _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
     };
 
     /// <summary>

@@ -19,9 +19,9 @@ The mapping is as follows
     ValidationError validation => ValidationErrors<T>(validation, controllerBase),
     ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
     UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
-    ForbiddenError => (ActionResult<T>)controllerBase.Forbid(error.Message),
-    UnexpectedError => (ActionResult<T>)controllerBase.StatusCode(500, error),
-    _ => throw new NotImplementedException($"Unknown error {error.Code}"),
+    ForbiddenError => (ActionResult<T>)controllerBase.StatusCode(StatusCodes.Status403Forbidden, error),
+    UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
+    _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
 ```
 
 ## Example
@@ -31,10 +31,10 @@ Simple case.
 ```csharp
 [HttpPost("[action]")]
 public ActionResult<User> Register([FromBody] RegisterRequest request) =>
-    FirstName.New(request.firstName)
-    .Combine(LastName.New(request.lastName))
-    .Combine(EmailAddress.New(request.email))
-    .Bind((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
     .ToOkActionResult(this);
 ```
 
@@ -43,10 +43,10 @@ To control the return type
 ```csharp
 [HttpPost("[action]")]
 public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =>
-    FirstName.New(request.firstName)
-    .Combine(LastName.New(request.lastName))
-    .Combine(EmailAddress.New(request.email))
-    .Bind((firstName, lastName, email) => SampleWebApplication.User.New(firstName, lastName, email, request.password))
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
     .Finally(
         ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
         err => err.ToErrorActionResult<User>(this));
