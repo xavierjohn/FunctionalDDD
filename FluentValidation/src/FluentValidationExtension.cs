@@ -18,7 +18,7 @@ using FunctionalDDD.Results.Errors;
 ///    public EmailAddress Email { get; }
 ///    public string Password { get; }
 ///
-///    public static Result&lt;User&gt; New(FirstName firstName, LastName lastName, EmailAddress email, string password)
+///    public static Result&lt;User&gt; TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password)
 ///    {
 ///        var user = new User(firstName, lastName, email, password);
 ///        return s_validator.ValidateToResult(user);

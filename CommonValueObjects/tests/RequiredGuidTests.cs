@@ -13,7 +13,7 @@ public class RequiredGuidTests
     [Fact]
     public void Cannot_create_empty_RequiredGuid()
     {
-        var guidId1 = EmployeeId.New(default(Guid));
+        var guidId1 = EmployeeId.TryCreate(default(Guid));
         guidId1.IsFailure.Should().BeTrue();
         guidId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)guidId1.Error;
@@ -26,7 +26,7 @@ public class RequiredGuidTests
     public void Can_create_RequiredGuid_from_Guid()
     {
         var guid = Guid.NewGuid();
-        EmployeeId.New(guid)
+        EmployeeId.TryCreate(guid)
             .Tap(empId =>
             {
                 empId.Should().BeOfType<EmployeeId>();
@@ -42,7 +42,7 @@ public class RequiredGuidTests
         var strGuid = Guid.NewGuid().ToString();
 
         // Act
-        EmployeeId.New(strGuid)
+        EmployeeId.TryCreate(strGuid)
             .Tap(empId =>
             {
                 empId.Should().BeOfType<EmployeeId>();
@@ -53,8 +53,8 @@ public class RequiredGuidTests
 
     [Fact]
     public void Two_RequiredGuid_with_different_values_should_not_be_equal() =>
-        EmployeeId.New(Guid.NewGuid())
-            .Combine(EmployeeId.New(Guid.NewGuid()))
+        EmployeeId.TryCreate(Guid.NewGuid())
+            .Combine(EmployeeId.TryCreate(Guid.NewGuid()))
             .Tap((emp1, emp2) =>
             {
                 (emp1 != emp2).Should().BeTrue();
@@ -66,8 +66,8 @@ public class RequiredGuidTests
     public void Two_RequiredGuid_with_same_value_should_be_equal()
     {
         var myGuid = Guid.NewGuid();
-        EmployeeId.New(myGuid)
-            .Combine(EmployeeId.New(myGuid))
+        EmployeeId.TryCreate(myGuid)
+            .Combine(EmployeeId.TryCreate(myGuid))
             .Tap((emp1, emp2) =>
             {
                 (emp1 == emp2).Should().BeTrue();
@@ -81,7 +81,7 @@ public class RequiredGuidTests
     {
         // Arrange
         var guid = Guid.NewGuid();
-        var myGuid = EmployeeId.New(guid).Value;
+        var myGuid = EmployeeId.TryCreate(guid).Value;
 
         // Act
         var actual = myGuid.ToString();
@@ -95,7 +95,7 @@ public class RequiredGuidTests
     {
         // Arrange
         Guid myGuid = Guid.NewGuid();
-        EmployeeId myGuidId1 = EmployeeId.New(myGuid).Value;
+        EmployeeId myGuidId1 = EmployeeId.TryCreate(myGuid).Value;
 
         // Act
         Guid primGuid = myGuidId1;
@@ -138,7 +138,7 @@ public class RequiredGuidTests
     public void Cannot_create_RequiredGuid_from_invalid_string(string value)
     {
         // Act
-        var myGuidResult = EmployeeId.New(value);
+        var myGuidResult = EmployeeId.TryCreate(value);
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();
@@ -154,7 +154,7 @@ public class RequiredGuidTests
     public void Cannot_create_RequiredGuid_from_empty_string(string? value)
     {
         // Act
-        var myGuidResult = EmployeeId.New(value);
+        var myGuidResult = EmployeeId.TryCreate(value);
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();

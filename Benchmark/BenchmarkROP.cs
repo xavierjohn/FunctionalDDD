@@ -33,8 +33,8 @@ public class BenchmarkROP
 {
     [Benchmark]
     public string RopStyleHappy() =>
-        FirstName.New("Xavier")
-            .Combine(EmailAddress.New("xavier@somewhere.com"))
+        FirstName.TryCreate("Xavier")
+            .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
             .Finally(
                 ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
                 error => error.Message
@@ -43,8 +43,8 @@ public class BenchmarkROP
     [Benchmark]
     public string IfStyleHappy()
     {
-        var firstName = FirstName.New("Xavier");
-        var emailAddress = EmailAddress.New("xavier@somewhere.com");
+        var firstName = FirstName.TryCreate("Xavier");
+        var emailAddress = EmailAddress.TryCreate("xavier@somewhere.com");
         if (firstName.IsSuccess && emailAddress.IsSuccess)
             return firstName.Value.ToString() + " " + emailAddress.Value.ToString();
 
@@ -57,8 +57,8 @@ public class BenchmarkROP
 
     [Benchmark]
     public string RopStyleSad() =>
-    FirstName.New("Xavier")
-        .Combine(EmailAddress.New("bad email"))
+    FirstName.TryCreate("Xavier")
+        .Combine(EmailAddress.TryCreate("bad email"))
         .Finally(
             ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
             error => error.Message
@@ -67,8 +67,8 @@ public class BenchmarkROP
     [Benchmark]
     public string IfStyleSad()
     {
-        var firstName = FirstName.New("Xavier");
-        var emailAddress = EmailAddress.New("bad email");
+        var firstName = FirstName.TryCreate("Xavier");
+        var emailAddress = EmailAddress.TryCreate("bad email");
         if (firstName.IsSuccess && emailAddress.IsSuccess)
             return firstName.ToString() + " " + emailAddress.ToString();
 

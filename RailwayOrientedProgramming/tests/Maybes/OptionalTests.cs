@@ -11,7 +11,7 @@ public class OptionalTests
         string? zipCode = "92874";
 
         // Act
-        var result = Maybe.Optional(zipCode, ZipCode.New);
+        var result = Maybe.Optional(zipCode, ZipCode.TryCreate);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -26,7 +26,7 @@ public class OptionalTests
         string? zipCode = null;
 
         // Act
-        var result = Maybe.Optional(zipCode, ZipCode.New);
+        var result = Maybe.Optional(zipCode, ZipCode.TryCreate);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -41,7 +41,7 @@ public class OptionalTests
         string? zipCode = "Hi";
 
         // Act
-        var result = Maybe.Optional(zipCode, ZipCode.New);
+        var result = Maybe.Optional(zipCode, ZipCode.TryCreate);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -55,7 +55,7 @@ public class OptionalTests
 
         private ZipCode(string zipCode) => Zip = zipCode;
 
-        public static Result<ZipCode> New(string zipCode)
+        public static Result<ZipCode> TryCreate(string zipCode)
         {
             if (string.IsNullOrEmpty(zipCode)) return Result.Failure<ZipCode>(Error.BadRequest("ZipCode is required."));
             if (zipCode.Length != 5) return Result.Failure<ZipCode>(Error.BadRequest("Invalid ZipCode."));

@@ -11,7 +11,7 @@ public partial class EmailAddress : ScalarValueObject<string>
 {
     private EmailAddress(string value) : base(value) { }
 
-    public static Result<EmailAddress> New(string emailString, string? fieldName = null)
+    public static Result<EmailAddress> TryCreate(string emailString, string? fieldName = null)
     {
         if (emailString is not null)
         {

@@ -7,7 +7,7 @@ At this point there are three classes:
 - `RequiredGuid` - Guid value object that cannot be null or default.
 
 ## Usage
-`RequiredString` and `RequiredGuid` uses source code generation to generate the `New` method
+`RequiredString` and `RequiredGuid` uses source code generation to generate the `TryCreate` method
 and other boilerplate code. Make sure it is declared as partial class so that the source code
 generator can do the rest.
 
@@ -30,9 +30,9 @@ public partial class TrackingId : RequiredString
     {
     }
 
-    public static explicit operator TrackingId(string trackingId) => New(trackingId).Value;
+    public static explicit operator TrackingId(string trackingId) => TryCreate(trackingId).Value;
 
-    public static Result<TrackingId> New(string? requiredStringOrNothing) =>
+    public static Result<TrackingId> TryCreate(string? requiredStringOrNothing) =>
         requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new TrackingId(str));
@@ -57,17 +57,17 @@ public partial class EmployeeId : RequiredGuid
     {
     }
 
-    public static explicit operator EmployeeId(Guid employeeId) => New(employeeId).Value;
+    public static explicit operator EmployeeId(Guid employeeId) => TryCreate(employeeId).Value;
 
     public static EmployeeId NewUnique() => new(Guid.NewGuid());
 
-    public static Result<EmployeeId> New(Guid? requiredGuidOrNothing) =>
+    public static Result<EmployeeId> TryCreate(Guid? requiredGuidOrNothing) =>
         requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
             .Map(guid => new EmployeeId(guid));
 
-    public static Result<EmployeeId> New(string? stringOrNull)
+    public static Result<EmployeeId> TryCreate(string? stringOrNull)
     {
          Guid parsedGuid = Guid.Empty;
          return stringOrNull

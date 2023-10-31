@@ -10,7 +10,7 @@ internal class User : Aggregate<UserId>
     public EmailAddress Email { get; }
     public string Password { get; }
 
-    public static Result<User> New(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
         var user = new User(firstName, lastName, email, password);
         return s_validator.ValidateToResult(user);

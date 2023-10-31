@@ -10,10 +10,10 @@ public class ValidationExample
     public void Validation_successful_Test()
     {
 
-        var actual = EmailAddress.New("xavier@somewhere.com")
-            .Combine(FirstName.New("Xavier"))
-            .Combine(LastName.New("John"))
-            .Combine(EmailAddress.New("xavier@somewhereelse.com"))
+        var actual = EmailAddress.TryCreate("xavier@somewhere.com")
+            .Combine(FirstName.TryCreate("Xavier"))
+            .Combine(LastName.TryCreate("John"))
+            .Combine(EmailAddress.TryCreate("xavier@somewhereelse.com"))
             .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
         actual.Value.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
@@ -23,10 +23,10 @@ public class ValidationExample
     public void Validation_failed_Test()
     {
 
-        var actual = EmailAddress.New("xavier@somewhere.com")
-            .Combine(FirstName.New("Xavier"))
-            .Combine(LastName.New(string.Empty))
-            .Combine(EmailAddress.New("xavier @ somewhereelse.com"))
+        var actual = EmailAddress.TryCreate("xavier@somewhere.com")
+            .Combine(FirstName.TryCreate("Xavier"))
+            .Combine(LastName.TryCreate(string.Empty))
+            .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
             .Bind((email, firstName, lastName, anotherEmail) =>
             {
                 true.Should().BeFalse("this code should not get executed");
@@ -50,9 +50,9 @@ public class ValidationExample
         string email = "xavier@somewhere.com";
         string? lastName = "Deva";
 
-        var actual = EmailAddress.New(email)
-            .Combine(Maybe.Optional(firstName, FirstName.New))
-            .Combine(Maybe.Optional(lastName, LastName.New))
+        var actual = EmailAddress.TryCreate(email)
+            .Combine(Maybe.Optional(firstName, FirstName.TryCreate))
+            .Combine(Maybe.Optional(lastName, LastName.TryCreate))
             .Bind(Add);
 
         actual.Value.Should().Be("xavier@somewhere.com  Deva");
@@ -70,9 +70,9 @@ public class ValidationExample
         string email = "xavier@somewhere.com";
         string? lastName = "Deva";
 
-        var actual = EmailAddress.New(email)
-            .Combine(Maybe.Optional(firstName, FirstName.New))
-            .Combine(Maybe.Optional(lastName, LastName.New))
+        var actual = EmailAddress.TryCreate(email)
+            .Combine(Maybe.Optional(firstName, FirstName.TryCreate))
+            .Combine(Maybe.Optional(lastName, LastName.TryCreate))
             .Bind(Add);
 
         actual.IsFailure.Should().BeTrue();
