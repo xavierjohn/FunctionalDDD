@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>Benchmark</AssemblyName>
     <RootNamespace>Benchmark</RootNamespace>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
