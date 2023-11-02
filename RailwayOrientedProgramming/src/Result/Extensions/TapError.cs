@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 /// <summary>
 /// Executes the given action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.

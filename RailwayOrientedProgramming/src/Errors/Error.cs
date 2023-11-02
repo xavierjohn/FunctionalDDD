@@ -1,8 +1,8 @@
-﻿namespace FunctionalDDD.Results.Errors;
+﻿namespace FunctionalDdd;
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using static FunctionalDDD.Results.Errors.ValidationError;
+using static FunctionalDdd.ValidationError;
 
 [DebuggerDisplay("{Message}")]
 #pragma warning disable CA1716 // Identifiers should not match keywords

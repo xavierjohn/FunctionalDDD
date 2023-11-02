@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 ///     Represents the result of an operation that has no return value.

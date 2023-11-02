@@ -1,7 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
 using System;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 using Xunit;
 
 public class NullableExtensionTests

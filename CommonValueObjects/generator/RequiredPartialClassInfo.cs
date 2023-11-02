@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.CommonValueObjectGenerator
+﻿namespace FunctionalDdd.CommonValueObjectGenerator
 {
     internal class RequiredPartialClassInfo
     {

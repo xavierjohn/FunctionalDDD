@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 /// <summary>
 /// Combines two or more <see cref="Result{TValue}"/> into one tuple containing all the Results.

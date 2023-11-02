@@ -1,7 +1,6 @@
 ﻿namespace SampleWebApplication;
 using FluentValidation;
-using FunctionalDDD.Domain;
-using FunctionalDDD.Results;
+using FunctionalDdd;
 
 public class User : Aggregate<UserId>
 {

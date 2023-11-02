@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDdd;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;

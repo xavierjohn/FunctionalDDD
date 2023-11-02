@@ -1,6 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Maybes;
 
-using FunctionalDDD.Results;
+using FunctionalDdd;
 
 public class MaybeTests
 {

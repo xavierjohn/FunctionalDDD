@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 using System.Threading.Tasks;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 /// <summary>
 /// Static methods to create the <see cref="Result{TValue}"/> object.

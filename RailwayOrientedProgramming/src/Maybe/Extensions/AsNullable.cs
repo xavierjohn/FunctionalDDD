@@ -1,5 +1,5 @@
 ﻿
-namespace FunctionalDDD.Results;
+namespace FunctionalDdd;
 
 public static partial class MaybeExtensions
 {

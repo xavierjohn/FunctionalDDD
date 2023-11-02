@@ -1,4 +1,4 @@
-# Functional DDD
+# Functional Domain Driven Design
 
 Functional programming, railway-oriented programming, and domain-driven design are three concepts that can work together to create robust and reliable software.
 
@@ -24,7 +24,7 @@ By focusing on the problem domain, developers can create software that is more c
 
 Overall, functional programming with railway-oriented programming and domain-driven design can be a powerful approach to software development that can lead to more robust and reliable software.
 
-## FunctionalDDD NuGet Package
+##FunctionalDdd NuGet Package
 
 ![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
 

@@ -1,8 +1,6 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 
 using System.Text.RegularExpressions;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
 
 /// <summary>
 /// Represents an email address value object. It checks for valid email address.

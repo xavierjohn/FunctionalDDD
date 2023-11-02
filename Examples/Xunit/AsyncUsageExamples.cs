@@ -1,7 +1,6 @@
 ﻿
 namespace Example.Tests;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 using Xunit;
 
 public class AsyncUsageExamples

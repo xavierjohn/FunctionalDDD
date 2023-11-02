@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 public static class NullableExtensions
 {

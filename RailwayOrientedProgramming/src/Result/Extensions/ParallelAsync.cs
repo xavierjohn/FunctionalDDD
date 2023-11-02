@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Execute tasks in parallel and return a <see cref="Tuple"/> of <see cref="Result{TValue}"/> tasks.

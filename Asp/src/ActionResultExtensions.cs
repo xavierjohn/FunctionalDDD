@@ -1,8 +1,6 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDdd;
 
 using System.Net.Http.Headers;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 /// <summary>
 /// Create a strongly typed string value object that checks for null or empty string.
 /// </summary>

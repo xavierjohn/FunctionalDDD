@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RootNamespace>FunctionalDDD.Domain</RootNamespace>
     <Description>
       To avoid passing around strings, it is recommended to use RequiredString to obtain strongly typed properties. The source code generator will automate the implementation process.
     </Description>

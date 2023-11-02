@@ -1,6 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions
 {
-    using FunctionalDDD.Results;
+    using FunctionalDdd;
     using RailwayOrientedProgramming.Tests.Results.Extensions;
 
     public class BindTests_ValueTask_Right : BindBase

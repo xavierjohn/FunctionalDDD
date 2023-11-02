@@ -7,7 +7,7 @@
 <#@ include file="CommonFunction.t4" #>
 
 // Generated code
-namespace FunctionalDDD.Results;
+namespace FunctionalDdd;
 
 public static partial class BindExtensions
 {

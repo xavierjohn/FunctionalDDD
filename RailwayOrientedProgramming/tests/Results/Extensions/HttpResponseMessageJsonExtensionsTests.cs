@@ -4,8 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 public class HttpResponseMessageJsonExtensionsTests
 {
