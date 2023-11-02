@@ -1,6 +1,5 @@
 ﻿namespace FunctionalDdd;
 using System.Threading.Tasks;
-using FunctionalDdd;
 
 /// <summary>
 /// Static methods to create the <see cref="Result{TValue}"/> object.
