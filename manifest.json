@@ -4,540 +4,490 @@
   "files": [
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FluentValidation.FunctionalDDDValidationExtension.yml",
+      "source_relative_path": "api/FunctionalDdd.ActionResultExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FluentValidation.FunctionalDDDValidationExtension.html"
+          "relative_path": "api/FunctionalDdd.ActionResultExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FluentValidation.yml",
+      "source_relative_path": "api/FunctionalDdd.ActionResultExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FluentValidation.html"
+          "relative_path": "api/FunctionalDdd.ActionResultExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Asp.ActionResultExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.Aggregate-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Asp.ActionResultExtensions.html"
+          "relative_path": "api/FunctionalDdd.Aggregate-1.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Asp.ActionResultExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.AggregateError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Asp.ActionResultExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.AggregateError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Asp.PartialObjectResult.yml",
+      "source_relative_path": "api/FunctionalDdd.BadRequestError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Asp.PartialObjectResult.html"
+          "relative_path": "api/FunctionalDdd.BadRequestError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Asp.yml",
+      "source_relative_path": "api/FunctionalDdd.BindExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Asp.html"
+          "relative_path": "api/FunctionalDdd.BindExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.Aggregate-1.yml",
+      "source_relative_path": "api/FunctionalDdd.BindExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.Aggregate-1.html"
+          "relative_path": "api/FunctionalDdd.BindExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.EmailAddress.yml",
+      "source_relative_path": "api/FunctionalDdd.CombineErrorExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.EmailAddress.html"
+          "relative_path": "api/FunctionalDdd.CombineErrorExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.Entity-1.yml",
+      "source_relative_path": "api/FunctionalDdd.CombineExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.Entity-1.html"
+          "relative_path": "api/FunctionalDdd.CombineExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.RequiredGuid.yml",
+      "source_relative_path": "api/FunctionalDdd.CompensateExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.RequiredGuid.html"
+          "relative_path": "api/FunctionalDdd.CompensateExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.RequiredString.yml",
+      "source_relative_path": "api/FunctionalDdd.CompensateExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.RequiredString.html"
+          "relative_path": "api/FunctionalDdd.CompensateExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.ScalarValueObject-1.yml",
+      "source_relative_path": "api/FunctionalDdd.ConflictError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.ScalarValueObject-1.html"
+          "relative_path": "api/FunctionalDdd.ConflictError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.ValueObject.yml",
+      "source_relative_path": "api/FunctionalDdd.EmailAddress.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.ValueObject.html"
+          "relative_path": "api/FunctionalDdd.EmailAddress.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Domain.yml",
+      "source_relative_path": "api/FunctionalDdd.EnsureExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Domain.html"
+          "relative_path": "api/FunctionalDdd.EnsureExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.BindExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.EnsureExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.BindExtensions.html"
+          "relative_path": "api/FunctionalDdd.EnsureExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.BindExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.Entity-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.BindExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.Entity-1.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.CombineErrorExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.Error.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.CombineErrorExtensions.html"
+          "relative_path": "api/FunctionalDdd.Error.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.CombineExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.FinallyExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.CombineExtensions.html"
+          "relative_path": "api/FunctionalDdd.FinallyExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.CompensateExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.FinallyExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.CompensateExtensions.html"
+          "relative_path": "api/FunctionalDdd.FinallyExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.CompensateExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.ForbiddenError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.CompensateExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.ForbiddenError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.EnsureExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.FunctionalDDDValidationExtension.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.EnsureExtensions.html"
+          "relative_path": "api/FunctionalDdd.FunctionalDDDValidationExtension.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.EnsureExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.HttpResponseMessageJsonExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.EnsureExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.HttpResponseMessageJsonExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.AggregateError.yml",
+      "source_relative_path": "api/FunctionalDdd.MapExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.AggregateError.html"
+          "relative_path": "api/FunctionalDdd.MapExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.BadRequestError.yml",
+      "source_relative_path": "api/FunctionalDdd.MapExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.BadRequestError.html"
+          "relative_path": "api/FunctionalDdd.MapExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.ConflictError.yml",
+      "source_relative_path": "api/FunctionalDdd.Maybe-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.ConflictError.html"
+          "relative_path": "api/FunctionalDdd.Maybe-1.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.Error.yml",
+      "source_relative_path": "api/FunctionalDdd.Maybe.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.Error.html"
+          "relative_path": "api/FunctionalDdd.Maybe.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.ForbiddenError.yml",
+      "source_relative_path": "api/FunctionalDdd.MaybeExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.ForbiddenError.html"
+          "relative_path": "api/FunctionalDdd.MaybeExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.NotFoundError.yml",
+      "source_relative_path": "api/FunctionalDdd.MaybeExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.NotFoundError.html"
+          "relative_path": "api/FunctionalDdd.MaybeExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.UnauthorizedError.yml",
+      "source_relative_path": "api/FunctionalDdd.NotFoundError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.UnauthorizedError.html"
+          "relative_path": "api/FunctionalDdd.NotFoundError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.UnexpectedError.yml",
+      "source_relative_path": "api/FunctionalDdd.NullableExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.UnexpectedError.html"
+          "relative_path": "api/FunctionalDdd.NullableExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.ValidationError.ModelError.yml",
+      "source_relative_path": "api/FunctionalDdd.NullableExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.ValidationError.ModelError.html"
+          "relative_path": "api/FunctionalDdd.NullableExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.ValidationError.yml",
+      "source_relative_path": "api/FunctionalDdd.ParallelExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.ValidationError.html"
+          "relative_path": "api/FunctionalDdd.ParallelExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Errors.yml",
+      "source_relative_path": "api/FunctionalDdd.PartialObjectResult.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Errors.html"
+          "relative_path": "api/FunctionalDdd.PartialObjectResult.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.FinallyExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.RequiredGuid.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.FinallyExtensions.html"
+          "relative_path": "api/FunctionalDdd.RequiredGuid.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.FinallyExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.RequiredString.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.FinallyExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.RequiredString.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.HttpResponseMessageJsonExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.Result-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.HttpResponseMessageJsonExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.Result-1.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.MapExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.Result.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.MapExtensions.html"
+          "relative_path": "api/FunctionalDdd.Result.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.MapExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.ScalarValueObject-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.MapExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.ScalarValueObject-1.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Maybe-1.yml",
+      "source_relative_path": "api/FunctionalDdd.TapErrorExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Maybe-1.html"
+          "relative_path": "api/FunctionalDdd.TapErrorExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Maybe.yml",
+      "source_relative_path": "api/FunctionalDdd.TapErrorExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Maybe.html"
+          "relative_path": "api/FunctionalDdd.TapErrorExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.MaybeExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.TapExtensions.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.MaybeExtensions.html"
+          "relative_path": "api/FunctionalDdd.TapExtensions.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.MaybeExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.TapExtensionsAsync.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.MaybeExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.TapExtensionsAsync.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.NullableExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.UnauthorizedError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.NullableExtensions.html"
+          "relative_path": "api/FunctionalDdd.UnauthorizedError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.NullableExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.UnexpectedError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.NullableExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.UnexpectedError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.ParallelExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.Unit.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.ParallelExtensionsAsync.html"
+          "relative_path": "api/FunctionalDdd.Unit.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Result-1.yml",
+      "source_relative_path": "api/FunctionalDdd.ValidationError.ModelError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Result-1.html"
+          "relative_path": "api/FunctionalDdd.ValidationError.ModelError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Result.yml",
+      "source_relative_path": "api/FunctionalDdd.ValidationError.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Result.html"
+          "relative_path": "api/FunctionalDdd.ValidationError.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TapErrorExtensions.yml",
+      "source_relative_path": "api/FunctionalDdd.ValueObject.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TapErrorExtensions.html"
+          "relative_path": "api/FunctionalDdd.ValueObject.html"
         }
       },
       "version": ""
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TapErrorExtensionsAsync.yml",
+      "source_relative_path": "api/FunctionalDdd.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TapErrorExtensionsAsync.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TapExtensions.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TapExtensions.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.TapExtensionsAsync.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.TapExtensionsAsync.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.Unit.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.Unit.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.Results.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.Results.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDDD.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDDD.html"
+          "relative_path": "api/FunctionalDdd.html"
         }
       },
       "version": ""
