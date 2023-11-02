@@ -177,3 +177,6 @@ var result = await _httpClient.GetAsync($"person/{id}")
   ```
 
 Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
+
+## Related project
+[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#
