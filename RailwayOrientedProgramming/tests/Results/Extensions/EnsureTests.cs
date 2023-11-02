@@ -79,7 +79,7 @@ public class EnsureTests
 
         var result = await sut.EnsureAsync(value => !value.HasValue,
             value => Task.FromResult((Error)Error.Unexpected($"should be null but found {value}")));
-        result.Should().Be(sut.Result);
+        result.Should().Be(await sut);
     }
 
 
@@ -90,7 +90,7 @@ public class EnsureTests
 
         var result = await sut.EnsureAsync(() => true, Error.Unexpected("can't be this error"));
 
-        result.Should().Be(sut.Result);
+        result.Should().Be(await sut);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class EnsureTests
 
         var result = await sut.EnsureAsync(t => Task.FromResult(true), Error.Unexpected("test ensure error"));
 
-        result.Should().Be(sut.Result);
+        result.Should().Be(await sut);
     }
 
 
@@ -197,7 +197,7 @@ public class EnsureTests
 
         var result = await sut.EnsureAsync(d => Task.FromResult(true), Error.Unexpected("test error"));
 
-        result.Should().Be(sut.Result);
+        result.Should().Be(await sut);
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public class EnsureTests
 
         var result = await sut.EnsureAsync(t => true, Error.Unexpected("test ensure error"));
 
-        result.Should().Be(sut.Result);
+        result.Should().Be(await sut);
     }
 
 
