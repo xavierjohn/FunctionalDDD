@@ -5,23 +5,56 @@
         {
           "src": "../..",
           "files": [
-            "RailwayOrientedProgramming/src/RailwayOrientedProgramming.csproj",
-            "DomainDrivenDesign/src/DomainDrivenDesign.csproj",
-            "FluentValidation/src/FluentValidation.csproj",
-            "Asp/src/Asp.csproj",
+            "RailwayOrientedProgramming/src/RailwayOrientedProgramming.csproj"
+          ]
+        }
+      ],
+      "dest": "api/rop"
+    },
+    {
+      "src": [
+        {
+          "src": "../..",
+          "files": [
+            "DomainDrivenDesign/src/DomainDrivenDesign.csproj"
+          ]
+        }
+      ],
+      "dest": "api/domain"
+    },
+
+    {
+      "src": [
+        {
+          "src": "../..",
+          "files": [
+            "FluentValidation/src/FluentValidation.csproj"
+          ]
+        }
+      ],
+      "dest": "api/fluentValidation"
+    },
+    {
+      "src": [
+        {
+          "src": "../..",
+          "files": [
+            "Asp/src/Asp.csproj"
+          ]
+        }
+      ],
+      "dest": "api/asp"
+    },
+    {
+      "src": [
+        {
+          "src": "../..",
+          "files": [
             "CommonValueObjects/src/CommonValueObjects.csproj"
           ]
         }
       ],
-      "dest": "api",
-      "includePrivateMembers": false,
-      "disableGitFeatures": false,
-      "disableDefaultFilter": false,
-      "noRestore": false,
-      "namespaceLayout": "nested",
-      "memberLayout": "samePage",
-      "EnumSortOrder": "alphabetic",
-      "allowCompilationErrors": false
+      "dest": "api/valueObjects"
     }
   ],
   "build": {
@@ -29,6 +62,11 @@
       {
         "files": [
           "api/**.yml",
+          "api/rop/**.yml",
+          "api/domain/**.yml",
+          "api/valueObjects/**.yml",
+          "api/fluentValidation/**.yml",
+          "api/asp/**.yml",
           "api/index.md"
         ]
       },

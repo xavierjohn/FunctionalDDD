@@ -1,5 +1,13 @@
 ###############
 #  temp file  #
 ###############
-*.yml
-.manifest
+asp/*.yml
+asp/.manifest
+domain/*.yml
+domain/.manifest
+fluentValidation/*.yml
+fluentValidation/.manifest
+rop/*.yml
+rop/.manifest
+valueObjects/*.yml
+valueObjects/.manifest
