@@ -1,6 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDdd;
 using RailwayOrientedProgramming.Tests.Results;
 
 public abstract class BindBase : TestBase

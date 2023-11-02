@@ -1,7 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
 using System;
-using FunctionalDdd;
-using Xunit;
 
 public class MaybeExtensionTests
 {

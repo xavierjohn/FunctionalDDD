@@ -1,7 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results;
 
-using FunctionalDdd;
-
 public class ResultTests
 {
     [Fact]

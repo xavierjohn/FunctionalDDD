@@ -1,7 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDdd;
-using Xunit;
 public class ParallelTests
 {
     [Fact]

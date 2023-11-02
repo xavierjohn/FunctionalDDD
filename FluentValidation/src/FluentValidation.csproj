@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Convert fluent validation errors toFunctionalDdd Validation errors.</Description>
+    <Description>Convert fluent validation errors to FunctionalDdd Validation errors.</Description>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\"/>

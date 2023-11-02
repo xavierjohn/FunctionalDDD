@@ -1,6 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
 
-using FunctionalDdd;
 using Xunit;
 
 public class ErrorTests
