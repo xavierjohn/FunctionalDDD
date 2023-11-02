@@ -1,4 +1,4 @@
-# API Documentation forFunctionalDdd Library
+# API Documentation for FunctionalDdd Library
 
 Bringing the functional programming paradigm to C#.
 
