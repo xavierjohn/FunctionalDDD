@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 /// <summary>
 /// A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
 /// It is a small, simple object that encapsulates a concept from your problem domain.

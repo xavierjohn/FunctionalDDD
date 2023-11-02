@@ -1,8 +1,8 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
 using System.Net.Http.Json;
 using System.Text.Json;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 public static class HttpResponseMessageJsonExtensionsAsync
 {

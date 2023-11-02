@@ -1,7 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
 
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 public class EnsureTests_Task_Left
 {
@@ -47,7 +46,7 @@ public class EnsureTests_Task_Left
 
         Result<int?> result = await tResult.EnsureAsync(value => !value.HasValue, value => Error.Validation($"should be null but found {value}"));
 
-        result.Should().Be(tResult.Result);
+        result.Should().Be(await tResult);
     }
 
     [Fact]

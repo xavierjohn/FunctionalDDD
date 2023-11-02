@@ -1,7 +1,6 @@
 ﻿namespace SampleWebApplication.Controllers;
 
-using FunctionalDDD.Asp;
-using FunctionalDDD.Results;
+using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 

@@ -1,8 +1,6 @@
 ﻿namespace Example;
 
-using FunctionalDDD.Domain;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 public class ValidationExample
 {

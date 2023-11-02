@@ -1,7 +1,5 @@
 ﻿namespace FluentValidationExt.Tests;
 using FluentValidation;
-using FunctionalDDD.Domain;
-using FunctionalDDD.Results;
 
 internal class User : Aggregate<UserId>
 {

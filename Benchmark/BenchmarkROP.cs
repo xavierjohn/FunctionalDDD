@@ -1,7 +1,6 @@
 ﻿namespace Benchmark;
 using BenchmarkDotNet.Attributes;
-using FunctionalDDD.Domain;
-using FunctionalDDD.Results;
+using FunctionalDdd;
 
 /// <summary>
 /// Benchmark ROP vs If.

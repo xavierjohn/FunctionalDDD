@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Create a typed class that represents a single scalar value object.

@@ -7,7 +7,7 @@
   <ItemGroup>
     <Using Include="FluentAssertions" />
     <Using Include="Xunit" />
-    <Using Include="FunctionalDDD" />
+    <Using Include="FunctionalDdd" />
   </ItemGroup>
   
   <ItemGroup>

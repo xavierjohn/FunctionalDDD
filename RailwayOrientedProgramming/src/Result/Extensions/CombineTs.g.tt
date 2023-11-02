@@ -6,8 +6,7 @@
 <#@ output extension=".cs" #>
 <#@ include file="CommonFunction.t4" #>
 // Generated code
-namespace FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+namespace FunctionalDdd;
 #nullable enable
 
 public static partial class CombineExtensions

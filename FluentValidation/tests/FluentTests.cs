@@ -1,8 +1,5 @@
 ﻿namespace FluentValidationExt.Tests;
 
-using FunctionalDDD.Domain;
-using FunctionalDDD.Results.Errors;
-
 public class FluentTests
 {
     private const string StrongPassword = "P@ssw0rd";

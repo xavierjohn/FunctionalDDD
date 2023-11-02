@@ -1,6 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Maybes;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 public class OptionalTests
 {

@@ -1,6 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Maybes.Extensions;
 
-using FunctionalDDD.Results;
+using FunctionalDdd;
 using RailwayOrientedProgramming.Tests.Results;
 
 public class AsMaybeTests : TestBase

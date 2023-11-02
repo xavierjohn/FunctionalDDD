@@ -1,8 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
-
 public class CompensateTests
 {
     bool _compensatingFunctionCalled;

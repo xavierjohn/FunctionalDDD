@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 /// <summary>
 /// Entity is an object who's identity is defined by its Id.
 /// </summary>

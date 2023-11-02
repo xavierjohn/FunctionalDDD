@@ -1,9 +1,8 @@
-﻿namespace FluentValidation;
+﻿namespace FunctionalDdd;
 
 using System.Linq;
+using FluentValidation;
 using FluentValidation.Results;
-using FunctionalDDD.Results;
-using FunctionalDDD.Results.Errors;
 
 /// <summary>
 /// Converts a <see cref="ValidationResult"/> to a <see cref="Result{T}"/>.

@@ -1,6 +1,6 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
-using FunctionalDDD.Results.Errors;
+using FunctionalDdd;
 
 /// <summary>
 /// The Result type used in functional programming languages to represent a success value or an error.

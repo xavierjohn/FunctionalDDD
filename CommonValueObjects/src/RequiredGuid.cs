@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 /// <summary>
 /// Create a strongly typed Guid value object that cannot have default Guid value.
 /// </summary>

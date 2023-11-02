@@ -1,6 +1,6 @@
 ﻿namespace SampleWebApplication;
 
-using FunctionalDDD.Domain;
+using FunctionalDdd;
 
 public partial class LastName : RequiredString
 {

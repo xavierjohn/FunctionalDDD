@@ -1,7 +1,6 @@
 ﻿namespace DomainDrivenDesign.Tests.ValueObjects;
 
 using System.Collections.Generic;
-using FunctionalDDD.Domain;
 
 public class ScalarValueObjectTests
 {

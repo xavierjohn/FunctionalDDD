@@ -1,7 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDDD.Results;
-
 public class TapTests : TestBase
 {
     protected bool ActionExecuted { get; set; }

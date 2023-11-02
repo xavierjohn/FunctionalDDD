@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Executes the given action if the starting result is a success. Returns the starting result.

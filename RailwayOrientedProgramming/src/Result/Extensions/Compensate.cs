@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Compensate for failed result by calling the given function.

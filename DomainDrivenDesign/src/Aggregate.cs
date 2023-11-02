@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Domain;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// A DDD aggregate is a cluster of domain objects that can be treated as a single unit. 

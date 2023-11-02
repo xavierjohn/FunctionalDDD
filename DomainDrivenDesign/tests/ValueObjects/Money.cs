@@ -1,5 +1,4 @@
 ﻿namespace DomainDrivenDesign.Tests.ValueObjects;
-using FunctionalDDD.Domain;
 
 internal class Money : ScalarValueObject<decimal>
 {

@@ -1,7 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
 
-using FunctionalDDD.Results;
-
 internal static class ValueTaskExtensions
 {
     public static ValueTask<T> AsValueTask<T>(this T obj) => obj.AsCompletedValueTask();

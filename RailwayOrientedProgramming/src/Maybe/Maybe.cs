@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Contains static methods to create a <see cref="Maybe{T}"/> object.
@@ -43,7 +43,7 @@ public static class Maybe
     ///         </item>
     ///         <item>
     ///             <term>Value is not null and <paramref name="function"/> returned Result.Failure</term>
-    ///             <description>The <see cref="Errors.Error" /> from the <paramref name="function"/> return value.</description>
+    ///             <description>The <see cref="Error" /> from the <paramref name="function"/> return value.</description>
     ///         </item>
     ///     </list>
     /// </returns>

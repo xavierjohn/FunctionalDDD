@@ -1,7 +1,6 @@
-﻿namespace FunctionalDDD.Asp;
+﻿namespace FunctionalDdd;
 
 using System.Net.Http.Headers;
-using FunctionalDDD.Results;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>

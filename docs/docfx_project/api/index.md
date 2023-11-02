@@ -1,4 +1,4 @@
-# API Documentation for FunctionalDDD Library
+# API Documentation for FunctionalDdd Library
 
 Bringing the functional programming paradigm to C#.
 
@@ -6,11 +6,11 @@ Bringing the functional programming paradigm to C#.
 
 ## Functional Programming with [Railway Oriented Programming](https://blog.logrocket.com/what-is-railway-oriented-programming/)
 
-### [Result](xref:FunctionalDDD.Results.Result`1)
+### [Result](xref:FunctionalDdd.Result`1)
 
 The Result type used in functional programming languages to represent a success value or an error.
 
-### [Maybe](xref:FunctionalDDD.Results.Maybe`1)
+### [Maybe](xref:FunctionalDdd.Maybe`1)
 
 The Maybe type used in functional programming languages to represent an optional value.
 
@@ -18,13 +18,13 @@ The Maybe type used in functional programming languages to represent an optional
 
 ## [Domain Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design)
 
-### [Aggregate](xref:FunctionalDDD.Domain.Aggregate`1)
+### [Aggregate](xref:FunctionalDdd.Aggregate`1)
 
 A DDD aggregate is a cluster of domain objects that can be treated as a single unit. An aggregate will have one of its component objects be the aggregate root.Any references from outside the aggregate should only go to the aggregate root. The root can thus ensure the integrity of the aggregate as a whole.
 
 [For more details](https://martinfowler.com/bliki/DDD_Aggregate.html)
 
-### [ValueObject](xref:FunctionalDDD.Domain.ValueObject)
+### [ValueObject](xref:FunctionalDdd.ValueObject)
 
 A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
 It is a small, simple object that encapsulates a concept from your problem domain.

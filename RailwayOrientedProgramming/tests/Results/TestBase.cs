@@ -1,7 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results;
 
-using FunctionalDDD.Results.Errors;
-
 public abstract class TestBase
 {
     public Error Error1 { get; } = Error.Unexpected("Error Message");

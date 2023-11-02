@@ -1,4 +1,4 @@
-﻿namespace FunctionalDDD.Results.Errors;
+﻿namespace FunctionalDdd;
 
 public sealed class ForbiddenError : Error
 {

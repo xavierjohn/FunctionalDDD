@@ -1,8 +1,8 @@
-﻿namespace FunctionalDDD.Results.Errors;
+﻿namespace FunctionalDdd;
 
 public sealed class AggregateError : Error
 {
-    public AggregateError(List<Error> errors, string code) : base(errors[0].Message, code)
+    public AggregateError(List<Error> errors, string code) : base("Aggregated error", code)
     {
         if (errors.Count < 1)
             throw new ArgumentException("At least one error is required", nameof(errors));

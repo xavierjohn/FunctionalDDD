@@ -1,6 +1,6 @@
 ﻿namespace Example;
 
-using FunctionalDDD.Domain;
+using FunctionalDdd;
 
 internal partial class LastName : RequiredString
 {

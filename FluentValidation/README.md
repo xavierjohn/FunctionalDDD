@@ -1,6 +1,6 @@
 # Fluent Validation extension
 
-This library will help convert Fluent Validation Errors to FunctionalDDD ValidationError.
+This library will help convert Fluent Validation Errors to FunctionalDdd ValidationError.
 
 Example:
 
