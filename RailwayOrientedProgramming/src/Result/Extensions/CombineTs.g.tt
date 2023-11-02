@@ -7,7 +7,6 @@
 <#@ include file="CommonFunction.t4" #>
 // Generated code
 namespace FunctionalDdd;
-using FunctionalDdd;
 #nullable enable
 
 public static partial class CombineExtensions
