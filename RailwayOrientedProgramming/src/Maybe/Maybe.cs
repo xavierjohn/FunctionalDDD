@@ -21,7 +21,7 @@ public static class Maybe
     public static Maybe<T> From<T>(T? value) where T : notnull => new(value);
 
     /// <summary>
-    /// Helps convert optional primite types to strongly typed object.
+    /// Helps convert optional primitive types to strongly typed object.
     /// </summary>
     /// <typeparam name="TIn"></typeparam>
     /// <typeparam name="TOut"></typeparam>
@@ -34,25 +34,28 @@ public static class Maybe
     ///             <description>Return</description>
     ///         </listheader>
     ///         <item>
-    ///             <term>Value is null</term>
-    ///             <description>Maybe.None&lt;<typeparamref name="TOut"/>&gt;</description>
+    ///             <term><paramref name="value"/> is null</term>
+    ///             <description>Maybe&lt;<typeparamref name="TOut"/>&gt; without value.</description>
     ///         </item>
     ///         <item>
-    ///             <term>Value is not null and <paramref name="function"/> returned Result.Success</term>
-    ///             <description>Maybe.From( the <typeparamref name="TOut"/> value from <paramref name="function"/>)</description>
+    ///             <term><paramref name="value"/> is not null and <paramref name="function"/> returned Success</term>
+    ///             <description>Maybe&lt;<typeparamref name="TOut"/>&gt; with value from <paramref name="function"/>.</description>
     ///         </item>
     ///         <item>
-    ///             <term>Value is not null and <paramref name="function"/> returned Result.Failure</term>
-    ///             <description>The <see cref="Error" /> from the <paramref name="function"/> return value.</description>
+    ///             <term><paramref name="value"/> is not null and <paramref name="function"/> returned Failure</term>
+    ///             <description>The <see cref="Error" /> from the <paramref name="function"/>.</description>
     ///         </item>
     ///     </list>
     /// </returns>
     /// <example>
     /// This code snippet demonstrates how to transform an optional string representing a zipcode into a strongly typed Zipcode Maybe object.
-    /// If the string is null, the method returns a Maybe of None.
-    /// Otherwise, it invokes the specified function and, if the function's result is successful, it wraps the result in a Maybe object.
-    /// If the function fails, the method returns the failure.  This lets the given function run validation on the input data.
+    /// <para>
+    /// If the string is null, the method returns a Maybe&lt;Zipcode&gt; of None.<br/>
+    /// Otherwise, it invokes the specified function and, if the function is successful, it wraps the result in a Maybe object.<br/>
+    /// If the function fails, the method returns the failure. This is useful when you want to transform a string into a strongly typed object with validation.
+    /// </para>
     /// <code>
+    /// string? zipCode = "98052";
     /// var result = Maybe.Optional(zipCode, ZipCode.TryCreate);
     /// </code>
     /// </example>
