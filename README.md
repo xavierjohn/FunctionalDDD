@@ -24,7 +24,7 @@ By focusing on the problem domain, developers can create software that is more c
 
 Overall, functional programming with railway-oriented programming and domain-driven design can be a powerful approach to software development that can lead to more robust and reliable software.
 
-##FunctionalDdd NuGet Package
+## FunctionalDdd Libray
 
 ![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
 
@@ -32,7 +32,7 @@ This library facilitates railway-oriented programming, generates standard HTTP e
 It also supports fluent validation for validating the domain model and includes a source code generator for common types.
 
 
-Here is a YouTube video explaining several of this library's methods.
+Here is a YouTube video explaining several of this library's methods. That video was not created by me, but it does a good job of explaining the concepts behind this library.
 
 [![Functional DDD](https://img.youtube.com/vi/45yk2nuRjj8/0.jpg)](https://youtu.be/45yk2nuRjj8?t=682)
 
