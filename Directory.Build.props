@@ -16,7 +16,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/xavierjohn/FunctionalDDD</PackageProjectUrl>
+    <PackageProjectUrl>https://xavierjohn.github.io/FunctionalDDD/</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup  Label="Build">
