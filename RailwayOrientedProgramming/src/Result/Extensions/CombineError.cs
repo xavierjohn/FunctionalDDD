@@ -21,7 +21,7 @@ public static class CombineErrorExtensions
     public static Error Combine(this Error? thisError, Error otherError)
     {
         if (thisError is null) return otherError;
-        if (otherError is null) throw new ArgumentNullException(nameof(otherError));
+        ArgumentNullException.ThrowIfNull(otherError);
         if (thisError is ValidationError validation && otherError is ValidationError otherValidation)
         {
             var validationErrors = validation.Errors.Concat(otherValidation.Errors).ToList();
