@@ -41,6 +41,9 @@
       }
     ],
     "output": "_site",
+    "globalMetadata": {
+      "_appLogoPath": "/images/fddd.png"
+  },
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
     "template": [
