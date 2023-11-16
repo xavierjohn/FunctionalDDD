@@ -7,19 +7,23 @@ using System.Net.Http.Headers;
 [ApiController]
 [Produces("application/json")]
 [Route("[controller]")]
-public class WeatherForecastController : ControllerBase
+public class WeatherForecastController(ILogger<WeatherForecastController> logger) : ControllerBase
 {
-    private static readonly string[] s_summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+    private static readonly string[] s_summaries =
+    [
+        "Freezing",
+        "Bracing",
+        "Chilly",
+        "Cool",
+        "Mild",
+        "Warm",
+        "Balmy",
+        "Hot",
+        "Sweltering",
+        "Scorching"
+    ];
 
-    private readonly ILogger<WeatherForecastController> _logger;
-
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<WeatherForecastController> _logger = logger;
 
     [HttpGet(Name = "GetWeatherForecast")]
     public ActionResult<WeatherForecast[]> Get()
