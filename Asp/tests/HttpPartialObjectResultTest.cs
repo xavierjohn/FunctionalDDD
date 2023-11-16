@@ -65,7 +65,7 @@ public class HttpPartialObjectResultTest
         httpContext.Response.Headers["Content-Range"].ToString().Should().Be(expected);
     }
 
-    private static IServiceProvider CreateServices()
+    private static Microsoft.Extensions.DependencyInjection.ServiceProvider CreateServices()
     {
         var options = Options.Create(new MvcOptions());
         options.Value.OutputFormatters.Add(new StringOutputFormatter());

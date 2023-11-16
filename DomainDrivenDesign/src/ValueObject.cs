@@ -75,8 +75,7 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
 
     public virtual int CompareTo(ValueObject? other)
     {
-        if (other == null)
-            throw new ArgumentNullException(nameof(other));
+        ArgumentNullException.ThrowIfNull(other);
         var thisType = GetType();
         var otherType = other.GetType();
 
