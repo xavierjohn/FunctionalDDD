@@ -1,14 +1,12 @@
 ﻿namespace CommonValueObjects.Tests;
 
-using System.Data.SqlTypes;
-
 public class EmailAddressTests
 {
     [Theory]
     [MemberData(nameof(GetBadEmailAddresses))]
     public void Cannot_create_invalid_email(string email)
     {
-        // Arrange
+        // Arrange & Act
         var result = EmailAddress.TryCreate(email, "school email");
 
         // Assert
@@ -32,9 +30,7 @@ public class EmailAddressTests
     [MemberData(nameof(GetGoodEmailAddresses))]
     public void Can_create_EmailAddress_try_parsing_valid_string(string strEmail)
     {
-        // Arrange
-
-        // Act
+        // Arrange & Act
         EmailAddress.TryParse(strEmail, null, out var email)
 
         // Assert
@@ -47,8 +43,7 @@ public class EmailAddressTests
     [MemberData(nameof(GetBadEmailAddresses))]
     public void Cannot_create_EmailAddress_try_parsing_invalid_string(string strEmail)
     {
-        // Arrange
-        // Act
+        // Arrange & Act
         EmailAddress.TryParse(strEmail, null, out var email)
 
         // Assert
@@ -60,9 +55,7 @@ public class EmailAddressTests
     [MemberData(nameof(GetGoodEmailAddresses))]
     public void Can_create_EmailAddress_parsing_valid_string(string strEmail)
     {
-        // Arrange
-
-        // Act
+        // Arrange & Act
         var email = EmailAddress.Parse(strEmail, null);
 
         // Assert
@@ -74,7 +67,7 @@ public class EmailAddressTests
     [MemberData(nameof(GetBadEmailAddresses))]
     public void Cannot_create_EmailAddress_parsing_invalid_string(string email)
     {
-        // Arrange
+        // Arrange & Act
         Action act = () => EmailAddress.Parse(email, null);
 
         // Assert
