@@ -6,10 +6,11 @@ public partial class TrackingId : RequiredString
 
 public class RequiredStringTests
 {
-    [Fact]
-    public void Cannot_create_empty_RequiredString()
+    [Theory]
+    [MemberData(nameof(GetBadString))]
+    public void Cannot_create_empty_RequiredString(string? input)
     {
-        var trackingId1 = TrackingId.TryCreate(string.Empty);
+        var trackingId1 = TrackingId.TryCreate(input);
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)trackingId1.Error;
@@ -102,4 +103,68 @@ public class RequiredStringTests
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Attempted to access the Value for a failed result. A failed result has no Value.");
     }
+
+    [Fact]
+    public void Can_create_RequiredString_from_try_parsing_valid_string()
+    {
+        // Arrange
+        var strTrackingId = "32141sd";
+
+        // Act
+        TrackingId.TryParse(strTrackingId, null, out var trackingId)
+            .Should().BeTrue();
+
+        // Assert
+        trackingId.Should().BeOfType<TrackingId>();
+        trackingId!.ToString().Should().Be(strTrackingId);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetBadString))]
+    public void Cannot_create_RequiredString_from_try_parsing_invalid_string(string? input)
+    {
+        // Arrange
+
+        // Act
+        TrackingId.TryParse(input, null, out var myId)
+            .Should().BeFalse();
+
+        // Assert
+        myId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Can_create_RequiredString_from_parsing_valid_string()
+    {
+        // Arrange
+        var strTrackingId = "32141sd";
+
+        // Act
+        var trackingId = TrackingId.Parse(strTrackingId, null);
+
+        // Assert
+        trackingId.Should().BeOfType<TrackingId>();
+        trackingId.ToString().Should().Be(strTrackingId);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetBadString))]
+    public void Cannot_create_RequiredString_from_parsing_invalid_string(string? input)
+    {
+        // Arrange
+
+        // Act
+        Action act = () => TrackingId.Parse(input!, null);
+
+        // Assert
+        act.Should().Throw<FormatException>()
+            .WithMessage("Tracking Id cannot be empty.");
+    }
+
+    public static TheoryData<string?> GetBadString() =>
+        new TheoryData<string?>
+        {
+            null,
+            string.Empty
+        };
 }

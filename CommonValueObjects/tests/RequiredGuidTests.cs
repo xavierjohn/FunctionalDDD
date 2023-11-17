@@ -141,7 +141,7 @@ public class RequiredGuidTests
         myGuidResult.IsFailure.Should().BeTrue();
         myGuidResult.Error.Should().BeOfType<ValidationError>();
         ValidationError ve = (ValidationError)myGuidResult.Error;
-        ve.Message.Should().Be("string is not in valid format.");
+        ve.Message.Should().Be("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)");
         ve.FieldName.Should().Be("employeeId");
     }
 
@@ -159,5 +159,62 @@ public class RequiredGuidTests
         ValidationError ve = (ValidationError)myGuidResult.Error;
         ve.Message.Should().Be("Employee Id cannot be empty.");
         ve.FieldName.Should().Be("employeeId");
+    }
+
+    [Fact]
+    public void Can_create_RequiredGuid_from_try_parsing_valid_string()
+    {
+        // Arrange
+        var strGuid = Guid.NewGuid().ToString();
+
+        // Act
+        EmployeeId.TryParse(strGuid, null, out var myGuid)
+            .Should().BeTrue();
+
+        // Assert
+        myGuid.Should().BeOfType<EmployeeId>();
+        myGuid!.ToString().Should().Be(strGuid);
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_try_parsing_invalid_string()
+    {
+        // Arrange
+        var strGuid = "bad string";
+
+        // Act
+        EmployeeId.TryParse(strGuid, null, out var myGuid)
+            .Should().BeFalse();
+
+        // Assert
+        myGuid.Should().BeNull();
+    }
+
+    [Fact]
+    public void Can_create_RequiredGuid_from_parsing_valid_string()
+    {
+        // Arrange
+        var strGuid = Guid.NewGuid().ToString();
+
+        // Act
+        var myGuid = EmployeeId.Parse(strGuid, null);
+
+        // Assert
+        myGuid.Should().BeOfType<EmployeeId>();
+        myGuid.ToString().Should().Be(strGuid);
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_parsing_invalid_string()
+    {
+        // Arrange
+        var strGuid = "bad string";
+
+        // Act
+        Action act = () => EmployeeId.Parse(strGuid, null);
+
+        // Assert
+        act.Should().Throw<FormatException>()
+            .WithMessage("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)");
     }
 }
