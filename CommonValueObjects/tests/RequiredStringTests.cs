@@ -1,6 +1,9 @@
 ﻿namespace CommonValueObjects.Tests;
 
-public partial class TrackingId : RequiredString
+public partial class PublicTrackingId : RequiredString
+{
+}
+internal partial class InternalTrackingId : RequiredString
 {
 }
 
@@ -10,7 +13,7 @@ public class RequiredStringTests
     [MemberData(nameof(GetBadString))]
     public void Cannot_create_empty_RequiredString(string? input)
     {
-        var trackingId1 = TrackingId.TryCreate(input);
+        var trackingId1 = PublicTrackingId.TryCreate(input);
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)trackingId1.Error;
@@ -22,10 +25,10 @@ public class RequiredStringTests
     [Fact]
     public void Can_create_RequiredString()
     {
-        TrackingId.TryCreate("32141sd")
+        InternalTrackingId.TryCreate("32141sd")
             .Tap(trackingId =>
             {
-                trackingId.Should().BeOfType<TrackingId>();
+                trackingId.Should().BeOfType<InternalTrackingId>();
                 trackingId.ToString().Should().Be("32141sd");
             })
             .IsSuccess.Should().BeTrue();
@@ -33,8 +36,8 @@ public class RequiredStringTests
 
     [Fact]
     public void Two_RequiredString_with_same_value_should_be_equal() =>
-        TrackingId.TryCreate("SameValue")
-            .Combine(TrackingId.TryCreate("SameValue"))
+        PublicTrackingId.TryCreate("SameValue")
+            .Combine(PublicTrackingId.TryCreate("SameValue"))
             .Tap((tr1, tr2) =>
             {
                 (tr1 == tr2).Should().BeTrue();
@@ -44,8 +47,8 @@ public class RequiredStringTests
 
     [Fact]
     public void Two_RequiredString_with_different_value_should_be_not_equal() =>
-        TrackingId.TryCreate("Value1")
-            .Combine(TrackingId.TryCreate("Value2"))
+        PublicTrackingId.TryCreate("Value1")
+            .Combine(PublicTrackingId.TryCreate("Value2"))
             .Tap((tr1, tr2) =>
              {
                  (tr1 != tr2).Should().BeTrue();
@@ -57,7 +60,7 @@ public class RequiredStringTests
     public void Can_implicitly_cast_to_string()
     {
         // Arrange
-        TrackingId trackingId1 = TrackingId.TryCreate("32141sd").Value;
+        PublicTrackingId trackingId1 = PublicTrackingId.TryCreate("32141sd").Value;
 
         // Act
         string strTracking = trackingId1;
@@ -72,17 +75,17 @@ public class RequiredStringTests
         // Arrange
 
         // Act
-        TrackingId trackingId1 = (TrackingId)"32141sd";
+        PublicTrackingId trackingId1 = (PublicTrackingId)"32141sd";
 
         // Assert
-        trackingId1.Should().Be(TrackingId.TryCreate("32141sd").Value);
+        trackingId1.Should().Be(PublicTrackingId.TryCreate("32141sd").Value);
     }
 
     [Fact]
     public void Can_use_ToString()
     {
         // Arrange
-        TrackingId trackingId1 = TrackingId.TryCreate("32141sd").Value;
+        PublicTrackingId trackingId1 = PublicTrackingId.TryCreate("32141sd").Value;
 
         // Act
         var strTracking = trackingId1.ToString();
@@ -95,9 +98,9 @@ public class RequiredStringTests
     public void Cannot_cast_empty_to_RequiredString()
     {
         // Arrange
-        TrackingId trackingId;
+        PublicTrackingId trackingId;
         // Act
-        Action act = () => trackingId = (TrackingId)string.Empty;
+        Action act = () => trackingId = (PublicTrackingId)string.Empty;
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
@@ -111,11 +114,11 @@ public class RequiredStringTests
         var strTrackingId = "32141sd";
 
         // Act
-        TrackingId.TryParse(strTrackingId, null, out var trackingId)
+        PublicTrackingId.TryParse(strTrackingId, null, out var trackingId)
             .Should().BeTrue();
 
         // Assert
-        trackingId.Should().BeOfType<TrackingId>();
+        trackingId.Should().BeOfType<PublicTrackingId>();
         trackingId!.ToString().Should().Be(strTrackingId);
     }
 
@@ -126,7 +129,7 @@ public class RequiredStringTests
         // Arrange
 
         // Act
-        TrackingId.TryParse(input, null, out var myId)
+        PublicTrackingId.TryParse(input, null, out var myId)
             .Should().BeFalse();
 
         // Assert
@@ -140,10 +143,10 @@ public class RequiredStringTests
         var strTrackingId = "32141sd";
 
         // Act
-        var trackingId = TrackingId.Parse(strTrackingId, null);
+        var trackingId = PublicTrackingId.Parse(strTrackingId, null);
 
         // Assert
-        trackingId.Should().BeOfType<TrackingId>();
+        trackingId.Should().BeOfType<PublicTrackingId>();
         trackingId.ToString().Should().Be(strTrackingId);
     }
 
@@ -154,7 +157,7 @@ public class RequiredStringTests
         // Arrange
 
         // Act
-        Action act = () => TrackingId.Parse(input!, null);
+        Action act = () => PublicTrackingId.Parse(input!, null);
 
         // Assert
         act.Should().Throw<FormatException>()

@@ -16,7 +16,8 @@
             IncrementalValuesProvider<ClassDeclarationSyntax> requiredGuids = context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: static (n, _) => IsSyntaxTargetForGeneration(n),
-                    transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx));
+                    transform: static (ctx, _) => (ClassDeclarationSyntax)ctx.Node
+                    ).Where(m => m is not null);
 
             IncrementalValueProvider<(Compilation, ImmutableArray<ClassDeclarationSyntax>)> compilationAndEnums
                 = context.CompilationProvider.Combine(requiredGuids.Collect());
@@ -27,11 +28,6 @@
 
         private static void Execute(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> classes, SourceProductionContext context)
         {
-            if (classes.IsDefaultOrEmpty)
-            {
-                // nothing to do yet
-                return;
-            }
             //#if DEBUG
             //            if (!Debugger.IsAttached)
             //            {
@@ -134,39 +130,27 @@ using System.Diagnostics.CodeAnalysis;
 
         private static List<RequiredPartialClassInfo> GetTypesToGenerate(Compilation compilation, IEnumerable<ClassDeclarationSyntax> classes, CancellationToken cancellationToken)
         {
-            var requiredGuidStr = "FunctionalDdd.RequiredGuid";
-            var requiredStringStr = "FunctionalDdd.RequiredString";
             var classToGenerate = new List<RequiredPartialClassInfo>();
-            bool nothingToDo = compilation.GetTypeByMetadataName(requiredGuidStr) == null && compilation.GetTypeByMetadataName(requiredStringStr) == null;
-            if (nothingToDo)
-                return classToGenerate;
 
             foreach (var classDeclarationSyntax in classes)
             {
                 // stop if we're asked to
                 cancellationToken.ThrowIfCancellationRequested();
 
-                SemanticModel semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
-                if (semanticModel.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol classSymbol)
-                {
-                    // something went wrong
-                    continue;
-                }
+                INamedTypeSymbol? classSymbol = compilation
+                    .GetSemanticModel(classDeclarationSyntax.SyntaxTree)
+                    .GetDeclaredSymbol(classDeclarationSyntax, cancellationToken) as INamedTypeSymbol;
+
+                if (classSymbol == null) continue;
 
                 string className = classSymbol.Name;
-                string @namespace = classSymbol.ContainingNamespace.ToString();
+                string @namespace = classSymbol.ContainingNamespace.ToDisplayString();
                 string @base = classSymbol.BaseType?.Name ?? "unknown";
                 string accessibility = classSymbol.DeclaredAccessibility.ToString();
                 classToGenerate.Add(new RequiredPartialClassInfo(@namespace, className, @base, accessibility));
             }
 
             return classToGenerate;
-        }
-
-        static ClassDeclarationSyntax GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
-        {
-            // we know the node is a ClassDeclarationSyntax thanks to IsSyntaxTargetForGeneration
-            return (ClassDeclarationSyntax)context.Node;
         }
 
         private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
