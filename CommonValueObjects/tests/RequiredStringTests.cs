@@ -3,6 +3,9 @@
 public partial class TrackingId : RequiredString
 {
 }
+internal partial class InternalTrackingId : RequiredString
+{
+}
 
 public class RequiredStringTests
 {
@@ -22,10 +25,10 @@ public class RequiredStringTests
     [Fact]
     public void Can_create_RequiredString()
     {
-        TrackingId.TryCreate("32141sd")
+        InternalTrackingId.TryCreate("32141sd")
             .Tap(trackingId =>
             {
-                trackingId.Should().BeOfType<TrackingId>();
+                trackingId.Should().BeOfType<InternalTrackingId>();
                 trackingId.ToString().Should().Be("32141sd");
             })
             .IsSuccess.Should().BeTrue();
