@@ -5,8 +5,6 @@ public partial class EmployeeId : RequiredGuid
 {
 }
 
-public class Xavier { };
-
 public class RequiredGuidTests
 {
     [Fact]
