@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using FunctionalDdd;
 
 public class HttpResponseMessageJsonExtensionsTests
 {
@@ -83,13 +84,10 @@ public class HttpResponseMessageJsonExtensionsTests
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
         };
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = propertyNameCaseInsensitive
-        };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError, SourceGenerationContext.Default.PascalPerson);
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError,
+            propertyNameCaseInsensitive ? SourceGenerationCaseInsenstiveContext.Default.PascalPerson : SourceGenerationContext.Default.PascalPerson);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -272,5 +270,12 @@ public class HttpResponseMessageJsonExtensionsTests
 [JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
 [JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
 internal partial class SourceGenerationContext : JsonSerializerContext
+{
+}
+
+[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
+[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
+[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
+internal partial class SourceGenerationCaseInsenstiveContext : JsonSerializerContext
 {
 }
