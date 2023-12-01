@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using FunctionalDdd;
 
 public static class HttpResponseMessageJsonExtensionsAsync
@@ -10,7 +11,7 @@ public static class HttpResponseMessageJsonExtensionsAsync
     public static async Task<Result<T>> ReadResultWithNotFoundAsync<T>(
         this HttpResponseMessage response,
         NotFoundError notFoundError,
-        JsonSerializerOptions? jsonSerializerOptions,
+        JsonTypeInfo<T> jsonTypeInfo,
         CancellationToken cancellationToken = default)
     {
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -18,39 +19,27 @@ public static class HttpResponseMessageJsonExtensionsAsync
 
         response.EnsureSuccessStatusCode();
 
-        var t = await response.Content.ReadFromJsonAsync<T>(jsonSerializerOptions, cancellationToken)
+        var t = await response.Content.ReadFromJsonAsync<T>(jsonTypeInfo, cancellationToken)
             .ConfigureAwait(false);
         return (t is null) ? Result.Failure<T>(notFoundError) : Result.Success(t);
     }
 
-    public static Task<Result<T>> ReadResultWithNotFoundAsync<T>(
-        this HttpResponseMessage response,
-        NotFoundError notFoundError,
-        CancellationToken cancellationToken = default)
-            => response.ReadResultWithNotFoundAsync<T>(notFoundError, null, cancellationToken);
-
     public static async Task<Result<T>> ReadResultWithNotFoundAsync<T>(
         this Task<HttpResponseMessage> responseTask,
         NotFoundError notFoundError,
-        JsonSerializerOptions? jsonSerializerOptions,
+        JsonTypeInfo<T> jsonTypeInfo,
         CancellationToken cancellationToken = default)
     {
         using var response = await responseTask.ConfigureAwait(false);
-        return await response.ReadResultWithNotFoundAsync<T>(notFoundError, jsonSerializerOptions, cancellationToken)
+        return await response.ReadResultWithNotFoundAsync<T>(notFoundError, jsonTypeInfo, cancellationToken)
             .ConfigureAwait(false);
     }
-
-    public static Task<Result<T>> ReadResultWithNotFoundAsync<T>(
-        this Task<HttpResponseMessage> responseTask,
-        NotFoundError notFoundError,
-        CancellationToken cancellationToken = default)
-        => responseTask.ReadResultWithNotFoundAsync<T>(notFoundError, null, cancellationToken);
 
     public static async Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
         this HttpResponseMessage response,
         Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
         TContext context,
-        JsonSerializerOptions? jsonSerializerOptions,
+        JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken = default)
     {
         if (!response.IsSuccessStatusCode)
@@ -59,34 +48,20 @@ public static class HttpResponseMessageJsonExtensionsAsync
             return Result.Failure<TValue>(error);
         }
 
-        var t = await response.Content.ReadFromJsonAsync<TValue>(jsonSerializerOptions, cancellationToken)
+        var t = await response.Content.ReadFromJsonAsync<TValue>(jsonTypeInfo, cancellationToken)
             .ConfigureAwait(false);
         return (t is null) ? throw new JsonException($"Failed to create {typeof(TValue).Name} from Json") : Result.Success(t);
     }
-
-    public static Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
-        this HttpResponseMessage response,
-        Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
-        TContext context,
-        CancellationToken cancellationToken = default)
-            => response.ReadResultAsync<TValue, TContext>(callbackFailedStatusCode, context, null, cancellationToken);
 
     public static async Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
         this Task<HttpResponseMessage> responseTask,
         Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
         TContext context,
-        JsonSerializerOptions? jsonSerializerOptions,
+        JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken = default)
     {
         using var response = await responseTask.ConfigureAwait(false);
-        return await response.ReadResultAsync<TValue, TContext>(callbackFailedStatusCode, context, jsonSerializerOptions, cancellationToken)
+        return await response.ReadResultAsync<TValue, TContext>(callbackFailedStatusCode, context, jsonTypeInfo, cancellationToken)
             .ConfigureAwait(false);
     }
-
-    public static Task<Result<TValue>> ReadResultAsync<TValue, TContext>(
-        this Task<HttpResponseMessage> responseTask,
-        Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
-        TContext context,
-        CancellationToken cancellationToken = default)
-                => responseTask.ReadResultAsync<TValue, TContext>(callbackFailedStatusCode, context, null, cancellationToken);
 }
