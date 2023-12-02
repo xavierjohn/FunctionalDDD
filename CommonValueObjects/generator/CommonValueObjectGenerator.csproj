@@ -11,6 +11,7 @@
       <!-- https://github.com/nuget/home/issues/8583 -->
       <NoWarn>$(NoWarn);NU5128</NoWarn>
      <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+     <IsTrimmable>false</IsTrimmable>
    </PropertyGroup>
 
    <!-- This ensures the library will be packaged as a source generator when we use `dotnet pack` -->

@@ -13,12 +13,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>Latest</LangVersion>
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
+    <RepositoryType>git</RepositoryType>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  
+  <PropertyGroup  Label="nuget">
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://xavierjohn.github.io/FunctionalDDD/</PackageProjectUrl>
   </PropertyGroup>
-
+  
   <PropertyGroup  Label="Build">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
