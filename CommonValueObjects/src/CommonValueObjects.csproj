@@ -4,6 +4,7 @@
     <Description>
       To avoid passing around strings, it is recommended to use RequiredString to obtain strongly typed properties. The source code generator will automate the implementation process.
     </Description>
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />
