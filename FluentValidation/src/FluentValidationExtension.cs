@@ -1,6 +1,7 @@
 ﻿namespace FunctionalDdd;
 
 using System.Linq;
+using System.Runtime.CompilerServices;
 using FluentValidation;
 using FluentValidation.Results;
 
@@ -72,6 +73,15 @@ public static class FunctionalDDDValidationExtension
     /// <param name="validator"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    public static Result<T> ValidateToResult<T>(this IValidator<T> validator, T value) =>
-        validator.Validate(value).ToResult(value);
+    public static Result<T> ValidateToResult<T>(
+        this IValidator<T> validator,
+        T value,
+        [CallerArgumentExpression(nameof(value))] string paramName = "value")
+    {
+        var result = value is null
+        ? new ValidationResult(new[] { new ValidationFailure(paramName, $"{paramName} must not be empty.") })
+        : validator.Validate(value);
+
+        return result.ToResult(value);
+    }
 }
