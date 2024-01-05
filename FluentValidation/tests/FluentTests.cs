@@ -68,4 +68,34 @@ public class FluentTests
         validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(expectedValidationErrors);
     }
+
+    [Theory]
+    [InlineData("98052", true, null)]
+    [InlineData("98052-1234", true, null)]
+    [InlineData("98052-12345", false, "'zip Code' is not in the correct format.")]
+    [InlineData("98052-123", false, "'zip Code' is not in the correct format.")]
+    [InlineData("98052-1234-1234", false, "'zip Code' is not in the correct format.")]
+    [InlineData(null, false, "zipCode must not be empty.")]
+    public void Validate_zipcode(string? strZip, bool success, string? errorMessage)
+    {
+        // Arrange
+        // Act
+        var result = ZipCode.TryCreate(strZip);
+
+        // Assert
+        result.IsSuccess.Should().Be(success);
+        if (success)
+        {
+            result.Value.Value.Should().Be(strZip);
+        }
+        else
+        {
+            result.Error.Should().BeOfType<ValidationError>();
+            var validationError = (ValidationError)result.Error;
+            validationError.Errors.Should().HaveCount(1);
+            validationError.Errors[0].FieldName.Should().Be("zipCode");
+            validationError.Errors[0].Message.Should().Be(errorMessage);
+        }
+
+    }
 }

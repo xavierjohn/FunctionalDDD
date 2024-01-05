@@ -2,6 +2,7 @@
   <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Convert fluent validation errors to FunctionalDdd Validation errors.</Description>
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\"/>

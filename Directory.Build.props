@@ -14,7 +14,6 @@
     <LangVersion>Latest</LangVersion>
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <RepositoryType>git</RepositoryType>
-    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
   
   <PropertyGroup  Label="nuget">
