@@ -1,12 +1,10 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
 /// <summary>
 /// The Result type used in functional programming languages to represent a success value or an error.
 /// </summary>
 /// <typeparam name="TValue"></typeparam>
-public readonly struct Result<TValue>
+public readonly struct Result<TValue> : IResult<TValue>
 {
     /// <summary>
     /// Gets the underlying Value if Result is in success state.
