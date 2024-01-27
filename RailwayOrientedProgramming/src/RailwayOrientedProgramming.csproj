@@ -6,7 +6,6 @@
       By doing so, functional code can be written that allows for chaining of functions without the need for error checking.
   </Description>
   <IsAotCompatible>true</IsAotCompatible>
-  <RootNamespace>FunctionalDdd</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />
