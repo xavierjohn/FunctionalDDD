@@ -131,4 +131,30 @@ public class ResultTests
         // Assert
         result.Value.Should().Be(hello);
     }
+
+    [Fact]
+    public void Success_Unit_Result()
+    {
+        // Arrange
+        var result = Result.Success();
+
+        // Act
+        result.IsSuccess.Should().BeTrue();
+
+        // Assert
+        result.Value.Should().Be(default(Unit));
+    }
+
+    [Fact]
+    public void Failed_Unit_Result()
+    {
+        // Arrange
+        var result = Result.Failure(Error.Forbidden("Testing"));
+
+        // Act
+        result.IsFailure.Should().BeTrue();
+
+        // Assert
+        result.Error.Should().Be(Error.Forbidden("Testing"));
+    }
 }

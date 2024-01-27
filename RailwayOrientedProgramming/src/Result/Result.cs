@@ -87,4 +87,16 @@ public static class Result
         bool isFailure = await failurePredicate().ConfigureAwait(false);
         return SuccessIf(!isFailure, value, error);
     }
+
+    /// <summary>
+    ///     Creates a success unit result.
+    /// </summary>
+    public static Result<Unit> Success() =>
+        new(false, default, default);
+
+    /// <summary>
+    ///     Creates a failed unit result with the given error.
+    /// </summary>
+    public static Result<Unit> Failure(Error error) =>
+        new(true, default, error);
 }
