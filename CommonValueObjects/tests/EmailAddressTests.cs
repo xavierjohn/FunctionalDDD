@@ -4,7 +4,7 @@ public class EmailAddressTests
 {
     [Theory]
     [MemberData(nameof(GetBadEmailAddresses))]
-    public void Cannot_create_invalid_email(string email)
+    public void Cannot_create_invalid_email(string? email)
     {
         // Arrange & Act
         var result = EmailAddress.TryCreate(email, "school email");
@@ -16,7 +16,7 @@ public class EmailAddressTests
 
     [Theory]
     [MemberData(nameof(GetGoodEmailAddresses))]
-    public void Can_create_valid_email(string email)
+    public void Can_create_valid_email(string? email)
     {
         // Arrange
         var result = EmailAddress.TryCreate(email, "school email");
@@ -28,7 +28,7 @@ public class EmailAddressTests
 
     [Theory]
     [MemberData(nameof(GetGoodEmailAddresses))]
-    public void Can_create_EmailAddress_try_parsing_valid_string(string strEmail)
+    public void Can_create_EmailAddress_try_parsing_valid_string(string? strEmail)
     {
         // Arrange & Act
         EmailAddress.TryParse(strEmail, null, out var email)
@@ -41,7 +41,7 @@ public class EmailAddressTests
 
     [Theory]
     [MemberData(nameof(GetBadEmailAddresses))]
-    public void Cannot_create_EmailAddress_try_parsing_invalid_string(string strEmail)
+    public void Cannot_create_EmailAddress_try_parsing_invalid_string(string? strEmail)
     {
         // Arrange & Act
         EmailAddress.TryParse(strEmail, null, out var email)
@@ -53,7 +53,7 @@ public class EmailAddressTests
 
     [Theory]
     [MemberData(nameof(GetGoodEmailAddresses))]
-    public void Can_create_EmailAddress_parsing_valid_string(string strEmail)
+    public void Can_create_EmailAddress_parsing_valid_string(string? strEmail)
     {
         // Arrange & Act
         var email = EmailAddress.Parse(strEmail, null);
@@ -65,7 +65,7 @@ public class EmailAddressTests
 
     [Theory]
     [MemberData(nameof(GetBadEmailAddresses))]
-    public void Cannot_create_EmailAddress_parsing_invalid_string(string email)
+    public void Cannot_create_EmailAddress_parsing_invalid_string(string? email)
     {
         // Arrange & Act
         Action act = () => EmailAddress.Parse(email, null);

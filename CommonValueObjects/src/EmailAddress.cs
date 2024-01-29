@@ -21,7 +21,7 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
 
         return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", fieldName?.ToCamelCase() ?? "email"));
     }
-    public static EmailAddress Parse(string s, IFormatProvider? provider)
+    public static EmailAddress Parse(string? s, IFormatProvider? provider)
     {
         var r = TryCreate(s);
         if (r.IsFailure)
