@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
 public static partial class EnsureExtensionsAsync
 {
     /// <summary>

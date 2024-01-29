@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
 /// <summary>
 /// Passes the result to the given function (regardless of success/failure state) to yield a final output value.
 /// </summary>

@@ -1,4 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results;
+using Xunit;
 
 public class ResultTests
 {
@@ -156,5 +157,33 @@ public class ResultTests
 
         // Assert
         result.Error.Should().Be(Error.Forbidden("Testing"));
+    }
+
+    [Fact]
+    public void Wrap_value_into_Success_Result_struct()
+    {
+        // Arrange
+        var value = DateTime.Now;
+
+        // Act
+        var result = value.ToResult();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(value);
+    }
+
+    [Fact]
+    public void Wrap_value_into_Success_Result_class()
+    {
+        // Arrange
+        var value = "Hello";
+
+        // Act
+        var result = value.ToResult();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(value);
     }
 }

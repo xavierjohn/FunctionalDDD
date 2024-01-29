@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
 public static class NullableExtensions
 {
     public static Result<T> ToResult<T>(in this T? nullable, Error error)
