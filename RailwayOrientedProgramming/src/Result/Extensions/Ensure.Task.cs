@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
 /// <summary>
 ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
 /// </summary>

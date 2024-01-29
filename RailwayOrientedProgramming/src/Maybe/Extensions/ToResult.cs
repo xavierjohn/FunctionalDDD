@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
 public static partial class MaybeExtensions
 {
     /// <summary>
@@ -37,6 +35,14 @@ public static partial class MaybeExtensions
 
         return Result.Success(maybe.GetValueOrThrow());
     }
+
+    /// <summary>
+    /// Wrap <see param="TValue"/> in a <see cref="Result{TValue}"/> object.<br/>
+    /// </summary>
+    /// <typeparam name="TValue"></typeparam>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static Result<TValue> ToResult<TValue>(this TValue value) => value;
 }
 
 public static partial class MaybeExtensionsAsync
