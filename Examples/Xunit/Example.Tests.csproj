@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
    <ItemGroup>
-      <ProjectReference Include="..\..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+      <ProjectReference Include="..\..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
       <ProjectReference Include="..\..\CommonValueObjects\src\CommonValueObjects.csproj" />
    </ItemGroup>
 </Project>
