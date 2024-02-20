@@ -9,7 +9,21 @@
 public abstract class Aggregate<TId> : Entity<TId>
     where TId : notnull
 {
+    protected List<IDomainEvent> DomainEvents { get; } = [];
+
     protected Aggregate(TId id) : base(id)
     {
+    }
+
+    /// <summary>
+    /// Get all domain events that have been recorded.
+    /// </summary>
+    /// <returns></returns>
+    public IReadOnlyList<IDomainEvent> PopDomainEvents()
+    {
+        var copy = DomainEvents.ToList();
+        DomainEvents.Clear();
+
+        return copy;
     }
 }
