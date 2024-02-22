@@ -201,4 +201,19 @@ public class CombineTests
 
     }
 
+    [Fact]
+    public async Task Combine_async_task_results_where_both_are_success()
+    {
+        // Arrange
+        var rHelloWorld = await Task.FromResult(Result.Success("Hello"))
+            .CombineAsync(Result.Success("World"))
+            .BindAsync((hello, world) => Result.Success($"{hello} {world}"));
+
+        // Act
+
+        // Assert
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
+        helloWorld.Should().Be("Hello World");
+    }
 }
