@@ -216,4 +216,20 @@ public class CombineTests
         var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("Hello World");
     }
+
+    [Fact]
+    public async Task Combine_async_valuetask_results_where_both_are_success()
+    {
+        // Arrange
+        var rHelloWorld = await ValueTask.FromResult(Result.Success("Hello"))
+            .CombineAsync(Result.Success("World"))
+            .BindAsync((hello, world) => Result.Success($"{hello} {world}"));
+
+        // Act
+
+        // Assert
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
+        helloWorld.Should().Be("Hello World");
+    }
 }
