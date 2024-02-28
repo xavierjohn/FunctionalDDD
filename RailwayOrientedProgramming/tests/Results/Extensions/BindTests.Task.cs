@@ -63,4 +63,21 @@ public class BindTests_Task : BindBase
         FuncParam.Should().Be(T.Value);
         AssertSuccess(output);
     }
+
+    [Fact]
+    public async Task OnSuccess_Tuple_execute_async_result()
+    {
+        var result = Result.Success((5, "Hello"));
+        var output = await result.BindAsync((val, str) => ReturnFive(val, str));
+
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be(5);
+
+        static Task<Result<int>> ReturnFive(int val, string str)
+        {
+            val.Should().Be(5);
+            str.Should().Be("Hello");
+            return Task.FromResult(Result.Success(5));
+        }
+    }
 }
