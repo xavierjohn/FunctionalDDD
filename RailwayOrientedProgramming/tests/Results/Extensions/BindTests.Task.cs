@@ -73,7 +73,7 @@ public class BindTests_Task : BindBase
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be(5);
 
-        Task<Result<int>> ReturnFive(int val, string str)
+        static Task<Result<int>> ReturnFive(int val, string str)
         {
             val.Should().Be(5);
             str.Should().Be("Hello");

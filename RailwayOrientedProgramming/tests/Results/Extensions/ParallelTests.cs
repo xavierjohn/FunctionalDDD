@@ -17,6 +17,20 @@ public class ParallelTests
     }
 
     [Fact]
+    public async Task Run_two_parallel_tasks_with_async_result()
+    {
+        // Arrange
+        // Act
+        var r = await Task.FromResult(Result.Success("Hi"))
+            .ParallelAsync(Task.FromResult(Result.Success("Bye")))
+            .BindAsync((a, b) => Task.FromResult(Result.Success(a + b)));
+
+        // Assert
+        r.IsSuccess.Should().BeTrue();
+        r.Value.Should().Be("HiBye");
+    }
+
+    [Fact]
     public async Task Run_five_parallel_tasks()
     {
         // Arrange
