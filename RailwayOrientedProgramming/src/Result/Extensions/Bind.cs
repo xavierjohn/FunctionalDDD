@@ -61,16 +61,6 @@ public static partial class BindExtensionsAsync
         return valueTask(result.Value);
     }
 
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2)>> resultTask, Func<T1, T2, Result<TResult>> func)
-    {
-        var result = await resultTask;
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return func(args1, args2);
-    }
-
 
     public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2)>> resultTask, Func<T1, T2, Task<Result<TResult>>> func)
     {
