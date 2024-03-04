@@ -52,7 +52,16 @@ public static partial class BindExtensions
 
 public static partial class BindExtensionsAsync
 {
-<#  
+    // Async input, sync output.
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
+       this (Task<Result<T1>>, Task<Result<T2>>) tasks,
+       Func<T1, T2, Result<TResult>> func)
+    {
+       await Task.WhenAll(tasks.Item1, tasks.Item2);
+       return tasks.Item1.Result.Combine(tasks.Item2.Result).Bind(func);
+    }
+
+<# 
   for(var i = 3; i <= 9; i++) { 
 #>
 
@@ -62,6 +71,35 @@ public static partial class BindExtensionsAsync
     {
         await Task.WhenAll(<# WriteTaskItem(i); #>);
         return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>).Bind(func);
+    }
+
+<#
+ }
+#>
+
+    // Async input, Async output.
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
+    this (Task<Result<T1>>, Task<Result<T2>>) tasks,
+    Func<T1, T2, Task<Result<TResult>>> func)
+    {
+        await Task.WhenAll(tasks.Item1, tasks.Item2);
+        return await tasks.Item1.Result
+            .Combine(tasks.Item2.Result)
+            .BindAsync(func);
+    }
+
+<# 
+  for(var i = 3; i <= 9; i++) { 
+#>
+
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this (<# WriteTaskResult(i); #>) tasks,
+        Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
+    {
+        await Task.WhenAll(<# WriteTaskItem(i); #>);
+        return await tasks.Item1.Result
+             .Combine(<# WriteTaskItemResult(i); #>)
+             .BindAsync(func);
     }
 
 <#
