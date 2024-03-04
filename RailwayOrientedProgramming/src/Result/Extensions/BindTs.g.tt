@@ -23,8 +23,8 @@ public static partial class BindExtensions
     ///     Selects result from the return value of a given function. If the calling Result is a failure, a new failure result is returned instead.
     /// </summary>
     public static Result<TResult> Bind<<# WriteTs(i); #>, TResult>(
-        this Result<(<# WriteTs(i); #>)> result
-        , Func<<# WriteTs(i); #>, Result<TResult>> func)
+        this Result<(<# WriteTs(i); #>)> result,
+        Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -102,6 +102,36 @@ public static partial class BindExtensionsAsync
              .BindAsync(func);
     }
 
+<#
+ }
+#>
+
+    // sync input, Async output.
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this Result<(T1, T2)> result,
+        Func<T1, T2, Task<Result<TResult>>> func)
+    {
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2);
+    }
+
+<# 
+  for(var i = 3; i <= 9; i++) { 
+#>
+
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this Result<(<# WriteTs(i); #>)> result,
+        Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
+    {
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>);
+    }
 <#
  }
 #>
