@@ -21,12 +21,12 @@ public static partial class BindExtensions
 /// </summary>
 public static partial class BindExtensionsAsync
 {
-    public static Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
+    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error).AsCompletedTask();
+            return Result.Failure<TResult>(result.Error);
 
-        return func(result.Value);
+        return await func(result.Value);
     }
 
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, Task<Result<TResult>>> func)
@@ -59,52 +59,5 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
 
         return valueTask(result.Value);
-    }
-
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2)>> resultTask, Func<T1, T2, Result<TResult>> func)
-    {
-        var result = await resultTask;
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return func(args1, args2);
-    }
-
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(this Result<(T1, T2)> result, Func<T1, T2, Task<Result<TResult>>> func)
-    {
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2);
-    }
-
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(this Task<Result<(T1, T2)>> resultTask, Func<T1, T2, Task<Result<TResult>>> func)
-    {
-        var result = await resultTask;
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2);
-    }
-
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this (Task<Result<T1>>, Task<Result<T2>>) tasks,
-        Func<T1, T2, Result<TResult>> func)
-    {
-        await Task.WhenAll(tasks.Item1, tasks.Item2);
-        return tasks.Item1.Result.Combine(tasks.Item2.Result).Bind(func);
-    }
-
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-    this (Task<Result<T1>>, Task<Result<T2>>) tasks,
-    Func<T1, T2, Task<Result<TResult>>> func)
-    {
-        await Task.WhenAll(tasks.Item1, tasks.Item2);
-        return await tasks.Item1.Result
-            .Combine(tasks.Item2.Result)
-            .BindAsync(func);
     }
 }
