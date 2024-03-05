@@ -26,7 +26,7 @@ public static class CombineErrorExtensions
             return new ValidationError(validationErrors, validation.Code);
         }
 
-        List<Error> errors = new();
+        List<Error> errors = [];
         AddError(thisError);
         AddError(otherError);
 

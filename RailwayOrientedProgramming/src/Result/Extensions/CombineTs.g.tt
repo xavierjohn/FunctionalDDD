@@ -22,9 +22,8 @@ public static partial class CombineExtensions
   }
 
   void WriteAddFailure(int n) {
-    WriteLine("if (t1.IsFailure) error.Combine(t1.Error);");
-    for(var i=2; i <= n; i++)
-        WriteLine($"        if (t{i}.IsFailure) error = error.Combine(t{i}.Error);");
+    for(var i = 1; i <= n; i++)
+        WriteLine($"if (t{i}.IsFailure) error = error.Combine(t{i}.Error);");
   }
 
   void WriteTValues(int n) {

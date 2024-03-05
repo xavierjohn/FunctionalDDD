@@ -37,6 +37,24 @@ public class CombineTests
     }
 
     [Fact]
+    public void Combine_two_results_where_2nd_is_success()
+    {
+        // Arrange
+        var rHelloWorld = Result.Failure<string>(Error.Validation("Bad World", "key"))
+            .Combine(Result.Success("World"))
+            .Bind((hello, world) => Result.Success($"{hello} {world}"));
+
+        // Act
+
+        // Assert
+        rHelloWorld.IsFailure.Should().BeTrue();
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
+        validation.Errors.Should().ContainSingle();
+        validation.Errors[0].Should().Be(new ValidationError.ModelError("Bad World", "key"));
+    }
+
+    [Fact]
     public void Combine_three_results_where_all_success()
     {
         // Arrange
