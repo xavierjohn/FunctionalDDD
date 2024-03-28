@@ -29,16 +29,23 @@ public class ActionResultValueTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var expected = Error.BadRequest("Test");
-        var result = ValueTask.FromResult(Result.Failure<string>(expected));
+        var error = Error.BadRequest("Test", "Jackson");
+        var result = ValueTask.FromResult(Result.Failure<string>(error));
+        var expected = new ProblemDetails
+        {
+            Detail = "Test",
+            Status = StatusCodes.Status400BadRequest,
+            Instance = "Jackson"
+        };
 
         // Act
         var response = await result.ToOkActionResultAsync(controller);
 
         // Assert
-        var badRequest = response.Result.As<BadRequestObjectResult>();
-        badRequest.Value.Should().Be(expected);
-        badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
     [Fact]

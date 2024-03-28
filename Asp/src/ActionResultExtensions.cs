@@ -79,7 +79,7 @@ public static class ActionResultExtensions
     {
         NotFoundError => (ActionResult<TValue>)controllerBase.NotFound(error),
         ValidationError validation => ValidationErrors<TValue>(validation, controllerBase),
-        BadRequestError => (ActionResult<TValue>)controllerBase.BadRequest(error),
+        BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status400BadRequest),
         ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status409Conflict),
         UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status401Unauthorized),
         ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status403Forbidden),
