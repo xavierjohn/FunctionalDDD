@@ -48,24 +48,43 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(List<ModelError> modelErrors, string code = "validation.error") =>
         new(modelErrors, code);
 
-    public static BadRequestError BadRequest(string message, string code = "bad.request.error", string? instance = null) =>
-        new(message, code, instance);
+    public static BadRequestError BadRequest(string message, string? instance = null) =>
+        new(message, "bad.request.error", instance);
 
     public static ModelError ValidationError(string message, string fieldName = "") => new(message, fieldName);
 
-    public static ConflictError Conflict(string message, string code = "conflict.error", string? instance = null) =>
+    public static ConflictError Conflict(string message, string? instance = null) =>
+        new(message, "conflict.error", instance);
+
+    public static NotFoundError NotFound(string message, string? instance = null) =>
+        new(message, "not.found.error", instance);
+
+    public static UnauthorizedError Unauthorized(string message, string? instance = null) =>
+        new(message, "unauthorized.error", instance);
+
+    public static ForbiddenError Forbidden(string message, string? instance = null) =>
+        new(message, "forbidden.error", instance);
+
+    public static UnexpectedError Unexpected(string message, string? instance = null) =>
+        new(message, "unexpected.error", instance);
+
+
+    public static BadRequestError BadRequest(string message, string code, string? instance) =>
         new(message, code, instance);
 
-    public static NotFoundError NotFound(string message, string code = "not.found.error", string? instance = null) =>
+    public static ConflictError Conflict(string message, string code, string? instance) =>
         new(message, code, instance);
 
-    public static UnauthorizedError Unauthorized(string message, string code = "unauthorized.error", string? instance = null) =>
+    public static NotFoundError NotFound(string message, string code, string? instance) =>
         new(message, code, instance);
 
-    public static ForbiddenError Forbidden(string message, string code = "forbidden.error", string? instance = null) =>
+    public static UnauthorizedError Unauthorized(string message, string code, string? instance) =>
         new(message, code, instance);
 
-    public static UnexpectedError Unexpected(string message, string code = "unexpected.error", string? instance = null) =>
+    public static ForbiddenError Forbidden(string message, string code, string? instance) =>
+        new(message, code, instance);
+
+    public static UnexpectedError Unexpected(string message, string code, string? instance) =>
         new(message, code, instance);
 }
 

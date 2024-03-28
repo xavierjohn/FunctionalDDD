@@ -48,7 +48,7 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var error = Error.Forbidden("You are not authorized.", instance: "xavier");
+        var error = Error.Forbidden("You are not authorized.", "xavier");
         var expected = new ProblemDetails
         {
             Detail = "You are not authorized.",
