@@ -92,6 +92,30 @@ public class ActionResultTaskTests
     }
 
     [Fact]
+    public async Task Will_return_Conflict_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Conflict("There is a conflict.", "Micheal");
+        var expected = new ProblemDetails
+        {
+            Detail = "There is a conflict.",
+            Status = StatusCodes.Status409Conflict,
+            Instance = "Micheal"
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+    }
+
+    [Fact]
     public async Task ToPartialOrOkActionResultAsync_will_return_partial_status_code_when_results_are_partial()
     {
         // Arrange
