@@ -13,18 +13,18 @@ public class Error : IEquatable<Error>
 
     public string Message { get; }
 
-    public string? Target { get; }
+    public string? Instance { get; }
 
     public Error(string message, string code)
     {
         Message = message;
         Code = code;
     }
-    public Error(string message, string code, string? target)
+    public Error(string message, string code, string? instance)
     {
         Message = message;
         Code = code;
-        Target = target;
+        Instance = instance;
     }
 
     public bool Equals(Error? other)
@@ -48,24 +48,24 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(List<ModelError> modelErrors, string code = "validation.error") =>
         new(modelErrors, code);
 
-    public static BadRequestError BadRequest(string message, string code = "bad.request.error", string? target = null) =>
-        new(message, code, target);
+    public static BadRequestError BadRequest(string message, string code = "bad.request.error", string? instance = null) =>
+        new(message, code, instance);
 
     public static ModelError ValidationError(string message, string fieldName = "") => new(message, fieldName);
 
-    public static ConflictError Conflict(string message, string code = "conflict.error", string? target = null) =>
-        new(message, code, target);
+    public static ConflictError Conflict(string message, string code = "conflict.error", string? instance = null) =>
+        new(message, code, instance);
 
-    public static NotFoundError NotFound(string message, string code = "not.found.error", string? target = null) =>
-        new(message, code, target);
+    public static NotFoundError NotFound(string message, string code = "not.found.error", string? instance = null) =>
+        new(message, code, instance);
 
-    public static UnauthorizedError Unauthorized(string message, string code = "unauthorized.error", string? target = null) =>
-        new(message, code, target);
+    public static UnauthorizedError Unauthorized(string message, string code = "unauthorized.error", string? instance = null) =>
+        new(message, code, instance);
 
-    public static ForbiddenError Forbidden(string message, string code = "forbidden.error", string? target = null) =>
-        new(message, code, target);
+    public static ForbiddenError Forbidden(string message, string code = "forbidden.error", string? instance = null) =>
+        new(message, code, instance);
 
-    public static UnexpectedError Unexpected(string message, string code = "unexpected.error", string? target = null) =>
-        new(message, code, target);
+    public static UnexpectedError Unexpected(string message, string code = "unexpected.error", string? instance = null) =>
+        new(message, code, instance);
 }
 

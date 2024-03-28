@@ -17,7 +17,7 @@ public class ErrorTests
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<ConflictError>();
-        error.Target.Should().Be(target);
+        error.Instance.Should().Be(target);
 
     }
 
@@ -34,7 +34,7 @@ public class ErrorTests
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<NotFoundError>();
-        error.Target.Should().Be(target);
+        error.Instance.Should().Be(target);
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class ErrorTests
         error.Message.Should().Be("message");
         error.Code.Should().Be("not.found.error");
         error.Should().BeOfType<NotFoundError>();
-        error.Target.Should().BeNull();
+        error.Instance.Should().BeNull();
     }
 
     [Theory]
@@ -64,7 +64,7 @@ public class ErrorTests
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<ForbiddenError>();
-        error.Target.Should().Be(target);
+        error.Instance.Should().Be(target);
     }
 
     [Theory]
@@ -80,7 +80,7 @@ public class ErrorTests
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnauthorizedError>();
-        error.Target.Should().Be(target);
+        error.Instance.Should().Be(target);
     }
 
     [Theory]
@@ -96,6 +96,6 @@ public class ErrorTests
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnexpectedError>();
-        error.Target.Should().Be(target);
+        error.Instance.Should().Be(target);
     }
 }
