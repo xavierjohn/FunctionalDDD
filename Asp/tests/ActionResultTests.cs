@@ -80,7 +80,7 @@ public class ActionResultTests
             static r => throw new InvalidOperationException());
 
         // Assert
-        response.Result.As<NotFoundObjectResult>().StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        response.Result.As<ObjectResult>().StatusCode.Should().Be(StatusCodes.Status404NotFound);
     }
 
     [Fact]

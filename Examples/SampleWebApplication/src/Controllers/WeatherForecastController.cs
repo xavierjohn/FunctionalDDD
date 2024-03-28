@@ -62,4 +62,8 @@ public class WeatherForecastController : ControllerBase
     [HttpGet("Conflict")]
     public ActionResult<Unit> Conflict(string instance)
         => Error.Conflict("There is a conflict. " + instance, instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("NotFound")]
+    public ActionResult<Unit> NotFound(string instance)
+        => Error.NotFound("Record not found. " + instance, instance).ToErrorActionResult<Unit>(this);
 }

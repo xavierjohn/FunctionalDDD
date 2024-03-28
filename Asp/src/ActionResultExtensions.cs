@@ -77,7 +77,7 @@ public static class ActionResultExtensions
     public static ActionResult<TValue> ToErrorActionResult<TValue>(this Error error, ControllerBase controllerBase)
     => error switch
     {
-        NotFoundError => (ActionResult<TValue>)controllerBase.NotFound(error),
+        NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status404NotFound),
         ValidationError validation => ValidationErrors<TValue>(validation, controllerBase),
         BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status400BadRequest),
         ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status409Conflict),
