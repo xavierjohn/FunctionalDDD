@@ -7,34 +7,34 @@ public class ErrorTests
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void Create_conflict_error(string? target)
+    public void Create_conflict_error(string? instance)
     {
         // Arrange
         // Act
-        var error = Error.Conflict("message", "code", target);
+        var error = Error.Conflict("message", "code", instance);
 
         // Assert
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<ConflictError>();
-        error.Instance.Should().Be(target);
+        error.Instance.Should().Be(instance);
 
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void Create_not_found_error(string? target)
+    public void Create_not_found_error(string? instance)
     {
         // Arrange
         // Act
-        var error = Error.NotFound("message", "code", target);
+        var error = Error.NotFound("message", "code", instance);
 
         // Assert
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<NotFoundError>();
-        error.Instance.Should().Be(target);
+        error.Instance.Should().Be(instance);
     }
 
     [Fact]
@@ -54,48 +54,48 @@ public class ErrorTests
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void Create_Forbidden_error(string? target)
+    public void Create_Forbidden_error(string? instance)
     {
         // Arrange
         // Act
-        var error = Error.Forbidden("message", "code", target);
+        var error = Error.Forbidden("message", "code", instance);
 
         // Assert
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<ForbiddenError>();
-        error.Instance.Should().Be(target);
+        error.Instance.Should().Be(instance);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void Create_Unauthorized_error(string? target)
+    public void Create_Unauthorized_error(string? instance)
     {
         // Arrange
         // Act
-        var error = Error.Unauthorized("message", "code", target);
+        var error = Error.Unauthorized("message", "code", instance);
 
         // Assert
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnauthorizedError>();
-        error.Instance.Should().Be(target);
+        error.Instance.Should().Be(instance);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("abc")]
-    public void Create_Unexpected_error(string? target)
+    public void Create_Unexpected_error(string? instance)
     {
         // Arrange
         // Act
-        var error = Error.Unexpected("message", "code", target);
+        var error = Error.Unexpected("message", "code", instance);
 
         // Assert
         error.Message.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnexpectedError>();
-        error.Instance.Should().Be(target);
+        error.Instance.Should().Be(instance);
     }
 }

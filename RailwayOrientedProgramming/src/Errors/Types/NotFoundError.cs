@@ -2,7 +2,7 @@
 
 public sealed class NotFoundError : Error
 {
-    public NotFoundError(string message, string code, string? target = null) : base(message, code, target)
+    public NotFoundError(string message, string code, string? instance = null) : base(message, code, instance)
     {
     }
 }
