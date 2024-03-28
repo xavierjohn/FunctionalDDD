@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 [ApiController]
 [Produces("application/json")]
 [Route("[controller]")]
-public class WeatherForecastController(ILogger<WeatherForecastController> logger) : ControllerBase
+public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] s_summaries =
     [
@@ -22,8 +22,6 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
         "Sweltering",
         "Scorching"
     ];
-
-    private readonly ILogger<WeatherForecastController> _logger = logger;
 
     [HttpGet(Name = "GetWeatherForecast")]
     public ActionResult<WeatherForecast[]> Get()
@@ -52,4 +50,7 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
             })
         .ToPartialOrOkActionResult(this, static r => r.Item1, static r => r.Item2);
     }
+
+    [HttpGet("Forbidden")]
+    public ActionResult<Unit> Forbidden(string instance) => Error.Forbidden("You are not authorized.", target: instance).ToErrorActionResult<Unit>(this);
 }
