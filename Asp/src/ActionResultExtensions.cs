@@ -81,7 +81,7 @@ public static class ActionResultExtensions
         ValidationError validation => ValidationErrors<TValue>(validation, controllerBase),
         BadRequestError => (ActionResult<TValue>)controllerBase.BadRequest(error),
         ConflictError => (ActionResult<TValue>)controllerBase.Conflict(error),
-        UnauthorizedError => (ActionResult<TValue>)controllerBase.Unauthorized(error),
+        UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status401Unauthorized),
         ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status403Forbidden),
         UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
         _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),

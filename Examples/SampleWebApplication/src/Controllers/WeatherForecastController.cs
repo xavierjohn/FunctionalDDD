@@ -53,5 +53,9 @@ public class WeatherForecastController : ControllerBase
 
     [HttpGet("Forbidden")]
     public ActionResult<Unit> Forbidden(string instance)
-        => Error.Forbidden("You are not authorized.", instance: instance).ToErrorActionResult<Unit>(this);
+        => Error.Forbidden("You are forbidden.", instance: instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("Unauthorized")]
+    public ActionResult<Unit> Unauthorized(string instance)
+        => Error.Unauthorized("You are not authorized.", instance: instance).ToErrorActionResult<Unit>(this);
 }

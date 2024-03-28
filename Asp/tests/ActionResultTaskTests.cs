@@ -48,10 +48,10 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var error = Error.Forbidden("You are not authorized.", "xavier");
+        var error = Error.Forbidden("You are forbidden.", "xavier");
         var expected = new ProblemDetails
         {
-            Detail = "You are not authorized.",
+            Detail = "You are forbidden.",
             Status = StatusCodes.Status403Forbidden,
             Instance = "xavier"
         };
@@ -65,6 +65,30 @@ public class ActionResultTaskTests
         var objectResult = response.Result.As<ObjectResult>();
         objectResult.Value.Should().BeEquivalentTo(expected);
         objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
+
+    [Fact]
+    public async Task Will_return_Unauthorized_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Unauthorized("You are not authorized.", "xavier");
+        var expected = new ProblemDetails
+        {
+            Detail = "You are not authorized.",
+            Status = StatusCodes.Status401Unauthorized,
+            Instance = "xavier"
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
 
     [Fact]
