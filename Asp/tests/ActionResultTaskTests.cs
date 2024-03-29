@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using System.Net.Http.Headers;
+using static FunctionalDdd.ValidationError;
 
 public class ActionResultTaskTests
 {
@@ -95,6 +96,33 @@ public class ActionResultTaskTests
         var objectResult = response.Result.As<ObjectResult>();
         objectResult.Value.Should().BeEquivalentTo(expected);
         objectResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+    }
+
+    [Fact]
+    public async Task Will_return_BadRequest_Validation1_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        List<ModelError> modelError = [new ModelError("First name required.", "firstName")];
+        var error = Error.Validation(modelError, "Customer validation failed.", "Micheal");
+        var expected = new ValidationProblemDetails
+        {
+            Title = null,
+            Detail = "Customer validation failed.",
+            Instance = "Micheal",
+            Errors = new Dictionary<string, string[]> { { "firstName", ["First name required."] } }
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeOfType<ValidationProblemDetails>();
+        var validationProblem = objectResult.Value.As<ValidationProblemDetails>();
+        validationProblem.Should().BeEquivalentTo(expected);
     }
 
     [Fact]

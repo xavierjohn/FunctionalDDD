@@ -42,11 +42,14 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
-    public static ValidationError Validation(string message, string fieldName = "", string code = "validation.error") =>
-        new(message, fieldName, code);
+    public static ValidationError Validation(string message, string fieldName = "", string? instance = null) =>
+        new(message, fieldName, "validation.error", instance);
 
-    public static ValidationError Validation(List<ModelError> modelErrors, string code = "validation.error") =>
-        new(modelErrors, code);
+    public static ValidationError Validation(List<ModelError> modelErrors, string? message = null, string? instance = null) =>
+        new(modelErrors, message, "validation.error", instance);
+
+    public static ValidationError Validation(List<ModelError> modelErrors, string? message, string? instance, string code) =>
+    new(modelErrors, message, code, instance);
 
     public static BadRequestError BadRequest(string message, string? instance = null) =>
         new(message, "bad.request.error", instance);

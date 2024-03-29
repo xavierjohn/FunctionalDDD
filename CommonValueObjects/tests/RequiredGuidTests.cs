@@ -15,7 +15,7 @@ public class RequiredGuidTests
         guidId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)guidId1.Error;
         validation.Message.Should().Be("Employee Id cannot be empty.");
-        validation.FieldName.Should().Be("employeeId");
+        validation.Errors[0].FieldName.Should().Be("employeeId");
         validation.Code.Should().Be("validation.error");
     }
 
@@ -142,7 +142,7 @@ public class RequiredGuidTests
         myGuidResult.Error.Should().BeOfType<ValidationError>();
         ValidationError ve = (ValidationError)myGuidResult.Error;
         ve.Message.Should().Be("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)");
-        ve.FieldName.Should().Be("employeeId");
+        ve.Errors[0].FieldName.Should().Be("employeeId");
     }
 
     [Theory]
@@ -158,7 +158,7 @@ public class RequiredGuidTests
         myGuidResult.Error.Should().BeOfType<ValidationError>();
         ValidationError ve = (ValidationError)myGuidResult.Error;
         ve.Message.Should().Be("Employee Id cannot be empty.");
-        ve.FieldName.Should().Be("employeeId");
+        ve.Errors[0].FieldName.Should().Be("employeeId");
     }
 
     [Fact]

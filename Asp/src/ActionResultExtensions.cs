@@ -78,7 +78,7 @@ public static class ActionResultExtensions
     => error switch
     {
         NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status404NotFound),
-        ValidationError validation => ValidationErrors<TValue>(validation, controllerBase),
+        ValidationError validation => ValidationErrors<TValue>(string.IsNullOrEmpty(error.Message) ? null : error.Message, validation, error.Instance, controllerBase),
         BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status400BadRequest),
         ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status409Conflict),
         UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status401Unauthorized),
@@ -178,12 +178,12 @@ public static class ActionResultExtensions
         return error.ToErrorActionResult<TOut>(controllerBase);
     }
 
-    private static ActionResult<TValue> ValidationErrors<TValue>(ValidationError validation, ControllerBase controllerBase)
+    private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase)
     {
         ModelStateDictionary modelState = new();
         foreach (var error in validation.Errors)
             modelState.AddModelError(error.FieldName, error.Message);
 
-        return controllerBase.ValidationProblem(modelState);
+        return controllerBase.ValidationProblem(detail, instance, modelStateDictionary: modelState);
     }
 }

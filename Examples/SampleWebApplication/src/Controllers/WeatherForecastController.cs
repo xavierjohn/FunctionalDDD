@@ -2,7 +2,9 @@
 
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Net.Http.Headers;
+using static FunctionalDdd.ValidationError;
 
 [ApiController]
 [Produces("application/json")]
@@ -64,6 +66,16 @@ public class WeatherForecastController : ControllerBase
         => Error.Conflict("There is a conflict. " + instance, instance).ToErrorActionResult<Unit>(this);
 
     [HttpGet("NotFound")]
-    public ActionResult<Unit> NotFound(string instance)
+    public ActionResult<Unit> NotFound(string? instance)
         => Error.NotFound("Record not found. " + instance, instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("ValidationError")]
+    public ActionResult<Unit> ValidationError(string? instance, string? detail)
+    {
+        List<ModelError> errors = [
+            new("Field is required.", "Field1"),
+            new("Field is required.", "Field2")
+            ];
+        return Error.Validation(errors, detail, instance).ToErrorActionResult<Unit>(this);
+    }
 }
