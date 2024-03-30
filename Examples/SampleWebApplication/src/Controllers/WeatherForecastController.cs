@@ -35,6 +35,7 @@ public class WeatherForecastController : ControllerBase
             from = firstRange.From ?? from;
             to = firstRange.To ?? to;
         }
+
         return Result.Success<(ContentRangeHeaderValue, WeatherForecast[])>(() =>
             {
                 var allData = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -73,7 +74,7 @@ public class WeatherForecastController : ControllerBase
         List<ValidationError.FieldDetails> errors = [
             new("Field1",["Field is required.", "It cannot be empty."]),
             new("Field2",["Field is required."])
-            ];
+        ];
         return Error.Validation(errors, detail ?? string.Empty, instance).ToErrorActionResult<Unit>(this);
     }
 }

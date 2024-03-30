@@ -30,7 +30,6 @@ public class MaybeExamples
         fruit1.Should().BeOfType<Maybe<string>>();
         fruit1.HasNoValue.Should().BeTrue();
 
-
         fruit2.Should().BeOfType<Maybe<string>>();
         fruit2.HasNoValue.Should().BeTrue();
 
@@ -76,13 +75,11 @@ public class MaybeExamples
 
         // Act
 
-
         // Assert
         apple.Should().NotBe(orange);
         orange.Should().Be(alsoOrange);
         noFruit.Should().NotBe(orange);
     }
-
 
     [Fact]
     public void Convert_to_string()
@@ -92,7 +89,6 @@ public class MaybeExamples
         Maybe<string> noFruit = Maybe.None<string>();
 
         // Act
-
 
         // Assert
         apple.ToString().Should().Be("apple");
@@ -123,7 +119,6 @@ public class MaybeExamples
         Maybe<string> noFruit = Maybe.None<string>();
 
         // Act
-
 
         // Assert
         apple.HasValue.Should().BeTrue();

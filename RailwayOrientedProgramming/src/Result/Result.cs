@@ -40,23 +40,13 @@ public static class Result
     ///     Creates a result whose success/failure reflects the supplied condition. Opposite of FailureIf().
     /// </summary>
     public static Result<TValue> SuccessIf<TValue>(bool isSuccess, in TValue value, Error error)
-    {
-        return isSuccess
-            ? Success(value)
-            : Failure<TValue>(error);
-
-    }
+        => isSuccess ? Success(value) : Failure<TValue>(error);
 
     /// <summary>
     ///     Creates a result whose success/failure reflects the supplied condition. Opposite of FailureIf().
     /// </summary>
     public static Result<(T1, T2)> SuccessIf<T1, T2>(bool isSuccess, in T1 t1, in T2 t2, Error error)
-    {
-        return isSuccess
-            ? Success((t1, t2))
-            : Failure<(T1, T2)>(error);
-
-    }
+        => isSuccess ? Success((t1, t2)) : Failure<(T1, T2)>(error);
 
     /// <summary>
     ///     Creates a result whose success/failure reflects the supplied condition. Opposite of SuccessIf().

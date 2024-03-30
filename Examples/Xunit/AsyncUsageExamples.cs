@@ -81,10 +81,8 @@ public class AsyncUsageExamples
         public bool Promoted { get; set; }
         public bool CanBePromoted { get; } = true;
 
-        public void Promote()
-        {
-            Promoted = true;
-        }
+        public void Promote() => Promoted = true;
+
         public Task PromoteAsync()
         {
             Promoted = true;
