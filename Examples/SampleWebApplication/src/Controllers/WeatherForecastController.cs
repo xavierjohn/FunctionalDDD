@@ -2,9 +2,7 @@
 
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Net.Http.Headers;
-using static FunctionalDdd.ValidationError;
 
 [ApiController]
 [Produces("application/json")]
@@ -72,7 +70,7 @@ public class WeatherForecastController : ControllerBase
     [HttpGet("ValidationError")]
     public ActionResult<Unit> ValidationError(string? instance, string? detail)
     {
-        List<FieldDetails> errors = [
+        List<ValidationError.FieldDetails> errors = [
             new("Field1",["Field is required.", "It cannot be empty."]),
             new("Field2",["Field is required."])
             ];
