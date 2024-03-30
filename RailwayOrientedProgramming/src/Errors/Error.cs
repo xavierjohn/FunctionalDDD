@@ -45,10 +45,10 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(string fieldDetail, string fieldName = "", string detail = "", string? instance = null)
         => new(fieldDetail, fieldName, "validation.error", detail, instance);
 
-    public static ValidationError Validation(List<FieldDetails> fieldDetails, string? detail = null, string? instance = null)
+    public static ValidationError Validation(List<FieldDetails> fieldDetails, string detail = "", string? instance = null)
         => new(fieldDetails, "validation.error", detail, instance);
 
-    public static ValidationError Validation(List<FieldDetails> fieldDetails, string? detail, string? instance, string code)
+    public static ValidationError Validation(List<FieldDetails> fieldDetails, string detail, string? instance, string code)
         => new(fieldDetails, code, detail, instance);
 
     public static BadRequestError BadRequest(string message, string? instance = null) =>
