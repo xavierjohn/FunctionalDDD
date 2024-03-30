@@ -42,19 +42,21 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
-    public static ValidationError Validation(string message, string fieldName = "", string? instance = null) =>
-        new(message, fieldName, "validation.error", instance);
+    public static ValidationError Validation(string fieldDetail, string fieldName = "", string detail = "", string? instance = null)
+        => new(fieldDetail, fieldName, "validation.error", detail, instance);
 
-    public static ValidationError Validation(List<ModelError> modelErrors, string? message = null, string? instance = null) =>
-        new(modelErrors, message, "validation.error", instance);
+    public static ValidationError Validation(List<FieldDetails> fieldDetails, string? detail = null, string? instance = null)
+        => new(fieldDetails, "validation.error", detail, instance);
 
-    public static ValidationError Validation(List<ModelError> modelErrors, string? message, string? instance, string code) =>
-    new(modelErrors, message, code, instance);
+    public static ValidationError Validation(List<FieldDetails> fieldDetails, string? detail, string? instance, string code)
+        => new(fieldDetails, code, detail, instance);
 
     public static BadRequestError BadRequest(string message, string? instance = null) =>
         new(message, "bad.request.error", instance);
 
-    public static ModelError ValidationError(string message, string fieldName = "") => new(message, fieldName);
+    public static FieldDetails ValidationError(string message, string fieldName = "") => new(fieldName, [message]);
+
+    public static FieldDetails ValidationError(string[] message, string fieldName = "") => new(fieldName, message);
 
     public static ConflictError Conflict(string message, string? instance = null) =>
         new(message, "conflict.error", instance);

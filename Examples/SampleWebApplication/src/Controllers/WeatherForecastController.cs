@@ -72,9 +72,9 @@ public class WeatherForecastController : ControllerBase
     [HttpGet("ValidationError")]
     public ActionResult<Unit> ValidationError(string? instance, string? detail)
     {
-        List<ModelError> errors = [
-            new("Field is required.", "Field1"),
-            new("Field is required.", "Field2")
+        List<FieldDetails> errors = [
+            new("Field1",["Field is required."]),
+            new("Field2",["Field is required."])
             ];
         return Error.Validation(errors, detail, instance).ToErrorActionResult<Unit>(this);
     }

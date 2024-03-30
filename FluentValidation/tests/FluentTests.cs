@@ -93,8 +93,8 @@ public class FluentTests
             result.Error.Should().BeOfType<ValidationError>();
             var validationError = (ValidationError)result.Error;
             validationError.Errors.Should().HaveCount(1);
-            validationError.Errors[0].FieldName.Should().Be("zipCode");
-            validationError.Errors[0].Message.Should().Be(errorMessage);
+            validationError.Errors[0].Name.Should().Be("zipCode");
+            validationError.Errors[0].Details[0].Should().Be(errorMessage);
         }
 
     }

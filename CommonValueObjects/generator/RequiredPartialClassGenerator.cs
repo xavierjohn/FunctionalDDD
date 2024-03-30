@@ -72,7 +72,10 @@ using System.Diagnostics.CodeAnalysis;
     {
         var r = TryCreate(s);
         if (r.IsFailure)
-            throw new FormatException(r.Error.Message);
+        {
+            var val = (ValidationError)r.Error;
+            throw new FormatException(val.Errors[0].Details[0]);
+        }
         return r.Value;
     }
 

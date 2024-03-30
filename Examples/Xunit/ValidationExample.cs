@@ -56,9 +56,7 @@ public class ValidationExample
         actual.Value.Should().Be("xavier@somewhere.com  Deva");
 
         static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
-        {
-            return emailAddress + " " + firstname + " " + lastname;
-        }
+            => emailAddress + " " + firstname + " " + lastname;
     }
 
     [Fact]
@@ -76,11 +74,9 @@ public class ValidationExample
         actual.IsFailure.Should().BeTrue();
         actual.Error.Should().BeOfType<ValidationError>();
         var validationError = (ValidationError)actual.Error;
-        validationError.Message.Should().Be("First Name cannot be empty.");
+        validationError.Errors[0].Details[0].Should().Be("First Name cannot be empty.");
 
         static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
-        {
-            return emailAddress + " " + firstname + " " + lastname;
-        }
+            => emailAddress + " " + firstname + " " + lastname;
     }
 }

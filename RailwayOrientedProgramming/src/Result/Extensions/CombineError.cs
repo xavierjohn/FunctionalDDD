@@ -36,8 +36,6 @@ public static class CombineErrorExtensions
         {
             if (error is AggregateError aggregate)
                 errors.AddRange(aggregate.Errors);
-            else if (error is ValidationError validation)
-                errors.AddRange(validation.Errors.Select(e => new ValidationError(e.Message, e.FieldName, validation.Code)));
             else
                 errors.Add(error);
         }
