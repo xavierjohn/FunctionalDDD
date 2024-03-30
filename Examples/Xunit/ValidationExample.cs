@@ -34,10 +34,10 @@ public class ValidationExample
         actual.IsFailure.Should().BeTrue();
         var validationErrors = (ValidationError)actual.Error;
         validationErrors.Errors.Should().HaveCount(2);
-        validationErrors.Errors.Should().BeEquivalentTo(new[]
+        validationErrors.Errors.Should().BeEquivalentTo(new ValidationError.FieldDetails[]
         {
-            Error.ValidationError("Last Name cannot be empty.", "lastName"),
-            Error.ValidationError("Email address is not valid.", "email")
+           new("lastName", ["Last Name cannot be empty."]),
+           new("email", ["Email address is not valid."])
         });
     }
 

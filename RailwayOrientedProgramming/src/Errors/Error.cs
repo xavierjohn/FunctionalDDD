@@ -54,10 +54,6 @@ public class Error : IEquatable<Error>
     public static BadRequestError BadRequest(string message, string? instance = null) =>
         new(message, "bad.request.error", instance);
 
-    public static FieldDetails ValidationError(string message, string fieldName = "") => new(fieldName, [message]);
-
-    public static FieldDetails ValidationError(string[] message, string fieldName = "") => new(fieldName, message);
-
     public static ConflictError Conflict(string message, string? instance = null) =>
         new(message, "conflict.error", instance);
 
