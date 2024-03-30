@@ -2,23 +2,13 @@
 
 public sealed class ValidationError : Error
 {
-    public record ModelError(string Message, string FieldName);
+    public record FieldDetails(string Name, string[] Details);
 
-    public ValidationError(string message, string fieldName, string code) : base(message, code)
-    {
-        FieldName = fieldName;
-        Errors = new List<ModelError> { new ModelError(message, fieldName) };
-    }
-    public ValidationError(List<ModelError> modelErrors, string code) : base("Validation error", code)
-    {
-        if (modelErrors.Count < 1)
-            throw new ArgumentException("At least one error is required", nameof(modelErrors));
+    public ValidationError(string fieldDetail, string fieldName, string code, string detail = "", string? instance = null) : base(detail, code, instance)
+        => Errors = [new FieldDetails(fieldName, [fieldDetail])];
 
-        FieldName = modelErrors[0].FieldName;
-        Errors = modelErrors.ToList();
-    }
+    public ValidationError(List<FieldDetails> modelErrors, string code, string detail = "", string? instance = null) : base(detail, code, instance)
+        => Errors = [.. modelErrors];
 
-    public string FieldName { get; }
-
-    public List<ModelError> Errors { get; }
+    public List<FieldDetails> Errors { get; }
 }

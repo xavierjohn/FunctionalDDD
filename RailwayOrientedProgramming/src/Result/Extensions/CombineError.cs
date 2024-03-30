@@ -20,10 +20,10 @@ public static class CombineErrorExtensions
     {
         if (thisError is null) return otherError;
         ArgumentNullException.ThrowIfNull(otherError);
-        if (thisError is ValidationError validation && otherError is ValidationError otherValidation)
+        if (thisError is ValidationError thisValidation && otherError is ValidationError otherValidation)
         {
-            var validationErrors = validation.Errors.Concat(otherValidation.Errors).ToList();
-            return new ValidationError(validationErrors, validation.Code);
+            var validationErrors = thisValidation.Errors.Concat(otherValidation.Errors).ToList();
+            return Error.Validation(validationErrors, thisValidation.Message, thisValidation.Instance, thisValidation.Code);
         }
 
         List<Error> errors = [];
@@ -36,8 +36,6 @@ public static class CombineErrorExtensions
         {
             if (error is AggregateError aggregate)
                 errors.AddRange(aggregate.Errors);
-            else if (error is ValidationError validation)
-                errors.AddRange(validation.Errors.Select(e => new ValidationError(e.Message, e.FieldName, validation.Code)));
             else
                 errors.Add(error);
         }

@@ -20,12 +20,7 @@ public static class ActionResultExtensions
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
     public static ActionResult<TValue> ToOkActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
-    {
-        if (result.IsSuccess)
-            return controllerBase.Ok(result.Value);
-
-        return result.ToErrorActionResult(controllerBase);
-    }
+        => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.ToErrorActionResult(controllerBase);
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
@@ -77,12 +72,12 @@ public static class ActionResultExtensions
     public static ActionResult<TValue> ToErrorActionResult<TValue>(this Error error, ControllerBase controllerBase)
     => error switch
     {
-        NotFoundError => (ActionResult<TValue>)controllerBase.NotFound(error),
-        ValidationError validation => ValidationErrors<TValue>(validation, controllerBase),
-        BadRequestError => (ActionResult<TValue>)controllerBase.BadRequest(error),
-        ConflictError => (ActionResult<TValue>)controllerBase.Conflict(error),
-        UnauthorizedError => (ActionResult<TValue>)controllerBase.Unauthorized(error),
-        ForbiddenError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status403Forbidden, error),
+        NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status404NotFound),
+        ValidationError validation => ValidationErrors<TValue>(string.IsNullOrEmpty(error.Message) ? null : error.Message, validation, error.Instance, controllerBase),
+        BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status400BadRequest),
+        ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status409Conflict),
+        UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status401Unauthorized),
+        ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status403Forbidden),
         UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
         _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
     };
@@ -178,12 +173,13 @@ public static class ActionResultExtensions
         return error.ToErrorActionResult<TOut>(controllerBase);
     }
 
-    private static ActionResult<TValue> ValidationErrors<TValue>(ValidationError validation, ControllerBase controllerBase)
+    private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase)
     {
         ModelStateDictionary modelState = new();
         foreach (var error in validation.Errors)
-            modelState.AddModelError(error.FieldName, error.Message);
+            foreach (var detailError in error.Details)
+                modelState.AddModelError(error.Name, detailError);
 
-        return controllerBase.ValidationProblem(modelState);
+        return controllerBase.ValidationProblem(detail, instance, modelStateDictionary: modelState);
     }
 }

@@ -28,11 +28,11 @@ public class FluentTests
         FirstName firstName = default!;
         LastName lastName = default!;
         EmailAddress email = default!;
-        var expectedValidationErrors = new[]
+        var expectedValidationErrors = new ValidationError.FieldDetails[]
         {
-            Error.ValidationError("'First Name' must not be empty.", "FirstName"),
-            Error.ValidationError("'Last Name' must not be empty.", "LastName"),
-            Error.ValidationError("'Email' must not be empty.", "Email")
+            new("FirstName", ["'First Name' must not be empty."]),
+            new("LastName", ["'Last Name' must not be empty."]),
+            new("Email", ["'Email' must not be empty."])
         };
 
         // Act
@@ -52,11 +52,11 @@ public class FluentTests
         FirstName firstName = default!;
         LastName lastName = default!;
         EmailAddress email = EmailAddress.TryCreate("xavier@somewhere.com").Value;
-        var expectedValidationErrors = new[]
+        var expectedValidationErrors = new ValidationError.FieldDetails[]
         {
-            Error.ValidationError("'First Name' must not be empty.", "FirstName"),
-            Error.ValidationError("'Last Name' must not be empty.","LastName" ),
-            Error.ValidationError("'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.", "Password")
+            new("FirstName", ["'First Name' must not be empty."]),
+            new("LastName", ["'Last Name' must not be empty."] ),
+            new("Password", ["'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character."])
         };
 
         // Act
@@ -93,8 +93,8 @@ public class FluentTests
             result.Error.Should().BeOfType<ValidationError>();
             var validationError = (ValidationError)result.Error;
             validationError.Errors.Should().HaveCount(1);
-            validationError.Errors[0].FieldName.Should().Be("zipCode");
-            validationError.Errors[0].Message.Should().Be(errorMessage);
+            validationError.Errors[0].Name.Should().Be("zipCode");
+            validationError.Errors[0].Details[0].Should().Be(errorMessage);
         }
 
     }

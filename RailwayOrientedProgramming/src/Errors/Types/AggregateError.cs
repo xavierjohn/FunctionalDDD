@@ -13,6 +13,5 @@ public sealed class AggregateError : Error
     {
     }
 
-
     public IList<Error> Errors { get; }
 }

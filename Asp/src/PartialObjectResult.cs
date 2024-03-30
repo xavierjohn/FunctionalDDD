@@ -40,7 +40,7 @@ public class PartialObjectResult : ObjectResult
         StatusCode = StatusCodes.Status206PartialContent;
     }
 
-    public ContentRangeHeaderValue ContentRangeHeaderValue { get => _contentRangeHeaderValue; }
+    public ContentRangeHeaderValue ContentRangeHeaderValue => _contentRangeHeaderValue;
 
     /// <inheritdoc />
     public override void OnFormatting(ActionContext context)

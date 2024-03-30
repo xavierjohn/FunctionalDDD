@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using System.Net.Http.Headers;
+using static FunctionalDdd.ValidationError;
 
 public class ActionResultTaskTests
 {
@@ -30,26 +31,14 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var expected = Error.BadRequest("Test");
-        var result = Task.FromResult(Result.Failure<string>(expected));
-
-        // Act
-        var response = await result.ToOkActionResultAsync(controller);
-
-        // Assert
-        response.Result.Should().BeOfType<BadRequestObjectResult>();
-        var badRequest = response.Result.As<BadRequestObjectResult>();
-        badRequest.Value.Should().Be(expected);
-        badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-    }
-
-    [Fact]
-    public async Task Will_return_Forbidden_Result_Async()
-    {
-        // Arrange
-        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var expected = Error.Forbidden("You are not authorized.");
-        var result = Task.FromResult(Result.Failure<string>(expected));
+        var error = Error.BadRequest("Test", "Jackson");
+        var result = Task.FromResult(Result.Failure<string>(error));
+        var expected = new ProblemDetails
+        {
+            Detail = "Test",
+            Status = StatusCodes.Status400BadRequest,
+            Instance = "Jackson"
+        };
 
         // Act
         var response = await result.ToOkActionResultAsync(controller);
@@ -57,8 +46,107 @@ public class ActionResultTaskTests
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
         var objectResult = response.Result.As<ObjectResult>();
-        objectResult.Value.Should().Be(expected);
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public async Task Will_return_Forbidden_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Forbidden("You are forbidden.", "xavier");
+        var expected = new ProblemDetails
+        {
+            Detail = "You are forbidden.",
+            Status = StatusCodes.Status403Forbidden,
+            Instance = "xavier"
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
         objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
+
+    [Fact]
+    public async Task Will_return_Unauthorized_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Unauthorized("You are not authorized.", "xavier");
+        var expected = new ProblemDetails
+        {
+            Detail = "You are not authorized.",
+            Status = StatusCodes.Status401Unauthorized,
+            Instance = "xavier"
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+    }
+
+    [Fact]
+    public async Task Will_return_BadRequest_Validation1_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        List<FieldDetails> modelError = [new FieldDetails("firstName", ["First name required."])];
+        var error = Error.Validation(modelError, "Customer validation failed.", "Micheal");
+        var expected = new ValidationProblemDetails
+        {
+            Title = null,
+            Detail = "Customer validation failed.",
+            Instance = "Micheal",
+            Errors = new Dictionary<string, string[]> { { "firstName", ["First name required."] } }
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeOfType<ValidationProblemDetails>();
+        var validationProblem = objectResult.Value.As<ValidationProblemDetails>();
+        validationProblem.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task Will_return_Conflict_Result_Async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Conflict("There is a conflict.", "Micheal");
+        var expected = new ProblemDetails
+        {
+            Detail = "There is a conflict.",
+            Status = StatusCodes.Status409Conflict,
+            Instance = "Micheal"
+        };
+        var result = Task.FromResult(Result.Failure<string>(error));
+
+        // Act
+        var response = await result.ToOkActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
     [Fact]

@@ -50,7 +50,6 @@ public static class ActionResultExtensionsAsync
         return result.ToErrorActionResult(controllerBase);
     }
 
-
     /// <summary>
     /// If <see cref="Result{TIn}"/> is in success state this extension method returns
     /// <list type="bullet">
@@ -100,7 +99,6 @@ public static class ActionResultExtensionsAsync
         var result = await resultTask;
         return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
     }
-
 
     public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
         this Task<Result<TValue>> resultTask,

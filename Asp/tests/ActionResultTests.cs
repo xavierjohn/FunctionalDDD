@@ -27,16 +27,22 @@ public class ActionResultTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var expected = Error.BadRequest("Test");
-        var result = Result.Failure<string>(expected);
+        var error = Error.BadRequest("Test");
+        var result = Result.Failure<string>(error);
+        var expected = new ProblemDetails
+        {
+            Detail = "Test",
+            Status = StatusCodes.Status400BadRequest
+        };
 
         // Act
         var response = result.ToOkActionResult(controller);
 
         // Assert
-        var badRequest = response.Result.As<BadRequestObjectResult>();
-        badRequest.Value.Should().Be(expected);
-        badRequest.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
     [Fact]
@@ -74,7 +80,7 @@ public class ActionResultTests
             static r => throw new InvalidOperationException());
 
         // Assert
-        response.Result.As<NotFoundObjectResult>().StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        response.Result.As<ObjectResult>().StatusCode.Should().Be(StatusCodes.Status404NotFound);
     }
 
     [Fact]

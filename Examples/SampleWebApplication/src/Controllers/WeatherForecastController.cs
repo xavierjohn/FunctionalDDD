@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 [ApiController]
 [Produces("application/json")]
 [Route("[controller]")]
-public class WeatherForecastController(ILogger<WeatherForecastController> logger) : ControllerBase
+public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] s_summaries =
     [
@@ -23,8 +23,6 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
         "Scorching"
     ];
 
-    private readonly ILogger<WeatherForecastController> _logger = logger;
-
     [HttpGet(Name = "GetWeatherForecast")]
     public ActionResult<WeatherForecast[]> Get()
     {
@@ -37,6 +35,7 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
             from = firstRange.From ?? from;
             to = firstRange.To ?? to;
         }
+
         return Result.Success<(ContentRangeHeaderValue, WeatherForecast[])>(() =>
             {
                 var allData = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -51,5 +50,31 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
                 return new(contentRangeHeaderValue, data);
             })
         .ToPartialOrOkActionResult(this, static r => r.Item1, static r => r.Item2);
+    }
+
+    [HttpGet("Forbidden")]
+    public ActionResult<Unit> Forbidden(string instance)
+        => Error.Forbidden("You are forbidden.", instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("Unauthorized")]
+    public ActionResult<Unit> Unauthorized(string instance)
+        => Error.Unauthorized("You are not authorized.", instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("Conflict")]
+    public ActionResult<Unit> Conflict(string instance)
+        => Error.Conflict("There is a conflict. " + instance, instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("NotFound")]
+    public ActionResult<Unit> NotFound(string? instance)
+        => Error.NotFound("Record not found. " + instance, instance).ToErrorActionResult<Unit>(this);
+
+    [HttpGet("ValidationError")]
+    public ActionResult<Unit> ValidationError(string? instance, string? detail)
+    {
+        List<ValidationError.FieldDetails> errors = [
+            new("Field1",["Field is required.", "It cannot be empty."]),
+            new("Field2",["Field is required."])
+        ];
+        return Error.Validation(errors, detail ?? string.Empty, instance).ToErrorActionResult<Unit>(this);
     }
 }
