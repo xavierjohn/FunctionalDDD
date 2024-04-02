@@ -78,8 +78,8 @@ public static class ActionResultExtensions
         ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status409Conflict),
         UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status401Unauthorized),
         ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status403Forbidden),
-        UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
-        _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
+        UnexpectedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status500InternalServerError),
+        _ => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status500InternalServerError)
     };
 
     /// <summary>
