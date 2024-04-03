@@ -103,6 +103,23 @@ public class HttpResponseMessageJsonExtensionsTests
     }
 
     [Fact]
+    public async Task Will_support_Maybe_http_content_as_result()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new { })
+        };
+
+        // Act
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<Maybe<PascalPerson>>(_notFoundError, SourceGenerationContext.Default.MaybePascalPerson);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Maybe.None<PascalPerson>());
+    }
+
+    [Fact]
     public async Task When_HttpResponseMessage_is_Task_Will_read_http_content_as_result()
     {
         // Assign
@@ -268,6 +285,7 @@ public class HttpResponseMessageJsonExtensionsTests
 }
 [JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
 [JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
+[JsonSerializable(typeof(Maybe<HttpResponseMessageJsonExtensionsTests.PascalPerson>))]
 internal partial class SourceGenerationContext : JsonSerializerContext
 {
 }
