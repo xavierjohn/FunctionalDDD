@@ -103,7 +103,7 @@ public class HttpResponseMessageJsonExtensionsTests
     }
 
     [Fact]
-    public async Task Will_support_Maybe_http_content_as_result()
+    public async Task Will_support_MaybeX3CPersonX3E_None_http_content_as_result()
     {
         // Assign
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -116,7 +116,26 @@ public class HttpResponseMessageJsonExtensionsTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Maybe.None<PascalPerson>());
+        result.Value.Should().BeOfType<Maybe<PascalPerson>>().Which.Should().Be(Maybe.None<PascalPerson>());
+    }
+
+    [Fact]
+    public async Task Will_support_MaybeX3CPersonX3E_Value_http_content_as_result()
+    {
+        // Assign
+        var maybePerson = Maybe.From(new PascalPerson() { FirstName = "Xavier", Age = 50 });
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(maybePerson, SourceGenerationContext.Default.MaybePascalPerson)
+        };
+
+        // Act
+        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<Maybe<PascalPerson>>(_notFoundError, SourceGenerationContext.Default.MaybePascalPerson);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeOfType<Maybe<PascalPerson>>();
+        result.Value.Should().Be(maybePerson);
     }
 
     [Fact]
