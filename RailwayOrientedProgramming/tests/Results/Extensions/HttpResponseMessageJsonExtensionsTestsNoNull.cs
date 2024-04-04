@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 
-public class HttpResponseMessageJsonExtensionsTests
+public class HttpResponseMessageJsonExtensionsTestsNoNull
 {
     readonly NotFoundError _notFoundError = Error.NotFound("Person not found");
 
@@ -270,28 +270,4 @@ public class HttpResponseMessageJsonExtensionsTests
         context.Should().Be("Common");
         return Task.FromResult((Error)Error.NotFound("Bad request"));
     }
-
-    public class camelcasePerson
-    {
-        public string firstName { get; set; } = string.Empty;
-        public int age { get; set; }
-    }
-    public class PascalPerson
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
-}
-
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
-internal partial class SourceGenerationContext : JsonSerializerContext
-{
-}
-
-[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
-internal partial class SourceGenerationCaseInsenstiveContext : JsonSerializerContext
-{
 }

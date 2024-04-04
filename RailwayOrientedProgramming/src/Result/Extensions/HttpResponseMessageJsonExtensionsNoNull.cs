@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-public static class HttpResponseMessageJsonExtensionsAsync
+public static partial class HttpResponseMessageJsonExtensionsAsync
 {
     /// <summary>
     /// Make the http request and return a Result with the deserialized value.
