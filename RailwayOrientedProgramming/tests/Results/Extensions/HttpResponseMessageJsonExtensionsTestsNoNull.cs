@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 
-public class HttpResponseMessageJsonExtensionsTests
+public class HttpResponseMessageJsonExtensionsTestsNoNull
 {
     readonly NotFoundError _notFoundError = Error.NotFound("Person not found");
 
@@ -22,7 +22,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+        var result = await httpResponseMessage.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -37,7 +37,7 @@ public class HttpResponseMessageJsonExtensionsTests
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+        var result = await httpResponseMessage.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -54,7 +54,23 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+        Func<Task> act = async () => await httpResponseMessage.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+
+        // Assert
+        await act.Should().ThrowAsync<JsonException>();
+    }
+
+    [Fact]
+    public async Task Will_throw_JsonException_with_nulll_content()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = null
+        };
+
+        // Act
+        Func<Task> act = async () => await httpResponseMessage.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
@@ -67,7 +83,7 @@ public class HttpResponseMessageJsonExtensionsTests
         HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+        Func<Task> act = async () => await httpResponseMessage.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         await act.Should().ThrowAsync<HttpRequestException>();
@@ -85,7 +101,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<PascalPerson>(_notFoundError,
+        var result = await httpResponseMessage.ResultReadValueAsync(_notFoundError,
             propertyNameCaseInsensitive ? SourceGenerationCaseInsenstiveContext.Default.PascalPerson : SourceGenerationContext.Default.PascalPerson);
 
         // Assert
@@ -103,23 +119,6 @@ public class HttpResponseMessageJsonExtensionsTests
     }
 
     [Fact]
-    public async Task Will_support_Maybe_http_content_as_result()
-    {
-        // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
-        {
-            Content = JsonContent.Create(new { })
-        };
-
-        // Act
-        var result = await httpResponseMessage.ReadResultWithNotFoundAsync<Maybe<PascalPerson>>(_notFoundError, SourceGenerationContext.Default.MaybePascalPerson);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Maybe.None<PascalPerson>());
-    }
-
-    [Fact]
     public async Task When_HttpResponseMessage_is_Task_Will_read_http_content_as_result()
     {
         // Assign
@@ -130,7 +129,7 @@ public class HttpResponseMessageJsonExtensionsTests
         var task = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+        var result = await task.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -146,7 +145,7 @@ public class HttpResponseMessageJsonExtensionsTests
         var task = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.ReadResultWithNotFoundAsync<camelcasePerson>(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
+        var result = await task.ResultReadValueAsync(_notFoundError, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -173,7 +172,7 @@ public class HttpResponseMessageJsonExtensionsTests
         }
 
         // Act
-        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Hello", SourceGenerationContext.Default.camelcasePerson);
+        var result = await httpResponseMessage.ResultReadValueAsync(CallbackFailedStatusCode, "Hello", SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -202,7 +201,7 @@ public class HttpResponseMessageJsonExtensionsTests
         }
 
         // Act
-        var result = await task.ReadResultAsync<camelcasePerson, int>(Callback, 5, SourceGenerationContext.Default.camelcasePerson);
+        var result = await task.ResultReadValueAsync(Callback, 5, SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -220,7 +219,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Common", SourceGenerationContext.Default.camelcasePerson);
+        var result = await httpResponseMessage.ResultReadValueAsync(CallbackFailedStatusCode, "Common", SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -240,7 +239,7 @@ public class HttpResponseMessageJsonExtensionsTests
         var task = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Common", SourceGenerationContext.Default.camelcasePerson);
+        var result = await task.ResultReadValueAsync(CallbackFailedStatusCode, "Common", SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -259,7 +258,7 @@ public class HttpResponseMessageJsonExtensionsTests
         };
 
         // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultAsync<camelcasePerson, string>(CallbackFailedStatusCode, "Common", SourceGenerationContext.Default.camelcasePerson);
+        Func<Task> act = async () => await httpResponseMessage.ResultReadValueAsync(CallbackFailedStatusCode, "Common", SourceGenerationContext.Default.camelcasePerson);
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
@@ -271,28 +270,4 @@ public class HttpResponseMessageJsonExtensionsTests
         context.Should().Be("Common");
         return Task.FromResult((Error)Error.NotFound("Bad request"));
     }
-
-    public class camelcasePerson
-    {
-        public string firstName { get; set; } = string.Empty;
-        public int age { get; set; }
-    }
-    public class PascalPerson
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
-}
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
-[JsonSerializable(typeof(Maybe<HttpResponseMessageJsonExtensionsTests.PascalPerson>))]
-internal partial class SourceGenerationContext : JsonSerializerContext
-{
-}
-
-[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
-[JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
-internal partial class SourceGenerationCaseInsenstiveContext : JsonSerializerContext
-{
 }
