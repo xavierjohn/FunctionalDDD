@@ -19,6 +19,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
     /// <returns>A <see cref="Result{T}"/> object with the value.</returns>
     /// <exception cref="JsonException"></exception>
+    /// <exception cref="HttpRequestException">The HTTP response is unsuccessful.</exception>
     public static async Task<Result<T>> ResultReadValueAsync<T>(
         this HttpResponseMessage response,
         NotFoundError notFoundError,
@@ -45,6 +46,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
     /// <returns>A <see cref="Result{T}"/> Returns Success result with the value, Or Failed result.</returns>
     /// <exception cref="JsonException"></exception>
+    /// <exception cref="HttpRequestException">The HTTP response is unsuccessful.</exception>
     public static async Task<Result<T>> ResultReadValueAsync<T>(
         this Task<HttpResponseMessage> responseTask,
         NotFoundError notFoundError,
