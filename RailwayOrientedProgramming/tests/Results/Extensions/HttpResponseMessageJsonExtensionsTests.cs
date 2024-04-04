@@ -302,6 +302,8 @@ public class HttpResponseMessageJsonExtensionsTests
         public int Age { get; set; }
     }
 }
+
+[JsonConverter(typeof(MaybeJsonConverter<HttpResponseMessageJsonExtensionsTests.PascalPerson>))]
 [JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.camelcasePerson))]
 [JsonSerializable(typeof(HttpResponseMessageJsonExtensionsTests.PascalPerson))]
 [JsonSerializable(typeof(Maybe<HttpResponseMessageJsonExtensionsTests.PascalPerson>))]

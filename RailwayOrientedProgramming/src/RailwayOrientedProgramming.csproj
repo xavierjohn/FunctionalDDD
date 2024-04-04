@@ -5,7 +5,6 @@
       Railway Oriented Programming is a coding concept that involves using a library's built-in functions to control program execution flow based on success or error track.
       By doing so, functional code can be written that allows for chaining of functions without the need for error checking.
   </Description>
-  <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />
