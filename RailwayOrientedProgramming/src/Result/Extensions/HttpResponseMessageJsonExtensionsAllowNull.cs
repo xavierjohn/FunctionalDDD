@@ -15,7 +15,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="notFoundError">The <see cref="NotFoundError"></see> to return if the http response status code is <see cref="HttpStatusCode.NotFound"></see> </param>
     /// <param name="jsonTypeInfo">Provides JSON serialization-related metadata about a type.</param>
     /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
-    /// <returns>A <see cref="Result{T}"/> object with the value.</returns>
+    /// <returns>A <see cref="Result{T}"/> Returns Success result with the value or null, Or Failed result.</returns>
     public static async Task<Result<T>> ResultReadValueOrDefaultAsync<T>(
         this HttpResponseMessage response,
         NotFoundError notFoundError,
@@ -39,7 +39,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="notFoundError">The <see cref="NotFoundError"></see> to return if the http response status code is <see cref="HttpStatusCode.NotFound"></see> </param>
     /// <param name="jsonTypeInfo">Provides JSON serialization-related metadata about a type.</param>
     /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
-    /// <returns>A <see cref="Result{T}"/> object with the value.</returns>>
+    /// <returns>A <see cref="Result{T}"/> Returns Success result with the value or null, Or Failed result.</returns>
     public static async Task<Result<T>> ResultReadValueOrDefaultAsync<T>(
         this Task<HttpResponseMessage> responseTask,
         NotFoundError notFoundError,
@@ -61,7 +61,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="context">HTTP context that is passed to the callback function.</param>
     /// <param name="jsonTypeInfo">Provides JSON serialization-related metadata about a type.</param>
     /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
-    /// <returns>A <see cref="Result{T}"/> object with the value.</returns>
+    /// <returns>A <see cref="Result{T}"/> Returns Success result with the value or null, Or Failed result.</returns>
     public static async Task<Result<TValue>> ResultReadValueOrDefaultAsync<TValue, TContext>(
         this HttpResponseMessage response,
         Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
@@ -89,7 +89,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="context">HTTP context that is passed to the callback function.</param>
     /// <param name="jsonTypeInfo">Provides JSON serialization-related metadata about a type.</param>
     /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
-    /// <returns>A <see cref="Result{T}"/> object with the value.</returns>
+    /// <returns>A <see cref="Result{T}"/> Returns Success result with the value or null, Or Failed result.</returns>
     public static async Task<Result<TValue>> ResultReadValueOrDefaultAsync<TValue, TContext>(
         this Task<HttpResponseMessage> responseTask,
         Func<HttpResponseMessage, TContext, Task<Error>> callbackFailedStatusCode,
