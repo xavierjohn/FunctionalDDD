@@ -21,7 +21,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
                this Task<HttpResponseMessage> responseTask,
                       NotFoundError notFoundError)
     {
-        using var response = await responseTask;
+        var response = await responseTask;
         return response.HandleNotFound(notFoundError);
     }
 
@@ -46,7 +46,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
         TContext context,
         CancellationToken cancellationToken)
     {
-        using var response = await responseTask;
+        var response = await responseTask;
         return await response.HandleFailureAsync(callbackFailedStatusCode, context, cancellationToken);
     }
 
@@ -59,9 +59,8 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
         if (noThrow && response.IsSuccessStatusCode == false)
             return Result.Failure<TValue>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
 
-        var value = await response
-            .EnsureSuccessStatusCode()
-            .Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var value = await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
 
         return (value is null) ? throw new JsonException($"Failed to create {typeof(TValue).Name} from Json") : Result.Success(value);
     }
