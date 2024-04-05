@@ -60,6 +60,23 @@ public class HttpResponseMessageJsonExtensionsTests
     }
 
     [Fact]
+    public async Task Will_not_throw_JsonException_with_wrong_content()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadGateway)
+        {
+            Content = new StringContent("Bad JSON")
+        };
+
+        // Act
+        var result = await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None, true);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Message.Should().Be("Http Response is in a failed state for value camelcasePerson. Status code: BadGateway");
+    }
+
+    [Fact]
     public async Task Will_throw_JsonException_with_nulll_content()
     {
         // Assign
