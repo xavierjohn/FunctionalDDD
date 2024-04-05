@@ -15,7 +15,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_read_http_content_as_result()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
@@ -33,7 +33,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_throw_JsonException_with_wrong_content()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = new StringContent("Bad JSON")
@@ -49,7 +49,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_not_throw_JsonException_with_wrong_content()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadGateway)
         {
             Content = new StringContent("Bad JSON")
@@ -66,7 +66,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_throw_JsonException_with_nulll_content()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = null
@@ -82,7 +82,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_throw_Exception_for_Internal_Server_Error()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
 
         // Act
@@ -97,7 +97,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [InlineData(false)]
     public async Task Deserialize_is_case_sensitive(bool propertyNameCaseInsensitive)
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
@@ -125,7 +125,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task When_HttpResponseMessage_is_Task_Will_read_http_content_as_result()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
@@ -144,7 +144,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_throw_exception_for_null_JSON()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = new StringContent("null", Encoding.UTF8, "application/json")
@@ -161,7 +161,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task When_HttpResponseMessage_is_Task_and_NotFound_will_return_NotFound()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
         var task = Task.FromResult(httpResponseMessage);
 
@@ -176,7 +176,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_callback_on_failure()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("Expected space invaders.")
@@ -204,7 +204,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_task_callback_on_failure()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("Expected space invaders.")
@@ -233,7 +233,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_not_callback_on_success()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 }, SourceGenerationContext.Default.camelcasePerson)
@@ -254,7 +254,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public async Task Will_task_not_callback_on_success()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 }, SourceGenerationContext.Default.camelcasePerson)
@@ -283,7 +283,7 @@ public class HttpResponseMessageJsonExtensionsTests
     [Fact]
     public void When_NotFound_will_return_NotFound()
     {
-        // Assign
+        // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
 
         // Act
