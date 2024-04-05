@@ -16,7 +16,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_read_http_content_as_result()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
         };
@@ -34,7 +34,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_throw_JsonException_with_wrong_content()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = new StringContent("Bad JSON")
         };
@@ -50,7 +50,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_not_throw_JsonException_with_wrong_content()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadGateway)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadGateway)
         {
             Content = new StringContent("Bad JSON")
         };
@@ -67,7 +67,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_throw_JsonException_with_nulll_content()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = null
         };
@@ -83,7 +83,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_throw_Exception_for_Internal_Server_Error()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
 
         // Act
         Func<Task> act = async () => await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
@@ -98,7 +98,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Deserialize_is_case_sensitive(bool propertyNameCaseInsensitive)
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
         };
@@ -126,7 +126,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task When_HttpResponseMessage_is_Task_Will_read_http_content_as_result()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
         };
@@ -145,7 +145,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_throw_exception_for_null_JSON()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = new StringContent("null", Encoding.UTF8, "application/json")
         };
@@ -162,7 +162,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task When_HttpResponseMessage_is_Task_and_NotFound_will_return_NotFound()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
         var task = Task.FromResult(httpResponseMessage);
 
         // Act
@@ -177,7 +177,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_callback_on_failure()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("Expected space invaders.")
         };
@@ -205,7 +205,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_task_callback_on_failure()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("Expected space invaders.")
         };
@@ -234,7 +234,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_not_callback_on_success()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 }, SourceGenerationContext.Default.camelcasePerson)
         };
@@ -255,7 +255,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public async Task Will_task_not_callback_on_success()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 }, SourceGenerationContext.Default.camelcasePerson)
         };
@@ -284,7 +284,7 @@ public class HttpResponseMessageJsonExtensionsTests
     public void When_NotFound_will_return_NotFound()
     {
         // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
 
         // Act
         var result = httpResponseMessage.HandleNotFound(_notFoundError);
