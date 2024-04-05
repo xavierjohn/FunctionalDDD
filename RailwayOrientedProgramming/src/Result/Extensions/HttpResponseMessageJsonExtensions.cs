@@ -93,8 +93,12 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     public static async Task<Result<Maybe<TValue>>> ReadResultMayBeFromJsonAsync<TValue>(
     this HttpResponseMessage response,
     JsonTypeInfo<TValue> jsonTypeInfo,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken,
+     bool noThrow = false )
     {
+        if (noThrow && response.IsSuccessStatusCode == false)
+            return Result.Failure<Maybe<TValue>>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
+
         var value = await response
             .EnsureSuccessStatusCode()
             .Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);

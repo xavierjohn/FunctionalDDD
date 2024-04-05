@@ -11,6 +11,7 @@ public class HttpResponseMessageJsonExtensionsTests
 
     private bool _callbackCalled;
 
+    #region ReadResultFromJsonAsync
     [Fact]
     public async Task Will_read_http_content_as_result()
     {
@@ -27,20 +28,6 @@ public class HttpResponseMessageJsonExtensionsTests
         result.IsSuccess.Should().BeTrue();
         result.Value.firstName.Should().Be("Xavier");
         result.Value.age.Should().Be(50);
-    }
-
-    [Fact]
-    public void When_NotFound_will_return_NotFound()
-    {
-        // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
-
-        // Act
-        var result = httpResponseMessage.HandleNotFound(_notFoundError);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(_notFoundError);
     }
 
     [Fact]
@@ -153,6 +140,23 @@ public class HttpResponseMessageJsonExtensionsTests
         result.Value.firstName.Should().Be("Xavier");
         result.Value.age.Should().Be(50);
     }
+
+    [Fact]
+    public async Task Will_throw_exception_for_null_JSON()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent("null", Encoding.UTF8, "application/json")
+        };
+
+        // Act
+        Func<Task> act = async () => await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<JsonException>();
+    }
+    #endregion
 
     [Fact]
     public async Task When_HttpResponseMessage_is_Task_and_NotFound_will_return_NotFound()
@@ -269,26 +273,24 @@ public class HttpResponseMessageJsonExtensionsTests
         result.Value.age.Should().Be(18);
     }
 
-    [Fact]
-    public async Task Will_throw_exception_for_null_JSON()
-    {
-        // Assign
-        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
-        {
-            Content = new StringContent("null", Encoding.UTF8, "application/json")
-        };
-
-        // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<JsonException>();
-    }
-
     private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context, CancellationToken cancellationToken)
     {
         _callbackCalled = true;
         context.Should().Be("Common");
         return Task.FromResult((Error)Error.NotFound("Bad request"));
+    }
+
+    [Fact]
+    public void When_NotFound_will_return_NotFound()
+    {
+        // Assign
+        HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
+
+        // Act
+        var result = httpResponseMessage.HandleNotFound(_notFoundError);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(_notFoundError);
     }
 }
