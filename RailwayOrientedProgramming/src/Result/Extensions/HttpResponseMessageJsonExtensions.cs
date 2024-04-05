@@ -66,34 +66,37 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     }
 
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
-    this Task<HttpResponseMessage> responseTask,
-    JsonTypeInfo<TValue> jsonTypeInfo,
-    CancellationToken cancellationToken)
+        this Task<HttpResponseMessage> responseTask,
+        JsonTypeInfo<TValue> jsonTypeInfo,
+        CancellationToken cancellationToken,
+        bool noThrow = false)
     {
         var response = await responseTask;
-        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
+        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
     }
 
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken)
-        => await response.BindAsync(response => response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken));
+        CancellationToken cancellationToken,
+        bool noThrow = false)
+        => await response.BindAsync(response => response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow));
 
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
-    this Task<Result<HttpResponseMessage>> responseTask,
-    JsonTypeInfo<TValue> jsonTypeInfo,
-    CancellationToken cancellationToken)
+        this Task<Result<HttpResponseMessage>> responseTask,
+        JsonTypeInfo<TValue> jsonTypeInfo,
+        CancellationToken cancellationToken,
+        bool noThrow = false)
     {
         var response = await responseTask;
-        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
+        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
     }
 
-    public static async Task<Result<Maybe<TValue>>> ReadResultMayBeFromJsonAsync<TValue>(
-    this HttpResponseMessage response,
-    JsonTypeInfo<TValue> jsonTypeInfo,
-    CancellationToken cancellationToken,
-     bool noThrow = false )
+    public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
+        this HttpResponseMessage response,
+        JsonTypeInfo<TValue> jsonTypeInfo,
+        CancellationToken cancellationToken,
+        bool noThrow = false)
     {
         if (noThrow && response.IsSuccessStatusCode == false)
             return Result.Failure<Maybe<TValue>>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
@@ -105,12 +108,32 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
         return Result.Success(value is null ? Maybe.None<TValue>() : Maybe.From(value));
     }
 
-    public static async Task<Result<Maybe<TValue>>> ReadResultMayBeFromJsonAsync<TValue>(
+    public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool noThrow = false)
+
     {
         var response = await responseTask;
-        return await response.ReadResultMayBeFromJsonAsync(jsonTypeInfo, cancellationToken);
+        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
+    }
+
+    public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
+        this Result<HttpResponseMessage> response,
+        JsonTypeInfo<TValue> jsonTypeInfo,
+        CancellationToken cancellationToken,
+        bool noThrow = false)
+        => await response.BindAsync(response => response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow));
+
+    public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
+        this Task<Result<HttpResponseMessage>> responseTask,
+        JsonTypeInfo<TValue> jsonTypeInfo,
+        CancellationToken cancellationToken,
+        bool noThrow = false)
+
+    {
+        var response = await responseTask;
+        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
     }
 }

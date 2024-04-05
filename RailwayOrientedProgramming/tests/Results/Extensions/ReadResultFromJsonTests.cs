@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
 
-public class HttpResponseMessageJsonExtensionsTests
+public class ReadResultFromJsonTests
 {
     readonly NotFoundError _notFoundError = Error.NotFound("Person not found");
 
@@ -130,10 +130,10 @@ public class HttpResponseMessageJsonExtensionsTests
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
         };
-        var task = Task.FromResult(httpResponseMessage);
+        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+        var result = await taskHttpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -163,10 +163,10 @@ public class HttpResponseMessageJsonExtensionsTests
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
-        var task = Task.FromResult(httpResponseMessage);
+        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task.HandleNotFoundAsync(_notFoundError);
+        var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -209,7 +209,7 @@ public class HttpResponseMessageJsonExtensionsTests
         {
             Content = new StringContent("Expected space invaders.")
         };
-        var task = Task.FromResult(httpResponseMessage);
+        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
 
         var callbackCalled = false;
         async Task<Error> Callback(HttpResponseMessage response, int context, CancellationToken cancellationToken)
@@ -222,7 +222,7 @@ public class HttpResponseMessageJsonExtensionsTests
         }
 
         // Act
-        var result = await task.HandleFailureAsync(Callback, 5, CancellationToken.None);
+        var result = await taskHttpResponseMessage.HandleFailureAsync(Callback, 5, CancellationToken.None);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -259,10 +259,10 @@ public class HttpResponseMessageJsonExtensionsTests
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Chris", age = 18 }, SourceGenerationContext.Default.camelcasePerson)
         };
-        var task = Task.FromResult(httpResponseMessage);
+        var httpResponseMessageTask = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await task
+        var result = await httpResponseMessageTask
             .HandleFailureAsync(CallbackFailedStatusCode, "Common", CancellationToken.None)
             .ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
