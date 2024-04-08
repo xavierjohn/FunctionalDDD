@@ -11,7 +11,6 @@ public class ReadResultFromJsonTests
 
     private bool _callbackCalled;
 
-    #region ReadResultFromJsonAsync
     [Fact]
     public async Task Will_read_http_content_as_result()
     {
@@ -56,7 +55,7 @@ public class ReadResultFromJsonTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None, true);
+        var result = await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -77,19 +76,6 @@ public class ReadResultFromJsonTests
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
-    }
-
-    [Fact]
-    public async Task Will_throw_Exception_for_Internal_Server_Error()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
-
-        // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
     }
 
     [Theory]
@@ -140,23 +126,6 @@ public class ReadResultFromJsonTests
         result.Value.firstName.Should().Be("Xavier");
         result.Value.age.Should().Be(50);
     }
-
-    [Fact]
-    public async Task Will_throw_exception_for_null_JSON()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
-        {
-            Content = new StringContent("null", Encoding.UTF8, "application/json")
-        };
-
-        // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<JsonException>();
-    }
-    #endregion
 
     [Fact]
     public async Task When_HttpResponseMessage_is_Task_and_NotFound_will_return_NotFound()

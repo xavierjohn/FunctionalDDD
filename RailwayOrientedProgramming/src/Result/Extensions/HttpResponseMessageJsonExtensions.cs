@@ -3,7 +3,6 @@
 using System;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
 public static partial class HttpResponseMessageJsonExtensionsAsync
@@ -88,23 +87,13 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the deserialized value.</returns>
-    /// <exception cref="JsonException"></exception>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this HttpResponseMessage response,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
-    {
-        if (noThrow && response.IsSuccessStatusCode == false)
-            return Result.Failure<TValue>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
-
-        response.EnsureSuccessStatusCode();
-        var value = await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
-
-        return (value is null) ? throw new JsonException($"Failed to create {typeof(TValue).Name} from Json") : Result.Success(value);
-    }
+        CancellationToken cancellationToken)
+        => await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken)
+            .BindAsync(maybe => maybe.HasValue ? Result.Success(maybe.Value) : Result.Failure<TValue>(Error.Unexpected($"Http Response was null for value {typeof(TValue).Name}.")));
 
     /// <summary>
     /// Reads the HTTP response content as JSON and deserializes it to the specified type asynchronously.
@@ -113,17 +102,14 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the deserialized value.</returns>
-    /// <exception cref="JsonException"></exception>    
+    /// <returns>A <see cref="Task{Result{TValue}}"/> object.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
+        CancellationToken cancellationToken)
     {
         var response = await responseTask;
-        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
+        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
     }
 
     /// <summary>
@@ -133,15 +119,12 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the deserialized value.</returns>
-    /// <exception cref="JsonException"></exception>
+    /// <returns>A <see cref="Task{Result{TValue}}"/> object.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
-        => await response.BindAsync(response => response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow));
+        CancellationToken cancellationToken)
+        => await response.BindAsync(response => response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken));
 
     /// <summary>
     /// Reads the HTTP response content as JSON and deserializes it to the specified type using the Result monad asynchronously.
@@ -150,17 +133,14 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the deserialized value.</returns>
-    /// <exception cref="JsonException"></exception>
+    /// <returns>A <see cref="Task{Result{TValue}}"/> object.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Task<Result<HttpResponseMessage>> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
+        CancellationToken cancellationToken)
     {
         var response = await responseTask;
-        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
+        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
     }
 
     /// <summary>
@@ -170,20 +150,16 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the Maybe value.</returns>
-    /// <exception cref="JsonException"></exception>    
+    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this HttpResponseMessage response,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
+        CancellationToken cancellationToken)
     {
-        if (noThrow && response.IsSuccessStatusCode == false)
+        if (response.IsSuccessStatusCode == false)
             return Result.Failure<Maybe<TValue>>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
 
         var value = await response
-            .EnsureSuccessStatusCode()
             .Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
 
         return Result.Success(value is null ? Maybe.None<TValue>() : Maybe.From(value));
@@ -196,17 +172,14 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the Maybe value.</returns>
-    /// <exception cref="JsonException"></exception>
+    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
+        CancellationToken cancellationToken)
     {
         var response = await responseTask;
-        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
+        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken);
     }
 
     /// <summary>
@@ -216,15 +189,12 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the Maybe value.</returns>
-    /// <exception cref="JsonException"></exception>
+    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
-        => await response.BindAsync(response => response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow));
+        CancellationToken cancellationToken)
+        => await response.BindAsync(response => response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken));
 
     /// <summary>
     /// Reads the HTTP response content as JSON and deserializes it to the specified type using the Maybe monad and the Result monad asynchronously.
@@ -233,16 +203,14 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="noThrow">Indicates whether to throw an exception if the response is not successful.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the Maybe value.</returns>
-    /// <exception cref="JsonException"></exception>    
+    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Task<Result<HttpResponseMessage>> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
-        CancellationToken cancellationToken,
-        bool noThrow = false)
+        CancellationToken cancellationToken)
     {
         var response = await responseTask;
-        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken, noThrow);
+        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken);
     }
 }

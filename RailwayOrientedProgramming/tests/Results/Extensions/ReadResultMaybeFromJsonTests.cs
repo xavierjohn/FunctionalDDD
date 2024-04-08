@@ -58,7 +58,7 @@ public class ReadResultMaybeFromJsonTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None, true);
+        var result = await httpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -79,19 +79,6 @@ public class ReadResultMaybeFromJsonTests
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
-    }
-
-    [Fact]
-    public async Task Will_throw_Exception_for_Internal_Server_Error()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.InternalServerError);
-
-        // Act
-        Func<Task> act = async () => await httpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
     }
 
     [Theory]
