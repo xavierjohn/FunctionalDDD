@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
+using System.Text.Json.Serialization;
 
 public class ReadResultMaybeFromJsonTests
 {
@@ -230,4 +231,31 @@ public class ReadResultMaybeFromJsonTests
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(_notFoundError);
     }
+}
+
+#pragma warning disable IDE1006 // Naming Styles
+public class camelcasePerson
+#pragma warning restore IDE1006 // Naming Styles
+{
+    public string firstName { get; set; } = string.Empty;
+    public int age { get; set; }
+}
+
+public class PascalPerson
+{
+    public string FirstName { get; set; } = string.Empty;
+    public int Age { get; set; }
+}
+
+[JsonSerializable(typeof(camelcasePerson))]
+[JsonSerializable(typeof(PascalPerson))]
+internal partial class SourceGenerationContext : JsonSerializerContext
+{
+}
+
+[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
+[JsonSerializable(typeof(camelcasePerson))]
+[JsonSerializable(typeof(PascalPerson))]
+internal partial class SourceGenerationCaseInsenstiveContext : JsonSerializerContext
+{
 }
