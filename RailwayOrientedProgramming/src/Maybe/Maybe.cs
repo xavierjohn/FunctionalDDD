@@ -10,7 +10,7 @@ public static class Maybe
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns><see cref="Maybe{T}"/> object with no value.</returns>
-    public static Maybe<T> None<T>() where T : notnull => new();
+    public static Maybe<T> None<T>()=> new();
 
     /// <summary>
     /// Creates a new <see cref="Maybe{T}"/> with a value.
@@ -18,7 +18,7 @@ public static class Maybe
     /// <typeparam name="T"></typeparam>
     /// <param name="value"></param>
     /// <returns>A <see cref="Maybe{T}"/> object with the value.</returns>
-    public static Maybe<T> From<T>(T? value) where T : notnull => new(value);
+    public static Maybe<T> From<T>(T? value) => new(value);
 
     /// <summary>
     /// Helps convert optional primitive types to strongly typed object.
