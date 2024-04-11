@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
 /// </summary>
@@ -21,9 +23,14 @@ public static class EnsureExtensions
         if (result.IsFailure)
             return result;
 
+        using var activity = Trace.ActivitySource.StartActivity();
         if (!predicate(result.Value))
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(error);
+        }
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
@@ -32,9 +39,14 @@ public static class EnsureExtensions
         if (result.IsFailure)
             return result;
 
+        using var activity = Trace.ActivitySource.StartActivity();
         if (!predicate(result.Value))
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(errorPredicate(result.Value));
+        }
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 

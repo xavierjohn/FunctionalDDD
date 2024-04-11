@@ -1,21 +1,33 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 public static class NullableExtensions
 {
     public static Result<T> ToResult<T>(in this T? nullable, Error error)
         where T : struct
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (!nullable.HasValue)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<T>(error);
+        }
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return Result.Success<T>(nullable.Value);
     }
     public static Result<T> ToResult<T>(this T? obj, Error error)
         where T : class
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (obj == null)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<T>(error);
+        }
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return Result.Success<T>(obj);
     }
 }

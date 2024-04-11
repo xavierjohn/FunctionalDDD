@@ -3,12 +3,15 @@ namespace Example.Tests;
 using FunctionalDdd;
 using Xunit;
 
-public class AsyncUsageExamples
+public class AsyncUsageExamples : IClassFixture<TraceFixture>
 {
     [Fact]
     public static async Task Promote_with_async_methods_in_the_beginning_of_the_chain()
     {
         var id = 1;
+
+        using var activity = TraceFixture.ActivitySource.StartActivity();
+        activity?.AddTag("Function", nameof(Promote_with_async_methods_in_the_beginning_of_the_chain));
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
@@ -25,6 +28,9 @@ public class AsyncUsageExamples
     {
         var id = 1;
 
+        using var activity = TraceFixture.ActivitySource.StartActivity();
+        activity?.AddTag("Function", nameof(Promote_with_async_methods_in_the_beginning_of_the_chain));
+
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(static customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
@@ -39,6 +45,9 @@ public class AsyncUsageExamples
     public static async Task Promote_with_async_methods_in_the_beginning_and_in_the_middle_of_the_chain_using_compensate()
     {
         var id = 1;
+
+        using var activity = TraceFixture.ActivitySource.StartActivity();
+        activity?.AddTag("Function", nameof(Promote_with_async_methods_in_the_beginning_of_the_chain));
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))

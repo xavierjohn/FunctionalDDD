@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Executes the given action if the starting result is a success. Returns the starting result.
 /// It is useful to execute functions that don't have a return type or return type can be ignored.
@@ -23,7 +25,11 @@ public static class TapExtensions
     public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
     {
         if (result.IsSuccess)
+        {
+            using var activity = Trace.ActivitySource.StartActivity();
             action(result.Value);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
 
         return result;
     }
