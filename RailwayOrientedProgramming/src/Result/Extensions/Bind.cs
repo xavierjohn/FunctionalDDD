@@ -9,14 +9,14 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 /// </summary>
 public static partial class BindExtensions
 {
-    public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> function)
+    public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
         using var activity  = Trace.ActivitySource.StartActivity();
-        activity?.AddTag("Function", function.Method.Name);
-        var retResult = function(result.Value);
+        activity?.AddTag("delegate", func.Method.Name);
+        var retResult = func(result.Value);
 
         activity?.SetStatus(retResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
         return retResult;
@@ -29,15 +29,14 @@ public static partial class BindExtensions
 /// </summary>
 public static partial class BindExtensionsAsync
 {
-    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> function)
+    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
         using var activity = Trace.ActivitySource.StartActivity();
-        activity?.AddTag("Function", function.Method.Name);
-        var retResult = await function(result.Value);
-
+        activity?.AddTag("delegate", func.Method.Name);
+        var retResult = await func(result.Value);
         activity?.SetStatus(retResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
         return retResult;
     }
