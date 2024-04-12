@@ -41,7 +41,6 @@ public static class CompensateExtensionsAsync
         if (result.IsSuccess)
             return result;
 
-        var retResult = await funcAsync();
-        return retResult;
+        return await funcAsync();
     }
 }

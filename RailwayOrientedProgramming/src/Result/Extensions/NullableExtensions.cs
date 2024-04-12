@@ -11,10 +11,10 @@ public static class NullableExtensions
 
         return Result.Success<T>(nullable.Value);
     }
-    public static Result<T> ToResult<T>(this T? obj, Error error, string name = nameof(ToResult))
+    public static Result<T> ToResult<T>(this T? obj, Error error)
         where T : class
     {
-        using var activity = Trace.ActivitySource.StartActivity(name);
+        using var activity = Trace.ActivitySource.StartActivity();
         if (obj == null)
             return Result.Failure<T>(error);
 

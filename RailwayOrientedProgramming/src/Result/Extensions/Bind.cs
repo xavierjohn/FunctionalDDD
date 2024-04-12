@@ -1,7 +1,6 @@
 ﻿namespace FunctionalDdd;
 
 using System.Diagnostics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 /// <summary>
 /// If the starting Result is a success, the Bind function will return a new Result from the given function.
@@ -18,7 +17,6 @@ public static partial class BindExtensions
         activity?.AddTag("delegate", func.Method.Name);
         var retResult = func(result.Value);
 
-        activity?.SetStatus(retResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
         return retResult;
     }
 }
@@ -36,9 +34,7 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error);
 
         activity?.AddTag("delegate", func.Method.Name);
-        var retResult = await func(result.Value);
-        activity?.SetStatus(retResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
-        return retResult;
+        return await func(result.Value);
     }
 
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, Task<Result<TResult>>> func)

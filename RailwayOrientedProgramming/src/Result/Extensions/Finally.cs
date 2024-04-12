@@ -35,16 +35,15 @@ public static class FinallyExtensions
         if (result.IsSuccess)
         {
             activity?.SetTag("delegate", funcOk.Method.Name);
-            var r = funcOk(result.Value);
             activity?.SetStatus(ActivityStatusCode.Ok);
-            return r;
+
+            return funcOk(result.Value);
         }
         else
         {
             activity?.SetTag("delegate", funcError.Method.Name);
-            var r = funcError(result.Error);
             activity?.SetStatus(ActivityStatusCode.Error);
-            return r;
+            return funcError(result.Error);
         }
     }
 }
