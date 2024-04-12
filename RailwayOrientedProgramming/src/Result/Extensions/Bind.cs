@@ -12,10 +12,7 @@ public static partial class BindExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
-        activity?.AddTag("delegate", func.Method.Name);
-        var retResult = func(result.Value);
-
-        return retResult;
+        return func(result.Value);
     }
 }
 
@@ -31,7 +28,6 @@ public static partial class BindExtensionsAsync
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
-        activity?.AddTag("delegate", func.Method.Name);
         return await func(result.Value);
     }
 
