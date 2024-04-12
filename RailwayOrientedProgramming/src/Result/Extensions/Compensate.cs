@@ -36,7 +36,7 @@ public static class CompensateExtensionsAsync
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = Trace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         Result<T> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
             return result;

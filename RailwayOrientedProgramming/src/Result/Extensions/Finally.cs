@@ -34,14 +34,11 @@ public static class FinallyExtensions
 
         if (result.IsSuccess)
         {
-            activity?.SetTag("delegate", funcOk.Method.Name);
             activity?.SetStatus(ActivityStatusCode.Ok);
-
             return funcOk(result.Value);
         }
         else
         {
-            activity?.SetTag("delegate", funcError.Method.Name);
             activity?.SetStatus(ActivityStatusCode.Error);
             return funcError(result.Error);
         }

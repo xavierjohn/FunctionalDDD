@@ -12,7 +12,6 @@ public static class TapErrorExtensions
         using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
         {
-            activity?.SetTag("delegate", action.Method.Name);
             action();
             activity?.SetStatus(ActivityStatusCode.Error);
         }
@@ -25,7 +24,6 @@ public static class TapErrorExtensions
         using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
         {
-            activity?.SetTag("delegate", action.Method.Name);
             action(result.Error);
             activity?.SetStatus(ActivityStatusCode.Error);
         }

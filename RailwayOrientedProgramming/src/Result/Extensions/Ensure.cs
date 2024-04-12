@@ -1,5 +1,6 @@
 ﻿namespace FunctionalDdd;
 
+using System;
 using System.Diagnostics;
 
 /// <summary>
@@ -9,6 +10,7 @@ public static class EnsureExtensions
 {
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error errors)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 

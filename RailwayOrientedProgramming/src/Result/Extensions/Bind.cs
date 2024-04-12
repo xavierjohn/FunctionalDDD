@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using System.Diagnostics;
-
 /// <summary>
 /// If the starting Result is a success, the Bind function will return a new Result from the given function.
 /// Otherwise, the Bind function will return the starting failed Result.
@@ -29,7 +27,7 @@ public static partial class BindExtensionsAsync
 {
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = Trace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 

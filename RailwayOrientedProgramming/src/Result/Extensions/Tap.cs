@@ -28,7 +28,6 @@ public static class TapExtensions
         using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsSuccess)
         {
-            activity?.SetTag("delegate", action.Method.Name);
             action(result.Value);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
@@ -102,11 +101,10 @@ public static class TapExtensionsAsync
     /// </summary>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, Task> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = Trace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
         {
-            activity?.SetTag("delegate", func.Method.Name);
             await func(result.Value).ConfigureAwait(false);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
