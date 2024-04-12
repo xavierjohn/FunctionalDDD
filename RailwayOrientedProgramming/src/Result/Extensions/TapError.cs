@@ -20,9 +20,9 @@ public static class TapErrorExtensions
         return result;
     }
 
-    public static Result<TValue> TapError<TValue>(this Result<TValue> result, Action<Error> action, string name = nameof(TapError))
+    public static Result<TValue> TapError<TValue>(this Result<TValue> result, Action<Error> action)
     {
-        using var activity = Trace.ActivitySource.StartActivity(name);
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
         {
             activity?.SetTag("delegate", action.Method.Name);
@@ -39,9 +39,9 @@ public static class TapErrorExtensions
 /// </summary>
 public static class TapErrorExtensionsAsync
 {
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Action<Error> action, string name = nameof(TapErrorAsync))
+    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Action<Error> action)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.TapError(action, name);
+        return result.TapError(action);
     }
 }

@@ -23,9 +23,9 @@ public static class TapExtensions
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
-    public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action, string name = nameof(Tap))
+    public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
     {
-        using var activity = Trace.ActivitySource.StartActivity(name);
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsSuccess)
         {
             activity?.SetTag("delegate", action.Method.Name);
@@ -67,10 +67,10 @@ public static class TapExtensionsAsync
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
-    public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Action<TValue> action, string name = nameof(TapAsync))
+    public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Action<TValue> action)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.Tap(action, name);
+        return result.Tap(action);
     }
 
     /// <summary>

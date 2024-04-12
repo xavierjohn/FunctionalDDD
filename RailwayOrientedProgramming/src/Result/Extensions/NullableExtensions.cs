@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using System.Diagnostics;
-
 public static class NullableExtensions
 {
     public static Result<T> ToResult<T>(in this T? nullable, Error error)
@@ -9,12 +7,8 @@ public static class NullableExtensions
     {
         using var activity = Trace.ActivitySource.StartActivity();
         if (!nullable.HasValue)
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<T>(error);
-        }
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return Result.Success<T>(nullable.Value);
     }
     public static Result<T> ToResult<T>(this T? obj, Error error, string name = nameof(ToResult))
@@ -22,12 +16,8 @@ public static class NullableExtensions
     {
         using var activity = Trace.ActivitySource.StartActivity(name);
         if (obj == null)
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<T>(error);
-        }
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return Result.Success<T>(obj);
     }
 }
@@ -40,11 +30,11 @@ public static class NullableExtensionsAsync
         return nullable.ToResult(errors);
     }
 
-    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors, string name = nameof(ToResultAsync))
+    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
     where T : class
     {
         var nullable = await nullableTask.ConfigureAwait(false);
-        return nullable.ToResult(errors, name);
+        return nullable.ToResult(errors);
     }
 
     public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)

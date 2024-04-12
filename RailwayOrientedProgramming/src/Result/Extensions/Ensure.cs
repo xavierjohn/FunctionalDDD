@@ -7,6 +7,8 @@ using System.Diagnostics;
 /// </summary>
 public static class EnsureExtensions
 {
+    const string EnsureName = nameof(Ensure);
+
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error errors)
     {
         if (result.IsFailure)
@@ -18,35 +20,27 @@ public static class EnsureExtensions
         return result;
     }
 
-    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error, string name = nameof(Ensure))
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
-        using var activity = Trace.ActivitySource.StartActivity(name);
+        using var activity = Trace.ActivitySource.StartActivity(EnsureName);
         if (result.IsFailure)
             return result;
 
         if (!predicate(result.Value))
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(error);
-        }
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
-    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate, string name = nameof(Ensure))
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
-        using var activity = Trace.ActivitySource.StartActivity(name);
+        using var activity = Trace.ActivitySource.StartActivity(EnsureName);
         if (result.IsFailure)
             return result;
 
         if (!predicate(result.Value))
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(errorPredicate(result.Value));
-        }
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
@@ -59,12 +53,8 @@ public static class EnsureExtensions
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(predicateResult.Error);
-        }
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
@@ -77,12 +67,8 @@ public static class EnsureExtensions
         var predicateResult = predicate(result.Value);
 
         if (predicateResult.IsFailure)
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(predicateResult.Error);
-        }
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 

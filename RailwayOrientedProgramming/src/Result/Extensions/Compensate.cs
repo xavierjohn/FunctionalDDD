@@ -1,7 +1,5 @@
 ﻿namespace FunctionalDdd;
 
-using System.Diagnostics;
-
 /// <summary>
 /// Compensate for failed result by calling the given function.
 /// </summary>
@@ -44,7 +42,6 @@ public static class CompensateExtensionsAsync
             return result;
 
         var retResult = await funcAsync();
-        activity?.SetStatus(retResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
         return retResult;
     }
 }

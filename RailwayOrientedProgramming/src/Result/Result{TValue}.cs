@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// The Result type used in functional programming languages to represent a success value or an error.
 /// </summary>
@@ -48,6 +50,7 @@ public readonly struct Result<TValue> : IResult<TValue>
         IsFailure = isFailure;
         _error = error;
         _value = ok;
+        Activity.Current?.SetStatus(IsFailure ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
     }
 
     private readonly TValue? _value;

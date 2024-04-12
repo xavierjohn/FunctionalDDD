@@ -28,9 +28,9 @@ public static class FinallyExtensions
     /// <param name="funcOk">A delegate that return the success value.</param>
     /// <param name="funcError">A delegate that returns the error.</param>
     /// <returns>The final result of type TOut</returns>
-    public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError, string name = nameof(Finally))
+    public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError)
     {
-        using var activity = Trace.ActivitySource.StartActivity(name);
+        using var activity = Trace.ActivitySource.StartActivity();
 
         if (result.IsSuccess)
         {
@@ -110,11 +110,10 @@ public static class FinallyExtensionsAsync
 
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
         Func<TIn, TOut> funcOk,
-        Func<Error, TOut> funcError,
-        string name = nameof(FinallyAsync))
+        Func<Error, TOut> funcError)
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
-        return result.Finally(funcOk, funcError, name);
+        return result.Finally(funcOk, funcError);
     }
 
     public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask,
