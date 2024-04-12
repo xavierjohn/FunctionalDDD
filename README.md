@@ -176,7 +176,18 @@ var result = await _httpClient.GetAsync($"person/{id}")
 
   ```
 
+### Tracing
+
+Tracing can be enabled by adding `AddFunctionalDddInstrumentation()`.
+
+```csharp
+var builder = Sdk.CreateTracerProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("FunctionDddExample"))
+    .AddFunctionalDddInstrumentation()
+    .AddOtlpExporter();
+```
+
 Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
 
 ## Related project
-[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#
+[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#. This library was inspired by several of the training materials created by Vladimir Khorikov.

@@ -11,6 +11,7 @@
     <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="T4.Build" />
   </ItemGroup>
 

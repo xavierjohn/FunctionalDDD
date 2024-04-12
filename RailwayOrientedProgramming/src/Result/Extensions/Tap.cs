@@ -1,5 +1,8 @@
 ﻿namespace FunctionalDdd;
 
+using System;
+using System.Diagnostics;
+
 /// <summary>
 /// Executes the given action if the starting result is a success. Returns the starting result.
 /// It is useful to execute functions that don't have a return type or return type can be ignored.
@@ -22,8 +25,12 @@ public static class TapExtensions
     /// </summary>
     public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsSuccess)
+        {
             action(result.Value);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
 
         return result;
     }
@@ -94,9 +101,13 @@ public static class TapExtensionsAsync
     /// </summary>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, Task> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
+        {
             await func(result.Value).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
 
         return result;
     }

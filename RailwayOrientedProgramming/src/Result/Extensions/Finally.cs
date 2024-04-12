@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Passes the result to the given function (regardless of success/failure state) to yield a final output value.
 /// </summary>
@@ -27,7 +29,20 @@ public static class FinallyExtensions
     /// <param name="funcError">A delegate that returns the error.</param>
     /// <returns>The final result of type TOut</returns>
     public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError)
-        => result.IsSuccess ? funcOk(result.Value) : funcError(result.Error);
+    {
+        using var activity = Trace.ActivitySource.StartActivity();
+
+        if (result.IsSuccess)
+        {
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return funcOk(result.Value);
+        }
+        else
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
+            return funcError(result.Error);
+        }
+    }
 }
 
 /// <summary>
@@ -87,9 +102,7 @@ public static class FinallyExtensionsAsync
     /// </summary>
     public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this Result<TIn> result,
         Func<Result<TIn>, ValueTask<TOut>> valueTask)
-    {
-        return await valueTask(result);
-    }
+        => await valueTask(result);
 
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
         Func<TIn, TOut> funcOk,

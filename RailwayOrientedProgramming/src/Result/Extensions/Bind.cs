@@ -8,6 +8,7 @@ public static partial class BindExtensions
 {
     public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -23,6 +24,7 @@ public static partial class BindExtensionsAsync
 {
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 

@@ -49,7 +49,6 @@ public static partial class EnsureExtensionsAsync
         return Result.Failure<TOk>(await errorPredicate(result.Value).ConfigureAwait(false));
     }
 
-
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>

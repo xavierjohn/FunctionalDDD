@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
    <ItemGroup>
+     <PackageReference Include="OpenTelemetry" />
+     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+   </ItemGroup>
+   <ItemGroup>
       <ProjectReference Include="..\..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
       <ProjectReference Include="..\..\CommonValueObjects\src\CommonValueObjects.csproj" />
    </ItemGroup>

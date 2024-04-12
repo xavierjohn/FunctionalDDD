@@ -5,6 +5,7 @@ public static class NullableExtensions
     public static Result<T> ToResult<T>(in this T? nullable, Error error)
         where T : struct
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (!nullable.HasValue)
             return Result.Failure<T>(error);
 
@@ -13,6 +14,7 @@ public static class NullableExtensions
     public static Result<T> ToResult<T>(this T? obj, Error error)
         where T : class
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (obj == null)
             return Result.Failure<T>(error);
 

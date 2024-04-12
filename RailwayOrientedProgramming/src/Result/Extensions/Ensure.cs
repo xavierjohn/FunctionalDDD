@@ -1,5 +1,8 @@
 ﻿namespace FunctionalDdd;
 
+using System;
+using System.Diagnostics;
+
 /// <summary>
 ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
 /// </summary>
@@ -7,6 +10,7 @@ public static class EnsureExtensions
 {
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error errors)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -18,6 +22,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -29,6 +34,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -38,9 +44,9 @@ public static class EnsureExtensions
         return result;
     }
 
-
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -54,6 +60,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, Result<TValue>> predicate)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -65,7 +72,6 @@ public static class EnsureExtensions
         return result;
     }
 
-    public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error) =>
-        str.ToResult(error)
-                .Ensure(name => !string.IsNullOrWhiteSpace(name), error);
+    public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error)
+        => string.IsNullOrWhiteSpace(str) ? Result.Failure<string>(error) : Result.Success(str);
 }
