@@ -89,9 +89,9 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
 
         public string Email { get; } = "random@universe.com";
 
-        public bool CanBePromoted { get; }
-
         public bool Promoted { get; set; }
+
+        public bool CanBePromoted { get; }
 
         public void Promote() => Promoted = true;
 
