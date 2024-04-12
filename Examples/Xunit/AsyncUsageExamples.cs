@@ -5,31 +5,31 @@ using Xunit;
 
 public class AsyncUsageExamples : IClassFixture<TraceFixture>
 {
-    [Fact]
-    public static async Task Promote_with_async_methods_in_the_beginning_of_the_chain()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public static async Task Promote_customer(int id)
     {
-        var id = 1;
-
         using var activity = TraceFixture.ActivitySource.StartActivity();
-        activity?.AddTag("Function", nameof(Promote_with_async_methods_in_the_beginning_of_the_chain));
-
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .TapAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-            .FinallyAsync(ok => "Okay", error => error.Message);
+            .FinallyAsync(ok => "Okay", error => "Failed");
 
-        result.Should().Be("Okay");
+        if (id == 1)
+            result.Should().Be("Okay");
+        else
+            result.Should().Be("Failed");
     }
 
     [Fact]
-    public static async Task Promote_with_async_methods_in_the_beginning_and_in_the_middle_of_the_chain()
+    public static async Task PromoteAsync_customer()
     {
         var id = 1;
 
         using var activity = TraceFixture.ActivitySource.StartActivity();
-        activity?.AddTag("Function", nameof(Promote_with_async_methods_in_the_beginning_of_the_chain));
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
@@ -42,12 +42,11 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
     }
 
     [Fact]
-    public static async Task Promote_with_async_methods_in_the_beginning_and_in_the_middle_of_the_chain_using_compensate()
+    public static async Task Ask_manager_for_promotion()
     {
         var id = 1;
 
         using var activity = TraceFixture.ActivitySource.StartActivity();
-        activity?.AddTag("Function", nameof(Promote_with_async_methods_in_the_beginning_of_the_chain));
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
@@ -70,13 +69,14 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
     {
     }
 
-    static Task<Result<Customer>> AskManagerAsync(long id) => Task.FromResult(Result.Success(new Customer()));
+    static Task<Result<Customer>> AskManagerAsync(long id) => Task.FromResult(Result.Success(new Customer(true)));
 
     public static Task<Customer?> GetCustomerByIdAsync(long id)
     {
         var customer = id switch
         {
-            1 => new Customer(),
+            1 => new Customer(true),
+            2 => new Customer(false),
             _ => null
         };
 
@@ -85,10 +85,13 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
 
     public class Customer
     {
+        public Customer(bool canBePromoted) => CanBePromoted = canBePromoted;
+
         public string Email { get; } = "random@universe.com";
 
+        public bool CanBePromoted { get; }
+
         public bool Promoted { get; set; }
-        public bool CanBePromoted { get; } = true;
 
         public void Promote() => Promoted = true;
 

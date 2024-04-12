@@ -1,5 +1,6 @@
 ﻿namespace FunctionalDdd;
 
+using System;
 using System.Diagnostics;
 
 /// <summary>
@@ -22,11 +23,12 @@ public static class TapExtensions
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
-    public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
+    public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action, string name = nameof(Tap))
     {
+        using var activity = Trace.ActivitySource.StartActivity(name);
         if (result.IsSuccess)
         {
-            using var activity = Trace.ActivitySource.StartActivity();
+            activity?.SetTag("delegate", action.Method.Name);
             action(result.Value);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
@@ -65,10 +67,10 @@ public static class TapExtensionsAsync
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
-    public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Action<TValue> action)
+    public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Action<TValue> action, string name = nameof(TapAsync))
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.Tap(action);
+        return result.Tap(action, name);
     }
 
     /// <summary>
@@ -100,9 +102,14 @@ public static class TapExtensionsAsync
     /// </summary>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, Task> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
+        {
+            activity?.SetTag("delegate", func.Method.Name);
             await func(result.Value).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
 
         return result;
     }

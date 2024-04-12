@@ -1,6 +1,7 @@
 ﻿namespace FunctionalDdd;
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 public static class NullableExtensions
 {
@@ -17,10 +18,10 @@ public static class NullableExtensions
         activity?.SetStatus(ActivityStatusCode.Ok);
         return Result.Success<T>(nullable.Value);
     }
-    public static Result<T> ToResult<T>(this T? obj, Error error)
+    public static Result<T> ToResult<T>(this T? obj, Error error, string name = nameof(ToResult))
         where T : class
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = Trace.ActivitySource.StartActivity(name);
         if (obj == null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
@@ -40,11 +41,11 @@ public static class NullableExtensionsAsync
         return nullable.ToResult(errors);
     }
 
-    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
+    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors, string name = nameof(ToResultAsync))
     where T : class
     {
         var nullable = await nullableTask.ConfigureAwait(false);
-        return nullable.ToResult(errors);
+        return nullable.ToResult(errors, name);
     }
 
     public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)

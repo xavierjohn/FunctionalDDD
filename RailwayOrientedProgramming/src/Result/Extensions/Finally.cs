@@ -28,18 +28,20 @@ public static class FinallyExtensions
     /// <param name="funcOk">A delegate that return the success value.</param>
     /// <param name="funcError">A delegate that returns the error.</param>
     /// <returns>The final result of type TOut</returns>
-    public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError)
+    public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError, string name = nameof(Finally))
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = Trace.ActivitySource.StartActivity(name);
 
         if (result.IsSuccess)
         {
+            activity?.SetTag("delegate", funcOk.Method.Name);
             var r = funcOk(result.Value);
             activity?.SetStatus(ActivityStatusCode.Ok);
             return r;
         }
         else
         {
+            activity?.SetTag("delegate", funcError.Method.Name);
             var r = funcError(result.Error);
             activity?.SetStatus(ActivityStatusCode.Error);
             return r;
@@ -108,10 +110,11 @@ public static class FinallyExtensionsAsync
 
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
         Func<TIn, TOut> funcOk,
-        Func<Error, TOut> funcError)
+        Func<Error, TOut> funcError,
+        string name = nameof(FinallyAsync))
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
-        return result.Finally(funcOk, funcError);
+        return result.Finally(funcOk, funcError, name);
     }
 
     public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask,

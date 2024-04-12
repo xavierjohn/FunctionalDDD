@@ -14,23 +14,23 @@ public static partial class EnsureExtensionsAsync
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, bool> predicate, Error errorMessage)
+    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, bool> predicate, Error errorMessage, string name = nameof(EnsureAsync))
     {
         Result<TOk> result = await resultTask.ConfigureAwait(false);
-        return result.Ensure(predicate, errorMessage);
+        return result.Ensure(predicate, errorMessage, name);
     }
 
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate)
+    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, bool> predicate, Func<TOk, Error> errorPredicate, string name = nameof(EnsureAsync))
     {
         Result<TOk> result = await resultTask.ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
 
-        return result.Ensure(predicate, errorPredicate);
+        return result.Ensure(predicate, errorPredicate, name);
     }
 
     /// <summary>

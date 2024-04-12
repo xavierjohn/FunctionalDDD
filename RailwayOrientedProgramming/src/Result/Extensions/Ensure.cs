@@ -18,12 +18,12 @@ public static class EnsureExtensions
         return result;
     }
 
-    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error, string name = nameof(Ensure))
     {
+        using var activity = Trace.ActivitySource.StartActivity(name);
         if (result.IsFailure)
             return result;
 
-        using var activity = Trace.ActivitySource.StartActivity();
         if (!predicate(result.Value))
         {
             activity?.SetStatus(ActivityStatusCode.Error);
@@ -34,12 +34,12 @@ public static class EnsureExtensions
         return result;
     }
 
-    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate, string name = nameof(Ensure))
     {
+        using var activity = Trace.ActivitySource.StartActivity(name);
         if (result.IsFailure)
             return result;
 
-        using var activity = Trace.ActivitySource.StartActivity();
         if (!predicate(result.Value))
         {
             activity?.SetStatus(ActivityStatusCode.Error);
@@ -50,34 +50,42 @@ public static class EnsureExtensions
         return result;
     }
 
-
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(predicateResult.Error);
+        }
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, Result<TValue>> predicate)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
         var predicateResult = predicate(result.Value);
 
         if (predicateResult.IsFailure)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
             return Result.Failure<TValue>(predicateResult.Error);
+        }
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
-    public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error) =>
-        str.ToResult(error)
-                .Ensure(name => !string.IsNullOrWhiteSpace(name), error);
+    public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error)
+        => string.IsNullOrWhiteSpace(str) ? Result.Failure<string>(error) : Result.Success(str);
 }

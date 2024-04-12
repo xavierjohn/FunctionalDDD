@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Compensate for failed result by calling the given function.
 /// </summary>
@@ -36,10 +38,13 @@ public static class CompensateExtensionsAsync
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         Result<T> result = await resultTask.ConfigureAwait(false);
         if (result.IsSuccess)
             return result;
 
-        return await funcAsync();
+        var retResult = await funcAsync();
+        activity?.SetStatus(retResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
+        return retResult;
     }
 }
