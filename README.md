@@ -190,4 +190,4 @@ var builder = Sdk.CreateTracerProviderBuilder()
 Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
 
 ## Related project
-[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#. I love several of the trainings done by Vladimir Khorikov which has inspired this library.
+[CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#. This library was inspired by several of the training materials created by Vladimir Khorikov.
