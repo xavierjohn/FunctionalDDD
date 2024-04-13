@@ -73,6 +73,26 @@ public class ParallelTests
     }
 
     [Fact]
+    public async Task Run_five_parallel_tasks_map()
+    {
+        // Arrange
+        string result = string.Empty;
+
+        // Act
+        var r = await Task.FromResult(Result.Success("1"))
+            .ParallelAsync(Task.FromResult(Result.Success("2")))
+            .ParallelAsync(Task.FromResult(Result.Success("3")))
+            .ParallelAsync(Task.FromResult(Result.Success("4")))
+            .ParallelAsync(Task.FromResult(Result.Success("5")))
+            .AwaitAsync()
+            .MapAsync((a, b, c, d, e) =>  a + b + c + d + e);
+
+        // Assert
+        r.IsSuccess.Should().BeTrue();
+        r.Value.Should().Be("12345");
+    }
+
+    [Fact]
     public async Task Run_five_parallel_tasks_with_two_failures()
     {
         // Arrange
