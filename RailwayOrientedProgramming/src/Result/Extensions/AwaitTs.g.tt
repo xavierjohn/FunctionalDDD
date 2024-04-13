@@ -37,7 +37,7 @@ public static partial class AwaitExtensionsAsync
   for(var i = 3; i <= 9; i++) { 
 #>
 
-    public static async Task<Result<(<# WriteTs(i); #>)>> AwaitAsync<<# WriteTs(i); #>, TResult>(
+    public static async Task<Result<(<# WriteTs(i); #>)>> AwaitAsync<<# WriteTs(i); #>>(
         this (<# WriteTaskResult(i); #>) tasks)
     {
         await Task.WhenAll(<# WriteTaskItem(i); #>);

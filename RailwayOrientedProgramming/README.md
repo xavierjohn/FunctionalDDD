@@ -70,13 +70,13 @@ Tap calls the given function if the result is in success state and returns the s
 
 ### ParallelAsync
 
- Parallel runs multiple tasks in parallel and returns multiple tasks. `BindAsync` will await all the task and call the given function.
+ Parallel runs multiple tasks in parallel and returns multiple tasks. `AwaitAsync` will await all the task and return the combined result.
 
 ### Finally
 
  Finally unwraps the `Result` and returns the success value or the error.
 
- ### Maybe
+### Maybe
 
  Maybe states if it contains a value or not.
  It has the following methods:
