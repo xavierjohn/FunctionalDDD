@@ -21,6 +21,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>AwaitTs.g.tt</DependentUpon>
     </Compile>
+    <Compile Update="Result\Extensions\TapTs.g.cs">
+      <DependentUpon>TapTs.g.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
     <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
       <DependentUpon>Ensure.cs</DependentUpon>
     </Compile>
@@ -66,6 +71,10 @@
   <ItemGroup>
     <None Update="Result\Extensions\AwaitTs.g.tt">
       <LastGenOutput>AwaitTs.g.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="Result\Extensions\TapTs.g.tt">
+      <LastGenOutput>TapTs.g.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
     <None Update="Result\Extensions\BindTs.g.tt">

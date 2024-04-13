@@ -1,0 +1,61 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#@ include file="CommonFunction.t4" #>
+
+// Generated code
+namespace FunctionalDdd;
+using System.Diagnostics;
+
+public static partial class TapExtensions
+{
+<#
+  void WriteArgs(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "args" + i)));
+  }
+
+  for(var i = 2; i <=9; i++) { 
+#>
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static Result<(<# WriteTs(i); #>)> Tap<<# WriteTs(i); #>>(
+                  this Result<(<# WriteTs(i); #>)> result,
+                  Action<<# WriteTs(i); #>> action)
+    {
+        using var activity = Trace.ActivitySource.StartActivity();
+        if (result.IsSuccess) {
+            var (<# WriteArgs(i); #>) = result.Value;
+            action(<# WriteArgs(i); #>);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
+
+        return result;
+    }
+<#
+ }
+#>
+}
+
+public static partial class TapExtensionsAsync
+{
+<# 
+  for(var i = 2; i <= 9; i++) { 
+#>
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Action<<# WriteTs(i); #>> action)
+    {
+        var result = await resultTask;
+        return result.Tap(action);
+    }
+<#
+ }
+#>
+}

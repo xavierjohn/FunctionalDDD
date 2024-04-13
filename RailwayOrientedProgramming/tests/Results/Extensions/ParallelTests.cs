@@ -3,7 +3,7 @@
 public class ParallelTests
 {
     [Fact]
-    public async Task Run_two_parallel_tasks()
+    public async Task Run_two_parallel_tasks_bind()
     {
         // Arrange
         // Act
@@ -18,22 +18,24 @@ public class ParallelTests
     }
 
     [Fact]
-    public async Task Run_two_parallel_tasks_with_async_result()
+    public async Task Run_two_parallel_tasks_tap()
     {
         // Arrange
+        string result= string.Empty;
+
         // Act
         var r = await Task.FromResult(Result.Success("Hi"))
             .ParallelAsync(Task.FromResult(Result.Success("Bye")))
             .AwaitAsync()
-            .BindAsync((a, b) => Task.FromResult(Result.Success(a + b)));
+            .TapAsync((a, b) => result = a + b);
 
         // Assert
         r.IsSuccess.Should().BeTrue();
-        r.Value.Should().Be("HiBye");
+        result.Should().Be("HiBye");
     }
 
     [Fact]
-    public async Task Run_five_parallel_tasks()
+    public async Task Run_five_parallel_tasks_bind()
     {
         // Arrange
         // Act
@@ -48,6 +50,26 @@ public class ParallelTests
         // Assert
         r.IsSuccess.Should().BeTrue();
         r.Value.Should().Be("12345");
+    }
+
+    [Fact]
+    public async Task Run_five_parallel_tasks_tap()
+    {
+        // Arrange
+        string result = string.Empty;
+
+        // Act
+        var r = await Task.FromResult(Result.Success("1"))
+            .ParallelAsync(Task.FromResult(Result.Success("2")))
+            .ParallelAsync(Task.FromResult(Result.Success("3")))
+            .ParallelAsync(Task.FromResult(Result.Success("4")))
+            .ParallelAsync(Task.FromResult(Result.Success("5")))
+            .AwaitAsync()
+            .TapAsync((a, b, c, d, e) => result = a + b + c + d + e);
+
+        // Assert
+        r.IsSuccess.Should().BeTrue();
+        result.Should().Be("12345");
     }
 
     [Fact]

@@ -7,7 +7,7 @@ using System.Diagnostics;
 /// Executes the given action if the starting result is a success. Returns the starting result.
 /// It is useful to execute functions that don't have a return type or return type can be ignored.
 /// </summary>
-public static class TapExtensions
+public static partial class TapExtensions
 {
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
@@ -34,25 +34,13 @@ public static class TapExtensions
 
         return result;
     }
-
-    /// <summary>
-    /// Executes the given action if the starting result is a success. Returns the starting result.
-    /// </summary>
-    public static Result<(T1, T2)> Tap<T1, T2>(this Result<(T1, T2)> result, Action<T1, T2> action)
-    {
-        if (result.IsFailure)
-            return result;
-        var (args1, args2) = result.Value;
-        action(args1, args2);
-        return result;
-    }
 }
 
 /// <summary>
 /// Executes the given action if the starting result is a success. Returns the starting result.
 /// It is useful to execute functions that don't have a return type or return type can be ignored.
 /// </summary>
-public static class TapExtensionsAsync
+public static partial class TapExtensionsAsync
 {
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
@@ -188,23 +176,4 @@ public static class TapExtensionsAsync
         Result<TValue> result = await resultTask;
         return result.Tap(action);
     }
-
-    /// <summary>
-    /// Executes the given action if the starting result is a success. Returns the starting result.
-    /// </summary>
-    public static async Task<Result<(T1, T2)>> TapAsync<T1, T2>(this Task<Result<(T1, T2)>> resultTask, Action<T1, T2> action)
-    {
-        var result = await resultTask;
-        return result.Tap(action);
-    }
-
-    /// <summary>
-    /// Executes the given action if the starting result is a success. Returns the starting result.
-    /// </summary>
-    public static async ValueTask<Result<(T1, T2)>> TapAsync<T1, T2>(this ValueTask<Result<(T1, T2)>> resultTask, Action<T1, T2> action)
-    {
-        var result = await resultTask;
-        return result.Tap(action);
-    }
-
 }
