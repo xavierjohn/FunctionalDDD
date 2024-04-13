@@ -149,6 +149,7 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
 var r = await _sender.Send(new StudentInformationQuery(studentId)
     .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId))
     .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId))
+    .AwaitAsync()
     .BindAsync((studentInformation, studentGrades, checkoutBooks)
        => PrepareReport(studentInformation, studentGrades, checkoutBooks));
 ```

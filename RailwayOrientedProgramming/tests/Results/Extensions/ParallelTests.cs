@@ -9,6 +9,7 @@ public class ParallelTests
         // Act
         var r = await Task.FromResult(Result.Success("Hi"))
             .ParallelAsync(Task.FromResult(Result.Success("Bye")))
+            .AwaitAsync()
             .BindAsync((a, b) => Result.Success(a + b));
 
         // Assert
@@ -23,6 +24,7 @@ public class ParallelTests
         // Act
         var r = await Task.FromResult(Result.Success("Hi"))
             .ParallelAsync(Task.FromResult(Result.Success("Bye")))
+            .AwaitAsync()
             .BindAsync((a, b) => Task.FromResult(Result.Success(a + b)));
 
         // Assert
@@ -40,6 +42,7 @@ public class ParallelTests
             .ParallelAsync(Task.FromResult(Result.Success("3")))
             .ParallelAsync(Task.FromResult(Result.Success("4")))
             .ParallelAsync(Task.FromResult(Result.Success("5")))
+            .AwaitAsync()
             .BindAsync((a, b, c, d, e) => Result.Success(a + b + c + d + e));
 
         // Assert
@@ -59,6 +62,7 @@ public class ParallelTests
             .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Internal Server error."))))
             .ParallelAsync(Task.FromResult(Result.Success("4")))
             .ParallelAsync(Task.FromResult(Result.Failure<string>(Error.Unexpected("Network unreachable."))))
+            .AwaitAsync()
             .BindAsync((a, b, c, d, e) =>
              {
                  calledFunction = true;
