@@ -17,7 +17,7 @@ public static partial class MapExtensions
 /// <summary>
 /// If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.
 /// </summary>
-public static class MapExtensionsAsync
+public static partial class MapExtensionsAsync
 {
 
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)

@@ -26,6 +26,7 @@ public static partial class MapExtensions
         this Result<(<# WriteTs(i); #>)> result
         , Func<<# WriteTs(i); #>, TResult> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -35,5 +36,25 @@ public static partial class MapExtensions
 <#
  }
 #>
+}
 
+public static partial class MapExtensionsAsync
+{
+<# 
+  for(var i = 2; i <= 9; i++) { 
+#>
+    /// <summary>
+    /// If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.
+    /// </summary>
+    public static async Task<Result<TResult>> MapAsync<<# WriteTs(i); #>, TResult>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<<# WriteTs(i); #>, TResult> func)
+    {
+        var result = await resultTask;
+        return result.Map(func);
+    }
+
+<#
+ }
+#>
 }
