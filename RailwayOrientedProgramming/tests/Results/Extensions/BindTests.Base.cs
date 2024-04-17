@@ -71,58 +71,27 @@ public abstract class BindBase : TestBase
         return Result.Success(T.Value);
     }
 
-    protected Task<Result<T>> Task_Success_T(T value)
-    {
-        return Success_T(value).AsTask();
-    }
+    protected Task<Result<T>> Task_Success_T(T value) => Success_T(value).AsTask();
 
-    protected Task<Result<T>> Task_Failure_T()
-    {
-        return Failure_T().AsTask();
-    }
-    protected Task<Result<T>> Task_Failure_T_E()
-    {
-        return Failure_T_E().AsTask();
-    }
+    protected Task<Result<T>> Task_Failure_T() => Failure_T().AsTask();
 
-    protected Task<Result<K>> Task_Success_K()
-    {
-        return Success_K().AsTask();
-    }
+    protected Task<Result<T>> Task_Failure_T_E() => Failure_T_E().AsTask();
 
-    protected Task<Result<K>> Task_Failure_K()
-    {
-        return Failure_K().AsTask();
-    }
+    protected Task<Result<K>> Task_Success_K() => Success_K().AsTask();
 
-    protected Task<Result<K>> Func_T_Task_Success_K(T value)
-    {
-        return Success_T_Func_K(value).AsTask();
-    }
+    protected Task<Result<K>> Task_Failure_K() => Failure_K().AsTask();
 
-    protected ValueTask<Result<T>> ValueTask_Success_T(T value)
-    {
-        return Success_T(value).AsValueTask();
-    }
+    protected Task<Result<K>> Func_T_Task_Success_K(T value) => Success_T_Func_K(value).AsTask();
 
-    protected ValueTask<Result<T>> ValueTask_Failure_T()
-    {
-        return Failure_T().AsValueTask();
-    }
+    protected ValueTask<Result<T>> ValueTask_Success_T(T value) => Success_T(value).AsValueTask();
 
-    protected ValueTask<Result<K>> ValueTask_Success_K()
-    {
-        return Success_K().AsValueTask();
-    }
-    protected ValueTask<Result<K>> ValueTask_Failure_K()
-    {
-        return Failure_K().AsValueTask();
-    }
+    protected ValueTask<Result<T>> ValueTask_Failure_T() => Failure_T().AsValueTask();
 
-    protected ValueTask<Result<K>> Func_T_ValueTask_Success_K(T value)
-    {
-        return Success_T_Func_K(value).AsValueTask();
-    }
+    protected ValueTask<Result<K>> ValueTask_Success_K() => Success_K().AsValueTask();
+
+    protected ValueTask<Result<K>> ValueTask_Failure_K() => Failure_K().AsValueTask();
+
+    protected ValueTask<Result<K>> Func_T_ValueTask_Success_K(T value) => Success_T_Func_K(value).AsValueTask();
 
     protected void AssertFailure(Result<K> output)
     {
@@ -138,18 +107,9 @@ public abstract class BindBase : TestBase
         output.Value.Should().Be(K.Value);
     }
 
-    protected Task<Result<T>> Task_Success_T_E()
-    {
-        return Success_T_E().AsTask();
-    }
+    protected Task<Result<T>> Task_Success_T_E() => Success_T_E().AsTask();
 
-    protected ValueTask<Result<T>> Func_ValueTask_Success_T_E()
-    {
-        return Success_T_E().AsValueTask();
-    }
+    protected ValueTask<Result<T>> Func_ValueTask_Success_T_E() => Success_T_E().AsValueTask();
 
-    protected ValueTask<Result<T>> ValueTask_Failure_T_E()
-    {
-        return Failure_T_E().AsValueTask();
-    }
+    protected ValueTask<Result<T>> ValueTask_Failure_T_E() => Failure_T_E().AsValueTask();
 }
