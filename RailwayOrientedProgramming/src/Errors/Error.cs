@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using static FunctionalDdd.ValidationError;
 
-[DebuggerDisplay("{Message}")]
+[DebuggerDisplay("{Detail}")]
 #pragma warning disable CA1716 // Identifiers should not match keywords
 public class Error : IEquatable<Error>
 #pragma warning restore CA1716 // Identifiers should not match keywords
@@ -15,14 +15,14 @@ public class Error : IEquatable<Error>
 
     public string? Instance { get; }
 
-    public Error(string message, string code)
+    public Error(string detail, string code)
     {
-        Detail = message;
+        Detail = detail;
         Code = code;
     }
-    public Error(string message, string code, string? instance)
+    public Error(string detail, string code, string? instance)
     {
-        Detail = message;
+        Detail = detail;
         Code = code;
         Instance = instance;
     }
@@ -51,41 +51,41 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(FieldDetails[] fieldDetails, string detail, string? instance, string code)
         => new(fieldDetails, code, detail, instance);
 
-    public static BadRequestError BadRequest(string message, string? instance = null) =>
-        new(message, "bad.request.error", instance);
+    public static BadRequestError BadRequest(string detail, string? instance = null) =>
+        new(detail, "bad.request.error", instance);
 
-    public static ConflictError Conflict(string message, string? instance = null) =>
-        new(message, "conflict.error", instance);
+    public static ConflictError Conflict(string detail, string? instance = null) =>
+        new(detail, "conflict.error", instance);
 
-    public static NotFoundError NotFound(string message, string? instance = null) =>
-        new(message, "not.found.error", instance);
+    public static NotFoundError NotFound(string detail, string? instance = null) =>
+        new(detail, "not.found.error", instance);
 
-    public static UnauthorizedError Unauthorized(string message, string? instance = null) =>
-        new(message, "unauthorized.error", instance);
+    public static UnauthorizedError Unauthorized(string detail, string? instance = null) =>
+        new(detail, "unauthorized.error", instance);
 
-    public static ForbiddenError Forbidden(string message, string? instance = null) =>
-        new(message, "forbidden.error", instance);
+    public static ForbiddenError Forbidden(string detail, string? instance = null) =>
+        new(detail, "forbidden.error", instance);
 
-    public static UnexpectedError Unexpected(string message, string? instance = null) =>
-        new(message, "unexpected.error", instance);
+    public static UnexpectedError Unexpected(string detail, string? instance = null) =>
+        new(detail, "unexpected.error", instance);
 
 
-    public static BadRequestError BadRequest(string message, string code, string? instance) =>
-        new(message, code, instance);
+    public static BadRequestError BadRequest(string detail, string code, string? instance) =>
+        new(detail, code, instance);
 
-    public static ConflictError Conflict(string message, string code, string? instance) =>
-        new(message, code, instance);
+    public static ConflictError Conflict(string detail, string code, string? instance) =>
+        new(detail, code, instance);
 
-    public static NotFoundError NotFound(string message, string code, string? instance) =>
-        new(message, code, instance);
+    public static NotFoundError NotFound(string detail, string code, string? instance) =>
+        new(detail, code, instance);
 
-    public static UnauthorizedError Unauthorized(string message, string code, string? instance) =>
-        new(message, code, instance);
+    public static UnauthorizedError Unauthorized(string detail, string code, string? instance) =>
+        new(detail, code, instance);
 
-    public static ForbiddenError Forbidden(string message, string code, string? instance) =>
-        new(message, code, instance);
+    public static ForbiddenError Forbidden(string detail, string code, string? instance) =>
+        new(detail, code, instance);
 
-    public static UnexpectedError Unexpected(string message, string code, string? instance) =>
-        new(message, code, instance);
+    public static UnexpectedError Unexpected(string detail, string code, string? instance) =>
+        new(detail, code, instance);
 }
 

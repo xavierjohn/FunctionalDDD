@@ -2,7 +2,7 @@
 
 public sealed class ForbiddenError : Error
 {
-    public ForbiddenError(string message, string code, string? instance = null) : base(message, code, instance)
+    public ForbiddenError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }
 }
