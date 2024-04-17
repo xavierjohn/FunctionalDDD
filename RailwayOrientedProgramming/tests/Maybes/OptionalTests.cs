@@ -45,7 +45,7 @@ public class OptionalTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<BadRequestError>();
-        result.Error.Message.Should().Be("Invalid ZipCode.");
+        result.Error.Detail.Should().Be("Invalid ZipCode.");
     }
 
     class ZipCode

@@ -62,7 +62,7 @@ public class ReadResultMaybeFromJsonTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Message.Should().Be("Http Response is in a failed state for value camelcasePerson. Status code: BadGateway");
+        result.Error.Detail.Should().Be("Http Response is in a failed state for value camelcasePerson. Status code: BadGateway");
     }
 
     [Fact]

@@ -11,18 +11,18 @@ public class Error : IEquatable<Error>
 {
     public string Code { get; }
 
-    public string Message { get; }
+    public string Detail { get; }
 
     public string? Instance { get; }
 
     public Error(string message, string code)
     {
-        Message = message;
+        Detail = message;
         Code = code;
     }
     public Error(string message, string code, string? instance)
     {
-        Message = message;
+        Detail = message;
         Code = code;
         Instance = instance;
     }

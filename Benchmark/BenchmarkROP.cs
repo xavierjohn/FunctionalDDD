@@ -36,7 +36,7 @@ public class BenchmarkROP
             .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
             .Finally(
                 ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
-                error => error.Message
+                error => error.Detail
             );
 
     [Benchmark]
@@ -51,7 +51,7 @@ public class BenchmarkROP
         if (rEmailAddress.IsFailure)
             error = error.Combine(rEmailAddress.Error);
 
-        return error.Message;
+        return error.Detail;
     }
 
     [Benchmark]
@@ -60,7 +60,7 @@ public class BenchmarkROP
         .Combine(EmailAddress.TryCreate("bad email"))
         .Finally(
             ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
-            error => error.Message
+            error => error.Detail
         );
 
     [Benchmark]
@@ -75,6 +75,6 @@ public class BenchmarkROP
         if (rFirstName.IsFailure && rEmailAddress.IsFailure)
             error = error.Combine(rEmailAddress.Error);
 
-        return error.Message;
+        return error.Detail;
     }
 }
