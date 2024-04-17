@@ -12,5 +12,5 @@ public sealed class ValidationError : Error
         : base(detail, code, instance)
         => Errors = [.. fieldDetails];
 
-    public List<FieldDetails> Errors { get; }
+    public IList<FieldDetails> Errors { get; set; }
 }
