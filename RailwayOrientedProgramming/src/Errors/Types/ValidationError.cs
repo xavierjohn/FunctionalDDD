@@ -4,11 +4,13 @@ public sealed class ValidationError : Error
 {
     public record FieldDetails(string Name, string[] Details);
 
-    public ValidationError(string fieldDetail, string fieldName, string code, string detail = "", string? instance = null) : base(detail, code, instance)
+    public ValidationError(string fieldDetail, string fieldName, string code, string detail = "", string? instance = null)
+        : base(detail, code, instance)
         => Errors = [new FieldDetails(fieldName, [fieldDetail])];
 
-    public ValidationError(List<FieldDetails> modelErrors, string code, string detail = "", string? instance = null) : base(detail, code, instance)
-        => Errors = [.. modelErrors];
+    public ValidationError(FieldDetails[] fieldDetails, string code, string detail = "", string? instance = null)
+        : base(detail, code, instance)
+        => Errors = [.. fieldDetails];
 
-    public List<FieldDetails> Errors { get; }
+    public IList<FieldDetails> Errors { get; set; }
 }

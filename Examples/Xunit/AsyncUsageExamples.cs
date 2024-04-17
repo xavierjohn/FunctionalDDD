@@ -36,7 +36,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             .EnsureAsync(static customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(static ok => "Okay", static error => error.Message);
+            .FinallyAsync(static ok => "Okay", static error => error.Detail);
 
         result.Should().Be("Okay");
     }
@@ -56,7 +56,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             .TapAsync(static customer => Log("Manager approved promotion"))
             .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(static ok => "Okay", static error => error.Message);
+            .FinallyAsync(static ok => "Okay", static error => error.Detail);
 
         result.Should().Be("Okay");
     }

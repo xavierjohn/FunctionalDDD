@@ -61,7 +61,7 @@ public static class FunctionalDDDValidationExtension
 
         var errors = validationResult.Errors
             .Select(x => new ValidationError.FieldDetails(x.PropertyName, [x.ErrorMessage]))
-            .ToList();
+            .ToArray();
 
         return Result.Failure<T>(Error.Validation(errors));
     }

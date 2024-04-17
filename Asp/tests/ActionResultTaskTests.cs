@@ -103,7 +103,7 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        List<FieldDetails> modelError = [new FieldDetails("firstName", ["First name required."])];
+        FieldDetails[] modelError = [new FieldDetails("firstName", ["First name required."])];
         var error = Error.Validation(modelError, "Customer validation failed.", "Micheal");
         var expected = new ValidationProblemDetails
         {
