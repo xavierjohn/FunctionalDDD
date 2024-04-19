@@ -76,4 +76,19 @@ public class BindTests_ValueTask : BindBase
         AssertSuccess(output);
     }
     #endregion
+
+    [Fact]
+    public async Task BindAsync_Should_Return_Success_Result_When_Result_Is_Success()
+    {
+        // Arrange
+        var result = Result.Success(("value1", "value2"));
+
+        // Act
+        var bindResult = await result.BindAsync((arg1, arg2) =>
+            ValueTask.FromResult(Result.Success(arg1 + arg2)));
+
+        // Assert
+        Assert.True(bindResult.IsSuccess);
+        Assert.Equal("value1value2", bindResult.Value);
+    }
 }

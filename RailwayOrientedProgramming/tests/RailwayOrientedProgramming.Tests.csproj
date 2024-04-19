@@ -4,4 +4,23 @@
 	  <ProjectReference Include="..\src\RailwayOrientedProgramming.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="Results\Extensions\BindTests.g.tt">
+	    <Generator>TextTemplatingFileGenerator</Generator>
+	    <LastGenOutput>BindTests.g.cs</LastGenOutput>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Results\Extensions\BindTests.g.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>BindTests.g.tt</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
 </Project>
