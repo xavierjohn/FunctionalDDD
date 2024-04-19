@@ -30,18 +30,18 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
 	{
 #>
     [Fact]
-    public void Bind_With<#=i#>Parameters_ShouldReturnResult()
-    {
-        // Arrange
-        var result = Result.Success(("Hello", <#WriteNums(i);#>));
+        public void Bind_With<#=i#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>));
 
-        // Act
-        var actual = result.Bind((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            // Act
+            var actual = result.Bind((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
 
-        // Assert
-        Assert.True(actual.IsSuccess);
-        Assert.Equal("Hello <#WriteAssertNums(i);#>", actual.Value);
-    }
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
 <#
     }
 #>
