@@ -43,7 +43,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public void Tap_T_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = result.Tap(Action);
 
@@ -56,7 +56,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public void Tap_T_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = result.Tap(Action_T);
 
@@ -69,7 +69,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public void Tap_T1_T2_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<(T, K)> result = Result.SuccessIf(isSuccess, T.Value, K.Value, Error1);
+        Result<(T, K)> result = Result.SuccessIf(isSuccess, T.Value1, K.Value1, Error1);
 
         var returned = result.Tap(Action);
 
@@ -83,7 +83,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         Result<T> returned = await result.AsTask().TapAsync(Action);
 
@@ -96,7 +96,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsTask().TapAsync(Action);
 
@@ -109,7 +109,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Left_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsTask().TapAsync(Action);
 
@@ -122,7 +122,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Left_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsTask().TapAsync(Action_T);
 
@@ -135,7 +135,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Left_T_E_executes_task_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsTask().TapAsync(Task_Action_T);
 
@@ -148,7 +148,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Right_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.TapAsync(Task_Action);
 
@@ -161,7 +161,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_Task_Right_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.TapAsync(Task_Action_T);
 
@@ -176,7 +176,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsValueTask().TapAsync(ValueTask_Action);
 
@@ -189,7 +189,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsValueTask().TapAsync(ValueTask_Action_T);
 
@@ -202,7 +202,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Left_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsValueTask().TapAsync(Action);
 
@@ -215,7 +215,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Left_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.AsValueTask().TapAsync(Action_T);
 
@@ -228,7 +228,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Right_T_E_executes_action_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.TapAsync(ValueTask_Action);
 
@@ -241,7 +241,7 @@ public class TapTests : TestBase
     [InlineData(false)]
     public async Task Tap_ValueTask_Right_T_E_executes_action_T_on_result_success_and_returns_self(bool isSuccess)
     {
-        Result<T> result = Result.SuccessIf(isSuccess, T.Value, Error1);
+        Result<T> result = Result.SuccessIf(isSuccess, T.Value1, Error1);
 
         var returned = await result.TapAsync(ValueTask_Action_T);
 

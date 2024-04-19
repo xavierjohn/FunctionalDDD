@@ -7,14 +7,14 @@ public abstract class TestBase
 
     protected class T
     {
-        public static readonly T Value = new();
+        public static readonly T Value1 = new();
 
         public static readonly T Value2 = new();
     }
 
     protected class K
     {
-        public static readonly K Value = new();
+        public static readonly K Value1 = new();
 
         public static readonly K Value2 = new();
     }
