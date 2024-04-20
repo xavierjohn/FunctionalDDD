@@ -52,6 +52,17 @@ public static partial class BindExtensionsAsync
         return await func(args1, args2);
     }
 
+    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this Result<(T1, T2)> result,
+        Func<T1, T2, ValueTask<Result<TResult>>> func)
+    {
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2);
+    }
+
 <# 
   for(var i = 3; i <= 9; i++) { 
 #>
@@ -66,6 +77,18 @@ public static partial class BindExtensionsAsync
         var (<# WriteArgs(i); #>) = result.Value;
         return await func(<# WriteArgs(i); #>);
     }
+
+    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this Result<(<# WriteTs(i); #>)> result,
+        Func<<# WriteTs(i); #>, ValueTask<Result<TResult>>> func)
+    {
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>);
+    }
+
 <#
  }
 #>
@@ -83,12 +106,36 @@ public static partial class BindExtensionsAsync
         return func(args1, args2);
     }
 
+    // async tuple input, sync output.
+    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this ValueTask<Result<(T1, T2)>> resultTask,
+        Func<T1, T2, Result<TResult>> func)
+    {
+        var result = await resultTask;
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return func(args1, args2);
+    }
 <# 
   for(var i = 3; i <= 9; i++) { 
 #>
 
     public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+        Func<<# WriteTs(i); #>, Result<TResult>> func)
+    {
+        var result = await resultTask;
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return func(<# WriteArgs(i); #>);
+    }
+
+    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
         var result = await resultTask;
@@ -115,6 +162,17 @@ public static partial class BindExtensionsAsync
         return await func(args1, args2);
     }
 
+    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this ValueTask<Result<(T1, T2)>> resultTask,
+        Func<T1, T2, ValueTask<Result<TResult>>> func)
+    {
+        var result = await resultTask;
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2);
+    }
 <# 
   for(var i = 3; i <= 9; i++) { 
 #>
@@ -122,6 +180,18 @@ public static partial class BindExtensionsAsync
     public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
+    {
+        var result = await resultTask;
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>);
+    }
+
+    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+        Func<<# WriteTs(i); #>, ValueTask<Result<TResult>>> func)
     {
         var result = await resultTask;
         if (result.IsFailure)

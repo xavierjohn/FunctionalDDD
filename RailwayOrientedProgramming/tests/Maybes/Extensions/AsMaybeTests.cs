@@ -32,8 +32,8 @@ public class AsMaybeTests : TestBase
     [Fact]
     public void Class_maybe_conversion_some()
     {
-        Maybe<T> maybeT = T.Value.AsMaybe();
+        Maybe<T> maybeT = T.Value1.AsMaybe();
         maybeT.HasValue.Should().BeTrue();
-        maybeT.Value.Should().Be(T.Value);
+        maybeT.Value.Should().Be(T.Value1);
     }
 }

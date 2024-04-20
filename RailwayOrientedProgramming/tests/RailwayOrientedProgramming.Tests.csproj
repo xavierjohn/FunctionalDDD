@@ -5,21 +5,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Results\Extensions\EnsureTests.Task.cs" DependentUpon="EnsureTests.cs" />
-		<Compile Update="Results\Extensions\EnsureTests.Task.*.cs" DependentUpon="EnsureTests.Task.cs" />
-
-		<Compile Update="Results\Extensions\BindTests.Task.cs" DependentUpon="BindTests.cs" />
-		<Compile Update="Results\Extensions\BindsTests.Task.*.cs" DependentUpon="BindTests.Task.cs" />
-		<Compile Update="Results\Extensions\BindTests.ValueTask.cs" DependentUpon="BindTests.cs" />
-		<Compile Update="Results\Extensions\BindsTests.ValueTask.*.cs" DependentUpon="BindTests.ValueTask.cs" />
+	  <None Update="Results\Extensions\BindTests.g.tt">
+	    <Generator>TextTemplatingFileGenerator</Generator>
+	    <LastGenOutput>BindTests.g.cs</LastGenOutput>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Results\Extensions\BindsTests.ValueTask.Left.cs">
-	    <DependentUpon>BindTests.ValueTask.cs</DependentUpon>
-	  </Compile>
-	  <Compile Update="Results\Extensions\BindsTests.ValueTask.Right.cs">
-	    <DependentUpon>BindTests.ValueTask.cs</DependentUpon>
+	  <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Results\Extensions\BindTests.g.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>BindTests.g.tt</DependentUpon>
 	  </Compile>
 	</ItemGroup>
+
 </Project>
