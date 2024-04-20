@@ -1,6 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-public class ParallelTests
+public class ParallelTestsOld
 {
     [Fact]
     public async Task Run_two_parallel_tasks_bind()
