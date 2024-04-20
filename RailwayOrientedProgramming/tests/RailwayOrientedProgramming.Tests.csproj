@@ -5,6 +5,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Update="Results\Extensions\ParallelTests.g.tt">
+	    <LastGenOutput>ParallelTests.g.cs</LastGenOutput>
+	    <Generator>TextTemplatingFileGenerator</Generator>
+	  </None>
 	  <None Update="Results\Extensions\BindTests.g.tt">
 	    <Generator>TextTemplatingFileGenerator</Generator>
 	    <LastGenOutput>BindTests.g.cs</LastGenOutput>
@@ -16,10 +20,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Results\Extensions\BindTests.g.cs">
+		<Compile Update="Results\Extensions\BindTests.g.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>BindTests.g.tt</DependentUpon>
+		</Compile>		
+	  <Compile Update="Results\Extensions\ParallelTests.g.cs">
 	    <DesignTime>True</DesignTime>
 	    <AutoGen>True</AutoGen>
-	    <DependentUpon>BindTests.g.tt</DependentUpon>
+	    <DependentUpon>ParallelTests.g.tt</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
