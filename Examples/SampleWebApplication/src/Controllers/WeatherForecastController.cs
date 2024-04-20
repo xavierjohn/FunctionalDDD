@@ -71,7 +71,7 @@ public class WeatherForecastController : ControllerBase
     [HttpGet("ValidationError")]
     public ActionResult<Unit> ValidationError(string? instance, string? detail)
     {
-        List<ValidationError.FieldDetails> errors = [
+        ValidationError.FieldDetails[] errors = [
             new("Field1",["Field is required.", "It cannot be empty."]),
             new("Field2",["Field is required."])
         ];

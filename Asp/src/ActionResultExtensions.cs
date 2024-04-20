@@ -72,14 +72,14 @@ public static class ActionResultExtensions
     public static ActionResult<TValue> ToErrorActionResult<TValue>(this Error error, ControllerBase controllerBase)
     => error switch
     {
-        NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status404NotFound),
-        ValidationError validation => ValidationErrors<TValue>(string.IsNullOrEmpty(error.Message) ? null : error.Message, validation, error.Instance, controllerBase),
-        BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status400BadRequest),
-        ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status409Conflict),
-        UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status401Unauthorized),
-        ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status403Forbidden),
-        UnexpectedError => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status500InternalServerError),
-        _ => (ActionResult<TValue>)controllerBase.Problem(error.Message, error.Instance, StatusCodes.Status500InternalServerError)
+        NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status404NotFound),
+        ValidationError validation => ValidationErrors<TValue>(string.IsNullOrEmpty(error.Detail) ? null : error.Detail, validation, error.Instance, controllerBase),
+        BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status400BadRequest),
+        ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status409Conflict),
+        UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status401Unauthorized),
+        ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status403Forbidden),
+        UnexpectedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError),
+        _ => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError)
     };
 
     /// <summary>

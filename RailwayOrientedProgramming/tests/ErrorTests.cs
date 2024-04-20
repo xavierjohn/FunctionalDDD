@@ -15,7 +15,7 @@ public class ErrorTests
         var error = Error.Conflict("message", "code", instance);
 
         // Assert
-        error.Message.Should().Be("message");
+        error.Detail.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<ConflictError>();
         error.Instance.Should().Be(instance);
@@ -32,7 +32,7 @@ public class ErrorTests
         var error = Error.NotFound("message", "code", instance);
 
         // Assert
-        error.Message.Should().Be("message");
+        error.Detail.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<NotFoundError>();
         error.Instance.Should().Be(instance);
@@ -46,7 +46,7 @@ public class ErrorTests
         var error = Error.NotFound("message");
 
         // Assert
-        error.Message.Should().Be("message");
+        error.Detail.Should().Be("message");
         error.Code.Should().Be("not.found.error");
         error.Should().BeOfType<NotFoundError>();
         error.Instance.Should().BeNull();
@@ -62,7 +62,7 @@ public class ErrorTests
         var error = Error.Forbidden("message", "code", instance);
 
         // Assert
-        error.Message.Should().Be("message");
+        error.Detail.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<ForbiddenError>();
         error.Instance.Should().Be(instance);
@@ -78,7 +78,7 @@ public class ErrorTests
         var error = Error.Unauthorized("message", "code", instance);
 
         // Assert
-        error.Message.Should().Be("message");
+        error.Detail.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnauthorizedError>();
         error.Instance.Should().Be(instance);
@@ -94,7 +94,7 @@ public class ErrorTests
         var error = Error.Unexpected("message", "code", instance);
 
         // Assert
-        error.Message.Should().Be("message");
+        error.Detail.Should().Be("message");
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnexpectedError>();
         error.Instance.Should().Be(instance);
@@ -108,7 +108,7 @@ public class ErrorTests
         var error = Error.Validation("field detail.", "field name");
 
         // Assert
-        error.Message.Should().Be("");
+        error.Detail.Should().Be("");
         error.Code.Should().Be("validation.error");
         error.Should().BeOfType<ValidationError>();
         error.Instance.Should().BeNull();
@@ -131,7 +131,7 @@ public class ErrorTests
         var combinedError = error1.Combine(error2);
 
         // Assert
-        combinedError.Message.Should().Be("");
+        combinedError.Detail.Should().Be("");
         combinedError.Code.Should().Be("validation.error");
         combinedError.Should().BeOfType<ValidationError>();
         combinedError.Instance.Should().BeNull();
