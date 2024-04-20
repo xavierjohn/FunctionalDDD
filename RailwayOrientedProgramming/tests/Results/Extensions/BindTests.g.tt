@@ -41,11 +41,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>));
+            var functionCalled = false;
 
             // Act
-            var actual = result.Bind((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            var actual = result.Bind((str, <#WriteParamNums(i);#>) =>
+            { 
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>");
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -55,11 +61,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+            var functionCalled = false;
 
             // Act
-            var actual = result.Bind((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            var actual = result.Bind((str, <#WriteParamNums(i);#>) =>
+            { 
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>");
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
@@ -71,11 +83,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>");
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -85,11 +103,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>");
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
@@ -99,11 +123,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>));
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsTask();
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -113,11 +143,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsTask();
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
@@ -127,11 +163,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsTask();
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -141,11 +183,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsTask();
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
@@ -156,11 +204,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsValueTask();;
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>");
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -170,11 +224,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsValueTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>");
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
@@ -184,11 +244,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>));;
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask();
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -198,11 +264,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask();
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
@@ -212,11 +284,17 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsValueTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask();
+            });
 
             // Assert
+            functionCalled.Should().BeTrue();
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
         }
@@ -224,13 +302,18 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         [Fact]
         public async Task BindAsync_Both_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
         {
-            // Arrange
             var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsValueTask();
+            var functionCalled = false;
 
             // Act
-            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) =>
+            {
+                functionCalled = true;
+                return Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask();
+            });
 
             // Assert
+            functionCalled.Should().BeFalse();
             actual.IsFailure.Should().BeTrue();
             actual.Error.Should().Be(Error1);
         }
