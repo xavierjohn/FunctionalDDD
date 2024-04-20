@@ -2,8 +2,8 @@
 
 public abstract class TestBase
 {
-    public Error Error1 { get; } = Error.Unexpected("Error Message");
-    public Error Error2 { get; } = Error.Unexpected("Error Message2");
+    public Error Error1 { get; } = Error.Unexpected("Error Message one");
+    public Error Error2 { get; } = Error.Unexpected("Error Message two");
 
     protected class T
     {

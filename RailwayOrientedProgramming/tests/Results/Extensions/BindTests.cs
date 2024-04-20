@@ -32,86 +32,172 @@ public partial class BindTests : TestBase
     }
 
     [Fact]
-    public void Bind_WithTwoParameters_ShouldReturnResult()
+    public async Task BindAsync_Left_Task_ShouldReturnResult()
     {
         // Arrange
-        var result = Result.Success(("Hello", 42));
+        var result = Result.Success("Hello").AsTask();
 
         // Act
-        var actual = result.Bind((str, num) => Result.Success($"{str} {num}"));
+        var actual = await result.BindAsync(str => Result.Success($"{str}"));
 
         // Assert
-        Assert.True(actual.IsSuccess);
-        Assert.Equal("Hello 42", actual.Value);
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("Hello");
     }
 
     [Fact]
-    public void Bind_WithTwoParameters_ShouldReturnFailedResult()
+    public async Task BindAsync_Left_Task_ShouldReturnFailedResult()
     {
         // Arrange
-        var result = Result.Failure<(string, int)>(Error1);
+        var result = Result.Failure<string>(Error1).AsTask();
 
         // Act
-        var actual = result.Bind((str, num) => Result.Success($"{str} {num}"));
+        var actual = await result.BindAsync(str => Result.Success($"{str}"));
 
         // Assert
-        Assert.True(actual.IsFailure);
-        Assert.Equal(Error1, actual.Error);
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
     }
 
     [Fact]
-    public async Task BindAsync_Right_Task_WithTwoParameters_ShouldReturnResult()
+    public async Task BindAsync_Right_Task_ShouldReturnResult()
     {
         // Arrange
-        var result = Result.Success(("Hello", 42));
+        var result = Result.Success("Hello");
 
         // Act
-        var actual = await result.BindAsync((str, num) => Task.FromResult(Result.Success($"{str} {num}")));
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsTask());
 
         // Assert
-        Assert.True(actual.IsSuccess);
-        Assert.Equal("Hello 42", actual.Value);
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("Hello");
     }
 
     [Fact]
-    public async Task BindAsync_Right_Task_WithTwoParameters_ShouldReturnFailedResult()
+    public async Task BindAsync_Right_Task_ShouldReturnFailedResult()
     {
         // Arrange
-        var result = Result.Failure<(string, int)>(Error1);
+        var result = Result.Failure<string>(Error1);
 
         // Act
-        var actual = await result.BindAsync((str, num) => Task.FromResult(Result.Success($"{str} {num}")));
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsTask());
 
         // Assert
-        Assert.True(actual.IsFailure);
-        Assert.Equal(Error1, actual.Error);
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
     }
 
     [Fact]
-    public async Task BindAsync_Right_ValueTask_WithTwoParameters_ShouldReturnResult()
+    public async Task BindAsync_Both_Task_ShouldReturnResult()
     {
         // Arrange
-        var result = Result.Success(("Hello", 42));
+        var result = Result.Success("Hello").AsTask();
 
         // Act
-        var actual = await result.BindAsync((str, num) => ValueTask.FromResult(Result.Success($"{str} {num}")));
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsTask());
 
         // Assert
-        Assert.True(actual.IsSuccess);
-        Assert.Equal("Hello 42", actual.Value);
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("Hello");
     }
 
     [Fact]
-    public async Task BindAsync_Right_ValueTask_WithTwoParameters_ShouldReturnFailedResult()
+    public async Task BindAsync_Both_Task_ShouldReturnFailedResult()
     {
         // Arrange
-        var result = Result.Failure<(string, int)>(Error1);
+        var result = Result.Failure<string>(Error1).AsTask();
 
         // Act
-        var actual = await result.BindAsync((str, num) => ValueTask.FromResult(Result.Success($"{str} {num}")));
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsTask());
 
         // Assert
-        Assert.True(actual.IsFailure);
-        Assert.Equal(Error1, actual.Error);
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
     }
+
+    // Bind ValueTask
+    [Fact]
+    public async Task BindAsync_Left_ValueTask_ShouldReturnResult()
+    {
+        // Arrange
+        var result = Result.Success("Hello").AsValueTask();
+
+        // Act
+        var actual = await result.BindAsync(str => Result.Success($"{str}"));
+
+        // Assert
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("Hello");
+    }
+
+    [Fact]
+    public async Task BindAsync_Left_ValueTask_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var result = Result.Failure<string>(Error1).AsValueTask();
+
+        // Act
+        var actual = await result.BindAsync(str => Result.Success($"{str}"));
+
+        // Assert
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
+
+    [Fact]
+    public async Task BindAsync_Right_ValueTask_ShouldReturnResult()
+    {
+        // Arrange
+        var result = Result.Success("Hello");
+
+        // Act
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsValueTask());
+
+        // Assert
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("Hello");
+    }
+
+    [Fact]
+    public async Task BindAsync_Right_ValueTask_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var result = Result.Failure<string>(Error1);
+
+        // Act
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsValueTask());
+
+        // Assert
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
+
+    [Fact]
+    public async Task BindAsync_Both_ValueTask_ShouldReturnResult()
+    {
+        // Arrange
+        var result = Result.Success("Hello").AsValueTask();
+
+        // Act
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsValueTask());
+
+        // Assert
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("Hello");
+    }
+
+    [Fact]
+    public async Task BindAsync_Both_ValueTask_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var result = Result.Failure<string>(Error1).AsValueTask();
+
+        // Act
+        var actual = await result.BindAsync(str => Result.Success($"{str}").AsValueTask());
+
+        // Assert
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
+
 }

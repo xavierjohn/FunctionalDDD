@@ -26,12 +26,18 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
         Write(String.Join(" ", Enumerable.Range(1, n).Select(i => 40 + i)));
     }
 
+    void WriteInts(int n) {
+        Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "int")));
+    }
+
 	for (var i = 1; i < 9; i++)
 	{
 #>
 
+        // Bind
+
         [Fact]
-        public void Bind_With<#=i#>Parameters_ShouldReturnResult()
+        public void Bind_With<#=i+1#>Parameters_ShouldReturnResult()
         {
             // Arrange
             var result = Result.Success(("Hello", <#WriteNums(i);#>));
@@ -42,6 +48,191 @@ namespace RailwayOrientedProgramming.Tests.Results.Extensions
             // Assert
             actual.IsSuccess.Should().BeTrue();
             actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public void Bind_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+
+            // Act
+            var actual = result.Bind((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
+        }
+
+        // Bind Task
+
+        [Fact]
+        public async Task BindAsync_Left_Task_With<#=i+1#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public async Task BindAsync_Left_Task_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
+        }
+
+        [Fact]
+        public async Task BindAsync_Right_Task_With<#=i+1#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>));
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public async Task BindAsync_Right_Task_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
+        }
+
+        [Fact]
+        public async Task BindAsync_Both_Task_With<#=i+1#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public async Task BindAsync_Both_Task_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsTask());
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
+        }
+
+        // Bind ValueTask
+        [Fact]
+        public async Task BindAsync_Left_ValueTask_With<#=i+1#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsValueTask();;
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public async Task BindAsync_Left_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsValueTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>"));
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
+        }
+
+        [Fact]
+        public async Task BindAsync_Right_ValueTask_With<#=i+1#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>));;
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public async Task BindAsync_Right_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
+        }
+
+        [Fact]
+        public async Task BindAsync_Both_ValueTask_With<#=i+1#>Parameters_ShouldReturnResult()
+        {
+            // Arrange
+            var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsValueTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+
+            // Assert
+            actual.IsSuccess.Should().BeTrue();
+            actual.Value.Should().Be("Hello <#WriteAssertNums(i);#>");
+        }
+
+        [Fact]
+        public async Task BindAsync_Both_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+        {
+            // Arrange
+            var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsValueTask();
+
+            // Act
+            var actual = await result.BindAsync((str, <#WriteParamNums(i);#>) => Result.Success($"{str} <#WriteStrNums(i);#>").AsValueTask());
+
+            // Assert
+            actual.IsFailure.Should().BeTrue();
+            actual.Error.Should().Be(Error1);
         }
 <#
     }
