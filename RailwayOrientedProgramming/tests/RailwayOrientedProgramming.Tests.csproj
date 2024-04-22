@@ -1,6 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
+	  <None Include="Results\Extensions\TapTests.g.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>TapTests.g.tt</DependentUpon>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\src\RailwayOrientedProgramming.csproj" />
 	</ItemGroup>
 
@@ -12,6 +20,10 @@
 	  <None Update="Results\Extensions\BindTests.g.tt">
 	    <Generator>TextTemplatingFileGenerator</Generator>
 	    <LastGenOutput>BindTests.g.cs</LastGenOutput>
+	  </None>
+	  <None Update="Results\Extensions\TapTests.g.tt">
+	    <Generator>TextTemplatingFileGenerator</Generator>
+	    <LastGenOutput>TapTests.g.cs</LastGenOutput>
 	  </None>
 	</ItemGroup>
 
@@ -29,6 +41,11 @@
 	    <DesignTime>True</DesignTime>
 	    <AutoGen>True</AutoGen>
 	    <DependentUpon>ParallelTests.g.tt</DependentUpon>
+	  </Compile>		
+	  <Compile Update="Results\Extensions\TapTests.g.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>TapTests.g.tt</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 

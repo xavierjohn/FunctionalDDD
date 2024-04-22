@@ -55,6 +55,17 @@ public static partial class TapExtensionsAsync
         var result = await resultTask;
         return result.Tap(action);
     }
+
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Action<<# WriteTs(i); #>> action)
+    {
+        var result = await resultTask;
+        return result.Tap(action);
+    }
 <#
  }
 #>

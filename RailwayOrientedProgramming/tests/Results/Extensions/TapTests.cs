@@ -1,18 +1,12 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-public class TapTests : TestBase
+public partial class TapTests : TestBase
 {
     protected bool ActionExecuted { get; set; }
 
-    protected void Action()
-    {
-        ActionExecuted = true;
-    }
+    protected void Action() => ActionExecuted = true;
 
-    protected void Action_T(T _)
-    {
-        ActionExecuted = true;
-    }
+    protected void Action_T(T _) => ActionExecuted = true;
 
     protected Task Task_Action()
     {
