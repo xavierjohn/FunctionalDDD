@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Bind;
 
 public partial class BindTests : TestBase
 {
