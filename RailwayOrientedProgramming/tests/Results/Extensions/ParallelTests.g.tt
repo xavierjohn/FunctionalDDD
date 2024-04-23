@@ -5,87 +5,86 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
 
-namespace RailwayOrientedProgramming.Tests.Results.Extensions
+namespace RailwayOrientedProgramming.Tests.Results.Extensions.Parallel;
+
+public partial class ParallelTests : TestBase
 {
-    public partial class ParallelTests : TestBase
+<#
+void WriteParamNums(int n) {
+    Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "num" + i)));
+}
+
+void WriteStrNums(int n) {
+    Write(String.Join(" ", Enumerable.Range(1, n).Select(i => "{num" + i + "}")));
+}
+
+void WriteAssertNums(int n) {
+    Write(String.Join(" ", Enumerable.Range(1, n).Select(i => i)));
+}
+
+for (var i = 2; i < 9; i++)
+{
+#>
+
+    [Fact]
+    public async Task Parallel_Task_With<#=i+1#>Parameters_ShouldReturnResult()
     {
-<#
-    void WriteParamNums(int n) {
-        Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "num" + i)));
-    }
-
-    void WriteStrNums(int n) {
-        Write(String.Join(" ", Enumerable.Range(1, n).Select(i => "{num" + i + "}")));
-    }
-
-    void WriteAssertNums(int n) {
-        Write(String.Join(" ", Enumerable.Range(1, n).Select(i => i)));
-    }
-
-	for (var i = 2; i < 9; i++)
-	{
-#>
-
-        [Fact]
-        public async Task Parallel_Task_With<#=i+1#>Parameters_ShouldReturnResult()
-        {
-            // Arrange
-            <# for (var j = 1; j <= i; j++) { #>
+        // Arrange
+        <# for (var j = 1; j <= i; j++) { #>
 var num<#=j#> = Result.Success(<#=j#>).AsTask();
-            <# } #>
+        <# } #>
 var functionCalled = false;
 
-            // Act
-            var actual = await num1
-            <# for (var j = 2; j <= i; j++) { #>
-                .ParallelAsync(num<#=j#>)
-            <# } #>
-                .AwaitAsync()
-                .BindAsync((<#WriteParamNums(i);#>) =>
-                { 
-                    functionCalled = true;
-                    return Result.Success($"<#WriteStrNums(i);#>");
-                });
+        // Act
+        var actual = await num1
+        <# for (var j = 2; j <= i; j++) { #>
+            .ParallelAsync(num<#=j#>)
+        <# } #>
+            .AwaitAsync()
+            .BindAsync((<#WriteParamNums(i);#>) =>
+            { 
+                functionCalled = true;
+                return Result.Success($"<#WriteStrNums(i);#>");
+            });
 
-            // Assert
-            functionCalled.Should().BeTrue();
-            actual.IsSuccess.Should().BeTrue();
-            actual.Value.Should().Be("<#WriteAssertNums(i);#>");
-        }
+        // Assert
+        functionCalled.Should().BeTrue();
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be("<#WriteAssertNums(i);#>");
+    }
 
-        [Fact]
-        public async Task Parallel_Task_With<#=i+1#>Parameters_ShouldReturnFailedResult()
-        {
-            // Arrange
-            <# for (var j = 1; j <= i; j++) { 
-             if (j == i) {#>
+    [Fact]
+    public async Task Parallel_Task_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+    {
+        // Arrange
+        <# for (var j = 1; j <= i; j++) { 
+            if (j == i) {#>
 var num<#=j#> = Result.Failure<int>(Error1).AsTask();
-			<#} else {#>
+		<#} else {#>
 var num<#=j#> = Result.Success(<#=j#>).AsTask();
-            <#}
-            }#>
+        <#}
+        }#>
 var functionCalled = false;
 
-            // Act
-            var actual = await num1
-            <# for (var j = 2; j <= i; j++) { #>
-                .ParallelAsync(num<#=j#>)
-            <# } #>
-                .AwaitAsync()
-                .BindAsync((<#WriteParamNums(i);#>) =>
-                { 
-                    functionCalled = true;
-                    return Result.Success($"<#WriteStrNums(i);#>");
-                });
+        // Act
+        var actual = await num1
+        <# for (var j = 2; j <= i; j++) { #>
+            .ParallelAsync(num<#=j#>)
+        <# } #>
+            .AwaitAsync()
+            .BindAsync((<#WriteParamNums(i);#>) =>
+            { 
+                functionCalled = true;
+                return Result.Success($"<#WriteStrNums(i);#>");
+            });
 
-            // Assert
-            functionCalled.Should().BeFalse();
-            actual.IsFailure.Should().BeTrue();
-            actual.Error.Should().Be(Error1);
-        }
+        // Assert
+        functionCalled.Should().BeFalse();
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
 
 <#
-    }
+}
 #>
-    }
 }

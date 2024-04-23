@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Tap;
 
 public partial class TapTests : TestBase
 {
