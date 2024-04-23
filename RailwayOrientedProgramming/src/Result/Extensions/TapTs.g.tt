@@ -63,9 +63,11 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, Task> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity("tap");
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>);
+            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
         return result;
@@ -102,9 +104,11 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, ValueTask> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity("tap");
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>);
+            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
         return result;
