@@ -65,10 +65,7 @@ public partial class TapTests : TestBase
         var functionCalled = false;
 
         // Act
-        var actual = result.Tap((str, <#WriteParamNums(i);#>) =>
-        { 
-            functionCalled = true;
-        });
+        var actual = result.Tap((str, <#WriteParamNums(i);#>) => functionCalled = true);
 
         // Assert
         functionCalled.Should().BeFalse();
@@ -108,10 +105,7 @@ public partial class TapTests : TestBase
         var functionCalled = false;
 
         // Act
-        var actual = await resultTask.TapAsync((str, <#WriteParamNums(i);#>) =>
-        {
-            functionCalled = true;
-        });
+        var actual = await resultTask.TapAsync((str, <#WriteParamNums(i);#>) => functionCalled = true);
 
         // Assert
         functionCalled.Should().BeFalse();
@@ -202,6 +196,140 @@ public partial class TapTests : TestBase
 			functionCalled = true;
             resultValue = $"{str} <#WriteStrNums(i);#>";
             return Task.CompletedTask;
+		});
+
+        // Act
+        var actual = await result.TapAsync(func);
+
+        // Assert
+        functionCalled.Should().BeFalse();
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
+
+     // Tap ValueTask
+
+    [Fact]
+    public async Task TapAsync_Left_ValueTask_With<#=i+1#>Parameters_ShouldReturnResult()
+    {
+        // Arrange
+        var resultTask = Result.Success(("Hello", <#WriteNums(i);#>)).AsValueTask();
+        var functionCalled = false;
+        var resultValue = string.Empty;
+
+        // Act
+        var actual = await resultTask.TapAsync((str, <#WriteParamNums(i);#>) =>
+        {
+            functionCalled = true;
+            resultValue = $"{str} <#WriteStrNums(i);#>";
+        });
+
+        // Assert
+        functionCalled.Should().BeTrue();
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be(("Hello", <#WriteNums(i);#>));
+        resultValue.Should().Be("Hello <#WriteAssertNums(i);#>");
+    }
+
+    [Fact]
+    public async Task TapAsync_Left_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var resultTask = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsValueTask();
+        var functionCalled = false;
+
+        // Act
+        var actual = await resultTask.TapAsync((str, <#WriteParamNums(i);#>) => functionCalled = true);
+
+        // Assert
+        functionCalled.Should().BeFalse();
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
+
+    [Fact]
+    public async Task TapAsync_Right_ValueTask_With<#=i+1#>Parameters_ShouldReturnResult()
+    {
+        // Arrange
+        var result = Result.Success(("Hello", <#WriteNums(i);#>));
+        var functionCalled = false;
+        var resultValue = string.Empty;
+        var func = new Func<string, <#WriteInts(i);#>, ValueTask>((str, <#WriteParamNums(i);#>) =>
+		{
+			functionCalled = true;
+            resultValue = $"{str} <#WriteStrNums(i);#>";
+            return ValueTask.CompletedTask;
+		});
+
+        // Act
+        var actual = await result.TapAsync(func);
+
+        // Assert
+        functionCalled.Should().BeTrue();
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be(("Hello", <#WriteNums(i);#>));
+        resultValue.Should().Be("Hello <#WriteAssertNums(i);#>");
+    }
+
+    [Fact]
+    public async Task TapAsync_Right_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1);
+        var functionCalled = false;
+        var resultValue = string.Empty;
+        var func = new Func<string, <#WriteInts(i);#>, ValueTask>((str, <#WriteParamNums(i);#>) =>
+		{
+			functionCalled = true;
+            resultValue = $"{str} <#WriteStrNums(i);#>";
+            return ValueTask.CompletedTask;
+		});
+
+        // Act
+        var actual = await result.TapAsync(func);
+
+        // Assert
+        functionCalled.Should().BeFalse();
+        actual.IsFailure.Should().BeTrue();
+        actual.Error.Should().Be(Error1);
+    }
+
+    [Fact]
+    public async Task TapAsync_Both_ValueTask_With<#=i+1#>Parameters_ShouldReturnResult()
+    {
+        // Arrange
+        var result = Result.Success(("Hello", <#WriteNums(i);#>)).AsValueTask();
+        var functionCalled = false;
+        var resultValue = string.Empty;
+        var func = new Func<string, <#WriteInts(i);#>, ValueTask>((str, <#WriteParamNums(i);#>) =>
+		{
+			functionCalled = true;
+            resultValue = $"{str} <#WriteStrNums(i);#>";
+            return ValueTask.CompletedTask;
+		});
+
+        // Act
+        var actual = await result.TapAsync(func);
+
+        // Assert
+        functionCalled.Should().BeTrue();
+        actual.IsSuccess.Should().BeTrue();
+        actual.Value.Should().Be(("Hello", <#WriteNums(i);#>));
+        resultValue.Should().Be("Hello <#WriteAssertNums(i);#>");
+    }
+
+    [Fact]
+    public async Task TapAsync_Both_ValueTask_With<#=i+1#>Parameters_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var result = Result.Failure<(string, <#WriteInts(i);#>)>(Error1).AsValueTask();
+        var functionCalled = false;
+        var resultValue = string.Empty;
+        var func = new Func<string, <#WriteInts(i);#>, ValueTask>((str, <#WriteParamNums(i);#>) =>
+		{
+			functionCalled = true;
+            resultValue = $"{str} <#WriteStrNums(i);#>";
+            return ValueTask.CompletedTask;
 		});
 
         // Act
