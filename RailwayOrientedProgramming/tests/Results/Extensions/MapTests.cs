@@ -203,18 +203,4 @@ public class MapTests : TestBase
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error1);
     }
-
-    //[Fact]
-    //public void Map_will_not_wrap_value_that_is_already_result()
-    //{
-    //    // Arrange
-    //    var i = Result.Success(5);
-
-    //    // Act
-    //    var result = i.Map(x => Result.Success(x.ToString(CultureInfo.InvariantCulture)));
-
-    //    // Assert
-    //    result.IsSuccess.Should().BeTrue();
-    //    result.Value.Should().Be("5");
-    //}
 }
