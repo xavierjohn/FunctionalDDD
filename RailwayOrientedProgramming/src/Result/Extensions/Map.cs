@@ -7,6 +7,7 @@ public static partial class MapExtensions
 {
     public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> func)
     {
+        using var activity = Trace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
@@ -19,15 +20,13 @@ public static partial class MapExtensions
 /// </summary>
 public static partial class MapExtensionsAsync
 {
-
-    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
-        Result<TIn> result = await resultTask.ConfigureAwait(false);
-
+        using var activity = Trace.ActivitySource.StartActivity("map");
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = await func(result.Value).ConfigureAwait(false);
+        TOut value = await func(result.Value);
 
         return Result.Success<TOut>(value);
     }
@@ -36,22 +35,23 @@ public static partial class MapExtensionsAsync
     {
         Result<TIn> result = await resultTask;
 
-        if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
-
-        TOut value = func(result.Value);
-
-        return Result.Success<TOut>(value);
+        return result.Map(func);
     }
 
-    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> valueTask)
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
     {
         Result<TIn> result = await resultTask;
 
+        return await result.MapAsync(func);
+    }
+
+    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, ValueTask<TOut>> func)
+    {
+        using var activity = Trace.ActivitySource.StartActivity("map");
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = await valueTask(result.Value);
+        TOut value = await func(result.Value);
 
         return Result.Success<TOut>(value);
     }
@@ -60,11 +60,13 @@ public static partial class MapExtensionsAsync
     {
         Result<TIn> result = await resultTask;
 
-        if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
+        return result.Map(func);
+    }
 
-        TOut value = func(result.Value);
+    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> func)
+    {
+        Result<TIn> result = await resultTask;
 
-        return Result.Success<TOut>(value);
+        return await result.MapAsync(func);
     }
 }
