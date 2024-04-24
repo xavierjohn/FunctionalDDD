@@ -8,11 +8,9 @@ public class ZipCode : ScalarValueObject<string>
     {
     }
 
-    public static Result<ZipCode> TryCreate(string? zipCode)
-    {
-        return s_validationRules.ValidateToResult(zipCode)
+    public static Result<ZipCode> TryCreate(string? zipCode) =>
+        s_validationRules.ValidateToResult(zipCode)
             .Map(v => new ZipCode(v!));
-    }
 
     static readonly InlineValidator<string?> s_validationRules = new()
     {
