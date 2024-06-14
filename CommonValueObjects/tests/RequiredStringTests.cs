@@ -23,8 +23,7 @@ public class RequiredStringTests
     }
 
     [Fact]
-    public void Can_create_RequiredString()
-    {
+    public void Can_create_RequiredString() =>
         InternalTrackingId.TryCreate("32141sd")
             .Tap(trackingId =>
             {
@@ -32,7 +31,6 @@ public class RequiredStringTests
                 trackingId.ToString().Should().Be("32141sd");
             })
             .IsSuccess.Should().BeTrue();
-    }
 
     [Fact]
     public void Two_RequiredString_with_same_value_should_be_equal() =>
