@@ -1,21 +1,20 @@
-﻿namespace SourceGenerator
+﻿namespace SourceGenerator;
+
+using System.Text.RegularExpressions;
+
+internal static class StringExtenstions
 {
-    using System.Text.RegularExpressions;
+    /// <summary>
+    /// Splits pascal case, so "FooBar" would become "Foo Bar".
+    /// </summary>
+    internal static string SplitPascalCase(this string input)
+        => Regex.Replace(input, @"(?<=[a-z])(?=[A-Z])", " ").Trim();
 
-    internal static class StringExtenstions
+    public static string ToCamelCase(this string str)
     {
-        /// <summary>
-        /// Splits pascal case, so "FooBar" would become "Foo Bar".
-        /// </summary>
-        internal static string SplitPascalCase(this string input)
-            => Regex.Replace(input, @"(?<=[a-z])(?=[A-Z])", " ").Trim();
+        if (!string.IsNullOrEmpty(str) && str.Length > 1)
+            return char.ToLowerInvariant(str[0]) + str.Substring(1);
 
-        public static string ToCamelCase(this string str)
-        {
-            if (!string.IsNullOrEmpty(str) && str.Length > 1)
-                return char.ToLowerInvariant(str[0]) + str.Substring(1);
-
-            return str.ToLowerInvariant();
-        }
+        return str.ToLowerInvariant();
     }
 }
