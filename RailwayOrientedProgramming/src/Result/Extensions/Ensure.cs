@@ -1,7 +1,6 @@
 ﻿namespace FunctionalDdd;
 
 using System;
-using System.Diagnostics;
 
 /// <summary>
 ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
@@ -74,4 +73,6 @@ public static class EnsureExtensions
 
     public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error)
         => string.IsNullOrWhiteSpace(str) ? Result.Failure<string>(error) : Result.Success(str);
+
+    public static Result<Unit> Ensure(bool flag, Error error) => flag ? Result.Success() : Result.Failure(error);
 }

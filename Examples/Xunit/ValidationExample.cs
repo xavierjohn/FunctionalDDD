@@ -1,17 +1,21 @@
 ﻿namespace Example;
 
 using FunctionalDdd;
+using static EnsureExtensions;
 
 public class ValidationExample
 {
     [Fact]
     public void Validation_successful_Test()
     {
+        var createdAt = DateTime.UtcNow;
+        var updatedAt = createdAt;
 
         var actual = EmailAddress.TryCreate("xavier@somewhere.com")
             .Combine(FirstName.TryCreate("Xavier"))
             .Combine(LastName.TryCreate("John"))
             .Combine(EmailAddress.TryCreate("xavier@somewhereelse.com"))
+            .Combine(Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt")))
             .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
 
         actual.Value.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
@@ -20,11 +24,13 @@ public class ValidationExample
     [Fact]
     public void Validation_failed_Test()
     {
-
+        var createdAt = DateTime.UtcNow;
+        var updatedAt = createdAt.AddMinutes(-10);
         var actual = EmailAddress.TryCreate("xavier@somewhere.com")
             .Combine(FirstName.TryCreate("Xavier"))
             .Combine(LastName.TryCreate(string.Empty))
             .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
+            .Combine(Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt", nameof(updatedAt))))
             .Bind((email, firstName, lastName, anotherEmail) =>
             {
                 true.Should().BeFalse("this code should not get executed");
@@ -33,11 +39,12 @@ public class ValidationExample
 
         actual.IsFailure.Should().BeTrue();
         var validationErrors = (ValidationError)actual.Error;
-        validationErrors.Errors.Should().HaveCount(2);
+        validationErrors.Errors.Should().HaveCount(3);
         validationErrors.Errors.Should().BeEquivalentTo(new ValidationError.FieldDetails[]
         {
            new("lastName", ["Last Name cannot be empty."]),
-           new("email", ["Email address is not valid."])
+           new("email", ["Email address is not valid."]),
+           new("updatedAt", ["updateAt cannot be less than createdAt"]),
         });
     }
 
