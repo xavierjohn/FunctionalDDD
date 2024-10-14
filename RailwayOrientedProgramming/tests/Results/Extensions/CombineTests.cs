@@ -3,6 +3,40 @@
 public class CombineTests
 {
     [Fact]
+    public void Combine_one_result_and_Unit_where_both_are_success()
+    {
+        // Arrange
+        var rHello = Result.Success("Hello")
+            .Combine(Result.Success())
+            .Bind(hello => Result.Success($"{hello}"));
+
+        // Act
+
+        // Assert
+        rHello.IsSuccess.Should().BeTrue();
+        var helloWorld = rHello.Value;
+        helloWorld.Should().Be("Hello");
+    }
+
+    [Fact]
+    public void Combine_one_result_and_Unit_where_one_is_success()
+    {
+        // Arrange
+        var rHelloWorld = Result.Success("Hello")
+            .Combine(Result.Failure(Error.Validation("Bad World", "key")))
+            .Bind(hello => Result.Success($"{hello}"));
+
+        // Act
+
+        // Assert
+        rHelloWorld.IsFailure.Should().BeTrue();
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
+        validation.Errors.Should().ContainSingle();
+        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("key", ["Bad World"]));
+    }
+
+    [Fact]
     public void Combine_two_results_where_both_are_success()
     {
         // Arrange
@@ -42,6 +76,42 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Failure<string>(Error.Validation("Bad World", "key"))
             .Combine(Result.Success("World"))
+            .Bind((hello, world) => Result.Success($"{hello} {world}"));
+
+        // Act
+
+        // Assert
+        rHelloWorld.IsFailure.Should().BeTrue();
+        rHelloWorld.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)rHelloWorld.Error;
+        validation.Errors.Should().ContainSingle();
+        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("key", ["Bad World"]));
+    }
+
+    [Fact]
+    public void Combine_two_result_and_Unit_where_both_are_success()
+    {
+        // Arrange
+        var rHelloWorld = Result.Success("Hello")
+            .Combine(Result.Success("World"))
+            .Combine(Result.Success())
+            .Bind((hello, world) => Result.Success($"{hello} {world}"));
+
+        // Act
+
+        // Assert
+        rHelloWorld.IsSuccess.Should().BeTrue();
+        var helloWorld = rHelloWorld.Value;
+        helloWorld.Should().Be("Hello World");
+    }
+
+    [Fact]
+    public void Combine_two_result_and_Unit_where_one_is_success()
+    {
+        // Arrange
+        var rHelloWorld = Result.Success("Hello")
+            .Combine(Result.Success("World"))
+            .Combine(Result.Failure(Error.Validation("Bad World", "key")))
             .Bind((hello, world) => Result.Success($"{hello} {world}"));
 
         // Act
@@ -105,7 +175,6 @@ public class CombineTests
             .Combine(Result.Success("8"))
             .Combine(Result.Success("9"))
             .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Success($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
-
 
         // Act
 
