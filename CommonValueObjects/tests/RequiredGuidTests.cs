@@ -1,5 +1,6 @@
 ﻿namespace CommonValueObjects.Tests;
 using System;
+using Xunit;
 
 public partial class EmployeeId : RequiredGuid
 {
@@ -217,5 +218,20 @@ public class RequiredGuidTests
         // Assert
         act.Should().Throw<FormatException>()
             .WithMessage("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)");
+    }
+
+    [Fact]
+    public void Can_use_Contains()
+    {
+        // Arrange
+        var employeeId1 = EmployeeId.NewUnique();
+        var employeeId2 = EmployeeId.NewUnique();
+        IReadOnlyList<EmployeeId> employeeIds = new List<EmployeeId> { employeeId1, employeeId2 };
+
+        // Act
+        var actual = employeeIds.Contains(employeeId1);
+
+        // Assert
+        actual.Should().BeTrue();
     }
 }

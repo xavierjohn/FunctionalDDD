@@ -162,6 +162,21 @@ public class RequiredStringTests
             .WithMessage("Tracking Id cannot be empty.");
     }
 
+    [Fact]
+    public void Can_use_Contains()
+    {
+        // Arrange
+        var id1 = TrackingId.TryCreate("id1").Value;
+        var id2 = TrackingId.TryCreate("id2").Value;
+        IReadOnlyList<TrackingId> ids = [id1, id2];
+
+        // Act
+        var actual = ids.Contains(id1);
+
+        // Assert
+        actual.Should().BeTrue();
+    }
+
     public static TheoryData<string?> GetBadString() =>
         new TheoryData<string?>
         {
