@@ -1,6 +1,7 @@
 ﻿namespace Benchmark;
 using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
+using System.Globalization;
 
 /// <summary>
 /// Benchmark ROP vs If.
@@ -35,7 +36,7 @@ public class BenchmarkROP
         FirstName.TryCreate("Xavier")
             .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
             .Finally(
-                ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
+                ok => ok.Item1.ToString(CultureInfo.InvariantCulture) + " " + ok.Item2.ToString(CultureInfo.InvariantCulture),
                 error => error.Detail
             );
 
@@ -45,7 +46,7 @@ public class BenchmarkROP
         var rFirstName = FirstName.TryCreate("Xavier");
         var rEmailAddress = EmailAddress.TryCreate("xavier@somewhere.com");
         if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
-            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
+            return rFirstName.Value.ToString(CultureInfo.InvariantCulture) + " " + rEmailAddress.Value.ToString(CultureInfo.InvariantCulture);
 
         var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
         if (rEmailAddress.IsFailure)
@@ -59,7 +60,7 @@ public class BenchmarkROP
     FirstName.TryCreate("Xavier")
         .Combine(EmailAddress.TryCreate("bad email"))
         .Finally(
-            ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
+            ok => ok.Item1.ToString(CultureInfo.InvariantCulture) + " " + ok.Item2.ToString(CultureInfo.InvariantCulture),
             error => error.Detail
         );
 
@@ -69,7 +70,7 @@ public class BenchmarkROP
         var rFirstName = FirstName.TryCreate("Xavier");
         var rEmailAddress = EmailAddress.TryCreate("bad email");
         if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
-            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
+            return rFirstName.Value.ToString(CultureInfo.InvariantCulture) + " " + rEmailAddress.Value.ToString(CultureInfo.InvariantCulture);
 
         var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
         if (rFirstName.IsFailure && rEmailAddress.IsFailure)

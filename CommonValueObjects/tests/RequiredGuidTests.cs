@@ -1,5 +1,6 @@
 ﻿namespace CommonValueObjects.Tests;
 using System;
+using System.Globalization;
 using Xunit;
 
 public partial class EmployeeId : RequiredGuid
@@ -44,7 +45,7 @@ public class RequiredGuidTests
             .Tap(empId =>
             {
                 empId.Should().BeOfType<EmployeeId>();
-                empId.ToString().Should().Be(strGuid);
+                empId.ToString(CultureInfo.InvariantCulture).Should().Be(strGuid);
             })
             .IsSuccess.Should().BeTrue();
     }
@@ -82,7 +83,7 @@ public class RequiredGuidTests
         var myGuid = EmployeeId.TryCreate(guid).Value;
 
         // Act
-        var actual = myGuid.ToString();
+        var actual = myGuid.ToString(CultureInfo.InvariantCulture);
 
         // Assert
         actual.Should().Be(guid.ToString());
@@ -175,7 +176,7 @@ public class RequiredGuidTests
 
         // Assert
         myGuid.Should().BeOfType<EmployeeId>();
-        myGuid!.ToString().Should().Be(strGuid);
+        myGuid!.ToString(CultureInfo.InvariantCulture).Should().Be(strGuid);
     }
 
     [Fact]
@@ -203,7 +204,7 @@ public class RequiredGuidTests
 
         // Assert
         myGuid.Should().BeOfType<EmployeeId>();
-        myGuid.ToString().Should().Be(strGuid);
+        myGuid.ToString(CultureInfo.InvariantCulture).Should().Be(strGuid);
     }
 
     [Fact]
