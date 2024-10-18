@@ -1,5 +1,7 @@
 ﻿namespace CommonValueObjects.Tests;
 
+using System.Globalization;
+
 public class EmailAddressTests
 {
     [Theory]
@@ -36,7 +38,7 @@ public class EmailAddressTests
         // Assert
         .Should().BeTrue();
         email.Should().BeOfType<EmailAddress>();
-        email!.ToString().Should().Be(strEmail);
+        email!.ToString(CultureInfo.InvariantCulture).Should().Be(strEmail);
     }
 
     [Theory]
@@ -60,7 +62,7 @@ public class EmailAddressTests
 
         // Assert
         email.Should().BeOfType<EmailAddress>();
-        email.ToString().Should().Be(strEmail);
+        email.ToString(CultureInfo.InvariantCulture).Should().Be(strEmail);
     }
 
     [Theory]

@@ -35,7 +35,7 @@ public class BenchmarkROP
         FirstName.TryCreate("Xavier")
             .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
             .Finally(
-                ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
+                ok => ok.Item1 + " " + ok.Item2,
                 error => error.Detail
             );
 
@@ -45,7 +45,7 @@ public class BenchmarkROP
         var rFirstName = FirstName.TryCreate("Xavier");
         var rEmailAddress = EmailAddress.TryCreate("xavier@somewhere.com");
         if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
-            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
+            return rFirstName.Value + " " + rEmailAddress.Value;
 
         var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
         if (rEmailAddress.IsFailure)
@@ -59,7 +59,7 @@ public class BenchmarkROP
     FirstName.TryCreate("Xavier")
         .Combine(EmailAddress.TryCreate("bad email"))
         .Finally(
-            ok => ok.Item1.ToString() + " " + ok.Item2.ToString(),
+            ok => ok.Item1 + " " + ok.Item2,
             error => error.Detail
         );
 
@@ -69,7 +69,7 @@ public class BenchmarkROP
         var rFirstName = FirstName.TryCreate("Xavier");
         var rEmailAddress = EmailAddress.TryCreate("bad email");
         if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
-            return rFirstName.Value.ToString() + " " + rEmailAddress.Value.ToString();
+            return rFirstName.Value + " " + rEmailAddress.Value;
 
         var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
         if (rFirstName.IsFailure && rEmailAddress.IsFailure)
