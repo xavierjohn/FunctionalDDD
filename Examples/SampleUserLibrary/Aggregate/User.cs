@@ -1,4 +1,4 @@
-﻿namespace SampleWebApplication;
+﻿namespace SampleUserLibrary;
 using FluentValidation;
 using FunctionalDdd;
 
@@ -14,7 +14,6 @@ public class User : Aggregate<UserId>
         var user = new User(firstName, lastName, email, password);
         return Validator.ValidateToResult(user);
     }
-
 
     private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
         : base(UserId.NewUnique())

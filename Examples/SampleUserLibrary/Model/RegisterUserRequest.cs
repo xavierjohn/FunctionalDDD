@@ -1,4 +1,4 @@
-﻿namespace SampleWebApplication.Model;
+﻿namespace SampleUserLibrary;
 
 public record RegisterUserRequest(
     string firstName,

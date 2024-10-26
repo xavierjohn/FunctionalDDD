@@ -1,4 +1,4 @@
-﻿namespace SampleWebApplication;
+﻿namespace SampleUserLibrary;
 
 using FunctionalDdd;
 

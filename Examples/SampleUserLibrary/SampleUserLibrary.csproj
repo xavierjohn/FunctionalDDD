@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SampleUserLibrary</RootNamespace>
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\CommonValueObjects\src\CommonValueObjects.csproj" />
+    <ProjectReference Include="..\..\FluentValidation\src\FluentValidation.csproj" />
+  </ItemGroup>
+  
+</Project>

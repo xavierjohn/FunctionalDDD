@@ -1,0 +1,11 @@
+@SampleMinimalApi_HostAddress = http://localhost:5157
+
+GET {{SampleMinimalApi_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{SampleMinimalApi_HostAddress}}/todos/1
+Accept: application/json
+
+###
