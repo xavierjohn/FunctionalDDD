@@ -9,4 +9,10 @@
     <RootNamespace>SampleMinimalApi</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Http\Http\Http.csproj" />
+    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
+    <ProjectReference Include="..\SampleUserLibrary\SampleUserLibrary.csproj" />
+  </ItemGroup>
+
 </Project>
