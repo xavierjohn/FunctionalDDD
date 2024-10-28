@@ -1,6 +1,5 @@
 ﻿namespace FunctionalDdd;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
 /// These extension methods are used to convert the Result object to <see cref="Results"/>.
@@ -33,22 +32,16 @@ public static class HttpResultExtensions
             return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance);
         }
 
-        var problem = new ProblemDetails
+        var status = error switch
         {
-            Detail = error.Detail,
-            Instance = error.Instance,
-            Status = error switch
-            {
-                NotFoundError => StatusCodes.Status404NotFound,
-                BadRequestError => StatusCodes.Status400BadRequest,
-                ConflictError => StatusCodes.Status409Conflict,
-                UnauthorizedError => StatusCodes.Status401Unauthorized,
-                ForbiddenError => StatusCodes.Status403Forbidden,
-                UnexpectedError => StatusCodes.Status500InternalServerError,
-                _ => StatusCodes.Status500InternalServerError
-            }
+            NotFoundError => StatusCodes.Status404NotFound,
+            BadRequestError => StatusCodes.Status400BadRequest,
+            ConflictError => StatusCodes.Status409Conflict,
+            UnauthorizedError => StatusCodes.Status401Unauthorized,
+            ForbiddenError => StatusCodes.Status403Forbidden,
+            UnexpectedError => StatusCodes.Status500InternalServerError,
+            _ => StatusCodes.Status500InternalServerError
         };
-
-        return Results.Problem(problem);
+        return Results.Problem(error.Detail, error.Instance, status);
     }
 }

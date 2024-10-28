@@ -55,7 +55,7 @@ Accept: application/json
 ###
 
 // Unauthorized
-GET {{SampleMinimalApi_HostAddress}}/users/notfound/213
+GET {{SampleMinimalApi_HostAddress}}/users/unauthorized/213
 Accept: application/json
 
 ###
