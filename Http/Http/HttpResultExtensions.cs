@@ -17,56 +17,16 @@ public static class HttpResultExtensions
     /// </summary>
     /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
     /// <param name="result">The result object.</param>
-    /// <returns><see cref="IValueHttpResult{TValue}"/> </returns>
+    /// <returns><see cref="Microsoft.AspNetCore.Http.IResult"/> </returns>
     public static Microsoft.AspNetCore.Http.IResult ToOkResult<TValue>(this Result<TValue> result)
         => result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToErrorResult<TValue>();
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="Microsoft.AspNetCore.Http.IResult"/>.
     /// </summary>
-    /// <typeparam name="TValue">The type of the <see cref="ActionResult{TValue}"/></typeparam>
     /// <param name="error">The domain error object.</param>
-    /// <param name="controllerBase">The controller object.</param>
     /// <returns>
-    ///     <para>Converts domain errors to failed <see cref="ObjectResult"/>:</para>
-    ///     <list type="table">
-    ///         <listheader>
-    ///             <term>Domain Error</term>
-    ///             <description>HTTP error</description>
-    ///         </listheader>
-    ///         <item>
-    ///             <term><see cref="NotFoundError"/></term>
-    ///             <description><see cref="ControllerBase.NotFound()"/></description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="ValidationError"/></term>
-    ///             <description><see cref="ControllerBase.ValidationProblem()"/></description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="BadRequestError"/></term>
-    ///             <description><see cref="ControllerBase.BadRequest()"/></description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="ConflictError"/></term>
-    ///             <description><see cref="ControllerBase.Conflict()"/></description>
-    ///         </item>    
-    ///         <item>
-    ///             <term><see cref="UnauthorizedError"/></term>
-    ///             <description><see cref="ControllerBase.Unauthorized()"/></description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="ForbiddenError"/></term>
-    ///             <description>403 Forbidden</description>
-    ///         </item>    
-    ///         <item>
-    ///             <term><see cref="UnexpectedError"/></term>
-    ///             <description>500 Internal Server Error</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>Everything else</term>
-    ///             <description>500 Internal Server Error</description>
-    ///         </item>
-    ///     </list>
+    ///     <para>Converts domain errors to failed <see cref="Microsoft.AspNetCore.Http.IResult"/>:</para>
     /// </returns>
     public static Microsoft.AspNetCore.Http.IResult ToErrorResult<TValue>(this Error error)
     {
@@ -79,17 +39,17 @@ public static class HttpResultExtensions
         var problem = new ProblemDetails
         {
             Detail = error.Detail,
-            Instance = error.Instance
-        };
-        problem.Status = error switch
-        {
-            NotFoundError => StatusCodes.Status404NotFound,
-            BadRequestError => StatusCodes.Status400BadRequest,
-            ConflictError => StatusCodes.Status409Conflict,
-            UnauthorizedError => StatusCodes.Status401Unauthorized,
-            ForbiddenError => StatusCodes.Status403Forbidden,
-            UnexpectedError => StatusCodes.Status500InternalServerError,
-            _ => StatusCodes.Status500InternalServerError
+            Instance = error.Instance,
+            Status = error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                BadRequestError => StatusCodes.Status400BadRequest,
+                ConflictError => StatusCodes.Status409Conflict,
+                UnauthorizedError => StatusCodes.Status401Unauthorized,
+                ForbiddenError => StatusCodes.Status403Forbidden,
+                UnexpectedError => StatusCodes.Status500InternalServerError,
+                _ => StatusCodes.Status500InternalServerError
+            }
         };
 
         return Results.Problem(problem);
