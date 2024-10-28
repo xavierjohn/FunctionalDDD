@@ -1,8 +1,6 @@
 using SampleUserLibrary;
 using System.Text.Json.Serialization;
 using FunctionalDdd;
-using FunctionalDdd.Http;
-using System.ComponentModel.DataAnnotations;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 

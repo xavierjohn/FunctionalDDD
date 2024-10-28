@@ -1,9 +1,6 @@
-﻿namespace FunctionalDdd.Http;
-using FunctionalDdd;
+﻿namespace FunctionalDdd;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.ComponentModel.DataAnnotations;
 
 /// <summary>
 /// These extension methods are used to convert the Result object to <see cref="Results"/>.
