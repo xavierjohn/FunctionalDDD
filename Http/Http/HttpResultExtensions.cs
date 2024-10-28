@@ -71,7 +71,10 @@ public static class HttpResultExtensions
     public static Microsoft.AspNetCore.Http.IResult ToErrorResult<TValue>(this Error error)
     {
         if (error is ValidationError validationError)
-            return ValidationErrors(validationError);
+        {
+            var errors = validationError.Errors.ToDictionary(error => error.Name, error => error.Details);
+            return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance);
+        }
 
         var problem = new ProblemDetails
         {
@@ -90,16 +93,5 @@ public static class HttpResultExtensions
         };
 
         return Results.Problem(problem);
-    }
-
-    private static Microsoft.AspNetCore.Http.IResult ValidationErrors(ValidationError validation)
-    {
-        ModelStateDictionary modelState = new();
-        var results = new List<ValidationResult>();
-        foreach (var error in validation.Errors)
-            foreach (var detailError in error.Details)
-                results.Add(new ValidationResult(detailError, [error.Name]));
-
-        return Results.BadRequest(results);
     }
 }
