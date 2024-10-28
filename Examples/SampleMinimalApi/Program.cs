@@ -66,6 +66,7 @@ public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplet
 [JsonSerializable(typeof(RegisterUserResponse))]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
+[JsonSerializable(typeof(Microsoft.AspNetCore.Http.HttpResults.ValidationProblem))]
 internal partial class AppJsonSerializerContext : JsonSerializerContext
 {
 
