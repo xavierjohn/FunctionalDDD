@@ -2,11 +2,11 @@
 
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc;
-using SampleWebApplication.Model;
+using SampleUserLibrary;
 
 [ApiController]
 [Route("[controller]")]
-public class AuthenticationController : ControllerBase
+public class UserController : ControllerBase
 {
 #pragma warning disable ASP0023 // Route conflict detected between controller actions
     [HttpPost("[action]")]
@@ -14,7 +14,7 @@ public class AuthenticationController : ControllerBase
         FirstName.TryCreate(request.firstName)
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
         .ToOkActionResult(this);
 
     [HttpPost("[action]")]
@@ -22,17 +22,7 @@ public class AuthenticationController : ControllerBase
         FirstName.TryCreate(request.firstName)
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
-        .Finally(result => result.IsSuccess
-            ? CreatedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
-            : result.ToErrorActionResult(this));
-
-    [HttpPost("[action]")]
-    public ActionResult<User> RegisterCreated2([FromBody] RegisterUserRequest request) =>
-        FirstName.TryCreate(request.firstName)
-        .Combine(LastName.TryCreate(request.lastName))
-        .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
         .Finally(
             ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
             err => err.ToErrorActionResult<User>(this));
@@ -42,7 +32,7 @@ public class AuthenticationController : ControllerBase
         FirstName.TryCreate(request.firstName)
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
+        .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
         .Finally(result => result.IsSuccess
             ? AcceptedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
             : result.ToErrorActionResult(this));

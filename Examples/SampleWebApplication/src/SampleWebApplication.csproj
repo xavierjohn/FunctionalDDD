@@ -12,10 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Asp\src\Asp.csproj" />
-    <ProjectReference Include="..\..\..\CommonValueObjects\src\CommonValueObjects.csproj" />
-    <ProjectReference Include="..\..\..\FluentValidation\src\FluentValidation.csproj" />
     <ProjectReference Include="..\..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
-    <ProjectReference Include="..\..\..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="..\..\SampleUserLibrary\SampleUserLibrary.csproj" />
   </ItemGroup>
 
 </Project>

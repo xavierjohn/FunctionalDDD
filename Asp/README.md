@@ -1,15 +1,17 @@
 # ASP Extension
 
-This library will help convert Error objects to ASP.NET Core ActionResult.
+This library will help convert Error objects to ASP.NET Core ActionResult
+
+## MVC
 
 - ToOkActionResult
 - ToErrorActionResult
 
-## ToOkActionResult
+### ToOkActionResult
 
 Use this method to convert `Result` to `OkObjectResult` or various failed results.
 
-## ToErrorActionResult
+### ToErrorActionResult
 
 Use this method to convert `Error` to various failed results.
 The mapping is as follows
@@ -24,7 +26,7 @@ The mapping is as follows
     _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
 ```
 
-## Example
+### Example
 
 Simple case.
 
@@ -52,7 +54,46 @@ public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =
         err => err.ToErrorActionResult<User>(this));
 ```
 
-## ToPartialOrOkActionResult
+### ToPartialOrOkActionResult
 ToPartialOrOkActionResult can be used to support pagination.
 The function takes in three parameters to, from and length and based on the values
 will return PartialContent (206) or Okay(200) per [RFC9110](https://www.rfc-editor.org/rfc/rfc9110#field.content-range)
+
+## Minimal API
+- ToOkResult
+- ToErrorResult
+
+### ToOkResult
+
+Use this method to convert `Result` to `IResult` or various failed results.
+
+### ToErrorResult
+
+Use this method to convert `Error` to various failed results.
+
+### Example
+
+Simple case.
+
+```csharp
+userApi.MapPost("/register", (RegisterUserRequest request) =>
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
+    .ToOkResult());
+```
+
+To control the return type
+
+```csharp
+userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
+    .Map(user => new RegisterUserResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Password))
+    .Finally(
+            ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.firstName } }, ok),
+            err => err.ToErrorResult()));
+```

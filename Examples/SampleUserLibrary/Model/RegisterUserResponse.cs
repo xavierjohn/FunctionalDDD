@@ -1,6 +1,7 @@
-﻿namespace SampleWebApplication.Model;
+﻿namespace SampleUserLibrary;
 
-public record RegisterUserRequest(
+public record RegisterUserResponse(
+    Guid id,
     string firstName,
     string lastName,
     string email,

@@ -1,0 +1,80 @@
+@SampleMinimalApi_HostAddress = http://localhost:5157
+
+GET {{SampleMinimalApi_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{SampleMinimalApi_HostAddress}}/todos/1
+Accept: application/json
+
+###
+
+// Okay
+POST {{SampleMinimalApi_HostAddress}}/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "KeepItSimple"
+}
+###
+
+// Created
+POST {{SampleMinimalApi_HostAddress}}/users/registerCreated
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "KeepItSimple"
+}
+###
+
+// Bad request
+POST {{SampleMinimalApi_HostAddress}}/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "string",
+  "lastName": "",
+  "email": "xa.com",
+  "password": "string"
+}
+###
+
+// Not found
+GET {{SampleMinimalApi_HostAddress}}/users/notfound/213
+Accept: application/json
+
+###
+
+// Conflict
+GET {{SampleMinimalApi_HostAddress}}/users/conflict/213
+Accept: application/json
+
+###
+
+// Forbidden
+GET {{SampleMinimalApi_HostAddress}}/users/forbidden/213
+Accept: application/json
+
+###
+
+// Unauthorized
+GET {{SampleMinimalApi_HostAddress}}/users/unauthorized/213
+Accept: application/json
+
+###
+
+// Unexpected
+GET {{SampleMinimalApi_HostAddress}}/users/unexpected/213
+Accept: application/json
+
+###
