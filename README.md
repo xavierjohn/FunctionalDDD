@@ -68,6 +68,12 @@ Here is a YouTube video explaining several of this library's methods. That video
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
 
+  **ASP.NET**
+
+  Convert Result object to HTTP result.
+
+  [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
+
 ## Examples
 
 Let's look at a few examples:
@@ -177,6 +183,47 @@ var result = await _httpClient.GetAsync($"person/{id}")
 
   ```
 
+  ### Convert Result to HTTP response
+
+#### MVC
+  ```csharp
+[HttpPost("[action]")]
+public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
+    .ToOkActionResult(this);
+
+  ```
+
+#### Minimal API
+  ```csharp
+userApi.MapPost("/register", (RegisterUserRequest request) =>
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
+    .ToOkResult());
+
+  ```
+
+Sample Error:
+  ```json
+{
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+        "lastName": [
+            "Last Name cannot be empty."
+        ],
+        "email": [
+            "Email address is not valid."
+        ]
+    }
+}
+  ```
 ### Tracing
 
 Tracing can be enabled by adding `AddFunctionalDddInstrumentation()`.
