@@ -6,7 +6,7 @@ using SampleUserLibrary;
 
 [ApiController]
 [Route("[controller]")]
-public class UserController : ControllerBase
+public class UsersController : ControllerBase
 {
 #pragma warning disable ASP0023 // Route conflict detected between controller actions
     [HttpPost("[action]")]
