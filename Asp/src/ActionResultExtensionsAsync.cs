@@ -15,7 +15,7 @@ public static class ActionResultExtensionsAsync
     /// Otherwise it returns the error code corresponding to the failure error object.
     /// </summary>
     /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="result">The result object.</param>
+    /// <param name="resultTask">The result object.</param>
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
     public static async Task<ActionResult<TValue>> ToOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
@@ -29,7 +29,7 @@ public static class ActionResultExtensionsAsync
     /// Otherwise it returns the error code corresponding to the failure error object.
     /// </summary>
     /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="result">The result object.</param>
+    /// <param name="resultTask">The result object.</param>
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/></returns>
     public static async ValueTask<ActionResult<TValue>> ToOkActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
@@ -60,7 +60,7 @@ public static class ActionResultExtensionsAsync
     /// </summary>
     /// <typeparam name="TIn"></typeparam>
     /// <typeparam name="TOut"></typeparam>
-    /// <param name="result"></param>
+    /// <param name="resultTask"></param>
     /// <param name="controllerBase"></param>
     /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
     /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
@@ -85,7 +85,7 @@ public static class ActionResultExtensionsAsync
     /// </summary>
     /// <typeparam name="TIn"></typeparam>
     /// <typeparam name="TOut"></typeparam>
-    /// <param name="result"></param>
+    /// <param name="resultTask"></param>
     /// <param name="controllerBase"></param>
     /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
     /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
