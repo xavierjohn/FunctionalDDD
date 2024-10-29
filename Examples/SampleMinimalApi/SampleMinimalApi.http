@@ -23,6 +23,19 @@ Accept: application/json
 }
 ###
 
+// Created
+POST {{SampleMinimalApi_HostAddress}}/users/registerCreated
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "KeepItSimple"
+}
+###
+
 // Bad request
 POST {{SampleMinimalApi_HostAddress}}/users/register
 Content-Type: application/json

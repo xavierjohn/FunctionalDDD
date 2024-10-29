@@ -25,6 +25,9 @@ todosApi.MapGet("/{id}", (int id) =>
 
 var userApi = app.MapGroup("/users");
 userApi.MapGet("/", () => "Hello Users");
+
+userApi.MapGet("/{name}", (string name) => $"Hello {name}").WithName("GetUserById");
+
 userApi.MapPost("/register", (RegisterUserRequest request) =>
     FirstName.TryCreate(request.firstName)
     .Combine(LastName.TryCreate(request.lastName))
@@ -32,6 +35,16 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
     .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
     .Map(user => new RegisterUserResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Password))
     .ToOkResult());
+
+userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
+    FirstName.TryCreate(request.firstName)
+    .Combine(LastName.TryCreate(request.lastName))
+    .Combine(EmailAddress.TryCreate(request.email))
+    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
+    .Map(user => new RegisterUserResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Password))
+    .Finally(
+            ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.firstName } }, ok),
+            err => err.ToErrorResult()));
 
 userApi.MapGet("/notfound/{id}", (int id) =>
     Result.Failure(Error.NotFound("User not found", id.ToString()))

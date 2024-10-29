@@ -15,7 +15,7 @@ public static class HttpResultExtensions
     /// <param name="result">The result object.</param>
     /// <returns><see cref="Microsoft.AspNetCore.Http.IResult"/> </returns>
     public static Microsoft.AspNetCore.Http.IResult ToOkResult<TValue>(this Result<TValue> result)
-        => result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToErrorResult<TValue>();
+        => result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToErrorResult();
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="Microsoft.AspNetCore.Http.IResult"/>.
@@ -24,7 +24,7 @@ public static class HttpResultExtensions
     /// <returns>
     ///     <para>Converts domain errors to failed <see cref="Microsoft.AspNetCore.Http.IResult"/>:</para>
     /// </returns>
-    public static Microsoft.AspNetCore.Http.IResult ToErrorResult<TValue>(this Error error)
+    public static Microsoft.AspNetCore.Http.IResult ToErrorResult(this Error error)
     {
         if (error is ValidationError validationError)
         {

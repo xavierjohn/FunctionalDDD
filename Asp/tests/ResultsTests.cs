@@ -43,6 +43,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
 
@@ -73,6 +74,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeOfType<HttpValidationProblemDetails>();
         HttpValidationProblemDetails actualProblemDetails = problemResult.ProblemDetails.As<HttpValidationProblemDetails>();
         actualProblemDetails.Should().BeEquivalentTo(expected);
@@ -99,6 +101,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
 
@@ -122,6 +125,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
 
@@ -145,6 +149,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
 
@@ -168,6 +173,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
 
@@ -191,6 +197,7 @@ public class ResultsTests
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
 }
