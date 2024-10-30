@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class EmailAddress
- </title>
+      <title>Class EmailAddress </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class EmailAddress
- ">
+      <meta name="title" content="Class EmailAddress ">
       
+      <meta name="description" content="Represents an email address value object. It checks for valid email address.">
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
       <link rel="stylesheet" href="../public/main.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_EmailAddress" data-uid="FunctionalDdd.EmailAddress" class="text-break">
-    Class EmailAddress
-  
+Class EmailAddress  
   </h1>
 
   <div class="facts text-secondary">
@@ -100,7 +98,7 @@
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public class EmailAddress : ScalarValueObject&lt;string&gt;, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt;</code></pre>
+    <pre><code class="lang-csharp hljs">public class EmailAddress : ScalarValueObject&lt;string&gt;, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt;, IConvertible, IParsable&lt;EmailAddress&gt;</code></pre>
   </div>
 
 
@@ -121,11 +119,13 @@
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.icomparable-1">IComparable</a>&lt;<a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a>&gt;</div>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a>&gt;</div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iconvertible">IConvertible</a></div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iparsable-1">IParsable</a>&lt;<a class="xref" href="FunctionalDdd.EmailAddress.html">EmailAddress</a>&gt;</div>
     </dd>
   </dl>
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -136,6 +136,57 @@
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToString">ScalarValueObject&lt;string&gt;.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_GetTypeCode">ScalarValueObject&lt;string&gt;.GetTypeCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToBoolean_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToBoolean(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToByte_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToByte(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToChar_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToChar(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToDateTime_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToDateTime(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToDecimal_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToDecimal(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToDouble_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToDouble(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToInt16_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToInt16(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToInt32_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToInt32(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToInt64_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToInt64(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToSByte_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToSByte(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToSingle_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToSingle(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToString_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToString(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToType_System_Type_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToType(Type, IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToUInt16_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToUInt16(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToUInt32_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToUInt32(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToUInt64_System_IFormatProvider_">ScalarValueObject&lt;string&gt;.ToUInt64(IFormatProvider)</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.ValueObject.html#FunctionalDdd_ValueObject_Equals_System_Object_">ValueObject.Equals(object)</a>
@@ -170,6 +221,9 @@
       <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
   </div>
   <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
       <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
   </div>
   </dd></dl>
@@ -182,18 +236,72 @@
 </h2>
 
 
+  <a id="FunctionalDdd_EmailAddress_Parse_" data-uid="FunctionalDdd.EmailAddress.Parse*"></a>
+
+  <h3 id="FunctionalDdd_EmailAddress_Parse_System_String_System_IFormatProvider_" data-uid="FunctionalDdd.EmailAddress.Parse(System.String,System.IFormatProvider)">
+  Parse(string?, IFormatProvider?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/EmailAddress.cs/#L24"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Parses a string into a value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static EmailAddress Parse(string? s, IFormatProvider? provider)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>s</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The string to parse.</p>
+</dd>
+    <dt><code>provider</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iformatprovider">IFormatProvider</a></dt>
+    <dd><p>An object that provides culture-specific formatting information about <code class="paramref">s</code>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.EmailAddress.html">EmailAddress</a></dt>
+    <dd><p>The result of parsing <code class="paramref">s</code>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p><code class="paramref">s</code> is <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a>.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.formatexception">FormatException</a></dt>
+    <dd><p><code class="paramref">s</code> is not in the correct format.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.overflowexception">OverflowException</a></dt>
+    <dd><p><code class="paramref">s</code> is not representable by <a class="xref" href="FunctionalDdd.EmailAddress.html">EmailAddress</a>.</p>
+</dd>
+  </dl>
+
+
+
   <a id="FunctionalDdd_EmailAddress_TryCreate_" data-uid="FunctionalDdd.EmailAddress.TryCreate*"></a>
 
   <h3 id="FunctionalDdd_EmailAddress_TryCreate_System_String_System_String_" data-uid="FunctionalDdd.EmailAddress.TryCreate(System.String,System.String)">
-  TryCreate(string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/EmailAddress.cs/#L12"><i class="bi bi-code-slash"></i></a>
+  TryCreate(string?, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/EmailAddress.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;EmailAddress&gt; TryCreate(string emailString, string? fieldName = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Result&lt;EmailAddress&gt; TryCreate(string? emailString, string? fieldName = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -208,6 +316,51 @@
   <dl class="parameters">
     <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.EmailAddress.html">EmailAddress</a>&gt;</dt>
     <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_EmailAddress_TryParse_" data-uid="FunctionalDdd.EmailAddress.TryParse*"></a>
+
+  <h3 id="FunctionalDdd_EmailAddress_TryParse_System_String_System_IFormatProvider_FunctionalDdd_EmailAddress__" data-uid="FunctionalDdd.EmailAddress.TryParse(System.String,System.IFormatProvider,FunctionalDdd.EmailAddress@)">
+  TryParse(string?, IFormatProvider?, out EmailAddress)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/EmailAddress.cs/#L35"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Tries to parse a string into a value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool TryParse(string? s, IFormatProvider? provider, out EmailAddress result)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>s</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The string to parse.</p>
+</dd>
+    <dt><code>provider</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iformatprovider">IFormatProvider</a></dt>
+    <dd><p>An object that provides culture-specific formatting information about <code class="paramref">s</code>.</p>
+</dd>
+    <dt><code>result</code> <a class="xref" href="FunctionalDdd.EmailAddress.html">EmailAddress</a></dt>
+    <dd><p>When this method returns, contains the result of successfully parsing <code class="paramref">s</code> or an undefined value on failure.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p><a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a> if <code class="paramref">s</code> was successfully parsed; otherwise, <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">false</a>.</p>
+</dd>
   </dl>
 
 

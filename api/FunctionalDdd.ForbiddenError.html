@@ -2,11 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class ForbiddenError
- </title>
+      <title>Class ForbiddenError </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class ForbiddenError
- ">
+      <meta name="title" content="Class ForbiddenError ">
+      
       
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_ForbiddenError" data-uid="FunctionalDdd.ForbiddenError" class="text-break">
-    Class ForbiddenError
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ForbiddenError.cs/#L3"><i class="bi bi-code-slash"></i></a>
+Class ForbiddenError  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ForbiddenError.cs/#L3"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -122,17 +120,17 @@
   </dl>
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Code">Error.Code</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Message">Error.Message</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Detail">Error.Detail</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Target">Error.Target</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Instance">Error.Instance</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Equals_FunctionalDdd_Error_">Error.Equals(Error)</a>
@@ -144,16 +142,34 @@
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_GetHashCode">Error.GetHashCode()</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_">Error.Validation(string, string, string)</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_">Error.Validation(string, string, string, string)</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_Collections_Generic_List_FunctionalDdd_ValidationError_ModelError__System_String_">Error.Validation(List&lt;ValidationError.ModelError&gt;, string)</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_">Error.Validation(ValidationError.FieldDetails[], string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_System_String_">Error.Validation(ValidationError.FieldDetails[], string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_BadRequest_System_String_System_String_">Error.BadRequest(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Conflict_System_String_System_String_">Error.Conflict(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_NotFound_System_String_System_String_">Error.NotFound(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unauthorized_System_String_System_String_">Error.Unauthorized(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Forbidden_System_String_System_String_">Error.Forbidden(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unexpected_System_String_System_String_">Error.Unexpected(string, string)</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_BadRequest_System_String_System_String_System_String_">Error.BadRequest(string, string, string)</a>
-    </div>
-    <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_ValidationError_System_String_System_String_">Error.ValidationError(string, string)</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Conflict_System_String_System_String_System_String_">Error.Conflict(string, string, string)</a>
@@ -194,6 +210,9 @@
       <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
   </div>
   <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
       <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
   </div>
   </dd></dl>
@@ -217,16 +236,16 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public ForbiddenError(string message, string code, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public ForbiddenError(string detail, string code, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 

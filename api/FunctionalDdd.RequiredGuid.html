@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class RequiredGuid
- </title>
+      <title>Class RequiredGuid </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class RequiredGuid
- ">
+      <meta name="title" content="Class RequiredGuid ">
       
+      <meta name="description" content="Create a strongly typed Guid value object that cannot have default Guid value.">
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
       <link rel="stylesheet" href="../public/main.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_RequiredGuid" data-uid="FunctionalDdd.RequiredGuid" class="text-break">
-    Class RequiredGuid
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/RequiredGuid.cs/#L14"><i class="bi bi-code-slash"></i></a>
+Class RequiredGuid  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/CommonValueObjects/src/RequiredGuid.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -100,7 +98,7 @@
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public abstract class RequiredGuid : ScalarValueObject&lt;Guid&gt;, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt;</code></pre>
+    <pre><code class="lang-csharp hljs">public abstract class RequiredGuid : ScalarValueObject&lt;Guid&gt;, IComparable&lt;ValueObject&gt;, IEquatable&lt;ValueObject&gt;, IConvertible</code></pre>
   </div>
 
 
@@ -121,11 +119,12 @@
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.icomparable-1">IComparable</a>&lt;<a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a>&gt;</div>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a>&gt;</div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iconvertible">IConvertible</a></div>
     </dd>
   </dl>
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -136,6 +135,57 @@
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToString">ScalarValueObject&lt;Guid&gt;.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_GetTypeCode">ScalarValueObject&lt;Guid&gt;.GetTypeCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToBoolean_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToBoolean(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToByte_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToByte(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToChar_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToChar(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToDateTime_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToDateTime(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToDecimal_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToDecimal(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToDouble_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToDouble(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToInt16_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToInt16(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToInt32_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToInt32(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToInt64_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToInt64(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToSByte_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToSByte(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToSingle_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToSingle(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToString_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToString(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToType_System_Type_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToType(Type, IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToUInt16_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToUInt16(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToUInt32_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToUInt32(IFormatProvider)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.ScalarValueObject-1.html#FunctionalDdd_ScalarValueObject_1_ToUInt64_System_IFormatProvider_">ScalarValueObject&lt;Guid&gt;.ToUInt64(IFormatProvider)</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.ValueObject.html#FunctionalDdd_ValueObject_Equals_System_Object_">ValueObject.Equals(object)</a>
@@ -168,6 +218,9 @@
     <dd>
   <div>
       <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
   </div>
   <div>
       <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
@@ -216,12 +269,6 @@
 
 
 
-  <dl class="typelist seealso">
-    <dt>See Also</dt>
-    <dd>
-    <div><a class="xref" href="FunctionalDdd.ScalarValueObject-1.html">ScalarValueObject</a>&lt;T&gt;</div>
-    </dd>
-  </dl>
 
 
   <h2 id="seealso">See Also</h2>

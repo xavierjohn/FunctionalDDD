@@ -94,6 +94,16 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.CombineExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.CombineExtensionsAsync.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDdd.CompensateExtensions.yml",
       "output": {
         ".html": {
@@ -218,6 +228,66 @@
       "output": {
         ".html": {
           "relative_path": "api/FunctionalDdd.HttpResponseMessageJsonExtensionsAsync.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.HttpResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.HttpResultExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.HttpResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.HttpResultExtensionsAsync.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IAggregate.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IAggregate.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IDomainEvent.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IDomainEvent.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IResult-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IResult-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IResult.html"
         }
       },
       "version": ""
@@ -424,6 +494,16 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TracerProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TracerProviderBuilderExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDdd.UnauthorizedError.yml",
       "output": {
         ".html": {
@@ -454,10 +534,10 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDdd.ValidationError.ModelError.yml",
+      "source_relative_path": "api/FunctionalDdd.ValidationError.FieldDetails.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FunctionalDdd.ValidationError.ModelError.html"
+          "relative_path": "api/FunctionalDdd.ValidationError.FieldDetails.html"
         }
       },
       "version": ""
@@ -506,11 +586,11 @@
       "type": "Toc",
       "source_relative_path": "api/toc.yml",
       "output": {
-        ".html": {
-          "relative_path": "api/toc.html"
-        },
         ".json": {
           "relative_path": "api/toc.json"
+        },
+        ".html": {
+          "relative_path": "api/toc.html"
         }
       },
       "version": ""
@@ -549,11 +629,11 @@
       "type": "Toc",
       "source_relative_path": "articles/toc.yml",
       "output": {
-        ".html": {
-          "relative_path": "articles/toc.html"
-        },
         ".json": {
           "relative_path": "articles/toc.json"
+        },
+        ".html": {
+          "relative_path": "articles/toc.html"
         }
       },
       "version": ""
@@ -582,11 +662,11 @@
       "type": "Toc",
       "source_relative_path": "toc.yml",
       "output": {
-        ".html": {
-          "relative_path": "toc.html"
-        },
         ".json": {
           "relative_path": "toc.json"
+        },
+        ".html": {
+          "relative_path": "toc.html"
         }
       },
       "version": ""

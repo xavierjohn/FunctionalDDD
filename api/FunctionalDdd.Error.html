@@ -2,11 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class Error
- </title>
+      <title>Class Error </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class Error
- ">
+      <meta name="title" content="Class Error ">
+      
       
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_Error" data-uid="FunctionalDdd.Error" class="text-break">
-    Class Error
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L7"><i class="bi bi-code-slash"></i></a>
+Class Error  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L7"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -134,7 +132,7 @@
     </dd>
   </dl>
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -164,6 +162,9 @@
       <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
   </div>
   <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
       <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
   </div>
   </dd></dl>
@@ -187,12 +188,12 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public Error(string message, string code)</code></pre>
+    <pre><code class="lang-csharp hljs">public Error(string detail, string code)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
@@ -220,16 +221,16 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public Error(string message, string code, string? target)</code></pre>
+    <pre><code class="lang-csharp hljs">public Error(string detail, string code, string? instance)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -279,10 +280,10 @@
 
 
 
-  <a id="FunctionalDdd_Error_Message_" data-uid="FunctionalDdd.Error.Message*"></a>
+  <a id="FunctionalDdd_Error_Detail_" data-uid="FunctionalDdd.Error.Detail*"></a>
 
-  <h3 id="FunctionalDdd_Error_Message" data-uid="FunctionalDdd.Error.Message">
-  Message
+  <h3 id="FunctionalDdd_Error_Detail" data-uid="FunctionalDdd.Error.Detail">
+  Detail
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -290,7 +291,7 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public string Message { get; }</code></pre>
+    <pre><code class="lang-csharp hljs">public string Detail { get; }</code></pre>
   </div>
 
 
@@ -310,10 +311,10 @@
 
 
 
-  <a id="FunctionalDdd_Error_Target_" data-uid="FunctionalDdd.Error.Target*"></a>
+  <a id="FunctionalDdd_Error_Instance_" data-uid="FunctionalDdd.Error.Instance*"></a>
 
-  <h3 id="FunctionalDdd_Error_Target" data-uid="FunctionalDdd.Error.Target">
-  Target
+  <h3 id="FunctionalDdd_Error_Instance" data-uid="FunctionalDdd.Error.Instance">
+  Instance
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L16"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -321,7 +322,7 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public string? Target { get; }</code></pre>
+    <pre><code class="lang-csharp hljs">public string? Instance { get; }</code></pre>
   </div>
 
 
@@ -347,25 +348,63 @@
 
   <a id="FunctionalDdd_Error_BadRequest_" data-uid="FunctionalDdd.Error.BadRequest*"></a>
 
-  <h3 id="FunctionalDdd_Error_BadRequest_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.BadRequest(System.String,System.String,System.String)">
-  BadRequest(string, string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L51"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_Error_BadRequest_System_String_System_String_" data-uid="FunctionalDdd.Error.BadRequest(System.String,System.String)">
+  BadRequest(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L54"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static BadRequestError BadRequest(string message, string code = &quot;bad.request.error&quot;, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static BadRequestError BadRequest(string detail, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_BadRequest_" data-uid="FunctionalDdd.Error.BadRequest*"></a>
+
+  <h3 id="FunctionalDdd_Error_BadRequest_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.BadRequest(System.String,System.String,System.String)">
+  BadRequest(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L73"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BadRequestError BadRequest(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -387,25 +426,63 @@
 
   <a id="FunctionalDdd_Error_Conflict_" data-uid="FunctionalDdd.Error.Conflict*"></a>
 
-  <h3 id="FunctionalDdd_Error_Conflict_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Conflict(System.String,System.String,System.String)">
-  Conflict(string, string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L56"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_Error_Conflict_System_String_System_String_" data-uid="FunctionalDdd.Error.Conflict(System.String,System.String)">
+  Conflict(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L57"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ConflictError Conflict(string message, string code = &quot;conflict.error&quot;, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ConflictError Conflict(string detail, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Conflict_" data-uid="FunctionalDdd.Error.Conflict*"></a>
+
+  <h3 id="FunctionalDdd_Error_Conflict_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Conflict(System.String,System.String,System.String)">
+  Conflict(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L76"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ConflictError Conflict(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -505,25 +582,63 @@
 
   <a id="FunctionalDdd_Error_Forbidden_" data-uid="FunctionalDdd.Error.Forbidden*"></a>
 
-  <h3 id="FunctionalDdd_Error_Forbidden_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Forbidden(System.String,System.String,System.String)">
-  Forbidden(string, string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L65"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_Error_Forbidden_System_String_System_String_" data-uid="FunctionalDdd.Error.Forbidden(System.String,System.String)">
+  Forbidden(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L66"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ForbiddenError Forbidden(string message, string code = &quot;forbidden.error&quot;, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ForbiddenError Forbidden(string detail, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Forbidden_" data-uid="FunctionalDdd.Error.Forbidden*"></a>
+
+  <h3 id="FunctionalDdd_Error_Forbidden_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Forbidden(System.String,System.String,System.String)">
+  Forbidden(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L85"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ForbiddenError Forbidden(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -578,25 +693,63 @@
 
   <a id="FunctionalDdd_Error_NotFound_" data-uid="FunctionalDdd.Error.NotFound*"></a>
 
-  <h3 id="FunctionalDdd_Error_NotFound_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.NotFound(System.String,System.String,System.String)">
-  NotFound(string, string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L59"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_Error_NotFound_System_String_System_String_" data-uid="FunctionalDdd.Error.NotFound(System.String,System.String)">
+  NotFound(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L60"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static NotFoundError NotFound(string message, string code = &quot;not.found.error&quot;, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static NotFoundError NotFound(string detail, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_NotFound_" data-uid="FunctionalDdd.Error.NotFound*"></a>
+
+  <h3 id="FunctionalDdd_Error_NotFound_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.NotFound(System.String,System.String,System.String)">
+  NotFound(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L79"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static NotFoundError NotFound(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -618,25 +771,63 @@
 
   <a id="FunctionalDdd_Error_Unauthorized_" data-uid="FunctionalDdd.Error.Unauthorized*"></a>
 
-  <h3 id="FunctionalDdd_Error_Unauthorized_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Unauthorized(System.String,System.String,System.String)">
-  Unauthorized(string, string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L62"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_Error_Unauthorized_System_String_System_String_" data-uid="FunctionalDdd.Error.Unauthorized(System.String,System.String)">
+  Unauthorized(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L63"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static UnauthorizedError Unauthorized(string message, string code = &quot;unauthorized.error&quot;, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static UnauthorizedError Unauthorized(string detail, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Unauthorized_" data-uid="FunctionalDdd.Error.Unauthorized*"></a>
+
+  <h3 id="FunctionalDdd_Error_Unauthorized_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Unauthorized(System.String,System.String,System.String)">
+  Unauthorized(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L82"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static UnauthorizedError Unauthorized(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -658,25 +849,63 @@
 
   <a id="FunctionalDdd_Error_Unexpected_" data-uid="FunctionalDdd.Error.Unexpected*"></a>
 
-  <h3 id="FunctionalDdd_Error_Unexpected_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Unexpected(System.String,System.String,System.String)">
-  Unexpected(string, string, string?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L68"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_Error_Unexpected_System_String_System_String_" data-uid="FunctionalDdd.Error.Unexpected(System.String,System.String)">
+  Unexpected(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L69"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static UnexpectedError Unexpected(string message, string code = &quot;unexpected.error&quot;, string? target = null)</code></pre>
+    <pre><code class="lang-csharp hljs">public static UnexpectedError Unexpected(string detail, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Unexpected_" data-uid="FunctionalDdd.Error.Unexpected*"></a>
+
+  <h3 id="FunctionalDdd_Error_Unexpected_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Unexpected(System.String,System.String,System.String)">
+  Unexpected(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L88"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static UnexpectedError Unexpected(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>target</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -698,8 +927,8 @@
 
   <a id="FunctionalDdd_Error_Validation_" data-uid="FunctionalDdd.Error.Validation*"></a>
 
-  <h3 id="FunctionalDdd_Error_Validation_System_Collections_Generic_List_FunctionalDdd_ValidationError_ModelError__System_String_" data-uid="FunctionalDdd.Error.Validation(System.Collections.Generic.List{FunctionalDdd.ValidationError.ModelError},System.String)">
-  Validation(List&lt;ModelError&gt;, string)
+  <h3 id="FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String)">
+  Validation(FieldDetails[], string, string?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L48"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -707,12 +936,56 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValidationError Validation(List&lt;ValidationError.ModelError&gt; modelErrors, string code = &quot;validation.error&quot;)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValidationError Validation(ValidationError.FieldDetails[] fieldDetails, string detail = &quot;&quot;, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>modelErrors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.ModelError.html">ModelError</a>&gt;</dt>
+    <dt><code>fieldDetails</code> <a class="xref" href="FunctionalDdd.ValidationError.FieldDetails.html">FieldDetails</a>[]</dt>
+    <dd></dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Validation_" data-uid="FunctionalDdd.Error.Validation*"></a>
+
+  <h3 id="FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String,System.String)">
+  Validation(FieldDetails[], string, string?, string)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L51"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValidationError Validation(ValidationError.FieldDetails[] fieldDetails, string detail, string? instance, string code)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fieldDetails</code> <a class="xref" href="FunctionalDdd.ValidationError.FieldDetails.html">FieldDetails</a>[]</dt>
+    <dd></dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
@@ -736,8 +1009,8 @@
 
   <a id="FunctionalDdd_Error_Validation_" data-uid="FunctionalDdd.Error.Validation*"></a>
 
-  <h3 id="FunctionalDdd_Error_Validation_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(System.String,System.String,System.String)">
-  Validation(string, string, string)
+  <h3 id="FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(System.String,System.String,System.String,System.String)">
+  Validation(string, string, string, string?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L45"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -745,60 +1018,24 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValidationError Validation(string message, string fieldName = &quot;&quot;, string code = &quot;validation.error&quot;)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValidationError Validation(string fieldDetail, string fieldName = &quot;&quot;, string detail = &quot;&quot;, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>fieldDetail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>fieldName</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
-    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
   <h4 class="section">Returns</h4>
   <dl class="parameters">
     <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDdd_Error_ValidationError_" data-uid="FunctionalDdd.Error.ValidationError*"></a>
-
-  <h3 id="FunctionalDdd_Error_ValidationError_System_String_System_String_" data-uid="FunctionalDdd.Error.ValidationError(System.String,System.String)">
-  ValidationError(string, string)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L54"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValidationError.ModelError ValidationError(string message, string fieldName = &quot;&quot;)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
-    <dd></dd>
-    <dt><code>fieldName</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.ModelError.html">ModelError</a></dt>
     <dd></dd>
   </dl>
 

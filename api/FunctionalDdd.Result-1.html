@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Struct Result&lt;TValue&gt;
- </title>
+      <title>Struct Result&lt;TValue&gt; </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Struct Result&lt;TValue&gt;
- ">
+      <meta name="title" content="Struct Result&lt;TValue&gt; ">
       
+      <meta name="description" content="The Result type used in functional programming languages to represent a success value or an error.">
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
       <link rel="stylesheet" href="../public/main.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_Result_1" data-uid="FunctionalDdd.Result`1" class="text-break">
-    Struct Result&lt;TValue&gt;
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L9"><i class="bi bi-code-slash"></i></a>
+Struct Result&lt;TValue&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L9"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -100,7 +98,7 @@
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public readonly struct Result&lt;TValue&gt;</code></pre>
+    <pre><code class="lang-csharp hljs">public readonly struct Result&lt;TValue&gt; : IResult&lt;TValue&gt;, IResult</code></pre>
   </div>
 
 
@@ -112,9 +110,16 @@
   </dl>
 
 
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="FunctionalDdd.IResult-1.html">IResult</a>&lt;TValue&gt;</div>
+      <div><a class="xref" href="FunctionalDdd.IResult.html">IResult</a></div>
+    </dd>
+  </dl>
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -150,10 +155,22 @@
       <a class="xref" href="FunctionalDdd.BindExtensionsAsync.html#FunctionalDdd_BindExtensionsAsync_BindAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___1____">BindExtensionsAsync.BindAsync&lt;TValue, TResult&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&lt;Result&lt;TResult&gt;&gt;&gt;)</a>
   </div>
   <div>
+      <a class="xref" href="FunctionalDdd.CombineExtensions.html#FunctionalDdd_CombineExtensions_Combine__1_FunctionalDdd_Result___0__FunctionalDdd_Result_FunctionalDdd_Unit__">CombineExtensions.Combine&lt;T1&gt;(Result&lt;T1&gt;, Result&lt;Unit&gt;)</a>
+  </div>
+  <div>
       <a class="xref" href="FunctionalDdd.CombineExtensions.html#FunctionalDdd_CombineExtensions_Combine__2_FunctionalDdd_Result___0__FunctionalDdd_Result___1__">CombineExtensions.Combine&lt;T1, T2&gt;(Result&lt;T1&gt;, Result&lt;T2&gt;)</a>
   </div>
   <div>
+      <a class="xref" href="FunctionalDdd.CompensateExtensions.html#FunctionalDdd_CompensateExtensions_Compensate__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_FunctionalDdd_Result___0___">CompensateExtensions.Compensate&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
       <a class="xref" href="FunctionalDdd.CompensateExtensions.html#FunctionalDdd_CompensateExtensions_Compensate__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Result___0___">CompensateExtensions.Compensate&lt;T&gt;(Result&lt;T&gt;, Func&lt;Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CompensateExtensionsAsync.html#FunctionalDdd_CompensateExtensionsAsync_CompensateAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">CompensateExtensionsAsync.CompensateAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CompensateExtensionsAsync.html#FunctionalDdd_CompensateExtensionsAsync_CompensateAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">CompensateExtensionsAsync.CompensateAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
   </div>
   <div>
       <a class="xref" href="FunctionalDdd.EnsureExtensions.html#FunctionalDdd_EnsureExtensions_Ensure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Result___0___">EnsureExtensions.Ensure&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Result&lt;TValue&gt;&gt;)</a>
@@ -220,6 +237,15 @@
   </div>
   <div>
       <a class="xref" href="FunctionalDdd.MapExtensions.html#FunctionalDdd_MapExtensions_Map__2_FunctionalDdd_Result___0__System_Func___0___1__">MapExtensions.Map&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, TOut&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapExtensionsAsync.html#FunctionalDdd_MapExtensionsAsync_MapAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task___1___">MapExtensionsAsync.MapAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, Task&lt;TOut&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapExtensionsAsync.html#FunctionalDdd_MapExtensionsAsync_MapAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask___1___">MapExtensionsAsync.MapAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, ValueTask&lt;TOut&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
   </div>
   <div>
       <a class="xref" href="FunctionalDdd.TapErrorExtensions.html#FunctionalDdd_TapErrorExtensions_TapError__1_FunctionalDdd_Result___0__System_Action_">TapErrorExtensions.TapError&lt;TValue&gt;(Result&lt;TValue&gt;, Action)</a>

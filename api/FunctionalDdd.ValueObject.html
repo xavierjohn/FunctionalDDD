@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class ValueObject
- </title>
+      <title>Class ValueObject </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class ValueObject
- ">
+      <meta name="title" content="Class ValueObject ">
       
+      <meta name="description" content="A value object is an object that represents a descriptive aspect of the domain with no conceptual identity. It is a small, simple object that encapsulates a concept from your problem domain. Unlike an aggregate, a value object does not have a unique identity and is immutable. Value objects support and enrich the ubiquitous language of your domain. Value objects compare equality based on property specified in the GetEqualityComponents method.">
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
       <link rel="stylesheet" href="../public/main.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_ValueObject" data-uid="FunctionalDdd.ValueObject" class="text-break">
-    Class ValueObject
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L47"><i class="bi bi-code-slash"></i></a>
+Class ValueObject  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L47"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -133,7 +131,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
     </dd>
   </dl>
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -158,6 +156,9 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
     <dd>
   <div>
       <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
   </div>
   <div>
       <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
@@ -394,7 +395,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
 
   <h3 id="FunctionalDdd_ValueObject_op_Equality_FunctionalDdd_ValueObject_FunctionalDdd_ValueObject_" data-uid="FunctionalDdd.ValueObject.op_Equality(FunctionalDdd.ValueObject,FunctionalDdd.ValueObject)">
   operator ==(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L117"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L116"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -432,7 +433,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
 
   <h3 id="FunctionalDdd_ValueObject_op_GreaterThan_FunctionalDdd_ValueObject_FunctionalDdd_ValueObject_" data-uid="FunctionalDdd.ValueObject.op_GreaterThan(FunctionalDdd.ValueObject,FunctionalDdd.ValueObject)">
   operator &gt;(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L140"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L139"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -470,7 +471,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
 
   <h3 id="FunctionalDdd_ValueObject_op_GreaterThanOrEqual_FunctionalDdd_ValueObject_FunctionalDdd_ValueObject_" data-uid="FunctionalDdd.ValueObject.op_GreaterThanOrEqual(FunctionalDdd.ValueObject,FunctionalDdd.ValueObject)">
   operator &gt;=(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L145"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L144"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -508,7 +509,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
 
   <h3 id="FunctionalDdd_ValueObject_op_Inequality_FunctionalDdd_ValueObject_FunctionalDdd_ValueObject_" data-uid="FunctionalDdd.ValueObject.op_Inequality(FunctionalDdd.ValueObject,FunctionalDdd.ValueObject)">
   operator !=(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L128"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L127"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -546,7 +547,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
 
   <h3 id="FunctionalDdd_ValueObject_op_LessThan_FunctionalDdd_ValueObject_FunctionalDdd_ValueObject_" data-uid="FunctionalDdd.ValueObject.op_LessThan(FunctionalDdd.ValueObject,FunctionalDdd.ValueObject)">
   operator &lt;(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L130"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L129"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -584,7 +585,7 @@ Value objects support and enrich the ubiquitous language of your domain.</p>
 
   <h3 id="FunctionalDdd_ValueObject_op_LessThanOrEqual_FunctionalDdd_ValueObject_FunctionalDdd_ValueObject_" data-uid="FunctionalDdd.ValueObject.op_LessThanOrEqual(FunctionalDdd.ValueObject,FunctionalDdd.ValueObject)">
   operator &lt;=(ValueObject?, ValueObject?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L135"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/ValueObject.cs/#L134"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>

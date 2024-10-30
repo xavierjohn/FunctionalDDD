@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class TapExtensions
- </title>
+      <title>Class TapExtensions </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class TapExtensions
- ">
+      <meta name="title" content="Class TapExtensions ">
       
+      <meta name="description" content="Executes the given action if the starting result is a success. Returns the starting result. It is useful to execute functions that don&#39;t have a return type or return type can be ignored.">
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
       <link rel="stylesheet" href="../public/main.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_TapExtensions" data-uid="FunctionalDdd.TapExtensions" class="text-break">
-    Class TapExtensions
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L7"><i class="bi bi-code-slash"></i></a>
+Class TapExtensions  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L10"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -117,7 +115,7 @@ It is useful to execute functions that don't have a return type or return type c
 
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -156,7 +154,7 @@ It is useful to execute functions that don't have a return type or return type c
 
   <h3 id="FunctionalDdd_TapExtensions_Tap__1_FunctionalDdd_Result___0__System_Action_" data-uid="FunctionalDdd.TapExtensions.Tap``1(FunctionalDdd.Result{``0},System.Action)">
   Tap&lt;TValue&gt;(Result&lt;TValue&gt;, Action)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L12"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L15"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Executes the given action if the starting result is a success. Returns the starting result.</p>
@@ -200,7 +198,7 @@ It is useful to execute functions that don't have a return type or return type c
 
   <h3 id="FunctionalDdd_TapExtensions_Tap__1_FunctionalDdd_Result___0__System_Action___0__" data-uid="FunctionalDdd.TapExtensions.Tap``1(FunctionalDdd.Result{``0},System.Action{``0})">
   Tap&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;TValue&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L23"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L26"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Executes the given action if the starting result is a success. Returns the starting result.</p>
@@ -240,57 +238,11 @@ It is useful to execute functions that don't have a return type or return type c
 
 
 
-  <a id="FunctionalDdd_TapExtensions_Tap_" data-uid="FunctionalDdd.TapExtensions.Tap*"></a>
-
-  <h3 id="FunctionalDdd_TapExtensions_Tap__2_FunctionalDdd_Result_System_ValueTuple___0___1___System_Action___0___1__" data-uid="FunctionalDdd.TapExtensions.Tap``2(FunctionalDdd.Result{System.ValueTuple{``0,``1}},System.Action{``0,``1})">
-  Tap&lt;T1, T2&gt;(Result&lt;(T1, T2)&gt;, Action&lt;T1, T2&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L34"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"><p>Executes the given action if the starting result is a success. Returns the starting result.</p>
-</div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Result&lt;(T1, T2)&gt; Tap&lt;T1, T2&gt;(this Result&lt;(T1, T2)&gt; result, Action&lt;T1, T2&gt; action)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;(T1, T2)&gt;</dt>
-    <dd></dd>
-    <dt><code>action</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.action-2">Action</a>&lt;T1, T2&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;(T1, T2)&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Type Parameters</h4>
-  <dl class="parameters">
-    <dt><code>T1</code></dt>
-    <dd></dd>
-    <dt><code>T2</code></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
 
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L7" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Extensions/Tap.cs/#L10" class="edit-link">Edit this page</a>
         </div>
 
 

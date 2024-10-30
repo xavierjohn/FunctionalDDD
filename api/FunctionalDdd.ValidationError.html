@@ -2,11 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class ValidationError
- </title>
+      <title>Class ValidationError </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class ValidationError
- ">
+      <meta name="title" content="Class ValidationError ">
+      
       
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_ValidationError" data-uid="FunctionalDdd.ValidationError" class="text-break">
-    Class ValidationError
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L3"><i class="bi bi-code-slash"></i></a>
+Class ValidationError  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L3"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -122,17 +120,17 @@
   </dl>
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Code">Error.Code</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Message">Error.Message</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Detail">Error.Detail</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Target">Error.Target</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Instance">Error.Instance</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Equals_FunctionalDdd_Error_">Error.Equals(Error)</a>
@@ -144,16 +142,34 @@
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_GetHashCode">Error.GetHashCode()</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_">Error.Validation(string, string, string)</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_">Error.Validation(string, string, string, string)</a>
     </div>
     <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_Collections_Generic_List_FunctionalDdd_ValidationError_ModelError__System_String_">Error.Validation(List&lt;ValidationError.ModelError&gt;, string)</a>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_">Error.Validation(ValidationError.FieldDetails[], string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_System_String_">Error.Validation(ValidationError.FieldDetails[], string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_BadRequest_System_String_System_String_">Error.BadRequest(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Conflict_System_String_System_String_">Error.Conflict(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_NotFound_System_String_System_String_">Error.NotFound(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unauthorized_System_String_System_String_">Error.Unauthorized(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Forbidden_System_String_System_String_">Error.Forbidden(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unexpected_System_String_System_String_">Error.Unexpected(string, string)</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_BadRequest_System_String_System_String_System_String_">Error.BadRequest(string, string, string)</a>
-    </div>
-    <div>
-      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_ValidationError_System_String_System_String_">Error.ValidationError(string, string)</a>
     </div>
     <div>
       <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Conflict_System_String_System_String_System_String_">Error.Conflict(string, string, string)</a>
@@ -194,6 +210,9 @@
       <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
   </div>
   <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
       <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
   </div>
   </dd></dl>
@@ -208,23 +227,27 @@
 
   <a id="FunctionalDdd_ValidationError__ctor_" data-uid="FunctionalDdd.ValidationError.#ctor*"></a>
 
-  <h3 id="FunctionalDdd_ValidationError__ctor_System_Collections_Generic_List_FunctionalDdd_ValidationError_ModelError__System_String_" data-uid="FunctionalDdd.ValidationError.#ctor(System.Collections.Generic.List{FunctionalDdd.ValidationError.ModelError},System.String)">
-  ValidationError(List&lt;ModelError&gt;, string)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L12"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_ValidationError__ctor_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_System_String_" data-uid="FunctionalDdd.ValidationError.#ctor(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String,System.String)">
+  ValidationError(FieldDetails[], string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L11"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public ValidationError(List&lt;ValidationError.ModelError&gt; modelErrors, string code)</code></pre>
+    <pre><code class="lang-csharp hljs">public ValidationError(ValidationError.FieldDetails[] fieldDetails, string code, string detail = &quot;&quot;, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>modelErrors</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.ModelError.html">ModelError</a>&gt;</dt>
+    <dt><code>fieldDetails</code> <a class="xref" href="FunctionalDdd.ValidationError.FieldDetails.html">FieldDetails</a>[]</dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -241,8 +264,8 @@
 
   <a id="FunctionalDdd_ValidationError__ctor_" data-uid="FunctionalDdd.ValidationError.#ctor*"></a>
 
-  <h3 id="FunctionalDdd_ValidationError__ctor_System_String_System_String_System_String_" data-uid="FunctionalDdd.ValidationError.#ctor(System.String,System.String,System.String)">
-  ValidationError(string, string, string)
+  <h3 id="FunctionalDdd_ValidationError__ctor_System_String_System_String_System_String_System_String_System_String_" data-uid="FunctionalDdd.ValidationError.#ctor(System.String,System.String,System.String,System.String,System.String)">
+  ValidationError(string, string, string, string, string?)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L7"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -250,16 +273,20 @@
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public ValidationError(string message, string fieldName, string code)</code></pre>
+    <pre><code class="lang-csharp hljs">public ValidationError(string fieldDetail, string fieldName, string code, string detail = &quot;&quot;, string? instance = null)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
-    <dt><code>message</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><code>fieldDetail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>fieldName</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
     <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
     <dd></dd>
   </dl>
 
@@ -282,14 +309,14 @@
 
   <h3 id="FunctionalDdd_ValidationError_Errors" data-uid="FunctionalDdd.ValidationError.Errors">
   Errors
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L23"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L15"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public List&lt;ValidationError.ModelError&gt; Errors { get; }</code></pre>
+    <pre><code class="lang-csharp hljs">public IList&lt;ValidationError.FieldDetails&gt; Errors { get; set; }</code></pre>
   </div>
 
 
@@ -298,38 +325,7 @@
 
   <h4 class="section">Property Value</h4>
   <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List</a>&lt;<a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.ModelError.html">ModelError</a>&gt;</dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-  <a id="FunctionalDdd_ValidationError_FieldName_" data-uid="FunctionalDdd.ValidationError.FieldName*"></a>
-
-  <h3 id="FunctionalDdd_ValidationError_FieldName" data-uid="FunctionalDdd.ValidationError.FieldName">
-  FieldName
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ValidationError.cs/#L21"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public string FieldName { get; }</code></pre>
-  </div>
-
-
-
-
-
-  <h4 class="section">Property Value</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ilist-1">IList</a>&lt;<a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.FieldDetails.html">FieldDetails</a>&gt;</dt>
     <dd></dd>
   </dl>
 

@@ -2,12 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-      <title>Class ActionResultExtensionsAsync
- </title>
+      <title>Class ActionResultExtensionsAsync </title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="title" content="Class ActionResultExtensionsAsync
- ">
+      <meta name="title" content="Class ActionResultExtensionsAsync ">
       
+      <meta name="description" content="These extension methods are used to convert the Result object to ActionResult. If the Result is in a failed state, it returns the corresponding HTTP error code.">
       <link rel="icon" href="../favicon.ico">
       <link rel="stylesheet" href="../public/docfx.min.css">
       <link rel="stylesheet" href="../public/main.css">
@@ -30,15 +29,15 @@
       <meta name="loc:changeTheme" content="Change theme">
       <meta name="loc:copy" content="Copy">
       <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
   </head>
-
-  <script type="module" src="./../public/docfx.min.js"></script>
-
-  <script>
-    const theme = localStorage.getItem('theme') || 'auto'
-    document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
-  </script>
-
 
   <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
     <header class="bg-body border-bottom">
@@ -74,7 +73,7 @@
 
       <div class="content">
         <div class="actionbar">
-          <button class="btn btn-lg border-0 d-md-none" style="margin-top: -.65em; margin-left: -.8em" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
             <i class="bi bi-list"></i>
           </button>
 
@@ -86,8 +85,7 @@
 
 
   <h1 id="FunctionalDdd_ActionResultExtensionsAsync" data-uid="FunctionalDdd.ActionResultExtensionsAsync" class="text-break">
-    Class ActionResultExtensionsAsync
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L10"><i class="bi bi-code-slash"></i></a>
+Class ActionResultExtensionsAsync  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L10"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -117,7 +115,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
 
 
-  <dl class="typelist derived">
+  <dl class="typelist inheritedMembers">
     <dt>Inherited Members</dt>
     <dd>
     <div>
@@ -257,7 +255,8 @@ Otherwise it returns the error code corresponding to the failure error object.</
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
     <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
-    <dd></dd>
+    <dd><p>The result object.</p>
+</dd>
     <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
     <dd><p>The controller object.</p>
 </dd>
@@ -305,7 +304,8 @@ Otherwise it returns the error code corresponding to the failure error object.</
   <h4 class="section">Parameters</h4>
   <dl class="parameters">
     <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
-    <dd></dd>
+    <dd><p>The result object.</p>
+</dd>
     <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
     <dd><p>The controller object.</p>
 </dd>
@@ -338,7 +338,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
 
   <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
   ToPartialOrOkActionResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, ControllerBase, long, long, long)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L105"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L103"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -387,7 +387,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
 
   <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
   ToPartialOrOkActionResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, ControllerBase, long, long, long)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L114"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L112"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -436,7 +436,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
 
   <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__2_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
   ToPartialOrOkActionResultAsync&lt;TIn, TOut&gt;(Task&lt;Result&lt;TIn&gt;&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L69"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L68"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>If <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> is in success state this extension method returns</p>
@@ -490,7 +490,7 @@ Otherwise it returns the error code corresponding to the failure error object.
 
   <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToPartialOrOkActionResultAsync__2_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToPartialOrOkActionResultAsync``2(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
   ToPartialOrOkActionResultAsync&lt;TIn, TOut&gt;(ValueTask&lt;Result&lt;TIn&gt;&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L94"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L93"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>If <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> is in success state this extension method returns</p>
