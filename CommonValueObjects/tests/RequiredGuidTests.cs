@@ -1,6 +1,7 @@
 ﻿namespace CommonValueObjects.Tests;
 using System;
 using System.Globalization;
+using System.Text.Json;
 using Xunit;
 
 public partial class EmployeeId : RequiredGuid
@@ -234,5 +235,20 @@ public class RequiredGuidTests
 
         // Assert
         actual.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ConvertToJson()
+    {
+        // Arrange
+        var employeeId = EmployeeId.NewUnique();
+        Guid primEmployeeId = employeeId.Value;
+        var expected = JsonSerializer.Serialize(primEmployeeId);
+
+        // Act
+        var actual = JsonSerializer.Serialize(employeeId);
+
+        // Assert
+        actual.Should().Be(expected);
     }
 }

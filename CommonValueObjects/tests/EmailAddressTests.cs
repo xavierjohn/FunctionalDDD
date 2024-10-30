@@ -1,6 +1,8 @@
 ﻿namespace CommonValueObjects.Tests;
 
 using System.Globalization;
+using System.Text.Json;
+using Xunit;
 
 public class EmailAddressTests
 {
@@ -75,6 +77,21 @@ public class EmailAddressTests
         // Assert
         act.Should().Throw<FormatException>()
             .WithMessage("Email address is not valid.");
+    }
+
+    [Fact]
+    public void ConvertToJson()
+    {
+        // Arrange
+        EmailAddress email = EmailAddress.TryCreate("chris@somewhere.com").Value;
+        string primEmail = "chris@somewhere.com";
+        var expected = JsonSerializer.Serialize(primEmail);
+
+        // Act
+        var actual = JsonSerializer.Serialize(email);
+
+        // Assert
+        actual.Should().Be(expected);
     }
 
     public static TheoryData<string?> GetGoodEmailAddresses() => new()
