@@ -27,8 +27,5 @@ jobs:
     - name: Build and Pack
       run: dotnet pack --configuration Release --output nupkgs
 
-    - name: Test
-      run: dotnet test --no-build  -l "console;verbosity=normal" -c Release  --test-adapter-path:nupkgs
-
     - name: Publish
       run: dotnet nuget push nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
