@@ -1,0 +1,31 @@
+name: Publish NuGet Package
+
+on:
+    workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - uses: actions/checkout@v4
+      with:
+          fetch-depth: 0 # depth is needed for nbgv
+
+    - uses: dotnet/nbgv@master
+      with:
+          setAllVars: true
+  
+    - name: Restore dependencies
+      run: dotnet restore        
+
+    - name: Build and Pack
+      run: dotnet pack --configuration Release --output nupkgs
+
+    - name: Publish
+      run: dotnet nuget push nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json

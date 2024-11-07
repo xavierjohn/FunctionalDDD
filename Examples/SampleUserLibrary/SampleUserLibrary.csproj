@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>SampleUserLibrary</RootNamespace>
     <PublishAot>true</PublishAot>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
   
   <ItemGroup>
