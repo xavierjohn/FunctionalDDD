@@ -33,7 +33,6 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
     .Combine(LastName.TryCreate(request.lastName))
     .Combine(EmailAddress.TryCreate(request.email))
     .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .Map(user => new RegisterUserResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Password))
     .ToOkResult());
 
 userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
@@ -41,9 +40,8 @@ userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
     .Combine(LastName.TryCreate(request.lastName))
     .Combine(EmailAddress.TryCreate(request.email))
     .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .Map(user => new RegisterUserResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Password))
     .Finally(
-            ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.firstName } }, ok),
+            ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
             err => err.ToErrorResult()));
 
 userApi.MapGet("/notfound/{id}", (int id) =>
@@ -74,7 +72,7 @@ public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplet
 
 [JsonSerializable(typeof(Todo[]))]
 [JsonSerializable(typeof(RegisterUserRequest))]
-[JsonSerializable(typeof(RegisterUserResponse))]
+[JsonSerializable(typeof(User))]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Http.HttpResults.ValidationProblem))]

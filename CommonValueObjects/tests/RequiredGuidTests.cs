@@ -1,6 +1,7 @@
 ﻿namespace CommonValueObjects.Tests;
 using System;
 using System.Globalization;
+using System.Text.Json;
 using Xunit;
 
 public partial class EmployeeId : RequiredGuid
@@ -234,5 +235,48 @@ public class RequiredGuidTests
 
         // Assert
         actual.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ConvertToJson()
+    {
+        // Arrange
+        var employeeId = EmployeeId.NewUnique();
+        Guid primEmployeeId = employeeId.Value;
+        var expected = JsonSerializer.Serialize(primEmployeeId);
+
+        // Act
+        var actual = JsonSerializer.Serialize(employeeId);
+
+        // Assert
+        actual.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ConvertFromJson()
+    {
+        // Arrange
+        Guid guid = Guid.NewGuid();
+        var json = JsonSerializer.Serialize(guid);
+
+        // Act
+        EmployeeId actual = JsonSerializer.Deserialize<EmployeeId>(json)!;
+
+        // Assert
+        actual.Value.Should().Be(guid);
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_parsing_invalid_string_in_json()
+    {
+        // Arrange
+        var strGuid = JsonSerializer.Serialize("bad guid");
+
+        // Act
+        Action act = () => JsonSerializer.Deserialize<EmployeeId>(strGuid);
+
+        // Assert
+        act.Should().Throw<FormatException>()
+            .WithMessage("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)");
     }
 }

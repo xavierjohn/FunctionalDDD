@@ -1,6 +1,9 @@
 ﻿namespace CommonValueObjects.Tests;
 
+using FunctionalDdd;
 using System.Globalization;
+using System.Text.Json;
+using Xunit;
 
 public class EmailAddressTests
 {
@@ -65,6 +68,19 @@ public class EmailAddressTests
         email.ToString(CultureInfo.InvariantCulture).Should().Be(strEmail);
     }
 
+    [Fact]
+    public void Cannot_create_EmailAddress_parsing_null_string()
+    {
+        // Arrange
+        string? str = null;
+        // Act
+        Action act = () => EmailAddress.Parse(str, null);
+
+        // Assert
+        act.Should().Throw<FormatException>()
+            .WithMessage("Email address is not valid.");
+    }
+
     [Theory]
     [MemberData(nameof(GetBadEmailAddresses))]
     public void Cannot_create_EmailAddress_parsing_invalid_string(string? email)
@@ -77,16 +93,61 @@ public class EmailAddressTests
             .WithMessage("Email address is not valid.");
     }
 
-    public static TheoryData<string?> GetGoodEmailAddresses() => new()
+    [Fact]
+    public void ConvertToJson()
     {
+        // Arrange
+        EmailAddress email = EmailAddress.TryCreate("chris@somewhere.com").Value;
+        string primEmail = "chris@somewhere.com";
+
+        var expected = JsonSerializer.Serialize(primEmail);
+
+        // Act
+        var actual = JsonSerializer.Serialize(email);
+
+        // Assert
+        actual.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ConvertFromJson()
+    {
+        // Arrange
+        string primEmail = "chris@somewhere.com";
+
+        var json = JsonSerializer.Serialize(primEmail);
+
+        // Act
+        EmailAddress actual = JsonSerializer.Deserialize<EmailAddress>(json)!;
+
+        // Assert
+        actual.Value.Should().Be(primEmail);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetBadEmailAddresses))]
+    public void Cannot_create_EmailAddress_from_parsing_invalid_string_in_JSON(string? email)
+    {
+        // Arrange
+        var json = JsonSerializer.Serialize(email);
+
+        // Act
+        Action act = () => JsonSerializer.Deserialize<EmailAddress>(json);
+
+        // Assert
+        act.Should().Throw<FormatException>()
+            .WithMessage("Email address is not valid.");
+    }
+
+    public static TheoryData<string?> GetGoodEmailAddresses() =>
+    [
         "xavier@somewhere.com",
         "0987654321@example.com",
         "_______@email.com"
-    };
+    ];
 
-    public static TheoryData<string?> GetBadEmailAddresses() => new()
-    {
-        null,
+    public static TheoryData<string?> GetBadEmailAddresses() =>
+    [
         string.Empty,
         "xavier",
         "xavier@",
@@ -94,5 +155,5 @@ public class EmailAddressTests
         "@#@@##@%^%#$@#$@#.com",
         "John Doe <example@email.com>",
         "CAT…123@email.com"
-    };
+    ];
 }

@@ -66,12 +66,11 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
         if (!_cachedHashCode.HasValue)
         {
             _cachedHashCode = GetEqualityComponents()
-                .Aggregate(1, (current, obj) => HashCode.Combine(current, (obj?.GetHashCode() ?? 0)));
+                .Aggregate(1, (current, obj) => HashCode.Combine(current, obj?.GetHashCode() ?? 0));
         }
 
         return _cachedHashCode.Value;
     }
-
 
     public virtual int CompareTo(ValueObject? other)
     {
@@ -81,7 +80,6 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
 
         if (thisType != otherType)
             throw new ArgumentException($"Cannot compare objects of different types: {thisType} and {otherType}");
-
 
         object[] components = GetEqualityComponents().ToArray();
         object[] otherComponents = other.GetEqualityComponents().ToArray();
@@ -127,22 +125,14 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
     public static bool operator !=(ValueObject? a, ValueObject? b) => !(a == b);
 
     public static bool operator <(ValueObject? left, ValueObject? right)
-    {
-        return ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
-    }
+        => ReferenceEquals(left, null) ? !ReferenceEquals(right, null) : left.CompareTo(right) < 0;
 
     public static bool operator <=(ValueObject? left, ValueObject? right)
-    {
-        return ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
-    }
+        => ReferenceEquals(left, null) || left.CompareTo(right) <= 0;
 
     public static bool operator >(ValueObject? left, ValueObject? right)
-    {
-        return !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
-    }
+        => !ReferenceEquals(left, null) && left.CompareTo(right) > 0;
 
     public static bool operator >=(ValueObject? left, ValueObject? right)
-    {
-        return ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
-    }
+        => ReferenceEquals(left, null) ? ReferenceEquals(right, null) : left.CompareTo(right) >= 0;
 }

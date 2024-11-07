@@ -1,15 +1,16 @@
 ﻿namespace FunctionalDdd;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 /// <summary>
 /// Represents an email address value object. It checks for valid email address.
 /// </summary>
+[JsonConverter(typeof(ParsableJsonConverter<EmailAddress>))]
 public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAddress>
 {
     private EmailAddress(string value) : base(value) { }
-
 
     public static Result<EmailAddress> TryCreate(string? emailString, string? fieldName = null)
     {
@@ -29,6 +30,7 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
             var val = (ValidationError)r.Error;
             throw new FormatException(val.Errors[0].Details[0]);
         }
+
         return r.Value;
     }
 
