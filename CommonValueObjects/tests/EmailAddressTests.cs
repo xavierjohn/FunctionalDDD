@@ -96,10 +96,10 @@ public class EmailAddressTests
         };
 #pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
 
-        var expected = JsonSerializer.Serialize(primEmail, options);
+        var expected = JsonSerializer.Serialize(primEmail);
 
         // Act
-        var actual = JsonSerializer.Serialize(email);
+        var actual = JsonSerializer.Serialize(email, options );
 
         // Assert
         actual.Should().Be(expected);
