@@ -1,5 +1,6 @@
 ﻿namespace CommonValueObjects.Tests;
 
+using FunctionalDdd;
 using System.Globalization;
 using System.Text.Json;
 using Xunit;
@@ -85,7 +86,17 @@ public class EmailAddressTests
         // Arrange
         EmailAddress email = EmailAddress.TryCreate("chris@somewhere.com").Value;
         string primEmail = "chris@somewhere.com";
-        var expected = JsonSerializer.Serialize(primEmail);
+#pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+        var options = new JsonSerializerOptions
+        {
+            Converters =
+            {
+                new ParsableJsonConverter<EmailAddress>()
+            }
+        };
+#pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
+
+        var expected = JsonSerializer.Serialize(primEmail, options);
 
         // Act
         var actual = JsonSerializer.Serialize(email);

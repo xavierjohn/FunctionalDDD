@@ -10,7 +10,6 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
 {
     private EmailAddress(string value) : base(value) { }
 
-
     public static Result<EmailAddress> TryCreate(string? emailString, string? fieldName = null)
     {
         if (emailString is not null)
@@ -29,6 +28,7 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
             var val = (ValidationError)r.Error;
             throw new FormatException(val.Errors[0].Details[0]);
         }
+
         return r.Value;
     }
 

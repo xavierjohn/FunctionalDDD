@@ -1,5 +1,4 @@
 ﻿namespace FunctionalDdd;
-
 /// <summary>
 /// Create a typed class that represents a single scalar value object.
 /// </summary>
@@ -21,6 +20,7 @@
 /// }
 /// </code>
 /// </example>
+
 public abstract class ScalarValueObject<T> : ValueObject, IConvertible
     where T : IComparable
 {
