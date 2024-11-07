@@ -57,8 +57,10 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 namespace {{g.NameSpace}};
 using FunctionalDdd;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 #nullable enable
+[JsonConverter(typeof(ParsableJsonConverter<{{g.ClassName}}>))]
 {{g.Accessibility.ToCamelCase()}} partial class {{g.ClassName}} : {{g.ClassBase}}, IParsable<{{g.ClassName}}>
 {
     protected static readonly Error CannotBeEmptyError = Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", "{{g.ClassName.ToCamelCase()}}");
