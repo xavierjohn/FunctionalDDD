@@ -86,20 +86,11 @@ public class EmailAddressTests
         // Arrange
         EmailAddress email = EmailAddress.TryCreate("chris@somewhere.com").Value;
         string primEmail = "chris@somewhere.com";
-#pragma warning disable CA1869 // Cache and reuse 'JsonSerializerOptions' instances
-        var options = new JsonSerializerOptions
-        {
-            Converters =
-            {
-                new ParsableJsonConverter<EmailAddress>()
-            }
-        };
-#pragma warning restore CA1869 // Cache and reuse 'JsonSerializerOptions' instances
 
         var expected = JsonSerializer.Serialize(primEmail);
 
         // Act
-        var actual = JsonSerializer.Serialize(email, options );
+        var actual = JsonSerializer.Serialize(email);
 
         // Assert
         actual.Should().Be(expected);
