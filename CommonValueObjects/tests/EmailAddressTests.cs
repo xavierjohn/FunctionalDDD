@@ -126,7 +126,7 @@ public class EmailAddressTests
 
     [Theory]
     [MemberData(nameof(GetBadEmailAddresses))]
-    public void Cannot_create_EmailAddress_parsing_invalid_string_from_JSON(string? email)
+    public void Cannot_create_EmailAddress_from_parsing_invalid_string_in_JSON(string? email)
     {
         // Arrange
         var json = JsonSerializer.Serialize(email);

@@ -195,6 +195,34 @@ public class RequiredStringTests
         actual.Should().Be(expected);
     }
 
+    [Fact]
+    public void ConvertFromJson()
+    {
+        // Arrange
+        string str = "MyTrackingId";
+        var json = JsonSerializer.Serialize(str);
+
+        // Act
+        TrackingId actual = JsonSerializer.Deserialize<TrackingId>(json)!;
+
+        // Assert
+        actual.Value.Should().Be(str);
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredString_from_parsing_empty_string_in_json()
+    {
+        // Arrange
+        var strGuid = JsonSerializer.Serialize(string.Empty);
+
+        // Act
+        Action act = () => JsonSerializer.Deserialize<TrackingId>(strGuid);
+
+        // Assert
+        act.Should().Throw<FormatException>()
+            .WithMessage("Tracking Id cannot be empty.");
+    }
+
     public static TheoryData<string?> GetBadString() =>
       new TheoryData<string?>
       {
