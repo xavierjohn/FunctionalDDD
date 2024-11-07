@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// A DDD aggregate is a cluster of domain objects that can be treated as a single unit. 
 /// Any references from outside the aggregate should only go to the aggregate root.
@@ -15,6 +17,7 @@ public abstract class Aggregate<TId> : Entity<TId>, IAggregate
     /// Gets a value indicating whether the aggregate has changed.
     /// </summary>
     /// <value>True if the aggregate has changed; otherwise, false.</value>
+    [JsonIgnore]
     public virtual bool IsChanged => DomainEvents.Count > 0;
 
     protected Aggregate(TId id) : base(id)
