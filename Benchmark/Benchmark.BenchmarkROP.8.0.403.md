@@ -8,11 +8,11 @@ BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.2033)
 
 
 ```
-| Method               | Mean     | Error    | StdDev   | Median   | Gen0   | Allocated |
-|--------------------- |---------:|---------:|---------:|---------:|-------:|----------:|
-| RopStyleHappy        | 306.2 ns | 16.51 ns | 47.09 ns | 299.2 ns | 0.0229 |     144 B |
-| IfStyleHappy         | 192.6 ns |  3.69 ns |  9.98 ns | 189.4 ns | 0.0229 |     144 B |
-| RopStyleSad          | 162.8 ns |  3.25 ns |  7.53 ns | 160.2 ns | 0.0331 |     208 B |
-| IfStyleSad           | 136.0 ns |  2.79 ns |  7.20 ns | 134.0 ns | 0.0331 |     208 B |
-| RopStyleWithClosure  | 992.0 ns | 26.59 ns | 74.56 ns | 964.3 ns | 0.1545 |     976 B |
-| IfStyleWithNoClosure | 771.1 ns | 15.45 ns | 41.77 ns | 756.6 ns | 0.1554 |     976 B |
+| Method        | Mean     | Error    | StdDev   | Median   | Gen0   | Allocated |
+|-------------- |---------:|---------:|---------:|---------:|-------:|----------:|
+| RopStyleHappy | 235.8 ns |  2.99 ns |  2.34 ns | 235.1 ns | 0.0229 |     144 B |
+| IfStyleHappy  | 195.4 ns |  3.98 ns | 10.82 ns | 191.6 ns | 0.0229 |     144 B |
+| RopStyleSad   | 151.8 ns |  1.66 ns |  1.48 ns | 151.4 ns | 0.0331 |     208 B |
+| IfStyleSad    | 170.8 ns | 12.07 ns | 35.39 ns | 174.3 ns | 0.0331 |     208 B |
+| RopSample1    | 945.3 ns | 18.78 ns | 32.39 ns | 935.1 ns | 0.1545 |     976 B |
+| IfSample1     | 782.3 ns | 15.66 ns | 36.30 ns | 773.6 ns | 0.1554 |     976 B |

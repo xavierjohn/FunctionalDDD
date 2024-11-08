@@ -81,7 +81,7 @@ public class BenchmarkROP
     }
 
     [Benchmark]
-    public Result<string> RopStyleWithClosure()
+    public Result<string> RopSample1()
     {
         var createdAt = DateTime.UtcNow;
         var updatedAt = createdAt.AddMinutes(-10);
@@ -94,7 +94,7 @@ public class BenchmarkROP
     }
 
     [Benchmark]
-    public Result<string> IfStyleWithNoClosure()
+    public Result<string> IfSample1()
     {
         var createdAt = DateTime.UtcNow;
         var updatedAt = createdAt.AddMinutes(-10);
@@ -104,7 +104,19 @@ public class BenchmarkROP
         var hrEmailSec = EmailAddress.TryCreate("xavier @ somewhereelse.com");
         var hrDateCheck = Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt", nameof(updatedAt)));
 
-        if (hrEmail.IsSuccess && hrFname.IsSuccess && hrLname.IsSuccess && hrEmailSec.IsSuccess && hrDateCheck.IsSuccess)
+        Error? error = null;
+        if (hrEmail.IsFailure)
+            error = hrEmail.Error;
+        if (hrFname.IsFailure)
+            error = error.Combine(hrFname.Error);
+        if (hrLname.IsFailure)
+            error = error.Combine(hrLname.Error);
+        if (hrEmailSec.IsFailure)
+            error = error.Combine(hrEmailSec.Error);
+        if (hrDateCheck.IsFailure)
+            error = error.Combine(hrDateCheck.Error);
+
+        if (error == null)
         {
             var email = hrEmail.Value;
             var firstName = hrFname.Value;
@@ -112,15 +124,7 @@ public class BenchmarkROP
             var anotherEmail = hrEmailSec.Value;
             return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));
         }
-        else
-        {
-            var error = hrLname.Error;
-            if (hrEmailSec.IsFailure)
-                error = error.Combine(hrEmailSec.Error);
-            if (hrDateCheck.IsFailure)
-                error = error.Combine(hrDateCheck.Error);
 
-            return Result.Failure<string>(error);
-        }
+        return Result.Failure<string>(error);
     }
 }
