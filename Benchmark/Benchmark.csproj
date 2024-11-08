@@ -12,7 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CommonValueObjects\src\CommonValueObjects.csproj" />
+    <ProjectReference Include="..\Examples\SampleUserLibrary\SampleUserLibrary.csproj" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 ﻿namespace Benchmark;
 using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
+using SampleUserLibrary;
+using static FunctionalDdd.EnsureExtensions;
 
 /// <summary>
 /// Benchmark ROP vs If.
@@ -76,5 +78,49 @@ public class BenchmarkROP
             error = error.Combine(rEmailAddress.Error);
 
         return error.Detail;
+    }
+
+    [Benchmark]
+    public Result<string> RopStyleWithClosure()
+    {
+        var createdAt = DateTime.UtcNow;
+        var updatedAt = createdAt.AddMinutes(-10);
+        return EmailAddress.TryCreate("xavier@somewhere.com")
+            .Combine(FirstName.TryCreate("Xavier"))
+            .Combine(LastName.TryCreate(string.Empty))
+            .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
+            .Combine(Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt", nameof(updatedAt))))
+            .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+    }
+
+    [Benchmark]
+    public Result<string> IfStyleWithNoClosure()
+    {
+        var createdAt = DateTime.UtcNow;
+        var updatedAt = createdAt.AddMinutes(-10);
+        var hrEmail = EmailAddress.TryCreate("xavier@somewhere.com");
+        var hrFname = FirstName.TryCreate("Xavier");
+        var hrLname = LastName.TryCreate(string.Empty);
+        var hrEmailSec = EmailAddress.TryCreate("xavier @ somewhereelse.com");
+        var hrDateCheck = Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt", nameof(updatedAt)));
+
+        if (hrEmail.IsSuccess && hrFname.IsSuccess && hrLname.IsSuccess && hrEmailSec.IsSuccess && hrDateCheck.IsSuccess)
+        {
+            var email = hrEmail.Value;
+            var firstName = hrFname.Value;
+            var lastName = hrLname.Value;
+            var anotherEmail = hrEmailSec.Value;
+            return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));
+        }
+        else
+        {
+            var error = hrLname.Error;
+            if (hrEmailSec.IsFailure)
+                error = error.Combine(hrEmailSec.Error);
+            if (hrDateCheck.IsFailure)
+                error = error.Combine(hrDateCheck.Error);
+
+            return Result.Failure<string>(error);
+        }
     }
 }
