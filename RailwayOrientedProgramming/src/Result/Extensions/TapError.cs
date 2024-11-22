@@ -9,7 +9,7 @@ public static class TapErrorExtensions
 {
     public static Result<TValue> TapError<TValue>(this Result<TValue> result, Action action)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
         {
             action();
@@ -21,7 +21,7 @@ public static class TapErrorExtensions
 
     public static Result<TValue> TapError<TValue>(this Result<TValue> result, Action<Error> action)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
         {
             action(result.Error);

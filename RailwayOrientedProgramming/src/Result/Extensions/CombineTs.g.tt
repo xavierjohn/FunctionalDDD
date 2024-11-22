@@ -35,7 +35,7 @@ public static partial class CombineExtensions
     public static Result<(<# WriteTs(i - 1); #>)> Combine<<# WriteTs(i - 1); #>>(
       this Result<(<# WriteTs(i - 1); #>)> t1, Result<Unit> tc)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (tc.IsFailure) error = error.Combine(tc.Error);
@@ -46,7 +46,7 @@ public static partial class CombineExtensions
     public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(
       this Result<(<# WriteTs(i - 1); #>)> t1, Result<<# Write("T" + i); #>> tc)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (tc.IsFailure) error = error.Combine(tc.Error);
@@ -57,7 +57,7 @@ public static partial class CombineExtensions
     public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(
        this <# WriteResultT(i); #>)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         Error? error = null;
         <# WriteAddFailure(i); #>
 

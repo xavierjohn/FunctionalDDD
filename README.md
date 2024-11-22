@@ -226,12 +226,12 @@ Sample Error:
   ```
 ### Tracing
 
-Tracing can be enabled by adding `AddFunctionalDddInstrumentation()`.
+Tracing can be enabled by adding `AddFunctionalDddRopInstrumentation()` for ROP code or `AddFunctionalDddCvoInstrumentation` for Common Value Objects.
 
 ```csharp
 var builder = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("FunctionDddExample"))
-    .AddFunctionalDddInstrumentation()
+    .AddFunctionalDddCvoInstrumentation()
     .AddOtlpExporter();
 ```
 

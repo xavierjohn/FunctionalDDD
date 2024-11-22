@@ -26,7 +26,7 @@ public static partial class TapExtensions
                   this Result<(<# WriteTs(i); #>)> result,
                   Action<<# WriteTs(i); #>> action)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             action(<# WriteArgs(i); #>);
@@ -63,7 +63,7 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, Task> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity("tap");
+        using var activity = RopTrace.ActivitySource.StartActivity("tap");
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>);
@@ -103,7 +103,7 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, ValueTask> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity("tap");
+        using var activity = RopTrace.ActivitySource.StartActivity("tap");
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>);

@@ -10,7 +10,7 @@ public static class CompensateExtensions
     /// </summary>
     public static Result<T> Compensate<T>(this Result<T> result, Func<Result<T>> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         if (result.IsSuccess)
             return result;
 
@@ -22,7 +22,7 @@ public static class CompensateExtensions
     /// </summary>
     public static Result<T> Compensate<T>(this Result<T> result, Func<Error, Result<T>> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         if (result.IsSuccess)
             return result;
 
@@ -49,7 +49,7 @@ public static class CompensateExtensionsAsync
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Task<Result<T>>> funcAsync)
     {
-        using var activity = Trace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         if (result.IsSuccess)
             return result;
 
@@ -79,7 +79,7 @@ public static class CompensateExtensionsAsync
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, Task<Result<T>>> funcAsync)
     {
-        using var activity = Trace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         if (result.IsSuccess)
             return result;
 

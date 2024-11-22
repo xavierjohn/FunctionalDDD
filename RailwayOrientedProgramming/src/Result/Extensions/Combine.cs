@@ -14,7 +14,7 @@ public static partial class CombineExtensions
     /// <returns>Tuple containing both the results.</returns>
     public static Result<T1> Combine<T1>(this Result<T1> t1, Result<Unit> t2)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
@@ -32,7 +32,7 @@ public static partial class CombineExtensions
     /// <returns>Tuple containing both the results.</returns>
     public static Result<(T1, T2)> Combine<T1, T2>(this Result<T1> t1, Result<T2> t2)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
@@ -56,7 +56,7 @@ public static partial class CombineExtensionsAsync
     /// <returns>Tuple containing both the results.</returns>
     public static async Task<Result<(T1, T2)>> CombineAsync<T1, T2>(this Task<Result<T1>> tt1, Result<T2> t2)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         Error? error = null;
         var t1 = await tt1;
         if (t1.IsFailure) error = error.Combine(t1.Error);
