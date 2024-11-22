@@ -7,6 +7,7 @@
     <RootNamespace>SampleUserLibrary</RootNamespace>
     <PublishAot>true</PublishAot>
     <IsPackable>false</IsPackable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
   
   <ItemGroup>
