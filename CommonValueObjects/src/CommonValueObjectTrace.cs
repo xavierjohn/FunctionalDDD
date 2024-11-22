@@ -3,10 +3,10 @@
 using System.Diagnostics;
 using System.Reflection;
 
-internal static class Trace
+public static class CommonValueObjectTrace
 {
     internal static readonly AssemblyName AssemblyName = typeof(Trace).Assembly.GetName();
-    internal static readonly string ActivitySourceName = "Functional DDD";
+    internal static readonly string ActivitySourceName = "Functional DDD CVO";
     internal static readonly Version Version = AssemblyName.Version!;
-    internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+    public static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 }

@@ -7,7 +7,7 @@ public static partial class MapExtensions
 {
     public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
@@ -22,7 +22,7 @@ public static partial class MapExtensionsAsync
 {
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity("map");
+        using var activity = RopTrace.ActivitySource.StartActivity("map");
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
@@ -47,7 +47,7 @@ public static partial class MapExtensionsAsync
 
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, ValueTask<TOut>> func)
     {
-        using var activity = Trace.ActivitySource.StartActivity("map");
+        using var activity = RopTrace.ActivitySource.StartActivity("map");
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 

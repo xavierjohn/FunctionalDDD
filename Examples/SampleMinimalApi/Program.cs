@@ -1,10 +1,23 @@
 using SampleUserLibrary;
 using System.Text.Json.Serialization;
 using FunctionalDdd;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
+
+Action<ResourceBuilder> configureResource = r => r.AddService(
+    serviceName: "SampleMinimalApi",
+    serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown");
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(configureResource)
+    .WithTracing(tracing
+        => tracing.AddSource("SampleMinimalApi")
+            .SetSampler(new AlwaysOnSampler())
+            .AddFunctionalDddCvoInstrumentation()
+            .AddOtlpExporter());
 
 var app = builder.Build();
 

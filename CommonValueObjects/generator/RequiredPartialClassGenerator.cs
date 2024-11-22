@@ -1,6 +1,5 @@
 ﻿namespace SourceGenerator;
 
-
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -102,16 +101,20 @@ using System.Text.Json.Serialization;
 
     public static {{g.ClassName}} NewUnique() => new(Guid.NewGuid());
 
-    public static Result<{{g.ClassName}}> TryCreate(Guid? requiredGuidOrNothing) =>
-        requiredGuidOrNothing
+    public static Result<{{g.ClassName}}> TryCreate(Guid? requiredGuidOrNothing)
+    {
+        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        return requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
             .Map(guid => new {{g.ClassName}}(guid));
+     }
 
     public static Result<{{g.ClassName}}> TryCreate(string? stringOrNull)
     {
-         Guid parsedGuid = Guid.Empty;
-         return stringOrNull
+        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        Guid parsedGuid = Guid.Empty;
+        return stringOrNull
             .ToResult(CannotBeEmptyError)
             .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)", "{{g.ClassName.ToCamelCase()}}"))
             .Ensure(_ => parsedGuid != Guid.Empty, CannotBeEmptyError)
@@ -125,10 +128,13 @@ using System.Text.Json.Serialization;
             {
                 source += $$"""
 
-    public static Result<{{g.ClassName}}> TryCreate(string? requiredStringOrNothing) =>
-        requiredStringOrNothing
+    public static Result<{{g.ClassName}}> TryCreate(string? requiredStringOrNothing)
+    {
+        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        return requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new {{g.ClassName}}(str));
+    }
 }
 """;
             }

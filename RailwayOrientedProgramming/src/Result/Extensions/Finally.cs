@@ -30,7 +30,7 @@ public static class FinallyExtensions
     /// <returns>The final result of type TOut</returns>
     public static TOut Finally<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> funcOk, Func<Error, TOut> funcError)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
 
         if (result.IsSuccess)
         {

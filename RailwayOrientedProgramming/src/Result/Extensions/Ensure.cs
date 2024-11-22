@@ -9,7 +9,7 @@ public static class EnsureExtensions
 {
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error errors)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -21,7 +21,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -33,7 +33,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -45,7 +45,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -59,7 +59,7 @@ public static class EnsureExtensions
 
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, Result<TValue>> predicate)
     {
-        using var activity = Trace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return result;
 
@@ -72,7 +72,10 @@ public static class EnsureExtensions
     }
 
     public static Result<string> EnsureNotNullOrWhiteSpace(this string? str, Error error)
-        => string.IsNullOrWhiteSpace(str) ? Result.Failure<string>(error) : Result.Success(str);
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        return string.IsNullOrWhiteSpace(str) ? Result.Failure<string>(error) : Result.Success(str);
+    }
 
     public static Result<Unit> Ensure(bool flag, Error error) => flag ? Result.Success() : Result.Failure(error);
 }
