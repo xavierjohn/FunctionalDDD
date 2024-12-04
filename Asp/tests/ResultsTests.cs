@@ -14,7 +14,7 @@ public class ResultsTests
         var result = Result.Success("Test");
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.Ok<string>>();
@@ -38,7 +38,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
@@ -69,7 +69,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
@@ -96,7 +96,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
@@ -120,7 +120,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
@@ -144,7 +144,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
@@ -168,7 +168,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
@@ -192,7 +192,7 @@ public class ResultsTests
         };
 
         // Act
-        var response = result.ToOkResult();
+        var response = result.ToHttpResult();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();

@@ -19,7 +19,7 @@ public static class ActionResultExtensions
     /// <param name="result">The result object.</param>
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
-    public static ActionResult<TValue> ToOkActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
+    public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
         => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.ToErrorActionResult(controllerBase);
 
     /// <summary>
@@ -122,7 +122,7 @@ public static class ActionResultExtensions
     /// <param name="to">The end of the range.</param>
     /// <param name="length">The total number of items.</param>
     /// <returns></returns>
-    public static ActionResult<TValue> ToPartialOrOkActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase, long from, long to, long length)
+    public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase, long from, long to, long length)
     {
         if (result.IsSuccess)
         {
@@ -152,7 +152,7 @@ public static class ActionResultExtensions
     /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
     /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
     /// <returns></returns>
-    public static ActionResult<TOut> ToPartialOrOkActionResult<TIn, TOut>(
+    public static ActionResult<TOut> ToActionResult<TIn, TOut>(
         this Result<TIn> result,
         ControllerBase controllerBase,
         Func<TIn, ContentRangeHeaderValue> funcRange,

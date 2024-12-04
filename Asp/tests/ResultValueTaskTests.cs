@@ -14,7 +14,7 @@ public class ResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToOkResultAsync();
+        var response = await result.ToHttpResultAsync();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.Ok<string>>();
@@ -38,7 +38,7 @@ public class ResultValueTaskTests
         };
 
         // Act
-        var response = await result.ToOkResultAsync();
+        var response = await result.ToHttpResultAsync();
 
         // Assert
         response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();

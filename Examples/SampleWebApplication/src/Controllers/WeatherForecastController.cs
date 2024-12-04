@@ -49,7 +49,7 @@ public class WeatherForecastController : ControllerBase
                 var contentRangeHeaderValue = new ContentRangeHeaderValue(from, to, allData.Length) { Unit = "items" };
                 return new(contentRangeHeaderValue, data);
             })
-        .ToPartialOrOkActionResult(this, static r => r.Item1, static r => r.Item2);
+        .ToActionResult(this, static r => r.Item1, static r => r.Item2);
     }
 
     [HttpGet("Forbidden")]

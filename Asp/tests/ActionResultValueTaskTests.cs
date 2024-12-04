@@ -16,7 +16,7 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();
@@ -39,7 +39,7 @@ public class ActionResultValueTaskTests
         };
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -56,7 +56,7 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, 4, 10, 15);
+        var response = await result.ToActionResultAsync(controller, 4, 10, 15);
 
         // Assert
         var partialResult = response.Result.As<PartialObjectResult>();
@@ -76,7 +76,7 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(
+        var response = await result.ToActionResultAsync(
             controller,
             r => new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" },
             r => r);
@@ -99,7 +99,7 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, 0, 9, 10);
+        var response = await result.ToActionResultAsync(controller, 0, 9, 10);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();
@@ -115,7 +115,7 @@ public class ActionResultValueTaskTests
         var result = ValueTask.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(
+        var response = await result.ToActionResultAsync(
             controller,
             r => new ContentRangeHeaderValue(0, 9, 10) { Unit = "items" },
             r => r);

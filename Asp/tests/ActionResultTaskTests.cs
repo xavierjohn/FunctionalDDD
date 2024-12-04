@@ -17,7 +17,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<OkObjectResult>();
@@ -41,7 +41,7 @@ public class ActionResultTaskTests
         };
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -65,7 +65,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Failure<string>(error));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -89,7 +89,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Failure<string>(error));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -115,7 +115,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Failure<string>(error));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -140,7 +140,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Failure<string>(error));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -164,7 +164,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Failure<string>(error));
 
         // Act
-        var response = await result.ToOkActionResultAsync(controller);
+        var response = await result.ToActionResultAsync(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -181,7 +181,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, 4, 10, 15);
+        var response = await result.ToActionResultAsync(controller, 4, 10, 15);
 
         // Assert
         var partialResult = response.Result.As<PartialObjectResult>();
@@ -201,7 +201,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller,
+        var response = await result.ToActionResultAsync(controller,
             r => new ContentRangeHeaderValue(4, 10, 15) { Unit = "items" },
             r => r);
 
@@ -223,7 +223,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(controller, 0, 9, 10);
+        var response = await result.ToActionResultAsync(controller, 0, 9, 10);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();
@@ -239,7 +239,7 @@ public class ActionResultTaskTests
         var result = Task.FromResult(Result.Success("Test"));
 
         // Act
-        var response = await result.ToPartialOrOkActionResultAsync(
+        var response = await result.ToActionResultAsync(
             controller,
             r => new ContentRangeHeaderValue(0, 9, 10) { Unit = "items" },
             r => r);
