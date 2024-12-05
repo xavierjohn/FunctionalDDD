@@ -69,7 +69,7 @@ public static class ActionResultExtensions
     ///         </item>
     ///     </list>
     /// </returns>
-    public static ActionResult<TValue> ToErrorActionResult<TValue>(this Error error, ControllerBase controllerBase)
+    public static ActionResult<TValue> ToActionResult<TValue>(this Error error, ControllerBase controllerBase)
     => error switch
     {
         NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status404NotFound),
@@ -92,7 +92,7 @@ public static class ActionResultExtensions
     public static ActionResult<TValue> ToErrorActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
     {
         var error = result.Error;
-        return error.ToErrorActionResult<TValue>(controllerBase);
+        return error.ToActionResult<TValue>(controllerBase);
     }
 
     public static async Task<ActionResult<TValue>> ToErrorActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
@@ -134,7 +134,7 @@ public static class ActionResultExtensions
         }
 
         var error = result.Error;
-        return error.ToErrorActionResult<TValue>(controllerBase);
+        return error.ToActionResult<TValue>(controllerBase);
     }
 
     /// <summary>
@@ -170,7 +170,7 @@ public static class ActionResultExtensions
         }
 
         var error = result.Error;
-        return error.ToErrorActionResult<TOut>(controllerBase);
+        return error.ToActionResult<TOut>(controllerBase);
     }
 
     private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase)

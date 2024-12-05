@@ -54,19 +54,19 @@ public class WeatherForecastController : ControllerBase
 
     [HttpGet("Forbidden")]
     public ActionResult<Unit> Forbidden(string instance)
-        => Error.Forbidden("You are forbidden.", instance).ToErrorActionResult<Unit>(this);
+        => Error.Forbidden("You are forbidden.", instance).ToActionResult<Unit>(this);
 
     [HttpGet("Unauthorized")]
     public ActionResult<Unit> Unauthorized(string instance)
-        => Error.Unauthorized("You are not authorized.", instance).ToErrorActionResult<Unit>(this);
+        => Error.Unauthorized("You are not authorized.", instance).ToActionResult<Unit>(this);
 
     [HttpGet("Conflict")]
     public ActionResult<Unit> Conflict(string instance)
-        => Error.Conflict("There is a conflict. " + instance, instance).ToErrorActionResult<Unit>(this);
+        => Error.Conflict("There is a conflict. " + instance, instance).ToActionResult<Unit>(this);
 
     [HttpGet("NotFound")]
     public ActionResult<Unit> NotFound(string? instance)
-        => Error.NotFound("Record not found. " + instance, instance).ToErrorActionResult<Unit>(this);
+        => Error.NotFound("Record not found. " + instance, instance).ToActionResult<Unit>(this);
 
     [HttpGet("ValidationError")]
     public ActionResult<Unit> ValidationError(string? instance, string? detail)
@@ -75,6 +75,6 @@ public class WeatherForecastController : ControllerBase
             new("Field1",["Field is required.", "It cannot be empty."]),
             new("Field2",["Field is required."])
         ];
-        return Error.Validation(errors, detail ?? string.Empty, instance).ToErrorActionResult<Unit>(this);
+        return Error.Validation(errors, detail ?? string.Empty, instance).ToActionResult<Unit>(this);
     }
 }

@@ -25,7 +25,7 @@ public class UsersController : ControllerBase
         .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
         .Finally(
             ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
-            err => err.ToErrorActionResult<User>(this));
+            err => err.ToActionResult<User>(this));
 
     [HttpPost("[action]")]
     public ActionResult<User> RegisterAccepted([FromBody] RegisterUserRequest request) =>
@@ -44,5 +44,5 @@ public class UsersController : ControllerBase
     public ActionResult<Unit> Delete(string id) =>
         UserId.TryCreate(id).Finally(
             ok => NoContent(),
-            err => err.ToErrorActionResult<Unit>(this));
+            err => err.ToActionResult<Unit>(this));
 }
