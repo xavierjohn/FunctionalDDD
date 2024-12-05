@@ -14,7 +14,7 @@ public static class HttpResultExtensions
     /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
     /// <param name="result">The result object.</param>
     /// <returns><see cref="Microsoft.AspNetCore.Http.IResult"/> </returns>
-    public static Microsoft.AspNetCore.Http.IResult ToOkResult<TValue>(this Result<TValue> result)
+    public static Microsoft.AspNetCore.Http.IResult ToHttpResult<TValue>(this Result<TValue> result)
         => result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToErrorResult();
 
     /// <summary>

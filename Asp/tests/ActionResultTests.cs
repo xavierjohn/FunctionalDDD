@@ -16,7 +16,7 @@ public class ActionResultTests
         var result = Result.Success("Test");
 
         // Act
-        var response = result.ToOkActionResult(controller);
+        var response = result.ToActionResult(controller);
 
         // Assert
         response.Result.As<OkObjectResult>().StatusCode.Should().Be(StatusCodes.Status200OK);
@@ -36,7 +36,7 @@ public class ActionResultTests
         };
 
         // Act
-        var response = result.ToOkActionResult(controller);
+        var response = result.ToActionResult(controller);
 
         // Assert
         response.Result.Should().BeOfType<ObjectResult>();
@@ -53,7 +53,7 @@ public class ActionResultTests
         var result = Result.Success("Test");
 
         // Act
-        var response = result.ToPartialOrOkActionResult(controller,
+        var response = result.ToActionResult(controller,
             static r => new ContentRangeHeaderValue(4, 10, 15) { Unit = "stones" },
             static r => "Replaced");
 
@@ -75,7 +75,7 @@ public class ActionResultTests
         var result = Result.Failure<string>(Error.NotFound("Can't find it"));
 
         // Act
-        var response = result.ToPartialOrOkActionResult<string, string>(controller,
+        var response = result.ToActionResult<string, string>(controller,
             static r => throw new InvalidOperationException(),
             static r => throw new InvalidOperationException());
 
@@ -91,7 +91,7 @@ public class ActionResultTests
         var result = Result.Success("Test");
 
         // Act
-        var response = result.ToPartialOrOkActionResult(controller, 0, 9, 10);
+        var response = result.ToActionResult(controller, 0, 9, 10);
 
         // Assert
         var okObjResult = response.Result.As<OkObjectResult>();

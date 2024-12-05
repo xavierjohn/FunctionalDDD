@@ -18,10 +18,10 @@ public static class ActionResultExtensionsAsync
     /// <param name="resultTask">The result object.</param>
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
-    public static async Task<ActionResult<TValue>> ToOkActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
+    public static async Task<ActionResult<TValue>> ToActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
         var result = await resultTask;
-        return result.ToOkActionResult(controllerBase);
+        return result.ToActionResult(controllerBase);
     }
 
     /// <summary>
@@ -32,10 +32,10 @@ public static class ActionResultExtensionsAsync
     /// <param name="resultTask">The result object.</param>
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/></returns>
-    public static async ValueTask<ActionResult<TValue>> ToOkActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
+    public static async ValueTask<ActionResult<TValue>> ToActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
         var result = await resultTask;
-        return result.ToOkActionResult(controllerBase);
+        return result.ToActionResult(controllerBase);
     }
 
     public static async Task<ActionResult<TValue>> ToErrorActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
@@ -65,14 +65,14 @@ public static class ActionResultExtensionsAsync
     /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
     /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
     /// <returns></returns>
-    public static async Task<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(
+    public static async Task<ActionResult<TOut>> ToActionResultAsync<TIn, TOut>(
         this Task<Result<TIn>> resultTask,
         ControllerBase controllerBase,
         Func<TIn, ContentRangeHeaderValue> funcRange,
         Func<TIn, TOut> funcValue)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
+        return result.ToActionResult(controllerBase, funcRange, funcValue);
     }
 
     /// <summary>
@@ -90,31 +90,31 @@ public static class ActionResultExtensionsAsync
     /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
     /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
     /// <returns></returns>
-    public static async ValueTask<ActionResult<TOut>> ToPartialOrOkActionResultAsync<TIn, TOut>(
+    public static async ValueTask<ActionResult<TOut>> ToActionResultAsync<TIn, TOut>(
     this ValueTask<Result<TIn>> resultTask,
     ControllerBase controllerBase,
     Func<TIn, ContentRangeHeaderValue> funcRange,
     Func<TIn, TOut> funcValue)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, funcRange, funcValue);
+        return result.ToActionResult(controllerBase, funcRange, funcValue);
     }
 
-    public static async Task<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
+    public static async Task<ActionResult<TValue>> ToActionResultAsync<TValue>(
         this Task<Result<TValue>> resultTask,
         ControllerBase controllerBase,
         long from, long to, long totalLength)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
+        return result.ToActionResult(controllerBase, from, to, totalLength);
     }
 
-    public static async ValueTask<ActionResult<TValue>> ToPartialOrOkActionResultAsync<TValue>(
+    public static async ValueTask<ActionResult<TValue>> ToActionResultAsync<TValue>(
         this ValueTask<Result<TValue>> resultTask,
         ControllerBase controllerBase,
         long from, long to, long totalLength)
     {
         var result = await resultTask;
-        return result.ToPartialOrOkActionResult(controllerBase, from, to, totalLength);
+        return result.ToActionResult(controllerBase, from, to, totalLength);
     }
 }

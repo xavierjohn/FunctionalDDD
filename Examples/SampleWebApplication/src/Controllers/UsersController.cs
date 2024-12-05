@@ -15,7 +15,7 @@ public class UsersController : ControllerBase
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
         .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
-        .ToOkActionResult(this);
+        .ToActionResult(this);
 
     [HttpPost("[action]")]
     public ActionResult<User> RegisterCreated([FromBody] RegisterUserRequest request) =>
