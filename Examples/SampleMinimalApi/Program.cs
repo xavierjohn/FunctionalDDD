@@ -55,7 +55,7 @@ userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
     .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
     .Finally(
             ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
-            err => err.ToErrorResult()));
+            err => err.ToHttpResult()));
 
 userApi.MapGet("/notfound/{id}", (int id) =>
     Result.Failure(Error.NotFound("User not found", id.ToString()))
