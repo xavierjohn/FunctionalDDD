@@ -4,10 +4,10 @@ This library will help convert Error objects to ASP.NET Core ActionResult
 
 ## MVC
 
-- ToOkActionResult
+- ToActionResult
 - ToErrorActionResult
 
-### ToOkActionResult
+### ToActionResult
 
 Use this method to convert `Result` to `OkObjectResult` or various failed results.
 
@@ -37,7 +37,7 @@ public ActionResult<User> Register([FromBody] RegisterRequest request) =>
     .Combine(LastName.TryCreate(request.lastName))
     .Combine(EmailAddress.TryCreate(request.email))
     .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
-    .ToOkActionResult(this);
+    .ToActionResult(this);
 ```
 
 To control the return type
@@ -54,16 +54,17 @@ public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =
         err => err.ToErrorActionResult<User>(this));
 ```
 
-### ToPartialOrOkActionResult
-ToPartialOrOkActionResult can be used to support pagination.
-The function takes in three parameters to, from and length and based on the values
+### ToActionResult
+
+ToActionResult can be used to support pagination by passing three parameters to, from and length. Based on the values it
 will return PartialContent (206) or Okay(200) per [RFC9110](https://www.rfc-editor.org/rfc/rfc9110#field.content-range)
 
 ## Minimal API
-- ToOkResult
+
+- ToHttpResult
 - ToErrorResult
 
-### ToOkResult
+### ToHttpResult
 
 Use this method to convert `Result` to `IResult` or various failed results.
 
@@ -81,7 +82,7 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
     .Combine(LastName.TryCreate(request.lastName))
     .Combine(EmailAddress.TryCreate(request.email))
     .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .ToOkResult());
+    .ToHttpResult());
 ```
 
 To control the return type

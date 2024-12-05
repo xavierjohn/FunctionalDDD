@@ -183,9 +183,10 @@ var result = await _httpClient.GetAsync($"person/{id}")
 
   ```
 
-  ### Convert Result to HTTP response
+### Convert Result to HTTP response
 
 #### MVC
+
   ```csharp
 [HttpPost("[action]")]
 public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
@@ -193,22 +194,24 @@ public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
     .Combine(LastName.TryCreate(request.lastName))
     .Combine(EmailAddress.TryCreate(request.email))
     .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
-    .ToOkActionResult(this);
+    .ToActionResult(this);
 
   ```
 
 #### Minimal API
+
   ```csharp
 userApi.MapPost("/register", (RegisterUserRequest request) =>
     FirstName.TryCreate(request.firstName)
     .Combine(LastName.TryCreate(request.lastName))
     .Combine(EmailAddress.TryCreate(request.email))
     .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .ToOkResult());
+    .ToHttpResult());
 
   ```
 
 Sample Error:
+
   ```json
 {
     "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
@@ -224,6 +227,7 @@ Sample Error:
     }
 }
   ```
+
 ### Tracing
 
 Tracing can be enabled by adding `AddFunctionalDddRopInstrumentation()` for ROP code or `AddFunctionalDddCvoInstrumentation()` for Common Value Objects.
@@ -238,4 +242,5 @@ var builder = Sdk.CreateTracerProviderBuilder()
 Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
 
 ## Related project
+
 [CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#. This library was inspired by several of the training materials created by Vladimir Khorikov.
