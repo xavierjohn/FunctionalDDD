@@ -56,7 +56,7 @@ public class FluentTests
         {
             new("FirstName", ["'First Name' must not be empty."]),
             new("LastName", ["'Last Name' must not be empty."] ),
-            new("Password", ["'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character."])
+            new("Password", ["Password must contain at least one number.", "Password must contain at least one special character." ])
         };
 
         // Act

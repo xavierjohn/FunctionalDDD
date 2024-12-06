@@ -59,8 +59,9 @@ public static class FunctionalDDDValidationExtension
         if (validationResult.IsValid)
             return Result.Success<T>(value);
 
-        var errors = validationResult.Errors
-            .Select(x => new ValidationError.FieldDetails(x.PropertyName, [x.ErrorMessage]))
+        ValidationError.FieldDetails[] errors = validationResult.Errors
+            .GroupBy(e => e.PropertyName)
+            .Select( g => new ValidationError.FieldDetails(g.Key, g.Select(e => e.ErrorMessage).ToArray()))
             .ToArray();
 
         return Result.Failure<T>(Error.Validation(errors));
@@ -78,8 +79,8 @@ public static class FunctionalDDDValidationExtension
         T value,
         [CallerArgumentExpression(nameof(value))] string paramName = "value")
     {
-        var result = value is null
-        ? new ValidationResult(new[] { new ValidationFailure(paramName, $"{paramName} must not be empty.") })
+        ValidationResult result = value is null
+        ? new ValidationResult([new ValidationFailure(paramName, $"{paramName} must not be empty.")])
         : validator.Validate(value);
 
         return result.ToResult(value);
