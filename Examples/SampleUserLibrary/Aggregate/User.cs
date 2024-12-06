@@ -10,7 +10,7 @@ public class User : Aggregate<UserId>
     public required EmailAddress Email { get; init; }
     public required string Password { get; init; }
 
-    public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password) // password shown as string to demo validation but you should have a Password Type.
     {
         var user = new User(firstName, lastName, email, password);
         var validator = new UserValidator();
