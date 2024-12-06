@@ -1,12 +1,13 @@
 ﻿namespace FluentValidationExt.Tests;
 using FluentValidation;
+using System.Diagnostics.CodeAnalysis;
 
 internal class User : Aggregate<UserId>
 {
-    public FirstName FirstName { get; }
-    public LastName LastName { get; }
-    public EmailAddress Email { get; }
-    public string Password { get; }
+    public required FirstName FirstName { get; init; }
+    public required LastName LastName { get; init; }
+    public required EmailAddress Email { get; init; }
+    public required string Password { get; init; }
 
     public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
@@ -14,7 +15,7 @@ internal class User : Aggregate<UserId>
         return s_validator.ValidateToResult(user);
     }
 
-
+    [SetsRequiredMembers]
     private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
         : base(UserId.NewUnique())
     {
