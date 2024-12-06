@@ -8,7 +8,7 @@ public class User : Aggregate<UserId>
     public required FirstName FirstName { get; init; }
     public required LastName LastName { get; init; }
     public required EmailAddress Email { get; init; }
-    public string Password { get; }
+    public required string Password { get; init; }
 
     public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password)
     {
