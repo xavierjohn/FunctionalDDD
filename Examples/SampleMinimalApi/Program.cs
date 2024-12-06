@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using FunctionalDdd;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using SampleMinimalApi.API;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -21,62 +22,7 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-var sampleTodos = new Todo[] {
-    new(1, "Walk the dog"),
-    new(2, "Do the dishes", DateOnly.FromDateTime(DateTime.Now)),
-    new(3, "Do the laundry", DateOnly.FromDateTime(DateTime.Now.AddDays(1))),
-    new(4, "Clean the bathroom"),
-    new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
-};
-
-var todosApi = app.MapGroup("/todos");
-todosApi.MapGet("/", () => sampleTodos);
-todosApi.MapGet("/{id}", (int id) =>
-    sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
-        ? Results.Ok(todo)
-        : Results.NotFound());
-
-var userApi = app.MapGroup("/users");
-userApi.MapGet("/", () => "Hello Users");
-
-userApi.MapGet("/{name}", (string name) => $"Hello {name}").WithName("GetUserById");
-
-userApi.MapPost("/register", (RegisterUserRequest request) =>
-    FirstName.TryCreate(request.firstName)
-    .Combine(LastName.TryCreate(request.lastName))
-    .Combine(EmailAddress.TryCreate(request.email))
-    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .ToHttpResult());
-
-userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
-    FirstName.TryCreate(request.firstName)
-    .Combine(LastName.TryCreate(request.lastName))
-    .Combine(EmailAddress.TryCreate(request.email))
-    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .Finally(
-            ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
-            err => err.ToHttpResult()));
-
-userApi.MapGet("/notfound/{id}", (int id) =>
-    Result.Failure(Error.NotFound("User not found", id.ToString()))
-    .ToHttpResult());
-
-userApi.MapGet("/conflict/{id}", (int id) =>
-    Result.Failure(Error.Conflict("Record has changed.", id.ToString()))
-    .ToHttpResult());
-
-userApi.MapGet("/forbidden/{id}", (int id) =>
-    Result.Failure(Error.Forbidden("You do not have access.", id.ToString()))
-    .ToHttpResult());
-
-userApi.MapGet("/unauthorized/{id}", (int id) =>
-    Result.Failure(Error.Unauthorized("You have not been authorized.", id.ToString()))
-    .ToHttpResult());
-
-userApi.MapGet("/unexpected/{id}", (int id) =>
-    Result.Failure(Error.Unexpected("Internal server error.", id.ToString()))
-    .ToHttpResult());
-
+app.UseUserRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces

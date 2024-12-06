@@ -51,8 +51,9 @@ public class ResultsTests
     public void Will_return_BadRequst_for_validation_failure()
     {
         // Arrange
-        var errors = Error.Validation("MyField 1 Detail", "MyField 1 Name", "Some validation falied.", "magicInstance")
-            .Combine(Error.Validation("MyField 2 Detail", "MyField 2 Name", "Some other validation falied.", "magicInstance"));
+        ValidationError.FieldDetails field1 = new("MyField1", ["Detail 1"]);
+        ValidationError.FieldDetails field2 = new("MyField2", ["Detail 2", "More Detail 2"]);
+        Error errors = Error.Validation([field1, field2], "Some validation falied.", "magicInstance");
         var result = Result.Failure(errors);
         var expected = new HttpValidationProblemDetails
         {
@@ -63,8 +64,8 @@ public class ResultsTests
             Instance = "magicInstance",
             Errors = new Dictionary<string, string[]>
             {
-                ["MyField 1 Name"] = ["MyField 1 Detail"],
-                ["MyField 2 Name"] = ["MyField 2 Detail"]
+                ["MyField1"] = ["Detail 1"],
+                ["MyField2"] = ["Detail 2", "More Detail 2"]
             }
         };
 

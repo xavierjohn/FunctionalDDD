@@ -1,5 +1,6 @@
 ﻿namespace FluentValidationExt.Tests;
 using FluentValidation;
+using System.Diagnostics.CodeAnalysis;
 
 internal class User : Aggregate<UserId>
 {
@@ -8,12 +9,12 @@ internal class User : Aggregate<UserId>
     public EmailAddress Email { get; }
     public string Password { get; }
 
-    public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password)
+    public static Result<User> TryCreate(FirstName firstName, LastName lastName, EmailAddress email, string password) // password shown as string to demo validation but you should have a Password Type.
     {
         var user = new User(firstName, lastName, email, password);
-        return s_validator.ValidateToResult(user);
+        var validator = new UserValidator();
+        return validator.ValidateToResult(user);
     }
-
 
     private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
         : base(UserId.NewUnique())
@@ -24,12 +25,20 @@ internal class User : Aggregate<UserId>
         Password = password;
     }
 
-    static readonly InlineValidator<User> s_validator = new()
+    public class UserValidator : AbstractValidator<User>
     {
-        v => v.RuleFor(x => x.FirstName).NotNull(),
-        v => v.RuleFor(x => x.LastName).NotNull(),
-        v => v.RuleFor(x => x.Email).NotNull(),
-        v => v.RuleFor(x => x.Password).Matches("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])(?=.{8,})")
-                .WithMessage("'Password' must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit and one special character.")
-    };
+        public UserValidator()
+        {
+            RuleFor(user => user.FirstName).NotNull();
+            RuleFor(user => user.LastName).NotNull();
+            RuleFor(user => user.Email).NotNull();
+            RuleFor(user => user.Password)
+                .NotEmpty().WithMessage("Password must not be empty.")
+                .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
+                .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
+                .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
+                .Matches("[0-9]").WithMessage("Password must contain at least one number.")
+                .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
+        }
+    }
 }
