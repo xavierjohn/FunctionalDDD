@@ -19,7 +19,7 @@ Accept: application/json
   "firstName": "Xavier",
   "lastName": "John",
   "email": "xa@somewhere.com",
-  "password": "KeepItSimple"
+  "password": "Keep8Simple!"
 }
 ###
 
@@ -46,6 +46,19 @@ Accept: application/json
   "lastName": "",
   "email": "xa.com",
   "password": "string"
+}
+###
+
+// Bad Request password
+POST {{SampleMinimalApi_HostAddress}}/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "KeepItSimple"
 }
 ###
 

@@ -28,7 +28,19 @@ public static class HttpResultExtensions
     {
         if (error is ValidationError validationError)
         {
-            var errors = validationError.Errors.ToDictionary(error => error.Name, error => error.Details);
+            Dictionary<string, List<string>> dictionary = [];
+            foreach (var item in validationError.Errors)
+            {
+                if (dictionary.TryGetValue(item.Name, out var value))
+                    value.AddRange(item.Details);
+                else
+                    dictionary.Add(item.Name, new List<string>(item.Details));
+            }
+
+            Dictionary<string, string[]> errors = [];
+            foreach (KeyValuePair<string, List<string>> item in dictionary)
+                errors.Add(item.Key, [.. item.Value]);
+
             return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance);
         }
 
