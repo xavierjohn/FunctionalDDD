@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -150,96 +150,10 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 </h2>
 
 
-  <a id="FunctionalDdd_ActionResultExtensions_ToErrorActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResultAsync*"></a>
+  <a id="FunctionalDdd_ActionResultExtensions_ToActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult*"></a>
 
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToErrorActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResultAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase)">
-  ToErrorActionResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L98"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;ActionResult&lt;TValue&gt;&gt; ToErrorActionResultAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, ControllerBase controllerBase)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
-    <dd></dd>
-    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Type Parameters</h4>
-  <dl class="parameters">
-    <dt><code>TValue</code></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDdd_ActionResultExtensions_ToErrorActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResultAsync*"></a>
-
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToErrorActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase)">
-  ToErrorActionResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L104"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"></div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;ActionResult&lt;TValue&gt;&gt; ToErrorActionResultAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, ControllerBase controllerBase)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
-    <dd></dd>
-    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Type Parameters</h4>
-  <dl class="parameters">
-    <dt><code>TValue</code></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDdd_ActionResultExtensions_ToErrorActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResult*"></a>
-
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToErrorActionResult__1_FunctionalDdd_Error_Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResult``1(FunctionalDdd.Error,Microsoft.AspNetCore.Mvc.ControllerBase)">
-  ToErrorActionResult&lt;TValue&gt;(Error, ControllerBase)
+  <h3 id="FunctionalDdd_ActionResultExtensions_ToActionResult__1_FunctionalDdd_Error_Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult``1(FunctionalDdd.Error,Microsoft.AspNetCore.Mvc.ControllerBase)">
+  ToActionResult&lt;TValue&gt;(Error, ControllerBase)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L72"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -248,7 +162,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToErrorActionResult&lt;TValue&gt;(this Error error, ControllerBase controllerBase)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToActionResult&lt;TValue&gt;(this Error error, ControllerBase controllerBase)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -309,54 +223,10 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
 
 
-  <a id="FunctionalDdd_ActionResultExtensions_ToErrorActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResult*"></a>
+  <a id="FunctionalDdd_ActionResultExtensions_ToActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult*"></a>
 
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToErrorActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToErrorActionResult``1(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase)">
-  ToErrorActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L92"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"><p><a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> extension method that maps domain errors to failed <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.objectresult">ObjectResult</a> using <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a>.</p>
-</div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToErrorActionResult&lt;TValue&gt;(this Result&lt;TValue&gt; result, ControllerBase controllerBase)</code></pre>
-  </div>
-
-  <h4 class="section">Parameters</h4>
-  <dl class="parameters">
-    <dt><code>result</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
-    <dd></dd>
-    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Returns</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;</dt>
-    <dd></dd>
-  </dl>
-
-  <h4 class="section">Type Parameters</h4>
-  <dl class="parameters">
-    <dt><code>TValue</code></dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
-
-
-  <a id="FunctionalDdd_ActionResultExtensions_ToOkActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToOkActionResult*"></a>
-
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToOkActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToOkActionResult``1(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase)">
-  ToOkActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase)
+  <h3 id="FunctionalDdd_ActionResultExtensions_ToActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult``1(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase)">
+  ToActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L22"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -366,7 +236,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToOkActionResult&lt;TValue&gt;(this Result&lt;TValue&gt; result, ControllerBase controllerBase)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToActionResult&lt;TValue&gt;(this Result&lt;TValue&gt; result, ControllerBase controllerBase)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -402,11 +272,11 @@ Otherwise it returns the error code corresponding to the failure error object.</
 
 
 
-  <a id="FunctionalDdd_ActionResultExtensions_ToPartialOrOkActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToPartialOrOkActionResult*"></a>
+  <a id="FunctionalDdd_ActionResultExtensions_ToActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult*"></a>
 
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToPartialOrOkActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDdd.ActionResultExtensions.ToPartialOrOkActionResult``1(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
-  ToPartialOrOkActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase, long, long, long)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L125"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_ActionResultExtensions_ToActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult``1(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
+  ToActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase, long, long, long)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L100"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>If <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> is in success state this extension method returns</p>
@@ -416,7 +286,7 @@ Otherwise it returns the error code corresponding to the failure error object.
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToPartialOrOkActionResult&lt;TValue&gt;(this Result&lt;TValue&gt; result, ControllerBase controllerBase, long from, long to, long length)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TValue&gt; ToActionResult&lt;TValue&gt;(this Result&lt;TValue&gt; result, ControllerBase controllerBase, long from, long to, long length)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -459,11 +329,11 @@ Otherwise it returns the error code corresponding to the failure error object.
 
 
 
-  <a id="FunctionalDdd_ActionResultExtensions_ToPartialOrOkActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToPartialOrOkActionResult*"></a>
+  <a id="FunctionalDdd_ActionResultExtensions_ToActionResult_" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult*"></a>
 
-  <h3 id="FunctionalDdd_ActionResultExtensions_ToPartialOrOkActionResult__2_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDdd.ActionResultExtensions.ToPartialOrOkActionResult``2(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
-  ToPartialOrOkActionResult&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L155"><i class="bi bi-code-slash"></i></a>
+  <h3 id="FunctionalDdd_ActionResultExtensions_ToActionResult__2_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDdd.ActionResultExtensions.ToActionResult``2(FunctionalDdd.Result{``0},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
+  ToActionResult&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensions.cs/#L130"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>If <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> is in success state this extension method returns</p>
@@ -473,7 +343,7 @@ Otherwise it returns the error code corresponding to the failure error object.
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TOut&gt; ToPartialOrOkActionResult&lt;TIn, TOut&gt;(this Result&lt;TIn&gt; result, ControllerBase controllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt; funcRange, Func&lt;TIn, TOut&gt; funcValue)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ActionResult&lt;TOut&gt; ToActionResult&lt;TIn, TOut&gt;(this Result&lt;TIn&gt; result, ControllerBase controllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt; funcRange, Func&lt;TIn, TOut&gt; funcValue)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>

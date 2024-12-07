@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -150,10 +150,10 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 </h2>
 
 
-  <a id="FunctionalDdd_HttpResultExtensionsAsync_ToOkResultAsync_" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToOkResultAsync*"></a>
+  <a id="FunctionalDdd_HttpResultExtensionsAsync_ToHttpResultAsync_" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToHttpResultAsync*"></a>
 
-  <h3 id="FunctionalDdd_HttpResultExtensionsAsync_ToOkResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToOkResultAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}})">
-  ToOkResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;)
+  <h3 id="FunctionalDdd_HttpResultExtensionsAsync_ToHttpResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToHttpResultAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}})">
+  ToHttpResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensionsAsync.cs/#L17"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -163,7 +163,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static Task&lt;IResult&gt; ToOkResultAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask)</code></pre>
+    <pre><code class="lang-csharp hljs">public static Task&lt;IResult&gt; ToHttpResultAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -196,10 +196,10 @@ Otherwise it returns the error code corresponding to the failure error object.</
 
 
 
-  <a id="FunctionalDdd_HttpResultExtensionsAsync_ToOkResultAsync_" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToOkResultAsync*"></a>
+  <a id="FunctionalDdd_HttpResultExtensionsAsync_ToHttpResultAsync_" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToHttpResultAsync*"></a>
 
-  <h3 id="FunctionalDdd_HttpResultExtensionsAsync_ToOkResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToOkResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}})">
-  ToOkResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;)
+  <h3 id="FunctionalDdd_HttpResultExtensionsAsync_ToHttpResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___" data-uid="FunctionalDdd.HttpResultExtensionsAsync.ToHttpResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}})">
+  ToHttpResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensionsAsync.cs/#L30"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -209,7 +209,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static ValueTask&lt;IResult&gt; ToOkResultAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask)</code></pre>
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;IResult&gt; ToHttpResultAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>

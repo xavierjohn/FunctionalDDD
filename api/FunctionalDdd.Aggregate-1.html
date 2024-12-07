@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -85,7 +85,7 @@
 
 
   <h1 id="FunctionalDdd_Aggregate_1" data-uid="FunctionalDdd.Aggregate`1" class="text-break">
-Class Aggregate&lt;TId&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L9"><i class="bi bi-code-slash"></i></a>
+Class Aggregate&lt;TId&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L11"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -184,7 +184,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
   <h3 id="FunctionalDdd_Aggregate_1__ctor__0_" data-uid="FunctionalDdd.Aggregate`1.#ctor(`0)">
   Aggregate(TId)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L20"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L23"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -219,7 +219,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
   <h3 id="FunctionalDdd_Aggregate_1_DomainEvents" data-uid="FunctionalDdd.Aggregate`1.DomainEvents">
   DomainEvents
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L12"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L14"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"></div>
@@ -250,7 +250,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
   <h3 id="FunctionalDdd_Aggregate_1_IsChanged" data-uid="FunctionalDdd.Aggregate`1.IsChanged">
   IsChanged
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L18"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L20"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets a value indicating whether the aggregate has changed.</p>
@@ -258,7 +258,8 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public virtual bool IsChanged { get; }</code></pre>
+    <pre><code class="lang-csharp hljs">[JsonIgnore]
+public virtual bool IsChanged { get; }</code></pre>
   </div>
 
 
@@ -287,7 +288,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
   <h3 id="FunctionalDdd_Aggregate_1_AcceptChanges" data-uid="FunctionalDdd.Aggregate`1.AcceptChanges">
   AcceptChanges()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L31"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L34"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Resets the object's state to unchanged by accepting the modifications.</p>
@@ -314,7 +315,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 
   <h3 id="FunctionalDdd_Aggregate_1_UncommittedEvents" data-uid="FunctionalDdd.Aggregate`1.UncommittedEvents">
   UncommittedEvents()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L28"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L31"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Get all domain events that have been recorded.</p>
@@ -346,7 +347,7 @@ The root can thus ensure the integrity of the aggregate as a whole.</p>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L9" class="edit-link">Edit this page</a>
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/DomainDrivenDesign/src/Aggregate.cs/#L11" class="edit-link">Edit this page</a>
         </div>
 
 

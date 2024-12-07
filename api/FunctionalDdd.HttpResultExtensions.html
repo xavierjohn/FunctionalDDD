@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -150,10 +150,10 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 </h2>
 
 
-  <a id="FunctionalDdd_HttpResultExtensions_ToErrorResult_" data-uid="FunctionalDdd.HttpResultExtensions.ToErrorResult*"></a>
+  <a id="FunctionalDdd_HttpResultExtensions_ToHttpResult_" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult*"></a>
 
-  <h3 id="FunctionalDdd_HttpResultExtensions_ToErrorResult_FunctionalDdd_Error_" data-uid="FunctionalDdd.HttpResultExtensions.ToErrorResult(FunctionalDdd.Error)">
-  ToErrorResult(Error)
+  <h3 id="FunctionalDdd_HttpResultExtensions_ToHttpResult_FunctionalDdd_Error_" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult(FunctionalDdd.Error)">
+  ToHttpResult(Error)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensions.cs/#L27"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -162,7 +162,7 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static IResult ToErrorResult(this Error error)</code></pre>
+    <pre><code class="lang-csharp hljs">public static IResult ToHttpResult(this Error error)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>
@@ -189,10 +189,10 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 
 
 
-  <a id="FunctionalDdd_HttpResultExtensions_ToOkResult_" data-uid="FunctionalDdd.HttpResultExtensions.ToOkResult*"></a>
+  <a id="FunctionalDdd_HttpResultExtensions_ToHttpResult_" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult*"></a>
 
-  <h3 id="FunctionalDdd_HttpResultExtensions_ToOkResult__1_FunctionalDdd_Result___0__" data-uid="FunctionalDdd.HttpResultExtensions.ToOkResult``1(FunctionalDdd.Result{``0})">
-  ToOkResult&lt;TValue&gt;(Result&lt;TValue&gt;)
+  <h3 id="FunctionalDdd_HttpResultExtensions_ToHttpResult__1_FunctionalDdd_Result___0__" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult``1(FunctionalDdd.Result{``0})">
+  ToHttpResult&lt;TValue&gt;(Result&lt;TValue&gt;)
   <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensions.cs/#L17"><i class="bi bi-code-slash"></i></a>
   </h3>
 
@@ -202,7 +202,7 @@ Otherwise it returns the error code corresponding to the failure error object.</
   <div class="markdown level1 conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public static IResult ToOkResult&lt;TValue&gt;(this Result&lt;TValue&gt; result)</code></pre>
+    <pre><code class="lang-csharp hljs">public static IResult ToHttpResult&lt;TValue&gt;(this Result&lt;TValue&gt; result)</code></pre>
   </div>
 
   <h4 class="section">Parameters</h4>

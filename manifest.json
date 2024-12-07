@@ -104,6 +104,26 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.CommonValueObjectTrace.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.CommonValueObjectTrace.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.CommonValueObjectTraceProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.CommonValueObjectTraceProviderBuilderExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDdd.CompensateExtensions.yml",
       "output": {
         ".html": {
@@ -394,6 +414,16 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ParsableJsonConverter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ParsableJsonConverter-1.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDdd.PartialObjectResult.yml",
       "output": {
         ".html": {
@@ -444,6 +474,16 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.RopTracerProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.RopTracerProviderBuilderExtensions.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FunctionalDdd.ScalarValueObject-1.yml",
       "output": {
         ".html": {
@@ -488,16 +528,6 @@
       "output": {
         ".html": {
           "relative_path": "api/FunctionalDdd.TapExtensionsAsync.html"
-        }
-      },
-      "version": ""
-    },
-    {
-      "type": "ManagedReference",
-      "source_relative_path": "api/FunctionalDdd.TracerProviderBuilderExtensions.yml",
-      "output": {
-        ".html": {
-          "relative_path": "api/FunctionalDdd.TracerProviderBuilderExtensions.html"
         }
       },
       "version": ""
