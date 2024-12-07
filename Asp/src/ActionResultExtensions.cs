@@ -20,7 +20,7 @@ public static class ActionResultExtensions
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
     public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
-        => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.ToErrorActionResult(controllerBase);
+        => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.ToActionResult(controllerBase);
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
@@ -81,31 +81,6 @@ public static class ActionResultExtensions
         UnexpectedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError),
         _ => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError)
     };
-
-    /// <summary>
-    /// <see cref="Result{TValue}"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
-    /// </summary>
-    /// <typeparam name="TValue"></typeparam>
-    /// <param name="result"></param>
-    /// <param name="controllerBase"></param>
-    /// <returns></returns>
-    public static ActionResult<TValue> ToErrorActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
-    {
-        var error = result.Error;
-        return error.ToActionResult<TValue>(controllerBase);
-    }
-
-    public static async Task<ActionResult<TValue>> ToErrorActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
-    {
-        var result = await resultTask;
-        return result.ToErrorActionResult(controllerBase);
-    }
-
-    public static async ValueTask<ActionResult<TValue>> ToErrorActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
-    {
-        var result = await resultTask;
-        return result.ToErrorActionResult(controllerBase);
-    }
 
     /// <summary>
     /// If <see cref="Result{TValue}"/> is in success state this extension method returns
