@@ -20,7 +20,7 @@ public static class ActionResultExtensionsAsync
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
     public static async Task<ActionResult<TValue>> ToActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
-        var result = await resultTask;
+        Result<TValue> result = await resultTask;
         return result.ToActionResult(controllerBase);
     }
 
@@ -34,20 +34,8 @@ public static class ActionResultExtensionsAsync
     /// <returns><see cref="ActionResult{TValue}"/></returns>
     public static async ValueTask<ActionResult<TValue>> ToActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
-        var result = await resultTask;
+        Result<TValue> result = await resultTask;
         return result.ToActionResult(controllerBase);
-    }
-
-    public static async Task<ActionResult<TValue>> ToErrorActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
-    {
-        var result = await resultTask;
-        return result.ToErrorActionResult(controllerBase);
-    }
-
-    public static async ValueTask<ActionResult<TValue>> ToErrorActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
-    {
-        var result = await resultTask;
-        return result.ToErrorActionResult(controllerBase);
     }
 
     /// <summary>

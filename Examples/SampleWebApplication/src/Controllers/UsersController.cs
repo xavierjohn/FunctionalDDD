@@ -35,7 +35,7 @@ public class UsersController : ControllerBase
         .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
         .Finally(result => result.IsSuccess
             ? AcceptedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
-            : result.ToErrorActionResult(this));
+            : result.ToActionResult(this));
 
     [HttpGet("{name}")]
     public ActionResult<string> Get(string name) => Ok($"Hello {name}!");

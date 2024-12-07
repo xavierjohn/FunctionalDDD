@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 
-public class ResultValueTaskTests
+public class HttpResultValueTaskTests
 {
     [Fact]
     public async Task Will_return_Ok_Result_Async()
