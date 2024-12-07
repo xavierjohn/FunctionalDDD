@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Xunit;
 using FunctionalDdd;
 
-public class ResultsTests
+public class HttpResultsTests
 {
     [Fact]
     public void Will_return_Ok_Result()

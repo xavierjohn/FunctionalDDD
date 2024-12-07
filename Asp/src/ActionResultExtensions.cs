@@ -20,7 +20,7 @@ public static class ActionResultExtensions
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
     public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
-        => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.ToActionResult(controllerBase);
+        => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.Error.ToActionResult<TValue>(controllerBase);
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
