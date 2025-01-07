@@ -108,7 +108,7 @@ public class ErrorTests
         var error = Error.Validation("field detail.", "field name");
 
         // Assert
-        error.Detail.Should().Be("");
+        error.Detail.Should().Be("field detail.");
         error.Code.Should().Be("validation.error");
         error.Should().BeOfType<ValidationError>();
         error.Instance.Should().BeNull();
@@ -131,7 +131,7 @@ public class ErrorTests
         var combinedError = error1.Combine(error2);
 
         // Assert
-        combinedError.Detail.Should().Be("");
+        combinedError.Detail.Should().Be("Too short.");
         combinedError.Code.Should().Be("validation.error");
         combinedError.Should().BeOfType<ValidationError>();
         combinedError.Instance.Should().BeNull();
