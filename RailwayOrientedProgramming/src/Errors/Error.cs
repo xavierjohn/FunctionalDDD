@@ -42,7 +42,7 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
-    public static ValidationError Validation(string fieldDetail, string fieldName = "", string detail = "", string? instance = null)
+    public static ValidationError Validation(string fieldDetail, string fieldName = "", string? detail = null, string? instance = null)
         => new(fieldDetail, fieldName, "validation.error", detail, instance);
 
     public static ValidationError Validation(FieldDetails[] fieldDetails, string detail = "", string? instance = null)
