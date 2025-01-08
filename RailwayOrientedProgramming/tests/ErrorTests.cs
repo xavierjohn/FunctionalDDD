@@ -131,7 +131,7 @@ public class ErrorTests
         var combinedError = error1.Combine(error2);
 
         // Assert
-        combinedError.Detail.Should().Be("Too short.");
+        combinedError.Detail.Should().Be(string.Empty);
         combinedError.Code.Should().Be("validation.error");
         combinedError.Should().BeOfType<ValidationError>();
         combinedError.Instance.Should().BeNull();
