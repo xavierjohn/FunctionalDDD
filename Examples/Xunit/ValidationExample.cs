@@ -14,11 +14,10 @@ public class ValidationExample
         var actual = EmailAddress.TryCreate("xavier@somewhere.com")
             .Combine(FirstName.TryCreate("Xavier"))
             .Combine(LastName.TryCreate("John"))
-            .Combine(EmailAddress.TryCreate("xavier@somewhereelse.com"))
             .Combine(Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt")))
-            .Bind((email, firstName, lastName, anotherEmail) => Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail)));
+            .Bind((email, firstName, lastName) => Result.Success(string.Join(" ", firstName, lastName, email)));
 
-        actual.Value.Should().Be("Xavier John xavier@somewhere.com xavier@somewhereelse.com");
+        actual.Value.Should().Be("Xavier John xavier@somewhere.com");
     }
 
     [Fact]
@@ -26,15 +25,14 @@ public class ValidationExample
     {
         var createdAt = DateTime.UtcNow;
         var updatedAt = createdAt.AddMinutes(-10);
-        var actual = EmailAddress.TryCreate("xavier@somewhere.com")
-            .Combine(FirstName.TryCreate("Xavier"))
+        var actual = FirstName.TryCreate("Xavier")
             .Combine(LastName.TryCreate(string.Empty))
             .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
             .Combine(Ensure(createdAt <= updatedAt, Error.Validation("updateAt cannot be less than createdAt", nameof(updatedAt))))
-            .Bind((email, firstName, lastName, anotherEmail) =>
+            .Bind((firstName, lastName, email) =>
             {
                 true.Should().BeFalse("this code should not get executed");
-                return Result.Success(string.Join(" ", firstName, lastName, email, anotherEmail));
+                return Result.Success(string.Join(" ", firstName, lastName, email));
             });
 
         actual.IsFailure.Should().BeTrue();
@@ -49,29 +47,29 @@ public class ValidationExample
     }
 
     [Fact]
-    public void Convert_optional_primitive_type_to_concrete_objects()
+    public void Convert_optional_primitive_type_to_valid_objects()
     {
-        string? firstName = null;
+        string? firstName = null; // Optional so null is allowed.
         string email = "xavier@somewhere.com";
-        string? lastName = "Deva";
+        string? lastName = "John";
 
         var actual = EmailAddress.TryCreate(email)
             .Combine(Maybe.Optional(firstName, FirstName.TryCreate))
             .Combine(Maybe.Optional(lastName, LastName.TryCreate))
             .Bind(Add);
 
-        actual.Value.Should().Be("xavier@somewhere.com  Deva");
+        actual.Value.Should().Be("xavier@somewhere.com  John");
 
         static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
             => emailAddress + " " + firstname + " " + lastname;
     }
 
     [Fact]
-    public void Convert_optional_primitive_type_to_concrete_objects_failure()
+    public void Cannot_convert_optional_invalid_primitive_type_to_valid_objects()
     {
-        string? firstName = string.Empty;
+        string? firstName = string.Empty; // Optional but empty string is not a valid first name.
         string email = "xavier@somewhere.com";
-        string? lastName = "Deva";
+        string? lastName = "John";
 
         var actual = EmailAddress.TryCreate(email)
             .Combine(Maybe.Optional(firstName, FirstName.TryCreate))
