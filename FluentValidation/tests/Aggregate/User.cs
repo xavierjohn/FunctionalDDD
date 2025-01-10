@@ -1,6 +1,5 @@
 ﻿namespace FluentValidationExt.Tests;
 using FluentValidation;
-using System.Diagnostics.CodeAnalysis;
 
 internal class User : Aggregate<UserId>
 {
@@ -29,10 +28,10 @@ internal class User : Aggregate<UserId>
     {
         public UserValidator()
         {
-            RuleFor(user => user.FirstName).NotNull();
-            RuleFor(user => user.LastName).NotNull();
-            RuleFor(user => user.Email).NotNull();
-            RuleFor(user => user.Password)
+            _ = RuleFor(user => user.FirstName).NotNull();
+            _ = RuleFor(user => user.LastName).NotNull();
+            _ = RuleFor(user => user.Email).NotNull();
+            _ = RuleFor(user => user.Password)
                 .NotEmpty().WithMessage("Password must not be empty.")
                 .MinimumLength(8).WithMessage("Password must be at least 8 characters long.")
                 .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
