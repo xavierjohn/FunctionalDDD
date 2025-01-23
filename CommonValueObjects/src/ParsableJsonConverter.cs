@@ -3,6 +3,10 @@
 using System.Text.Json.Serialization;
 using System.Text.Json;
 
+/// <summary>
+/// A JsonConverter that can be used to serialize and deserialize a Parsable Value Object.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class ParsableJsonConverter<T> :
     JsonConverter<T> where T : IParsable<T>
 {
