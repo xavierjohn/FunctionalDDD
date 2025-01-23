@@ -1463,13 +1463,13 @@ references:
   nameWithType: Error.Validation(ValidationError.FieldDetails[], string, string?, string)
   nameWithType.vb: Error.Validation(ValidationError.FieldDetails(), String, String, String)
 - uid: FunctionalDdd.Error.Validation(System.String,System.String,System.String,System.String)
-  name: Validation(string, string, string, string?)
+  name: Validation(string, string, string?, string?)
   href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_
   commentId: M:FunctionalDdd.Error.Validation(System.String,System.String,System.String,System.String)
   name.vb: Validation(String, String, String, String)
-  fullName: FunctionalDdd.Error.Validation(string, string, string, string?)
+  fullName: FunctionalDdd.Error.Validation(string, string, string?, string?)
   fullName.vb: FunctionalDdd.Error.Validation(String, String, String, String)
-  nameWithType: Error.Validation(string, string, string, string?)
+  nameWithType: Error.Validation(string, string, string?, string?)
   nameWithType.vb: Error.Validation(String, String, String, String)
 - uid: FunctionalDdd.Error.Validation*
   name: Validation
@@ -3733,13 +3733,13 @@ references:
   nameWithType: ValidationError.ValidationError(ValidationError.FieldDetails[], string, string, string?)
   nameWithType.vb: ValidationError.New(ValidationError.FieldDetails(), String, String, String)
 - uid: FunctionalDdd.ValidationError.#ctor(System.String,System.String,System.String,System.String,System.String)
-  name: ValidationError(string, string, string, string, string?)
+  name: ValidationError(string, string, string, string?, string?)
   href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError__ctor_System_String_System_String_System_String_System_String_System_String_
   commentId: M:FunctionalDdd.ValidationError.#ctor(System.String,System.String,System.String,System.String,System.String)
   name.vb: New(String, String, String, String, String)
-  fullName: FunctionalDdd.ValidationError.ValidationError(string, string, string, string, string?)
+  fullName: FunctionalDdd.ValidationError.ValidationError(string, string, string, string?, string?)
   fullName.vb: FunctionalDdd.ValidationError.New(String, String, String, String, String)
-  nameWithType: ValidationError.ValidationError(string, string, string, string, string?)
+  nameWithType: ValidationError.ValidationError(string, string, string, string?, string?)
   nameWithType.vb: ValidationError.New(String, String, String, String, String)
 - uid: FunctionalDdd.ValidationError.#ctor*
   name: ValidationError
