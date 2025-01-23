@@ -34,6 +34,12 @@ jobs:
     - name: Test
       run: dotnet test --no-build  -l "console;verbosity=normal" -c Release
 
+    - name: Update doc tools
+      run: dotnet tool update -g docfx
+
+    - name: Build docs
+      run: docfx docs/docfx_project/docfx.json
+  
     - name: Pack
       if: ${{ success() && !github.base_ref }}
       run: |
