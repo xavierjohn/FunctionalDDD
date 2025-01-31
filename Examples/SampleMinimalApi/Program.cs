@@ -22,6 +22,7 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
+app.UseToDoRoute();
 app.UseUserRoute();
 app.Run();
 

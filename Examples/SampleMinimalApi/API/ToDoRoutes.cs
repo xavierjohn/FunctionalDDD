@@ -1,6 +1,6 @@
 ﻿namespace SampleMinimalApi.API;
 
-public static class ToDodoRoutes
+public static class ToDoRoutes
 {
     public static void UseToDoRoute(this WebApplication app)
     {
