@@ -20,6 +20,7 @@ public class ErrorTests
         error.Should().BeOfType<ConflictError>();
         error.Instance.Should().Be(instance);
 
+        error.ToString().Should().Be($"Type: ConflictError, Code: code, Detail: message, Instance: {instance ?? "N/A"}");
     }
 
     [Theory]
@@ -36,6 +37,8 @@ public class ErrorTests
         error.Code.Should().Be("code");
         error.Should().BeOfType<NotFoundError>();
         error.Instance.Should().Be(instance);
+
+        error.ToString().Should().Be($"Type: NotFoundError, Code: code, Detail: message, Instance: {instance ?? "N/A"}");
     }
 
     [Fact]
@@ -50,6 +53,8 @@ public class ErrorTests
         error.Code.Should().Be("not.found.error");
         error.Should().BeOfType<NotFoundError>();
         error.Instance.Should().BeNull();
+
+        error.ToString().Should().Be($"Type: NotFoundError, Code: not.found.error, Detail: message, Instance: N/A");
     }
 
     [Theory]
@@ -66,6 +71,8 @@ public class ErrorTests
         error.Code.Should().Be("code");
         error.Should().BeOfType<ForbiddenError>();
         error.Instance.Should().Be(instance);
+
+        error.ToString().Should().Be($"Type: ForbiddenError, Code: code, Detail: message, Instance: {instance ?? "N/A"}");
     }
 
     [Theory]
@@ -82,6 +89,8 @@ public class ErrorTests
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnauthorizedError>();
         error.Instance.Should().Be(instance);
+
+        error.ToString().Should().Be($"Type: UnauthorizedError, Code: code, Detail: message, Instance: {instance ?? "N/A"}");
     }
 
     [Theory]
@@ -98,6 +107,8 @@ public class ErrorTests
         error.Code.Should().Be("code");
         error.Should().BeOfType<UnexpectedError>();
         error.Instance.Should().Be(instance);
+
+        error.ToString().Should().Be($"Type: UnexpectedError, Code: code, Detail: message, Instance: {instance ?? "N/A"}");
     }
 
     [Fact]
@@ -117,6 +128,7 @@ public class ErrorTests
         validationError.Errors[0].Name.Should().Be("field name");
         validationError.Errors[0].Details.Should().HaveCount(1);
         validationError.Errors[0].Details[0].Should().Be("field detail.");
+        validationError.ToString().Should().Be("Type: ValidationError, Code: validation.error, Detail: field detail., Instance: N/A\r\nfield name: field detail.");
     }
 
     [Fact]
@@ -144,5 +156,8 @@ public class ErrorTests
         validationError.Errors[1].Name.Should().Be("password");
         validationError.Errors[1].Details.Should().HaveCount(2);
         validationError.Errors[1].Details.Should().Equal("Not complex.", "Make it complex.");
+
+        var errorSting = validationError.ToString();
+        errorSting.Should().Be("Type: ValidationError, Code: validation.error, Detail: , Instance: N/A\r\npassword: Too short.\r\npassword: Not complex., Make it complex.");
     }
 }
