@@ -1,5 +1,6 @@
 ﻿namespace FunctionalDdd;
 
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using FluentValidation;
@@ -57,11 +58,11 @@ public static class FunctionalDDDValidationExtension
     public static Result<T> ToResult<T>(this ValidationResult validationResult, T value)
     {
         if (validationResult.IsValid)
-            return Result.Success<T>(value);
+            return Result.Success(value);
 
         ValidationError.FieldDetails[] errors = validationResult.Errors
             .GroupBy(e => e.PropertyName)
-            .Select( g => new ValidationError.FieldDetails(g.Key, g.Select(e => e.ErrorMessage).ToArray()))
+            .Select(g => new ValidationError.FieldDetails(g.Key, g.Select(e => e.ErrorMessage).ToArray()))
             .ToArray();
 
         return Result.Failure<T>(Error.Validation(errors));
@@ -77,10 +78,11 @@ public static class FunctionalDDDValidationExtension
     public static Result<T> ValidateToResult<T>(
         this IValidator<T> validator,
         T value,
-        [CallerArgumentExpression(nameof(value))] string paramName = "value")
+        [CallerArgumentExpression(nameof(value))] string paramName = "value",
+        string? message = null)
     {
         ValidationResult result = value is null
-        ? new ValidationResult([new ValidationFailure(paramName, $"{paramName} must not be empty.")])
+        ? new ValidationResult([new ValidationFailure(paramName, message ?? $"'{paramName}' must not be empty.")])
         : validator.Validate(value);
 
         return result.ToResult(value);
