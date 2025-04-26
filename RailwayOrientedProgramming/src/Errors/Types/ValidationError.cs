@@ -13,4 +13,7 @@ public sealed class ValidationError : Error
         => Errors = [.. fieldDetails];
 
     public IList<FieldDetails> Errors { get; set; }
+
+    public override string ToString()
+        => base.ToString() + "\r\n" + string.Join("\r\n", Errors.Select(e => $"{e.Name}: {string.Join(", ", e.Details)}"));
 }

@@ -42,6 +42,9 @@ public class Error : IEquatable<Error>
 
     public override int GetHashCode() => Code.GetHashCode();
 
+    public override string ToString()
+        => $"Type: {GetType().Name}, Code: {Code}, Detail: {Detail}, Instance: {Instance ?? "N/A"}";
+
     public static ValidationError Validation(string fieldDetail, string fieldName = "", string? detail = null, string? instance = null)
         => new(fieldDetail, fieldName, "validation.error", detail, instance);
 
@@ -68,7 +71,6 @@ public class Error : IEquatable<Error>
 
     public static UnexpectedError Unexpected(string detail, string? instance = null) =>
         new(detail, "unexpected.error", instance);
-
 
     public static BadRequestError BadRequest(string detail, string code, string? instance) =>
         new(detail, code, instance);
