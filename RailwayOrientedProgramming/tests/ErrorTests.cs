@@ -151,7 +151,7 @@ public class ErrorTests
         validationError.FieldErrors.Should().HaveCount(1);
         validationError.FieldErrors[0].FieldName.Should().Be("password");
         validationError.FieldErrors[0].Details.Should().HaveCount(3);
-        validationError.FieldErrors[0].Details[0].Should().Be("Too short.", "Not complex.", "Make it complex.");
+        validationError.FieldErrors[0].Details.Should().BeEquivalentTo(new[] { "Too short.", "Not complex.", "Make it complex." });
 
         var errorSting = validationError.ToString();
         errorSting.Should().Be("Type: ValidationError, Code: validation.error, Detail: Too short., Instance: N/A\r\npassword: Too short., Not complex., Make it complex.");
