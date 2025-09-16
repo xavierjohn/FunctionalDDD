@@ -3,8 +3,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Xunit;
+using System.Collections.Immutable;
 using System.Net.Http.Headers;
+using Xunit;
 using static FunctionalDdd.ValidationError;
 
 public class ActionResultTaskTests
@@ -103,7 +104,7 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        FieldDetails[] modelError = [new FieldDetails("firstName", ["First name required."])];
+        ImmutableArray<FieldError> modelError = [new FieldError("firstName", ["First name required."])];
         var error = Error.Validation(modelError, "Customer validation failed.", "Micheal");
         var expected = new ValidationProblemDetails
         {

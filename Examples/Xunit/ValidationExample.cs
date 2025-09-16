@@ -1,7 +1,9 @@
 ﻿namespace Example;
 
 using FunctionalDdd;
+using System.Collections.Immutable;
 using static EnsureExtensions;
+using static FunctionalDdd.ValidationError;
 
 public class ValidationExample
 {
@@ -23,8 +25,17 @@ public class ValidationExample
     [Fact]
     public void Validation_failed_Test()
     {
+        // Arrange
+        ImmutableArray<FieldError> expected = [
+            new("lastName", ["Last Name cannot be empty."]),
+            new("email", ["Email address is not valid."]),
+            new("updatedAt", ["updateAt cannot be less than createdAt"]),
+        ];
+
         var createdAt = DateTime.UtcNow;
         var updatedAt = createdAt.AddMinutes(-10);
+
+        //Act
         var actual = FirstName.TryCreate("Xavier")
             .Combine(LastName.TryCreate(string.Empty))
             .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
@@ -34,16 +45,11 @@ public class ValidationExample
                 true.Should().BeFalse("this code should not get executed");
                 return Result.Success(string.Join(" ", firstName, lastName, email));
             });
-
+        // Assert
         actual.IsFailure.Should().BeTrue();
         var validationErrors = (ValidationError)actual.Error;
-        validationErrors.Errors.Should().HaveCount(3);
-        validationErrors.Errors.Should().BeEquivalentTo(new ValidationError.FieldDetails[]
-        {
-           new("lastName", ["Last Name cannot be empty."]),
-           new("email", ["Email address is not valid."]),
-           new("updatedAt", ["updateAt cannot be less than createdAt"]),
-        });
+        validationErrors.FieldErrors.Should().HaveCount(3);
+        validationErrors.FieldErrors.Should().BeEquivalentTo(expected);
     }
 
     [Fact]
@@ -79,7 +85,7 @@ public class ValidationExample
         actual.IsFailure.Should().BeTrue();
         actual.Error.Should().BeOfType<ValidationError>();
         var validationError = (ValidationError)actual.Error;
-        validationError.Errors[0].Details[0].Should().Be("First Name cannot be empty.");
+        validationError.FieldErrors[0].Details[0].Should().Be("First Name cannot be empty.");
 
         static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)
             => emailAddress + " " + firstname + " " + lastname;

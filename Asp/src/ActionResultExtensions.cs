@@ -151,7 +151,7 @@ public static class ActionResultExtensions
     private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase)
     {
         ModelStateDictionary modelState = new();
-        foreach (var error in validation.Errors)
+        foreach (var error in validation.FieldErrors)
             foreach (var detailError in error.Details)
                 modelState.AddModelError(error.FieldName, detailError);
 

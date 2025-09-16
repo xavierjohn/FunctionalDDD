@@ -28,7 +28,7 @@ public static class HttpResultExtensions
     {
         if (error is ValidationError validationError)
         {
-            Dictionary<string, string[]> errors = validationError.Errors
+            Dictionary<string, string[]> errors = validationError.FieldErrors
                 .GroupBy(x => x.FieldName)
                 .ToDictionary(x => x.Key, x => x.SelectMany(y => y.Details).ToArray());
 

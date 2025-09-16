@@ -1,9 +1,11 @@
 ﻿namespace FunctionalDdd;
 
-using System.Linq;
-using System.Runtime.CompilerServices;
 using FluentValidation;
 using FluentValidation.Results;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using static FunctionalDdd.ValidationError;
 
 /// <summary>
 /// Converts a <see cref="ValidationResult"/> to a <see cref="Result{T}"/>.
@@ -59,10 +61,10 @@ public static class FunctionalDDDValidationExtension
         if (validationResult.IsValid)
             return Result.Success(value);
 
-        ValidationError.FieldDetails[] errors = validationResult.Errors
+        ImmutableArray<FieldError> errors = validationResult.Errors
             .GroupBy(e => e.PropertyName)
-            .Select(g => new ValidationError.FieldDetails(g.Key, g.Select(e => e.ErrorMessage).ToArray()))
-            .ToArray();
+            .Select(g => new FieldError(g.Key, g.Select(e => e.ErrorMessage).ToArray()))
+            .ToImmutableArray();
 
         return Result.Failure<T>(Error.Validation(errors));
     }

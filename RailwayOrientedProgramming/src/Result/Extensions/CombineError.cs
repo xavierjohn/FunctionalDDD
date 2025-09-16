@@ -21,11 +21,7 @@ public static class CombineErrorExtensions
         if (thisError is null) return otherError;
         ArgumentNullException.ThrowIfNull(otherError);
         if (thisError is ValidationError thisValidation && otherError is ValidationError otherValidation)
-        {
-            ValidationError.FieldDetails[] validationErrors = [.. thisValidation.Errors, .. otherValidation.Errors];
-            var detail = thisValidation.Detail == otherValidation.Detail ? thisValidation.Detail : string.Empty;
-            return Error.Validation(validationErrors, detail, thisValidation.Instance, thisValidation.Code);
-        }
+            return thisValidation.Merge(otherValidation);
 
         List<Error> errors = [];
         AddError(thisError);

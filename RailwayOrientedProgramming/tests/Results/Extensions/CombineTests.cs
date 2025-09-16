@@ -32,8 +32,8 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("key", ["Bad World"]));
+        validation.FieldErrors.Should().ContainSingle();
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("key", ["Bad World"]));
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("key", ["Bad World"]));
+        validation.FieldErrors.Should().ContainSingle();
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("key", ["Bad World"]));
     }
 
     [Fact]
@@ -84,8 +84,8 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("key", ["Bad World"]));
+        validation.FieldErrors.Should().ContainSingle();
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("key", ["Bad World"]));
     }
 
     [Fact]
@@ -120,8 +120,8 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("key", ["Bad World"]));
+        validation.FieldErrors.Should().ContainSingle();
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("key", ["Bad World"]));
     }
 
     [Fact]
@@ -156,9 +156,9 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().HaveCount(2);
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails("First", ["Bad First"]));
-        validation.Errors[1].Should().BeEquivalentTo(new ValidationError.FieldDetails("Last", ["Bad Last"]));
+        validation.FieldErrors.Should().HaveCount(2);
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("First", ["Bad First"]));
+        validation.FieldErrors[1].Should().BeEquivalentTo(new ValidationError.FieldError("Last", ["Bad Last"]));
     }
 
     [Fact]
@@ -205,8 +205,8 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().ContainSingle();
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails(string.Empty, ["Bad 9"]));
+        validation.FieldErrors.Should().ContainSingle();
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError(string.Empty, ["Bad 9"]));
     }
 
     [Fact]
@@ -230,9 +230,8 @@ public class CombineTests
         rHelloWorld.IsFailure.Should().BeTrue();
         rHelloWorld.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)rHelloWorld.Error;
-        validation.Errors.Should().HaveCount(2);
-        validation.Errors[0].Should().BeEquivalentTo(new ValidationError.FieldDetails(string.Empty, ["Bad 3"]));
-        validation.Errors[1].Should().BeEquivalentTo(new ValidationError.FieldDetails(string.Empty, ["Bad 9"]));
+        validation.FieldErrors.Should().HaveCount(1);
+        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError(string.Empty, ["Bad 3", "Bad 9"]));
     }
 
     [Fact]
@@ -245,10 +244,7 @@ public class CombineTests
         var rHelloWorld = Result.Success("Hello")
             .Combine(Result.Failure<string>(Error.Validation("Bad First", "First")))
             .Combine(Result.Failure<string>(Error.Unexpected("Server error")))
-            .Bind((hello, first, last) =>
-            {
-                return Result.Success($"{hello} {first} {last}");
-            });
+            .Bind((hello, first, last) => Result.Success($"{hello} {first} {last}"));
 
         // Assert
         called.Should().BeFalse();
