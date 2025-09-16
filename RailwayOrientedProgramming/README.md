@@ -84,3 +84,35 @@ Tap calls the given function if the result is in success state and returns the s
 - HasValue - returns true if it has a value.
 - HasNoValue - returns true if it does not have a value.
 - Value - returns the value if it has a value. Otherwise `InvalidOperationException`
+
+## LINQ Query Syntax
+
+You can use C# query expressions with `Result` via `Select`, `SelectMany`, and `Where`:
+
+```csharp
+var total = from a in Result.Success(2) from b in Result.Success(3) from c in Result.Success(5) select a + b + c;          // Success(10)
+var filtered = from x in Result.Success(5) where x > 10               // predicate false -> failure (UnexpectedError) select x;
+```
+
+`where` uses an `Unexpected` error if the predicate fails. For domain-specific errors prefer `Ensure`.
+
+## Error Transformation (MapError)
+
+```csharp
+Result<int> r = GetUserPoints(userId);
+var apiResult = r.MapError(err => Error.NotFound("User not found")); // Success passes through unchanged; failure error replaced.
+```
+
+## Pattern Matching (Match / Switch)
+```csharp
+var description = r.Match( ok  => $"Points: {ok}", err => $"Error: {err.Code}");
+await r.MatchAsync( async ok  => { await LogAsync(ok); return Unit.Value; }, async err => { await LogErrorAsync(err); return Unit.Value; });
+```
+
+## Exception Capture (Try / TryAsync)
+Add these patterns to keep chains free from explicit try/catch and error plumbing.
+
+```csharp
+var loaded = Result.Try(() => LoadFromDisk(path));          // captures exceptions
+var loadedAsync = await Result.TryAsync(() => FetchAsync()); // async variant
+```
