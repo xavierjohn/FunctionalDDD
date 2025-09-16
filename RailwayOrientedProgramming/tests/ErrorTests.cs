@@ -140,7 +140,7 @@ public class ErrorTests
         var error2 = Error.Validation([fieldDetails]);
 
         // Act
-        var combinedError = error1.Combine(error2);
+        Error combinedError = error1.Combine(error2);
 
         // Assert
         combinedError.Detail.Should().Be("Too short.");
@@ -151,7 +151,7 @@ public class ErrorTests
         validationError.FieldErrors.Should().HaveCount(1);
         validationError.FieldErrors[0].FieldName.Should().Be("password");
         validationError.FieldErrors[0].Details.Should().HaveCount(3);
-        validationError.FieldErrors[0].Details.Should().BeEquivalentTo(new[] { "Too short.", "Not complex.", "Make it complex." });
+        validationError.FieldErrors[0].Details.Should().BeEquivalentTo(["Too short.", "Not complex.", "Make it complex."]);
 
         var errorSting = validationError.ToString();
         errorSting.Should().Be("Type: ValidationError, Code: validation.error, Detail: Too short., Instance: N/A\r\npassword: Too short., Not complex., Make it complex.");

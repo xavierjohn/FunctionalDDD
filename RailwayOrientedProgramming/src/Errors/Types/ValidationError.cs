@@ -54,7 +54,7 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
 
     // Add / merge (returns new instance, functional style)
     public ValidationError And(string fieldName, string message)
-        => Merge(new ValidationError(fieldName, message, Code, Detail, Instance));
+        => Merge(new ValidationError(message, fieldName, Code, Detail, Instance));
 
     public ValidationError And(string fieldName, params string[] messages)
         => Merge(new ValidationError(
