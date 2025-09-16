@@ -51,14 +51,14 @@ public class HttpResultsTests
     public void Will_return_BadRequst_for_validation_failure()
     {
         // Arrange
-        ValidationError.FieldDetails field1 = new("MyField1", ["Detail 1"]);
-        ValidationError.FieldDetails field2 = new("MyField2", ["Detail 2", "More Detail 2"]);
-        Error errors = Error.Validation([field1, field2], "Some validation falied.", "magicInstance");
+        ValidationError.FieldError field1 = new("MyField1", ["Detail 1"]);
+        ValidationError.FieldError field2 = new("MyField2", ["Detail 2", "More Detail 2"]);
+        Error errors = Error.Validation([field1, field2], "Some validation failed.", "magicInstance");
         var result = Result.Failure(errors);
         var expected = new HttpValidationProblemDetails
         {
             Title = "One or more validation errors occurred.",
-            Detail = "Some validation falied.",
+            Detail = "Some validation failed.",
             Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
             Status = StatusCodes.Status400BadRequest,
             Instance = "magicInstance",

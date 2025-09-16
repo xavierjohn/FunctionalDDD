@@ -76,7 +76,7 @@ using System.Text.Json.Serialization;
         if (r.IsFailure)
         {
             var val = (ValidationError)r.Error;
-            throw new FormatException(val.Errors[0].Details[0]);
+            throw new FormatException(val.FieldErrors[0].Details[0]);
         }
         return r.Value;
     }

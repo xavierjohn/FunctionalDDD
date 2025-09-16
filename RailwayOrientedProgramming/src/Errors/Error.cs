@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDdd;
 
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using static FunctionalDdd.ValidationError;
 
@@ -48,10 +48,10 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(string fieldDetail, string fieldName = "", string? detail = null, string? instance = null)
         => new(fieldDetail, fieldName, "validation.error", detail, instance);
 
-    public static ValidationError Validation(FieldDetails[] fieldDetails, string detail = "", string? instance = null)
+    public static ValidationError Validation(ImmutableArray<FieldError> fieldDetails, string detail = "", string? instance = null)
         => new(fieldDetails, "validation.error", detail, instance);
 
-    public static ValidationError Validation(FieldDetails[] fieldDetails, string detail, string? instance, string code)
+    public static ValidationError Validation(ImmutableArray<FieldError> fieldDetails, string detail, string? instance, string code)
         => new(fieldDetails, code, detail, instance);
 
     public static BadRequestError BadRequest(string detail, string? instance = null) =>
