@@ -53,4 +53,12 @@ public class ValidationErrorTests
         merged.Detail.Should().Be("Detail A | Detail B");
         merged.FieldErrors.Should().HaveCount(2);
     }
+
+    [Fact]
+    public void For_field_and_message_not_swapped()
+    {
+        var ve = ValidationError.For("FieldX", "MessageY");
+        ve.FieldErrors[0].FieldName.Should().Be("FieldX");
+        ve.FieldErrors[0].Details[0].Should().Be("MessageY");
+    }
 }
