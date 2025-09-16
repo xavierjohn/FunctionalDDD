@@ -62,7 +62,7 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
 
         IsFailure = isFailure;
         _error = error;
-        _value = isFailure ? default : ok;
+        _value = ok;
 
         Activity.Current?.SetStatus(IsFailure ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
 
@@ -124,19 +124,16 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     {
         if (IsFailure != other.IsFailure) return false;
         if (IsFailure) return _error!.Equals(other._error);
-        return EqualityComparer<TValue>.Default.Equals(_value!, other._value);
+        return EqualityComparer<TValue>.Default.Equals(_value, other._value);
     }
 
     public override bool Equals(object? obj) => obj is Result<TValue> other && Equals(other);
 
     public override int GetHashCode()
     {
-        unchecked
-        {
-            return IsFailure
-                ? HashCode.Combine(true, _error)
-                : HashCode.Combine(false, _value);
-        }
+        return IsFailure
+            ? HashCode.Combine(true, _error)
+            : HashCode.Combine(false, _value);
     }
 
     public static bool operator ==(Result<TValue> left, Result<TValue> right) => left.Equals(right);

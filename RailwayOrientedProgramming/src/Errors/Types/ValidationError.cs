@@ -127,25 +127,5 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
     }
 
     public override string ToString()
-    {
-        var sb = new StringBuilder();
-        sb.Append(base.ToString());
-        foreach (var fe in FieldErrors)
-        {
-            sb.Append("\r\n");
-            sb.Append(fe.FieldName);
-            sb.Append(": ");
-            sb.Append(string.Join(", ", fe.Details));
-        }
-
-        return sb.ToString();
-    }
-
-    // Deconstruction convenience
-    public void Deconstruct(out string code, out string detail, out ImmutableArray<FieldError> fieldErrors)
-    {
-        code = Code;
-        detail = Detail;
-        fieldErrors = FieldErrors;
-    }
+        => base.ToString() + "\r\n" + string.Join("\r\n", FieldErrors.Select(e => $"{e.FieldName}: {string.Join(", ", e.Details)}"));
 }
