@@ -68,11 +68,31 @@ public class LinqTests : TestBase
     [Fact]
     public void Where_keeps_success_when_predicate_true()
     {
-        var r =
+        Result<int> r =
             Result.Success(15)
                   .Where(v => v > 10);
 
         r.IsSuccess.Should().BeTrue();
         r.Value.Should().Be(15);
+    }
+
+    [Fact]
+    public void SelectMany_combines_four_success_results()
+    {
+        var a = Result.Success(1);
+        var b = Result.Success(2);
+        var c = Result.Success(3);
+        var d = Result.Success(4);
+
+        // LINQ query syntax exercises chained SelectMany calls for 4 Results
+        Result<int> combined =
+            from av in a
+            from bv in b
+            from cv in c
+            from dv in d
+            select av + bv + cv + dv;
+
+        combined.IsSuccess.Should().BeTrue();
+        combined.Value.Should().Be(1 + 2 + 3 + 4);
     }
 }
