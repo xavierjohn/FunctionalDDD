@@ -50,7 +50,7 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
 
     // Factory: start with one field
     public static ValidationError For(string fieldName, string message, string code = "validation.error", string? detail = null, string? instance = null)
-        => new(fieldName, message, code, detail, instance);
+        => new(message, fieldName, code, detail, instance);
 
     // Add / merge (returns new instance, functional style)
     public ValidationError And(string fieldName, string message)
