@@ -2,9 +2,10 @@
 using System.Threading.Tasks;
 
 /// <summary>
-/// Static methods to create the <see cref="Result{TValue}"/> object.
+/// Non-generic Result utility host.
+/// NOTE: This struct is not intended to be instantiated.
 /// </summary>
-public static class Result
+public readonly struct Result
 {
     /// <summary>
     ///     Creates a success result containing the given value.
@@ -13,7 +14,7 @@ public static class Result
         new(false, value, default);
 
     /// <summary>
-    ///     Creates a success result containing the given value.
+    ///     Creates a success result containing the given value via deferred factory.
     /// </summary>
     public static Result<TValue> Success<TValue>(Func<TValue> funcOk)
     {
@@ -28,7 +29,7 @@ public static class Result
         new(true, default, error);
 
     /// <summary>
-    ///     Creates a failure result with the given error.
+    ///     Creates a failure result with the given error via deferred factory.
     /// </summary>
     public static Result<TValue> Failure<TValue>(Func<Error> error)
     {
@@ -61,7 +62,7 @@ public static class Result
         => SuccessIf(!failurePredicate(), value, error);
 
     /// <summary>
-    ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of FailureIf().
+    ///     Creates a result whose success/failure depends on the supplied async predicate. Opposite of FailureIf().
     /// </summary>
     public static async Task<Result<TValue>> SuccessIfAsync<TValue>(Func<Task<bool>> predicate, TValue value, Error error)
     {
@@ -70,7 +71,7 @@ public static class Result
     }
 
     /// <summary>
-    ///     Creates a result whose success/failure depends on the supplied predicate. Opposite of SuccessIf().
+    ///     Creates a result whose success/failure depends on the supplied async predicate. Opposite of SuccessIf().
     /// </summary>
     public static async Task<Result<TValue>> FailureIfAsync<TValue>(Func<Task<bool>> failurePredicate, TValue value, Error error)
     {
