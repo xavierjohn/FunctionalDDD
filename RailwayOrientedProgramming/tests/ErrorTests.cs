@@ -125,7 +125,7 @@ public class ErrorTests
         error.Instance.Should().BeNull();
         var validationError = (ValidationError)error;
         validationError.Errors.Should().HaveCount(1);
-        validationError.Errors[0].Name.Should().Be("field name");
+        validationError.Errors[0].FieldName.Should().Be("field name");
         validationError.Errors[0].Details.Should().HaveCount(1);
         validationError.Errors[0].Details[0].Should().Be("field detail.");
         validationError.ToString().Should().Be("Type: ValidationError, Code: validation.error, Detail: field detail., Instance: N/A\r\nfield name: field detail.");
@@ -149,11 +149,11 @@ public class ErrorTests
         combinedError.Instance.Should().BeNull();
         var validationError = (ValidationError)combinedError;
         validationError.Errors.Should().HaveCount(2);
-        validationError.Errors[0].Name.Should().Be("password");
+        validationError.Errors[0].FieldName.Should().Be("password");
         validationError.Errors[0].Details.Should().HaveCount(1);
         validationError.Errors[0].Details[0].Should().Be("Too short.");
 
-        validationError.Errors[1].Name.Should().Be("password");
+        validationError.Errors[1].FieldName.Should().Be("password");
         validationError.Errors[1].Details.Should().HaveCount(2);
         validationError.Errors[1].Details.Should().Equal("Not complex.", "Make it complex.");
 

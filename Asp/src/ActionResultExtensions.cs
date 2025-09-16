@@ -153,7 +153,7 @@ public static class ActionResultExtensions
         ModelStateDictionary modelState = new();
         foreach (var error in validation.Errors)
             foreach (var detailError in error.Details)
-                modelState.AddModelError(error.Name, detailError);
+                modelState.AddModelError(error.FieldName, detailError);
 
         return controllerBase.ValidationProblem(detail, instance, modelStateDictionary: modelState);
     }
