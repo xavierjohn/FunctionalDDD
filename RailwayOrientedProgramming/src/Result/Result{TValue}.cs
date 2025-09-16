@@ -131,12 +131,9 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
 
     public override int GetHashCode()
     {
-        unchecked
-        {
-            return IsFailure
-                ? HashCode.Combine(true, _error)
-                : HashCode.Combine(false, _value);
-        }
+        return IsFailure
+            ? HashCode.Combine(true, _error)
+            : HashCode.Combine(false, _value);
     }
 
     public static bool operator ==(Result<TValue> left, Result<TValue> right) => left.Equals(right);
