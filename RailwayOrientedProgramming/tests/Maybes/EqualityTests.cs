@@ -133,6 +133,36 @@ public class EqualityTests
     }
 
     [Fact]
+    public void None_is_not_equal_to_any_concrete_value()
+    {
+        Maybe<int> none = Maybe.None<int>();
+
+        (none == 0).Should().BeFalse();
+        (none == 5).Should().BeFalse();
+        none.Equals(0).Should().BeFalse();
+        none.Equals(5).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Some_is_equal_to_underlying_value()
+    {
+        Maybe<int> some = 42;
+
+        (some == 42).Should().BeTrue();
+        some.Equals(42).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Two_nones_are_equal()
+    {
+        Maybe<int> a = Maybe.None<int>();
+        Maybe<int> b = Maybe.None<int>();
+
+        (a == b).Should().BeTrue();
+        a.Equals(b).Should().BeTrue();
+    }
+
+    [Fact]
     public void Compare_with_null_value()
     {
         Maybe<MyClass> maybe = null;

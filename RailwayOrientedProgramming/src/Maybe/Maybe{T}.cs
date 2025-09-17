@@ -55,9 +55,9 @@ public readonly struct Maybe<T> :
 
     public static bool operator !=(Maybe<T> maybe, T value) => !maybe.Equals(value);
 
-    public static bool operator ==(Maybe<T> maybe, object other) => maybe.Equals(other);
+    public static bool operator ==(Maybe<T> maybe, object? other) => maybe.Equals(other);
 
-    public static bool operator !=(Maybe<T> maybe, object other) => !maybe.Equals(other);
+    public static bool operator !=(Maybe<T> maybe, object? other) => !maybe.Equals(other);
 
     public static bool operator ==(Maybe<T> first, Maybe<T> second) => first.Equals(second);
 
@@ -73,15 +73,16 @@ public readonly struct Maybe<T> :
 
     public bool Equals(Maybe<T> other) =>
         _isValueSet && other._isValueSet
-        ? EqualityComparer<T>.Default.Equals(_value, other._value)
-        : !_isValueSet && !other._isValueSet;
+            ? EqualityComparer<T>.Default.Equals(_value, other._value)
+            : !_isValueSet && !other._isValueSet;
 
-    public bool Equals(T? other) =>
-        _isValueSet
-        ? EqualityComparer<T>.Default.Equals(_value, other)
-        : !_isValueSet;
+    public bool Equals(T? other) => 
+        (_isValueSet && EqualityComparer<T>.Default.Equals(_value, other))
+        || (!_isValueSet && other is null);
 
-    public override int GetHashCode() => _value?.GetHashCode() ?? 0;
+    public override int GetHashCode() => _isValueSet
+        ? (_value?.GetHashCode() ?? 0)
+        : 0;
 
     public override string ToString() => _value?.ToString() ?? string.Empty;
 }
