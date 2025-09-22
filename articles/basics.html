@@ -140,28 +140,28 @@ var person = CreatePerson(firstNameResult.Value, lastNameResult.Value);
 <p>The Result is a generic class and can be used to hold any type of value or error.
 The need to handle failure after each method call can be tedious so the <code>Result</code> class has a few extension methods to help with that.</p>
 <p>First, let us look at the definition of the <code>Result</code> class:</p>
-<pre><code class="lang-csharp">/// &lt;summary&gt;
-/// Gets the underlying Value if Result is in success state.
-/// &lt;/summary&gt;
-/// &lt;exception cref=&quot;InvalidOperationException&quot;&gt;Attempted to access the Value for a failed result.&lt;/exception&gt;
-public TValue Value =&gt; IsSuccess ? _value! : throw new InvalidOperationException(&quot;Attempted to access the Value for a failed result. A failed result has no Value.&quot;);
+<pre><code class="lang-csharp">/// &lt;typeparam name=&quot;TValue&quot;&gt;Success value type.&lt;/typeparam&gt;
+public readonly struct Result&lt;TValue&gt; : IResult&lt;TValue&gt;, IEquatable&lt;Result&lt;TValue&gt;&gt;
+{
+    /// &lt;summary&gt;
+    /// Gets the underlying value if the result is successful; otherwise throws.
+    /// &lt;/summary&gt;
+    public TValue Value =&gt;
+        IsSuccess
+            ? _value!
+            : throw new InvalidOperationException(&quot;Attempted to access the Value for a failed result. A failed result has no Value.&quot;);
 
-/// &lt;summary&gt;
-/// Gets the Error object if Result is in failed state.
-/// &lt;/summary&gt;
-/// &lt;exception cref=&quot;InvalidOperationException&quot;&gt;Attempted to access the Error property for a successful result.&lt;/exception&gt;
-public Error Error =&gt; IsFailure ? _error! : throw new InvalidOperationException(&quot;Attempted to access the Error property for a successful result.A successful result has no Error.&quot;);
+    /// &lt;summary&gt;
+    /// Gets the error if the result is a failure; otherwise throws.
+    /// &lt;/summary&gt;
+    public Error Error =&gt;
+        IsFailure
+            ? _error!
+            : throw new InvalidOperationException(&quot;Attempted to access the Error property for a successful result. A successful result has no Error.&quot;);
 
-/// &lt;summary&gt;
-/// Check if result is in success state.
-/// &lt;/summary&gt;
-public bool IsSuccess =&gt; !IsFailure;
-
-/// &lt;summary&gt;
-/// Check if result is in failure state.
-/// &lt;/summary&gt;
-public bool IsFailure { get; }
-
+    /// &lt;summary&gt;
+    /// True when the result represents success.
+    /// &lt;/summary&gt;
 </code></pre>
 <p>This class help chain functions on the success or error path in a concept called <a href="https://fsharpforfunandprofit.com/rop/">Railway Oriented Programming</a>.
 If the Result is in failed state, accessing the Value property will throw an exception. Similarly, if the Result is in success state, accessing the Error property will throw an exception.</p>

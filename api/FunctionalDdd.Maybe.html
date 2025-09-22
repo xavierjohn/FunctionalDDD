@@ -257,10 +257,7 @@ Class Maybe  <a class="header-action link-secondary" title="View source" href="h
   <h4 class="section">Returns</h4>
   <dl class="parameters">
     <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe</a>&lt;TOut&gt;&gt;</dt>
-    <dd><table><thead><tr><th class="term">State</th><th class="description">Return</th></tr></thead><tbody><tr><td class="term">
-      <code class="paramref">value</code> is null</td><td class="description">Maybe&lt;<code class="typeparamref">TOut</code>&gt; without value.</td></tr><tr><td class="term">
-      <code class="paramref">value</code> is not null and <code class="paramref">function</code> returned Success</td><td class="description">Maybe&lt;<code class="typeparamref">TOut</code>&gt; with value from <code class="paramref">function</code>.</td></tr><tr><td class="term">
-      <code class="paramref">value</code> is not null and <code class="paramref">function</code> returned Failure</td><td class="description">The <a class="xref" href="FunctionalDdd.Error.html">Error</a> from the <code class="paramref">function</code>.</td></tr></tbody></table>
+    <dd><table><thead><tr><th class="term">State</th><th class="description">Return</th></tr></thead><tbody><tr><td class="term"><code class="paramref">value</code> is null</td><td class="description">Maybe&lt;<code class="typeparamref">TOut</code>&gt; without value.</td></tr><tr><td class="term"><code class="paramref">value</code> is not null and <code class="paramref">function</code> returned Success</td><td class="description">Maybe&lt;<code class="typeparamref">TOut</code>&gt; with value from <code class="paramref">function</code>.</td></tr><tr><td class="term"><code class="paramref">value</code> is not null and <code class="paramref">function</code> returned Failure</td><td class="description">The <a class="xref" href="FunctionalDdd.Error.html">Error</a> from the <code class="paramref">function</code>.</td></tr></tbody></table>
 </dd>
   </dl>
 
@@ -282,8 +279,9 @@ Class Maybe  <a class="header-action link-secondary" title="View source" href="h
 If the string is null, the method returns a Maybe&lt;Zipcode&gt; of None.<br>
 Otherwise, it invokes the specified function and, if the function is successful, it wraps the result in a Maybe object.<br>
 If the function fails, the method returns the failure. This is useful when you want to transform a string into a strongly typed object with validation.
-</p><pre><code class="lang-csharp">string? zipCode = "98052";
-    var result = Maybe.Optional(zipCode, ZipCode.TryCreate);</code></pre>
+</p>
+<pre><code class="lang-csharp">string? zipCode = "98052";
+var result = Maybe.Optional(zipCode, ZipCode.TryCreate);</code></pre>
 
 
 

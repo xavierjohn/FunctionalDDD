@@ -1394,6 +1394,19 @@ references:
   isSpec: "True"
   fullName: FunctionalDdd.Error.NotFound
   nameWithType: Error.NotFound
+- uid: FunctionalDdd.Error.ToString
+  name: ToString()
+  href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_ToString
+  commentId: M:FunctionalDdd.Error.ToString
+  fullName: FunctionalDdd.Error.ToString()
+  nameWithType: Error.ToString()
+- uid: FunctionalDdd.Error.ToString*
+  name: ToString
+  href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_ToString_
+  commentId: Overload:FunctionalDdd.Error.ToString
+  isSpec: "True"
+  fullName: FunctionalDdd.Error.ToString
+  nameWithType: Error.ToString
 - uid: FunctionalDdd.Error.Unauthorized(System.String,System.String)
   name: Unauthorized(string, string?)
   href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Unauthorized_System_String_System_String_
@@ -1444,24 +1457,24 @@ references:
   isSpec: "True"
   fullName: FunctionalDdd.Error.Unexpected
   nameWithType: Error.Unexpected
-- uid: FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String)
-  name: Validation(FieldDetails[], string, string?)
-  href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_
-  commentId: M:FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String)
-  name.vb: Validation(FieldDetails(), String, String)
-  fullName: FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[], string, string?)
-  fullName.vb: FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails(), String, String)
-  nameWithType: Error.Validation(ValidationError.FieldDetails[], string, string?)
-  nameWithType.vb: Error.Validation(ValidationError.FieldDetails(), String, String)
-- uid: FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String,System.String)
-  name: Validation(FieldDetails[], string, string?, string)
-  href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_System_String_
-  commentId: M:FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String,System.String)
-  name.vb: Validation(FieldDetails(), String, String, String)
-  fullName: FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails[], string, string?, string)
-  fullName.vb: FunctionalDdd.Error.Validation(FunctionalDdd.ValidationError.FieldDetails(), String, String, String)
-  nameWithType: Error.Validation(ValidationError.FieldDetails[], string, string?, string)
-  nameWithType.vb: Error.Validation(ValidationError.FieldDetails(), String, String, String)
+- uid: FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray{FunctionalDdd.ValidationError.FieldError},System.String,System.String)
+  name: Validation(ImmutableArray<FieldError>, string, string?)
+  href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String_
+  commentId: M:FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray{FunctionalDdd.ValidationError.FieldError},System.String,System.String)
+  name.vb: Validation(ImmutableArray(Of FieldError), String, String)
+  fullName: FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray<FunctionalDdd.ValidationError.FieldError>, string, string?)
+  fullName.vb: FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray(Of FunctionalDdd.ValidationError.FieldError), String, String)
+  nameWithType: Error.Validation(ImmutableArray<ValidationError.FieldError>, string, string?)
+  nameWithType.vb: Error.Validation(ImmutableArray(Of ValidationError.FieldError), String, String)
+- uid: FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray{FunctionalDdd.ValidationError.FieldError},System.String,System.String,System.String)
+  name: Validation(ImmutableArray<FieldError>, string, string?, string)
+  href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String_System_String_
+  commentId: M:FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray{FunctionalDdd.ValidationError.FieldError},System.String,System.String,System.String)
+  name.vb: Validation(ImmutableArray(Of FieldError), String, String, String)
+  fullName: FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray<FunctionalDdd.ValidationError.FieldError>, string, string?, string)
+  fullName.vb: FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray(Of FunctionalDdd.ValidationError.FieldError), String, String, String)
+  nameWithType: Error.Validation(ImmutableArray<ValidationError.FieldError>, string, string?, string)
+  nameWithType.vb: Error.Validation(ImmutableArray(Of ValidationError.FieldError), String, String, String)
 - uid: FunctionalDdd.Error.Validation(System.String,System.String,System.String,System.String)
   name: Validation(string, string, string?, string?)
   href: api/FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_
@@ -1648,15 +1661,15 @@ references:
   isSpec: "True"
   fullName: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult
   nameWithType: FunctionalDDDValidationExtension.ValidateToResult
-- uid: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0,System.String)
-  name: ValidateToResult<T>(IValidator<T>, T, string)
-  href: api/FunctionalDdd.FunctionalDDDValidationExtension.html#FunctionalDdd_FunctionalDDDValidationExtension_ValidateToResult__1_FluentValidation_IValidator___0____0_System_String_
-  commentId: M:FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0,System.String)
-  name.vb: ValidateToResult(Of T)(IValidator(Of T), T, String)
-  fullName: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult<T>(FluentValidation.IValidator<T>, T, string)
-  fullName.vb: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult(Of T)(FluentValidation.IValidator(Of T), T, String)
-  nameWithType: FunctionalDDDValidationExtension.ValidateToResult<T>(IValidator<T>, T, string)
-  nameWithType.vb: FunctionalDDDValidationExtension.ValidateToResult(Of T)(IValidator(Of T), T, String)
+- uid: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0,System.String,System.String)
+  name: ValidateToResult<T>(IValidator<T>, T, string, string?)
+  href: api/FunctionalDdd.FunctionalDDDValidationExtension.html#FunctionalDdd_FunctionalDDDValidationExtension_ValidateToResult__1_FluentValidation_IValidator___0____0_System_String_System_String_
+  commentId: M:FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult``1(FluentValidation.IValidator{``0},``0,System.String,System.String)
+  name.vb: ValidateToResult(Of T)(IValidator(Of T), T, String, String)
+  fullName: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult<T>(FluentValidation.IValidator<T>, T, string, string?)
+  fullName.vb: FunctionalDdd.FunctionalDDDValidationExtension.ValidateToResult(Of T)(FluentValidation.IValidator(Of T), T, String, String)
+  nameWithType: FunctionalDDDValidationExtension.ValidateToResult<T>(IValidator<T>, T, string, string?)
+  nameWithType.vb: FunctionalDDDValidationExtension.ValidateToResult(Of T)(IValidator(Of T), T, String, String)
 - uid: FunctionalDdd.HttpResponseMessageJsonExtensionsAsync
   name: HttpResponseMessageJsonExtensionsAsync
   href: api/FunctionalDdd.HttpResponseMessageJsonExtensionsAsync.html
@@ -1958,6 +1971,62 @@ references:
   fullName.vb: FunctionalDdd.IResult(Of TValue).Value
   nameWithType: IResult<TValue>.Value
   nameWithType.vb: IResult(Of TValue).Value
+- uid: FunctionalDdd.MapErrorExtensions
+  name: MapErrorExtensions
+  href: api/FunctionalDdd.MapErrorExtensions.html
+  commentId: T:FunctionalDdd.MapErrorExtensions
+  fullName: FunctionalDdd.MapErrorExtensions
+  nameWithType: MapErrorExtensions
+- uid: FunctionalDdd.MapErrorExtensions.MapError*
+  name: MapError
+  href: api/FunctionalDdd.MapErrorExtensions.html#FunctionalDdd_MapErrorExtensions_MapError_
+  commentId: Overload:FunctionalDdd.MapErrorExtensions.MapError
+  isSpec: "True"
+  fullName: FunctionalDdd.MapErrorExtensions.MapError
+  nameWithType: MapErrorExtensions.MapError
+- uid: FunctionalDdd.MapErrorExtensions.MapErrorAsync*
+  name: MapErrorAsync
+  href: api/FunctionalDdd.MapErrorExtensions.html#FunctionalDdd_MapErrorExtensions_MapErrorAsync_
+  commentId: Overload:FunctionalDdd.MapErrorExtensions.MapErrorAsync
+  isSpec: "True"
+  fullName: FunctionalDdd.MapErrorExtensions.MapErrorAsync
+  nameWithType: MapErrorExtensions.MapErrorAsync
+- uid: FunctionalDdd.MapErrorExtensions.MapErrorAsync``1(FunctionalDdd.Result{``0},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{FunctionalDdd.Error}})
+  name: MapErrorAsync<T>(Result<T>, Func<Error, Task<Error>>)
+  href: api/FunctionalDdd.MapErrorExtensions.html#FunctionalDdd_MapErrorExtensions_MapErrorAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task_FunctionalDdd_Error___
+  commentId: M:FunctionalDdd.MapErrorExtensions.MapErrorAsync``1(FunctionalDdd.Result{``0},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{FunctionalDdd.Error}})
+  name.vb: MapErrorAsync(Of T)(Result(Of T), Func(Of Error, Task(Of Error)))
+  fullName: FunctionalDdd.MapErrorExtensions.MapErrorAsync<T>(FunctionalDdd.Result<T>, System.Func<FunctionalDdd.Error, System.Threading.Tasks.Task<FunctionalDdd.Error>>)
+  fullName.vb: FunctionalDdd.MapErrorExtensions.MapErrorAsync(Of T)(FunctionalDdd.Result(Of T), System.Func(Of FunctionalDdd.Error, System.Threading.Tasks.Task(Of FunctionalDdd.Error)))
+  nameWithType: MapErrorExtensions.MapErrorAsync<T>(Result<T>, Func<Error, Task<Error>>)
+  nameWithType.vb: MapErrorExtensions.MapErrorAsync(Of T)(Result(Of T), Func(Of Error, Task(Of Error)))
+- uid: FunctionalDdd.MapErrorExtensions.MapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{FunctionalDdd.Error,FunctionalDdd.Error})
+  name: MapErrorAsync<T>(Task<Result<T>>, Func<Error, Error>)
+  href: api/FunctionalDdd.MapErrorExtensions.html#FunctionalDdd_MapErrorExtensions_MapErrorAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___System_Func_FunctionalDdd_Error_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.MapErrorExtensions.MapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{FunctionalDdd.Error,FunctionalDdd.Error})
+  name.vb: MapErrorAsync(Of T)(Task(Of Result(Of T)), Func(Of Error, Error))
+  fullName: FunctionalDdd.MapErrorExtensions.MapErrorAsync<T>(System.Threading.Tasks.Task<FunctionalDdd.Result<T>>, System.Func<FunctionalDdd.Error, FunctionalDdd.Error>)
+  fullName.vb: FunctionalDdd.MapErrorExtensions.MapErrorAsync(Of T)(System.Threading.Tasks.Task(Of FunctionalDdd.Result(Of T)), System.Func(Of FunctionalDdd.Error, FunctionalDdd.Error))
+  nameWithType: MapErrorExtensions.MapErrorAsync<T>(Task<Result<T>>, Func<Error, Error>)
+  nameWithType.vb: MapErrorExtensions.MapErrorAsync(Of T)(Task(Of Result(Of T)), Func(Of Error, Error))
+- uid: FunctionalDdd.MapErrorExtensions.MapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{FunctionalDdd.Error}})
+  name: MapErrorAsync<T>(Task<Result<T>>, Func<Error, Task<Error>>)
+  href: api/FunctionalDdd.MapErrorExtensions.html#FunctionalDdd_MapErrorExtensions_MapErrorAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task_FunctionalDdd_Error___
+  commentId: M:FunctionalDdd.MapErrorExtensions.MapErrorAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{FunctionalDdd.Error}})
+  name.vb: MapErrorAsync(Of T)(Task(Of Result(Of T)), Func(Of Error, Task(Of Error)))
+  fullName: FunctionalDdd.MapErrorExtensions.MapErrorAsync<T>(System.Threading.Tasks.Task<FunctionalDdd.Result<T>>, System.Func<FunctionalDdd.Error, System.Threading.Tasks.Task<FunctionalDdd.Error>>)
+  fullName.vb: FunctionalDdd.MapErrorExtensions.MapErrorAsync(Of T)(System.Threading.Tasks.Task(Of FunctionalDdd.Result(Of T)), System.Func(Of FunctionalDdd.Error, System.Threading.Tasks.Task(Of FunctionalDdd.Error)))
+  nameWithType: MapErrorExtensions.MapErrorAsync<T>(Task<Result<T>>, Func<Error, Task<Error>>)
+  nameWithType.vb: MapErrorExtensions.MapErrorAsync(Of T)(Task(Of Result(Of T)), Func(Of Error, Task(Of Error)))
+- uid: FunctionalDdd.MapErrorExtensions.MapError``1(FunctionalDdd.Result{``0},System.Func{FunctionalDdd.Error,FunctionalDdd.Error})
+  name: MapError<T>(Result<T>, Func<Error, Error>)
+  href: api/FunctionalDdd.MapErrorExtensions.html#FunctionalDdd_MapErrorExtensions_MapError__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.MapErrorExtensions.MapError``1(FunctionalDdd.Result{``0},System.Func{FunctionalDdd.Error,FunctionalDdd.Error})
+  name.vb: MapError(Of T)(Result(Of T), Func(Of Error, Error))
+  fullName: FunctionalDdd.MapErrorExtensions.MapError<T>(FunctionalDdd.Result<T>, System.Func<FunctionalDdd.Error, FunctionalDdd.Error>)
+  fullName.vb: FunctionalDdd.MapErrorExtensions.MapError(Of T)(FunctionalDdd.Result(Of T), System.Func(Of FunctionalDdd.Error, FunctionalDdd.Error))
+  nameWithType: MapErrorExtensions.MapError<T>(Result<T>, Func<Error, Error>)
+  nameWithType.vb: MapErrorExtensions.MapError(Of T)(Result(Of T), Func(Of Error, Error))
 - uid: FunctionalDdd.MapExtensions
   name: MapExtensions
   href: api/FunctionalDdd.MapExtensions.html
@@ -2047,6 +2116,100 @@ references:
   fullName.vb: FunctionalDdd.MapExtensionsAsync.MapAsync(Of TIn, TOut)(System.Threading.Tasks.ValueTask(Of FunctionalDdd.Result(Of TIn)), System.Func(Of TIn, TOut))
   nameWithType: MapExtensionsAsync.MapAsync<TIn, TOut>(ValueTask<Result<TIn>>, Func<TIn, TOut>)
   nameWithType.vb: MapExtensionsAsync.MapAsync(Of TIn, TOut)(ValueTask(Of Result(Of TIn)), Func(Of TIn, TOut))
+- uid: FunctionalDdd.MatchExtensions
+  name: MatchExtensions
+  href: api/FunctionalDdd.MatchExtensions.html
+  commentId: T:FunctionalDdd.MatchExtensions
+  fullName: FunctionalDdd.MatchExtensions
+  nameWithType: MatchExtensions
+- uid: FunctionalDdd.MatchExtensions.Match*
+  name: Match
+  href: api/FunctionalDdd.MatchExtensions.html#FunctionalDdd_MatchExtensions_Match_
+  commentId: Overload:FunctionalDdd.MatchExtensions.Match
+  isSpec: "True"
+  fullName: FunctionalDdd.MatchExtensions.Match
+  nameWithType: MatchExtensions.Match
+- uid: FunctionalDdd.MatchExtensions.Match``2(FunctionalDdd.Result{``0},System.Func{``0,``1},System.Func{FunctionalDdd.Error,``1})
+  name: Match<TIn, TOut>(Result<TIn>, Func<TIn, TOut>, Func<Error, TOut>)
+  href: api/FunctionalDdd.MatchExtensions.html#FunctionalDdd_MatchExtensions_Match__2_FunctionalDdd_Result___0__System_Func___0___1__System_Func_FunctionalDdd_Error___1__
+  commentId: M:FunctionalDdd.MatchExtensions.Match``2(FunctionalDdd.Result{``0},System.Func{``0,``1},System.Func{FunctionalDdd.Error,``1})
+  name.vb: Match(Of TIn, TOut)(Result(Of TIn), Func(Of TIn, TOut), Func(Of Error, TOut))
+  fullName: FunctionalDdd.MatchExtensions.Match<TIn, TOut>(FunctionalDdd.Result<TIn>, System.Func<TIn, TOut>, System.Func<FunctionalDdd.Error, TOut>)
+  fullName.vb: FunctionalDdd.MatchExtensions.Match(Of TIn, TOut)(FunctionalDdd.Result(Of TIn), System.Func(Of TIn, TOut), System.Func(Of FunctionalDdd.Error, TOut))
+  nameWithType: MatchExtensions.Match<TIn, TOut>(Result<TIn>, Func<TIn, TOut>, Func<Error, TOut>)
+  nameWithType.vb: MatchExtensions.Match(Of TIn, TOut)(Result(Of TIn), Func(Of TIn, TOut), Func(Of Error, TOut))
+- uid: FunctionalDdd.MatchExtensions.Switch*
+  name: Switch
+  href: api/FunctionalDdd.MatchExtensions.html#FunctionalDdd_MatchExtensions_Switch_
+  commentId: Overload:FunctionalDdd.MatchExtensions.Switch
+  isSpec: "True"
+  fullName: FunctionalDdd.MatchExtensions.Switch
+  nameWithType: MatchExtensions.Switch
+- uid: FunctionalDdd.MatchExtensions.Switch``1(FunctionalDdd.Result{``0},System.Action{``0},System.Action{FunctionalDdd.Error})
+  name: Switch<TIn>(Result<TIn>, Action<TIn>, Action<Error>)
+  href: api/FunctionalDdd.MatchExtensions.html#FunctionalDdd_MatchExtensions_Switch__1_FunctionalDdd_Result___0__System_Action___0__System_Action_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.MatchExtensions.Switch``1(FunctionalDdd.Result{``0},System.Action{``0},System.Action{FunctionalDdd.Error})
+  name.vb: Switch(Of TIn)(Result(Of TIn), Action(Of TIn), Action(Of Error))
+  fullName: FunctionalDdd.MatchExtensions.Switch<TIn>(FunctionalDdd.Result<TIn>, System.Action<TIn>, System.Action<FunctionalDdd.Error>)
+  fullName.vb: FunctionalDdd.MatchExtensions.Switch(Of TIn)(FunctionalDdd.Result(Of TIn), System.Action(Of TIn), System.Action(Of FunctionalDdd.Error))
+  nameWithType: MatchExtensions.Switch<TIn>(Result<TIn>, Action<TIn>, Action<Error>)
+  nameWithType.vb: MatchExtensions.Switch(Of TIn)(Result(Of TIn), Action(Of TIn), Action(Of Error))
+- uid: FunctionalDdd.MatchExtensionsAsync
+  name: MatchExtensionsAsync
+  href: api/FunctionalDdd.MatchExtensionsAsync.html
+  commentId: T:FunctionalDdd.MatchExtensionsAsync
+  fullName: FunctionalDdd.MatchExtensionsAsync
+  nameWithType: MatchExtensionsAsync
+- uid: FunctionalDdd.MatchExtensionsAsync.MatchAsync*
+  name: MatchAsync
+  href: api/FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync_
+  commentId: Overload:FunctionalDdd.MatchExtensionsAsync.MatchAsync
+  isSpec: "True"
+  fullName: FunctionalDdd.MatchExtensionsAsync.MatchAsync
+  nameWithType: MatchExtensionsAsync.MatchAsync
+- uid: FunctionalDdd.MatchExtensionsAsync.MatchAsync``2(FunctionalDdd.Result{``0},System.Func{``0,System.Threading.Tasks.Task{``1}},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{``1}})
+  name: MatchAsync<TIn, TOut>(Result<TIn>, Func<TIn, Task<TOut>>, Func<Error, Task<TOut>>)
+  href: api/FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task___1___
+  commentId: M:FunctionalDdd.MatchExtensionsAsync.MatchAsync``2(FunctionalDdd.Result{``0},System.Func{``0,System.Threading.Tasks.Task{``1}},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{``1}})
+  name.vb: MatchAsync(Of TIn, TOut)(Result(Of TIn), Func(Of TIn, Task(Of TOut)), Func(Of Error, Task(Of TOut)))
+  fullName: FunctionalDdd.MatchExtensionsAsync.MatchAsync<TIn, TOut>(FunctionalDdd.Result<TIn>, System.Func<TIn, System.Threading.Tasks.Task<TOut>>, System.Func<FunctionalDdd.Error, System.Threading.Tasks.Task<TOut>>)
+  fullName.vb: FunctionalDdd.MatchExtensionsAsync.MatchAsync(Of TIn, TOut)(FunctionalDdd.Result(Of TIn), System.Func(Of TIn, System.Threading.Tasks.Task(Of TOut)), System.Func(Of FunctionalDdd.Error, System.Threading.Tasks.Task(Of TOut)))
+  nameWithType: MatchExtensionsAsync.MatchAsync<TIn, TOut>(Result<TIn>, Func<TIn, Task<TOut>>, Func<Error, Task<TOut>>)
+  nameWithType.vb: MatchExtensionsAsync.MatchAsync(Of TIn, TOut)(Result(Of TIn), Func(Of TIn, Task(Of TOut)), Func(Of Error, Task(Of TOut)))
+- uid: FunctionalDdd.MatchExtensionsAsync.MatchAsync``2(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{``0,System.Threading.Tasks.Task{``1}},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{``1}})
+  name: MatchAsync<TIn, TOut>(Task<Result<TIn>>, Func<TIn, Task<TOut>>, Func<Error, Task<TOut>>)
+  href: api/FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync__2_System_Threading_Tasks_Task_FunctionalDdd_Result___0___System_Func___0_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task___1___
+  commentId: M:FunctionalDdd.MatchExtensionsAsync.MatchAsync``2(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{``0,System.Threading.Tasks.Task{``1}},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task{``1}})
+  name.vb: MatchAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), Func(Of TIn, Task(Of TOut)), Func(Of Error, Task(Of TOut)))
+  fullName: FunctionalDdd.MatchExtensionsAsync.MatchAsync<TIn, TOut>(System.Threading.Tasks.Task<FunctionalDdd.Result<TIn>>, System.Func<TIn, System.Threading.Tasks.Task<TOut>>, System.Func<FunctionalDdd.Error, System.Threading.Tasks.Task<TOut>>)
+  fullName.vb: FunctionalDdd.MatchExtensionsAsync.MatchAsync(Of TIn, TOut)(System.Threading.Tasks.Task(Of FunctionalDdd.Result(Of TIn)), System.Func(Of TIn, System.Threading.Tasks.Task(Of TOut)), System.Func(Of FunctionalDdd.Error, System.Threading.Tasks.Task(Of TOut)))
+  nameWithType: MatchExtensionsAsync.MatchAsync<TIn, TOut>(Task<Result<TIn>>, Func<TIn, Task<TOut>>, Func<Error, Task<TOut>>)
+  nameWithType.vb: MatchExtensionsAsync.MatchAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), Func(Of TIn, Task(Of TOut)), Func(Of Error, Task(Of TOut)))
+- uid: FunctionalDdd.MatchExtensionsAsync.MatchAsync``2(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{``0,``1},System.Func{FunctionalDdd.Error,``1})
+  name: MatchAsync<TIn, TOut>(Task<Result<TIn>>, Func<TIn, TOut>, Func<Error, TOut>)
+  href: api/FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync__2_System_Threading_Tasks_Task_FunctionalDdd_Result___0___System_Func___0___1__System_Func_FunctionalDdd_Error___1__
+  commentId: M:FunctionalDdd.MatchExtensionsAsync.MatchAsync``2(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{``0,``1},System.Func{FunctionalDdd.Error,``1})
+  name.vb: MatchAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), Func(Of TIn, TOut), Func(Of Error, TOut))
+  fullName: FunctionalDdd.MatchExtensionsAsync.MatchAsync<TIn, TOut>(System.Threading.Tasks.Task<FunctionalDdd.Result<TIn>>, System.Func<TIn, TOut>, System.Func<FunctionalDdd.Error, TOut>)
+  fullName.vb: FunctionalDdd.MatchExtensionsAsync.MatchAsync(Of TIn, TOut)(System.Threading.Tasks.Task(Of FunctionalDdd.Result(Of TIn)), System.Func(Of TIn, TOut), System.Func(Of FunctionalDdd.Error, TOut))
+  nameWithType: MatchExtensionsAsync.MatchAsync<TIn, TOut>(Task<Result<TIn>>, Func<TIn, TOut>, Func<Error, TOut>)
+  nameWithType.vb: MatchExtensionsAsync.MatchAsync(Of TIn, TOut)(Task(Of Result(Of TIn)), Func(Of TIn, TOut), Func(Of Error, TOut))
+- uid: FunctionalDdd.MatchExtensionsAsync.SwitchAsync*
+  name: SwitchAsync
+  href: api/FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_SwitchAsync_
+  commentId: Overload:FunctionalDdd.MatchExtensionsAsync.SwitchAsync
+  isSpec: "True"
+  fullName: FunctionalDdd.MatchExtensionsAsync.SwitchAsync
+  nameWithType: MatchExtensionsAsync.SwitchAsync
+- uid: FunctionalDdd.MatchExtensionsAsync.SwitchAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{``0,System.Threading.Tasks.Task},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task})
+  name: SwitchAsync<TIn>(Task<Result<TIn>>, Func<TIn, Task>, Func<Error, Task>)
+  href: api/FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_SwitchAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___System_Func___0_System_Threading_Tasks_Task__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task__
+  commentId: M:FunctionalDdd.MatchExtensionsAsync.SwitchAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},System.Func{``0,System.Threading.Tasks.Task},System.Func{FunctionalDdd.Error,System.Threading.Tasks.Task})
+  name.vb: SwitchAsync(Of TIn)(Task(Of Result(Of TIn)), Func(Of TIn, Task), Func(Of Error, Task))
+  fullName: FunctionalDdd.MatchExtensionsAsync.SwitchAsync<TIn>(System.Threading.Tasks.Task<FunctionalDdd.Result<TIn>>, System.Func<TIn, System.Threading.Tasks.Task>, System.Func<FunctionalDdd.Error, System.Threading.Tasks.Task>)
+  fullName.vb: FunctionalDdd.MatchExtensionsAsync.SwitchAsync(Of TIn)(System.Threading.Tasks.Task(Of FunctionalDdd.Result(Of TIn)), System.Func(Of TIn, System.Threading.Tasks.Task), System.Func(Of FunctionalDdd.Error, System.Threading.Tasks.Task))
+  nameWithType: MatchExtensionsAsync.SwitchAsync<TIn>(Task<Result<TIn>>, Func<TIn, Task>, Func<Error, Task>)
+  nameWithType.vb: MatchExtensionsAsync.SwitchAsync(Of TIn)(Task(Of Result(Of TIn)), Func(Of TIn, Task), Func(Of Error, Task))
 - uid: FunctionalDdd.Maybe
   name: Maybe
   href: api/FunctionalDdd.Maybe.html
@@ -2424,13 +2587,13 @@ references:
   nameWithType: Maybe<T>.operator ==(Maybe<T>, Maybe<T>)
   nameWithType.vb: Maybe(Of T).=(Maybe(Of T), Maybe(Of T))
 - uid: FunctionalDdd.Maybe`1.op_Equality(FunctionalDdd.Maybe{`0},System.Object)
-  name: operator ==(Maybe<T>, object)
+  name: operator ==(Maybe<T>, object?)
   href: api/FunctionalDdd.Maybe-1.html#FunctionalDdd_Maybe_1_op_Equality_FunctionalDdd_Maybe__0__System_Object_
   commentId: M:FunctionalDdd.Maybe`1.op_Equality(FunctionalDdd.Maybe{`0},System.Object)
   name.vb: =(Maybe(Of T), Object)
-  fullName: FunctionalDdd.Maybe<T>.operator ==(FunctionalDdd.Maybe<T>, object)
+  fullName: FunctionalDdd.Maybe<T>.operator ==(FunctionalDdd.Maybe<T>, object?)
   fullName.vb: FunctionalDdd.Maybe(Of T).=(FunctionalDdd.Maybe(Of T), Object)
-  nameWithType: Maybe<T>.operator ==(Maybe<T>, object)
+  nameWithType: Maybe<T>.operator ==(Maybe<T>, object?)
   nameWithType.vb: Maybe(Of T).=(Maybe(Of T), Object)
 - uid: FunctionalDdd.Maybe`1.op_Equality(FunctionalDdd.Maybe{`0},`0)
   name: operator ==(Maybe<T>, T)
@@ -2480,13 +2643,13 @@ references:
   nameWithType: Maybe<T>.operator !=(Maybe<T>, Maybe<T>)
   nameWithType.vb: Maybe(Of T).<>(Maybe(Of T), Maybe(Of T))
 - uid: FunctionalDdd.Maybe`1.op_Inequality(FunctionalDdd.Maybe{`0},System.Object)
-  name: operator !=(Maybe<T>, object)
+  name: operator !=(Maybe<T>, object?)
   href: api/FunctionalDdd.Maybe-1.html#FunctionalDdd_Maybe_1_op_Inequality_FunctionalDdd_Maybe__0__System_Object_
   commentId: M:FunctionalDdd.Maybe`1.op_Inequality(FunctionalDdd.Maybe{`0},System.Object)
   name.vb: <>(Maybe(Of T), Object)
-  fullName: FunctionalDdd.Maybe<T>.operator !=(FunctionalDdd.Maybe<T>, object)
+  fullName: FunctionalDdd.Maybe<T>.operator !=(FunctionalDdd.Maybe<T>, object?)
   fullName.vb: FunctionalDdd.Maybe(Of T).<>(FunctionalDdd.Maybe(Of T), Object)
-  nameWithType: Maybe<T>.operator !=(Maybe<T>, object)
+  nameWithType: Maybe<T>.operator !=(Maybe<T>, object?)
   nameWithType.vb: Maybe(Of T).<>(Maybe(Of T), Object)
 - uid: FunctionalDdd.Maybe`1.op_Inequality(FunctionalDdd.Maybe{`0},`0)
   name: operator !=(Maybe<T>, T)
@@ -2866,6 +3029,31 @@ references:
   fullName.vb: FunctionalDdd.Result.Failure(Of TValue)(System.Func(Of FunctionalDdd.Error))
   nameWithType: Result.Failure<TValue>(Func<Error>)
   nameWithType.vb: Result.Failure(Of TValue)(Func(Of Error))
+- uid: FunctionalDdd.Result.FromException(System.Exception,System.Func{System.Exception,FunctionalDdd.Error})
+  name: FromException(Exception, Func<Exception, Error>?)
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_FromException_System_Exception_System_Func_System_Exception_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.Result.FromException(System.Exception,System.Func{System.Exception,FunctionalDdd.Error})
+  name.vb: FromException(Exception, Func(Of Exception, Error))
+  fullName: FunctionalDdd.Result.FromException(System.Exception, System.Func<System.Exception, FunctionalDdd.Error>?)
+  fullName.vb: FunctionalDdd.Result.FromException(System.Exception, System.Func(Of System.Exception, FunctionalDdd.Error))
+  nameWithType: Result.FromException(Exception, Func<Exception, Error>?)
+  nameWithType.vb: Result.FromException(Exception, Func(Of Exception, Error))
+- uid: FunctionalDdd.Result.FromException*
+  name: FromException
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_FromException_
+  commentId: Overload:FunctionalDdd.Result.FromException
+  isSpec: "True"
+  fullName: FunctionalDdd.Result.FromException
+  nameWithType: Result.FromException
+- uid: FunctionalDdd.Result.FromException``1(System.Exception,System.Func{System.Exception,FunctionalDdd.Error})
+  name: FromException<T>(Exception, Func<Exception, Error>?)
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_FromException__1_System_Exception_System_Func_System_Exception_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.Result.FromException``1(System.Exception,System.Func{System.Exception,FunctionalDdd.Error})
+  name.vb: FromException(Of T)(Exception, Func(Of Exception, Error))
+  fullName: FunctionalDdd.Result.FromException<T>(System.Exception, System.Func<System.Exception, FunctionalDdd.Error>?)
+  fullName.vb: FunctionalDdd.Result.FromException(Of T)(System.Exception, System.Func(Of System.Exception, FunctionalDdd.Error))
+  nameWithType: Result.FromException<T>(Exception, Func<Exception, Error>?)
+  nameWithType.vb: Result.FromException(Of T)(Exception, Func(Of Exception, Error))
 - uid: FunctionalDdd.Result.Success
   name: Success()
   href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_Success
@@ -2938,6 +3126,92 @@ references:
   fullName.vb: FunctionalDdd.Result.Success(Of TValue)(TValue)
   nameWithType: Result.Success<TValue>(TValue)
   nameWithType.vb: Result.Success(Of TValue)(TValue)
+- uid: FunctionalDdd.Result.Try*
+  name: Try
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_Try_
+  commentId: Overload:FunctionalDdd.Result.Try
+  isSpec: "True"
+  fullName: FunctionalDdd.Result.Try
+  nameWithType: Result.Try
+- uid: FunctionalDdd.Result.TryAsync*
+  name: TryAsync
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_TryAsync_
+  commentId: Overload:FunctionalDdd.Result.TryAsync
+  isSpec: "True"
+  fullName: FunctionalDdd.Result.TryAsync
+  nameWithType: Result.TryAsync
+- uid: FunctionalDdd.Result.TryAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Func{System.Exception,FunctionalDdd.Error})
+  name: TryAsync<T>(Func<Task<T>>, Func<Exception, Error>?)
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_TryAsync__1_System_Func_System_Threading_Tasks_Task___0___System_Func_System_Exception_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.Result.TryAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Func{System.Exception,FunctionalDdd.Error})
+  name.vb: TryAsync(Of T)(Func(Of Task(Of T)), Func(Of Exception, Error))
+  fullName: FunctionalDdd.Result.TryAsync<T>(System.Func<System.Threading.Tasks.Task<T>>, System.Func<System.Exception, FunctionalDdd.Error>?)
+  fullName.vb: FunctionalDdd.Result.TryAsync(Of T)(System.Func(Of System.Threading.Tasks.Task(Of T)), System.Func(Of System.Exception, FunctionalDdd.Error))
+  nameWithType: Result.TryAsync<T>(Func<Task<T>>, Func<Exception, Error>?)
+  nameWithType.vb: Result.TryAsync(Of T)(Func(Of Task(Of T)), Func(Of Exception, Error))
+- uid: FunctionalDdd.Result.Try``1(System.Func{``0},System.Func{System.Exception,FunctionalDdd.Error})
+  name: Try<T>(Func<T>, Func<Exception, Error>?)
+  href: api/FunctionalDdd.Result.html#FunctionalDdd_Result_Try__1_System_Func___0__System_Func_System_Exception_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.Result.Try``1(System.Func{``0},System.Func{System.Exception,FunctionalDdd.Error})
+  name.vb: Try(Of T)(Func(Of T), Func(Of Exception, Error))
+  fullName: FunctionalDdd.Result.Try<T>(System.Func<T>, System.Func<System.Exception, FunctionalDdd.Error>?)
+  fullName.vb: FunctionalDdd.Result.Try(Of T)(System.Func(Of T), System.Func(Of System.Exception, FunctionalDdd.Error))
+  nameWithType: Result.Try<T>(Func<T>, Func<Exception, Error>?)
+  nameWithType.vb: Result.Try(Of T)(Func(Of T), Func(Of Exception, Error))
+- uid: FunctionalDdd.ResultLinqExtensions
+  name: ResultLinqExtensions
+  href: api/FunctionalDdd.ResultLinqExtensions.html
+  commentId: T:FunctionalDdd.ResultLinqExtensions
+  fullName: FunctionalDdd.ResultLinqExtensions
+  nameWithType: ResultLinqExtensions
+- uid: FunctionalDdd.ResultLinqExtensions.Select*
+  name: Select
+  href: api/FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_Select_
+  commentId: Overload:FunctionalDdd.ResultLinqExtensions.Select
+  isSpec: "True"
+  fullName: FunctionalDdd.ResultLinqExtensions.Select
+  nameWithType: ResultLinqExtensions.Select
+- uid: FunctionalDdd.ResultLinqExtensions.SelectMany*
+  name: SelectMany
+  href: api/FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_SelectMany_
+  commentId: Overload:FunctionalDdd.ResultLinqExtensions.SelectMany
+  isSpec: "True"
+  fullName: FunctionalDdd.ResultLinqExtensions.SelectMany
+  nameWithType: ResultLinqExtensions.SelectMany
+- uid: FunctionalDdd.ResultLinqExtensions.SelectMany``3(FunctionalDdd.Result{``0},System.Func{``0,FunctionalDdd.Result{``1}},System.Func{``0,``1,``2})
+  name: SelectMany<TSource, TCollection, TResult>(Result<TSource>, Func<TSource, Result<TCollection>>, Func<TSource, TCollection, TResult>)
+  href: api/FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_SelectMany__3_FunctionalDdd_Result___0__System_Func___0_FunctionalDdd_Result___1___System_Func___0___1___2__
+  commentId: M:FunctionalDdd.ResultLinqExtensions.SelectMany``3(FunctionalDdd.Result{``0},System.Func{``0,FunctionalDdd.Result{``1}},System.Func{``0,``1,``2})
+  name.vb: SelectMany(Of TSource, TCollection, TResult)(Result(Of TSource), Func(Of TSource, Result(Of TCollection)), Func(Of TSource, TCollection, TResult))
+  fullName: FunctionalDdd.ResultLinqExtensions.SelectMany<TSource, TCollection, TResult>(FunctionalDdd.Result<TSource>, System.Func<TSource, FunctionalDdd.Result<TCollection>>, System.Func<TSource, TCollection, TResult>)
+  fullName.vb: FunctionalDdd.ResultLinqExtensions.SelectMany(Of TSource, TCollection, TResult)(FunctionalDdd.Result(Of TSource), System.Func(Of TSource, FunctionalDdd.Result(Of TCollection)), System.Func(Of TSource, TCollection, TResult))
+  nameWithType: ResultLinqExtensions.SelectMany<TSource, TCollection, TResult>(Result<TSource>, Func<TSource, Result<TCollection>>, Func<TSource, TCollection, TResult>)
+  nameWithType.vb: ResultLinqExtensions.SelectMany(Of TSource, TCollection, TResult)(Result(Of TSource), Func(Of TSource, Result(Of TCollection)), Func(Of TSource, TCollection, TResult))
+- uid: FunctionalDdd.ResultLinqExtensions.Select``2(FunctionalDdd.Result{``0},System.Func{``0,``1})
+  name: Select<TIn, TOut>(Result<TIn>, Func<TIn, TOut>)
+  href: api/FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_Select__2_FunctionalDdd_Result___0__System_Func___0___1__
+  commentId: M:FunctionalDdd.ResultLinqExtensions.Select``2(FunctionalDdd.Result{``0},System.Func{``0,``1})
+  name.vb: Select(Of TIn, TOut)(Result(Of TIn), Func(Of TIn, TOut))
+  fullName: FunctionalDdd.ResultLinqExtensions.Select<TIn, TOut>(FunctionalDdd.Result<TIn>, System.Func<TIn, TOut>)
+  fullName.vb: FunctionalDdd.ResultLinqExtensions.Select(Of TIn, TOut)(FunctionalDdd.Result(Of TIn), System.Func(Of TIn, TOut))
+  nameWithType: ResultLinqExtensions.Select<TIn, TOut>(Result<TIn>, Func<TIn, TOut>)
+  nameWithType.vb: ResultLinqExtensions.Select(Of TIn, TOut)(Result(Of TIn), Func(Of TIn, TOut))
+- uid: FunctionalDdd.ResultLinqExtensions.Where*
+  name: Where
+  href: api/FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_Where_
+  commentId: Overload:FunctionalDdd.ResultLinqExtensions.Where
+  isSpec: "True"
+  fullName: FunctionalDdd.ResultLinqExtensions.Where
+  nameWithType: ResultLinqExtensions.Where
+- uid: FunctionalDdd.ResultLinqExtensions.Where``1(FunctionalDdd.Result{``0},System.Func{``0,System.Boolean})
+  name: Where<TSource>(Result<TSource>, Func<TSource, bool>)
+  href: api/FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_Where__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__
+  commentId: M:FunctionalDdd.ResultLinqExtensions.Where``1(FunctionalDdd.Result{``0},System.Func{``0,System.Boolean})
+  name.vb: Where(Of TSource)(Result(Of TSource), Func(Of TSource, Boolean))
+  fullName: FunctionalDdd.ResultLinqExtensions.Where<TSource>(FunctionalDdd.Result<TSource>, System.Func<TSource, bool>)
+  fullName.vb: FunctionalDdd.ResultLinqExtensions.Where(Of TSource)(FunctionalDdd.Result(Of TSource), System.Func(Of TSource, Boolean))
+  nameWithType: ResultLinqExtensions.Where<TSource>(Result<TSource>, Func<TSource, bool>)
+  nameWithType.vb: ResultLinqExtensions.Where(Of TSource)(Result(Of TSource), Func(Of TSource, Boolean))
 - uid: FunctionalDdd.Result`1
   name: Result<TValue>
   href: api/FunctionalDdd.Result-1.html
@@ -2947,6 +3221,51 @@ references:
   fullName.vb: FunctionalDdd.Result(Of TValue)
   nameWithType: Result<TValue>
   nameWithType.vb: Result(Of TValue)
+- uid: FunctionalDdd.Result`1.Deconstruct(System.Boolean@,`0@,FunctionalDdd.Error@)
+  name: Deconstruct(out bool, out TValue?, out Error?)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Deconstruct_System_Boolean___0__FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.Result`1.Deconstruct(System.Boolean@,`0@,FunctionalDdd.Error@)
+  name.vb: Deconstruct(Boolean, TValue, Error)
+  fullName: FunctionalDdd.Result<TValue>.Deconstruct(out bool, out TValue?, out FunctionalDdd.Error?)
+  fullName.vb: FunctionalDdd.Result(Of TValue).Deconstruct(Boolean, TValue, FunctionalDdd.Error)
+  nameWithType: Result<TValue>.Deconstruct(out bool, out TValue?, out Error?)
+  nameWithType.vb: Result(Of TValue).Deconstruct(Boolean, TValue, Error)
+- uid: FunctionalDdd.Result`1.Deconstruct*
+  name: Deconstruct
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Deconstruct_
+  commentId: Overload:FunctionalDdd.Result`1.Deconstruct
+  isSpec: "True"
+  fullName: FunctionalDdd.Result<TValue>.Deconstruct
+  fullName.vb: FunctionalDdd.Result(Of TValue).Deconstruct
+  nameWithType: Result<TValue>.Deconstruct
+  nameWithType.vb: Result(Of TValue).Deconstruct
+- uid: FunctionalDdd.Result`1.Equals(FunctionalDdd.Result{`0})
+  name: Equals(Result<TValue>)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Equals_FunctionalDdd_Result__0__
+  commentId: M:FunctionalDdd.Result`1.Equals(FunctionalDdd.Result{`0})
+  name.vb: Equals(Result(Of TValue))
+  fullName: FunctionalDdd.Result<TValue>.Equals(FunctionalDdd.Result<TValue>)
+  fullName.vb: FunctionalDdd.Result(Of TValue).Equals(FunctionalDdd.Result(Of TValue))
+  nameWithType: Result<TValue>.Equals(Result<TValue>)
+  nameWithType.vb: Result(Of TValue).Equals(Result(Of TValue))
+- uid: FunctionalDdd.Result`1.Equals(System.Object)
+  name: Equals(object?)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Equals_System_Object_
+  commentId: M:FunctionalDdd.Result`1.Equals(System.Object)
+  name.vb: Equals(Object)
+  fullName: FunctionalDdd.Result<TValue>.Equals(object?)
+  fullName.vb: FunctionalDdd.Result(Of TValue).Equals(Object)
+  nameWithType: Result<TValue>.Equals(object?)
+  nameWithType.vb: Result(Of TValue).Equals(Object)
+- uid: FunctionalDdd.Result`1.Equals*
+  name: Equals
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Equals_
+  commentId: Overload:FunctionalDdd.Result`1.Equals
+  isSpec: "True"
+  fullName: FunctionalDdd.Result<TValue>.Equals
+  fullName.vb: FunctionalDdd.Result(Of TValue).Equals
+  nameWithType: Result<TValue>.Equals
+  nameWithType.vb: Result(Of TValue).Equals
 - uid: FunctionalDdd.Result`1.Error
   name: Error
   href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Error
@@ -2964,6 +3283,23 @@ references:
   fullName.vb: FunctionalDdd.Result(Of TValue).Error
   nameWithType: Result<TValue>.Error
   nameWithType.vb: Result(Of TValue).Error
+- uid: FunctionalDdd.Result`1.GetHashCode
+  name: GetHashCode()
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_GetHashCode
+  commentId: M:FunctionalDdd.Result`1.GetHashCode
+  fullName: FunctionalDdd.Result<TValue>.GetHashCode()
+  fullName.vb: FunctionalDdd.Result(Of TValue).GetHashCode()
+  nameWithType: Result<TValue>.GetHashCode()
+  nameWithType.vb: Result(Of TValue).GetHashCode()
+- uid: FunctionalDdd.Result`1.GetHashCode*
+  name: GetHashCode
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_GetHashCode_
+  commentId: Overload:FunctionalDdd.Result`1.GetHashCode
+  isSpec: "True"
+  fullName: FunctionalDdd.Result<TValue>.GetHashCode
+  fullName.vb: FunctionalDdd.Result(Of TValue).GetHashCode
+  nameWithType: Result<TValue>.GetHashCode
+  nameWithType.vb: Result(Of TValue).GetHashCode
 - uid: FunctionalDdd.Result`1.IsFailure
   name: IsFailure
   href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_IsFailure
@@ -2998,6 +3334,59 @@ references:
   fullName.vb: FunctionalDdd.Result(Of TValue).IsSuccess
   nameWithType: Result<TValue>.IsSuccess
   nameWithType.vb: Result(Of TValue).IsSuccess
+- uid: FunctionalDdd.Result`1.ToString
+  name: ToString()
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_ToString
+  commentId: M:FunctionalDdd.Result`1.ToString
+  fullName: FunctionalDdd.Result<TValue>.ToString()
+  fullName.vb: FunctionalDdd.Result(Of TValue).ToString()
+  nameWithType: Result<TValue>.ToString()
+  nameWithType.vb: Result(Of TValue).ToString()
+- uid: FunctionalDdd.Result`1.ToString*
+  name: ToString
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_ToString_
+  commentId: Overload:FunctionalDdd.Result`1.ToString
+  isSpec: "True"
+  fullName: FunctionalDdd.Result<TValue>.ToString
+  fullName.vb: FunctionalDdd.Result(Of TValue).ToString
+  nameWithType: Result<TValue>.ToString
+  nameWithType.vb: Result(Of TValue).ToString
+- uid: FunctionalDdd.Result`1.TryGetError(FunctionalDdd.Error@)
+  name: TryGetError(out Error)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_TryGetError_FunctionalDdd_Error__
+  commentId: M:FunctionalDdd.Result`1.TryGetError(FunctionalDdd.Error@)
+  name.vb: TryGetError(Error)
+  fullName: FunctionalDdd.Result<TValue>.TryGetError(out FunctionalDdd.Error)
+  fullName.vb: FunctionalDdd.Result(Of TValue).TryGetError(FunctionalDdd.Error)
+  nameWithType: Result<TValue>.TryGetError(out Error)
+  nameWithType.vb: Result(Of TValue).TryGetError(Error)
+- uid: FunctionalDdd.Result`1.TryGetError*
+  name: TryGetError
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_TryGetError_
+  commentId: Overload:FunctionalDdd.Result`1.TryGetError
+  isSpec: "True"
+  fullName: FunctionalDdd.Result<TValue>.TryGetError
+  fullName.vb: FunctionalDdd.Result(Of TValue).TryGetError
+  nameWithType: Result<TValue>.TryGetError
+  nameWithType.vb: Result(Of TValue).TryGetError
+- uid: FunctionalDdd.Result`1.TryGetValue(`0@)
+  name: TryGetValue(out TValue)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_TryGetValue__0__
+  commentId: M:FunctionalDdd.Result`1.TryGetValue(`0@)
+  name.vb: TryGetValue(TValue)
+  fullName: FunctionalDdd.Result<TValue>.TryGetValue(out TValue)
+  fullName.vb: FunctionalDdd.Result(Of TValue).TryGetValue(TValue)
+  nameWithType: Result<TValue>.TryGetValue(out TValue)
+  nameWithType.vb: Result(Of TValue).TryGetValue(TValue)
+- uid: FunctionalDdd.Result`1.TryGetValue*
+  name: TryGetValue
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_TryGetValue_
+  commentId: Overload:FunctionalDdd.Result`1.TryGetValue
+  isSpec: "True"
+  fullName: FunctionalDdd.Result<TValue>.TryGetValue
+  fullName.vb: FunctionalDdd.Result(Of TValue).TryGetValue
+  nameWithType: Result<TValue>.TryGetValue
+  nameWithType.vb: Result(Of TValue).TryGetValue
 - uid: FunctionalDdd.Result`1.Value
   name: Value
   href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Value
@@ -3015,6 +3404,25 @@ references:
   fullName.vb: FunctionalDdd.Result(Of TValue).Value
   nameWithType: Result<TValue>.Value
   nameWithType.vb: Result(Of TValue).Value
+- uid: FunctionalDdd.Result`1.op_Equality(FunctionalDdd.Result{`0},FunctionalDdd.Result{`0})
+  name: operator ==(Result<TValue>, Result<TValue>)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_op_Equality_FunctionalDdd_Result__0__FunctionalDdd_Result__0__
+  commentId: M:FunctionalDdd.Result`1.op_Equality(FunctionalDdd.Result{`0},FunctionalDdd.Result{`0})
+  name.vb: =(Result(Of TValue), Result(Of TValue))
+  fullName: FunctionalDdd.Result<TValue>.operator ==(FunctionalDdd.Result<TValue>, FunctionalDdd.Result<TValue>)
+  fullName.vb: FunctionalDdd.Result(Of TValue).=(FunctionalDdd.Result(Of TValue), FunctionalDdd.Result(Of TValue))
+  nameWithType: Result<TValue>.operator ==(Result<TValue>, Result<TValue>)
+  nameWithType.vb: Result(Of TValue).=(Result(Of TValue), Result(Of TValue))
+- uid: FunctionalDdd.Result`1.op_Equality*
+  name: operator ==
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_op_Equality_
+  commentId: Overload:FunctionalDdd.Result`1.op_Equality
+  isSpec: "True"
+  name.vb: =
+  fullName: FunctionalDdd.Result<TValue>.operator ==
+  fullName.vb: FunctionalDdd.Result(Of TValue).=
+  nameWithType: Result<TValue>.operator ==
+  nameWithType.vb: Result(Of TValue).=
 - uid: FunctionalDdd.Result`1.op_Implicit(FunctionalDdd.Error)~FunctionalDdd.Result{`0}
   name: implicit operator Result<TValue>(Error)
   href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_op_Implicit_FunctionalDdd_Error__FunctionalDdd_Result__0_
@@ -3043,6 +3451,25 @@ references:
   fullName.vb: FunctionalDdd.Result(Of TValue).CType
   nameWithType: Result<TValue>.implicit operator
   nameWithType.vb: Result(Of TValue).CType
+- uid: FunctionalDdd.Result`1.op_Inequality(FunctionalDdd.Result{`0},FunctionalDdd.Result{`0})
+  name: operator !=(Result<TValue>, Result<TValue>)
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_op_Inequality_FunctionalDdd_Result__0__FunctionalDdd_Result__0__
+  commentId: M:FunctionalDdd.Result`1.op_Inequality(FunctionalDdd.Result{`0},FunctionalDdd.Result{`0})
+  name.vb: <>(Result(Of TValue), Result(Of TValue))
+  fullName: FunctionalDdd.Result<TValue>.operator !=(FunctionalDdd.Result<TValue>, FunctionalDdd.Result<TValue>)
+  fullName.vb: FunctionalDdd.Result(Of TValue).<>(FunctionalDdd.Result(Of TValue), FunctionalDdd.Result(Of TValue))
+  nameWithType: Result<TValue>.operator !=(Result<TValue>, Result<TValue>)
+  nameWithType.vb: Result(Of TValue).<>(Result(Of TValue), Result(Of TValue))
+- uid: FunctionalDdd.Result`1.op_Inequality*
+  name: operator !=
+  href: api/FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_op_Inequality_
+  commentId: Overload:FunctionalDdd.Result`1.op_Inequality
+  isSpec: "True"
+  name.vb: <>
+  fullName: FunctionalDdd.Result<TValue>.operator !=
+  fullName.vb: FunctionalDdd.Result(Of TValue).<>
+  nameWithType: Result<TValue>.operator !=
+  nameWithType.vb: Result(Of TValue).<>
 - uid: FunctionalDdd.RopTracerProviderBuilderExtensions
   name: RopTracerProviderBuilderExtensions
   href: api/FunctionalDdd.RopTracerProviderBuilderExtensions.html
@@ -3723,15 +4150,15 @@ references:
   commentId: T:FunctionalDdd.ValidationError
   fullName: FunctionalDdd.ValidationError
   nameWithType: ValidationError
-- uid: FunctionalDdd.ValidationError.#ctor(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String,System.String)
-  name: ValidationError(FieldDetails[], string, string, string?)
-  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError__ctor_FunctionalDdd_ValidationError_FieldDetails___System_String_System_String_System_String_
-  commentId: M:FunctionalDdd.ValidationError.#ctor(FunctionalDdd.ValidationError.FieldDetails[],System.String,System.String,System.String)
-  name.vb: New(FieldDetails(), String, String, String)
-  fullName: FunctionalDdd.ValidationError.ValidationError(FunctionalDdd.ValidationError.FieldDetails[], string, string, string?)
-  fullName.vb: FunctionalDdd.ValidationError.New(FunctionalDdd.ValidationError.FieldDetails(), String, String, String)
-  nameWithType: ValidationError.ValidationError(ValidationError.FieldDetails[], string, string, string?)
-  nameWithType.vb: ValidationError.New(ValidationError.FieldDetails(), String, String, String)
+- uid: FunctionalDdd.ValidationError.#ctor(System.Collections.Generic.IEnumerable{FunctionalDdd.ValidationError.FieldError},System.String,System.String,System.String)
+  name: ValidationError(IEnumerable<FieldError>, string, string, string?)
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError__ctor_System_Collections_Generic_IEnumerable_FunctionalDdd_ValidationError_FieldError__System_String_System_String_System_String_
+  commentId: M:FunctionalDdd.ValidationError.#ctor(System.Collections.Generic.IEnumerable{FunctionalDdd.ValidationError.FieldError},System.String,System.String,System.String)
+  name.vb: New(IEnumerable(Of FieldError), String, String, String)
+  fullName: FunctionalDdd.ValidationError.ValidationError(System.Collections.Generic.IEnumerable<FunctionalDdd.ValidationError.FieldError>, string, string, string?)
+  fullName.vb: FunctionalDdd.ValidationError.New(System.Collections.Generic.IEnumerable(Of FunctionalDdd.ValidationError.FieldError), String, String, String)
+  nameWithType: ValidationError.ValidationError(IEnumerable<ValidationError.FieldError>, string, string, string?)
+  nameWithType.vb: ValidationError.New(IEnumerable(Of ValidationError.FieldError), String, String, String)
 - uid: FunctionalDdd.ValidationError.#ctor(System.String,System.String,System.String,System.String,System.String)
   name: ValidationError(string, string, string, string?, string?)
   href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError__ctor_System_String_System_String_System_String_System_String_System_String_
@@ -3751,70 +4178,197 @@ references:
   fullName.vb: FunctionalDdd.ValidationError.New
   nameWithType: ValidationError.ValidationError
   nameWithType.vb: ValidationError.New
-- uid: FunctionalDdd.ValidationError.Errors
-  name: Errors
-  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Errors
-  commentId: P:FunctionalDdd.ValidationError.Errors
-  fullName: FunctionalDdd.ValidationError.Errors
-  nameWithType: ValidationError.Errors
-- uid: FunctionalDdd.ValidationError.Errors*
-  name: Errors
-  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Errors_
-  commentId: Overload:FunctionalDdd.ValidationError.Errors
+- uid: FunctionalDdd.ValidationError.And(System.String,System.String)
+  name: And(string, string)
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_And_System_String_System_String_
+  commentId: M:FunctionalDdd.ValidationError.And(System.String,System.String)
+  name.vb: And(String, String)
+  fullName: FunctionalDdd.ValidationError.And(string, string)
+  fullName.vb: FunctionalDdd.ValidationError.And(String, String)
+  nameWithType: ValidationError.And(string, string)
+  nameWithType.vb: ValidationError.And(String, String)
+- uid: FunctionalDdd.ValidationError.And(System.String,System.String[])
+  name: And(string, params string[])
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_And_System_String_System_String___
+  commentId: M:FunctionalDdd.ValidationError.And(System.String,System.String[])
+  name.vb: And(String, ParamArray String())
+  fullName: FunctionalDdd.ValidationError.And(string, params string[])
+  fullName.vb: FunctionalDdd.ValidationError.And(String, ParamArray String())
+  nameWithType: ValidationError.And(string, params string[])
+  nameWithType.vb: ValidationError.And(String, ParamArray String())
+- uid: FunctionalDdd.ValidationError.And*
+  name: And
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_And_
+  commentId: Overload:FunctionalDdd.ValidationError.And
   isSpec: "True"
-  fullName: FunctionalDdd.ValidationError.Errors
-  nameWithType: ValidationError.Errors
-- uid: FunctionalDdd.ValidationError.FieldDetails
-  name: ValidationError.FieldDetails
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html
-  commentId: T:FunctionalDdd.ValidationError.FieldDetails
-  fullName: FunctionalDdd.ValidationError.FieldDetails
-  nameWithType: ValidationError.FieldDetails
-- uid: FunctionalDdd.ValidationError.FieldDetails.#ctor(System.String,System.String[])
-  name: FieldDetails(string, string[])
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html#FunctionalDdd_ValidationError_FieldDetails__ctor_System_String_System_String___
-  commentId: M:FunctionalDdd.ValidationError.FieldDetails.#ctor(System.String,System.String[])
-  name.vb: New(String, String())
-  fullName: FunctionalDdd.ValidationError.FieldDetails.FieldDetails(string, string[])
-  fullName.vb: FunctionalDdd.ValidationError.FieldDetails.New(String, String())
-  nameWithType: ValidationError.FieldDetails.FieldDetails(string, string[])
-  nameWithType.vb: ValidationError.FieldDetails.New(String, String())
-- uid: FunctionalDdd.ValidationError.FieldDetails.#ctor*
-  name: FieldDetails
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html#FunctionalDdd_ValidationError_FieldDetails__ctor_
-  commentId: Overload:FunctionalDdd.ValidationError.FieldDetails.#ctor
+  fullName: FunctionalDdd.ValidationError.And
+  nameWithType: ValidationError.And
+- uid: FunctionalDdd.ValidationError.Equals(FunctionalDdd.ValidationError)
+  name: Equals(ValidationError?)
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Equals_FunctionalDdd_ValidationError_
+  commentId: M:FunctionalDdd.ValidationError.Equals(FunctionalDdd.ValidationError)
+  name.vb: Equals(ValidationError)
+  fullName: FunctionalDdd.ValidationError.Equals(FunctionalDdd.ValidationError?)
+  fullName.vb: FunctionalDdd.ValidationError.Equals(FunctionalDdd.ValidationError)
+  nameWithType: ValidationError.Equals(ValidationError?)
+  nameWithType.vb: ValidationError.Equals(ValidationError)
+- uid: FunctionalDdd.ValidationError.Equals(System.Object)
+  name: Equals(object?)
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Equals_System_Object_
+  commentId: M:FunctionalDdd.ValidationError.Equals(System.Object)
+  name.vb: Equals(Object)
+  fullName: FunctionalDdd.ValidationError.Equals(object?)
+  fullName.vb: FunctionalDdd.ValidationError.Equals(Object)
+  nameWithType: ValidationError.Equals(object?)
+  nameWithType.vb: ValidationError.Equals(Object)
+- uid: FunctionalDdd.ValidationError.Equals*
+  name: Equals
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Equals_
+  commentId: Overload:FunctionalDdd.ValidationError.Equals
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.Equals
+  nameWithType: ValidationError.Equals
+- uid: FunctionalDdd.ValidationError.FieldError
+  name: ValidationError.FieldError
+  href: api/FunctionalDdd.ValidationError.FieldError.html
+  commentId: T:FunctionalDdd.ValidationError.FieldError
+  fullName: FunctionalDdd.ValidationError.FieldError
+  nameWithType: ValidationError.FieldError
+- uid: FunctionalDdd.ValidationError.FieldError.#ctor(System.String,System.Collections.Generic.IEnumerable{System.String})
+  name: FieldError(string, IEnumerable<string>)
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError__ctor_System_String_System_Collections_Generic_IEnumerable_System_String__
+  commentId: M:FunctionalDdd.ValidationError.FieldError.#ctor(System.String,System.Collections.Generic.IEnumerable{System.String})
+  name.vb: New(String, IEnumerable(Of String))
+  fullName: FunctionalDdd.ValidationError.FieldError.FieldError(string, System.Collections.Generic.IEnumerable<string>)
+  fullName.vb: FunctionalDdd.ValidationError.FieldError.New(String, System.Collections.Generic.IEnumerable(Of String))
+  nameWithType: ValidationError.FieldError.FieldError(string, IEnumerable<string>)
+  nameWithType.vb: ValidationError.FieldError.New(String, IEnumerable(Of String))
+- uid: FunctionalDdd.ValidationError.FieldError.#ctor(System.String,System.Collections.Immutable.ImmutableArray{System.String})
+  name: FieldError(string, ImmutableArray<string>)
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError__ctor_System_String_System_Collections_Immutable_ImmutableArray_System_String__
+  commentId: M:FunctionalDdd.ValidationError.FieldError.#ctor(System.String,System.Collections.Immutable.ImmutableArray{System.String})
+  name.vb: New(String, ImmutableArray(Of String))
+  fullName: FunctionalDdd.ValidationError.FieldError.FieldError(string, System.Collections.Immutable.ImmutableArray<string>)
+  fullName.vb: FunctionalDdd.ValidationError.FieldError.New(String, System.Collections.Immutable.ImmutableArray(Of String))
+  nameWithType: ValidationError.FieldError.FieldError(string, ImmutableArray<string>)
+  nameWithType.vb: ValidationError.FieldError.New(String, ImmutableArray(Of String))
+- uid: FunctionalDdd.ValidationError.FieldError.#ctor*
+  name: FieldError
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError__ctor_
+  commentId: Overload:FunctionalDdd.ValidationError.FieldError.#ctor
   isSpec: "True"
   name.vb: New
-  fullName: FunctionalDdd.ValidationError.FieldDetails.FieldDetails
-  fullName.vb: FunctionalDdd.ValidationError.FieldDetails.New
-  nameWithType: ValidationError.FieldDetails.FieldDetails
-  nameWithType.vb: ValidationError.FieldDetails.New
-- uid: FunctionalDdd.ValidationError.FieldDetails.Details
+  fullName: FunctionalDdd.ValidationError.FieldError.FieldError
+  fullName.vb: FunctionalDdd.ValidationError.FieldError.New
+  nameWithType: ValidationError.FieldError.FieldError
+  nameWithType.vb: ValidationError.FieldError.New
+- uid: FunctionalDdd.ValidationError.FieldError.Details
   name: Details
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html#FunctionalDdd_ValidationError_FieldDetails_Details
-  commentId: P:FunctionalDdd.ValidationError.FieldDetails.Details
-  fullName: FunctionalDdd.ValidationError.FieldDetails.Details
-  nameWithType: ValidationError.FieldDetails.Details
-- uid: FunctionalDdd.ValidationError.FieldDetails.Details*
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError_Details
+  commentId: P:FunctionalDdd.ValidationError.FieldError.Details
+  fullName: FunctionalDdd.ValidationError.FieldError.Details
+  nameWithType: ValidationError.FieldError.Details
+- uid: FunctionalDdd.ValidationError.FieldError.Details*
   name: Details
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html#FunctionalDdd_ValidationError_FieldDetails_Details_
-  commentId: Overload:FunctionalDdd.ValidationError.FieldDetails.Details
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError_Details_
+  commentId: Overload:FunctionalDdd.ValidationError.FieldError.Details
   isSpec: "True"
-  fullName: FunctionalDdd.ValidationError.FieldDetails.Details
-  nameWithType: ValidationError.FieldDetails.Details
-- uid: FunctionalDdd.ValidationError.FieldDetails.Name
-  name: Name
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html#FunctionalDdd_ValidationError_FieldDetails_Name
-  commentId: P:FunctionalDdd.ValidationError.FieldDetails.Name
-  fullName: FunctionalDdd.ValidationError.FieldDetails.Name
-  nameWithType: ValidationError.FieldDetails.Name
-- uid: FunctionalDdd.ValidationError.FieldDetails.Name*
-  name: Name
-  href: api/FunctionalDdd.ValidationError.FieldDetails.html#FunctionalDdd_ValidationError_FieldDetails_Name_
-  commentId: Overload:FunctionalDdd.ValidationError.FieldDetails.Name
+  fullName: FunctionalDdd.ValidationError.FieldError.Details
+  nameWithType: ValidationError.FieldError.Details
+- uid: FunctionalDdd.ValidationError.FieldError.FieldName
+  name: FieldName
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError_FieldName
+  commentId: P:FunctionalDdd.ValidationError.FieldError.FieldName
+  fullName: FunctionalDdd.ValidationError.FieldError.FieldName
+  nameWithType: ValidationError.FieldError.FieldName
+- uid: FunctionalDdd.ValidationError.FieldError.FieldName*
+  name: FieldName
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError_FieldName_
+  commentId: Overload:FunctionalDdd.ValidationError.FieldError.FieldName
   isSpec: "True"
-  fullName: FunctionalDdd.ValidationError.FieldDetails.Name
-  nameWithType: ValidationError.FieldDetails.Name
+  fullName: FunctionalDdd.ValidationError.FieldError.FieldName
+  nameWithType: ValidationError.FieldError.FieldName
+- uid: FunctionalDdd.ValidationError.FieldError.ToString
+  name: ToString()
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError_ToString
+  commentId: M:FunctionalDdd.ValidationError.FieldError.ToString
+  fullName: FunctionalDdd.ValidationError.FieldError.ToString()
+  nameWithType: ValidationError.FieldError.ToString()
+- uid: FunctionalDdd.ValidationError.FieldError.ToString*
+  name: ToString
+  href: api/FunctionalDdd.ValidationError.FieldError.html#FunctionalDdd_ValidationError_FieldError_ToString_
+  commentId: Overload:FunctionalDdd.ValidationError.FieldError.ToString
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.FieldError.ToString
+  nameWithType: ValidationError.FieldError.ToString
+- uid: FunctionalDdd.ValidationError.FieldErrors
+  name: FieldErrors
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_FieldErrors
+  commentId: P:FunctionalDdd.ValidationError.FieldErrors
+  fullName: FunctionalDdd.ValidationError.FieldErrors
+  nameWithType: ValidationError.FieldErrors
+- uid: FunctionalDdd.ValidationError.FieldErrors*
+  name: FieldErrors
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_FieldErrors_
+  commentId: Overload:FunctionalDdd.ValidationError.FieldErrors
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.FieldErrors
+  nameWithType: ValidationError.FieldErrors
+- uid: FunctionalDdd.ValidationError.For(System.String,System.String,System.String,System.String,System.String)
+  name: For(string, string, string, string?, string?)
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_For_System_String_System_String_System_String_System_String_System_String_
+  commentId: M:FunctionalDdd.ValidationError.For(System.String,System.String,System.String,System.String,System.String)
+  name.vb: For(String, String, String, String, String)
+  fullName: FunctionalDdd.ValidationError.For(string, string, string, string?, string?)
+  fullName.vb: FunctionalDdd.ValidationError.For(String, String, String, String, String)
+  nameWithType: ValidationError.For(string, string, string, string?, string?)
+  nameWithType.vb: ValidationError.For(String, String, String, String, String)
+- uid: FunctionalDdd.ValidationError.For*
+  name: For
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_For_
+  commentId: Overload:FunctionalDdd.ValidationError.For
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.For
+  nameWithType: ValidationError.For
+- uid: FunctionalDdd.ValidationError.GetHashCode
+  name: GetHashCode()
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_GetHashCode
+  commentId: M:FunctionalDdd.ValidationError.GetHashCode
+  fullName: FunctionalDdd.ValidationError.GetHashCode()
+  nameWithType: ValidationError.GetHashCode()
+- uid: FunctionalDdd.ValidationError.GetHashCode*
+  name: GetHashCode
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_GetHashCode_
+  commentId: Overload:FunctionalDdd.ValidationError.GetHashCode
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.GetHashCode
+  nameWithType: ValidationError.GetHashCode
+- uid: FunctionalDdd.ValidationError.Merge(FunctionalDdd.ValidationError)
+  name: Merge(ValidationError)
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Merge_FunctionalDdd_ValidationError_
+  commentId: M:FunctionalDdd.ValidationError.Merge(FunctionalDdd.ValidationError)
+  fullName: FunctionalDdd.ValidationError.Merge(FunctionalDdd.ValidationError)
+  nameWithType: ValidationError.Merge(ValidationError)
+- uid: FunctionalDdd.ValidationError.Merge*
+  name: Merge
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_Merge_
+  commentId: Overload:FunctionalDdd.ValidationError.Merge
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.Merge
+  nameWithType: ValidationError.Merge
+- uid: FunctionalDdd.ValidationError.ToString
+  name: ToString()
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_ToString
+  commentId: M:FunctionalDdd.ValidationError.ToString
+  fullName: FunctionalDdd.ValidationError.ToString()
+  nameWithType: ValidationError.ToString()
+- uid: FunctionalDdd.ValidationError.ToString*
+  name: ToString
+  href: api/FunctionalDdd.ValidationError.html#FunctionalDdd_ValidationError_ToString_
+  commentId: Overload:FunctionalDdd.ValidationError.ToString
+  isSpec: "True"
+  fullName: FunctionalDdd.ValidationError.ToString
+  nameWithType: ValidationError.ToString
 - uid: FunctionalDdd.ValueObject
   name: ValueObject
   href: api/FunctionalDdd.ValueObject.html

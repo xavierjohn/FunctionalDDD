@@ -228,6 +228,11 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MapErrorExtensions.html">MapErrorExtensions</a></dt>
+      <dd><p>Transforms the Error of a failed Result while leaving successful Results unchanged.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDdd.MapExtensions.html">MapExtensions</a></dt>
       <dd><p>If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.</p>
 </dd>
@@ -236,6 +241,15 @@ If the Result is in a failed state, it returns the corresponding HTTP error code
       <dt><a class="xref" href="FunctionalDdd.MapExtensionsAsync.html">MapExtensionsAsync</a></dt>
       <dd><p>If the starting Result is a success, the Map function will call and  wrap the result of a given function with a new success result.</p>
 </dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MatchExtensions.html">MatchExtensions</a></dt>
+      <dd><p>Pattern matching helpers (Match / Switch) for Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MatchExtensionsAsync.html">MatchExtensionsAsync</a></dt>
+      <dd></dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDdd.Maybe.html">Maybe</a></dt>
@@ -289,8 +303,8 @@ and add a <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Con
 </dd>
     </dl>
     <dl class="jumplist">
-      <dt><a class="xref" href="FunctionalDdd.Result.html">Result</a></dt>
-      <dd><p>Static methods to create the <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> object.</p>
+      <dt><a class="xref" href="FunctionalDdd.ResultLinqExtensions.html">ResultLinqExtensions</a></dt>
+      <dd><p>LINQ query expression support (Select, SelectMany, Where).</p>
 </dd>
     </dl>
     <dl class="jumplist">
@@ -337,10 +351,6 @@ It is useful to execute functions that don't have a return type or return type c
       <dd></dd>
     </dl>
     <dl class="jumplist">
-      <dt><a class="xref" href="FunctionalDdd.ValidationError.FieldDetails.html">ValidationError.FieldDetails</a></dt>
-      <dd></dd>
-    </dl>
-    <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a></dt>
       <dd><p>A value object is an object that represents a descriptive aspect of the domain with no conceptual identity.
 It is a small, simple object that encapsulates a concept from your problem domain.
@@ -358,14 +368,23 @@ Structs
 </dd>
     </dl>
     <dl class="jumplist">
-      <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a></dt>
-      <dd><p>The Result type used in functional programming languages to represent a success value or an error.</p>
+      <dt><a class="xref" href="FunctionalDdd.Result.html">Result</a></dt>
+      <dd><p>Non-generic Result utility host containing factory and helper methods to construct <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> instances.
+NOTE: This struct is not intended to be instantiated; all members are static.</p>
 </dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a></dt>
+      <dd></dd>
     </dl>
     <dl class="jumplist">
       <dt><a class="xref" href="FunctionalDdd.Unit.html">Unit</a></dt>
       <dd><p>Represents the result of an operation that has no return value.</p>
 </dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ValidationError.FieldError.html">ValidationError.FieldError</a></dt>
+      <dd></dd>
     </dl>
     <h3 id="interfaces">
 Interfaces
