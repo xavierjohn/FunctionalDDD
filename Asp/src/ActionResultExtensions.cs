@@ -13,6 +13,7 @@ public static class ActionResultExtensions
 {
     /// <summary>
     /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.
+    /// For <see cref="Result{Unit}"/> success, returns 204 No Content instead.
     /// Otherwise it returns the error code corresponding to the failure error object.
     /// </summary>
     /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
@@ -20,7 +21,18 @@ public static class ActionResultExtensions
     /// <param name="controllerBase">The controller object.</param>
     /// <returns><see cref="ActionResult{TValue}"/> </returns>
     public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
-        => result.IsSuccess ? (ActionResult<TValue>)controllerBase.Ok(result.Value) : result.Error.ToActionResult<TValue>(controllerBase);
+    {
+        if (result.IsSuccess)
+        {
+            // If TValue is Unit, return 204 No Content
+            if (typeof(TValue) == typeof(Unit))
+                return (ActionResult<TValue>)controllerBase.NoContent();
+            
+            return (ActionResult<TValue>)controllerBase.Ok(result.Value);
+        }
+        
+        return result.Error.ToActionResult<TValue>(controllerBase);
+    }
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.

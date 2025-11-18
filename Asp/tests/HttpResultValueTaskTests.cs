@@ -46,4 +46,43 @@ public class HttpResultValueTaskTests
         problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
+
+    [Fact]
+    public async Task Will_return_NoContent_for_Unit_success_async()
+    {
+        // Arrange
+        var result = ValueTask.FromResult(Result.Success(new Unit()));
+
+        // Act
+        var response = await result.ToHttpResultAsync();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.NoContent>();
+        var noContentResult = response.As<Microsoft.AspNetCore.Http.HttpResults.NoContent>();
+        noContentResult.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+    }
+
+    [Fact]
+    public async Task Will_return_Conflict_for_Unit_failure_async()
+    {
+        // Arrange
+        var error = Error.Conflict("Conflict occurred");
+        var result = ValueTask.FromResult(Result.Failure<Unit>(error));
+        var expected = new ProblemDetails
+        {
+            Title = "Conflict",
+            Detail = "Conflict occurred",
+            Type = "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+            Status = StatusCodes.Status409Conflict
+        };
+
+        // Act
+        var response = await result.ToHttpResultAsync();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
+        problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
+    }
 }

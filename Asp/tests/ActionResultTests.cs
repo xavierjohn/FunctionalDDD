@@ -99,4 +99,42 @@ public class ActionResultTests
         okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
 
+    [Fact]
+    public void Will_return_NoContent_for_Unit_success()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var result = Result.Success(new Unit());
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<NoContentResult>();
+        response.Result.As<NoContentResult>().StatusCode.Should().Be(StatusCodes.Status204NoContent);
+    }
+
+    [Fact]
+    public void Will_return_BadRequest_for_Unit_failure()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.BadRequest("Operation failed");
+        var result = Result.Failure<Unit>(error);
+        var expected = new ProblemDetails
+        {
+            Detail = "Operation failed",
+            Status = StatusCodes.Status400BadRequest
+        };
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
 }
