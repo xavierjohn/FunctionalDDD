@@ -104,7 +104,7 @@ public class ActionResultTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var result = Result.Success(new Unit());
+        var result = Result.Success();
 
         // Act
         var response = result.ToActionResult(controller);
