@@ -43,6 +43,21 @@ public static class CompensateExtensions
 
         return result;
     }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function with the failed error if the predicate returns true.
+    /// </summary>
+    public static Result<T> Compensate<T>(this Result<T> result, Func<Error, bool> predicate, Func<Error, Result<T>> func)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return func(result.Error);
+
+        return result;
+    }
 }
 
 /// <summary>
@@ -121,6 +136,15 @@ public static class CompensateExtensionsAsync
     }
 
     /// <summary>
+    /// Compensate for failed result by calling the given function with the failed error if the predicate returns true.
+    /// </summary>
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, Result<T>> func)
+    {
+        Result<T> result = await resultTask;
+        return result.Compensate(predicate, func);
+    }
+
+    /// <summary>
     /// Compensate for failed result by calling the given async function if the predicate returns true.
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, bool> predicate, Func<Task<Result<T>>> funcAsync)
@@ -136,9 +160,33 @@ public static class CompensateExtensionsAsync
     }
 
     /// <summary>
+    /// Compensate for failed result by calling the given async function with the failed error if the predicate returns true.
+    /// </summary>
+    public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, bool> predicate, Func<Error, Task<Result<T>>> funcAsync)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync(result.Error);
+
+        return result;
+    }
+
+    /// <summary>
     /// Compensate for failed result by calling the given async function if the predicate returns true.
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Task<Result<T>>> funcAsync)
+    {
+        Result<T> result = await resultTask;
+        return await result.CompensateAsync(predicate, funcAsync);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function with the failed error if the predicate returns true.
+    /// </summary>
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, Task<Result<T>>> funcAsync)
     {
         Result<T> result = await resultTask;
         return await result.CompensateAsync(predicate, funcAsync);
