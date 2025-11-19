@@ -51,7 +51,7 @@ public class HttpResultValueTaskTests
     public async Task Will_return_NoContent_for_Unit_success_async()
     {
         // Arrange
-        var result = ValueTask.FromResult(Result.Success(new Unit()));
+        var result = ValueTask.FromResult(Result.Success());
 
         // Act
         var response = await result.ToHttpResultAsync();
