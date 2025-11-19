@@ -206,7 +206,7 @@ public class HttpResultsTests
     public void Will_return_NoContent_for_Unit_success()
     {
         // Arrange
-        var result = Result.Success(new Unit());
+        var result = Result.Success();
 
         // Act
         var response = result.ToHttpResult();
