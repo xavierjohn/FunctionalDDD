@@ -9,13 +9,25 @@ public static class HttpResultExtensions
 {
     /// <summary>
     /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.
+    /// For <see cref="Result{Unit}"/> success, returns 204 No Content instead.
     /// Otherwise it returns the error code corresponding to the failure error object.
     /// </summary>
     /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
     /// <param name="result">The result object.</param>
     /// <returns><see cref="Microsoft.AspNetCore.Http.IResult"/> </returns>
     public static Microsoft.AspNetCore.Http.IResult ToHttpResult<TValue>(this Result<TValue> result)
-        => result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToHttpResult();
+    {
+        if (result.IsSuccess)
+        {
+            // If TValue is Unit, return 204 No Content
+            if (typeof(TValue) == typeof(Unit))
+                return Results.NoContent();
+            
+            return Results.Ok(result.Value);
+        }
+        
+        return result.Error.ToHttpResult();
+    }
 
     /// <summary>
     /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="Microsoft.AspNetCore.Http.IResult"/>.

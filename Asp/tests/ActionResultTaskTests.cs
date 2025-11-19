@@ -250,4 +250,42 @@ public class ActionResultTaskTests
         okObjResult.Value.Should().Be("Test");
         okObjResult.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
+
+    [Fact]
+    public async Task Will_return_NoContent_for_Unit_success_async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var result = Task.FromResult(Result.Success());
+
+        // Act
+        var response = await result.ToActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<NoContentResult>();
+        response.Result.As<NoContentResult>().StatusCode.Should().Be(StatusCodes.Status204NoContent);
+    }
+
+    [Fact]
+    public async Task Will_return_NotFound_for_Unit_failure_async()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.NotFound("Resource not found");
+        var result = Task.FromResult(Result.Failure<Unit>(error));
+        var expected = new ProblemDetails
+        {
+            Detail = "Resource not found",
+            Status = StatusCodes.Status404NotFound
+        };
+
+        // Act
+        var response = await result.ToActionResultAsync(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.Value.Should().BeEquivalentTo(expected);
+        objectResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+    }
 }

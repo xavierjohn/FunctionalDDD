@@ -201,4 +201,43 @@ public class HttpResultsTests
         problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
+
+    [Fact]
+    public void Will_return_NoContent_for_Unit_success()
+    {
+        // Arrange
+        var result = Result.Success();
+
+        // Act
+        var response = result.ToHttpResult();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.NoContent>();
+        var noContentResult = response.As<Microsoft.AspNetCore.Http.HttpResults.NoContent>();
+        noContentResult.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+    }
+
+    [Fact]
+    public void Will_return_NotFound_for_Unit_failure()
+    {
+        // Arrange
+        var result = Result.Failure<Unit>(Error.NotFound("Resource not found", "UnitResource"));
+        var expected = new ProblemDetails
+        {
+            Title = "Not Found",
+            Detail = "Resource not found",
+            Instance = "UnitResource",
+            Type = "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+            Status = StatusCodes.Status404NotFound
+        };
+
+        // Act
+        var response = result.ToHttpResult();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
+        problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
+    }
 }
