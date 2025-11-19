@@ -256,7 +256,7 @@ public class ActionResultTaskTests
     {
         // Arrange
         var controller = new Mock<ControllerBase> { CallBase = true }.Object;
-        var result = Task.FromResult(Result.Success(new Unit()));
+        var result = Task.FromResult(Result.Success());
 
         // Act
         var response = await result.ToActionResultAsync(controller);
