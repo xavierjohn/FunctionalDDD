@@ -50,7 +50,55 @@ Tap calls the given function if the result is in success state and returns the s
 
 ### Compensate
 
- Compensate for failed result by calling the given function.
+Compensate for failed result by calling the given function. Useful for error recovery and providing fallback values.
+
+#### Basic Compensation
+
+```csharp
+// Compensate without accessing the error
+Result<User> result = GetUser(userId)
+    .Compensate(() => CreateGuestUser());
+
+// Compensate with access to the error
+Result<User> result = GetUser(userId)
+    .Compensate(error => CreateUserFromError(error));
+```
+
+#### Conditional Compensation with Predicate
+
+Compensate only when specific error conditions are met:
+
+```csharp
+// Compensate only for NotFound errors (without error parameter)
+Result<User> result = GetUser(userId)
+    .Compensate(
+        predicate: error => error is NotFoundError,
+        func: () => CreateDefaultUser()
+    );
+
+// Compensate only for NotFound errors (with error parameter for context-aware recovery)
+Result<User> result = GetUser(userId)
+    .Compensate(
+        predicate: error => error is NotFoundError,
+        func: error => CreateUserFromError(error)
+    );
+
+// Compensate based on error code
+Result<Data> result = FetchData(id)
+    .Compensate(
+        predicate: error => error.Code == "not.found.error",
+        func: () => GetCachedData(id)
+    );
+
+// Compensate for multiple error types
+Result<Config> result = LoadConfig()
+    .Compensate(
+        predicate: error => error is NotFoundError or UnauthorizedError,
+        func: () => GetDefaultConfig()
+    );
+```
+
+All Compensate methods have async variants (`CompensateAsync`) for working with `Task<Result<T>>`.
 
 ### Ensure
 
