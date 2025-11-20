@@ -244,7 +244,7 @@ var result = await GetUserAsync("123")
     .TapAsync(user => SendWelcomeEmail(user.Email));
 ```
 
-**Tap with error:**
+**TapError:**
 
 ```csharp
 var result = GetUser("123")
@@ -372,6 +372,9 @@ else
 ```
 
 **With optional values:**
+
+In this scenario, `firstName` is optional. If provided, it will be validated; if not, it will be skipped. 
+In other words, FirstName.TryCreate is only called if firstName is not null.
 
 ```csharp
 string? firstName = null;  // Optional
