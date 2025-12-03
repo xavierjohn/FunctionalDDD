@@ -67,7 +67,7 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
     {
         if (other is null || ReferenceEquals(this, other)) return this;
 
-        // Use a dictionary to merge field errors efficiently while preserving order
+        // Use a dictionary to merge field errors efficiently while preserving insertion order of detail messages
         var fieldErrorDict = new Dictionary<string, (HashSet<string> seen, List<string> ordered)>(StringComparer.Ordinal);
         var fieldOrder = new List<string>();
 
