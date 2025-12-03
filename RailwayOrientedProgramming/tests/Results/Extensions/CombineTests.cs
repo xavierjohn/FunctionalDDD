@@ -303,11 +303,11 @@ public class CombineTests
     [Fact]
     public void Merge_validation_errors_by_field_name_concatenates_distinct_messages_preserving_order()
     {
+
+        // Arrange
         string[] Field2Messages = ["Message A", "Message B"];
         string[] Field1Messages = ["Message C", "Message D"];
         string[] Field3Messages = ["Message E", "Message F"];
-
-        // Arrange
         var error1 = Error.Validation("Message A", "Field2");
         var error2 = Error.Validation("Message B", "Field2");
         var error3 = Error.Validation("Message A", "Field2"); // duplicate message
