@@ -65,25 +65,40 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
 
     public ValidationError Merge(ValidationError other)
     {
-        if (other is null) return this;
-        if (ReferenceEquals(this, other)) return this;
+        if (other is null || ReferenceEquals(this, other)) return this;
 
-        // Merge by field name; concatenate distinct message strings
-        var grouped = FieldErrors
-            .Concat(other.FieldErrors)
-            .GroupBy(fe => fe.FieldName, StringComparer.Ordinal)
-            .Select(g =>
+        // Use a dictionary to merge field errors efficiently while preserving insertion order of detail messages
+        var fieldErrorDict = new Dictionary<string, (HashSet<string> seen, List<string> ordered)>(StringComparer.Ordinal);
+        var fieldOrder = new List<string>();
+
+        void AddFieldErrors(ImmutableArray<FieldError> fieldErrors)
+        {
+            foreach (var fe in fieldErrors)
             {
-                var mergedDetails = g
-                    .SelectMany(f => f.Details)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToImmutableArray();
-                return new FieldError(g.Key, mergedDetails);
-            })
-            .OrderBy(f => f.FieldName, StringComparer.Ordinal)
+                if (!fieldErrorDict.TryGetValue(fe.FieldName, out var detailsSet))
+                {
+                    fieldOrder.Add(fe.FieldName);
+                    detailsSet = (new HashSet<string>(StringComparer.Ordinal), new List<string>());
+                    fieldErrorDict[fe.FieldName] = detailsSet;
+                }
+
+                foreach (var detail in fe.Details)
+                {
+                    if (detailsSet.seen.Add(detail))
+                    {
+                        detailsSet.ordered.Add(detail);
+                    }
+                }
+            }
+        }
+
+        AddFieldErrors(FieldErrors);
+        AddFieldErrors(other.FieldErrors);
+
+        var grouped = fieldOrder
+            .Select(fieldName => new FieldError(fieldName, fieldErrorDict[fieldName].ordered.ToImmutableArray()))
             .ToImmutableArray();
 
-        // If codes or base details differ, choose a merged descriptive detail.
         var mergedDetail = Code == other.Code && Detail == other.Detail
             ? Detail
             : $"{Detail} | {other.Detail}".Trim(' ', '|');
