@@ -67,8 +67,8 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
     {
         if (other is null || ReferenceEquals(this, other)) return this;
 
-        // Use a dictionary to merge field errors efficiently
-        var fieldErrorDict = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        // Use a dictionary to merge field errors efficiently while preserving order
+        var fieldErrorDict = new Dictionary<string, (HashSet<string> seen, List<string> ordered)>(StringComparer.Ordinal);
         var fieldOrder = new List<string>();
 
         void AddFieldErrors(ImmutableArray<FieldError> fieldErrors)
@@ -78,12 +78,17 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
                 if (!fieldErrorDict.TryGetValue(fe.FieldName, out var detailsSet))
                 {
                     fieldOrder.Add(fe.FieldName);
-                    detailsSet = new HashSet<string>(StringComparer.Ordinal);
+                    detailsSet = (new HashSet<string>(StringComparer.Ordinal), new List<string>());
                     fieldErrorDict[fe.FieldName] = detailsSet;
                 }
 
                 foreach (var detail in fe.Details)
-                    detailsSet.Add(detail);
+                {
+                    if (detailsSet.seen.Add(detail))
+                    {
+                        detailsSet.ordered.Add(detail);
+                    }
+                }
             }
         }
 
@@ -91,7 +96,7 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
         AddFieldErrors(other.FieldErrors);
 
         var grouped = fieldOrder
-            .Select(fieldName => new FieldError(fieldName, fieldErrorDict[fieldName].ToImmutableArray()))
+            .Select(fieldName => new FieldError(fieldName, fieldErrorDict[fieldName].ordered.ToImmutableArray()))
             .ToImmutableArray();
 
         var mergedDetail = Code == other.Code && Detail == other.Detail
