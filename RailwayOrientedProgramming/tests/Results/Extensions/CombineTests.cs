@@ -299,4 +299,60 @@ public class CombineTests
         var helloWorld = rHelloWorld.Value;
         helloWorld.Should().Be("Hello World");
     }
+
+    [Fact]
+    public void Merge_validation_errors_by_field_name_concatenates_distinct_messages_preserving_order()
+    {
+        string[] Field2Messages = ["Message A", "Message B"];
+        string[] Field1Messages = ["Message C", "Message D"];
+        string[] Field3Messages = ["Message E", "Message F"];
+
+        // Arrange
+        var error1 = Error.Validation("Message A", "Field2");
+        var error2 = Error.Validation("Message B", "Field2");
+        var error3 = Error.Validation("Message A", "Field2"); // duplicate message
+        var error4 = Error.Validation("Message C", "Field1");
+        var error5 = Error.Validation("Message D", "Field1");
+        var error6 = Error.Validation("Message C", "Field1"); // duplicate message
+        var error7 = Error.Validation("Message E", "Field3");
+        var error8 = Error.Validation("Message F", "Field3");
+        var error9 = Error.Validation("Message E", "Field3"); // duplicate message
+
+        var result1 = Result.Failure<string>(error1);
+        var result2 = Result.Failure<string>(error2);
+        var result3 = Result.Failure<string>(error3);
+        var result4 = Result.Failure<string>(error4);
+        var result5 = Result.Failure<string>(error5);
+        var result6 = Result.Failure<string>(error6);
+        var result7 = Result.Failure<string>(error7);
+        var result8 = Result.Failure<string>(error8);
+        var result9 = Result.Failure<string>(error9);
+
+        // Act
+        var merged = result1
+            .Combine(result2)
+            .Combine(result3)
+            .Combine(result4)
+            .Combine(result5)
+            .Combine(result6)
+            .Combine(result7)
+            .Combine(result8)
+            .Combine(result9);
+
+        // Assert
+        merged.IsFailure.Should().BeTrue();
+        merged.Error.Should().BeOfType<ValidationError>();
+        var validation = (ValidationError)merged.Error;
+        validation.FieldErrors.Should().HaveCount(3);
+
+        validation.FieldErrors[0].Should().BeEquivalentTo(
+            new ValidationError.FieldError("Field2", Field2Messages)
+        );
+        validation.FieldErrors[1].Should().BeEquivalentTo(
+            new ValidationError.FieldError("Field1", Field1Messages)
+        );
+        validation.FieldErrors[2].Should().BeEquivalentTo(
+            new ValidationError.FieldError("Field3", Field3Messages)
+        );
+    }
 }
