@@ -22,7 +22,7 @@ public class HttpPartialObjectResultTest
                 Id = 274,
                 Name = "George",
             }
-         ];
+        ];
 
     [Theory]
     [MemberData(nameof(ValuesData))]
