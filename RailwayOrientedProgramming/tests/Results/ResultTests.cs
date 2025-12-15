@@ -47,7 +47,6 @@ public class ResultTests
         result.Error.Should().Be(Error.Validation("Bad first name"));
     }
 
-
     [Fact]
     public void CreateFailure_value_is_null_Success_result_expected()
     {

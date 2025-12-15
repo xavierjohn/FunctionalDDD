@@ -14,6 +14,7 @@ public static partial class MaybeExtensions
         {
             return result;
         }
+
         return default;
     }
 }

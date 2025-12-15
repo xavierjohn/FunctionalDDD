@@ -13,22 +13,16 @@ using Microsoft.Extensions.Options;
 
 public class HttpPartialObjectResultTest
 {
-    public static TheoryData<object> ValuesData
-    {
-        get
-        {
-            return new TheoryData<object>
-                {
-                    null!,
-                    "Test string",
-                    new Person
-                    {
-                        Id = 274,
-                        Name = "George",
-                    }
-                };
-        }
-    }
+    public static TheoryData<object> ValuesData =>
+        [
+            null!,
+            "Test string",
+            new Person
+            {
+                Id = 274,
+                Name = "George",
+            }
+         ];
 
     [Theory]
     [MemberData(nameof(ValuesData))]
@@ -69,7 +63,7 @@ public class HttpPartialObjectResultTest
     {
         var options = Options.Create(new MvcOptions());
         options.Value.OutputFormatters.Add(new StringOutputFormatter());
-        options.Value.OutputFormatters.Add(new SystemTextJsonOutputFormatter((new JsonOptions()).JsonSerializerOptions));
+        options.Value.OutputFormatters.Add(new SystemTextJsonOutputFormatter(new JsonOptions().JsonSerializerOptions));
 
         var services = new ServiceCollection();
         services.AddSingleton<IActionResultExecutor<ObjectResult>>(new ObjectResultExecutor(
