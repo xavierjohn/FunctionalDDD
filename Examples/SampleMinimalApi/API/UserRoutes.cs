@@ -2,6 +2,7 @@
 
 using FunctionalDdd;
 using SampleUserLibrary;
+using System.Globalization;
 
 public static class UserRoutes
 {
@@ -30,23 +31,23 @@ public static class UserRoutes
                     err => err.ToHttpResult()));
 
         userApi.MapGet("/notfound/{id}", (int id) =>
-            Result.Failure(Error.NotFound("User not found", id.ToString()))
+            Result.Failure(Error.NotFound("User not found", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
         userApi.MapGet("/conflict/{id}", (int id) =>
-            Result.Failure(Error.Conflict("Record has changed.", id.ToString()))
+            Result.Failure(Error.Conflict("Record has changed.", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
         userApi.MapGet("/forbidden/{id}", (int id) =>
-            Result.Failure(Error.Forbidden("You do not have access.", id.ToString()))
+            Result.Failure(Error.Forbidden("You do not have access.", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
         userApi.MapGet("/unauthorized/{id}", (int id) =>
-            Result.Failure(Error.Unauthorized("You have not been authorized.", id.ToString()))
+            Result.Failure(Error.Unauthorized("You have not been authorized.", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
         userApi.MapGet("/unexpected/{id}", (int id) =>
-            Result.Failure(Error.Unexpected("Internal server error.", id.ToString()))
+            Result.Failure(Error.Unexpected("Internal server error.", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
     }

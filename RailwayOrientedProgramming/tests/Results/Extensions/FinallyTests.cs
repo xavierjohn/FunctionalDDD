@@ -52,7 +52,6 @@ public class FinallyTests
         }
     }
 
-
     [Fact]
     public void Finally_executes_Error()
     {
@@ -130,7 +129,6 @@ public class FinallyTests
         }
     }
 
-
     [Fact]
     public async Task FinallyAsync_Task_executes_Error()
     {
@@ -207,7 +205,6 @@ public class FinallyTests
             return "Error";
         }
     }
-
 
     [Fact]
     public async Task FinallyAsync_ValueTask_executes_Error()

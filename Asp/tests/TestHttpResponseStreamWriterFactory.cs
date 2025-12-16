@@ -7,8 +7,6 @@ public class TestHttpResponseStreamWriterFactory : IHttpResponseStreamWriterFact
 {
     public const int DefaultBufferSize = 16 * 1024;
 
-    public TextWriter CreateWriter(Stream stream, Encoding encoding)
-    {
-        return new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize);
-    }
+    public TextWriter CreateWriter(Stream stream, Encoding encoding) =>
+        new HttpResponseStreamWriter(stream, encoding, DefaultBufferSize);
 }

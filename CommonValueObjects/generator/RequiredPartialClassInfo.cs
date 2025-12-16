@@ -1,6 +1,5 @@
 ﻿namespace FunctionalDdd.CommonValueObjectGenerator;
 
-
 internal class RequiredPartialClassInfo
 {
     public readonly string NameSpace;

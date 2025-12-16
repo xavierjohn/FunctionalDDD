@@ -34,7 +34,6 @@ public class EnsureTests
         result.Should().Be(sut);
     }
 
-
     [Fact]
     public async Task Ensure_source_result_is_failure_async_predicate_do_not_invoked_expect_is_result_failure()
     {
@@ -44,7 +43,6 @@ public class EnsureTests
 
         result.Should().Be(sut);
     }
-
 
     [Fact]
     public async Task Ensure_source_result_is_success_async_predicate_is_failed_expected_result_failure()
@@ -58,7 +56,6 @@ public class EnsureTests
         result.Error.Should().Be(Error.Unexpected("predicate problems"));
     }
 
-
     [Fact]
     public async Task Ensure_source_result_is_success_async_predicate_is_passed_expected_result_success()
     {
@@ -69,7 +66,6 @@ public class EnsureTests
         result.Should().Be(sut);
     }
 
-
     [Fact]
     public async Task Ensure_task_source_result_is_success_predicate_is_passed_error_predicate_is_not_invoked()
     {
@@ -79,7 +75,6 @@ public class EnsureTests
             value => Task.FromResult((Error)Error.Unexpected($"should be null but found {value}")));
         result.Should().Be(await sut);
     }
-
 
     [Fact]
     public async Task Ensure_task_source_result_is_failure_predicate_do_not_invoked_expect_is_result_failure()
@@ -123,7 +118,6 @@ public class EnsureTests
         result.Should().Be(sut);
     }
 
-
     [Fact]
     public async Task
     Ensure_generic_source_result_is_failure_async_predicate_do_not_invoked_expect_is_error_result_failure()
@@ -134,7 +128,6 @@ public class EnsureTests
 
         result.Should().Be(sut);
     }
-
 
     [Fact]
     public async Task
@@ -148,7 +141,6 @@ public class EnsureTests
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("test ensure error"));
     }
-
 
     [Fact]
     public async Task
@@ -172,7 +164,6 @@ public class EnsureTests
         result.Should().Be(await sut);
     }
 
-
     [Fact]
     public async Task
     Ensure_generic_task_source_result_is_success_async_predicate_is_failed_expected_error_result_failure()
@@ -185,7 +176,6 @@ public class EnsureTests
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Unexpected("test ensure error"));
     }
-
 
     [Fact]
     public async Task
@@ -208,7 +198,6 @@ public class EnsureTests
 
         result.Should().Be(await sut);
     }
-
 
     [Fact]
     public void Ensure_with_successInput_and_successPredicate()

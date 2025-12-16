@@ -201,12 +201,8 @@ public class MaybeTests
         m.GetValueOrThrow().Should().BeFalse();
     }
 
-
     private class MyClass
     {
-        public override string ToString()
-        {
-            return "My custom class";
-        }
+        public override string ToString() => "My custom class";
     }
 }
