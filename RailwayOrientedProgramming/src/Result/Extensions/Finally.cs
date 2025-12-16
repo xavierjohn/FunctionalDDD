@@ -64,6 +64,16 @@ public static class FinallyExtensionsAsync
     ///     Passes the result to the given function (regardless of success/failure state) to yield a final output value.
     /// </summary>
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
+        Func<Result<TIn>, CancellationToken, Task<TOut>> func, CancellationToken cancellationToken = default)
+    {
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
+        return await func(result, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Passes the result to the given function (regardless of success/failure state) to yield a final output value.
+    /// </summary>
+    public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
         Func<Result<TIn>, TOut> func)
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
@@ -78,13 +88,30 @@ public static class FinallyExtensionsAsync
       => func(result);
 
     /// <summary>
+    ///     Passes the result to the given function (regardless of success/failure state) to yield a final output value.
+    /// </summary>
+    public static Task<TOut> FinallyAsync<TIn, TOut>(this Result<TIn> result,
+        Func<Result<TIn>, CancellationToken, Task<TOut>> func, CancellationToken cancellationToken = default)
+      => func(result, cancellationToken);
+
+    /// <summary>
+    ///     Passes the result to the given valueTask action (regardless of success/failure state) to yield a final output value.
+    /// </summary>
+    public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask,
+        Func<Result<TIn>, CancellationToken, ValueTask<TOut>> valueTask, CancellationToken cancellationToken = default)
+    {
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
+        return await valueTask(result, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     ///     Passes the result to the given valueTask action (regardless of success/failure state) to yield a final output value.
     /// </summary>
     public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask,
         Func<Result<TIn>, ValueTask<TOut>> valueTask)
     {
-        Result<TIn> result = await resultTask;
-        return await valueTask(result);
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
+        return await valueTask(result).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -101,8 +128,15 @@ public static class FinallyExtensionsAsync
     ///     Passes the result to the given valueTask action (regardless of success/failure state) to yield a final output value.
     /// </summary>
     public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this Result<TIn> result,
+        Func<Result<TIn>, CancellationToken, ValueTask<TOut>> valueTask, CancellationToken cancellationToken = default)
+        => await valueTask(result, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>
+    ///     Passes the result to the given valueTask action (regardless of success/failure state) to yield a final output value.
+    /// </summary>
+    public static async ValueTask<TOut> FinallyAsync<TIn, TOut>(this Result<TIn> result,
         Func<Result<TIn>, ValueTask<TOut>> valueTask)
-        => await valueTask(result);
+        => await valueTask(result).ConfigureAwait(false);
 
     public static async Task<TOut> FinallyAsync<TIn, TOut>(this Task<Result<TIn>> resultTask,
         Func<TIn, TOut> funcOk,

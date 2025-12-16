@@ -25,15 +25,33 @@ public static class MatchExtensionsAsync
         return result.Match(onSuccess, onFailure);
     }
 
+    public static async Task<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, Task<TOut>> onSuccess, Func<Error, CancellationToken, Task<TOut>> onFailure, CancellationToken cancellationToken = default) =>
+        result.IsSuccess
+            ? await onSuccess(result.Value, cancellationToken).ConfigureAwait(false)
+            : await onFailure(result.Error, cancellationToken).ConfigureAwait(false);
+
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> onSuccess, Func<Error, Task<TOut>> onFailure) =>
         result.IsSuccess
             ? await onSuccess(result.Value).ConfigureAwait(false)
             : await onFailure(result.Error).ConfigureAwait(false);
 
+    public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, CancellationToken, Task<TOut>> onSuccess, Func<Error, CancellationToken, Task<TOut>> onFailure, CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.MatchAsync(onSuccess, onFailure, cancellationToken).ConfigureAwait(false);
+    }
+
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> onSuccess, Func<Error, Task<TOut>> onFailure)
     {
         var result = await resultTask.ConfigureAwait(false);
         return await result.MatchAsync(onSuccess, onFailure).ConfigureAwait(false);
+    }
+
+    public static async Task SwitchAsync<TIn>(this Task<Result<TIn>> resultTask, Func<TIn, CancellationToken, Task> onSuccess, Func<Error, CancellationToken, Task> onFailure, CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        if (result.IsSuccess) await onSuccess(result.Value, cancellationToken).ConfigureAwait(false);
+        else await onFailure(result.Error, cancellationToken).ConfigureAwait(false);
     }
 
     public static async Task SwitchAsync<TIn>(this Task<Result<TIn>> resultTask, Func<TIn, Task> onSuccess, Func<Error, Task> onFailure)

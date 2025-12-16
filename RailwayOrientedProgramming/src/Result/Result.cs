@@ -104,6 +104,21 @@ public readonly struct Result
     /// <param name="predicate">Async predicate producing true for success.</param>
     /// <param name="value">Success value if predicate is true.</param>
     /// <param name="error">Error if predicate is false.</param>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>A task producing a success or failure <see cref="Result{TValue}"/>.</returns>
+    public static async Task<Result<TValue>> SuccessIfAsync<TValue>(Func<CancellationToken, Task<bool>> predicate, TValue value, Error error, CancellationToken cancellationToken = default)
+    {
+        bool isSuccess = await predicate(cancellationToken).ConfigureAwait(false);
+        return SuccessIf(isSuccess, value, error);
+    }
+
+    /// <summary>
+    /// Asynchronously determines success/failure using <paramref name="predicate"/>.
+    /// </summary>
+    /// <typeparam name="TValue">Type of the success value.</typeparam>
+    /// <param name="predicate">Async predicate producing true for success.</param>
+    /// <param name="value">Success value if predicate is true.</param>
+    /// <param name="error">Error if predicate is false.</param>
     /// <returns>A task producing a success or failure <see cref="Result{TValue}"/>.</returns>
     public static async Task<Result<TValue>> SuccessIfAsync<TValue>(Func<Task<bool>> predicate, TValue value, Error error)
     {
@@ -112,7 +127,22 @@ public readonly struct Result
     }
 
     /// <summary>
-    /// Asynchronously determines failure/success using <paramref name="failurePredicate"/> (inverse semantics of <see cref="SuccessIfAsync{TValue}"/>).
+    /// Asynchronously determines failure/success using <paramref name="failurePredicate"/> (inverse semantics of <see cref="SuccessIfAsync{TValue}(Func{CancellationToken, Task{bool}}, TValue, Error, CancellationToken)"/>).
+    /// </summary>
+    /// <typeparam name="TValue">Type of the value.</typeparam>
+    /// <param name="failurePredicate">Async predicate producing true for failure.</param>
+    /// <param name="value">Success value if predicate is false.</param>
+    /// <param name="error">Error if predicate is true.</param>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>A task producing a success or failure <see cref="Result{TValue}"/>.</returns>
+    public static async Task<Result<TValue>> FailureIfAsync<TValue>(Func<CancellationToken, Task<bool>> failurePredicate, TValue value, Error error, CancellationToken cancellationToken = default)
+    {
+        bool isFailure = await failurePredicate(cancellationToken).ConfigureAwait(false);
+        return SuccessIf(!isFailure, value, error);
+    }
+
+    /// <summary>
+    /// Asynchronously determines failure/success using <paramref name="failurePredicate"/> (inverse semantics of <see cref="SuccessIfAsync{TValue}(Func{Task{bool}}, TValue, Error)"/>).
     /// </summary>
     /// <typeparam name="TValue">Type of the value.</typeparam>
     /// <param name="failurePredicate">Async predicate producing true for failure.</param>
@@ -154,6 +184,26 @@ public readonly struct Result
         try
         {
             return Success(func());
+        }
+        catch (Exception ex)
+        {
+            return Failure<T>((map ?? DefaultExceptionMapper)(ex));
+        }
+    }
+
+    /// <summary>
+    /// Executes the asynchronous function and converts exceptions to a failed result using the optional mapper (default maps to Unexpected).
+    /// </summary>
+    /// <typeparam name="T">Type of the produced value.</typeparam>
+    /// <param name="func">Asynchronous function to execute.</param>
+    /// <param name="map">Optional exception-to-error mapper. If null, a default Unexpected error is used.</param>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>A task producing either a success or failure result.</returns>
+    public static async Task<Result<T>> TryAsync<T>(Func<CancellationToken, Task<T>> func, Func<Exception, Error>? map = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return Success(await func(cancellationToken).ConfigureAwait(false));
         }
         catch (Exception ex)
         {
