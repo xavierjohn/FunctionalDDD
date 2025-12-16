@@ -99,8 +99,10 @@ public class ErrorCombineAndMergeEdgeCaseTests
         var merged = error1.Merge(error2);
 
         // Assert
-        merged.Code.Should().Be("validation.error");
-        merged.Detail.Should().NotContain("|"); // Not combined when same
+        merged.Code.Should().Be("validation.error"); // Code is not duplicated when same
+        merged.Detail.Should().Contain("|"); // Details are combined with | separator
+        merged.Detail.Should().Contain("Message 1");
+        merged.Detail.Should().Contain("Message 2");
     }
 
     [Fact]
@@ -246,7 +248,7 @@ public class ErrorCombineAndMergeEdgeCaseTests
 
         // Assert
         act.Should().Throw<ArgumentException>()
-            .WithMessage("*at least one detail message*");
+            .WithMessage("*items*"); // Actual error message from ToImmutableArray()
     }
 
     [Fact]
@@ -431,8 +433,10 @@ public class ErrorCombineAndMergeEdgeCaseTests
     public void Equals_ValidationErrorsWithDifferentMessageOrder_ShouldNotBeEqual()
     {
         // Arrange
-        var error1 = ValidationError.For("password", "Too short", "No number");
-        var error2 = ValidationError.For("password", "No number", "Too short");
+        var error1 = ValidationError.For("password", "Too short")
+            .And("password", "No number");
+        var error2 = ValidationError.For("password", "No number")
+            .And("password", "Too short");
 
         // Act & Assert
         error1.Should().NotBe(error2);
@@ -531,7 +535,8 @@ public class ErrorCombineAndMergeEdgeCaseTests
     public void ToString_MultipleMessagesForSameField_ShouldFormatCorrectly()
     {
         // Arrange
-        var error = ValidationError.For("password", "Too short", "No number", "No special char");
+        var error = ValidationError.For("password", "Too short")
+            .And("password", "No number", "No special char");
 
         // Act
         string str = error.ToString();

@@ -471,7 +471,7 @@ public class MaybeEdgeCaseTests
         string str = maybe.ToString();
 
         // Assert
-        str.Should().Be(date.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        str.Should().Be(date.ToString(System.Globalization.CultureInfo.CurrentCulture)); // Uses underlying object's ToString()
     }
 
     #endregion

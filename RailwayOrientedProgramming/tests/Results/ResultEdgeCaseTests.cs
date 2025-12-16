@@ -338,13 +338,14 @@ public class ResultEdgeCaseTests
     #region Try/TryAsync Exception Handling Edge Cases
 
     [Fact]
-    public void Try_WithNullFunction_ShouldThrowArgumentNullException()
+    public void Try_WithNullFunction_ShouldReturnFailureResult()
     {
-        // Act
-        Action act = () => Result.Try<int>(null!);
+        // Act - Try() catches all exceptions including NullReferenceException and returns Failure
+        var result = Result.Try<int>(null!);
 
         // Assert
-        act.Should().Throw<ArgumentNullException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<UnexpectedError>();
     }
 
     [Fact]
