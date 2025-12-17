@@ -36,56 +36,70 @@ public class OrderWorkflow
         PaymentInfo paymentInfo,
         CancellationToken cancellationToken = default)
     {
-        // Step 1: Create order
-        var orderResult = Order.TryCreate(customerId)
-            .TapAsync((Order order, CancellationToken ct) => _notificationService.SendOrderCreatedEmailAsync(customerId, order.Id, ct), cancellationToken);
+        Order? currentOrder = null;
+        
+        return await Order.TryCreate(customerId)
+            .TapAsync(
+                async Task (order, ct) =>
+                {
+                    currentOrder = order;
+                    await _notificationService.SendOrderCreatedEmailAsync(customerId, order.Id, ct);
+                },
+                cancellationToken)
+            .BindAsync(
+                async Task<Result<Order>> (order, ct) => await AddItemsToOrderAsync(order, items, ct),
+                cancellationToken)
+            .BindAsync(
+                async Task<Result<Order>> (order, ct) =>
+                {
+                    var reserveResult = await ReserveInventoryAsync(order, ct)
+                        .CompensateAsync(
+                            predicate: error => error is ValidationError,
+                            funcAsync: async () => await SuggestAlternativeProductsAsync(order, ct));
 
-        var order = await orderResult;
-        if (order.IsFailure)
-            return order;
-
-        // Step 2: Add items and validate inventory
-        var addItemsResult = await AddItemsToOrderAsync(order.Value, items, cancellationToken);
-        if (addItemsResult.IsFailure)
-            return addItemsResult.Error;
-
-        // Step 3: Reserve inventory
-        var reserveResult = await ReserveInventoryAsync(order.Value, cancellationToken)
-            .CompensateAsync(
-                predicate: error => error is ValidationError,
-                funcAsync: () => SuggestAlternativeProductsAsync(order.Value, cancellationToken)
-            );
-
-        if (reserveResult.IsFailure)
-        {
-            order.Value.Cancel("Inventory unavailable");
-            return reserveResult.Error;
-        }
-
-        // Step 4: Submit order
-        var submitResult = order.Value.Submit();
-        if (submitResult.IsFailure)
-        {
-            await ReleaseInventoryAsync(order.Value, cancellationToken);
-            return submitResult.Error;
-        }
-
-        // Step 5: Process payment with compensation
-        var paymentResult = await ProcessPaymentWithCompensationAsync(order.Value, paymentInfo, cancellationToken);
-
-        if (paymentResult.IsFailure)
-        {
-            await ReleaseInventoryAsync(order.Value, cancellationToken);
-            order.Value.Cancel("Payment failed");
-            await _notificationService.SendPaymentFailedEmailAsync(customerId, order.Value.Id, cancellationToken);
-            return paymentResult.Error;
-        }
-
-        // Step 6: Confirm order
-        var confirmResult = order.Value.Confirm()
-            .TapAsync((Order o, CancellationToken ct) => _notificationService.SendOrderConfirmedEmailAsync(customerId, o.Id, ct), cancellationToken);
-
-        return await confirmResult;
+                    if (reserveResult.IsFailure)
+                    {
+                        order.Cancel("Inventory unavailable");
+                        return reserveResult.Error;
+                    }
+                    
+                    return Result.Success(order);
+                },
+                cancellationToken)
+            .BindAsync(
+                async Task<Result<Order>> (order, ct) =>
+                {
+                    var submitResult = order.Submit();
+                    if (submitResult.IsFailure && currentOrder != null)
+                    {
+                        await ReleaseInventoryAsync(currentOrder, ct);
+                    }
+                    
+                    return submitResult;
+                },
+                cancellationToken)
+            .BindAsync(
+                async Task<Result<Order>> (order, ct) =>
+                {
+                    var paymentResult = await ProcessPaymentWithCompensationAsync(order, paymentInfo, ct);
+                    
+                    if (paymentResult.IsFailure)
+                    {
+                        await ReleaseInventoryAsync(order, ct);
+                        order.Cancel("Payment failed");
+                        await _notificationService.SendPaymentFailedEmailAsync(customerId, order.Id, ct);
+                        return paymentResult.Error;
+                    }
+                    
+                    return Result.Success(order);
+                },
+                cancellationToken)
+            .BindAsync(
+                Task<Result<Order>> (order, ct) => Task.FromResult(order.Confirm()),
+                cancellationToken)
+            .TapAsync(
+                async Task (order, ct) => await _notificationService.SendOrderConfirmedEmailAsync(customerId, order.Id, ct),
+                cancellationToken);
     }
 
     /// <summary>
