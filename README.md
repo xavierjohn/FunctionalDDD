@@ -101,6 +101,26 @@ If there is no error, `TapAsync` will execute the `Promote` method and then send
 
 Finally, `FinallyAsync` will call the given functions with an underlying object or error.
 
+### With CancellationToken Support
+
+```csharp
+await GetCustomerByIdAsync(id, cancellationToken)
+   .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
+   .EnsureAsync(
+      (customer, ct) => customer.CanBePromotedAsync(ct),
+      Error.Validation("The customer has the highest status possible"),
+      cancellationToken)
+   .TapAsync(
+      async (customer, ct) => await customer.PromoteAsync(ct),
+      cancellationToken)
+   .BindAsync(
+      (customer, ct) => EmailGateway.SendPromotionNotificationAsync(customer.Email, ct),
+      cancellationToken)
+   .FinallyAsync(ok => "Okay", error => error.Message);
+```
+
+This allows graceful cancellation of long-running operations and supports request timeouts in web applications.
+
 ### Multi-Expression Evaluation
 
 ```csharp"sal
@@ -152,13 +172,28 @@ Finally, `FinallyAsync` will call the given functions with an underlying object 
 ### Running Parallel Tasks
 
 ```csharp
-var r = await _sender.Send(new StudentInformationQuery(studentId)
+var r = await _sender.Send(new StudentInformationQuery(studentId))
     .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId))
     .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId))
     .AwaitAsync()
     .BindAsync((studentInformation, studentGrades, checkoutBooks)
        => PrepareReport(studentInformation, studentGrades, checkoutBooks));
 ```
+
+### With CancellationToken Support
+
+```csharp
+var r = await _sender.Send(new StudentInformationQuery(studentId), cancellationToken)
+    .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId), cancellationToken))
+    .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId), cancellationToken))
+    .AwaitAsync()
+    .BindAsync(
+        (studentInformation, studentGrades, checkoutBooks, ct) =>
+            PrepareReportAsync(studentInformation, studentGrades, checkoutBooks, ct),
+        cancellationToken);
+```
+
+This allows cancellation to propagate through all parallel operations and the final report generation.
 
 ### Read HTTP response as Result
 
