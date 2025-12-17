@@ -63,7 +63,12 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure function based on the result state.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output.</typeparam>
+    /// <param name="resultTask">The task representing the result to match on.</param>
+    /// <param name="onSuccess">Function to execute on success.</param>
+    /// <param name="onFailure">Function to execute on failure.</param>
+    /// <returns>The output from either the success or failure function.</returns>
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, TOut> onSuccess, Func<Error, TOut> onFailure)
     {
         var result = await resultTask.ConfigureAwait(false);
@@ -73,7 +78,13 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure async function based on the result state.
     /// </summary>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output.</typeparam>
+    /// <param name="result">The result to match on.</param>
+    /// <param name="onSuccess">Async function to execute on success.</param>
+    /// <param name="onFailure">Async function to execute on failure.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the output from either the success or failure function.</returns>
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, Task<TOut>> onSuccess, Func<Error, CancellationToken, Task<TOut>> onFailure, CancellationToken cancellationToken = default)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
@@ -92,6 +103,12 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure async function based on the result state.
     /// </summary>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output.</typeparam>
+    /// <param name="result">The result to match on.</param>
+    /// <param name="onSuccess">Async function to execute on success.</param>
+    /// <param name="onFailure">Async function to execute on failure.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the output from either the success or failure function.</returns>
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> onSuccess, Func<Error, Task<TOut>> onFailure)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
@@ -110,7 +127,13 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure async function based on the result state.
     /// </summary>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output.</typeparam>
+    /// <param name="resultTask">The task representing the result to match on.</param>
+    /// <param name="onSuccess">Async function to execute on success.</param>
+    /// <param name="onFailure">Async function to execute on failure.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the output from either the success or failure function.</returns>
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, CancellationToken, Task<TOut>> onSuccess, Func<Error, CancellationToken, Task<TOut>> onFailure, CancellationToken cancellationToken = default)
     {
         var result = await resultTask.ConfigureAwait(false);
@@ -120,6 +143,12 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure async function based on the result state.
     /// </summary>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output.</typeparam>
+    /// <param name="resultTask">The task representing the result to match on.</param>
+    /// <param name="onSuccess">Async function to execute on success.</param>
+    /// <param name="onFailure">Async function to execute on failure.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the output from either the success or failure function.</returns>
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> onSuccess, Func<Error, Task<TOut>> onFailure)
     {
         var result = await resultTask.ConfigureAwait(false);
@@ -129,7 +158,12 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure async action based on the result state.
     /// </summary>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <param name="resultTask">The task representing the result to switch on.</param>
+    /// <param name="onSuccess">Async action to execute on success.</param>
+    /// <param name="onFailure">Async action to execute on failure.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public static async Task SwitchAsync<TIn>(this Task<Result<TIn>> resultTask, Func<TIn, CancellationToken, Task> onSuccess, Func<Error, CancellationToken, Task> onFailure, CancellationToken cancellationToken = default)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
@@ -149,6 +183,11 @@ public static class MatchExtensionsAsync
     /// <summary>
     /// Executes either the success or failure async action based on the result state.
     /// </summary>
+    /// <typeparam name="TIn">Type of the result value.</typeparam>
+    /// <param name="resultTask">The task representing the result to switch on.</param>
+    /// <param name="onSuccess">Async action to execute on success.</param>
+    /// <param name="onFailure">Async action to execute on failure.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public static async Task SwitchAsync<TIn>(this Task<Result<TIn>> resultTask, Func<TIn, Task> onSuccess, Func<Error, Task> onFailure)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
