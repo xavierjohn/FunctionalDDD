@@ -35,6 +35,56 @@ public static class HttpResultExtensions
     /// <param name="error">The domain error object.</param>
     /// <returns>
     ///     <para>Converts domain errors to failed <see cref="Microsoft.AspNetCore.Http.IResult"/>:</para>
+    ///     <list type="table">
+    ///         <listheader>
+    ///             <term>Domain Error</term>
+    ///             <description>HTTP Status</description>
+    ///         </listheader>
+    ///         <item>
+    ///             <term><see cref="ValidationError"/></term>
+    ///             <description>400 Bad Request (with validation details)</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="BadRequestError"/></term>
+    ///             <description>400 Bad Request</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="UnauthorizedError"/></term>
+    ///             <description>401 Unauthorized</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ForbiddenError"/></term>
+    ///             <description>403 Forbidden</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="NotFoundError"/></term>
+    ///             <description>404 Not Found</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ConflictError"/></term>
+    ///             <description>409 Conflict</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="DomainError"/></term>
+    ///             <description>422 Unprocessable Entity</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="RateLimitError"/></term>
+    ///             <description>429 Too Many Requests</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="UnexpectedError"/></term>
+    ///             <description>500 Internal Server Error</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ServiceUnavailableError"/></term>
+    ///             <description>503 Service Unavailable</description>
+    ///         </item>
+    ///         <item>
+    ///             <term>Unknown error types</term>
+    ///             <description>500 Internal Server Error</description>
+    ///         </item>
+    ///     </list>
     /// </returns>
     public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Error error)
     {
@@ -54,7 +104,10 @@ public static class HttpResultExtensions
             ConflictError => StatusCodes.Status409Conflict,
             UnauthorizedError => StatusCodes.Status401Unauthorized,
             ForbiddenError => StatusCodes.Status403Forbidden,
+            DomainError => StatusCodes.Status422UnprocessableEntity,
+            RateLimitError => StatusCodes.Status429TooManyRequests,
             UnexpectedError => StatusCodes.Status500InternalServerError,
+            ServiceUnavailableError => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status500InternalServerError
         };
         return Results.Problem(error.Detail, error.Instance, status);

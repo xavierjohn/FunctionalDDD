@@ -45,38 +45,50 @@ public static class ActionResultExtensions
     ///     <list type="table">
     ///         <listheader>
     ///             <term>Domain Error</term>
-    ///             <description>HTTP error</description>
+    ///             <description>HTTP Status</description>
     ///         </listheader>
     ///         <item>
-    ///             <term><see cref="NotFoundError"/></term>
-    ///             <description><see cref="ControllerBase.NotFound()"/></description>
-    ///         </item>
-    ///         <item>
     ///             <term><see cref="ValidationError"/></term>
-    ///             <description><see cref="ControllerBase.ValidationProblem()"/></description>
+    ///             <description><see cref="ControllerBase.ValidationProblem()"/> - 400 Bad Request</description>
     ///         </item>
     ///         <item>
     ///             <term><see cref="BadRequestError"/></term>
-    ///             <description><see cref="ControllerBase.BadRequest()"/></description>
+    ///             <description><see cref="ControllerBase.BadRequest()"/> - 400 Bad Request</description>
     ///         </item>
     ///         <item>
-    ///             <term><see cref="ConflictError"/></term>
-    ///             <description><see cref="ControllerBase.Conflict()"/></description>
-    ///         </item>    
-    ///         <item>
     ///             <term><see cref="UnauthorizedError"/></term>
-    ///             <description><see cref="ControllerBase.Unauthorized()"/></description>
+    ///             <description><see cref="ControllerBase.Unauthorized()"/> - 401 Unauthorized</description>
     ///         </item>
     ///         <item>
     ///             <term><see cref="ForbiddenError"/></term>
     ///             <description>403 Forbidden</description>
-    ///         </item>    
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="NotFoundError"/></term>
+    ///             <description><see cref="ControllerBase.NotFound()"/> - 404 Not Found</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="ConflictError"/></term>
+    ///             <description><see cref="ControllerBase.Conflict()"/> - 409 Conflict</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="DomainError"/></term>
+    ///             <description>422 Unprocessable Entity</description>
+    ///         </item>
+    ///         <item>
+    ///             <term><see cref="RateLimitError"/></term>
+    ///             <description>429 Too Many Requests</description>
+    ///         </item>
     ///         <item>
     ///             <term><see cref="UnexpectedError"/></term>
     ///             <description>500 Internal Server Error</description>
     ///         </item>
     ///         <item>
-    ///             <term>Everything else</term>
+    ///             <term><see cref="ServiceUnavailableError"/></term>
+    ///             <description>503 Service Unavailable</description>
+    ///         </item>
+    ///         <item>
+    ///             <term>Unknown error types</term>
     ///             <description>500 Internal Server Error</description>
     ///         </item>
     ///     </list>
@@ -90,7 +102,10 @@ public static class ActionResultExtensions
         ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status409Conflict),
         UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status401Unauthorized),
         ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status403Forbidden),
+        DomainError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status422UnprocessableEntity),
+        RateLimitError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status429TooManyRequests),
         UnexpectedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError),
+        ServiceUnavailableError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status503ServiceUnavailable),
         _ => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError)
     };
 

@@ -47,6 +47,18 @@ public class Error : IEquatable<Error>
         Instance = instance;
     }
 
+    /// <summary>
+    /// Determines equality based solely on the error Code.
+    /// </summary>
+    /// <param name="other">The error to compare with.</param>
+    /// <returns>True if the error codes match; false otherwise.</returns>
+    /// <remarks>
+    /// IMPORTANT: Two errors are considered equal if they have the same Code, 
+    /// regardless of their Detail, Instance, or concrete type.
+    /// This design allows treating errors with the same code as equivalent for programmatic handling.
+    /// Example: Error.NotFound("User not found", "user-1") == Error.NotFound("Product not found", "user-1") returns true
+    /// because both have the code "not.found.error".
+    /// </remarks>
     public bool Equals(Error? other)
     {
         if (other == null) return false;
@@ -177,6 +189,66 @@ public class Error : IEquatable<Error>
     public static UnexpectedError Unexpected(string detail, string? instance = null) =>
         new(detail, "unexpected.error", instance);
 
+    /// <summary>
+    /// Creates a <see cref="DomainError"/> indicating a business rule violation.
+    /// </summary>
+    /// <param name="detail">Description of the business rule that was violated.</param>
+    /// <param name="instance">Optional identifier for the entity or operation.</param>
+    /// <returns>A <see cref="DomainError"/>.</returns>
+    /// <remarks>
+    /// Use this for domain logic violations that prevent the operation from completing.
+    /// This is distinct from validation errors (field-level) and conflicts (state-based).
+    /// Maps to HTTP 422 Unprocessable Entity.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// Error.Domain("Cannot withdraw more than account balance")
+    /// Error.Domain("Minimum order quantity is 10 units")
+    /// Error.Domain("Cannot cancel order after shipment")
+    /// </code>
+    /// </example>
+    public static DomainError Domain(string detail, string? instance = null) =>
+        new(detail, "domain.error", instance);
+
+    /// <summary>
+    /// Creates a <see cref="RateLimitError"/> indicating too many requests have been made.
+    /// </summary>
+    /// <param name="detail">Description of the rate limit violation.</param>
+    /// <param name="instance">Optional identifier for the client or resource being rate limited.</param>
+    /// <returns>A <see cref="RateLimitError"/>.</returns>
+    /// <remarks>
+    /// Use this when a client has exceeded their request quota or rate limit.
+    /// Maps to HTTP 429 Too Many Requests.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// Error.RateLimit("API rate limit exceeded. Please try again in 60 seconds")
+    /// Error.RateLimit("Too many login attempts. Account temporarily locked")
+    /// </code>
+    /// </example>
+    public static RateLimitError RateLimit(string detail, string? instance = null) =>
+        new(detail, "rate.limit.error", instance);
+
+    /// <summary>
+    /// Creates a <see cref="ServiceUnavailableError"/> indicating temporary service unavailability.
+    /// </summary>
+    /// <param name="detail">Description of why the service is unavailable.</param>
+    /// <param name="instance">Optional identifier for the unavailable service or resource.</param>
+    /// <returns>A <see cref="ServiceUnavailableError"/>.</returns>
+    /// <remarks>
+    /// Use this when the service is temporarily unable to handle the request.
+    /// This indicates a temporary condition - the service is expected to be available again.
+    /// Maps to HTTP 503 Service Unavailable.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// Error.ServiceUnavailable("Service is under maintenance. Please try again later")
+    /// Error.ServiceUnavailable("External payment gateway is temporarily unavailable")
+    /// </code>
+    /// </example>
+    public static ServiceUnavailableError ServiceUnavailable(string detail, string? instance = null) =>
+        new(detail, "service.unavailable.error", instance);
+
     public static BadRequestError BadRequest(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
@@ -193,6 +265,15 @@ public class Error : IEquatable<Error>
         new(detail, code, instance);
 
     public static UnexpectedError Unexpected(string detail, string code, string? instance) =>
+        new(detail, code, instance);
+
+    public static DomainError Domain(string detail, string code, string? instance) =>
+        new(detail, code, instance);
+
+    public static RateLimitError RateLimit(string detail, string code, string? instance) =>
+        new(detail, code, instance);
+
+    public static ServiceUnavailableError ServiceUnavailable(string detail, string code, string? instance) =>
         new(detail, code, instance);
 }
 
