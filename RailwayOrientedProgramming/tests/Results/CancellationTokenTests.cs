@@ -299,4 +299,114 @@ public class CancellationTokenTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(25);
     }
+
+    [Fact]
+    public async Task TapErrorAsync_WithCancellationToken_ShouldPassTokenToFunction()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        var tokenPassed = false;
+
+        Task TapErrorFunction(Error error, CancellationToken ct)
+        {
+            tokenPassed = ct == cts.Token;
+            return Task.CompletedTask;
+        }
+
+        // Act
+        var result = await Result.Failure<int>(Error.NotFound("Not found"))
+            .TapErrorAsync(TapErrorFunction, cts.Token);
+
+        // Assert
+        tokenPassed.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_OnTaskResult_WithCancellationToken_ShouldPassToken()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        var tokenPassed = false;
+
+        Task TapErrorFunction(Error error, CancellationToken ct)
+        {
+            tokenPassed = ct == cts.Token;
+            return Task.CompletedTask;
+        }
+
+        // Act
+        var result = await Task.FromResult(Result.Failure<int>(Error.NotFound("Not found")))
+            .TapErrorAsync(TapErrorFunction, cts.Token);
+
+        // Assert
+        tokenPassed.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_OnTaskResult_WithCancellationToken_NoError_ShouldPassToken()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        var tokenPassed = false;
+
+        Task TapErrorFunction(CancellationToken ct)
+        {
+            tokenPassed = ct == cts.Token;
+            return Task.CompletedTask;
+        }
+
+        // Act
+        var result = await Task.FromResult(Result.Failure<int>(Error.NotFound("Not found")))
+            .TapErrorAsync(TapErrorFunction, cts.Token);
+
+        // Assert
+        tokenPassed.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_OnValueTaskResult_WithCancellationToken_ShouldPassToken()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        var tokenPassed = false;
+
+        ValueTask TapErrorFunction(Error error, CancellationToken ct)
+        {
+            tokenPassed = ct == cts.Token;
+            return ValueTask.CompletedTask;
+        }
+
+        // Act
+        var result = await ValueTask.FromResult(Result.Failure<int>(Error.NotFound("Not found")))
+            .TapErrorAsync(TapErrorFunction, cts.Token);
+
+        // Assert
+        tokenPassed.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_OnValueTaskResult_WithCancellationToken_NoError_ShouldPassToken()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        var tokenPassed = false;
+
+        ValueTask TapErrorFunction(CancellationToken ct)
+        {
+            tokenPassed = ct == cts.Token;
+            return ValueTask.CompletedTask;
+        }
+
+        // Act
+        var result = await ValueTask.FromResult(Result.Failure<int>(Error.NotFound("Not found")))
+            .TapErrorAsync(TapErrorFunction, cts.Token);
+
+        // Assert
+        tokenPassed.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
+    }
 }

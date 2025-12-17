@@ -100,16 +100,8 @@ public static partial class TapExtensionsAsync
     /// </summary>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Task> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsSuccess)
-        {
-            await func().ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -118,16 +110,8 @@ public static partial class TapExtensionsAsync
     /// <param name="cancellationToken">Cancellation token to observe.</param>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<CancellationToken, Task> func, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsSuccess)
-        {
-            await func(cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -135,15 +119,8 @@ public static partial class TapExtensionsAsync
     /// </summary>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, Task> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        if (result.IsSuccess)
-        {
-            await func(result.Value).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -152,15 +129,8 @@ public static partial class TapExtensionsAsync
     /// <param name="cancellationToken">Cancellation token to observe.</param>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, CancellationToken, Task> func, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        if (result.IsSuccess)
-        {
-            await func(result.Value, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -262,16 +232,8 @@ public static partial class TapExtensionsAsync
     /// <param name="cancellationToken">Cancellation token to observe.</param>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<CancellationToken, ValueTask> valueTask, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsSuccess)
-        {
-            await valueTask(cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(valueTask, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -279,16 +241,8 @@ public static partial class TapExtensionsAsync
     /// </summary>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<ValueTask> valueTask)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsSuccess)
-        {
-            await valueTask().ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(valueTask).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -297,16 +251,8 @@ public static partial class TapExtensionsAsync
     /// <param name="cancellationToken">Cancellation token to observe.</param>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<TValue, CancellationToken, ValueTask> valueTask, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsSuccess)
-        {
-            await valueTask(result.Value, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(valueTask, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -314,16 +260,8 @@ public static partial class TapExtensionsAsync
     /// </summary>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<TValue, ValueTask> valueTask)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsSuccess)
-        {
-            await valueTask(result.Value).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
-        return result;
+        return await result.TapAsync(valueTask).ConfigureAwait(false);
     }
 
     /// <summary>
