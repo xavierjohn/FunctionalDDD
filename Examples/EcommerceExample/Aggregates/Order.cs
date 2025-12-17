@@ -1,0 +1,205 @@
+namespace EcommerceExample.Aggregates;
+
+using EcommerceExample.Entities;
+using EcommerceExample.ValueObjects;
+using FunctionalDdd;
+
+/// <summary>
+/// Represents the status of an order in the system.
+/// </summary>
+public enum OrderStatus
+{
+    Draft,
+    Pending,
+    PaymentProcessing,
+    PaymentFailed,
+    Confirmed,
+    Shipped,
+    Delivered,
+    Cancelled
+}
+
+/// <summary>
+/// Order aggregate root managing the complete order lifecycle.
+/// </summary>
+public class Order : Aggregate<OrderId>
+{
+    private readonly List<OrderLine> _lines = [];
+
+    public CustomerId CustomerId { get; }
+    public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
+    public Money Total { get; private set; }
+    public OrderStatus Status { get; private set; }
+    public DateTime CreatedAt { get; }
+    public DateTime? ConfirmedAt { get; private set; }
+    public string? PaymentTransactionId { get; private set; }
+
+    private Order(CustomerId customerId) : base(OrderId.NewUnique())
+    {
+        CustomerId = customerId;
+        Total = Money.TryCreate(0).Value;
+        Status = OrderStatus.Draft;
+        CreatedAt = DateTime.UtcNow;
+    }
+
+    public static Result<Order> TryCreate(CustomerId customerId)
+    {
+        if (customerId is null)
+            return Error.Validation("Customer ID is required", nameof(customerId));
+
+        return new Order(customerId);
+    }
+
+    /// <summary>
+    /// Adds a product to the order with Railway Oriented Programming pattern.
+    /// </summary>
+    public Result<Order> AddLine(ProductId productId, string productName, Money unitPrice, int quantity)
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation($"Cannot add items to order in {Status} status"))
+            .Bind(_ => OrderLine.TryCreate(productId, productName, unitPrice, quantity))
+            .Tap(line =>
+            {
+                var existingLine = _lines.FirstOrDefault(l => l.Id.Equals(productId));
+                if (existingLine != null)
+                {
+                    _lines.Remove(existingLine);
+                    line = existingLine.UpdateQuantity(existingLine.Quantity + quantity).Value;
+                }
+
+                _lines.Add(line);
+            })
+            .Bind(_ => RecalculateTotal())
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Removes a product line from the order.
+    /// </summary>
+    public Result<Order> RemoveLine(ProductId productId)
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation($"Cannot remove items from order in {Status} status"))
+            .Ensure(_ => _lines.Any(l => l.Id.Equals(productId)), Error.NotFound("Product not found in order"))
+            .Tap(_ => _lines.RemoveAll(l => l.Id.Equals(productId)))
+            .Bind(_ => RecalculateTotal())
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Submits the order for processing with validation.
+    /// </summary>
+    public Result<Order> Submit()
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation($"Cannot submit order in {Status} status"))
+            .Ensure(_ => _lines.Count > 0, Error.Validation("Cannot submit empty order"))
+            .Ensure(_ => Total.Value > 0, Error.Validation("Order total must be greater than zero"))
+            .Tap(_ => Status = OrderStatus.Pending)
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Processes payment with error handling and compensation.
+    /// </summary>
+    public Result<Order> ProcessPayment(string transactionId)
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.Pending, Error.Validation($"Cannot process payment for order in {Status} status"))
+            .Ensure(_ => !string.IsNullOrWhiteSpace(transactionId), Error.Validation("Transaction ID is required"))
+            .Tap(_ =>
+            {
+                Status = OrderStatus.PaymentProcessing;
+                PaymentTransactionId = transactionId;
+            })
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Confirms the order after successful payment.
+    /// </summary>
+    public Result<Order> Confirm()
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.PaymentProcessing, 
+                Error.Validation($"Cannot confirm order in {Status} status"))
+            .Ensure(_ => !string.IsNullOrWhiteSpace(PaymentTransactionId), 
+                Error.Validation("Payment transaction ID is missing"))
+            .Tap(_ =>
+            {
+                Status = OrderStatus.Confirmed;
+                ConfirmedAt = DateTime.UtcNow;
+            })
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Marks payment as failed and allows retry or cancellation.
+    /// </summary>
+    public Result<Order> MarkPaymentFailed()
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.PaymentProcessing, 
+                Error.Validation($"Cannot mark payment failed for order in {Status} status"))
+            .Tap(_ =>
+            {
+                Status = OrderStatus.PaymentFailed;
+                PaymentTransactionId = null;
+            })
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Cancels the order with validation.
+    /// </summary>
+    public Result<Order> Cancel(string reason)
+    {
+        return this.ToResult()
+            .Ensure(_ => Status is OrderStatus.Draft or OrderStatus.Pending or OrderStatus.PaymentFailed,
+                Error.Validation($"Cannot cancel order in {Status} status"))
+            .Ensure(_ => !string.IsNullOrWhiteSpace(reason), Error.Validation("Cancellation reason is required"))
+            .Tap(_ => Status = OrderStatus.Cancelled)
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Marks the order as shipped.
+    /// </summary>
+    public Result<Order> MarkAsShipped()
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.Confirmed, 
+                Error.Validation($"Cannot ship order in {Status} status"))
+            .Tap(_ => Status = OrderStatus.Shipped)
+            .Map(_ => this);
+    }
+
+    /// <summary>
+    /// Marks the order as delivered.
+    /// </summary>
+    public Result<Order> MarkAsDelivered()
+    {
+        return this.ToResult()
+            .Ensure(_ => Status == OrderStatus.Shipped, 
+                Error.Validation($"Cannot mark order as delivered in {Status} status"))
+            .Tap(_ => Status = OrderStatus.Delivered)
+            .Map(_ => this);
+    }
+
+    private Result<Unit> RecalculateTotal()
+    {
+        var total = Money.TryCreate(0).Value;
+
+        foreach (var line in _lines)
+        {
+            var addResult = total.Add(line.LineTotal);
+            if (addResult.IsFailure)
+                return addResult.Error;
+
+            total = addResult.Value;
+        }
+
+        Total = total;
+        return Result.Success();
+    }
+}
