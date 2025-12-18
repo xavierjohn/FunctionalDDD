@@ -21,6 +21,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
     <PackageProjectUrl>https://xavierjohn.github.io/FunctionalDDD/</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
   
   <PropertyGroup  Label="Build">
@@ -40,6 +41,11 @@
     <RootNamespace>FunctionalDdd</RootNamespace>
     <AssemblyName>FunctionalDdd.$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
+
+  <!-- Include icon for non-test projects -->
+  <ItemGroup Condition=" '$(IsTestProject)' == 'false' ">
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <!-- Test projects. -->
   <ImportGroup Condition=" '$(IsTestProject)' == 'true' ">
