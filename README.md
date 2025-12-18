@@ -15,6 +15,7 @@
 - [What's New](#whats-new)
 - [NuGet Packages](#nuget-packages)
 - [Quick Start](#quick-start)
+- [Performance](#performance)
 - [Examples](#examples)
   - [Compose Operations](#compose-multiple-operations-in-a-single-chain)
   - [CancellationToken Support](#with-cancellationtoken-support)
@@ -164,6 +165,57 @@ var result = await GetUserAsync(userId)
 ```
 
 ?? **Next Steps**: See the [Examples](#examples) section below or explore the [Railway Oriented Programming documentation](RailwayOrientedProgramming/README.md) for comprehensive guidance.
+
+## Performance
+
+### ? **Negligible Overhead, Maximum Clarity**
+
+FunctionalDDD is designed with performance in mind. Comprehensive benchmarks on **.NET 10** show that railway-oriented programming adds only **~11-16 nanoseconds** of overhead compared to imperative code—less than **0.002%** of typical I/O operations.
+
+**Test Environment**: Intel Core i7-1185G7 @ 3.00GHz, Windows 11, .NET 10.0.1
+
+#### Key Performance Metrics
+
+| Operation | ROP Time | Imperative Time | Overhead | Memory |
+|-----------|----------|-----------------|----------|--------|
+| **Happy Path** | 147 ns | 131 ns | **16 ns** (12%) | 144 B (identical) |
+| **Error Path** | 99 ns | 88 ns | **11 ns** (13%) | 184 B (identical) |
+| **Combine (2 results)** | 7 ns | - | - | 0 B |
+| **Combine (5 results)** | 58 ns | - | - | 0 B |
+| **Bind (single)** | 9 ns | - | - | 0 B |
+| **Bind (5 chains)** | 63 ns | - | - | 0 B |
+| **Map (single)** | 4.6 ns | - | - | 0 B |
+| **Map (5 transforms)** | 44.5 ns | - | - | 0 B |
+| **Tap (single)** | 3 ns | - | - | 0 B |
+| **Tap (5 actions)** | 37.4 ns | - | - | 64 B |
+| **Ensure (single)** | 22.5 ns | - | - | 152 B |
+| **Ensure (5 checks)** | 175 ns | - | - | 760 B |
+
+#### Real-World Context
+
+```
+Database Query:   1,000,000 ns (1 ms)
+HTTP Request:    10,000,000 ns (10 ms)
+ROP Overhead:            16 ns (0.000016 ms)
+                         ?
+                    0.0016% overhead
+```
+
+**The overhead is 1/62,500th of a single database query!**
+
+#### Benefits Without Sacrifice
+
+? **Same Memory Usage** - No additional allocations vs imperative code  
+? **Blazing Fast** - Single-digit to low double-digit nanosecond overhead  
+? **Better Code** - Cleaner, more testable, and maintainable  
+? **Explicit Errors** - Clear error propagation and aggregation  
+
+?? **[View Detailed Benchmarks ?](BENCHMARKS.md)**
+
+Run benchmarks yourself:
+```bash
+dotnet run --project Benchmark/Benchmark.csproj -c Release
+```
 
 ## Examples
 
