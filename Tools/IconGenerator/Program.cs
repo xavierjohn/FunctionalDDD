@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
@@ -43,10 +43,10 @@ class Program
         var fullPath = Path.GetFullPath(outputPath);
         bitmap.Save(fullPath, ImageFormat.Png);
 
-        Console.WriteLine($"? Icon generated successfully: {fullPath}");
-        Console.WriteLine($"?? Size: 128x128 pixels");
-        Console.WriteLine($"?? Format: PNG with transparency");
-        Console.WriteLine($"?? Colors: Purple (#5B2C6F) to Blue (#0078D4) gradient");
+        Console.WriteLine($"✅ Icon generated successfully: {fullPath}");
+        Console.WriteLine($"📏 Size: 128x128 pixels");
+        Console.WriteLine($"🖼️ Format: PNG with transparency");
+        Console.WriteLine($"🎨 Colors: Purple (#5B2C6F) to Blue (#0078D4) gradient");
     }
 
     static void DrawRailwayTracks(Graphics g, Brush brush, int size)

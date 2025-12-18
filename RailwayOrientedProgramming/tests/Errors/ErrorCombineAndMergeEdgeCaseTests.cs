@@ -223,6 +223,12 @@ public class ErrorCombineAndMergeEdgeCaseTests
 
         // Assert
         error.FieldErrors.Should().HaveCount(3);
+        error.FieldErrors[0].FieldName.Should().Be("email");
+        error.FieldErrors[0].Details[0].Should().Be("Email required");
+        error.FieldErrors[1].FieldName.Should().Be("password");
+        error.FieldErrors[1].Details[0].Should().Be("Password required");
+        error.FieldErrors[2].FieldName.Should().Be("username");
+        error.FieldErrors[2].Details[0].Should().Be("Username required");
     }
 
     #endregion
