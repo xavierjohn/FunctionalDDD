@@ -31,12 +31,12 @@ A comprehensive banking system showcasing secure transaction processing, fraud d
 ### 1. **Account Operations with Validation**
 ```csharp
 return await account.Deposit(amount, "Salary")
-    .Ensure(acc => acc.Status == AccountStatus.Active, Error.Validation("Account not active"))
-    .Bind(acc => acc.Withdraw(withdrawAmount, "Rent"))
-    .Finally(
-        ok => $"Balance: {ok.Balance}",
-        err => $"Failed: {err.Detail}"
-    );
+.Ensure(acc => acc.Status == AccountStatus.Active, Error.Validation("Account not active"))
+.Bind(acc => acc.Withdraw(withdrawAmount, "Rent"))
+.Match(
+    ok => $"Balance: {ok.Balance}",
+    err => $"Failed: {err.Detail}"
+);
 ```
 
 ### 2. **Fraud Detection Integration**
@@ -135,7 +135,7 @@ This will execute all 5 examples:
 
 1. Set `BankingExample` as the startup project
 2. Press F5 or click "Start Debugging"
-3. Watch the console output showing each example with emojis (?, ?, ?, ??, etc.)
+3. Watch the console output showing each example with emojis (?, ?, ??, ??, etc.)
 
 ### Run Specific Examples
 
@@ -159,7 +159,7 @@ You'll see detailed console output for each example:
 ### Follow Learning Path
 1. Start with [QUICKSTART.md](../QUICKSTART.md) - Choose your path
 2. Read [README.md](../README.md) - Get overview
-3. Pick complexity level (? to ?????)
+3. Pick complexity level (?? to ??????????)
 4. Study code and run examples
 5. Read pattern documentation
 

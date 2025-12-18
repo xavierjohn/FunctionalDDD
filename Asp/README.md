@@ -126,8 +126,8 @@ The ASP extension automatically converts `Result<T>` outcomes to appropriate HTT
 5. **Keep domain logic out of controllers**  
    Controllers should orchestrate, not implement business rules.
 
-6. **Use `Finally` for custom status codes**  
-   Control specific HTTP responses (201 Created, 202 Accepted, etc.).
+6. **Use `Match` for custom responses**  
+   Control specific HTTP responses or handle both success and failure paths.
 
 7. **Use Result<Unit> for operations without return values**  
    Automatically returns 204 No Content on success.

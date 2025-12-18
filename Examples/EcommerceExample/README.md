@@ -33,14 +33,14 @@ The example showcases how to build a robust order processing system with proper 
 ### 1. **Railway Oriented Programming Patterns**
 ```csharp
 return await Order.TryCreate(customerId)
-    .Bind(order => order.AddLine(productId, productName, price, quantity))
-    .Bind(order => order.Submit())
-    .BindAsync(order => ProcessPaymentAsync(order, paymentInfo))
-    .TapAsync(order => SendConfirmationEmailAsync(order))
-    .FinallyAsync(
-        ok => "Order processed successfully",
-        err => $"Order failed: {err.Detail}"
-    );
+.Bind(order => order.AddLine(productId, productName, price, quantity))
+.Bind(order => order.Submit())
+.BindAsync(order => ProcessPaymentAsync(order, paymentInfo))
+.TapAsync(order => SendConfirmationEmailAsync(order))
+.MatchAsync(
+    ok => "Order processed successfully",
+    err => $"Order failed: {err.Detail}"
+);
 ```
 
 ### 2. **Error Handling with Compensation**
@@ -181,6 +181,6 @@ await EcommerceExamples.Example1_SimpleOrderCreation();
 ### Follow Learning Path
 1. Start with [QUICKSTART.md](../QUICKSTART.md) - Choose your path
 2. Read [README.md](../README.md) - Get overview
-3. Pick complexity level (? to ?????)
+3. Pick complexity level (?? to ??????????)
 4. Study code and run examples
 5. Read pattern documentation

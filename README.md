@@ -66,8 +66,8 @@ It also supports fluent validation for validating the domain model and includes 
 
 **Recent enhancements:**
 - ? **Discriminated Error Matching**: Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
-- ?? **Comprehensive CancellationToken Support**: All async operations now support cancellation tokens for graceful shutdown and timeouts
-- ?? **Tuple Destructuring**: Automatically destructure tuples in Match/Switch operations for cleaner code
+- ? **Comprehensive CancellationToken Support**: All async operations now support cancellation tokens for graceful shutdown and timeouts
+- ? **Tuple Destructuring**: Automatically destructure tuples in Match/Switch operations for cleaner code
 - ?? **Enhanced Documentation**: Comprehensive READMEs for all packages with detailed examples
 
 For detailed documentation, see the [Railway Oriented Programming README](RailwayOrientedProgramming/README.md).
