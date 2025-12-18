@@ -1,5 +1,29 @@
 # Functional Domain Driven Design
 
+## Table of Contents
+
+- [Overview](#overview)
+- [FunctionalDdd Library](#functionalddd-library)
+- [What's New](#whats-new)
+- [NuGet Packages](#nuget-packages)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
+  - [Compose Operations](#compose-multiple-operations-in-a-single-chain)
+  - [CancellationToken Support](#with-cancellationtoken-support)
+  - [Multi-Expression Evaluation](#multi-expression-evaluation)
+  - [Fluent Validation](#fluent-validation)
+  - [Parallel Tasks](#running-parallel-tasks)
+  - [HTTP Integration](#read-http-response-as-result)
+  - [ASP.NET Core](#convert-result-to-http-response)
+  - [Tracing](#tracing)
+  - [Error Matching](#discriminated-error-matching)
+  - [Pattern Matching](#pattern-matching-with-tuples)
+- [Contributing](#contributing)
+- [License](#license)
+- [Related Projects](#related-project)
+
+## Overview
+
 Functional programming, railway-oriented programming, and domain-driven design are three concepts that can work together to create robust and reliable software.
 
 Functional programming is a programming paradigm that emphasizes the use of pure functions,
@@ -24,13 +48,22 @@ By focusing on the problem domain, developers can create software that is more c
 
 Overall, functional programming with railway-oriented programming and domain-driven design can be a powerful approach to software development that can lead to more robust and reliable software.
 
-## FunctionalDdd Libray
+## FunctionalDdd Library
 
 ![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
 
 This library facilitates railway-oriented programming, generates standard HTTP errors, and includes common error classes.
 It also supports fluent validation for validating the domain model and includes a source code generator for common types.
 
+### What's New
+
+**Recent enhancements:**
+- ? **Discriminated Error Matching**: Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
+- ?? **Comprehensive CancellationToken Support**: All async operations now support cancellation tokens for graceful shutdown and timeouts
+- ?? **Tuple Destructuring**: Automatically destructure tuples in Match/Switch operations for cleaner code
+- ?? **Enhanced Documentation**: Comprehensive READMEs for all packages with detailed examples
+
+For detailed documentation, see the [Railway Oriented Programming README](RailwayOrientedProgramming/README.md).
 
 Here is a YouTube video explaining several of this library's methods. That video was not created by me, but it does a good job of explaining the concepts behind this library.
 
@@ -40,39 +73,91 @@ Here is a YouTube video explaining several of this library's methods. That video
 
 - **Railway Oriented Programming**
 
-  Adds the ability to chain functions.
+  Comprehensive railway-oriented programming with Result/Maybe types, error handling, and async support.
+
+  ?? [View Documentation](RailwayOrientedProgramming/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
 
 - **Fluent Validation**
 
-  Extension method to convert fluent validation errors to ROP Result.
+  Seamlessly integrate FluentValidation with Railway Oriented Programming.
+
+  ?? [View Documentation](FluentValidation/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)
   
 - **Common Value Objects**
 
-  Helps create simple value objects like Email, Required String & Required Guid.
+  Create strongly-typed value objects like EmailAddress, RequiredString & RequiredGuid.
+
+  ?? [View Documentation](CommonValueObjects/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects)
 
 - **Common Value Objects Generator**
 
-  Source code generator for boilerplate code needed for Required String & Required Guid.
+  Source code generator for boilerplate code needed for RequiredString & RequiredGuid.
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator)
 
 - **Domain Driven Design**
 
-  Has DDD base type like Aggregate & ValueObject.
+  DDD building blocks: Aggregate, Entity, ValueObject, ScalarValueObject, and Domain Events.
+
+  ?? [View Documentation](DomainDrivenDesign/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
 
-  **ASP.NET**
+- **ASP.NET**
 
-  Convert Result object to HTTP result.
+  Convert Result objects to HTTP responses for MVC and Minimal APIs.
+
+  ?? [View Documentation](Asp/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
+
+## Quick Start
+
+### Installation
+
+Install the core railway-oriented programming package:
+
+```bash
+dotnet add package FunctionalDDD.RailwayOrientedProgramming
+```
+
+For ASP.NET Core integration:
+
+```bash
+dotnet add package FunctionalDDD.Asp
+```
+
+### Basic Usage
+
+```csharp
+using FunctionalDdd;
+
+// Create a Result with validation
+var emailResult = EmailAddress.TryCreate("user@example.com")
+    .Ensure(email => email.Domain != "spam.com", 
+            Error.Validation("Email domain not allowed"))
+    .Tap(email => Console.WriteLine($"Valid email: {email}"));
+
+// Handle success or failure
+var message = emailResult.Match(
+    onSuccess: email => $"Welcome {email}!",
+    onFailure: error => $"Error: {error.Message}"
+);
+
+// Chain multiple operations
+var result = await GetUserAsync(userId)
+    .ToResultAsync(Error.NotFound("User not found"))
+    .BindAsync(user => SaveUserAsync(user))
+    .TapAsync(user => SendEmailAsync(user.Email));
+```
+
+?? **Next Steps**: See the [Examples](#examples) section below or explore the [Railway Oriented Programming documentation](RailwayOrientedProgramming/README.md) for comprehensive guidance.
 
 ## Examples
 
@@ -123,7 +208,7 @@ This allows graceful cancellation of long-running operations and supports reques
 
 ### Multi-Expression Evaluation
 
-```csharp"sal
+```csharp
  EmailAddress.TryCreate("xavier@somewhere.com")
     .Combine(FirstName.TryCreate("Xavier"))
     .Combine(LastName.TryCreate("John"))
@@ -274,7 +359,64 @@ var builder = Sdk.CreateTracerProviderBuilder()
     .AddOtlpExporter();
 ```
 
+### Discriminated Error Matching
+
+Match on specific error types for precise error handling:
+
+```csharp
+var result = ProcessOrder(order)
+    .MatchError(
+        onValidationError: validationErr => 
+            Results.BadRequest(new { errors = validationErr.Details }),
+        onNotFoundError: notFoundErr => 
+            Results.NotFound(new { message = notFoundErr.Message }),
+        onConflictError: conflictErr => 
+            Results.Conflict(new { message = conflictErr.Message }),
+        onUnauthorizedError: _ => 
+            Results.Unauthorized(),
+        onSuccess: order => 
+            Results.Ok(order)
+    );
+```
+
+### Pattern Matching with Tuples
+
+Automatically destructure tuples in Match operations:
+
+```csharp
+var result = EmailAddress.TryCreate(email)
+    .Combine(UserId.TryCreate(userId))
+    .Combine(OrderId.TryCreate(orderId))
+    .Match(
+        // Tuple automatically destructured into parameters
+        (emailAddr, user, order) => $"Order {order} for {emailAddr}",
+        error => $"Error: {error.Message}"
+    );
+```
+
 Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
+
+## Contributing
+
+Contributions are welcome! This project follows standard GitHub workflow:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+Please ensure:
+- All tests pass (`dotnet test`)
+- Code follows existing style conventions
+- New features include appropriate tests and documentation
+- Commit messages are clear and descriptive
+
+For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ## Related project
 
