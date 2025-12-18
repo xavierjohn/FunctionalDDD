@@ -1,5 +1,13 @@
 # Functional Domain Driven Design
 
+[![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml)
+[![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/download)
+[![C#](https://img.shields.io/badge/C%23-14.0-blue.svg)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![GitHub Stars](https://img.shields.io/github/stars/xavierjohn/FunctionalDDD?style=social)](https://github.com/xavierjohn/FunctionalDDD/stargazers)
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -49,8 +57,6 @@ By focusing on the problem domain, developers can create software that is more c
 Overall, functional programming with railway-oriented programming and domain-driven design can be a powerful approach to software development that can lead to more robust and reliable software.
 
 ## FunctionalDdd Library
-
-![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)
 
 This library facilitates railway-oriented programming, generates standard HTTP errors, and includes common error classes.
 It also supports fluent validation for validating the domain model and includes a source code generator for common types.
