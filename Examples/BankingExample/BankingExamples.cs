@@ -47,9 +47,9 @@ public class BankingExamples
                 Money.TryCreate(100m).Value)
             .Bind(account => account.Deposit(Money.TryCreate(500m).Value, "Salary deposit"))
             .Bind(account => account.Withdraw(Money.TryCreate(200m).Value, "Grocery shopping"))
-            .Finally(
-                ok => $"? Account balance: {ok.Balance}. Transactions: {ok.Transactions.Count}",
-                err => $"? Operation failed: {err.Detail}"
+            .Match(
+                onSuccess: ok => $"? Account balance: {ok.Balance}. Transactions: {ok.Transactions.Count}",
+                onFailure: err => $"? Operation failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -94,9 +94,9 @@ public class BankingExamples
             "Rent payment"
         );
 
-        var message = result.Finally(
-            ok => $"? Transfer successful!\n   From account balance: {ok.From.Balance}\n   To account balance: {ok.To.Balance}",
-            err => $"? Transfer failed: {err.Detail}"
+        var message = result.Match(
+            onSuccess: ok => $"? Transfer successful!\n   From account balance: {ok.From.Balance}\n   To account balance: {ok.To.Balance}",
+            onFailure: err => $"? Transfer failed: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -130,9 +130,9 @@ public class BankingExamples
             "123456" // MFA code
         );
 
-        var message = result.Finally(
-            ok => $"? Withdrawal successful. New balance: {ok.Balance}",
-            err => $"? Expected fraud detection: {err.Detail}"
+        var message = result.Match(
+            onSuccess: ok => $"? Withdrawal successful. New balance: {ok.Balance}",
+            onFailure: err => $"? Expected fraud detection: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -198,8 +198,8 @@ public class BankingExamples
 
         var result = await workflow.ProcessInterestPaymentAsync(account, annualRate);
 
-        var message = result.Finally(
-            ok =>
+        var message = result.Match(
+            onSuccess: ok =>
             {
                 var interestTransaction = ok.Transactions.Last();
                 return $"? Interest payment processed\n" +
@@ -207,7 +207,7 @@ public class BankingExamples
                        $"   New balance: {ok.Balance}\n" +
                        $"   Annual rate: {annualRate:P2}";
             },
-            err => $"? Interest payment failed: {err.Detail}"
+            onFailure: err => $"? Interest payment failed: {err.Detail}"
         );
 
         Console.WriteLine(message);

@@ -16,7 +16,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .TapAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-            .FinallyAsync(ok => "Okay", error => "Failed");
+            .MatchAsync(ok => "Okay", error => "Failed");
 
         if (id == 1)
             result.Should().Be("Okay");
@@ -36,7 +36,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             .EnsureAsync(static customer => customer.CanBePromoted, Error.Validation("The customer has the highest status possible"))
             .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(static ok => "Okay", static error => error.Detail);
+            .MatchAsync(static ok => "Okay", static error => error.Detail);
 
         result.Should().Be("Okay");
     }
@@ -56,7 +56,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             .TapAsync(static customer => Log("Manager approved promotion"))
             .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
-            .FinallyAsync(static ok => "Okay", static error => error.Detail);
+            .MatchAsync(static ok => "Okay", static error => error.Detail);
 
         result.Should().Be("Okay");
     }

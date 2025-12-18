@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.1.11312.151 d18.0
+VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DCF81061-FBF4-44DB-9452-EA12D0021D46}"
 	ProjectSection(SolutionItems) = preProject
@@ -62,6 +62,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankingExample", "Examples\BankingExample\BankingExample.csproj", "{499DA91B-5E04-4025-702E-B686854E88D0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceExample", "Examples\EcommerceExample\EcommerceExample.csproj", "{37D080EF-F243-B3DC-B41C-199C53D3C532}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{26614E2E-249E-4A54-B47B-BCBDF5CA11EB}"
+	ProjectSection(SolutionItems) = preProject
+		docs\docfx_project\articles\basics.md = docs\docfx_project\articles\basics.md
+		docs\docfx_project\articles\examples.md = docs\docfx_project\articles\examples.md
+		docs\docfx_project\articles\intro.md = docs\docfx_project\articles\intro.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

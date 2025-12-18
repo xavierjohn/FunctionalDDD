@@ -166,8 +166,8 @@ public class AsyncBenchmarks
     {
         var result = _successResult;
         return await Task.FromResult(
-            result.Finally(
-                ok => ok * 2,
-                err => -1));
+            result.Match(
+                onSuccess: ok => ok * 2,
+                onFailure: err => -1));
     }
 }

@@ -52,9 +52,9 @@ public class BenchmarkROP
     public string RopStyleHappy() =>
         FirstName.TryCreate("Xavier")
             .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
-            .Finally(
-                ok => ok.Item1 + " " + ok.Item2,
-                error => error.Detail
+            .Match(
+                onSuccess: ok => ok.Item1 + " " + ok.Item2,
+                onFailure: error => error.Detail
             );
 
     [Benchmark]
@@ -78,9 +78,9 @@ public class BenchmarkROP
     public string RopStyleSad() =>
     FirstName.TryCreate("Xavier")
         .Combine(EmailAddress.TryCreate("bad email"))
-        .Finally(
-            ok => ok.Item1 + " " + ok.Item2,
-            error => error.Detail
+        .Match(
+            onSuccess: ok => ok.Item1 + " " + ok.Item2,
+            onFailure: error => error.Detail
         );
 
     [Benchmark]

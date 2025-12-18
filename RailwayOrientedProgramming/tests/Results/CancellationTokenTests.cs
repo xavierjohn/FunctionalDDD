@@ -189,20 +189,27 @@ public class CancellationTokenTests
     }
 
     [Fact]
-    public async Task FinallyAsync_WithCancellationToken_ShouldPassTokenToFunction()
+    public async Task MatchAsync_WithCancellationToken_AndResultCheck_ShouldPassTokenToFunction()
     {
         // Arrange
         var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
-        var output = await Result.Success(10).AsTask()
-            .FinallyAsync(async (result, ct) =>
-            {
-                tokenPassed = ct == cts.Token;
-                await Task.Delay(1, ct);
-                return result.IsSuccess ? result.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "error";
-            }, cts.Token);
+        var output = await Task.FromResult(Result.Success(10))
+            .MatchAsync(
+                async (value, ct) =>
+                {
+                    tokenPassed = ct == cts.Token;
+                    await Task.Delay(1, ct);
+                    return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                },
+                async (error, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return "error";
+                },
+                cts.Token);
 
         // Assert
         tokenPassed.Should().BeTrue();

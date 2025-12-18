@@ -36,12 +36,12 @@ See the [Examples README](https://github.com/xavierjohn/FunctionalDDD/tree/main/
 
  ```csharp
 await GetCustomerByIdAsync(id)
-   .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-   .EnsureAsync(customer => customer.CanBePromoted,
-      Error.Validation("The customer has the highest status possible"))
-   .TapAsync(customer => customer.Promote())
-   .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-   .FinallyAsync(ok => "Okay", error => error.Message);
+.ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
+.EnsureAsync(customer => customer.CanBePromoted,
+   Error.Validation("The customer has the highest status possible"))
+.TapAsync(customer => customer.Promote())
+.BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
+.MatchAsync(ok => "Okay", error => error.Message);
  ```
 
 `GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
@@ -53,7 +53,7 @@ If not, return a `Validation` error.
 
 If there is no error, `TapAsync` will execute the `Promote` method and then send an email.
 
-`FinallyAsync` will terminate the chain and return a `string` if there is no error, otherwise it will return the error message.
+`MatchAsync` will terminate the chain and return a `string` if there is no error, otherwise it will return the error message.
 
 ## Multi-Expression Evaluation
 

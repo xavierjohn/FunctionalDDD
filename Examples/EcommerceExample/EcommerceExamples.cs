@@ -45,9 +45,9 @@ public class EcommerceExamples
             .Bind(order => Money.TryCreate(29.99m)
                 .Bind(price => order.AddLine(productId, "Wireless Mouse", price, 2)))
             .Bind(order => order.Submit())
-            .Finally(
-                ok => $"? Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
-                err => $"? Order creation failed: {err.Detail}"
+            .Match(
+                onSuccess: ok => $"? Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
+                onFailure: err => $"? Order creation failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -82,9 +82,9 @@ public class EcommerceExamples
         var paymentInfo = new PaymentInfo("4111111111111111", "123", "John Doe");
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
-            .FinallyAsync(
-                ok => $"? Order {ok.Id} processed successfully! Status: {ok.Status}, Total: {ok.Total}",
-                err => $"? Order processing failed: {err.Detail}"
+            .MatchAsync(
+                onSuccess: ok => $"? Order {ok.Id} processed successfully! Status: {ok.Status}, Total: {ok.Total}",
+                onFailure: err => $"? Order processing failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -117,9 +117,9 @@ public class EcommerceExamples
         var paymentInfo = new PaymentInfo("4111111111110000", "123", "Jane Doe");
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
-            .FinallyAsync(
-                ok => $"? Order processed: {ok.Status}",
-                err => $"? Expected failure - Payment declined: {err.Detail}"
+            .MatchAsync(
+                onSuccess: ok => $"? Order processed: {ok.Status}",
+                onFailure: err => $"? Expected failure - Payment declined: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -152,9 +152,9 @@ public class EcommerceExamples
         var paymentInfo = new PaymentInfo("4111111111111111", "123", "Bob Smith");
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
-            .FinallyAsync(
-                ok => $"? Order processed: {ok.Status}",
-                err => $"? Expected failure - Insufficient inventory: {err.Detail}"
+            .MatchAsync(
+                onSuccess: ok => $"? Order processed: {ok.Status}",
+                onFailure: err => $"? Expected failure - Insufficient inventory: {err.Detail}"
             );
 
         Console.WriteLine(result);

@@ -29,7 +29,7 @@
   - [Pattern Matching](#pattern-matching-with-tuples)
 - [Contributing](#contributing)
 - [License](#license)
-- [Related Projects](#related-project)
+- [Related Projects](#related-projects)
 
 ## Overview
 
@@ -230,7 +230,7 @@ await GetCustomerByIdAsync(id)
       Error.Validation("The customer has the highest status possible"))
    .TapAsync(customer => customer.Promote())
    .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-   .FinallyAsync(ok => "Okay", error => error.Message);
+   .MatchAsync(ok => "Okay", error => error.Message);
  ```
 
 `GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
@@ -242,7 +242,7 @@ If `GetCustomerByIdAsync` returned a customer, then `EnsureAsync` is called to c
 
 If there is no error, `TapAsync` will execute the `Promote` method and then send an email.
 
-Finally, `FinallyAsync` will call the given functions with an underlying object or error.
+Finally, `MatchAsync` will call the given functions based on success or failure.
 
 ### With CancellationToken Support
 
@@ -259,7 +259,7 @@ await GetCustomerByIdAsync(id, cancellationToken)
    .BindAsync(
       (customer, ct) => EmailGateway.SendPromotionNotificationAsync(customer.Email, ct),
       cancellationToken)
-   .FinallyAsync(ok => "Okay", error => error.Message);
+   .MatchAsync(ok => "Okay", error => error.Message);
 ```
 
 This allows graceful cancellation of long-running operations and supports request timeouts in web applications.
@@ -476,6 +476,6 @@ For major changes, please open an issue first to discuss what you would like to 
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## Related project
+## Related Projects
 
 [CSharpFunctionalExtensions](https://github.com/vkhorikov/CSharpFunctionalExtensions) Functional Extensions for C#. This library was inspired by several of the training materials created by Vladimir Khorikov.

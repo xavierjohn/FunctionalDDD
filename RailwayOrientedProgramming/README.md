@@ -19,7 +19,6 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
   - [Ensure](#ensure)
   - [Compensate](#compensate)
   - [Combine](#combine)
-  - [Finally](#finally)
 - [Advanced Features](#advanced-features)
   - [LINQ Query Syntax](#linq-query-syntax)
   - [Pattern Matching](#pattern-matching)
@@ -454,43 +453,6 @@ var result = EmailAddress.TryCreate(email)
     .Bind((e, f, l) => CreateProfile(e, f, l));
 ```
 
-### Finally
-
-`Finally` unwraps a `Result` by providing handlers for both success and failure cases. It always returns a value (not a `Result`).
-
-**Use when:** You need to convert a `Result` to a concrete value or action.
-
-```csharp
-// Convert to string message
-string message = GetUser("123")
-    .Finally(
-        ok: user => $"Found: {user.Name}",
-        err: error => $"Error: {error.Code}"
-    );
-
-// Convert to HTTP status
-int statusCode = SaveData(data)
-    .Finally(
-        ok: _ => 200,
-        err: error => error switch
-        {
-            NotFoundError => 404,
-            ValidationError => 400,
-            _ => 500
-        }
-    );
-```
-
-**Async variant:**
-
-```csharp
-var response = await ProcessOrderAsync(order)
-    .FinallyAsync(
-        ok: async order => await CreateSuccessResponseAsync(order),
-        err: async error => await CreateErrorResponseAsync(error)
-    );
-```
-
 ## Advanced Features
 
 ### LINQ Query Syntax
@@ -525,20 +487,20 @@ Use `Match` to handle both success and failure cases inline:
 ```csharp
 // Synchronous match
 var description = GetUser("123").Match(
-    ok: user => $"User: {user.Name}",
-    err: error => $"Error: {error.Code}"
+    onSuccess: user => $"User: {user.Name}",
+    onFailure: error => $"Error: {error.Code}"
 );
 
 // Async match
 await ProcessOrderAsync(order).MatchAsync(
-    ok: async order => await SendConfirmationAsync(order),
-    err: async error => await LogErrorAsync(error)
+    onSuccess: async order => await SendConfirmationAsync(order),
+    onFailure: async error => await LogErrorAsync(error)
 );
 
 // With return value
 var httpResult = SaveData(data).Match(
-    ok: data => Results.Ok(data),
-    err: error => error.ToErrorResult()
+    onSuccess: data => Results.Ok(data),
+    onFailure: error => error.ToErrorResult()
 );
 ```
 
@@ -652,9 +614,9 @@ public async Task<Result<string>> PromoteCustomerAsync(string customerId)
                     Error.Validation("Customer has highest status"))
         .TapAsync(customer => customer.PromoteAsync())
         .BindAsync(customer => SendPromotionEmailAsync(customer.Email))
-        .FinallyAsync(
-            ok: _ => "Promotion successful",
-            err: error => error.Message
+        .MatchAsync(
+            onSuccess: _ => "Promotion successful",
+            onFailure: error => error.Detail
         );
 }
 ```
