@@ -105,15 +105,15 @@ var result = FirstName.TryCreate("John")
 
 The result will either contain validation errors from the `FirstName` and/or `LastName` class, or a success with a `Person` object. It is possible `CreatePerson` can fail, in which case the `Result` will contain the error.
 
-## Finally extension method
+## Match extension method
 
-So far we still have a `Result` type and we need to unwrap it to get the underlying value. This can be achieved by using the `Finally` method.
+So far we still have a `Result` type and we need to unwrap it to get the underlying value. This can be achieved by using the `Match` method.
 
 ```csharp
 string result = FirstName.TryCreate("John")
     .Combine(LastName.TryCreate("Smith"))
     .Bind((firstName, lastName) => CreatePerson(firstName, lastName))
-    .Finally(ok => "Okay: Person created", error => error.Message);
+    .Match(ok => "Okay: Person created", error => error.Message);
 ```
 
 ## Conclusion

@@ -19,7 +19,6 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
   - [Ensure](#ensure)
   - [Compensate](#compensate)
   - [Combine](#combine)
-  - [Finally](#finally)
 - [Advanced Features](#advanced-features)
   - [LINQ Query Syntax](#linq-query-syntax)
   - [Pattern Matching](#pattern-matching)
@@ -195,6 +194,41 @@ var result = await GetUserAsync("123")
     .BindAsync(user => GetLastOrderAsync(user));
 ```
 
+**Async with CancellationToken:**
+
+```csharp
+async Task<Result<User>> GetUserAsync(string id, CancellationToken ct) { /* ... */ }
+async Task<Result<Order>> GetLastOrderAsync(User user, CancellationToken ct) { /* ... */ }
+
+var result = await GetUserAsync("123", cancellationToken)
+    .BindAsync((user, ct) => GetLastOrderAsync(user, ct), cancellationToken);
+```
+
+**Tuple-based operations with CancellationToken:**
+
+When working with multiple values from combined results, you can use CancellationToken with tuple operations:
+
+```csharp
+// Combine multiple results into a tuple
+var result = EmailAddress.TryCreate("user@example.com")
+    .Combine(UserId.TryCreate("123"))
+    .Combine(OrderId.TryCreate("456"));
+
+// Bind with tuple parameters and CancellationToken
+var orderResult = await result
+    .BindAsync(
+        (email, userId, orderId, ct) => FetchOrderAsync(email, userId, orderId, ct),
+        cancellationToken
+    );
+
+// Works with tuples of 2-9 parameters
+var complexResult = await GetUserDataAsync()
+    .BindAsync(
+        (id, name, email, phone, ct) => ProcessUserAsync(id, name, email, phone, ct),
+        cancellationToken
+    );
+```
+
 ### Map
 
 `Map` transforms the value inside a successful `Result`. Unlike `Bind`, the transformation function returns a plain value, not a `Result`.
@@ -244,12 +278,44 @@ var result = await GetUserAsync("123")
     .TapAsync(user => SendWelcomeEmail(user.Email));
 ```
 
-**TapError:**
+**Async with CancellationToken:**
 
 ```csharp
-var result = GetUser("123")
-    .TapError(error => _logger.LogError($"Failed: {error.Message}"))
-    .Tap(user => _logger.LogInfo($"Success: {user.Name}"));
+var result = await GetUserAsync("123", cancellationToken)
+    .TapAsync(
+        async (user, ct) => await AuditLogAsync(user.Id, ct),
+        cancellationToken
+    )
+    .TapAsync(
+        async (user, ct) => await SendWelcomeEmailAsync(user.Email, ct),
+        cancellationToken
+    );
+```
+
+**Tuple-based operations with CancellationToken:**
+
+When working with tuples, you can use CancellationToken for side effects on multiple values:
+
+```csharp
+// Tap with tuple parameters and CancellationToken
+var result = EmailAddress.TryCreate("user@example.com")
+    .Combine(UserId.TryCreate("123"))
+    .TapAsync(
+        async (email, userId, ct) => await LogUserCreationAsync(email, userId, ct),
+        cancellationToken
+    )
+    .TapAsync(
+        async (email, userId, ct) => await NotifyAdminAsync(email, userId, ct),
+        cancellationToken
+    );
+
+// Works with tuples of 2-9 parameters
+var complexTap = await GetOrderDetailsAsync()
+    .TapAsync(
+        async (orderId, customerId, total, status, ct) => 
+            await SendOrderNotificationAsync(orderId, customerId, total, status, ct),
+        cancellationToken
+    );
 ```
 
 ### Ensure
@@ -387,43 +453,6 @@ var result = EmailAddress.TryCreate(email)
     .Bind((e, f, l) => CreateProfile(e, f, l));
 ```
 
-### Finally
-
-`Finally` unwraps a `Result` by providing handlers for both success and failure cases. It always returns a value (not a `Result`).
-
-**Use when:** You need to convert a `Result` to a concrete value or action.
-
-```csharp
-// Convert to string message
-string message = GetUser("123")
-    .Finally(
-        ok: user => $"Found: {user.Name}",
-        err: error => $"Error: {error.Message}"
-    );
-
-// Convert to HTTP status
-int statusCode = SaveData(data)
-    .Finally(
-        ok: _ => 200,
-        err: error => error switch
-        {
-            NotFoundError => 404,
-            ValidationError => 400,
-            _ => 500
-        }
-    );
-```
-
-**Async variant:**
-
-```csharp
-var response = await ProcessOrderAsync(order)
-    .FinallyAsync(
-        ok: async order => await CreateSuccessResponseAsync(order),
-        err: async error => await CreateErrorResponseAsync(error)
-    );
-```
-
 ## Advanced Features
 
 ### LINQ Query Syntax
@@ -458,20 +487,20 @@ Use `Match` to handle both success and failure cases inline:
 ```csharp
 // Synchronous match
 var description = GetUser("123").Match(
-    ok: user => $"User: {user.Name}",
-    err: error => $"Error: {error.Code}"
+    onSuccess: user => $"User: {user.Name}",
+    onFailure: error => $"Error: {error.Code}"
 );
 
 // Async match
 await ProcessOrderAsync(order).MatchAsync(
-    ok: async order => await SendConfirmationAsync(order),
-    err: async error => await LogErrorAsync(error)
+    onSuccess: async order => await SendConfirmationAsync(order),
+    onFailure: async error => await LogErrorAsync(error)
 );
 
 // With return value
 var httpResult = SaveData(data).Match(
-    ok: data => Results.Ok(data),
-    err: error => error.ToErrorResult()
+    onSuccess: data => Results.Ok(data),
+    onFailure: error => error.ToErrorResult()
 );
 ```
 
@@ -585,9 +614,9 @@ public async Task<Result<string>> PromoteCustomerAsync(string customerId)
                     Error.Validation("Customer has highest status"))
         .TapAsync(customer => customer.PromoteAsync())
         .BindAsync(customer => SendPromotionEmailAsync(customer.Email))
-        .FinallyAsync(
-            ok: _ => "Promotion successful",
-            err: error => error.Message
+        .MatchAsync(
+            onSuccess: _ => "Promotion successful",
+            onFailure: error => error.Detail
         );
 }
 ```
@@ -671,4 +700,41 @@ public async Task<Result<string>> PromoteCustomerAsync(string customerId)
    Result<Data> LoadData() =>
        Result.Try(() => File.ReadAllText(path))
            .Bind(json => ParseJson(json));
+   ```
+
+8. **Use CancellationToken with async operations** for proper cancellation support
+   
+   ```csharp
+   // Single-parameter operations
+   var result = await GetUserAsync(id, cancellationToken)
+       .BindAsync((user, ct) => GetOrderAsync(user.Id, ct), cancellationToken)
+       .TapAsync(async (order, ct) => await LogOrderAsync(order, ct), cancellationToken);
+   
+   // Tuple-based operations
+   var complexResult = EmailAddress.TryCreate(email)
+       .Combine(UserId.TryCreate(userId))
+       .BindAsync(
+           async (email, userId, ct) => await CreateUserAsync(email, userId, ct),
+           cancellationToken
+       );
+   ```
+
+9. **Provide CancellationToken parameter** when calling async operations to enable timeouts and graceful shutdown
+   
+   ```csharp
+   // Good - supports cancellation
+   async Task<Result<User>> ProcessUserAsync(string id, CancellationToken ct)
+   {
+       return await GetUserAsync(id, ct)
+           .BindAsync((user, ct) => ValidateAsync(user, ct), ct)
+           .TapAsync(async (user, ct) => await NotifyAsync(user, ct), ct);
+   }
+   
+   // Avoid - no cancellation support
+   async Task<Result<User>> ProcessUserAsync(string id)
+   {
+       return await GetUserAsync(id)
+           .BindAsync(user => ValidateAsync(user))
+           .TapAsync(async user => await NotifyAsync(user));
+   }
    ```

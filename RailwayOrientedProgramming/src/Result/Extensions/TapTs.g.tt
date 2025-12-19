@@ -52,8 +52,26 @@ public static partial class TapExtensionsAsync
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action<<# WriteTs(i); #>> action)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
+    }
+
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<<# WriteTs(i); #>, CancellationToken, Task> func,
+                  CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tap");
+        if (result.IsSuccess) {
+            var (<# WriteArgs(i); #>) = result.Value;
+            await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -66,7 +84,7 @@ public static partial class TapExtensionsAsync
         using var activity = RopTrace.ActivitySource.StartActivity("tap");
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
-            await func(<# WriteArgs(i); #>);
+            await func(<# WriteArgs(i); #>).ConfigureAwait(false);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
@@ -78,12 +96,23 @@ public static partial class TapExtensionsAsync
     /// </summary>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
-                  Func<<# WriteTs(i); #>, Task> func)
+                  Func<<# WriteTs(i); #>, CancellationToken, Task> func,
+                  CancellationToken cancellationToken = default)
     {
-        var result = await resultTask;
-        return await result.TapAsync(func);
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<<# WriteTs(i); #>, Task> func)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapAsync(func).ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
@@ -92,11 +121,29 @@ public static partial class TapExtensionsAsync
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action<<# WriteTs(i); #>> action)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
 
-        /// <summary>
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<<# WriteTs(i); #>, CancellationToken, ValueTask> func,
+                  CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tap");
+        if (result.IsSuccess) {
+            var (<# WriteArgs(i); #>) = result.Value;
+            await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Executes the given action if the starting result is a success. Returns the starting result.
     /// </summary>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
@@ -106,7 +153,7 @@ public static partial class TapExtensionsAsync
         using var activity = RopTrace.ActivitySource.StartActivity("tap");
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
-            await func(<# WriteArgs(i); #>);
+            await func(<# WriteArgs(i); #>).ConfigureAwait(false);
             activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
@@ -118,10 +165,22 @@ public static partial class TapExtensionsAsync
     /// </summary>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<<# WriteTs(i); #>, CancellationToken, ValueTask> func,
+                  CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given action if the starting result is a success. Returns the starting result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<<# WriteTs(i); #>, ValueTask> func)
     {
-        var result = await resultTask;
-        return await result.TapAsync(func);
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapAsync(func).ConfigureAwait(false);
     }
 <#
  }

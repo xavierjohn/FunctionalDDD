@@ -77,13 +77,36 @@ public static class CompensateExtensionsAsync
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        return await funcAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Task<Result<T>>> funcAsync)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         if (result.IsSuccess)
             return result;
 
-        return await funcAsync();
+        return await funcAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.CompensateAsync(funcAsync, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -91,8 +114,8 @@ public static class CompensateExtensionsAsync
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Task<Result<T>>> funcAsync)
     {
-        Result<T> result = await resultTask;
-        return await result.CompensateAsync(funcAsync);
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.CompensateAsync(funcAsync).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -107,13 +130,37 @@ public static class CompensateExtensionsAsync
     /// <summary>
     /// Compensate for failed result by calling the given function.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        return await funcAsync(result.Error, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, Task<Result<T>>> funcAsync)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
         if (result.IsSuccess)
             return result;
 
-        return await funcAsync(result.Error);
+        return await funcAsync(result.Error).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        
+        return await result.CompensateAsync(funcAsync, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -123,7 +170,7 @@ public static class CompensateExtensionsAsync
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
         
-        return await result.CompensateAsync(funcAsync);
+        return await result.CompensateAsync(funcAsync).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -147,6 +194,22 @@ public static class CompensateExtensionsAsync
     /// <summary>
     /// Compensate for failed result by calling the given async function if the predicate returns true.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, bool> predicate, Func<CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync(cancellationToken).ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function if the predicate returns true.
+    /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, bool> predicate, Func<Task<Result<T>>> funcAsync)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
@@ -154,7 +217,23 @@ public static class CompensateExtensionsAsync
             return result;
 
         if (predicate(result.Error))
-            return await funcAsync();
+            return await funcAsync().ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function with the failed error if the predicate returns true.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Result<T> result, Func<Error, bool> predicate, Func<Error, CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync(result.Error, cancellationToken).ConfigureAwait(false);
 
         return result;
     }
@@ -169,7 +248,7 @@ public static class CompensateExtensionsAsync
             return result;
 
         if (predicate(result.Error))
-            return await funcAsync(result.Error);
+            return await funcAsync(result.Error).ConfigureAwait(false);
 
         return result;
     }
@@ -177,10 +256,30 @@ public static class CompensateExtensionsAsync
     /// <summary>
     /// Compensate for failed result by calling the given async function if the predicate returns true.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.CompensateAsync(predicate, funcAsync, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function if the predicate returns true.
+    /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Task<Result<T>>> funcAsync)
     {
-        Result<T> result = await resultTask;
-        return await result.CompensateAsync(predicate, funcAsync);
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.CompensateAsync(predicate, funcAsync).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function with the failed error if the predicate returns true.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, CancellationToken, Task<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.CompensateAsync(predicate, funcAsync, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -188,7 +287,165 @@ public static class CompensateExtensionsAsync
     /// </summary>
     public static async Task<Result<T>> CompensateAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, Task<Result<T>>> funcAsync)
     {
-        Result<T> result = await resultTask;
-        return await result.CompensateAsync(predicate, funcAsync);
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return await result.CompensateAsync(predicate, funcAsync).ConfigureAwait(false);
+    }
+
+    // ValueTask overloads
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Result<T>> func)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return result.Compensate(func);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<CancellationToken, ValueTask<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        return await funcAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<ValueTask<Result<T>>> funcAsync)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        return await funcAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, Result<T>> func)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return result.Compensate(func);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, CancellationToken, ValueTask<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        return await funcAsync(result.Error, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, ValueTask<Result<T>>> funcAsync)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        return await funcAsync(result.Error).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function if the predicate returns true.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<Result<T>> func)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return result.Compensate(predicate, func);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given function with the failed error if the predicate returns true.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, Result<T>> func)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        return result.Compensate(predicate, func);
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function if the predicate returns true.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<CancellationToken, ValueTask<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync(cancellationToken).ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function if the predicate returns true.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<ValueTask<Result<T>>> funcAsync)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync().ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function with the failed error if the predicate returns true.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, CancellationToken, ValueTask<Result<T>>> funcAsync, CancellationToken cancellationToken = default)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync(result.Error, cancellationToken).ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Compensate for failed result by calling the given async function with the failed error if the predicate returns true.
+    /// </summary>
+    public static async ValueTask<Result<T>> CompensateAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, ValueTask<Result<T>>> funcAsync)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(CompensateExtensions.Compensate));
+        if (result.IsSuccess)
+            return result;
+
+        if (predicate(result.Error))
+            return await funcAsync(result.Error).ConfigureAwait(false);
+
+        return result;
     }
 }

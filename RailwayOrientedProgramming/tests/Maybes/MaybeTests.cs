@@ -125,7 +125,7 @@ public class MaybeTests
         Action action = () =>
         {
             var maybe = Maybe.None<int>();
-            var _ = maybe.GetValueOrThrow(errorMessage);
+            maybe.GetValueOrThrow(errorMessage);
         };
 
         action.Should().Throw<InvalidOperationException>().WithMessage(errorMessage);

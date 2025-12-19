@@ -26,9 +26,9 @@ public static class UserRoutes
             .Combine(LastName.TryCreate(request.lastName))
             .Combine(EmailAddress.TryCreate(request.email))
             .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-            .Finally(
-                    ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
-                    err => err.ToHttpResult()));
+            .Match(
+                    onSuccess: ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
+                    onFailure: err => err.ToHttpResult()));
 
         userApi.MapGet("/notfound/{id}", (int id) =>
             Result.Failure(Error.NotFound("User not found", id.ToString(CultureInfo.InvariantCulture)))

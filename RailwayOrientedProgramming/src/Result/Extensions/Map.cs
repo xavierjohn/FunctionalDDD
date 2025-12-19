@@ -20,29 +20,58 @@ public static partial class MapExtensions
 /// </summary>
 public static partial class MapExtensionsAsync
 {
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, Task<TOut>> func, CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("map");
+        if (result.IsFailure)
+            return Result.Failure<TOut>(result.Error);
+
+        TOut value = await func(result.Value, cancellationToken).ConfigureAwait(false);
+
+        return Result.Success<TOut>(value);
+    }
+
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity("map");
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = await func(result.Value);
+        TOut value = await func(result.Value).ConfigureAwait(false);
 
         return Result.Success<TOut>(value);
     }
 
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, TOut> func)
     {
-        Result<TIn> result = await resultTask;
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return result.Map(func);
     }
 
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, CancellationToken, Task<TOut>> func, CancellationToken cancellationToken = default)
+    {
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
+
+        return await result.MapAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
     {
-        Result<TIn> result = await resultTask;
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
 
-        return await result.MapAsync(func);
+        return await result.MapAsync(func).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, ValueTask<TOut>> func, CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("map");
+        if (result.IsFailure)
+            return Result.Failure<TOut>(result.Error);
+
+        TOut value = await func(result.Value, cancellationToken).ConfigureAwait(false);
+
+        return Result.Success<TOut>(value);
     }
 
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, ValueTask<TOut>> func)
@@ -51,22 +80,29 @@ public static partial class MapExtensionsAsync
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
-        TOut value = await func(result.Value);
+        TOut value = await func(result.Value).ConfigureAwait(false);
 
         return Result.Success<TOut>(value);
     }
 
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, TOut> func)
     {
-        Result<TIn> result = await resultTask;
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return result.Map(func);
     }
 
+    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, CancellationToken, ValueTask<TOut>> func, CancellationToken cancellationToken = default)
+    {
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
+
+        return await result.MapAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> func)
     {
-        Result<TIn> result = await resultTask;
+        Result<TIn> result = await resultTask.ConfigureAwait(false);
 
-        return await result.MapAsync(func);
+        return await result.MapAsync(func).ConfigureAwait(false);
     }
 }

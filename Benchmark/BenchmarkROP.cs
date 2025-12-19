@@ -6,6 +6,22 @@ using static FunctionalDdd.EnsureExtensions;
 
 /// <summary>
 /// Benchmark ROP vs If.
+/// 
+/// Latest Run (ShortRun - 3 iterations, .NET 10.0.1, Intel Core i7-1185G7 @ 3.00GHz, Windows 11):
+/// | Method        | Mean      | Error     | StdDev    | Gen0   | Allocated |
+/// |-------------- |----------:|----------:|----------:|-------:|----------:|
+/// | RopStyleHappy | 146.89 ns | 24.45 ns  | 1.340 ns  | 0.0229 |     144 B |
+/// | IfStyleHappy  | 131.27 ns | 30.31 ns  | 1.662 ns  | 0.0229 |     144 B |
+/// | RopStyleSad   |  99.16 ns | 63.06 ns  | 3.457 ns  | 0.0293 |     184 B |
+/// | IfStyleSad    |  87.60 ns | 57.17 ns  | 3.134 ns  | 0.0293 |     184 B |
+/// 
+/// Analysis:
+/// - ROP adds ~16 ns overhead on happy path (~12% slower than imperative)
+/// - ROP adds ~11 ns overhead on sad path (~13% slower than imperative)
+/// - Memory allocations are identical between ROP and imperative styles
+/// - The overhead is negligible compared to typical I/O operations (database, HTTP, etc.)
+/// 
+/// Previous Runs (for reference):
 /// Run 1
 /// | Method        | Mean      | Error    | StdDev   | Gen0   | Allocated |
 /// |-------------- |----------:|---------:|---------:|-------:|----------:|
@@ -36,9 +52,9 @@ public class BenchmarkROP
     public string RopStyleHappy() =>
         FirstName.TryCreate("Xavier")
             .Combine(EmailAddress.TryCreate("xavier@somewhere.com"))
-            .Finally(
-                ok => ok.Item1 + " " + ok.Item2,
-                error => error.Detail
+            .Match(
+                onSuccess: ok => ok.Item1 + " " + ok.Item2,
+                onFailure: error => error.Detail
             );
 
     [Benchmark]
@@ -49,20 +65,22 @@ public class BenchmarkROP
         if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
             return rFirstName.Value + " " + rEmailAddress.Value;
 
-        var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
+        Error? error = null;
+        if (rFirstName.IsFailure)
+            error = rFirstName.Error;
         if (rEmailAddress.IsFailure)
             error = error.Combine(rEmailAddress.Error);
 
-        return error.Detail;
+        return error!.Detail;
     }
 
     [Benchmark]
     public string RopStyleSad() =>
     FirstName.TryCreate("Xavier")
         .Combine(EmailAddress.TryCreate("bad email"))
-        .Finally(
-            ok => ok.Item1 + " " + ok.Item2,
-            error => error.Detail
+        .Match(
+            onSuccess: ok => ok.Item1 + " " + ok.Item2,
+            onFailure: error => error.Detail
         );
 
     [Benchmark]
@@ -73,11 +91,13 @@ public class BenchmarkROP
         if (rFirstName.IsSuccess && rEmailAddress.IsSuccess)
             return rFirstName.Value + " " + rEmailAddress.Value;
 
-        var error = rFirstName.IsFailure ? rFirstName.Error : rEmailAddress.Error;
-        if (rFirstName.IsFailure && rEmailAddress.IsFailure)
+        Error? error = null;
+        if (rFirstName.IsFailure)
+            error = rFirstName.Error;
+        if (rEmailAddress.IsFailure)
             error = error.Combine(rEmailAddress.Error);
 
-        return error.Detail;
+        return error!.Detail;
     }
 
     [Benchmark]

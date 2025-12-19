@@ -1,86 +1,140 @@
 # ASP Extension
 
-This library will help convert Error objects to ASP.NET Core ActionResult
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
 
-## MVC
+This library converts Railway Oriented Programming `Result` types to ASP.NET Core HTTP responses, providing seamless integration between your functional domain layer and web API layer.
 
-### ToActionResult
+## Table of Contents
 
-Use this method to convert `Result` to `OkObjectResult` or various failed results.
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [MVC Controllers](#mvc-controllers)
+  - [Minimal API](#minimal-api)
+- [Core Concepts](#core-concepts)
+- [Best Practices](#best-practices)
+- [Resources](#resources)
 
-It supports pagination by passing three parameters to, from and length. Based on the values it
-will return PartialContent (206) or Okay(200) per [RFC9110](https://www.rfc-editor.org/rfc/rfc9110#field.content-range)
+## Installation
 
-Failed state is based on the `Error` object.
-The mapping is as follows
+Install via NuGet:
 
-```csharp
-    NotFoundError => (ActionResult<T>)controllerBase.NotFound(error),
-    ValidationError validation => ValidationErrors<T>(validation, controllerBase),
-    ConflictError => (ActionResult<T>)controllerBase.Conflict(error),
-    UnauthorizedError => (ActionResult<T>)controllerBase.Unauthorized(error),
-    ForbiddenError => (ActionResult<T>)controllerBase.StatusCode(StatusCodes.Status403Forbidden, error),
-    UnexpectedError => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
-    _ => (ActionResult<TValue>)controllerBase.StatusCode(StatusCodes.Status500InternalServerError, error),
+```bash
+dotnet add package FunctionalDDD.Asp
 ```
 
-### MVC Example
+## Quick Start
 
-Simple case.
+### MVC Controllers
+
+Use `ToActionResult` to convert `Result<T>` to `ActionResult<T>`:
 
 ```csharp
-[HttpPost("[action]")]
-public ActionResult<User> Register([FromBody] RegisterRequest request) =>
-    FirstName.TryCreate(request.firstName)
-    .Combine(LastName.TryCreate(request.lastName))
-    .Combine(EmailAddress.TryCreate(request.email))
-    .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
-    .ToActionResult(this);
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
+{
+    [HttpPost]
+    public ActionResult<User> Register([FromBody] RegisterRequest request) =>
+        FirstName.TryCreate(request.FirstName)
+            .Combine(LastName.TryCreate(request.LastName))
+            .Combine(EmailAddress.TryCreate(request.Email))
+            .Bind((firstName, lastName, email) => 
+                User.TryCreate(firstName, lastName, email, request.Password))
+            .ToActionResult(this);
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<User>> GetUserAsync(
+        string id,
+        CancellationToken cancellationToken) =>
+        await _userRepository.GetByIdAsync(id, cancellationToken)
+            .ToResultAsync(Error.NotFound($"User {id} not found"))
+            .ToActionResultAsync(this);
+}
 ```
 
-To control the return type
+### Minimal API
+
+Use `ToHttpResult` to convert `Result<T>` to `IResult`:
 
 ```csharp
-[HttpPost("[action]")]
-public ActionResult<User> RegisterCreated2([FromBody] RegisterRequest request) =>
-    FirstName.TryCreate(request.firstName)
-    .Combine(LastName.TryCreate(request.lastName))
-    .Combine(EmailAddress.TryCreate(request.email))
-    .Bind((firstName, lastName, email) => SampleWebApplication.User.TryCreate(firstName, lastName, email, request.password))
-    .Finally(
-        ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
-        err => err.ToErrorActionResult<User>(this));
-```
+var userApi = app.MapGroup("/api/users");
 
-## Minimal API
-
-### ToHttpResult
-
-Use this method to convert `Result` to `Http.IResult` or various failed results.
-
-### Minimal API Example
-
-Simple case.
-
-```csharp
 userApi.MapPost("/register", (RegisterUserRequest request) =>
-    FirstName.TryCreate(request.firstName)
-    .Combine(LastName.TryCreate(request.lastName))
-    .Combine(EmailAddress.TryCreate(request.email))
-    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .ToHttpResult());
+    FirstName.TryCreate(request.FirstName)
+        .Combine(LastName.TryCreate(request.LastName))
+        .Combine(EmailAddress.TryCreate(request.Email))
+        .Bind((firstName, lastName, email) => 
+            User.TryCreate(firstName, lastName, email, request.Password))
+        .ToHttpResult());
+
+userApi.MapGet("/{id}", async (
+    string id,
+    UserRepository repository,
+    CancellationToken cancellationToken) =>
+    await repository.GetByIdAsync(id, cancellationToken)
+        .ToResultAsync(Error.NotFound($"User {id} not found"))
+        .ToHttpResultAsync());
 ```
 
-To control the return type
+## Core Concepts
 
-```csharp
-userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
-    FirstName.TryCreate(request.firstName)
-    .Combine(LastName.TryCreate(request.lastName))
-    .Combine(EmailAddress.TryCreate(request.email))
-    .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
-    .Map(user => new RegisterUserResponse(user.Id, user.FirstName, user.LastName, user.Email, user.Password))
-    .Finally(
-            ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.firstName } }, ok),
-            err => err.ToErrorResult()));
+The ASP extension automatically converts `Result<T>` outcomes to appropriate HTTP responses:
+
+| Result Type | HTTP Status | Description |
+|------------|-------------|-------------|
+| Success | 200 OK | Success with content |
+| Success (Unit) | 204 No Content | Success without content |
+| ValidationError | 400 Bad Request | Validation errors with details |
+| BadRequestError | 400 Bad Request | Invalid request |
+| UnauthorizedError | 401 Unauthorized | Authentication required |
+| ForbiddenError | 403 Forbidden | Access denied |
+| NotFoundError | 404 Not Found | Resource not found |
+| ConflictError | 409 Conflict | Resource conflict |
+| DomainError | 422 Unprocessable Entity | Domain rule violation |
+| RateLimitError | 429 Too Many Requests | Rate limit exceeded |
+| UnexpectedError | 500 Internal Server Error | Unexpected error |
+| ServiceUnavailableError | 503 Service Unavailable | Service unavailable |
+
+**Validation Error Response Format:**
+
+```json
+{
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+        "lastName": ["Last Name cannot be empty."],
+        "email": ["Email address is not valid."]
+    }
+}
 ```
+
+## Best Practices
+
+1. **Always pass `this` to `ToActionResult` in MVC controllers**  
+   Required for proper HTTP context access.
+
+2. **Use async variants for async operations**  
+   Use `ToActionResultAsync` and `ToHttpResultAsync` for async code paths.
+
+3. **Always provide CancellationToken for async operations**  
+   Enables proper request cancellation and resource cleanup.
+
+4. **Use domain-specific errors, not generic exceptions**  
+   Return `Error.NotFound()`, `Error.Validation()`, etc. instead of throwing exceptions.
+
+5. **Keep domain logic out of controllers**  
+   Controllers should orchestrate, not implement business rules.
+
+6. **Use `Match` for custom responses**  
+   Control specific HTTP responses or handle both success and failure paths.
+
+7. **Use Result<Unit> for operations without return values**  
+   Automatically returns 204 No Content on success.
+
+## Resources
+
+- [SAMPLES.md](SAMPLES.md) - Comprehensive examples and advanced patterns
+- [Railway Oriented Programming](../RailwayOrientedProgramming/README.md) - Core Result<T> concepts
+- [Domain-Driven Design](../DomainDrivenDesign/README.md) - Entity and value object patterns
+

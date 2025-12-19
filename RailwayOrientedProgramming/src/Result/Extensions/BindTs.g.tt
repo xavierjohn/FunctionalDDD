@@ -41,7 +41,34 @@ public static partial class BindExtensions
 
 public static partial class BindExtensionsAsync
 {
-    // sync input, Async output.
+    // sync input, Async output with CancellationToken
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this Result<(T1, T2)> result,
+        Func<T1, T2, CancellationToken, Task<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this Result<(T1, T2)> result,
+        Func<T1, T2, CancellationToken, ValueTask<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
+    }
+
+    // sync input, Async output without CancellationToken
     public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
         this Result<(T1, T2)> result,
         Func<T1, T2, Task<Result<TResult>>> func)
@@ -51,7 +78,7 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error);
 
         var (args1, args2) = result.Value;
-        return await func(args1, args2);
+        return await func(args1, args2).ConfigureAwait(false);
     }
 
     public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
@@ -63,12 +90,38 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error);
 
         var (args1, args2) = result.Value;
-        return await func(args1, args2);
+        return await func(args1, args2).ConfigureAwait(false);
     }
 
 <# 
   for(var i = 3; i <= 9; i++) { 
 #>
+
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this Result<(<# WriteTs(i); #>)> result,
+        Func<<# WriteTs(i); #>, CancellationToken, Task<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this Result<(<# WriteTs(i); #>)> result,
+        Func<<# WriteTs(i); #>, CancellationToken, ValueTask<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
+    }
 
     public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
         this Result<(<# WriteTs(i); #>)> result,
@@ -79,7 +132,7 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error);
 
         var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>);
+        return await func(<# WriteArgs(i); #>).ConfigureAwait(false);
     }
 
     public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
@@ -91,7 +144,7 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error);
 
         var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>);
+        return await func(<# WriteArgs(i); #>).ConfigureAwait(false);
     }
 
 <#
@@ -104,7 +157,7 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, Result<TResult>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -118,7 +171,7 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, Result<TResult>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -134,7 +187,7 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -147,7 +200,7 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -158,18 +211,47 @@ public static partial class BindExtensionsAsync
  }
 #>
 
-    // async tuple input, async output.
+    // async tuple input, async output with CancellationToken
+    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this Task<Result<(T1, T2)>> resultTask,
+        Func<T1, T2, CancellationToken, Task<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        var result = await resultTask.ConfigureAwait(false);
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
+        this ValueTask<Result<(T1, T2)>> resultTask,
+        Func<T1, T2, CancellationToken, ValueTask<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        var result = await resultTask.ConfigureAwait(false);
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (args1, args2) = result.Value;
+        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
+    }
+
+    // async tuple input, async output without CancellationToken
     public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
         this Task<Result<(T1, T2)>> resultTask,
         Func<T1, T2, Task<Result<TResult>>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
         var (args1, args2) = result.Value;
-        return await func(args1, args2);
+        return await func(args1, args2).ConfigureAwait(false);
     }
 
     public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
@@ -177,12 +259,12 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, ValueTask<Result<TResult>>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
         var (args1, args2) = result.Value;
-        return await func(args1, args2);
+        return await func(args1, args2).ConfigureAwait(false);
     }
 <# 
   for(var i = 3; i <= 9; i++) { 
@@ -190,15 +272,43 @@ public static partial class BindExtensionsAsync
 
     public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
-        Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
+        Func<<# WriteTs(i); #>, CancellationToken, Task<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
         var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>);
+        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+        Func<<# WriteTs(i); #>, CancellationToken, ValueTask<Result<TResult>>> func,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        var result = await resultTask.ConfigureAwait(false);
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
+        this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+        Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        var result = await resultTask.ConfigureAwait(false);
+        if (result.IsFailure)
+            return Result.Failure<TResult>(result.Error);
+
+        var (<# WriteArgs(i); #>) = result.Value;
+        return await func(<# WriteArgs(i); #>).ConfigureAwait(false);
     }
 
     public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
@@ -206,12 +316,12 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, ValueTask<Result<TResult>>> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
         var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>);
+        return await func(<# WriteArgs(i); #>).ConfigureAwait(false);
     }
 <#
  }

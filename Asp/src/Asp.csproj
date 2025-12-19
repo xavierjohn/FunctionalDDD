@@ -2,6 +2,7 @@
   <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>These extension methods are used to convert the ROP Result object to ActionResult. If the Result is in a failed state, it returns the corresponding HTTP error code.</Description>
+    <PackageTags>aspnetcore;mvc;minimal-api;web-api;railway-oriented;result;http;error-handling</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>

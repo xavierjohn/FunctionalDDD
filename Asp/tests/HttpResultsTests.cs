@@ -240,4 +240,59 @@ public class HttpResultsTests
         problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
+
+    [Fact]
+    public void Will_return_UnprocessableEntity_for_Domain_error()
+    {
+        // Arrange
+        var result = Result.Failure(Error.Domain("Cannot withdraw more than account balance", "account-123"));
+
+        // Act
+        var response = result.ToHttpResult();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
+        problemResult.ProblemDetails.Title.Should().Be("Unprocessable Entity");
+        problemResult.ProblemDetails.Detail.Should().Be("Cannot withdraw more than account balance");
+        problemResult.ProblemDetails.Instance.Should().Be("account-123");
+        problemResult.ProblemDetails.Status.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    [Fact]
+    public void Will_return_TooManyRequests_for_RateLimit_error()
+    {
+        // Arrange
+        var result = Result.Failure(Error.RateLimit("API rate limit exceeded. Please try again in 60 seconds", "user-456"));
+
+        // Act
+        var response = result.ToHttpResult();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
+        problemResult.ProblemDetails.Detail.Should().Be("API rate limit exceeded. Please try again in 60 seconds");
+        problemResult.ProblemDetails.Instance.Should().Be("user-456");
+        problemResult.ProblemDetails.Status.Should().Be(StatusCodes.Status429TooManyRequests);
+    }
+
+    [Fact]
+    public void Will_return_ServiceUnavailable_for_ServiceUnavailable_error()
+    {
+        // Arrange
+        var result = Result.Failure(Error.ServiceUnavailable("Service is under maintenance. Please try again later", "payment-service"));
+
+        // Act
+        var response = result.ToHttpResult();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        problemResult.ContentType.Should().Be("application/problem+json");
+        problemResult.ProblemDetails.Detail.Should().Be("Service is under maintenance. Please try again later");
+        problemResult.ProblemDetails.Instance.Should().Be("payment-service");
+        problemResult.ProblemDetails.Status.Should().Be(StatusCodes.Status503ServiceUnavailable);
+    }
 }

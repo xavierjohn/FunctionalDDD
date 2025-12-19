@@ -88,4 +88,35 @@ public static class FunctionalDDDValidationExtension
 
         return result.ToResult(value);
     }
+
+    /// <summary>
+    /// Asynchronously validates the specified instance and returns a <see cref="Result{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">Type being validated</typeparam>
+    /// <param name="validator">The validator.</param>
+    /// <param name="value">The value being validated.</param>
+    /// <param name="paramName">The name of the parameter being validated.</param>
+    /// <param name="message">Optional error message if the value is null.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success if valid. Failure with validation errors if invalid.</returns>
+    /// <example>
+    /// <code>
+    /// var createProductValidator = new CreateProductRequestValidator();
+    /// return await createProductValidator.ValidateToResultAsync(request, cancellationToken: cancellationToken)
+    ///     .BindAsync(req => Product.CreateAsync(req.Name, req.Price, cancellationToken), cancellationToken);
+    /// </code>
+    /// </example>
+    public static async Task<Result<T>> ValidateToResultAsync<T>(
+        this IValidator<T> validator,
+        T value,
+        [CallerArgumentExpression(nameof(value))] string paramName = "value",
+        string? message = null,
+        CancellationToken cancellationToken = default)
+    {
+        ValidationResult result = value is null
+            ? new ValidationResult([new ValidationFailure(paramName, message ?? $"'{paramName}' must not be empty.")])
+            : await validator.ValidateAsync(value, cancellationToken).ConfigureAwait(false);
+
+        return result.ToResult(value);
+    }
 }

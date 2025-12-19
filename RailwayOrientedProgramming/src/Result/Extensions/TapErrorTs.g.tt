@@ -1,0 +1,341 @@
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#@ include file="CommonFunction.t4" #>
+
+// Generated code
+namespace FunctionalDdd;
+using System.Diagnostics;
+
+/// <summary>
+/// Executes the given action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.
+/// These extensions support tuple-based operations (2-9 parameters).
+/// </summary>
+public static partial class TapErrorExtensions
+{
+<#
+  void WriteArgs(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => "args" + i)));
+  }
+
+  for(var i = 2; i <=9; i++) { 
+#>
+    /// <summary>
+    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static Result<(<# WriteTs(i); #>)> TapError<<# WriteTs(i); #>>(
+                  this Result<(<# WriteTs(i); #>)> result,
+                  Action action)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsFailure) {
+            action();
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static Result<(<# WriteTs(i); #>)> TapError<<# WriteTs(i); #>>(
+                  this Result<(<# WriteTs(i); #>)> result,
+                  Action<Error> action)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsFailure) {
+            action(result.Error);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+<#
+ }
+#>
+}
+
+/// <summary>
+/// Executes the given async action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.
+/// These extensions support tuple-based operations (2-9 parameters) with CancellationToken support.
+/// </summary>
+public static partial class TapErrorExtensionsAsync
+{
+<# 
+  for(var i = 2; i <= 9; i++) { 
+#>
+    /// <summary>
+    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Action action)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.TapError(action);
+    }
+
+    /// <summary>
+    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Action<Error> action)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.TapError(action);
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<Task> func)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func().ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<Error, Task> func)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func(result.Error).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<CancellationToken, Task> func,
+                  CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func(cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<Error, CancellationToken, Task> func,
+                  CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func(result.Error, cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<Task> func)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<Error, Task> func)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<CancellationToken, Task> func,
+                  CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<Error, CancellationToken, Task> func,
+                  CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Action action)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.TapError(action);
+    }
+
+    /// <summary>
+    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Action<Error> action)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.TapError(action);
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<ValueTask> func)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func().ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<Error, ValueTask> func)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func(result.Error).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<CancellationToken, ValueTask> func,
+                  CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func(cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this Result<(<# WriteTs(i); #>)> result,
+                  Func<Error, CancellationToken, ValueTask> func,
+                  CancellationToken cancellationToken = default)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity("tapError");
+        if (result.IsFailure) {
+            await func(result.Error, cancellationToken).ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Error);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<ValueTask> func)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<Error, ValueTask> func)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<CancellationToken, ValueTask> func,
+                  CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// </summary>
+    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
+                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
+                  Func<Error, CancellationToken, ValueTask> func,
+                  CancellationToken cancellationToken = default)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
+    }
+<#
+ }
+#>
+}

@@ -23,26 +23,26 @@ public class UsersController : ControllerBase
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
         .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
-        .Finally(
-            ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
-            err => err.ToActionResult<User>(this));
+        .Match(
+            onSuccess: ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
+            onFailure: err => err.ToActionResult<User>(this));
 
     [HttpPost("[action]")]
     public ActionResult<User> RegisterAccepted([FromBody] RegisterUserRequest request) =>
         FirstName.TryCreate(request.firstName)
-        .Combine(LastName.TryCreate(request.lastName))
-        .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
-        .Finally(result => result.IsSuccess
-            ? AcceptedAtAction("Get", new { name = result.Value.FirstName }, result.Value)
-            : result.ToActionResult(this));
+            .Combine(LastName.TryCreate(request.lastName))
+            .Combine(EmailAddress.TryCreate(request.email))
+            .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
+            .Match(
+                onSuccess: ok => AcceptedAtAction("Get", new { name = ok.FirstName }, ok),
+                onFailure: err => err.ToActionResult<User>(this));
 
     [HttpGet("{name}")]
     public ActionResult<string> Get(string name) => Ok($"Hello {name}!");
 
     [HttpDelete("{id}")]
     public ActionResult<Unit> Delete(string id) =>
-        UserId.TryCreate(id).Finally(
-            ok => NoContent(),
-            err => err.ToActionResult<Unit>(this));
+        UserId.TryCreate(id).Match(
+            onSuccess: ok => NoContent(),
+            onFailure: err => err.ToActionResult<Unit>(this));
 }
