@@ -12,7 +12,7 @@ public class CancellationTokenTests
     public async Task TryAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act

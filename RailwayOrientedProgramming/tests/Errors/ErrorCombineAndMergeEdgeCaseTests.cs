@@ -239,7 +239,7 @@ public class ErrorCombineAndMergeEdgeCaseTests
     public void FieldError_WithEmptyDetailsArray_ShouldThrow()
     {
         // Act
-        Action act = () => { var _ = new FieldError("field", Array.Empty<string>()); };
+        Action act = () => { new FieldError("field", Array.Empty<string>()); };
 
         // Assert
         act.Should().Throw<ArgumentException>()
