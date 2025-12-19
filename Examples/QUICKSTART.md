@@ -1,4 +1,4 @@
-# Quick Start Guide - Real-World Examples
+﻿# Quick Start Guide - Real-World Examples
 
 Get started quickly with these practical examples from the repository.
 
@@ -15,8 +15,8 @@ var result = FirstName.TryCreate("John")
     .Combine(EmailAddress.TryCreate("john@example.com"))
     .Bind((first, last, email) => CreateProfile(first, last, email));
 
-// All validations pass ? Success
-// Any validation fails ? Aggregated errors
+// All validations pass → Success
+// Any validation fails → Aggregated errors
 ```
 
 **Next**: Try [Maybe Examples](./Xunit/MaybeExamples.cs) for optional values
@@ -35,9 +35,9 @@ public ActionResult<User> Register([FromBody] RegisterRequest request) =>
         .Combine(EmailAddress.TryCreate(request.email))
         .Bind((first, last, email) => User.TryCreate(first, last, email, request.password))
         .ToActionResult(this);
-// Success ? 200 OK
-// Validation ? 400 Bad Request
-// NotFound ? 404 Not Found
+// Success → 200 OK
+// Validation → 400 Bad Request
+// NotFound → 404 Not Found
 ```
 
 **For Minimal API**: Check [User Routes](./SampleMinimalApi/API/UserRoutes.cs)
@@ -134,11 +134,14 @@ await GetUserAsync(id)
 
 ### Pattern 4: Parallel Operations
 ```csharp
-var task1 = ValidateAsync(item1);
-var task2 = ValidateAsync(item2);
-var results = await Task.WhenAll(task1, task2);
+var result = await GetStudentInfoAsync(studentId)
+    .ParallelAsync(GetStudentGradesAsync(studentId))
+    .ParallelAsync(GetLibraryBooksAsync(studentId))
+    .AwaitAsync()
+    .BindAsync((info, grades, books) => 
+        PrepareReport(info, grades, books));
 ```
-**Use When**: Multiple independent async operations
+**Use When**: Multiple independent async operations need to run concurrently
 
 ### Pattern 5: State Machine
 ```csharp
@@ -164,9 +167,9 @@ public Result<Order> Submit()
 | `Tap` | Side effect on success | `Result<T>` | Logging, metrics, notifications |
 | `Combine` | Merge multiple Results | `Result<(T1,T2,...)>` | Multiple independent validations |
 | `Compensate` | Fallback on failure | `Result<T>` | Retry, cleanup, alternative path |
-| `Finally` | Unwrap Result | `TOut` | End of chain, convert to concrete value |
+| `Match` | Unwrap Result | `TOut` | End of chain, handle both success and failure |
 
-**Async Variants**: `BindAsync`, `MapAsync`, `EnsureAsync`, `TapAsync`, `CompensateAsync`, `FinallyAsync`
+**Async Variants**: `BindAsync`, `MapAsync`, `EnsureAsync`, `TapAsync`, `CompensateAsync`, `MatchAsync`
 
 ---
 
@@ -220,7 +223,7 @@ public async Task Payment_Failure_Triggers_Inventory_Release()
 
 ## Error Handling Best Practices
 
-### ? DO
+### ✅ DO
 ```csharp
 // Be specific with errors
 return Error.Validation("Email format is invalid", "email");
@@ -233,7 +236,7 @@ if (unauthorized) return Error.Unauthorized("Login required");
 if (forbidden) return Error.Forbidden("Insufficient permissions");
 ```
 
-### ? DON'T
+### ❌ DON'T
 ```csharp
 // Don't use generic errors
 return Error.Unexpected("Something went wrong");

@@ -194,15 +194,18 @@ await GetCustomerAsync(id)
 
 ---
 
-### 4. **Parallel Validation Pattern**
+### 4. **Parallel Operations Pattern**
 ```csharp
-var tasks = items.Select(item => ValidateAsync(item));
-var results = await Task.WhenAll(tasks);
-// Check results and combine errors
+var result = await GetStudentInfoAsync(studentId)
+    .ParallelAsync(GetStudentGradesAsync(studentId))
+    .ParallelAsync(GetLibraryBooksAsync(studentId))
+    .AwaitAsync()
+    .BindAsync((info, grades, books) => 
+        PrepareReport(info, grades, books));
 ```
 
-**Used In**: EcommerceExample (order lines), BankingExample (transfer validation)
-**Purpose**: Validate multiple items concurrently for performance
+**Used In**: EcommerceExample, BankingExample
+**Purpose**: Run multiple independent async operations concurrently for performance
 
 ---
 
@@ -363,10 +366,10 @@ Domain rules are explicit and enforced:
 
 ## Additional Resources
 
-- [Railway Oriented Programming README](../../RailwayOrientedProgramming/README.md)
-- [DDD Basics](../../docs/docfx_project/articles/basics.md)
-- [API Integration Guide](../../Asp/README.md)
-- [Value Objects Guide](../../CommonValueObjects/README.md)
+- [Railway Oriented Programming README](../RailwayOrientedProgramming/README.md)
+- [DDD Basics](../docs/docfx_project/articles/basics.md)
+- [API Integration Guide](../Asp/README.md)
+- [Value Objects Guide](../CommonValueObjects/README.md)
 
 ## Contributing Examples
 
@@ -375,6 +378,6 @@ Want to add a new example? Follow this structure:
 
 ## Questions?
 
-- Check the [main documentation](../../README.md)
-- Review [examples article](../../docs/docfx_project/articles/examples.md)
+- Check the [main documentation](../README.md)
+- Review [examples article](../docs/docfx_project/articles/examples.md)
 - Open an issue on GitHub
