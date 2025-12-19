@@ -55,17 +55,14 @@ public class Customer : Entity<CustomerId>
         CreatedAt = DateTime.UtcNow;
     }
     
-    public static Result<Customer> TryCreate(string name, EmailAddress email)
-    {
-        return name.ToResult()
+    public static Result<Customer> TryCreate(string name, EmailAddress email) =>
+        name.ToResult()
             .Ensure(n => !string.IsNullOrWhiteSpace(n), 
                    Error.Validation("Name cannot be empty"))
             .Map(n => new Customer(CustomerId.NewUnique(), n, email));
-    }
     
-    public Result<Customer> UpdateName(string newName)
-    {
-        return newName.ToResult()
+    public Result<Customer> UpdateName(string newName) =>
+        newName.ToResult()
             .Ensure(n => !string.IsNullOrWhiteSpace(n),
                    Error.Validation("Name cannot be empty"))
             .Tap(n =>
@@ -74,18 +71,15 @@ public class Customer : Entity<CustomerId>
                 UpdatedAt = DateTime.UtcNow;
             })
             .Map(_ => this);
-    }
     
-    public Result<Customer> UpdateEmail(EmailAddress newEmail)
-    {
-        return newEmail.ToResult()
+    public Result<Customer> UpdateEmail(EmailAddress newEmail) =>
+        newEmail.ToResult()
             .Tap(e =>
             {
                 Email = e;
                 UpdatedAt = DateTime.UtcNow;
             })
             .Map(_ => this);
-    }
 }
 
 // Usage
@@ -133,9 +127,8 @@ public class Address : ValueObject
         string city, 
         string state, 
         string postalCode,
-        string country)
-    {
-        return (street, city, state, postalCode, country).ToResult()
+        string country) =>
+        (street, city, state, postalCode, country).ToResult()
             .Ensure(x => !string.IsNullOrWhiteSpace(x.street), 
                    Error.Validation("Street is required", nameof(street)))
             .Ensure(x => !string.IsNullOrWhiteSpace(x.city),
@@ -147,7 +140,6 @@ public class Address : ValueObject
             .Ensure(x => !string.IsNullOrWhiteSpace(x.country),
                    Error.Validation("Country is required", nameof(country)))
             .Map(x => new Address(x.street, x.city, x.state, x.postalCode, x.country));
-    }
     
     // Define equality components
     protected override IEnumerable<IComparable> GetEqualityComponents()
@@ -160,10 +152,9 @@ public class Address : ValueObject
     }
     
     // Domain behavior
-    public string GetFullAddress() => 
-        $"{Street}, {City}, {State} {PostalCode}, {Country}";
+    public string GetFullAddress() => $"{Street}, {City}, {State} {PostalCode}, {Country}";
     
-    public bool IsSameCity(Address other) => 
+    public bool IsSameCity(Address other) =>
         City.Equals(other.City, StringComparison.OrdinalIgnoreCase) &&
         State.Equals(other.State, StringComparison.OrdinalIgnoreCase);
 }
@@ -201,10 +192,8 @@ public class Temperature : ScalarValueObject<decimal>
             .Map(v => new Temperature(v));
     
     public static Temperature FromCelsius(decimal celsius) => new(celsius);
-    public static Temperature FromFahrenheit(decimal fahrenheit) => 
-        new((fahrenheit - 32) * 5 / 9);
-    public static Temperature FromKelvin(decimal kelvin) => 
-        new(kelvin - 273.15m);
+    public static Temperature FromFahrenheit(decimal fahrenheit) => new((fahrenheit - 32) * 5 / 9);
+    public static Temperature FromKelvin(decimal kelvin) => new(kelvin - 273.15m);
     
     // Custom equality - round to 2 decimal places
     protected override IEnumerable<IComparable> GetEqualityComponents()
@@ -213,11 +202,8 @@ public class Temperature : ScalarValueObject<decimal>
     }
     
     // Domain operations
-    public Temperature Add(Temperature other) => 
-        new Temperature(Value + other.Value);
-    
-    public Temperature Subtract(Temperature other) => 
-        new Temperature(Value - other.Value);
+    public Temperature Add(Temperature other) => new(Value + other.Value);
+    public Temperature Subtract(Temperature other) => new(Value - other.Value);
     
     public decimal ToCelsius() => Value;
     public decimal ToFahrenheit() => (Value * 9 / 5) + 32;
@@ -262,9 +248,8 @@ public class Money : ValueObject
         Currency = currency;
     }
     
-    public static Result<Money> TryCreate(decimal amount, string currency = "USD")
-    {
-        return (amount, currency).ToResult()
+    public static Result<Money> TryCreate(decimal amount, string currency = "USD") =>
+        (amount, currency).ToResult()
             .Ensure(x => x.amount >= 0, 
                    Error.Validation("Amount cannot be negative", nameof(amount)))
             .Ensure(x => !string.IsNullOrWhiteSpace(x.currency),
@@ -272,7 +257,6 @@ public class Money : ValueObject
             .Ensure(x => x.currency.Length == 3,
                    Error.Validation("Currency must be 3-letter ISO code", nameof(currency)))
             .Map(x => new Money(x.amount, x.currency.ToUpperInvariant()));
-    }
     
     public static Money Zero(string currency = "USD") => new(0, currency);
     
@@ -283,48 +267,32 @@ public class Money : ValueObject
     }
     
     // Domain operations
-    public Result<Money> Add(Money other)
-    {
-        if (Currency != other.Currency)
-            return Error.Validation($"Cannot add {other.Currency} to {Currency}");
-        
-        return new Money(Amount + other.Amount, Currency).ToResult();
-    }
+    public Result<Money> Add(Money other) =>
+        Currency != other.Currency
+            ? Error.Validation($"Cannot add {other.Currency} to {Currency}")
+            : new Money(Amount + other.Amount, Currency).ToResult();
     
-    public Result<Money> Subtract(Money other)
-    {
-        if (Currency != other.Currency)
-            return Error.Validation($"Cannot subtract {other.Currency} from {Currency}");
-        
-        if (Amount < other.Amount)
-            return Error.Validation("Result would be negative");
-        
-        return new Money(Amount - other.Amount, Currency).ToResult();
-    }
+    public Result<Money> Subtract(Money other) =>
+        Currency != other.Currency
+            ? Error.Validation($"Cannot subtract {other.Currency} from {Currency}")
+            : Amount < other.Amount
+                ? Error.Validation("Result would be negative")
+                : new Money(Amount - other.Amount, Currency).ToResult();
     
-    public Money Multiply(decimal factor)
-    {
-        if (factor < 0)
-            throw new ArgumentException("Factor cannot be negative", nameof(factor));
-        
-        return new Money(Amount * factor, Currency);
-    }
+    public Money Multiply(decimal factor) =>
+        factor < 0
+            ? throw new ArgumentException("Factor cannot be negative", nameof(factor))
+            : new Money(Amount * factor, Currency);
     
-    public Money Divide(decimal divisor)
-    {
-        if (divisor <= 0)
-            throw new ArgumentException("Divisor must be positive", nameof(divisor));
-        
-        return new Money(Amount / divisor, Currency);
-    }
+    public Money Divide(decimal divisor) =>
+        divisor <= 0
+            ? throw new ArgumentException("Divisor must be positive", nameof(divisor))
+            : new Money(Amount / divisor, Currency);
     
-    public Money ApplyDiscount(decimal percentage)
-    {
-        if (percentage < 0 || percentage > 100)
-            throw new ArgumentException("Percentage must be between 0 and 100", nameof(percentage));
-        
-        return new Money(Amount * (1 - percentage / 100), Currency);
-    }
+    public Money ApplyDiscount(decimal percentage) =>
+        percentage is < 0 or > 100
+            ? throw new ArgumentException("Percentage must be between 0 and 100", nameof(percentage))
+            : new Money(Amount * (1 - percentage / 100), Currency);
     
     public bool IsZero => Amount == 0;
     public bool IsPositive => Amount > 0;
@@ -382,15 +350,12 @@ public class Order : Aggregate<OrderId>
         DomainEvents.Add(new OrderCreatedEvent(id, customerId, CreatedAt));
     }
     
-    public static Result<Order> TryCreate(CustomerId customerId)
-    {
-        return customerId.ToResult()
+    public static Result<Order> TryCreate(CustomerId customerId) =>
+        customerId.ToResult()
             .Map(cid => new Order(OrderId.NewUnique(), cid));
-    }
     
-    public Result<Order> AddLine(ProductId productId, string productName, Money price, int quantity)
-    {
-        return this.ToResult()
+    public Result<Order> AddLine(ProductId productId, string productName, Money price, int quantity) =>
+        this.ToResult()
             .Ensure(_ => Status == OrderStatus.Draft,
                    Error.Validation("Can only add items to draft orders"))
             .Ensure(_ => quantity > 0,
@@ -412,11 +377,9 @@ public class Order : Aggregate<OrderId>
                 RecalculateTotal();
                 DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
             });
-    }
     
-    public Result<Order> RemoveLine(ProductId productId)
-    {
-        return this.ToResult()
+    public Result<Order> RemoveLine(ProductId productId) =>
+        this.ToResult()
             .Ensure(_ => Status == OrderStatus.Draft,
                    Error.Validation("Can only remove items from draft orders"))
             .Ensure(_ => _lines.Any(l => l.ProductId == productId),
@@ -428,11 +391,9 @@ public class Order : Aggregate<OrderId>
                 RecalculateTotal();
                 DomainEvents.Add(new OrderLineRemovedEvent(Id, productId));
             });
-    }
     
-    public Result<Order> Submit()
-    {
-        return this.ToResult()
+    public Result<Order> Submit() =>
+        this.ToResult()
             .Ensure(_ => Status == OrderStatus.Draft,
                    Error.Validation("Can only submit draft orders"))
             .Ensure(_ => Lines.Count > 0,
@@ -445,11 +406,9 @@ public class Order : Aggregate<OrderId>
                 SubmittedAt = DateTime.UtcNow;
                 DomainEvents.Add(new OrderSubmittedEvent(Id, Total, SubmittedAt.Value));
             });
-    }
     
-    public Result<Order> Ship()
-    {
-        return this.ToResult()
+    public Result<Order> Ship() =>
+        this.ToResult()
             .Ensure(_ => Status == OrderStatus.Submitted,
                    Error.Validation("Can only ship submitted orders"))
             .Tap(_ =>
@@ -458,11 +417,9 @@ public class Order : Aggregate<OrderId>
                 ShippedAt = DateTime.UtcNow;
                 DomainEvents.Add(new OrderShippedEvent(Id, ShippedAt.Value));
             });
-    }
     
-    public Result<Order> Cancel(string reason)
-    {
-        return this.ToResult()
+    public Result<Order> Cancel(string reason) =>
+        this.ToResult()
             .Ensure(_ => Status is OrderStatus.Draft or OrderStatus.Submitted,
                    Error.Validation("Can only cancel draft or submitted orders"))
             .Ensure(_ => !string.IsNullOrWhiteSpace(reason),
@@ -473,7 +430,6 @@ public class Order : Aggregate<OrderId>
                 CancelledAt = DateTime.UtcNow;
                 DomainEvents.Add(new OrderCancelledEvent(Id, reason, CancelledAt.Value));
             });
-    }
     
     private void RecalculateTotal()
     {
@@ -515,13 +471,10 @@ public class OrderLine : Entity<Guid>
         Quantity = quantity;
     }
     
-    public void UpdateQuantity(int newQuantity)
-    {
-        if (newQuantity <= 0)
-            throw new ArgumentException("Quantity must be positive", nameof(newQuantity));
-        
-        Quantity = newQuantity;
-    }
+    public void UpdateQuantity(int newQuantity) =>
+        Quantity = newQuantity > 0
+            ? newQuantity
+            : throw new ArgumentException("Quantity must be positive", nameof(newQuantity));
 }
 ```
 
@@ -803,7 +756,6 @@ public class BulkOrderService
     
     private Result<OrderConfirmation> ProcessOrders(Order order1, Order order2, Order order3)
     {
-        // Calculate bulk discount
         var totalAmount = order1.Total.Add(order2.Total).Value.Add(order3.Total).Value;
         var discount = _discountService.CalculateBulkDiscount(totalAmount);
         var finalAmount = totalAmount.ApplyDiscount(discount);
@@ -880,10 +832,7 @@ public class UnitOfWork : IUnitOfWork
     private readonly IEventBus _eventBus;
     private readonly List<IAggregate> _aggregates = [];
     
-    public void RegisterAggregate(IAggregate aggregate)
-    {
-        _aggregates.Add(aggregate);
-    }
+    public void RegisterAggregate(IAggregate aggregate) => _aggregates.Add(aggregate);
     
     public async Task<Result<Unit>> CommitAsync(CancellationToken cancellationToken)
     {
