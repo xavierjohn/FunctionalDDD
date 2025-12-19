@@ -1,4 +1,4 @@
-# Functional Domain Driven Design
+﻿# Functional Domain Driven Design
 
 [![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml)
 [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
@@ -65,10 +65,10 @@ It also supports fluent validation for validating the domain model and includes 
 ### What's New
 
 **Recent enhancements:**
-- ? **Discriminated Error Matching**: Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
-- ? **Comprehensive CancellationToken Support**: All async operations now support cancellation tokens for graceful shutdown and timeouts
-- ? **Tuple Destructuring**: Automatically destructure tuples in Match/Switch operations for cleaner code
-- ?? **Enhanced Documentation**: Comprehensive READMEs for all packages with detailed examples
+- ✨ **Discriminated Error Matching**: Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
+- ✨ **Comprehensive CancellationToken Support**: All async operations now support cancellation tokens for graceful shutdown and timeouts
+- ✨ **Tuple Destructuring**: Automatically destructure tuples in Match/Switch operations for cleaner code
+- 📚 **Enhanced Documentation**: Comprehensive READMEs for all packages with detailed examples
 
 For detailed documentation, see the [Railway Oriented Programming README](RailwayOrientedProgramming/README.md).
 
@@ -82,7 +82,7 @@ Here is a YouTube video explaining several of this library's methods. That video
 
   Comprehensive railway-oriented programming with Result/Maybe types, error handling, and async support.
 
-  ?? [View Documentation](RailwayOrientedProgramming/README.md)
+  📖 [View Documentation](RailwayOrientedProgramming/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
 
@@ -90,7 +90,7 @@ Here is a YouTube video explaining several of this library's methods. That video
 
   Seamlessly integrate FluentValidation with Railway Oriented Programming.
 
-  ?? [View Documentation](FluentValidation/README.md)
+  📖 [View Documentation](FluentValidation/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)
   
@@ -98,7 +98,7 @@ Here is a YouTube video explaining several of this library's methods. That video
 
   Create strongly-typed value objects like EmailAddress, RequiredString & RequiredGuid.
 
-  ?? [View Documentation](CommonValueObjects/README.md)
+  📖 [View Documentation](CommonValueObjects/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects)
 
@@ -112,7 +112,7 @@ Here is a YouTube video explaining several of this library's methods. That video
 
   DDD building blocks: Aggregate, Entity, ValueObject, ScalarValueObject, and Domain Events.
 
-  ?? [View Documentation](DomainDrivenDesign/README.md)
+  📖 [View Documentation](DomainDrivenDesign/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
 
@@ -120,7 +120,7 @@ Here is a YouTube video explaining several of this library's methods. That video
 
   Convert Result objects to HTTP responses for MVC and Minimal APIs.
 
-  ?? [View Documentation](Asp/README.md)
+  📖 [View Documentation](Asp/README.md)
 
   [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
 
@@ -164,13 +164,13 @@ var result = await GetUserAsync(userId)
     .TapAsync(user => SendEmailAsync(user.Email));
 ```
 
-?? **Next Steps**: See the [Examples](#examples) section below or explore the [Railway Oriented Programming documentation](RailwayOrientedProgramming/README.md) for comprehensive guidance.
+👉 **Next Steps**: See the [Examples](#examples) section below or explore the [Railway Oriented Programming documentation](RailwayOrientedProgramming/README.md) for comprehensive guidance.
 
 ## Performance
 
-### ? **Negligible Overhead, Maximum Clarity**
+### ⚡ **Negligible Overhead, Maximum Clarity**
 
-FunctionalDDD is designed with performance in mind. Comprehensive benchmarks on **.NET 10** show that railway-oriented programming adds only **~11-16 nanoseconds** of overhead compared to imperative code�less than **0.002%** of typical I/O operations.
+FunctionalDDD is designed with performance in mind. Comprehensive benchmarks on **.NET 10** show that railway-oriented programming adds only **~11-16 nanoseconds** of overhead compared to imperative code—less than **0.002%** of typical I/O operations.
 
 **Test Environment**: Intel Core i7-1185G7 @ 3.00GHz, Windows 11, .NET 10.0.1
 
@@ -197,7 +197,7 @@ FunctionalDDD is designed with performance in mind. Comprehensive benchmarks on 
 Database Query:   1,000,000 ns (1 ms)
 HTTP Request:    10,000,000 ns (10 ms)
 ROP Overhead:            16 ns (0.000016 ms)
-                         ?
+                         ↑
                     0.0016% overhead
 ```
 
@@ -205,12 +205,12 @@ ROP Overhead:            16 ns (0.000016 ms)
 
 #### Benefits Without Sacrifice
 
-? **Same Memory Usage** - No additional allocations vs imperative code  
-? **Blazing Fast** - Single-digit to low double-digit nanosecond overhead  
-? **Better Code** - Cleaner, more testable, and maintainable  
-? **Explicit Errors** - Clear error propagation and aggregation  
+✅ **Same Memory Usage** - No additional allocations vs imperative code  
+⚡ **Blazing Fast** - Single-digit to low double-digit nanosecond overhead  
+✅ **Better Code** - Cleaner, more testable, and maintainable  
+✅ **Explicit Errors** - Clear error propagation and aggregation  
 
-?? **[View Detailed Benchmarks ?](BENCHMARKS.md)**
+📊 **[View Detailed Benchmarks 🔗](BENCHMARKS.md)**
 
 Run benchmarks yourself:
 ```bash
