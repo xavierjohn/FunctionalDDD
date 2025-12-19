@@ -33,7 +33,7 @@ public class CancellationTokenTests
     public async Task TryAsync_WithCancellation_ShouldReturnFailureResult()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act
@@ -51,7 +51,7 @@ public class CancellationTokenTests
     public async Task BindAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         Task<Result<int>> BindFunction(int value, CancellationToken ct)
@@ -74,7 +74,7 @@ public class CancellationTokenTests
     public async Task MapAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         Task<int> MapFunction(int value, CancellationToken ct)
@@ -97,7 +97,7 @@ public class CancellationTokenTests
     public async Task TapAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         Task TapFunction(int value, CancellationToken ct)
@@ -120,7 +120,7 @@ public class CancellationTokenTests
     public async Task EnsureAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
@@ -142,7 +142,7 @@ public class CancellationTokenTests
     public async Task CompensateAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
@@ -164,7 +164,7 @@ public class CancellationTokenTests
     public async Task MatchAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
@@ -192,7 +192,7 @@ public class CancellationTokenTests
     public async Task MatchAsync_WithCancellationToken_AndResultCheck_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
@@ -220,7 +220,7 @@ public class CancellationTokenTests
     public async Task SuccessIfAsync_WithCancellationToken_ShouldPassTokenToPredicate()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
@@ -245,7 +245,7 @@ public class CancellationTokenTests
     public async Task FailureIfAsync_WithCancellationToken_ShouldPassTokenToPredicate()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         // Act
@@ -270,7 +270,7 @@ public class CancellationTokenTests
     public async Task ChainedOperations_WithCancellationToken_ShouldPropagateToken()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var bindTokenPassed = false;
         var mapTokenPassed = false;
         var tapTokenPassed = false;
@@ -311,7 +311,7 @@ public class CancellationTokenTests
     public async Task TapErrorAsync_WithCancellationToken_ShouldPassTokenToFunction()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         Task TapErrorFunction(Error error, CancellationToken ct)
@@ -333,7 +333,7 @@ public class CancellationTokenTests
     public async Task TapErrorAsync_OnTaskResult_WithCancellationToken_ShouldPassToken()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         Task TapErrorFunction(Error error, CancellationToken ct)
@@ -355,7 +355,7 @@ public class CancellationTokenTests
     public async Task TapErrorAsync_OnTaskResult_WithCancellationToken_NoError_ShouldPassToken()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         Task TapErrorFunction(CancellationToken ct)
@@ -377,7 +377,7 @@ public class CancellationTokenTests
     public async Task TapErrorAsync_OnValueTaskResult_WithCancellationToken_ShouldPassToken()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         ValueTask TapErrorFunction(Error error, CancellationToken ct)
@@ -399,7 +399,7 @@ public class CancellationTokenTests
     public async Task TapErrorAsync_OnValueTaskResult_WithCancellationToken_NoError_ShouldPassToken()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tokenPassed = false;
 
         ValueTask TapErrorFunction(CancellationToken ct)
