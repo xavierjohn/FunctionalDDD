@@ -33,7 +33,7 @@ The FunctionalDDD library is designed with performance in mind. All benchmarks a
 ### ? **Minimal Overhead**
 Railway-oriented programming adds **~11-16 nanoseconds** overhead compared to imperative style (measured on .NET 10), which is negligible in real-world applications (~12-13% overhead).
 
-### ?? **Consistent Memory Usage**
+### ? **Consistent Memory Usage**
 Both ROP and imperative styles allocate the same amount of memory for equivalent operations, showing no additional allocation overhead from the abstraction.
 
 ### ?? **Success Path Optimizations**

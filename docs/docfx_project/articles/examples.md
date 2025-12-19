@@ -1,4 +1,4 @@
-# Examples
+﻿# Examples
 
 This page provides quick code snippets to get you started. For comprehensive real-world examples, see the [Examples Directory](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples).
 
@@ -6,22 +6,22 @@ This page provides quick code snippets to get you started. For comprehensive rea
 
 The repository includes production-ready examples demonstrating complete systems:
 
-### ?? [E-Commerce Order Processing](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample)
+### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample)
 Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, compensation patterns, and transaction-like behavior.
 
 **Key Concepts**: Aggregate lifecycle, compensation, parallel validation, async workflows
 
-### ?? [Banking Transactions](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample)
+### 🏦 [Banking Transactions](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample)
 Banking system with fraud detection, daily limits, overdraft protection, and interest calculations. Shows security patterns and state machines.
 
 **Key Concepts**: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail
 
-### ?? [User Management](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleUserLibrary)
+### 👤 [User Management](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleUserLibrary)
 User registration with FluentValidation integration and value objects.
 
 **Key Concepts**: Aggregates, FluentValidation, value objects, type safety
 
-### ?? [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWebApplication)
+### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWebApplication)
 ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.
 
 **Key Concepts**: ToActionResult, ToHttpResult, API integration, HTTP status codes
