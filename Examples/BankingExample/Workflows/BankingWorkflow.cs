@@ -67,7 +67,7 @@ public class BankingWorkflow
 
     /// <summary>
     /// Processes a transfer between accounts with full validation.
-    /// Demonstrates: Complex workflow with multiple validations and parallel operations.
+    /// Demonstrates: Complex workflow with multiple validations and parallel operations using ParallelAsync.
     /// </summary>
     public async Task<Result<(BankAccount From, BankAccount To)>> ProcessTransferAsync(
         BankAccount fromAccount,
@@ -76,20 +76,15 @@ public class BankingWorkflow
         string description,
         CancellationToken cancellationToken = default)
     {
-        // Validate both accounts in parallel
-        var fromValidation = _fraudDetection.AnalyzeTransactionAsync(fromAccount, amount, "transfer-out", cancellationToken);
-        var toValidation = _fraudDetection.AnalyzeTransactionAsync(toAccount, amount, "transfer-in", cancellationToken);
+        // Validate both accounts in parallel using ParallelAsync
+        var validationResult = await _fraudDetection.AnalyzeTransactionAsync(fromAccount, amount, "transfer-out", cancellationToken)
+            .ParallelAsync(_fraudDetection.AnalyzeTransactionAsync(toAccount, amount, "transfer-in", cancellationToken))
+            .AwaitAsync();
 
-        var validationResults = await Task.WhenAll(fromValidation, toValidation);
-
-        if (validationResults[0].IsFailure)
-            return validationResults[0].Error;
-
-        if (validationResults[1].IsFailure)
-            return validationResults[1].Error;
-
+        if (validationResult.IsFailure)
+            return validationResult.Error;
         // Perform transfer
-        return await Task.FromResult(fromAccount.TransferTo(toAccount, amount, description))
+        return await fromAccount.TransferTo(toAccount, amount, description)
             .TapAsync(accounts => LogTransactionAsync(
                 fromAccount.Id,
                 "transfer",

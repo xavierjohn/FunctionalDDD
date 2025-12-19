@@ -103,7 +103,9 @@ public class OrderWorkflow
     }
 
     /// <summary>
-    /// Demonstrates parallel validation of multiple order lines.
+    /// Demonstrates parallel validation of multiple order lines using TraverseAsync.
+    /// Note: For validating collections, TraverseAsync is more appropriate than ParallelAsync.
+    /// ParallelAsync is best for 2-9 independent operations that need to run concurrently.
     /// </summary>
     private async Task<Result<Order>> AddItemsToOrderAsync(
         Order order,
@@ -113,23 +115,15 @@ public class OrderWorkflow
         if (items.Count == 0)
             return Error.Validation("Order must contain at least one item");
 
-        // Validate all items in parallel
-        var validationTasks = items.Select(item =>
-            Task.FromResult(_inventoryService.CheckAvailability(item.ProductId, item.Quantity))
+        // Validate all items - errors are automatically aggregated
+        var validationResult = await items.TraverseAsync(
+            (item, ct) => Task.FromResult(_inventoryService.CheckAvailability(item.ProductId, item.Quantity)),
+            cancellationToken
         );
 
-        var validationResults = await Task.WhenAll(validationTasks);
-
-        // Check if any validation failed
-        var failures = validationResults.Where(r => r.IsFailure).ToList();
-        if (failures.Count > 0)
-        {
-            var combinedError = failures
-                .Select(r => r.Error)
-                .Aggregate((current, next) => current.Combine(next));
-
-            return combinedError;
-        }
+        // If any validation failed, return aggregated errors
+        if (validationResult.IsFailure)
+            return validationResult.Error;
 
         // Add all items to order
         var currentOrder = Result.Success(order);

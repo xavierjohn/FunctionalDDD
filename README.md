@@ -166,6 +166,8 @@ var result = await GetUserAsync(userId)
 
 👉 **Next Steps**: See the [Examples](#examples) section below or explore the [Railway Oriented Programming documentation](RailwayOrientedProgramming/README.md) for comprehensive guidance.
 
+💡 **New to functional programming?** Check out the [Debugging ROP Chains guide](RailwayOrientedProgramming/README.md#debugging-railway-oriented-programming) to learn how to effectively debug and troubleshoot Railway Oriented Programming code.
+
 ## Performance
 
 ### ⚡ **Negligible Overhead, Maximum Clarity**
