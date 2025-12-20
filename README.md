@@ -164,9 +164,18 @@ var result = await GetUserAsync(userId)
     .TapAsync(user => SendEmailAsync(user.Email));
 ```
 
+#### 🚀 Quick Start Guides
+
+Choose your preferred learning path:
+
+- **[Quick Start for C# Developers](Examples/QUICKSTART_CSHARP.md)** - Perfect if you're new to functional programming! Uses familiar C# patterns with alias methods like `Then`, `Peek`, `OrElse`, and `Require`.
+- **[Standard Quick Start](Examples/QUICKSTART.md)** - Uses canonical functional programming terminology (`Bind`, `Map`, `Tap`, `Ensure`) aligned with F#, Haskell, and other FP languages.
+
+Both guides cover the same powerful concepts - choose based on your comfort level!
+
 👉 **Next Steps**: See the [Examples](#examples) section below or explore the [Railway Oriented Programming documentation](RailwayOrientedProgramming/README.md) for comprehensive guidance.
 
-💡 **New to functional programming?** Check out the [Debugging ROP Chains guide](RailwayOrientedProgramming/README.md#debugging-railway-oriented-programming) to learn how to effectively debug and troubleshoot Railway Oriented Programming code.
+💡 **Need help debugging?** Check out the [Debugging ROP Chains guide](RailwayOrientedProgramming/README.md#debugging-railway-oriented-programming) to learn how to effectively debug and troubleshoot Railway Oriented Programming code.
 
 ## Performance
 
