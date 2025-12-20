@@ -249,10 +249,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.RoutePrefix = string.Empty; // Swagger at root URL
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
@@ -383,7 +380,7 @@ All test projects should build and pass (0 tests initially).
 
 - Always target .NET 10 (`-f net10.0`) for new projects
 - Use `AntiCorruptionLayer` as the infrastructure project name (can be shortened to `Acl` in namespaces)
-- Date-based API versioning folders (e.g., `2025-01-15`) should be created when adding first controller
+- Date-based API versioning folders (e.g., `2025-01-15`) should be created when adding first controller. Use current date by default and the controller should be versioned accordingly.
 - Test projects follow pattern: `{ProjectName}.Tests` in `{Layer}/tests/` directory
 - Never add project references that violate layer dependencies (Domain must have zero dependencies)
 
