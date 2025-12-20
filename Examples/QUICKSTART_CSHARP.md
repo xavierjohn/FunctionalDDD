@@ -326,21 +326,20 @@ public Result<User> CreateUser(string first, string last, string email)
 }
 ```
 
-**Result when multiple fail:**
+**HTTP Response when multiple validations fail:**
 ```json
 {
-  "isSuccess": false,
-  "error": {
-    "type": "AggregateError",
-    "errors": [
-      { "message": "First name cannot be empty", "field": "firstName" },
-      { "message": "Invalid email format", "field": "email" }
-    ]
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "firstName": ["First name cannot be empty"],
+    "email": ["Invalid email format"]
   }
 }
 ```
 
-Perfect for form validation in web APIs!
+Perfect for form validation in web APIs! The response follows the standard `ProblemDetails` format (RFC 9110).
 
 ## Async Operations
 
