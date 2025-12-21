@@ -1,0 +1,86 @@
+# Minimal Clean Architecture Scaffold
+# This creates the basic structure - add features via GitHub issues!
+
+project:
+  name: MyAwesomeProject
+  namespace: MyCompany.MyProject
+  description: Clean architecture project - ready to extend with features!
+  author:
+    name: Your Name
+    email: you@example.com
+
+# Minimal domain - just enough to show the pattern
+domain:
+  # One simple aggregate to demonstrate the pattern
+  aggregates:
+    - name: HealthCheck
+      id: HealthCheckId
+      properties:
+        - name: Status
+          type: string
+          required: true
+        - name: Timestamp
+          type: DateTime
+      behaviors:
+        - name: UpdateStatus
+          parameters:
+            - status: string
+          returns: Result<HealthCheck>
+  
+  # Simple value objects
+  valueObjects:
+    - name: HealthCheckId
+      type: RequiredGuid
+
+# Minimal application layer
+application:
+  # One query to demonstrate CQRS
+  queries:
+    - name: GetHealthCheck
+      description: Get system health status
+      returns: HealthCheck
+  
+  # One command to demonstrate pattern
+  commands:
+    - name: UpdateHealthCheck
+      description: Update health check status
+      parameters:
+        - status: string
+      returns: HealthCheck
+  
+  # Basic abstraction
+  abstractions:
+    - name: IHealthCheckRepository
+      methods:
+        - name: GetAsync
+          parameters:
+            - ct: CancellationToken
+          returns: Task<HealthCheck?>
+        - name: UpdateAsync
+          parameters:
+            - healthCheck: HealthCheck
+            - ct: CancellationToken
+          returns: Task
+
+# Minimal API
+api:
+  version: "2024-01-15"
+  
+  observability:
+    openTelemetry: true
+    serviceName: MyAwesomeProjectApi
+    includeTracing: true
+    includeMetrics: true
+  
+  endpoints:
+    - resource: health
+      description: Health check endpoints
+      operations:
+        - method: GET
+          route: ""
+          description: Get health status
+
+# Infrastructure - just basics
+infrastructure:
+  database:
+    type: InMemory  # Start simple, upgrade later

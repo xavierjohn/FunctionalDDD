@@ -1,0 +1,384 @@
+# E-Commerce Order Management System
+# This is a demo specification for the FunctionalDDD Clean Architecture Agent
+
+project:
+  name: ECommerceOrderSystem
+  namespace: DemoCompany.ECommerce
+  description: Complete e-commerce order management system with customer management, product catalog, and order processing
+  author:
+    name: Demo User
+    company: Demo Company
+    email: demo@example.com
+
+domain:
+  aggregates:
+    - name: Order
+      description: Customer order aggregate with order lines
+      id: OrderId
+      properties:
+        - name: CustomerId
+          type: CustomerId
+          required: true
+          description: Customer who placed the order
+          
+        - name: OrderLines
+          type: List<OrderLine>
+          description: Items in the order
+          
+        - name: Status
+          type: OrderStatus
+          enum: [Draft, Submitted, Processing, Shipped, Delivered, Cancelled]
+          description: Current order status
+          
+        - name: Total
+          type: Money
+          description: Order total amount
+          
+        - name: ShippingAddress
+          type: Address
+          required: true
+          
+        - name: BillingAddress
+          type: Address
+          required: true
+          
+        - name: CreatedAt
+          type: DateTime
+          
+        - name: SubmittedAt
+          type: DateTime?
+          
+        - name: ShippedAt
+          type: DateTime?
+      
+      behaviors:
+        - name: Submit
+          description: Submit the order for processing
+          validates:
+            - Status == Draft
+            - OrderLines.Count > 0
+            - Total.Amount > 0
+          returns: Result<Order>
+          
+        - name: AddLine
+          description: Add item to the order
+          parameters:
+            - productId: ProductId
+            - productName: string
+            - quantity: int
+            - price: Money
+          validates:
+            - Status == Draft
+            - quantity > 0
+            - quantity <= 1000
+          returns: Result<Order>
+          
+        - name: RemoveLine
+          description: Remove item from order
+          parameters:
+            - productId: ProductId
+          validates:
+            - Status == Draft
+          returns: Result<Order>
+          
+        - name: Ship
+          description: Mark order as shipped
+          validates:
+            - Status == Submitted
+          returns: Result<Order>
+          
+        - name: Cancel
+          description: Cancel the order
+          parameters:
+            - reason: string
+          validates:
+            - Status in [Draft, Submitted]
+            - reason is not empty
+          returns: Result<Order>
+    
+    - name: Customer
+      description: Customer aggregate with contact information
+      id: CustomerId
+      properties:
+        - name: FirstName
+          type: string
+          required: true
+        - name: LastName
+          type: string
+          required: true
+        - name: Email
+          type: EmailAddress
+          required: true
+        - name: Phone
+          type: PhoneNumber
+        - name: DefaultShippingAddress
+          type: Address
+        - name: DefaultBillingAddress
+          type: Address
+        - name: CreatedAt
+          type: DateTime
+        - name: IsActive
+          type: bool
+      
+      behaviors:
+        - name: UpdateEmail
+          parameters:
+            - email: EmailAddress
+          returns: Result<Customer>
+          
+        - name: UpdateName
+          parameters:
+            - firstName: string
+            - lastName: string
+          validates:
+            - firstName is not empty
+            - lastName is not empty
+          returns: Result<Customer>
+          
+        - name: Deactivate
+          returns: Result<Customer>
+    
+    - name: Product
+      description: Product catalog item
+      id: ProductId
+      properties:
+        - name: Name
+          type: string
+          required: true
+        - name: Description
+          type: string
+        - name: Price
+          type: Money
+          required: true
+        - name: Stock
+          type: int
+        - name: Category
+          type: string
+        - name: IsAvailable
+          type: bool
+        - name: CreatedAt
+          type: DateTime
+      
+      behaviors:
+        - name: UpdatePrice
+          parameters:
+            - newPrice: Money
+          validates:
+            - newPrice.Amount > 0
+          returns: Result<Product>
+          
+        - name: AdjustStock
+          parameters:
+            - quantity: int
+          returns: Result<Product>
+          
+        - name: Discontinue
+          returns: Result<Product>
+  
+  valueObjects:
+    # Simple value objects
+    - name: OrderId
+      type: RequiredGuid
+      
+    - name: CustomerId
+      type: RequiredGuid
+      
+    - name: ProductId
+      type: RequiredGuid
+    
+    # Complex value objects
+    - name: EmailAddress
+      type: ScalarValueObject<string>
+      validation:
+        - rule: "!string.IsNullOrWhiteSpace(value)"
+          message: "Email cannot be empty"
+        - rule: "value.Contains('@')"
+          message: "Email must contain @"
+        - rule: "value.Length <= 100"
+          message: "Email cannot exceed 100 characters"
+    
+    - name: PhoneNumber
+      type: ScalarValueObject<string>
+      validation:
+        - rule: "!string.IsNullOrWhiteSpace(value)"
+          message: "Phone number cannot be empty"
+    
+    - name: Money
+      type: ValueObject
+      properties:
+        - name: Amount
+          type: decimal
+        - name: Currency
+          type: string
+      validation:
+        - rule: "Amount >= 0"
+          message: "Amount cannot be negative"
+        - rule: "Currency.Length == 3"
+          message: "Currency must be 3-letter ISO code"
+    
+    - name: Address
+      type: ValueObject
+      properties:
+        - name: Street
+          type: string
+        - name: City
+          type: string
+        - name: State
+          type: string
+        - name: PostalCode
+          type: string
+        - name: Country
+          type: string
+
+  events:
+    - name: OrderCreatedEvent
+      properties:
+        - orderId: OrderId
+        - customerId: CustomerId
+        - createdAt: DateTime
+    
+    - name: OrderSubmittedEvent
+      properties:
+        - orderId: OrderId
+        - total: Money
+        - submittedAt: DateTime
+    
+    - name: OrderShippedEvent
+      properties:
+        - orderId: OrderId
+        - shippedAt: DateTime
+
+application:
+  queries:
+    - name: GetOrderById
+      description: Retrieve order by ID
+      parameters:
+        - orderId: OrderId
+      returns: Order
+      
+    - name: ListOrders
+      description: List orders with filtering
+      parameters:
+        - customerId: CustomerId?
+        - status: OrderStatus?
+      returns: List<Order>
+      
+    - name: GetCustomerById
+      description: Retrieve customer by ID
+      parameters:
+        - customerId: CustomerId
+      returns: Customer
+      
+    - name: SearchProducts
+      description: Search products by name
+      parameters:
+        - searchTerm: string
+      returns: List<Product>
+  
+  commands:
+    - name: CreateOrder
+      description: Create a new order
+      parameters:
+        - customerId: CustomerId
+        - shippingAddress: Address
+        - billingAddress: Address
+      returns: Order
+      
+    - name: AddOrderLine
+      description: Add item to order
+      parameters:
+        - orderId: OrderId
+        - productId: ProductId
+        - quantity: int
+      returns: Order
+      
+    - name: SubmitOrder
+      description: Submit order for processing
+      parameters:
+        - orderId: OrderId
+      returns: Order
+      
+    - name: RegisterCustomer
+      description: Register a new customer
+      parameters:
+        - firstName: string
+        - lastName: string
+        - email: string
+      returns: Customer
+  
+  abstractions:
+    - name: IOrderRepository
+      methods:
+        - name: GetByIdAsync
+          parameters:
+            - orderId: OrderId
+            - ct: CancellationToken
+          returns: Task<Order?>
+        - name: AddAsync
+          parameters:
+            - order: Order
+            - ct: CancellationToken
+          returns: Task
+    
+    - name: IEmailService
+      methods:
+        - name: SendOrderConfirmationAsync
+          parameters:
+            - order: Order
+            - ct: CancellationToken
+          returns: Task<Result<Unit>>
+
+api:
+  version: "2024-01-15"
+  
+  observability:
+    openTelemetry: true
+    serviceName: ECommerceApi
+    includeTracing: true
+    includeMetrics: true
+  
+  endpoints:
+    - resource: orders
+      description: Order management endpoints
+      operations:
+        - method: GET
+          route: ""
+          description: List all orders
+          
+        - method: GET
+          route: "{orderId}"
+          description: Get order by ID
+          
+        - method: POST
+          route: ""
+          description: Create new order
+          
+        - method: POST
+          route: "{orderId}/lines"
+          description: Add item to order
+          
+        - method: POST
+          route: "{orderId}/submit"
+          description: Submit order
+    
+    - resource: customers
+      description: Customer management
+      operations:
+        - method: GET
+          route: "{customerId}"
+          description: Get customer by ID
+          
+        - method: POST
+          route: ""
+          description: Register new customer
+    
+    - resource: products
+      description: Product catalog
+      operations:
+        - method: GET
+          route: ""
+          description: Search products
+          
+        - method: GET
+          route: "{productId}"
+          description: Get product by ID

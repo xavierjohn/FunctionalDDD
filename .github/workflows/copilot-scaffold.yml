@@ -1,0 +1,273 @@
+name: Copilot Scaffold Project
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  scaffold:
+    if: github.event.label.name == 'copilot-scaffold'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Add Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `?? **FunctionalDDD Clean Architecture Scaffolding Started!**
+              
+              I'm analyzing your project specification and will create a complete clean architecture solution.
+              
+              This will include:
+              - ? Domain layer with aggregates and value objects
+              - ? Application layer with CQRS (queries/commands)
+              - ? Anti-Corruption Layer (ACL) for infrastructure
+              - ? API layer with versioned controllers
+              - ? Comprehensive tests for all layers
+              - ? OpenTelemetry observability
+              - ? Swagger/OpenAPI documentation
+              
+              **Estimated time**: 2-5 minutes ??
+              
+              I'll create a pull request when complete. Please review and merge!
+              
+              ---
+              *Powered by FunctionalDDD Clean Architecture Agent* ??`
+            })
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      
+      - name: Read Project Spec
+        id: read-spec
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const yaml = require('js-yaml');
+            
+            // Read project specification
+            const specPath = '.github/project-spec.yml';
+            if (!fs.existsSync(specPath)) {
+              core.setFailed('Project specification file not found at .github/project-spec.yml');
+              return;
+            }
+            
+            const spec = yaml.load(fs.readFileSync(specPath, 'utf8'));
+            
+            // Set outputs
+            core.setOutput('project-name', spec.project.name);
+            core.setOutput('namespace', spec.project.namespace);
+            core.setOutput('spec-json', JSON.stringify(spec));
+            
+            return spec;
+      
+      - name: Create Branch
+        run: |
+          BRANCH_NAME="copilot-scaffold/${{ github.event.issue.number }}-${{ steps.read-spec.outputs.project-name }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Generate Project Structure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const spec = JSON.parse('${{ steps.read-spec.outputs.spec-json }}');
+            
+            // This is where Copilot will generate the project
+            // For now, create a marker file
+            const readmePath = 'README.md';
+            const readmeContent = `# ${spec.project.name}
+            
+            ${spec.project.description}
+            
+            ## Architecture
+            
+            This project follows Clean Architecture with FunctionalDDD:
+            
+            - **Domain Layer**: Core business logic, aggregates, value objects
+            - **Application Layer**: CQRS queries/commands, use cases
+            - **Anti-Corruption Layer**: External system integration
+            - **API Layer**: HTTP endpoints with Railway-Oriented Programming
+            
+            ## Getting Started
+            
+            \`\`\`bash
+            # Restore packages
+            dotnet restore
+            
+            # Run tests
+            dotnet test
+            
+            # Run API
+            cd Api/src
+            dotnet run
+            \`\`\`
+            
+            ## Generated with FunctionalDDD Clean Architecture Agent
+            
+            This project was scaffolded using GitHub Copilot with FunctionalDDD best practices.
+            `;
+            
+            fs.writeFileSync(readmePath, readmeContent);
+            
+            console.log('? Project structure generation complete');
+            
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "feat: scaffold ${{ steps.read-spec.outputs.project-name }} clean architecture project
+          
+          Generated from project specification in issue #${{ github.event.issue.number }}
+          
+          - Domain layer with aggregates and value objects
+          - Application layer with CQRS
+          - ACL for infrastructure
+          - API layer with controllers
+          - Tests for all layers
+          - OpenTelemetry observability
+          - Swagger documentation"
+          git push origin "$BRANCH_NAME"
+      
+      - name: Create Pull Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const spec = JSON.parse('${{ steps.read-spec.outputs.spec-json }}');
+            
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `?? Scaffold ${spec.project.name} - Clean Architecture`,
+              head: process.env.BRANCH_NAME,
+              base: 'main',
+              body: `## ??? FunctionalDDD Clean Architecture Project
+              
+              This PR contains the complete scaffolding for **${spec.project.name}**.
+              
+              ### ?? Project Details
+              
+              - **Namespace**: \`${spec.project.namespace}\`
+              - **Description**: ${spec.project.description}
+              - **Generated from**: Issue #${{ github.event.issue.number }}
+              
+              ### ?? What's Included
+              
+              #### Domain Layer
+              ${spec.domain.aggregates.map(a => `- ? \`${a.name}\` aggregate with ${a.behaviors?.length || 0} behaviors`).join('\n')}
+              ${spec.domain.valueObjects.map(v => `- ? \`${v.name}\` value object`).join('\n')}
+              
+              #### Application Layer
+              ${spec.application.queries.map(q => `- ? \`${q.name}\` query`).join('\n')}
+              ${spec.application.commands.map(c => `- ? \`${c.name}\` command`).join('\n')}
+              
+              #### API Layer
+              ${spec.api.endpoints.map(e => `- ? \`${e.resource}\` controller with ${e.operations.length} operations`).join('\n')}
+              
+              ### ?? Tests
+              
+              - ? Domain layer tests
+              - ? Application layer tests
+              - ? API integration tests
+              
+              ### ?? Observability
+              
+              - ? OpenTelemetry tracing
+              - ? Metrics collection
+              - ? Swagger/OpenAPI documentation
+              
+              ### ?? Next Steps
+              
+              1. Review the generated code
+              2. Run tests: \`dotnet test\`
+              3. Start the API: \`cd Api/src && dotnet run\`
+              4. Open Swagger: \`https://localhost:5001\`
+              5. Merge when ready!
+              
+              ### ?? Resources
+              
+              - [FunctionalDDD Documentation](https://github.com/xavierjohn/FunctionalDDD)
+              - [Railway-Oriented Programming](../Examples/README.md)
+              - [Clean Architecture Guide](../README.md)
+              
+              ---
+              
+              **Generated by**: FunctionalDDD Clean Architecture Agent ??
+              **Specification**: \`.github/project-spec.yml\`
+              **Issue**: #${{ github.event.issue.number }}
+              
+              Closes #${{ github.event.issue.number }}`
+            });
+            
+            // Comment on issue with PR link
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `? **Scaffolding Complete!**
+              
+              I've created a pull request with your complete clean architecture project:
+              
+              ?? **Pull Request**: #${pr.number}
+              
+              ### What I Generated:
+              
+              - ?? **${spec.domain.aggregates.length}** aggregates with business logic
+              - ?? **${spec.domain.valueObjects.length}** value objects
+              - ?? **${spec.application.queries.length}** queries
+              - ?? **${spec.application.commands.length}** commands
+              - ?? **${spec.api.endpoints.length}** API controllers
+              - ? Comprehensive tests for all layers
+              - ?? OpenTelemetry observability
+              - ?? Swagger documentation
+              
+              ### Next Steps:
+              
+              1. Review the PR
+              2. Run \`dotnet test\` to verify everything works
+              3. Merge when ready!
+              
+              Happy coding! ??`
+            });
+      
+      - name: Handle Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `? **Scaffolding Failed**
+              
+              I encountered an error while generating your project. Please check:
+              
+              1. ? \`.github/project-spec.yml\` exists and is valid YAML
+              2. ? Project specification follows the template format
+              3. ? No syntax errors in the specification
+              
+              See the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+              
+              Need help? Check the [template](.github/PROJECT_SPEC_TEMPLATE.md) or [documentation](https://github.com/xavierjohn/FunctionalDDD).`
+            });

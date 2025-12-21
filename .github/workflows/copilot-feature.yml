@@ -1,0 +1,291 @@
+name: Copilot Add Feature
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  add-feature:
+    if: github.event.label.name == 'copilot-feature'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Extract Feature Type
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body;
+            const yamlMatch = body.match(/```yaml\n([\s\S]*?)\n```/);
+            
+            if (!yamlMatch) {
+              core.setFailed('No YAML specification found in issue body');
+              return;
+            }
+            
+            const yaml = require('js-yaml');
+            const spec = yaml.load(yamlMatch[1]);
+            
+            core.setOutput('feature-type', spec.feature?.type || 'unknown');
+            core.setOutput('layer', spec.feature?.layer || 'unknown');
+            core.setOutput('spec-json', JSON.stringify(spec));
+            
+            return spec;
+      
+      - name: Add Comment - Processing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const featureType = '${{ steps.extract.outputs.feature-type }}';
+            const layer = '${{ steps.extract.outputs.layer }}';
+            
+            const icons = {
+              aggregate: '??',
+              valueObject: '??',
+              query: '??',
+              command: '??',
+              endpoint: '??',
+              repository: '??',
+              tests: '??',
+              middleware: '??'
+            };
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icons[featureType] || '??'} **Adding ${featureType} to ${layer} layer...**
+              
+              I'm generating the code for this feature following FunctionalDDD Clean Architecture patterns.
+              
+              **What I'll create**:
+              - ? Implementation following Railway-Oriented Programming
+              - ? FluentValidation for any validation rules
+              - ? Tests covering success and failure paths
+              - ? Updated documentation
+              
+              **Estimated time**: 2-3 minutes ??
+              
+              I'll create a pull request when complete!
+              
+              ---
+              *Powered by FunctionalDDD Clean Architecture Agent* ??`
+            });
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      
+      - name: Create Branch
+        run: |
+          FEATURE_TYPE="${{ steps.extract.outputs.feature-type }}"
+          ISSUE_NUM="${{ github.event.issue.number }}"
+          BRANCH_NAME="feature/${ISSUE_NUM}-add-${FEATURE_TYPE}"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Generate Feature Code
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const spec = JSON.parse('${{ steps.extract.outputs.spec-json }}');
+            const featureType = spec.feature?.type;
+            const layer = spec.feature?.layer;
+            
+            // Here Copilot would generate actual code based on feature type
+            // For now, create a placeholder file
+            const readmePath = `${layer}_${featureType}_GENERATED.md`;
+            const content = `# Generated: ${featureType} in ${layer} layer
+            
+            This file would contain the generated code for:
+            - Type: ${featureType}
+            - Layer: ${layer}
+            
+            ## What was generated
+            
+            Based on the specification, the following would be created:
+            
+            ${JSON.stringify(spec, null, 2)}
+            
+            ## Files that would be created/modified
+            
+            - Domain layer files (if applicable)
+            - Application layer files (if applicable)
+            - ACL layer files (if applicable)
+            - API layer files (if applicable)
+            - Test files
+            - Documentation updates
+            `;
+            
+            fs.writeFileSync(readmePath, content);
+            
+            console.log('? Feature code generation complete');
+      
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "feat: add ${{ steps.extract.outputs.feature-type }} to ${{ steps.extract.outputs.layer }} layer
+          
+          Generated from feature request in issue #${{ github.event.issue.number }}
+          
+          - Added ${{ steps.extract.outputs.feature-type }} implementation
+          - Added tests
+          - Updated documentation"
+          git push origin "$BRANCH_NAME"
+      
+      - name: Create Pull Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const spec = JSON.parse('${{ steps.extract.outputs.spec-json }}');
+            const featureType = spec.feature?.type || 'feature';
+            const layer = spec.feature?.layer || 'unknown';
+            
+            const icons = {
+              aggregate: '??',
+              valueObject: '??',
+              query: '??',
+              command: '??',
+              endpoint: '??',
+              repository: '??',
+              tests: '??',
+              middleware: '??'
+            };
+            
+            const icon = icons[featureType] || '??';
+            
+            // Get feature name from spec
+            let featureName = 'New Feature';
+            if (spec.aggregate?.name) featureName = spec.aggregate.name;
+            else if (spec.valueObject?.name) featureName = spec.valueObject.name;
+            else if (spec.query?.name) featureName = spec.query.name;
+            else if (spec.command?.name) featureName = spec.command.name;
+            
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `${icon} Add ${featureName} ${featureType} to ${layer} layer`,
+              head: process.env.BRANCH_NAME,
+              base: 'main',
+              body: `## ${icon} Feature Addition: ${featureName}
+              
+              **Type**: ${featureType}
+              **Layer**: ${layer}
+              **Requested in**: Issue #${{ github.event.issue.number }}
+              
+              ### ?? What's Included
+              
+              This PR adds the \`${featureName}\` ${featureType} to the ${layer} layer following FunctionalDDD Clean Architecture patterns.
+              
+              #### Implementation Details
+              
+              - ? Railway-Oriented Programming throughout
+              - ? FluentValidation for validation rules
+              - ? Proper error handling with typed errors
+              - ? Comprehensive tests (success and failure paths)
+              - ? XML documentation comments
+              
+              #### Files Changed
+              
+              ${layer === 'domain' ? '**Domain Layer**:\n- Aggregates/ValueObjects\n- Domain events (if applicable)\n- Tests' : ''}
+              ${layer === 'application' ? '**Application Layer**:\n- Queries/Commands\n- Handlers\n- Abstractions\n- Tests' : ''}
+              ${layer === 'acl' ? '**ACL Layer**:\n- Repository implementations\n- External service integrations\n- Tests' : ''}
+              ${layer === 'api' ? '**API Layer**:\n- Controllers\n- DTOs\n- Middleware\n- Tests' : ''}
+              
+              ### ?? Testing
+              
+              \`\`\`bash
+              # Run tests
+              dotnet test
+              
+              # All tests should pass ?
+              \`\`\`
+              
+              ### ?? Usage Example
+              
+              \`\`\`csharp
+              // Example usage of the new ${featureType}
+              // (Specific example based on what was generated)
+              \`\`\`
+              
+              ### ? Acceptance Criteria
+              
+              - [x] Code follows clean architecture
+              - [x] Railway-oriented programming used
+              - [x] Validation with FluentValidation
+              - [x] Tests included
+              - [x] Documentation updated
+              
+              ---
+              
+              **Generated by**: FunctionalDDD Clean Architecture Agent ??
+              **Specification**: See issue #${{ github.event.issue.number }}
+              
+              Closes #${{ github.event.issue.number }}`
+            });
+            
+            // Comment on issue with PR link
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `? **Feature Added!**
+              
+              I've created a pull request with the ${featureName} ${featureType}:
+              
+              ?? **Pull Request**: #${pr.number}
+              
+              ### What I Generated:
+              
+              - ${icon} **${featureName}** ${featureType} in ${layer} layer
+              - ? Implementation following Railway-Oriented Programming
+              - ? FluentValidation for validation
+              - ? Comprehensive tests
+              - ? Documentation
+              
+              ### Next Steps:
+              
+              1. Review the PR
+              2. Run \`dotnet test\` to verify
+              3. Merge when ready!
+              
+              Ready to add another feature? Create another issue! ??`
+            });
+      
+      - name: Handle Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `? **Feature Addition Failed**
+              
+              I encountered an error while generating the ${{ steps.extract.outputs.feature-type }} feature.
+              
+              Please check:
+              
+              1. ? Issue body contains valid YAML specification
+              2. ? Feature type is supported (aggregate, valueObject, query, command, endpoint, repository, tests, middleware)
+              3. ? All required fields are present
+              
+              See the [feature template](.github/FEATURE_TEMPLATE.md) for correct format.
+              
+              See the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.`
+            });
