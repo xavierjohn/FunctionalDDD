@@ -173,16 +173,16 @@ Each issue → PR in 2 minutes! 🚀
 
 ### **For Users**
 
-- **[Iterative Demo Guide](.github/ITERATIVE_DEMO.md)** - 10-minute e-commerce build walkthrough ⭐
-- **[Feature Template](.github/FEATURE_TEMPLATE.md)** - How to add features via issues
-- **[Minimal Scaffold](.github/project-spec-minimal.yml)** - Starting point
-- **[Complete Demo](.github/project-spec-demo.yml)** - Full e-commerce example
+- **[Iterative Demo Guide](../docs/agent/iterative-demo.md)** - 10-minute e-commerce build walkthrough ⭐
+- **[Feature Template](./feature-template.md)** - How to add features via issues
+- **[Minimal Scaffold](../Examples/.github-samples/project-spec-minimal.yml)** - Starting point
+- **[Complete Demo](../Examples/.github-samples/project-spec-demo.yml)** - Full e-commerce example
 
 ### **For Developers**
 
-- **[Agent Instructions](.github/copilot-instructions.md)** - How Copilot works
-- **[Scaffold Workflow](.github/workflows/copilot-scaffold.yml)** - Initial setup automation
-- **[Feature Workflow](.github/workflows/copilot-feature.yml)** - Feature addition automation
+- **[Agent Instructions](./copilot-instructions.md)** - How Copilot works
+- **[Scaffold Workflow](./workflows/copilot-scaffold.yml)** - Initial setup automation
+- **[Feature Workflow](./workflows/copilot-feature.yml)** - Feature addition automation
 
 ---
 
@@ -384,7 +384,7 @@ Create a complete e-commerce system from scratch:
 - Start API and show Swagger
 - **Audience reaction**: 🤯
 
-See the [Demo Guide](.github/DEMO_GUIDE.md) for full script.
+See the [Demo Guide](../docs/agent/demo-guide.md) for full script.
 
 ### **2-Minute Lightning Demo**
 Create a todo list application:
@@ -536,7 +536,7 @@ api:
       operations: [GET, POST]
 ```
 
-See [PROJECT_SPEC_TEMPLATE.md](.github/PROJECT_SPEC_TEMPLATE.md) for complete reference.
+See [Project Specification Template](../docs/agent/project-spec-template.md) for complete reference.
 
 ---
 
@@ -590,7 +590,7 @@ If you find this helpful, please give it a star! It helps others discover it.
 ```powershell
 gh repo create my-awesome-project --public
 cd my-awesome-project
-# Copy project-spec-demo.yml to .github/project-spec.yml
+# Copy from Examples/.github-samples/project-spec-demo.yml to .github/project-spec.yml
 gh issue create --label copilot-scaffold --title "Scaffold My Project"
 # ✨ Magic happens! ✨
 ```
