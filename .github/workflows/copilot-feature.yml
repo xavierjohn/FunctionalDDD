@@ -48,7 +48,7 @@ jobs:
               aggregate: '??',
               valueObject: '??',
               query: '??',
-              command: '??',
+              command: '?',
               endpoint: '??',
               repository: '??',
               tests: '??',
@@ -59,7 +59,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${icons[featureType] || '??'} **Adding ${featureType} to ${layer} layer...**
+              body: `${icons[featureType] || '?'} **Adding ${featureType} to ${layer} layer...**
               
               I'm generating the code for this feature following FunctionalDDD Clean Architecture patterns.
               
@@ -159,14 +159,14 @@ jobs:
               aggregate: '??',
               valueObject: '??',
               query: '??',
-              command: '??',
+              command: '?',
               endpoint: '??',
               repository: '??',
               tests: '??',
               middleware: '??'
             };
             
-            const icon = icons[featureType] || '??';
+            const icon = icons[featureType] || '?';
             
             // Get feature name from spec
             let featureName = 'New Feature';
@@ -285,7 +285,7 @@ jobs:
               2. ? Feature type is supported (aggregate, valueObject, query, command, endpoint, repository, tests, middleware)
               3. ? All required fields are present
               
-              See the [feature template](.github/FEATURE_TEMPLATE.md) for correct format.
+              See the [feature template](.github/feature-template.md) for correct format.
               
               See the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.`
             });

@@ -1,4 +1,4 @@
-name: Copilot Scaffold Project
+﻿name: Copilot Scaffold Project
 
 on:
   issues:
@@ -23,25 +23,25 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `?? **FunctionalDDD Clean Architecture Scaffolding Started!**
+              body: `🚀 **FunctionalDDD Clean Architecture Scaffolding Started!**
               
               I'm analyzing your project specification and will create a complete clean architecture solution.
               
               This will include:
-              - ? Domain layer with aggregates and value objects
-              - ? Application layer with CQRS (queries/commands)
-              - ? Anti-Corruption Layer (ACL) for infrastructure
-              - ? API layer with versioned controllers
-              - ? Comprehensive tests for all layers
-              - ? OpenTelemetry observability
-              - ? Swagger/OpenAPI documentation
+              - ✅ Domain layer with aggregates and value objects
+              - ✅ Application layer with CQRS (queries/commands)
+              - ✅ Anti-Corruption Layer (ACL) for infrastructure
+              - ✅ API layer with versioned controllers
+              - ✅ Comprehensive tests for all layers
+              - ✅ OpenTelemetry observability
+              - ✅ Swagger/OpenAPI documentation
               
-              **Estimated time**: 2-5 minutes ??
+              **Estimated time**: 2-5 minutes ⏱️
               
               I'll create a pull request when complete. Please review and merge!
               
               ---
-              *Powered by FunctionalDDD Clean Architecture Agent* ??`
+              *Powered by FunctionalDDD Clean Architecture Agent* 🤖`
             })
       
       - name: Checkout repository
@@ -129,7 +129,7 @@ jobs:
             
             fs.writeFileSync(readmePath, readmeContent);
             
-            console.log('? Project structure generation complete');
+            console.log('✅ Project structure generation complete');
             
       - name: Commit Changes
         run: |
@@ -158,45 +158,45 @@ jobs:
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `?? Scaffold ${spec.project.name} - Clean Architecture`,
+              title: `🚀 Scaffold ${spec.project.name} - Clean Architecture`,
               head: process.env.BRANCH_NAME,
               base: 'main',
-              body: `## ??? FunctionalDDD Clean Architecture Project
+              body: `## ✨ FunctionalDDD Clean Architecture Project
               
               This PR contains the complete scaffolding for **${spec.project.name}**.
               
-              ### ?? Project Details
+              ### 📋 Project Details
               
               - **Namespace**: \`${spec.project.namespace}\`
               - **Description**: ${spec.project.description}
               - **Generated from**: Issue #${{ github.event.issue.number }}
               
-              ### ?? What's Included
+              ### 📦 What's Included
               
               #### Domain Layer
-              ${spec.domain.aggregates.map(a => `- ? \`${a.name}\` aggregate with ${a.behaviors?.length || 0} behaviors`).join('\n')}
-              ${spec.domain.valueObjects.map(v => `- ? \`${v.name}\` value object`).join('\n')}
+              ${spec.domain.aggregates.map(a => `- ✅ \`${a.name}\` aggregate with ${a.behaviors?.length || 0} behaviors`).join('\n')}
+              ${spec.domain.valueObjects.map(v => `- ✅ \`${v.name}\` value object`).join('\n')}
               
               #### Application Layer
-              ${spec.application.queries.map(q => `- ? \`${q.name}\` query`).join('\n')}
-              ${spec.application.commands.map(c => `- ? \`${c.name}\` command`).join('\n')}
+              ${spec.application.queries.map(q => `- ✅ \`${q.name}\` query`).join('\n')}
+              ${spec.application.commands.map(c => `- ✅ \`${c.name}\` command`).join('\n')}
               
               #### API Layer
-              ${spec.api.endpoints.map(e => `- ? \`${e.resource}\` controller with ${e.operations.length} operations`).join('\n')}
+              ${spec.api.endpoints.map(e => `- ✅ \`${e.resource}\` controller with ${e.operations.length} operations`).join('\n')}
               
-              ### ?? Tests
+              ### 🧪 Tests
               
-              - ? Domain layer tests
-              - ? Application layer tests
-              - ? API integration tests
+              - ✅ Domain layer tests
+              - ✅ Application layer tests
+              - ✅ API integration tests
               
-              ### ?? Observability
+              ### 📊 Observability
               
-              - ? OpenTelemetry tracing
-              - ? Metrics collection
-              - ? Swagger/OpenAPI documentation
+              - ✅ OpenTelemetry tracing
+              - ✅ Metrics collection
+              - ✅ Swagger/OpenAPI documentation
               
-              ### ?? Next Steps
+              ### 🎯 Next Steps
               
               1. Review the generated code
               2. Run tests: \`dotnet test\`
@@ -204,7 +204,7 @@ jobs:
               4. Open Swagger: \`https://localhost:5001\`
               5. Merge when ready!
               
-              ### ?? Resources
+              ### 📚 Resources
               
               - [FunctionalDDD Documentation](https://github.com/xavierjohn/FunctionalDDD)
               - [Railway-Oriented Programming](../Examples/README.md)
@@ -212,7 +212,7 @@ jobs:
               
               ---
               
-              **Generated by**: FunctionalDDD Clean Architecture Agent ??
+              **Generated by**: FunctionalDDD Clean Architecture Agent 🤖
               **Specification**: \`.github/project-spec.yml\`
               **Issue**: #${{ github.event.issue.number }}
               
@@ -224,22 +224,22 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `? **Scaffolding Complete!**
+              body: `✅ **Scaffolding Complete!**
               
               I've created a pull request with your complete clean architecture project:
               
-              ?? **Pull Request**: #${pr.number}
+              🔗 **Pull Request**: #${pr.number}
               
               ### What I Generated:
               
-              - ?? **${spec.domain.aggregates.length}** aggregates with business logic
-              - ?? **${spec.domain.valueObjects.length}** value objects
-              - ?? **${spec.application.queries.length}** queries
-              - ?? **${spec.application.commands.length}** commands
-              - ?? **${spec.api.endpoints.length}** API controllers
-              - ? Comprehensive tests for all layers
-              - ?? OpenTelemetry observability
-              - ?? Swagger documentation
+              - 📦 **${spec.domain.aggregates.length}** aggregates with business logic
+              - 💎 **${spec.domain.valueObjects.length}** value objects
+              - 🔍 **${spec.application.queries.length}** queries
+              - ⚡ **${spec.application.commands.length}** commands
+              - 🌐 **${spec.api.endpoints.length}** API controllers
+              - 🧪 Comprehensive tests for all layers
+              - 📊 OpenTelemetry observability
+              - 📖 Swagger documentation
               
               ### Next Steps:
               
@@ -247,7 +247,7 @@ jobs:
               2. Run \`dotnet test\` to verify everything works
               3. Merge when ready!
               
-              Happy coding! ??`
+              Happy coding! 🎉`
             });
       
       - name: Handle Failure
@@ -259,13 +259,13 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `? **Scaffolding Failed**
+              body: `❌ **Scaffolding Failed**
               
               I encountered an error while generating your project. Please check:
               
-              1. ? \`.github/project-spec.yml\` exists and is valid YAML
-              2. ? Project specification follows the template format
-              3. ? No syntax errors in the specification
+              1. ✅ \`.github/project-spec.yml\` exists and is valid YAML
+              2. ✅ Project specification follows the template format
+              3. ✅ No syntax errors in the specification
               
               See the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
               
