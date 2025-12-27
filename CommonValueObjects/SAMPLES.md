@@ -84,7 +84,7 @@ public void SafeProcessing(string input)
     }
     else
     {
-        Console.WriteLine($"Invalid: {result.Error.Message}");
+        Console.WriteLine($"Invalid: {result.Error.Detail}");
         // Output: "Order Number cannot be empty."
     }
 }
@@ -320,7 +320,7 @@ public void ParseFromString()
     }
     else
     {
-        Console.WriteLine($"Error: {result.Error.Message}");
+        Console.WriteLine($"Error: {result.Error.Detail}");
     }
     
     // IParsable support
@@ -607,7 +607,7 @@ public partial class TrackingId : RequiredString, IParsable<TrackingId>
     {
         var r = TryCreate(s);
         if (r.IsFailure)
-            throw new FormatException(r.Error.Message);
+            throw new FormatException(r.Error.Detail);
         return r.Value;
     }
 
@@ -667,7 +667,7 @@ public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>
     {
         var r = TryCreate(s);
         if (r.IsFailure)
-            throw new FormatException(r.Error.Message);
+            throw new FormatException(r.Error.Detail);
         return r.Value;
     }
 

@@ -41,7 +41,7 @@ await GetCustomerByIdAsync(id)
    Error.Validation("The customer has the highest status possible"))
 .TapAsync(customer => customer.Promote())
 .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-.MatchAsync(ok => "Okay", error => error.Message);
+.MatchAsync(ok => "Okay", error => error.Detail);
  ```
 
 `GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
@@ -129,9 +129,10 @@ Transfer-Encoding: chunked
 ### Running Parallel Tasks
 
 ```csharp
-var r = await _sender.Send(new StudentInformationQuery(studentId)
-    .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId))
-    .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId))
+var r = await _sender.Send(new StudentInformationQuery(studentId))
+    .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId)))
+    .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId)))
+    .AwaitAsync()
     .BindAsync((studentInformation, studentGrades, checkoutBooks)
        => PrepareReport(studentInformation, studentGrades, checkoutBooks));
 ```
@@ -142,7 +143,9 @@ Handles HTTP NotFound and throws for all other failures.
 
 ```csharp
 var result = await _httpClient.GetAsync($"person/{id}")
-    .ReadResultWithNotFoundAsync<Person>(Error.NotFound("Person not found"));
+    .HandleNotFoundAsync(Error.NotFound("Person not found"))
+    .BindAsync(response => response.ReadResultMaybeFromJsonAsync<Person>(PersonContext.Default.Person, cancellationToken))
+    .BindAsync(maybePerson => maybePerson.ToResult(Error.NotFound("Person not found")));
 ```
 
 Or handle the errors yourself by using a callback.

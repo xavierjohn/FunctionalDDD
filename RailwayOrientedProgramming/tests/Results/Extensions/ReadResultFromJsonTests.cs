@@ -78,6 +78,24 @@ public class ReadResultFromJsonTests
         await act.Should().ThrowAsync<JsonException>();
     }
 
+    [Fact]
+    public async Task Successful_response_with_null_json_value_Returns_failure()
+    {
+        // Arrange
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent("null", Encoding.UTF8, "application/json")
+        };
+
+        // Act
+        var result = await httpResponseMessage.ReadResultFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<UnexpectedError>();
+        result.Error.Detail.Should().Be("Http Response was null for value camelcasePerson.");
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

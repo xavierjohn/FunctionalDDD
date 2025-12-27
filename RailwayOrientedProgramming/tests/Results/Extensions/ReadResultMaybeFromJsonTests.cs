@@ -13,7 +13,7 @@ public class ReadResultMaybeFromJsonTests
     private bool _callbackCalled;
 
     [Fact]
-    public async Task Will_read_http_content_as_result()
+    public async Task Successful_response_with_valid_json_Returns_deserialized_content()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -33,7 +33,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public async Task Will_throw_JsonException_with_wrong_content()
+    public async Task Successful_response_with_invalid_json_Throws_JsonException()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -49,7 +49,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public async Task Will_not_throw_JsonException_with_wrong_content()
+    public async Task Failed_response_status_code_Returns_failure_with_error_message()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadGateway)
@@ -66,7 +66,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public async Task Will_throw_JsonException_with_nulll_content()
+    public async Task Successful_response_with_null_content_Throws_JsonException()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -84,7 +84,7 @@ public class ReadResultMaybeFromJsonTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Deserialize_is_case_sensitive(bool propertyNameCaseInsensitive)
+    public async Task Deserialization_Respects_case_sensitivity_options(bool propertyNameCaseInsensitive)
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -93,7 +93,7 @@ public class ReadResultMaybeFromJsonTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultMaybeFromJsonAsync(
+        Result<Maybe<PascalPerson>> result = await httpResponseMessage.ReadResultMaybeFromJsonAsync(
             propertyNameCaseInsensitive ? SourceGenerationCaseInsenstiveContext.Default.PascalPerson : SourceGenerationContext.Default.PascalPerson,
             CancellationToken.None);
 
@@ -114,7 +114,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public async Task When_HttpResponseMessage_is_Task_Will_read_http_content_as_result()
+    public async Task Task_wrapped_successful_response_Returns_deserialized_content()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -124,7 +124,7 @@ public class ReadResultMaybeFromJsonTests
         var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
 
         // Act
-        var result = await taskHttpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+        Result<Maybe<camelcasePerson>> result = await taskHttpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -134,7 +134,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public async Task Will_not_throw_exception_for_null_JSON()
+    public async Task Successful_response_with_null_json_value_Returns_none()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -143,16 +143,16 @@ public class ReadResultMaybeFromJsonTests
         };
 
         // Act
-        var result = await httpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+        Result<Maybe<camelcasePerson>> result = await httpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        var maybePerson = result.Value;
+        Maybe<camelcasePerson> maybePerson = result.Value;
         maybePerson.HasValue.Should().BeFalse();
     }
 
     [Fact]
-    public async Task Will_not_callback_on_success()
+    public async Task Successful_response_with_failure_handler_Does_not_invoke_callback()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -175,7 +175,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public async Task Will_task_not_callback_on_success()
+    public async Task Task_wrapped_successful_response_with_failure_handler_Does_not_invoke_callback()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
@@ -198,6 +198,156 @@ public class ReadResultMaybeFromJsonTests
         maybePerson.Value.age.Should().Be(18);
     }
 
+    [Fact]
+    public async Task Failed_response_with_failure_handler_Invokes_callback_and_returns_failure()
+    {
+        // Arrange
+        _callbackCalled = false;
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("Bad request content")
+        };
+
+        // Act
+        var result = await httpResponseMessage
+            .HandleFailureAsync(CallbackFailedStatusCode, "Common", CancellationToken.None)
+            .ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        _callbackCalled.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+        result.Error.Detail.Should().Be("Bad request");
+    }
+
+    [Fact]
+    public async Task Task_wrapped_failed_response_with_failure_handler_Invokes_callback_and_returns_failure()
+    {
+        // Arrange
+        _callbackCalled = false;
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("Bad request content")
+        };
+        var httpResponseMessageTask = Task.FromResult(httpResponseMessage);
+
+        // Act
+        var result = await httpResponseMessageTask
+            .HandleFailureAsync(CallbackFailedStatusCode, "Common", CancellationToken.None)
+            .ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        _callbackCalled.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+        result.Error.Detail.Should().Be("Bad request");
+    }
+
+    [Fact]
+    public async Task Result_wrapped_successful_response_Returns_deserialized_content()
+    {
+        // Arrange
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Anna", age = 25 }, SourceGenerationContext.Default.camelcasePerson)
+        };
+        var resultHttpResponseMessage = Result.Success(httpResponseMessage);
+
+        // Act
+        var result = await resultHttpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var maybePerson = result.Value;
+        maybePerson.HasValue.Should().BeTrue();
+        maybePerson.Value.firstName.Should().Be("Anna");
+        maybePerson.Value.age.Should().Be(25);
+    }
+
+    [Fact]
+    public async Task Result_wrapped_failure_Propagates_error()
+    {
+        // Arrange
+        var error = Error.Validation("Validation failed");
+        var resultHttpResponseMessage = Result.Failure<HttpResponseMessage>(error);
+
+        // Act
+        var result = await resultHttpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(error);
+    }
+
+    [Fact]
+    public async Task Task_result_wrapped_successful_response_Returns_deserialized_content()
+    {
+        // Arrange
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new camelcasePerson() { firstName = "Bob", age = 30 }, SourceGenerationContext.Default.camelcasePerson)
+        };
+        var taskResultHttpResponseMessage = Task.FromResult(Result.Success(httpResponseMessage));
+
+        // Act
+        var result = await taskResultHttpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var maybePerson = result.Value;
+        maybePerson.HasValue.Should().BeTrue();
+        maybePerson.Value.firstName.Should().Be("Bob");
+        maybePerson.Value.age.Should().Be(30);
+    }
+
+    [Fact]
+    public async Task Task_result_wrapped_failure_Propagates_error()
+    {
+        // Arrange
+        var error = Error.Unauthorized("Unauthorized access");
+        var taskResultHttpResponseMessage = Task.FromResult(Result.Failure<HttpResponseMessage>(error));
+
+        // Act
+        var result = await taskResultHttpResponseMessage.ReadResultMaybeFromJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(error);
+    }
+
+    [Fact]
+    public async Task Task_wrapped_not_found_response_Returns_specified_error()
+    {
+        // Arrange
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
+        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
+
+        // Act
+        var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(_notFoundError);
+    }
+
+    [Fact]
+    public async Task Task_wrapped_ok_response_Returns_success()
+    {
+        // Arrange
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
+        {
+            Content = new StringContent("Success")
+        };
+        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
+
+        // Act
+        var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
     private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context, CancellationToken cancellationToken)
     {
         _callbackCalled = true;
@@ -206,7 +356,7 @@ public class ReadResultMaybeFromJsonTests
     }
 
     [Fact]
-    public void When_NotFound_will_return_NotFound()
+    public void Not_found_response_Returns_specified_error()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
@@ -217,6 +367,20 @@ public class ReadResultMaybeFromJsonTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(_notFoundError);
+    }
+
+    [Fact]
+    public void Ok_response_Returns_success()
+    {
+        // Arrange
+        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK);
+
+        // Act
+        var result = httpResponseMessage.HandleNotFound(_notFoundError);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }
 

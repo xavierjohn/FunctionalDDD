@@ -12,7 +12,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// </summary>
     /// <param name="response">The HTTP response message.</param>
     /// <param name="notFoundError">The error to return if the response has a status code of NotFound.</param>
-    /// <returns>A Result object containing the HTTP response message.</returns>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
     public static Result<HttpResponseMessage> HandleNotFound(
         this HttpResponseMessage response,
         NotFoundError notFoundError)
@@ -28,7 +28,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// </summary>
     /// <param name="responseTask">The task representing the HTTP response message.</param>
     /// <param name="notFoundError">The error to return if the response has a status code of NotFound.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the HTTP response message.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
     public static async Task<Result<HttpResponseMessage>> HandleNotFoundAsync(
         this Task<HttpResponseMessage> responseTask,
         NotFoundError notFoundError)
@@ -45,7 +45,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="callbackFailedStatusCode">The callback function to handle the failed status code.</param>
     /// <param name="context">The context object.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the HTTP response message.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
     public static async Task<Result<HttpResponseMessage>> HandleFailureAsync<TContext>(
         this HttpResponseMessage response,
         Func<HttpResponseMessage, TContext, CancellationToken, Task<Error>> callbackFailedStatusCode,
@@ -69,7 +69,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="callbackFailedStatusCode">The callback function to handle the failed status code.</param>
     /// <param name="context">The context object.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the HTTP response message.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
     public static async Task<Result<HttpResponseMessage>> HandleFailureAsync<TContext>(
         this Task<HttpResponseMessage> responseTask,
         Func<HttpResponseMessage, TContext, CancellationToken, Task<Error>> callbackFailedStatusCode,
@@ -87,7 +87,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the deserialized value.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the deserialized value.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this HttpResponseMessage response,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -102,7 +102,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="Task{Result{TValue}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the deserialized value.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -119,7 +119,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="Task{Result{TValue}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the deserialized value.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -133,7 +133,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="Task{Result{TValue}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the deserialized value.</returns>
     public static async Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
         this Task<Result<HttpResponseMessage>> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -150,7 +150,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing <see cref="Maybe{TValue}"/>.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this HttpResponseMessage response,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -172,7 +172,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing <see cref="Maybe{TValue}"/>.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -189,7 +189,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="response">The Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing <see cref="Maybe{TValue}"/>.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
@@ -203,8 +203,7 @@ public static partial class HttpResponseMessageJsonExtensionsAsync
     /// <param name="responseTask">The task representing the Result object containing the HTTP response message.</param>
     /// <param name="jsonTypeInfo">The JSON type information for deserialization.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object containing the Maybe value.</returns>
-    /// <returns>A <see cref="Task{Result{Maybe{TValue}}}"/> object.</returns>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing <see cref="Maybe{TValue}"/>.</returns>
     public static async Task<Result<Maybe<TValue>>> ReadResultMaybeFromJsonAsync<TValue>(
         this Task<Result<HttpResponseMessage>> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,

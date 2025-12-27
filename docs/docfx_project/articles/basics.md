@@ -1,7 +1,10 @@
-# The basics
+# Basics
 
-Let us learn some basics of the library by looking at "Avoiding primitive obsession" as a scenario and building up from there.
-To ensure type safety for parameters in C# code, it's important to avoid primitive obsession. Passing strings as parameters can lead to errors, such as accidentally switching the order of the first and last names. For example, the `CreatePerson` function could be called with `lastName` as the first parameter and `firstName` as the second, resulting in a person with the wrong name.
+This guide demonstrates core concepts using primitive obsession avoidance as a practical example.
+
+## Avoiding Primitive Obsession
+
+Passing strings as parameters can cause errors. Consider this example where first and last names could be swapped:
 
 ```csharp
 Person CreatePerson(string firstName, string lastName)
@@ -14,21 +17,18 @@ var lastName = "Smith";
 var person = CreatePerson(lastName, firstName);
 ```
 
-This would result in a person with the first name of "Smith" and the last name of "John".
+This would result in a person with first name "Smith" and last name "John".
 
-To avoid this problem we need type safety for the parameters. We can achieve this by creating a class for different domain types.
-In this case we need `FirstName` and `LastName` classes.
-In Domain Driven Design, objects have to be in a valid state at all time so we need to validate the parameters before creating an instance of the class.
-Often that check is as simple as checking if the string is null or empty. To avoid, writing the same validation code over and over again, we can use the `RequiredString` class.
+### Creating Type-Safe Parameters
 
-Let us see how we can use it:
+Create dedicated classes for each domain type (FirstName, LastName). In Domain-Driven Design, objects must maintain valid state, requiring parameter validation before instantiation. For simple null/empty checks, use the `RequiredString` class:
 
 ```csharp
-public partial class FirstName : RequiredString<FirstName>
+public partial class FirstName : RequiredString
 {
 }
 
-public partial class LastName : RequiredString<LastName>
+public partial class LastName : RequiredString
 {
 }
 
@@ -38,15 +38,13 @@ Person CreatePerson(FirstName firstName, LastName lastName)
 }
 ```
 
-The class has to be partial so that the source code generator can add the `TryCreate` method to it.
-Now let us use it:
+The class must be partial to allow source code generation of the `TryCreate` method:
 
 ```csharp
 Result<FirstName> firstNameResult = FirstName.TryCreate("John");
 ```
 
-The `TryCreate` method returns a `Result` type and based on the input it can be either `Success` or `Failure` so we need to handle the failure case.
-Here is a possible solution:
+`TryCreate` returns a `Result` type that is either `Success` or `Failure`. Handle the failure case:
 
 ```csharp
 Result<FirstName> firstNameResult = FirstName.TryCreate("John");
@@ -66,36 +64,36 @@ if (lastNameResult.IsFailure)
 var person = CreatePerson(firstNameResult.Value, lastNameResult.Value);
 ```
 
-If by mistake the developer passes the parameters in the wrong order, the compiler will catch it.
+The compiler will catch parameter order mistakes.
 
-## Result{TValue} class
+## Result<TValue> Type
 
-The Result is a generic class and can be used to hold any type of value or error.
-The need to handle failure after each method call can be tedious so the `Result` class has a few extension methods to help with that.
+Result is a generic type that holds either a value or an error. Extension methods eliminate tedious failure handling after each call.
 
 First, let us look at the definition of the `Result` class:
 
 [!code-csharp[](../../../RailwayOrientedProgramming/src/Result/Result{TValue}.cs#L11-L32)]
 
-This class help chain functions on the success or error path in a concept called [Railway Oriented Programming](https://fsharpforfunandprofit.com/rop/).
-If the Result is in failed state, accessing the Value property will throw an exception. Similarly, if the Result is in success state, accessing the Error property will throw an exception.
+Result enables function chaining on success or error paths—the core concept of [Railway Oriented Programming](https://fsharpforfunandprofit.com/rop/).
 
-Next let us look at some of the extension methods.
+**Important:** Accessing `Value` on failure or `Error` on success throws an exception.
 
-## Combine extension method
+## Core Extension Methods
 
-We need to combine the result of `FirstName.TryCreate` and `LastName.TryCreate` to create a person. This can be achieved by using the `Combine` method.
+### Combine
+
+Combine multiple results to validate all inputs together:
 
 ```csharp
 var result = FirstName.TryCreate("John")
     .Combine(LastName.TryCreate("Smith"));
 ```
 
-The resulting result will either contain validation errors from the `FirstName` and/or `LastName` class, or a success with a tuple containing both values.
+Returns either validation errors from FirstName/LastName, or a tuple containing both values on success.
 
-## Bind extension method
+### Bind
 
-We need a method to call `CreatePerson` with the values from the `FirstName` and `LastName` classes if the result is in a success state. This can be achieved by using the `Bind` method.
+Chain operations that return Results:
 
 ```csharp
 var result = FirstName.TryCreate("John")
@@ -103,19 +101,106 @@ var result = FirstName.TryCreate("John")
     .Bind((firstName, lastName) => CreatePerson(firstName, lastName));
 ```
 
-The result will either contain validation errors from the `FirstName` and/or `LastName` class, or a success with a `Person` object. It is possible `CreatePerson` can fail, in which case the `Result` will contain the error.
+Returns validation errors from FirstName/LastName, a Person object on success, or any error from CreatePerson.
 
-## Match extension method
+### Match
 
-So far we still have a `Result` type and we need to unwrap it to get the underlying value. This can be achieved by using the `Match` method.
+Unwrap the Result to extract the final value:
 
 ```csharp
 string result = FirstName.TryCreate("John")
     .Combine(LastName.TryCreate("Smith"))
     .Bind((firstName, lastName) => CreatePerson(firstName, lastName))
-    .Match(ok => "Okay: Person created", error => error.Message);
+    .Match(ok => "Okay: Person created", error => error.Detail);
 ```
+
+Match accepts two functions and calls the appropriate one based on Result state.
+
+## Additional Core Operations
+
+### Map - Transform Values
+
+Use `Map` when you want to transform a successful value without changing it to another Result:
+
+```csharp
+var result = EmailAddress.TryCreate("user@example.com")
+    .Map(email => email.ToString().ToUpper());
+// Result<string> containing "USER@EXAMPLE.COM" or an error
+```
+
+**Key difference:** `Map` transforms the value (returns `T`), while `Bind` chains operations (returns `Result<T>`).
+
+### Tap - Execute Side Effects
+
+Use `Tap` to perform side effects (like logging) without changing the Result:
+
+```csharp
+var result = FirstName.TryCreate("John")
+    .Tap(name => Console.WriteLine($"Created name: {name}"))
+    .Tap(name => _logger.LogInformation("Name validated"));
+// Result<FirstName> - unchanged, but side effects executed
+```
+
+**Common uses:** Logging, auditing, sending notifications, updating UI
+
+### Ensure - Add Validation
+
+Use `Ensure` to add additional validation conditions:
+
+```csharp
+var result = EmailAddress.TryCreate("user@spam.com")
+    .Ensure(email => !email.Domain.Contains("spam"),
+           Error.Validation("Spam domains not allowed"));
+// Fails if email is from spam domain
+```
+
+You can chain multiple `Ensure` calls for complex validation:
+
+```csharp
+var result = Age.TryCreate(25)
+    .Ensure(age => age >= 18, Error.Validation("Must be 18 or older"))
+    .Ensure(age => age <= 120, Error.Validation("Invalid age"));
+```
+
+### Compensate - Recover from Errors
+
+Use `Compensate` to provide fallback values or recovery logic:
+
+```csharp
+var result = GetUserFromCache(id)
+    .Compensate(error => GetUserFromDatabase(id));
+// Try cache first, fallback to database on error
+```
+
+### Working with Async Operations
+
+All operations have async variants with `Async` suffix:
+
+```csharp
+var result = await GetUserAsync(id)
+    .BindAsync(user => GetOrdersAsync(user.Id))
+    .TapAsync(orders => LogOrderCountAsync(orders.Count))
+    .EnsureAsync(orders => orders.Any(),
+                Error.NotFound("No orders found"))
+    .MapAsync(orders => orders.ToDto())
+    .MatchAsync(
+        onSuccess: dto => Results.Ok(dto),
+        onFailure: error => Results.BadRequest(error.Detail)
+    );
+```
+
+### Summary of Core Operations
+
+| Operation | Purpose | Input Function Returns | Example Use Case |
+|-----------|---------|----------------------|------------------|
+| **Bind** | Chain operations that return Result | `Result<T>` | Calling another validation/business operation |
+| **Map** | Transform successful values | `T` | Converting types, formatting |
+| **Tap** | Execute side effects | `void` | Logging, notifications |
+| **Ensure** | Add validation | `bool` | Business rule validation |
+| **Combine** | Merge multiple Results | N/A | Validating multiple inputs together |
+| **Compensate** | Error recovery | `Result<T>` | Fallback logic, retry |
+| **Match** | Unwrap and handle both cases | `TResult` | Final result handling |
 
 ## Conclusion
 
-To prevent incorrect parameter assignment, it is recommended to use strongly typed classes that are always in a valid state. Additionally, to improve code readability, consider applying the railway-oriented programming model.
+Use strongly-typed classes that maintain valid state to prevent parameter assignment errors. Railway-oriented programming enables clean, readable code with explicit error handling through core operations: `Bind`, `Map`, `Tap`, `Ensure`, and `Combine`.

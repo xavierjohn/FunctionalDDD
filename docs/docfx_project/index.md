@@ -1,20 +1,15 @@
-# Welcome to the Functional Programming with Domain-Driven Design
+﻿# Functional Programming with Domain-Driven Design
 
-Functional programming, railway-oriented programming, and domain-driven design are three concepts that can work together to create robust and reliable software.
+Functional programming, railway-oriented programming, and domain-driven design combine to create robust, reliable software.
 
-**Functional programming** is a programming paradigm that emphasizes the use of pure functions, which are functions that take in inputs and produce outputs without any side effects. This approach can lead to code that is easier to understand, test, and maintain.
+**Functional programming** emphasizes pure functions—functions that take inputs and produce outputs without side effects. This leads to code that is easier to understand, test, and maintain. Learn more in the [Applying Functional Principles in C# Pluralsight course](https://enterprisecraftsmanship.com/ps-func).
 
-To get to know more about the principles behind it, check out the [Applying Functional Principles in C# Pluralsight course](https://enterprisecraftsmanship.com/ps-func).
+**Railway-oriented programming** handles errors using a railway track metaphor. Code flows through operations that either succeed (continuing on the success track) or fail (switching to the error track). This makes error handling explicit and easier to reason about.
 
-**Railway-oriented programming** is an approach to error handling that is based on the idea of a railway track. In this approach, the code is divided into a series of functions that represent different steps along the railway track. Each function either succeeds and moves the code along the track, or fails and sends the code down a different track. This approach can make error handling more explicit and easier to reason about.
+**Domain-driven design** focuses on understanding the problem domain and creating an accurate model to guide software design and implementation. This alignment with business needs creates software that better serves users. Learn more in [Domain-Driven Design in Practice](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents).
 
-**Domain-driven design** is an approach to software development that focuses on understanding the problem domain and creating a model that accurately represents it. This model is then used to guide the design and implementation of the software. By focusing on the problem domain, developers can create software that is more closely aligned with the needs of the users and the business.
-To learn more about DDD, check out the course [Domain-Driven Design in Practice](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents).
+These approaches complement each other: pure functions enable testable code, railway-oriented programming makes error handling explicit, and domain-driven design ensures alignment with business needs.
 
-When combined, functional programming, railway-oriented programming, and domain-driven design can lead to software that is both robust and reliable. By using pure functions, developers can create code that is easier to reason about and test. By using railway-oriented programming, developers can make error handling more explicit and easier to reason about. By focusing on the problem domain, developers can create software that is more closely aligned with the needs of the users and the business.
+## Get Started
 
-Overall, functional programming with railway-oriented programming and domain-driven design can be a powerful approach to software development that can lead to more robust and reliable software.
-
-## Why use this library?
-
-[Click here to find out](articles/intro.md)
+[Explore the library features](articles/intro.md)

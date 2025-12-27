@@ -1,39 +1,114 @@
-# Why use this library?
+﻿# Why Use This Library?
 
+## Functional Programming
 
-### Functional programming
+Railway Oriented Programming controls program execution flow using success or error tracks. This enables function chaining without explicit error checking at each step.
 
-Railway Oriented Programming is a coding concept that involves using a library's built-in functions to control program execution flow based on success or error track. By doing so, functional code can be written that allows for chaining of functions without the need for error checking.
+This approach leads to:
+- **Explicit error handling** - No hidden null references or exceptions
+- **Composable operations** - Chain functions together naturally
+- **Testable code** - Pure functions are easier to test
+- **Type safety** - Compiler-enforced error handling
 
-### Domain Driven Design
+## Domain-Driven Design
 
-Using the library's classes, it is possible to create Aggregate, Entity, and ValueObject classes. These classes can be validated using Fluent Validation to ensure that all domain properties are in a valid state. For simple ValueObjects with a single value, ScalarValueObject can be used. If the only requirement for a ValueObject is that the value is not null or empty, RequiredString can be utilized.
+The library provides classes for creating Aggregates, Entities, and Value Objects. Integrate with FluentValidation to ensure domain properties remain in a valid state. Use ScalarValueObject for single-value objects, or RequiredString for non-null/non-empty string validation.
 
-### Error classes
+**Key DDD building blocks:**
+- **Aggregates** - Consistency boundaries with domain events
+- **Entities** - Objects with identity
+- **Value Objects** - Immutable objects defined by their values
+- **Scalar Value Objects** - Single-value wrappers with validation
 
-The library includes a set of common error classes that can be returned by your domain. Additionally, the library supports automatic mapping of these errors to corresponding HTTP errors.
+## Error Types
 
-- ValidationError
-- NotFoundError
-- ForbiddenError
-- UnauthorizedError
-- ConflictError
-- BadRequestError
-- UnauthorizedError
-- AggregateError
+The library provides common error types for domain operations with automatic mapping to HTTP status codes.
 
-### Reuse Domain object validation rules at the API layer
+**Built-in error types:**
+- `ValidationError` - Input validation failures with detailed error information
+- `NotFoundError` - Resource not found (404)
+- `ForbiddenError` - Access denied (403)
+- `UnauthorizedError` - Authentication required (401)
+- `ConflictError` - Resource conflict (409)
+- `BadRequestError` - Invalid request (400)
+- `UnexpectedError` - Unexpected system error or exception (500)
+- `DomainError` - Business rule violation (422)
+- `RateLimitError` - Rate limit exceeded (429)
+- `ServiceUnavailableError` - Service temporarily unavailable (503)
+- `AggregateError` - Multiple errors combined
 
-As far as I know, this library is unique in its ability to reuse domain validation rules at the presentation layer to return errors in HTTP standard format. If the domain returns a validation failure, the library will translate it to HTTP BadRequest with the failure details. Additionally, if the domain returns a record not found, the library will translate it to HTTP NotFound.
+### Discriminated Error Matching
 
-### Pagination over several objects
+Match on specific error types for precise error handling:
 
-When pagination is required for a response, the library will automatically set the HTTP headers and return either an HTTP Ok (200) status or an HTTP PartialContent (206) status in accordance with [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110#field.content-range).
+```csharp
+var result = ProcessOrder(order)
+    .MatchError(
+        onValidation: validationErr => 
+            Results.BadRequest(new 
+            { 
+                errors = validationErr.FieldErrors
+                    .ToDictionary(f => f.FieldName, f => f.Details.ToArray()) 
+            }),
+        onNotFound: notFoundErr => 
+            Results.NotFound(new { message = notFoundErr.Detail }),
+        onConflict: conflictErr => 
+            Results.Conflict(new { message = conflictErr.Detail }),
+        onSuccess: order => 
+            Results.Ok(order)
+    );
+```
 
-### Avoid primitive obsession
+## Reuse Domain Validation at the API Layer
 
-To avoid passing around strings, it is recommended to use RequiredString to obtain strongly typed properties. The source code generator will automate the implementation process. There are also other ValueObject classes available to use.
+Domain validation rules automatically translate to HTTP standard error responses. ValidationError becomes BadRequest with detailed errors, NotFoundError becomes HTTP 404. This creates a **single source of truth**, eliminating duplication between domain and API layers.
 
-### Parallel Execution
+## Pagination Support
 
-Need to fetch data from several sources in parallel while maintaining ROP style of programming? This library can do that.
+Automatic HTTP header management with proper status codes: 200 (OK) for complete results, 206 (Partial Content) for paginated responses per [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110#field.content-range).
+
+## Avoid Primitive Obsession
+
+Use strongly-typed value objects instead of primitive types. RequiredString provides type-safe string properties with automatic source generation. Additional value object types are available for common scenarios.
+
+**Benefits:**
+- **Type safety** - Compiler prevents parameter mix-ups
+- **Self-documenting** - `FirstName` vs `string` is clearer
+- **Validation once** - Create validated objects, use everywhere
+- **Source generation** - Minimal boilerplate
+
+## Async & Cancellation Support
+
+All async operations support `CancellationToken` for graceful shutdown and request timeouts:
+
+```csharp
+await GetCustomerByIdAsync(id, cancellationToken)
+   .EnsureAsync(
+      (customer, ct) => customer.CanBePromotedAsync(ct),
+      Error.Validation("Cannot promote"),
+      cancellationToken)
+   .TapAsync(
+      async (customer, ct) => await customer.PromoteAsync(ct),
+      cancellationToken)
+   .MatchAsync(ok => "Success", error => error.Detail);
+```
+
+## Parallel Execution
+
+Fetch data from multiple sources in parallel while maintaining Railway Oriented Programming style:
+
+```csharp
+var result = await Task.WhenAll(
+        GetUserAsync(userId),
+        GetOrdersAsync(userId),
+        GetPreferencesAsync(userId)
+    )
+    .ThenAsync(results => results[0]
+        .Combine(results[1])
+        .Combine(results[2])
+    );
+```
+
+## Performance
+
+The library adds only **~11-16 nanoseconds** of overhead compared to imperative code - less than 0.002% of typical I/O operations. You get cleaner, more maintainable code with virtually zero performance cost.

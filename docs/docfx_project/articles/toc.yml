@@ -2,5 +2,17 @@
   href: intro.md
 - name: Basics
   href: basics.md
+- name: Advanced Features
+  href: advanced-features.md
+- name: Error Handling
+  href: error-handling.md
+- name: Async & Cancellation
+  href: async-cancellation.md
+- name: Debugging
+  href: debugging.md
+- name: Performance
+  href: performance.md
+- name: Integration
+  href: integration.md
 - name: Examples
   href: examples.md  

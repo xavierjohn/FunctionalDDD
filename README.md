@@ -154,7 +154,7 @@ var emailResult = EmailAddress.TryCreate("user@example.com")
 // Handle success or failure
 var message = emailResult.Match(
     onSuccess: email => $"Welcome {email}!",
-    onFailure: error => $"Error: {error.Message}"
+    onFailure: error => $"Error: {error.Detail}"
 );
 
 // Chain multiple operations
@@ -241,7 +241,7 @@ await GetCustomerByIdAsync(id)
       Error.Validation("The customer has the highest status possible"))
    .TapAsync(customer => customer.Promote())
    .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-   .MatchAsync(ok => "Okay", error => error.Message);
+   .MatchAsync(ok => "Okay", error => error.Detail);
  ```
 
 `GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
@@ -270,7 +270,7 @@ await GetCustomerByIdAsync(id, cancellationToken)
    .BindAsync(
       (customer, ct) => EmailGateway.SendPromotionNotificationAsync(customer.Email, ct),
       cancellationToken)
-   .MatchAsync(ok => "Okay", error => error.Message);
+   .MatchAsync(ok => "Okay", error => error.Detail);
 ```
 
 This allows graceful cancellation of long-running operations and supports request timeouts in web applications.
@@ -353,7 +353,8 @@ This allows cancellation to propagate through all parallel operations and the fi
 
 ```csharp
 var result = await _httpClient.GetAsync($"person/{id}")
-    .ReadResultWithNotFoundAsync<Person>(Error.NotFound("Person not found"));
+    .HandleNotFoundAsync(Error.NotFound("Person not found"))
+    .BindAsync(response => response.ReadResultMaybeFromJsonAsync<Person>(PersonContext.Default.Person, cancellationToken));
 ```
 
 Or handle errors yourself by using a callback.
@@ -435,13 +436,13 @@ Match on specific error types for precise error handling:
 ```csharp
 var result = ProcessOrder(order)
     .MatchError(
-        onValidationError: validationErr => 
-            Results.BadRequest(new { errors = validationErr.Details }),
-        onNotFoundError: notFoundErr => 
-            Results.NotFound(new { message = notFoundErr.Message }),
-        onConflictError: conflictErr => 
-            Results.Conflict(new { message = conflictErr.Message }),
-        onUnauthorizedError: _ => 
+        onValidation: validationErr => 
+            Results.BadRequest(new { errors = validationErr.FieldErrors }),
+        onNotFound: notFoundErr => 
+            Results.NotFound(new { message = notFoundErr.Detail }),
+        onConflict: conflictErr => 
+            Results.Conflict(new { message = conflictErr.Detail }),
+        onUnauthorized: _ => 
             Results.Unauthorized(),
         onSuccess: order => 
             Results.Ok(order)
@@ -459,7 +460,7 @@ var result = EmailAddress.TryCreate(email)
     .Match(
         // Tuple automatically destructured into parameters
         (emailAddr, user, order) => $"Order {order} for {emailAddr}",
-        error => $"Error: {error.Message}"
+        error => $\"Error: {error.Detail}\"
     );
 ```
 
