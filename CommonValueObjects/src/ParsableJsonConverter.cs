@@ -4,15 +4,195 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 
 /// <summary>
-/// A JsonConverter that can be used to serialize and deserialize a Parsable Value Object.
+/// A JSON converter for value objects that implement <see cref="IParsable{TSelf}"/>.
+/// Enables automatic serialization and deserialization of parsable value objects in ASP.NET Core APIs and System.Text.Json scenarios.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">The type of the value object to convert. Must implement <see cref="IParsable{TSelf}"/>.</typeparam>
+/// <remarks>
+/// <para>
+/// This converter provides seamless JSON integration for value objects by:
+/// <list type="bullet">
+/// <item>Serializing value objects to their string representation</item>
+/// <item>Deserializing JSON strings back to value objects using the Parse method</item>
+/// <item>Maintaining type safety throughout the serialization process</item>
+/// <item>Working with ASP.NET Core model binding and validation</item>
+/// </list>
+/// </para>
+/// <para>
+/// The converter delegates to the value object's <see cref="IParsable{TSelf}.Parse"/> and
+/// <see cref="object.ToString"/> methods, ensuring consistent behavior between JSON
+/// serialization and other parsing scenarios.
+/// </para>
+/// <para>
+/// Common usage:
+/// <list type="bullet">
+/// <item>Applied via <c>[JsonConverter]</c> attribute on value object classes</item>
+/// <item>Enables clean JSON APIs without manual conversion code</item>
+/// <item>Supports both request deserialization and response serialization</item>
+/// <item>Works with minimal APIs, MVC controllers, and HttpClient</item>
+/// </list>
+/// </para>
+/// </remarks>
+/// <example>
+/// Applying the converter to a value object:
+/// <code>
+/// [JsonConverter(typeof(ParsableJsonConverter&lt;EmailAddress&gt;))]
+/// public partial class EmailAddress : ScalarValueObject&lt;string&gt;, IParsable&lt;EmailAddress&gt;
+/// {
+///     private EmailAddress(string value) : base(value) { }
+///     
+///     public static EmailAddress Parse(string s, IFormatProvider? provider)
+///     {
+///         var result = TryCreate(s);
+///         if (result.IsFailure)
+///             throw new FormatException("Invalid email address");
+///         return result.Value;
+///     }
+///     
+///     public static bool TryParse(string? s, IFormatProvider? provider, 
+///         out EmailAddress result)
+///     {
+///         var r = TryCreate(s);
+///         result = r.IsSuccess ? r.Value : default!;
+///         return r.IsSuccess;
+///     }
+///     
+///     public override string ToString() => Value;
+/// }
+/// </code>
+/// </example>
+/// <example>
+/// Automatic JSON serialization in DTOs:
+/// <code>
+/// public record UserDto(
+///     UserId Id,
+///     EmailAddress Email,
+///     FirstName FirstName
+/// );
+/// 
+/// var user = new UserDto(
+///     UserId.NewUnique(),
+///     EmailAddress.TryCreate("user@example.com").Value,
+///     FirstName.TryCreate("John").Value
+/// );
+/// 
+/// var json = JsonSerializer.Serialize(user);
+/// // Produces:
+/// // {
+/// //   "id": "550e8400-e29b-41d4-a716-446655440000",
+/// //   "email": "user@example.com",
+/// //   "firstName": "John"
+/// // }
+/// 
+/// var deserialized = JsonSerializer.Deserialize&lt;UserDto&gt;(json);
+/// // Automatically parses strings back to value objects
+/// </code>
+/// </example>
+/// <example>
+/// Using in API endpoints:
+/// <code>
+/// public record CreateUserRequest(
+///     EmailAddress Email,
+///     FirstName FirstName,
+///     LastName LastName
+/// );
+/// 
+/// // Minimal API
+/// app.MapPost("/users", (CreateUserRequest request) =>
+/// {
+///     // Value objects are already parsed and validated from JSON
+///     return _userService.CreateUser(request.Email, request.FirstName, request.LastName)
+///         .ToHttpResult();
+/// });
+/// 
+/// // MVC Controller
+/// [HttpPost]
+/// public ActionResult&lt;UserDto&gt; CreateUser(CreateUserRequest request)
+/// {
+///     // ASP.NET Core automatically deserializes JSON strings to value objects
+///     return _userService.CreateUser(request.Email, request.FirstName, request.LastName)
+///         .ToActionResult(this);
+/// }
+/// 
+/// // JSON Request:
+/// // {
+/// //   "email": "user@example.com",
+/// //   "firstName": "John",
+/// //   "lastName": "Doe"
+/// // }
+/// </code>
+/// </example>
+/// <example>
+/// Error handling during deserialization:
+/// <code>
+/// // Invalid JSON value throws JsonException during deserialization
+/// var invalidJson = @"{""email"": ""not-a-valid-email""}";
+/// 
+/// try
+/// {
+///     var dto = JsonSerializer.Deserialize&lt;UserDto&gt;(invalidJson);
+/// }
+/// catch (JsonException ex)
+/// {
+///     // Exception message contains the FormatException from EmailAddress.Parse
+///     Console.WriteLine($"JSON deserialization failed: {ex.Message}");
+/// }
+/// 
+/// // In ASP.NET Core, this automatically becomes a 400 Bad Request
+/// // with model validation error details
+/// </code>
+/// </example>
+/// <seealso cref="IParsable{TSelf}"/>
+/// <seealso cref="JsonConverter{T}"/>
 public class ParsableJsonConverter<T> :
     JsonConverter<T> where T : IParsable<T>
 {
+    /// <summary>
+    /// Reads and converts the JSON to type <typeparamref name="T"/>.
+    /// </summary>
+    /// <param name="reader">The <see cref="Utf8JsonReader"/> to read from.</param>
+    /// <param name="typeToConvert">The type to convert.</param>
+    /// <param name="options">The serializer options to use.</param>
+    /// <returns>
+    /// The converted value object of type <typeparamref name="T"/>.
+    /// </returns>
+    /// <exception cref="JsonException">
+    /// Thrown when the JSON value cannot be parsed into a valid value object.
+    /// The inner exception contains the <see cref="FormatException"/> from the value object's Parse method.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// This method:
+    /// <list type="bullet">
+    /// <item>Reads the JSON string value using <see cref="Utf8JsonReader.GetString"/></item>
+    /// <item>Delegates to <typeparamref name="T"/>'s <see cref="IParsable{TSelf}.Parse"/> method</item>
+    /// <item>Throws <see cref="JsonException"/> if parsing fails</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// In ASP.NET Core, deserialization failures are automatically handled and converted
+    /// to 400 Bad Request responses with appropriate error messages.
+    /// </para>
+    /// </remarks>
     public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         => T.Parse(reader.GetString()!, default);
 
+    /// <summary>
+    /// Writes a specified value as JSON.
+    /// </summary>
+    /// <param name="writer">The <see cref="Utf8JsonWriter"/> to write to.</param>
+    /// <param name="value">The value object to convert to JSON.</param>
+    /// <param name="options">The serializer options to use.</param>
+    /// <remarks>
+    /// <para>
+    /// This method converts the value object to its string representation using
+    /// <see cref="object.ToString"/> and writes it as a JSON string value.
+    /// </para>
+    /// <para>
+    /// For value objects inheriting from <see cref="ScalarValueObject{T}"/>, this typically
+    /// returns the wrapped primitive value (e.g., the email string, GUID string, etc.).
+    /// </para>
+    /// </remarks>
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
         => writer.WriteStringValue(value.ToString());
 }

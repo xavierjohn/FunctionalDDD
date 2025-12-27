@@ -1,19 +1,153 @@
 ﻿namespace FunctionalDdd;
+
 /// <summary>
-/// Create a strongly typed Guid value object that cannot have default Guid value.
+/// Base class for creating strongly-typed GUID value objects that cannot have the default (empty) GUID value.
+/// Provides a foundation for entity identifiers and other domain concepts represented by GUIDs.
 /// </summary>
-/// <typeparam name="TValue"></typeparam>
-/// <seealso cref="ScalarValueObject{TValue}"/>
+/// <remarks>
+/// <para>
+/// This class extends <see cref="ScalarValueObject{T}"/> to provide a specialized base for GUID-based value objects
+/// with automatic validation that prevents empty/default GUIDs. When used with the <c>partial</c> keyword,
+/// the CommonValueObjectGenerator source generator automatically creates:
+/// <list type="bullet">
+/// <item>Static factory methods (NewUnique, TryCreate, TryParse)</item>
+/// <item>Validation logic that ensures non-empty GUIDs</item>
+/// <item>JSON serialization support</item>
+/// <item>Comparison and equality operations</item>
+/// <item>String parsing and formatting</item>
+/// </list>
+/// </para>
+/// <para>
+/// Common use cases:
+/// <list type="bullet">
+/// <item>Entity identifiers (CustomerId, OrderId, ProductId)</item>
+/// <item>Correlation IDs for distributed tracing</item>
+/// <item>Session or transaction identifiers</item>
+/// <item>Any domain concept requiring a globally unique, non-empty identifier</item>
+/// </list>
+/// </para>
+/// <para>
+/// Benefits over plain GUIDs:
+/// <list type="bullet">
+/// <item><strong>Type safety</strong>: Cannot accidentally use CustomerId where OrderId is expected</item>
+/// <item><strong>Validation</strong>: Prevents empty/default GUIDs at creation time</item>
+/// <item><strong>Domain clarity</strong>: Makes code more self-documenting and expressive</item>
+/// <item><strong>Serialization</strong>: Consistent JSON and database representation</item>
+/// <item><strong>Factory methods</strong>: Clean API for creating new unique identifiers</item>
+/// </list>
+/// </para>
+/// </remarks>
 /// <example>
-/// This example shows how to create a strongly named Value Object MenuId that cannot have default Guid value.
+/// Creating a strongly-typed entity identifier:
 /// <code>
-/// partial class MenuId : RequiredGuid
+/// // Define the value object (partial keyword enables source generation)
+/// public partial class CustomerId : RequiredGuid
+/// {
+/// }
+/// 
+/// // The source generator automatically creates:
+/// // - public static CustomerId NewUnique() => new(Guid.NewGuid());
+/// // - public static Result&lt;CustomerId&gt; TryCreate(Guid? value)
+/// // - public static Result&lt;CustomerId&gt; TryParse(string? value)
+/// // - private CustomerId(Guid value) : base(value) { }
+/// 
+/// // Usage examples:
+/// 
+/// // Generate a new unique ID
+/// var customerId = CustomerId.NewUnique();
+/// 
+/// // Create from existing GUID with validation
+/// var result1 = CustomerId.TryCreate(existingGuid);
+/// // Returns: Success(CustomerId) if guid != Guid.Empty
+/// // Returns: Failure(ValidationError) if guid == Guid.Empty
+/// 
+/// // Parse from string
+/// var result2 = CustomerId.TryParse("550e8400-e29b-41d4-a716-446655440000");
+/// // Returns: Success(CustomerId) if valid GUID format
+/// // Returns: Failure(ValidationError) if invalid format or empty GUID
+/// 
+/// // In entity constructors
+/// public class Customer : Entity&lt;CustomerId&gt;
+/// {
+///     public EmailAddress Email { get; }
+///     
+///     private Customer(CustomerId id, EmailAddress email) : base(id)
+///     {
+///         Email = email;
+///     }
+///     
+///     public static Result&lt;Customer&gt; Create(EmailAddress email) =>
+///         email.ToResult()
+///             .Map(e => new Customer(CustomerId.NewUnique(), e));
+/// }
 /// </code>
-/// **Note** The partial keyword is required to allow the code generator to add the generated methods.
 /// </example>
+/// <example>
+/// Using in API endpoints with automatic JSON serialization:
+/// <code>
+/// // Request DTO
+/// public record GetCustomerRequest(CustomerId CustomerId);
+/// 
+/// // API endpoint
+/// app.MapGet("/customers/{id}", (string id) =>
+///     CustomerId.TryParse(id)
+///         .Bind(_customerRepository.GetAsync)
+///         .Map(customer => new CustomerDto(customer))
+///         .ToHttpResult());
+/// 
+/// // JSON request/response examples:
+/// // Request: GET /customers/550e8400-e29b-41d4-a716-446655440000
+/// // Response: { "customerId": "550e8400-e29b-41d4-a716-446655440000", "name": "John" }
+/// // 
+/// // Invalid GUID: GET /customers/00000000-0000-0000-0000-000000000000
+/// // Response: 400 Bad Request with ValidationError
+/// </code>
+/// </example>
+/// <example>
+/// Multiple strongly-typed IDs in the same domain:
+/// <code>
+/// public partial class CustomerId : RequiredGuid { }
+/// public partial class OrderId : RequiredGuid { }
+/// public partial class ProductId : RequiredGuid { }
+/// 
+/// public class Order : Entity&lt;OrderId&gt;
+/// {
+///     public CustomerId CustomerId { get; }
+///     private readonly List&lt;OrderLine&gt; _lines = [];
+///     
+///     public Result&lt;Order&gt; AddLine(ProductId productId, int quantity) =>
+///         this.ToResult()
+///             .Ensure(_ => quantity > 0, Error.Validation("Quantity must be positive"))
+///             .Tap(_ => _lines.Add(new OrderLine(productId, quantity)));
+///     
+///     // Compiler prevents mixing IDs:
+///     // AddLine(customerId, 5); // Won't compile - type safety!
+/// }
+/// </code>
+/// </example>
+/// <seealso cref="ScalarValueObject{T}"/>
+/// <seealso cref="RequiredString"/>
 public abstract class RequiredGuid : ScalarValueObject<Guid>
 {
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RequiredGuid"/> class with the specified GUID value.
+    /// </summary>
+    /// <param name="value">The GUID value. Must not be <see cref="Guid.Empty"/>.</param>
+    /// <remarks>
+    /// <para>
+    /// This constructor is protected and should be called by derived classes.
+    /// When using the source generator (with <c>partial</c> keyword), a private constructor
+    /// is automatically generated that includes validation.
+    /// </para>
+    /// <para>
+    /// Direct instantiation should be avoided. Instead, use the generated factory methods:
+    /// <list type="bullet">
+    /// <item><c>NewUnique()</c> - Generate a new unique GUID</item>
+    /// <item><c>TryCreate(Guid?)</c> - Create from GUID with validation</item>
+    /// <item><c>TryParse(string?)</c> - Parse from string with validation</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     protected RequiredGuid(Guid value) : base(value)
     {
     }

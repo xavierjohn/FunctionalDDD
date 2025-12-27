@@ -6,20 +6,107 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 /// <summary>
-/// These extension methods are used to convert the Result object to ActionResult.
-/// If the Result is in a failed state, it returns the corresponding HTTP error code.
+/// Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.
+/// These methods bridge Railway Oriented Programming with ASP.NET Core MVC/Web API controllers.
 /// </summary>
+/// <remarks>
+/// <para>
+/// These extensions enable clean, declarative controller code by automatically mapping
+/// domain Result types to appropriate HTTP responses. They handle:
+/// <list type="bullet">
+/// <item>Automatic HTTP status code selection based on error type</item>
+/// <item>Problem Details (RFC 7807) formatting for errors</item>
+/// <item>Validation error formatting with ModelState</item>
+/// <item>Partial content (206) responses with range headers</item>
+/// <item>Unit result to 204 No Content conversion</item>
+/// </list>
+/// </para>
+/// <para>
+/// Usage pattern in controllers:
+/// <code>
+/// public class UsersController : ControllerBase
+/// {
+///     [HttpGet("{id}")]
+///     public ActionResult&lt;UserDto&gt; GetUser(string id) =>
+///         UserId.TryCreate(id)
+///             .Bind(_userService.GetUser)
+///             .Map(user => new UserDto(user))
+///             .ToActionResult(this);
+/// }
+/// </code>
+/// </para>
+/// </remarks>
 public static class ActionResultExtensions
 {
     /// <summary>
-    /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.
-    /// For <see cref="Result{Unit}"/> success, returns 204 No Content instead.
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with appropriate HTTP status code.
     /// </summary>
-    /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="result">The result object.</param>
-    /// <param name="controllerBase">The controller object.</param>
-    /// <returns><see cref="ActionResult{TValue}"/> </returns>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>200 OK with value if result is successful (except for Unit)</item>
+    /// <item>204 No Content if result is successful and TValue is Unit</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the primary method for converting domain results to HTTP responses in controllers.
+    /// It automatically selects the appropriate status code based on the error type.
+    /// </para>
+    /// <para>
+    /// Special handling for <see cref="Unit"/>: Since Unit represents "no value", 
+    /// successful Unit results return 204 No Content instead of 200 OK.
+    /// This is appropriate for operations like DELETE or state-changing operations
+    /// that don't return data.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Simple GET endpoint:
+    /// <code>
+    /// [HttpGet("{id}")]
+    /// public ActionResult&lt;UserDto&gt; GetUser(Guid id) =>
+    ///     UserId.TryCreate(id)
+    ///         .Bind(_repository.GetAsync)
+    ///         .Map(user => new UserDto(user))
+    ///         .ToActionResult(this);
+    /// 
+    /// // Success: 200 OK with UserDto
+    /// // Not found: 404 Not Found with Problem Details
+    /// // Validation error: 400 Bad Request with validation details
+    /// </code>
+    /// </example>
+    /// <example>
+    /// POST endpoint returning created resource:
+    /// <code>
+    /// [HttpPost]
+    /// public ActionResult&lt;UserDto&gt; CreateUser(CreateUserRequest request) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .Combine(FirstName.TryCreate(request.FirstName))
+    ///         .Bind((email, name) => _userService.CreateUser(email, name))
+    ///         .Map(user => new UserDto(user))
+    ///         .ToActionResult(this);
+    /// 
+    /// // Success: 200 OK with UserDto
+    /// // Validation error: 400 Bad Request with field-level errors
+    /// // Conflict: 409 Conflict if user already exists
+    /// </code>
+    /// </example>
+    /// <example>
+    /// DELETE endpoint returning Unit:
+    /// <code>
+    /// [HttpDelete("{id}")]
+    /// public ActionResult&lt;Unit&gt; DeleteUser(Guid id) =>
+    ///     UserId.TryCreate(id)
+    ///         .Bind(_repository.DeleteAsync)
+    ///         .ToActionResult(this);
+    /// 
+    /// // Success: 204 No Content (automatic for Unit)
+    /// // Not found: 404 Not Found
+    /// </code>
+    /// </example>
     public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase)
     {
         if (result.IsSuccess)
@@ -35,64 +122,97 @@ public static class ActionResultExtensions
     }
 
     /// <summary>
-    /// <see cref="Error"/> extension method that maps domain errors to failed <see cref="ObjectResult"/> using <see cref="ControllerBase"/>.
+    /// Converts a domain <see cref="Error"/> to an <see cref="ActionResult{TValue}"/> with appropriate HTTP status code and Problem Details format.
     /// </summary>
-    /// <typeparam name="TValue">The type of the <see cref="ActionResult{TValue}"/></typeparam>
-    /// <param name="error">The domain error object.</param>
-    /// <param name="controllerBase">The controller object.</param>
+    /// <typeparam name="TValue">The type of the ActionResult value.</typeparam>
+    /// <param name="error">The domain error to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
     /// <returns>
-    ///     <para>Converts domain errors to failed <see cref="ObjectResult"/>:</para>
-    ///     <list type="table">
-    ///         <listheader>
-    ///             <term>Domain Error</term>
-    ///             <description>HTTP Status</description>
-    ///         </listheader>
-    ///         <item>
-    ///             <term><see cref="ValidationError"/></term>
-    ///             <description><see cref="ControllerBase.ValidationProblem()"/> - 400 Bad Request</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="BadRequestError"/></term>
-    ///             <description><see cref="ControllerBase.BadRequest()"/> - 400 Bad Request</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="UnauthorizedError"/></term>
-    ///             <description><see cref="ControllerBase.Unauthorized()"/> - 401 Unauthorized</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="ForbiddenError"/></term>
-    ///             <description>403 Forbidden</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="NotFoundError"/></term>
-    ///             <description><see cref="ControllerBase.NotFound()"/> - 404 Not Found</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="ConflictError"/></term>
-    ///             <description><see cref="ControllerBase.Conflict()"/> - 409 Conflict</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="DomainError"/></term>
-    ///             <description>422 Unprocessable Entity</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="RateLimitError"/></term>
-    ///             <description>429 Too Many Requests</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="UnexpectedError"/></term>
-    ///             <description>500 Internal Server Error</description>
-    ///         </item>
-    ///         <item>
-    ///             <term><see cref="ServiceUnavailableError"/></term>
-    ///             <description>503 Service Unavailable</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>Unknown error types</term>
-    ///             <description>500 Internal Server Error</description>
-    ///         </item>
-    ///     </list>
+    /// An ActionResult with Problem Details (RFC 7807) response containing:
+    /// <list type="table">
+    ///     <listheader>
+    ///         <term>Domain Error Type</term>
+    ///         <description>HTTP Status Code</description>
+    ///     </listheader>
+    ///     <item>
+    ///         <term><see cref="ValidationError"/></term>
+    ///         <description>400 Bad Request with validation problem details and ModelState</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="BadRequestError"/></term>
+    ///         <description>400 Bad Request</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="UnauthorizedError"/></term>
+    ///         <description>401 Unauthorized</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="ForbiddenError"/></term>
+    ///         <description>403 Forbidden</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="NotFoundError"/></term>
+    ///         <description>404 Not Found</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="ConflictError"/></term>
+    ///         <description>409 Conflict</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="DomainError"/></term>
+    ///         <description>422 Unprocessable Entity</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="RateLimitError"/></term>
+    ///         <description>429 Too Many Requests</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="UnexpectedError"/></term>
+    ///         <description>500 Internal Server Error</description>
+    ///     </item>
+    ///     <item>
+    ///         <term><see cref="ServiceUnavailableError"/></term>
+    ///         <description>503 Service Unavailable</description>
+    ///     </item>
+    ///     <item>
+    ///         <term>Unknown types</term>
+    ///         <description>500 Internal Server Error</description>
+    ///     </item>
+    /// </list>
     /// </returns>
+    /// <remarks>
+    /// <para>
+    /// All responses use Problem Details format (RFC 7807) which provides a standard way to
+    /// communicate errors in HTTP APIs. The format includes:
+    /// <list type="bullet">
+    /// <item><c>type</c>: A URI reference identifying the problem type</item>
+    /// <item><c>title</c>: A short human-readable summary</item>
+    /// <item><c>status</c>: The HTTP status code</item>
+    /// <item><c>detail</c>: A human-readable explanation (from error.Detail)</item>
+    /// <item><c>instance</c>: A URI reference identifying the specific occurrence (from error.Instance)</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// For <see cref="ValidationError"/>, the response includes an additional <c>errors</c> object
+    /// containing field-level validation messages compatible with ASP.NET Core ModelState.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Example Problem Details response for a validation error:
+    /// <code>
+    /// {
+    ///   "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+    ///   "title": "One or more validation errors occurred.",
+    ///   "status": 400,
+    ///   "detail": "User data validation failed",
+    ///   "instance": "/api/users",
+    ///   "errors": {
+    ///     "email": ["Email address is invalid"],
+    ///     "age": ["Age must be 18 or older"]
+    ///   }
+    /// }
+    /// </code>
+    /// </example>
     public static ActionResult<TValue> ToActionResult<TValue>(this Error error, ControllerBase controllerBase)
     => error switch
     {
@@ -110,20 +230,65 @@ public static class ActionResultExtensions
     };
 
     /// <summary>
-    /// If <see cref="Result{TValue}"/> is in success state this extension method returns
-    /// <list type="bullet">
-    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
-    /// <item><description>Okay (200) status for complete results.</description></item>
-    /// </list>
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with support for partial content responses (HTTP 206).
     /// </summary>
-    /// <typeparam name="TValue"></typeparam>
-    /// <param name="result">The result object.</param>
-    /// <param name="controllerBase">Controller object.</param>
-    /// <param name="from">The start of the range.</param>
-    /// <param name="to">The end of the range.</param>
-    /// <param name="length">The total number of items.</param>
-    /// <returns></returns>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="from">The starting index of the range (inclusive, 0-based).</param>
+    /// <param name="to">The ending index of the range (inclusive, 0-based).</param>
+    /// <param name="length">The total number of items available.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>206 Partial Content with Content-Range header if the range is a subset of the total</item>
+    /// <item>200 OK if the range represents the complete set</item>
+    /// <item>Appropriate error status code if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method is useful for implementing pagination or range requests where clients
+    /// request a subset of a larger collection. The Content-Range header indicates:
+    /// <list type="bullet">
+    /// <item>Which items are included in this response</item>
+    /// <item>The total number of items available</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// The Content-Range header format is: <c>items {from}-{to}/{length}</c>
+    /// Example: <c>Content-Range: items 0-24/100</c>
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Paginated list endpoint:
+    /// <code>
+    /// [HttpGet]
+    /// public ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt; GetUsers(
+    ///     [FromQuery] int page = 0,
+    ///     [FromQuery] int pageSize = 25)
+    /// {
+    ///     var from = page * pageSize;
+    ///     var to = from + pageSize - 1;
+    ///     
+    ///     return _userService
+    ///         .GetUsersAsync(from, pageSize)
+    ///         .Map(result => (
+    ///             Users: result.Items,
+    ///             TotalCount: result.TotalCount
+    ///         ))
+    ///         .Map(x => x.Users)
+    ///         .ToActionResult(this, from, to, totalCount);
+    /// }
+    /// 
+    /// // Response for page 0 (25 items out of 100):
+    /// // Status: 206 Partial Content
+    /// // Content-Range: items 0-24/100
+    /// 
+    /// // Response for single page (all items):
+    /// // Status: 200 OK
+    /// // No Content-Range header
+    /// </code>
+    /// </example>
     public static ActionResult<TValue> ToActionResult<TValue>(this Result<TValue> result, ControllerBase controllerBase, long from, long to, long length)
     {
         if (result.IsSuccess)
@@ -140,20 +305,67 @@ public static class ActionResultExtensions
     }
 
     /// <summary>
-    /// If <see cref="Result{TIn}"/> is in success state this extension method returns
-    /// <list type="bullet">
-    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
-    /// <item><description>Okay (200) status for complete results.</description></item>
-    /// </list>
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a <see cref="Result{TIn}"/> to an <see cref="ActionResult{TOut}"/> with support for partial content responses,
+    /// using custom functions to extract range information and transform the value.
     /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <param name="result"></param>
-    /// <param name="controllerBase"></param>
-    /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
-    /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
-    /// <returns></returns>
+    /// <typeparam name="TIn">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the output ActionResult.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="funcRange">Function that extracts <see cref="ContentRangeHeaderValue"/> from the input value.</param>
+    /// <param name="funcValue">Function that transforms the input value to the output type.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>206 Partial Content with Content-Range header if the range is a subset</item>
+    /// <item>200 OK if the range represents the complete set</item>
+    /// <item>Appropriate error status code if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This overload is useful when the result value contains both the data and range information,
+    /// and you need to transform the value before returning it.
+    /// </para>
+    /// <para>
+    /// Common scenarios:
+    /// <list type="bullet">
+    /// <item>Returning a subset of properties from a complex result object</item>
+    /// <item>Mapping domain entities to DTOs while preserving pagination info</item>
+    /// <item>Extracting embedded pagination metadata from a wrapper object</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Using a result wrapper with pagination metadata:
+    /// <code>
+    /// public record PagedResult&lt;T&gt;(
+    ///     IEnumerable&lt;T&gt; Items,
+    ///     long From,
+    ///     long To,
+    ///     long TotalCount
+    /// );
+    /// 
+    /// [HttpGet]
+    /// public ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt; GetUsers(
+    ///     [FromQuery] int page = 0,
+    ///     [FromQuery] int pageSize = 25)
+    /// {
+    ///     return _userService
+    ///         .GetPagedUsersAsync(page, pageSize)
+    ///         .ToActionResult(
+    ///             this,
+    ///             funcRange: pagedResult => new ContentRangeHeaderValue(
+    ///                 pagedResult.From,
+    ///                 pagedResult.To,
+    ///                 pagedResult.TotalCount),
+    ///             funcValue: pagedResult => pagedResult.Items.Select(u => new UserDto(u))
+    ///         );
+    /// }
+    /// 
+    /// // Automatically returns 206 Partial Content with proper headers
+    /// // for partial results, 200 OK for complete results
+    /// </code>
+    /// </example>
     public static ActionResult<TOut> ToActionResult<TIn, TOut>(
         this Result<TIn> result,
         ControllerBase controllerBase,
