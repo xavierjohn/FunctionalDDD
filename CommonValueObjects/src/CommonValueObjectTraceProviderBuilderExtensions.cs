@@ -15,7 +15,7 @@ public static class CommonValueObjectTraceProviderBuilderExtensions
     /// <returns>The configured <see cref="TracerProviderBuilder"/> for method chaining.</returns>
     /// <remarks>
     /// <para>
-    /// This extension method registers the CommonValueObjects <see cref="ActivitySource"/> with OpenTelemetry,
+    /// This extension method registers the CommonValueObjects <see cref="System.Diagnostics.ActivitySource"/> with OpenTelemetry,
     /// allowing you to observe and monitor value object operations in your distributed tracing system.
     /// </para>
     /// <para>

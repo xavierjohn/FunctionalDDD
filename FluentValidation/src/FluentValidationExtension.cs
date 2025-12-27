@@ -137,8 +137,8 @@ public static class FunctionalDDDValidationExtension
     /// <param name="value">The value that was validated.</param>
     /// <returns>
     /// <list type="bullet">
-    /// <item><see cref="Result{T}.Success"/> containing the value if validation passed</item>
-    /// <item><see cref="Result{T}.Failure"/> with a <see cref="ValidationError"/> containing grouped field errors if validation failed</item>
+    /// <item>Success containing the value if validation passed</item>
+    /// <item>Failure with validation errors if validation failed or value is null</item>
     /// </list>
     /// </returns>
     /// <remarks>
@@ -200,8 +200,8 @@ public static class FunctionalDDDValidationExtension
     /// <param name="message">Optional custom error message when value is null.</param>
     /// <returns>
     /// <list type="bullet">
-    /// <item><see cref="Result{T}.Success"/> containing the value if validation passed</item>
-    /// <item><see cref="Result{T}.Failure"/> with validation errors if validation failed or value is null</item>
+    /// <item>Success containing the value if validation passed</item>
+    /// <item>Failure with validation errors if validation failed or value is null</item>
     /// </list>
     /// </returns>
     /// <remarks>
@@ -297,8 +297,8 @@ public static class FunctionalDDDValidationExtension
     /// <returns>
     /// A task representing the asynchronous validation operation, containing:
     /// <list type="bullet">
-    /// <item><see cref="Result{T}.Success"/> with the value if validation passed</item>
-    /// <item><see cref="Result{T}.Failure"/> with validation errors if validation failed or value is null</item>
+    /// <item>Success with the value if validation passed</item>
+    /// <item>Failure with validation errors if validation failed or value is null</item>
     /// </list>
     /// </returns>
     /// <remarks>

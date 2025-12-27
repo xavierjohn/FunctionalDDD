@@ -95,7 +95,7 @@ public static class ResultAliases
     // Async variants
 
     /// <summary>
-    /// Alias for <see cref="BindExtensions.BindAsync{TIn, TOut}"/>.
+    /// Alias for BindAsync.
     /// Async version of Then.
     /// </summary>
     public static Task<Result<TOut>> ThenAsync<TIn, TOut>(
@@ -104,7 +104,7 @@ public static class ResultAliases
         => result.BindAsync(func);
 
     /// <summary>
-    /// Alias for <see cref="BindExtensions.BindAsync{TIn, TOut}(Task{Result{TIn}}, Func{TIn, Task{Result{TOut}}})"/>.
+    /// Alias for BindAsync with Task-wrapped results.
     /// Async version of Then for Task-wrapped results.
     /// </summary>
     public static Task<Result<TOut>> ThenAsync<TIn, TOut>(
@@ -113,7 +113,7 @@ public static class ResultAliases
         => resultTask.BindAsync(func);
 
     /// <summary>
-    /// Alias for <see cref="TapExtensions.TapAsync{T}"/>.
+    /// Alias for TapAsync.
     /// Async version of Peek.
     /// </summary>
     public static Task<Result<T>> PeekAsync<T>(
@@ -122,7 +122,7 @@ public static class ResultAliases
         => result.TapAsync(action);
 
     /// <summary>
-    /// Alias for <see cref="TapExtensions.TapAsync{T}(Task{Result{T}}, Func{T, Task})"/>.
+    /// Alias for TapAsync with Task-wrapped results.
     /// Async version of Peek for Task-wrapped results.
     /// </summary>
     public static Task<Result<T>> PeekAsync<T>(
@@ -131,7 +131,7 @@ public static class ResultAliases
         => resultTask.TapAsync(action);
 
     /// <summary>
-    /// Alias for <see cref="CompensateExtensions.CompensateAsync{T}"/>.
+    /// Alias for CompensateAsync.
     /// Async version of OrElse.
     /// </summary>
     public static Task<Result<T>> OrElseAsync<T>(
@@ -140,7 +140,7 @@ public static class ResultAliases
         => result.CompensateAsync(fallbackAsync);
 
     /// <summary>
-    /// Alias for <see cref="EnsureExtensions.EnsureAsync{T}"/>.
+    /// Alias for EnsureAsync.
     /// Async version of Require.
     /// </summary>
     public static Task<Result<T>> RequireAsync<T>(

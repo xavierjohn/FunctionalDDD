@@ -68,9 +68,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcommerceExample", "Example
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{26614E2E-249E-4A54-B47B-BCBDF5CA11EB}"
 	ProjectSection(SolutionItems) = preProject
+		docs\docfx_project\articles\advanced-features.md = docs\docfx_project\articles\advanced-features.md
+		docs\docfx_project\articles\async-cancellation.md = docs\docfx_project\articles\async-cancellation.md
 		docs\docfx_project\articles\basics.md = docs\docfx_project\articles\basics.md
+		docs\docfx_project\articles\debugging.md = docs\docfx_project\articles\debugging.md
+		docs\docfx_project\articles\error-handling.md = docs\docfx_project\articles\error-handling.md
 		docs\docfx_project\articles\examples.md = docs\docfx_project\articles\examples.md
+		docs\docfx_project\articles\integration.md = docs\docfx_project\articles\integration.md
 		docs\docfx_project\articles\intro.md = docs\docfx_project\articles\intro.md
+		docs\docfx_project\articles\performance.md = docs\docfx_project\articles\performance.md
+		docs\docfx_project\articles\toc.yml = docs\docfx_project\articles\toc.yml
 	EndProjectSection
 EndProject
 Global

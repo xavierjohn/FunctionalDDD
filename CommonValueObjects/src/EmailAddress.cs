@@ -171,8 +171,8 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     /// </param>
     /// <returns>
     /// <list type="bullet">
-    /// <item><see cref="Result{T}.Success"/> with the EmailAddress if the string is a valid email</item>
-    /// <item><see cref="Result{T}.Failure"/> with a <see cref="ValidationError"/> if the email is invalid or null</item>
+    /// <item>Success with the EmailAddress if the string is a valid email</item>
+    /// <item>Failure with a <see cref="ValidationError"/> if the email is invalid or null</item>
     /// </list>
     /// </returns>
     /// <remarks>

@@ -4,7 +4,7 @@ This guide covers performance characteristics, benchmarks, and optimization tech
 
 ## Table of Contents
 
-- [Performance Overview](#performance-overview)
+- [Overview](#overview)
 - [Key Metrics](#key-metrics)
 - [Benchmark Results](#benchmark-results)
 - [Real-World Context](#real-world-context)

@@ -24,7 +24,7 @@ using System.Reflection;
 /// </para>
 /// <para>
 /// To enable tracing in your application, register the activity source with your
-/// OpenTelemetry configuration using <see cref="CommonValueObjectTraceProviderBuilderExtensions.AddCommonValueObjectInstrumentation"/>.
+/// OpenTelemetry configuration using <see cref="CommonValueObjectTraceProviderBuilderExtensions.AddFunctionalDddCvoInstrumentation"/>.
 /// </para>
 /// </remarks>
 /// <example>

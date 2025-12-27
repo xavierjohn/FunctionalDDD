@@ -32,19 +32,19 @@
 /// </remarks>
 /// <example>
 /// Simple scalar value object for a strongly-typed ID:
-/// <code>
-/// public class CustomerId : ScalarValueObject&lt;Guid&gt;
+/// <code><![CDATA[
+/// public class CustomerId : ScalarValueObject<Guid>
 /// {
 ///     private CustomerId(Guid value) : base(value) { }
 ///     
 ///     public static CustomerId NewUnique() => new(Guid.NewGuid());
 ///     
-///     public static Result&lt;CustomerId&gt; TryCreate(Guid? value) =>
+///     public static Result<CustomerId> TryCreate(Guid? value) =>
 ///         value.ToResult(Error.Validation("Customer ID cannot be empty"))
 ///             .Ensure(v => v != Guid.Empty, Error.Validation("Customer ID cannot be empty"))
 ///             .Map(v => new CustomerId(v));
 ///     
-///     public static Result&lt;CustomerId&gt; TryCreate(string? stringOrNull) =>
+///     public static Result<CustomerId> TryCreate(string? stringOrNull) =>
 ///         stringOrNull.ToResult(Error.Validation("Customer ID cannot be empty"))
 ///             .Bind(s => Guid.TryParse(s, out var guid)
 ///                 ? Result.Success(guid)
@@ -55,16 +55,16 @@
 /// // Usage
 /// var id = CustomerId.NewUnique();
 /// Guid guidValue = id; // Implicit conversion to Guid
-/// </code>
+/// ]]></code>
 /// </example>
 /// <example>
 /// Scalar value object with custom equality and validation:
-/// <code>
-/// public class Temperature : ScalarValueObject&lt;decimal&gt;
+/// <code><![CDATA[
+/// public class Temperature : ScalarValueObject<decimal>
 /// {
 ///     private Temperature(decimal value) : base(value) { }
 ///     
-///     public static Result&lt;Temperature&gt; TryCreate(decimal value) =>
+///     public static Result<Temperature> TryCreate(decimal value) =>
 ///         value.ToResult()
 ///             .Ensure(v => v >= -273.15m, 
 ///                    Error.Validation("Temperature cannot be below absolute zero"))
@@ -73,7 +73,7 @@
 ///             .Map(v => new Temperature(v));
 ///     
 ///     // Custom equality - round to 2 decimal places
-///     protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+///     protected override IEnumerable<IComparable> GetEqualityComponents()
 ///     {
 ///         yield return Math.Round(Value, 2);
 ///     }
@@ -93,16 +93,16 @@
 /// temp1 == temp2; // true - rounded to same value
 /// 
 /// decimal celsius = temp1.Value; // Access underlying value
-/// </code>
+/// ]]></code>
 /// </example>
 /// <example>
 /// Scalar value object for email addresses:
-/// <code>
-/// public class EmailAddress : ScalarValueObject&lt;string&gt;
+/// <code><![CDATA[
+/// public class EmailAddress : ScalarValueObject<string>
 /// {
 ///     private EmailAddress(string value) : base(value) { }
 ///     
-///     public static Result&lt;EmailAddress&gt; TryCreate(string? email) =>
+///     public static Result<EmailAddress> TryCreate(string? email) =>
 ///         email.ToResult(Error.Validation("Email is required", "email"))
 ///             .Ensure(e => !string.IsNullOrWhiteSpace(e),
 ///                    Error.Validation("Email cannot be empty", "email"))
@@ -115,7 +115,7 @@
 ///     public string Domain => Value.Split('@')[1];
 ///     public string LocalPart => Value.Split('@')[0];
 /// }
-/// </code>
+/// ]]></code>
 /// </example>
 public abstract class ScalarValueObject<T> : ValueObject, IConvertible
     where T : IComparable
@@ -152,13 +152,13 @@ public abstract class ScalarValueObject<T> : ValueObject, IConvertible
     /// </para>
     /// </remarks>
     /// <example>
-    /// <code>
+    /// <code><![CDATA[
     /// // Custom equality for Temperature - round to 2 decimal places
-    /// protected override IEnumerable&lt;IComparable&gt; GetEqualityComponents()
+    /// protected override IEnumerable<IComparable> GetEqualityComponents()
     /// {
     ///     yield return Math.Round(Value, 2);
     /// }
-    /// </code>
+    /// ]]></code>
     /// </example>
     protected override IEnumerable<IComparable> GetEqualityComponents()
     {

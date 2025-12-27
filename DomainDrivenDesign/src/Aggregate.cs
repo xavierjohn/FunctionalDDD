@@ -40,10 +40,10 @@ using System.Text.Json.Serialization;
 /// </remarks>
 /// <example>
 /// Simple aggregate with validation and domain events:
-/// <code>
-/// public class Order : Aggregate&lt;OrderId&gt;
+/// <code><![CDATA[
+/// public class Order : Aggregate<OrderId>
 /// {
-///     private readonly List&lt;OrderLine&gt; _lines = [];
+///     private readonly List<OrderLine> _lines = [];
 ///     
 ///     public CustomerId CustomerId { get; private set; }
 ///     public OrderStatus Status { get; private set; }
@@ -52,7 +52,7 @@ using System.Text.Json.Serialization;
 ///     public DateTime? SubmittedAt { get; private set; }
 ///     
 ///     // Internal entities are protected and accessed through methods
-///     public IReadOnlyList&lt;OrderLine&gt; Lines => _lines.AsReadOnly();
+///     public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
 ///     
 ///     private Order(OrderId id, CustomerId customerId)
 ///         : base(id)
@@ -63,12 +63,12 @@ using System.Text.Json.Serialization;
 ///         CreatedAt = DateTime.UtcNow;
 ///     }
 ///     
-///     public static Result&lt;Order&gt; Create(CustomerId customerId) =>
+///     public static Result<Order> Create(CustomerId customerId) =>
 ///         customerId.ToResult(Error.Validation("Customer ID required"))
 ///             .Map(id => new Order(OrderId.NewUnique(), id));
 ///     
 ///     // All modifications go through methods that enforce invariants
-///     public Result&lt;Order&gt; AddLine(ProductId productId, int quantity, Money unitPrice) =>
+///     public Result<Order> AddLine(ProductId productId, int quantity, Money unitPrice) =>
 ///         this.ToResult()
 ///             .Ensure(_ => Status == OrderStatus.Draft,
 ///                    Error.Validation("Cannot modify submitted order"))
@@ -86,7 +86,7 @@ using System.Text.Json.Serialization;
 ///                 DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
 ///             });
 ///     
-///     public Result&lt;Order&gt; Submit() =>
+///     public Result<Order> Submit() =>
 ///         this.ToResult()
 ///             .Ensure(_ => Status == OrderStatus.Draft,
 ///                    Error.Validation("Order already submitted"))
@@ -103,7 +103,7 @@ using System.Text.Json.Serialization;
 /// }
 /// 
 /// // Internal entity - never exposed outside the aggregate
-/// internal class OrderLine : Entity&lt;Guid&gt;
+/// internal class OrderLine : Entity<Guid>
 /// {
 ///     public ProductId ProductId { get; }
 ///     public int Quantity { get; }
@@ -117,17 +117,17 @@ using System.Text.Json.Serialization;
 ///         UnitPrice = unitPrice;
 ///     }
 /// }
-/// </code>
+/// ]]></code>
 /// </example>
 /// <example>
 /// Repository pattern with aggregate persistence and event publishing:
-/// <code>
+/// <code><![CDATA[
 /// public class OrderRepository
 /// {
 ///     private readonly IDbContext _dbContext;
 ///     private readonly IEventBus _eventBus;
 ///     
-///     public async Task&lt;Result&gt; SaveAsync(Order order, CancellationToken ct)
+///     public async Task<Result> SaveAsync(Order order, CancellationToken ct)
 ///     {
 ///         // 1. Save aggregate to database
 ///         _dbContext.Orders.Update(order);
@@ -148,7 +148,7 @@ using System.Text.Json.Serialization;
 /// }
 /// 
 /// // Usage in an application service
-/// public async Task&lt;Result&gt; SubmitOrderAsync(OrderId orderId, CancellationToken ct)
+/// public async Task<Result> SubmitOrderAsync(OrderId orderId, CancellationToken ct)
 /// {
 ///     var order = await _orderRepository.GetAsync(orderId, ct);
 ///     
@@ -156,7 +156,7 @@ using System.Text.Json.Serialization;
 ///         .Bind(o => o.Submit())
 ///         .BindAsync(o => _orderRepository.SaveAsync(o, ct));
 /// }
-/// </code>
+/// ]]></code>
 /// </example>
 public abstract class Aggregate<TId> : Entity<TId>, IAggregate
     where TId : notnull
@@ -271,9 +271,9 @@ public abstract class Aggregate<TId> : Entity<TId>, IAggregate
     /// </para>
     /// </remarks>
     /// <example>
-    /// <code>
+    /// <code><![CDATA[
     /// // In a repository or unit of work
-    /// public async Task&lt;Result&gt; SaveAsync(Order order, CancellationToken ct)
+    /// public async Task<Result> SaveAsync(Order order, CancellationToken ct)
     /// {
     ///     using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
     ///     try
@@ -300,7 +300,7 @@ public abstract class Aggregate<TId> : Entity<TId>, IAggregate
     ///         return Error.Unexpected(ex.Message);
     ///     }
     /// }
-    /// </code>
+    /// ]]></code>
     /// </example>
     public void AcceptChanges()
         => DomainEvents.Clear();
