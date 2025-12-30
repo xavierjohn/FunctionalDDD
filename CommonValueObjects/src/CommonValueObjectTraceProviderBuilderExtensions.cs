@@ -3,9 +3,14 @@
 using OpenTelemetry.Trace;
 
 /// <summary>
-/// Provides extension methods for configuring OpenTelemetry tracing for CommonValueObjects operations.
+/// Provides extension methods for configuring OpenTelemetry tracing for Common Value Objects (CVO).
 /// </summary>
-public static class CommonValueObjectTraceProviderBuilderExtensions
+/// <remarks>
+/// This class enables distributed tracing and monitoring for value object operations such as
+/// creation, validation, and parsing. When configured, value object operations will automatically
+/// generate trace spans in your OpenTelemetry pipeline.
+/// </remarks>
+public static class CvoTracingExtensions
 {
     /// <summary>
     /// Adds CommonValueObjects instrumentation to the OpenTelemetry tracing pipeline.

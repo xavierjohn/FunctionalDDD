@@ -7,6 +7,7 @@
   </Description>
     <PackageTags>functional-programming;railway-oriented;result;monad;error-handling;maybe;csharp;dotnet;rop</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />

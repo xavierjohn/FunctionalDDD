@@ -146,37 +146,32 @@ Result<string> ReadFileWithCustomErrors(string path)
 
 Execute multiple async operations in parallel while maintaining ROP style:
 
-### Parallel Execution with WhenAll
+### Parallel Execution with ParallelAsync and AwaitAsync
 
 ```csharp
-// Start all operations in parallel
-var userTask = GetUserAsync(userId);
-var ordersTask = GetOrdersAsync(userId);
-var preferencesTask = GetPreferencesAsync(userId);
-
-// Combine results
-var result = await Task.WhenAll(userTask, ordersTask, preferencesTask)
-    .ThenAsync(results => results[0]
-        .Combine(results[1])
-        .Combine(results[2])
-    )
+// Execute multiple async operations in parallel using ParallelAsync
+var result = await GetUserAsync(userId, cancellationToken)
+    .ParallelAsync(GetOrdersAsync(userId, cancellationToken))
+    .ParallelAsync(GetPreferencesAsync(userId, cancellationToken))
+    .AwaitAsync()
     .BindAsync((user, orders, preferences) => 
-        CreateDashboard(user, orders, preferences)
-    );
+        CreateDashboard(user, orders, preferences, cancellationToken),
+        cancellationToken);
 ```
 
 ### Parallel with Result Collection
 
 ```csharp
 // Execute multiple validations in parallel
-var tasks = userIds.Select(id => ValidateUserAsync(id));
+var tasks = userIds.Select(id => ValidateUserAsync(id, cancellationToken));
 var results = await Task.WhenAll(tasks);
 
 // Combine all results - fails if any validation fails
-var combinedResult = results.Aggregate(
-    Result.Success(Enumerable.Empty<User>()),
-    (acc, result) => acc.Combine(result)
-);
+var combinedResult = results
+    .Aggregate(
+        Result.Success(ImmutableList<User>.Empty),
+        (acc, result) => acc.Combine(result).Map((users, user) => users.Add(user))
+    );
 ```
 
 ### Real-World Example: Fraud Detection
@@ -186,20 +181,17 @@ public async Task<Result<Transaction>> ProcessTransactionAsync(
     Transaction transaction,
     CancellationToken ct)
 {
-    // Run all fraud checks in parallel
-    var checksTask = Task.WhenAll(
-        CheckBlacklistAsync(transaction.AccountId, ct),
-        CheckVelocityLimitsAsync(transaction, ct),
-        CheckAmountThresholdAsync(transaction, ct),
-        CheckGeolocationAsync(transaction, ct)
-    );
+    // Run all fraud checks in parallel using ParallelAsync
+    var result = await CheckBlacklistAsync(transaction.AccountId, ct)
+        .ParallelAsync(CheckVelocityLimitsAsync(transaction, ct))
+        .ParallelAsync(CheckAmountThresholdAsync(transaction, ct))
+        .ParallelAsync(CheckGeolocationAsync(transaction, ct))
+        .AwaitAsync()
+        .BindAsync((check1, check2, check3, check4) => 
+            ApproveTransactionAsync(transaction, ct), 
+            ct);
     
-    return await checksTask
-        .ThenAsync(checks => checks.Aggregate(
-            Result.Success(transaction),
-            (result, check) => result.Combine(check)
-        ))
-        .BindAsync((tx, ct) => ApproveTransactionAsync(tx, ct), ct);
+    return result;
 }
 ```
 
@@ -217,16 +209,26 @@ var result =
     select new OrderConfirmation(user, order, payment);
 ```
 
-### LINQ with Additional Operations
+### LINQ with Where Clause
 
 ```csharp
 var result =
     from email in EmailAddress.TryCreate(emailInput)
     from user in GetUserByEmail(email)
-    let isActive = user.IsActive
-    where isActive
+    where user.IsActive
     from orders in GetUserOrders(user.Id)
     select new UserSummary(user, orders);
+```
+
+**Note:** The `where` clause uses a generic "filtered out" error. For domain-specific error messages, use `Ensure` instead:
+
+```csharp
+// Better: Use Ensure for custom error messages
+var result = EmailAddress.TryCreate(emailInput)
+    .Bind(email => GetUserByEmail(email))
+    .Ensure(user => user.IsActive, Error.Validation("User account is not active"))
+    .Bind(user => GetUserOrders(user.Id))
+    .Map(orders => new UserSummary(user, orders));
 ```
 
 ### LINQ with Async Operations
@@ -239,6 +241,8 @@ var result = await (
     select new UserWithPermissions(user, permissions)
 ).ConfigureAwait(false);
 ```
+
+**Note:** LINQ query syntax works best with synchronous operations. For complex async workflows, consider using `BindAsync` for better readability and cancellation token support.
 
 ## Maybe Type
 

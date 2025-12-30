@@ -1,6 +1,7 @@
 namespace FunctionalDdd;
 
 using System.Diagnostics;
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 /// <summary>
 /// Executes the given action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.

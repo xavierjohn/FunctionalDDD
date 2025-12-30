@@ -7,6 +7,7 @@ This guide covers async patterns and CancellationToken integration for Railway O
 - [Async Operation Basics](#async-operation-basics)
 - [CancellationToken Support](#cancellationtoken-support)
 - [Async with Tuples](#async-with-tuples)
+- [Parallel Operations](#parallel-operations)
 - [Timeout Patterns](#timeout-patterns)
 - [Best Practices](#best-practices)
 
@@ -18,181 +19,224 @@ Every ROP operation has an async variant with the `Async` suffix:
 
 ```csharp
 // BindAsync - Chain async operations
-var result = await GetUserAsync(userId)
-    .BindAsync(user => GetOrdersAsync(user.Id))
-    .BindAsync(orders => ProcessOrdersAsync(orders));
+var result = await GetUserAsync(userId, ct)
+    .BindAsync(user => GetOrdersAsync(user.Id, ct), ct)
+    .BindAsync(orders => ProcessOrdersAsync(orders, ct), ct);
 
 // MapAsync - Transform values asynchronously
-var result = await GetUserAsync(userId)
-    .MapAsync(user => user.ToDto())
-    .MapAsync(dto => EnrichDtoAsync(dto));
+var result = await GetUserAsync(userId, ct)
+    .MapAsync(user => user.Adapt<UserDto>())
+    .MapAsync(dto => EnrichDtoAsync(dto, ct), ct);
 
 // TapAsync - Async side effects
-var result = await CreateOrderAsync(order)
-    .TapAsync(order => SendEmailAsync(order.CustomerEmail))
-    .TapAsync(order => LogOrderCreatedAsync(order.Id));
+var result = await CreateOrderAsync(order, ct)
+    .TapAsync(order => SendEmailAsync(order.CustomerEmail, ct), ct)
+    .TapAsync(order => LogOrderCreatedAsync(order.Id, ct), ct);
 
 // EnsureAsync - Async validation
-var result = await GetUserAsync(userId)
+var result = await GetUserAsync(userId, ct)
     .EnsureAsync(
-        user => CheckUserIsActiveAsync(user),
-        Error.Validation("User is not active")
-    );
+        user => CheckUserIsActiveAsync(user, ct),
+        Error.Validation("User is not active"),
+        ct);
 
 // MatchAsync - Async result handling
-await ProcessOrderAsync(order)
+await ProcessOrderAsync(order, ct)
     .MatchAsync(
-        onSuccess: async order => await SendConfirmationAsync(order),
-        onFailure: async error => await LogErrorAsync(error)
-    );
+        onSuccess: order => SendConfirmationAsync(order, ct),
+        onFailure: error => LogErrorAsync(error, ct),
+        cancellationToken: ct);
 ```
 
 ### Mixing Sync and Async
 
-You can mix synchronous and asynchronous operations:
+You can mix synchronous and asynchronous operations seamlessly:
 
 ```csharp
-var result = await GetUserAsync(userId)          // Async
-    .Map(user => user.Email)                      // Sync
-    .BindAsync(email => ValidateEmailAsync(email)) // Async
-    .Ensure(email => email.Length > 5,             // Sync
+var result = await GetUserAsync(userId, ct)          // Async
+    .Map(user => user.Email)                          // Sync
+    .BindAsync(email => ValidateEmailAsync(email, ct), ct) // Async
+    .Ensure(email => email.Length > 5,                // Sync
             Error.Validation("Email too short"))
-    .TapAsync(email => LogEmailAsync(email));     // Async
+    .TapAsync(email => LogEmailAsync(email, ct), ct); // Async
+```
+
+### Expression-Body Style
+
+Use expression bodies for clean, concise async methods:
+
+```csharp
+// ✅ Clean expression-body style
+public async Task<ActionResult<UserDto>> GetUser(string id, CancellationToken ct)
+    => await UserId.TryCreate(id)
+        .BindAsync(userId => _repository.GetByIdAsync(userId, ct), ct)
+        .MapAsync(user => user.Adapt<UserDto>())
+        .ToActionResultAsync(this);
+
+// ✅ Repository method
+public async Task<Result<User>> GetByIdAsync(UserId userId, CancellationToken ct)
+    => await _context.Users
+        .FirstOrDefaultAsync(u => u.Id == userId, ct)
+        .ToResultAsync(Error.NotFound($"User {userId} not found"));
 ```
 
 ## CancellationToken Support
 
-All async operations support `CancellationToken` for graceful cancellation:
+All async operations support `CancellationToken` for graceful cancellation.
 
-### Basic CancellationToken Usage
+### Recommended Pattern: Lambda Capture
+
+The cleanest approach is to capture the `CancellationToken` in lambdas:
 
 ```csharp
 public async Task<Result<Order>> ProcessOrderAsync(
     OrderId orderId,
-    CancellationToken cancellationToken)
-{
-    return await GetOrderAsync(orderId, cancellationToken)
+    CancellationToken ct)
+    => await GetOrderAsync(orderId, ct)
         .EnsureAsync(
-            (order, ct) => ValidateOrderAsync(order, ct),
+            order => ValidateOrderAsync(order, ct),
             Error.Validation("Order validation failed"),
-            cancellationToken
-        )
-        .TapAsync(
-            async (order, ct) => await NotifyWarehouseAsync(order, ct),
-            cancellationToken
-        )
-        .BindAsync(
-            (order, ct) => ProcessPaymentAsync(order, ct),
-            cancellationToken
-        );
-}
+            ct)
+        .TapAsync(order => NotifyWarehouseAsync(order, ct), ct)
+        .BindAsync(order => ProcessPaymentAsync(order, ct), ct);
 ```
 
-### CancellationToken Patterns
+**Why this pattern?**
+- ✅ Concise and readable
+- ✅ No parameter duplication
+- ✅ Works seamlessly with tuple destructuring
+- ✅ Consistent with modern C# style
 
-#### Pattern 1: Pass to Each Operation
+### Alternative: Explicit CT Parameter (When Needed)
 
-```csharp
-async Task<Result<User>> GetUserAsync(string id, CancellationToken ct) { /* ... */ }
-async Task<Result<Order>> GetLastOrderAsync(User user, CancellationToken ct) { /* ... */ }
-
-var result = await GetUserAsync("123", cancellationToken)
-    .BindAsync((user, ct) => GetLastOrderAsync(user, ct), cancellationToken);
-```
-
-#### Pattern 2: Lambda Capture
-
-```csharp
-var result = await GetUserAsync(userId, cancellationToken)
-    .BindAsync(user => GetOrdersAsync(user.Id, cancellationToken))
-    .TapAsync(orders => LogOrdersAsync(orders, cancellationToken));
-```
-
-#### Pattern 3: Mixed Approach
+Use explicit `CancellationToken` parameter when you need more control:
 
 ```csharp
 public async Task<Result<Dashboard>> CreateDashboardAsync(
     UserId userId,
     CancellationToken ct)
-{
-    return await GetUserAsync(userId, ct)
+    => await GetUserAsync(userId, ct)
         .BindAsync(
-            // Explicit CT parameter
             (user, cancellationToken) => GetOrdersAsync(user.Id, cancellationToken),
-            ct
-        )
-        .TapAsync(
-            // Lambda capture
-            orders => LogOrderCountAsync(orders.Count, ct),
-            ct
-        );
-}
+            ct)
+        .MapAsync(
+            (orders, cancellationToken) => ProcessDashboardAsync(orders, cancellationToken),
+            ct);
 ```
+
+**Use this when:**
+- You need to pass a different token
+- Working with linked token sources
+- The lambda is complex and benefits from explicit parameters
 
 ## Async with Tuples
 
 CancellationToken works seamlessly with tuple-based operations:
 
-### Bind with Tuples and CancellationToken
+### Combine with BindAsync
 
 ```csharp
-var result = await EmailAddress.TryCreate(email)
-    .Combine(UserId.TryCreate(userId))
-    .Combine(OrderId.TryCreate(orderId))
-    // Tuple automatically destructured, CT passed explicitly
-    .BindAsync(
-        (email, userId, orderId, ct) => 
-            CreateOrderAsync(email, userId, orderId, ct),
-        cancellationToken
-    );
+public async Task<Result<Order>> CreateOrderAsync(
+    CreateOrderRequest request,
+    CancellationToken ct)
+    => await EmailAddress.TryCreate(request.Email)
+        .Combine(UserId.TryCreate(request.UserId))
+        .Combine(OrderId.TryCreate(request.OrderId))
+        .BindAsync(
+            (email, userId, orderId) => 
+                SaveOrderAsync(email, userId, orderId, ct),
+            ct);
 ```
 
-### Tap with Tuples and CancellationToken
+### Combine with MapAsync
 
 ```csharp
-var result = await GetUserAsync(userId, ct)
-    .Combine(await GetOrdersAsync(userId, ct))
-    // Tuple destructuring with CancellationToken
-    .TapAsync(
-        async (user, orders, ct) => 
-        {
-            await LogUserActivityAsync(user.Id, ct);
-            await CacheOrdersAsync(orders, ct);
-        },
-        cancellationToken
-    );
+public async Task<Result<UserProfile>> GetUserProfileAsync(
+    UserId userId,
+    CancellationToken ct)
+    => await GetUserAsync(userId, ct)
+        .ParallelAsync(GetSettingsAsync(userId, ct))
+        .ParallelAsync(GetPreferencesAsync(userId, ct))
+        .AwaitAsync()
+        .MapAsync(
+            (user, settings, preferences) =>
+                new UserProfile(user, settings, preferences));
 ```
 
-### Ensure with Tuples and CancellationToken
+### Ensure with Tuples
 
 ```csharp
-var result = await GetProductAsync(productId, ct)
-    .Combine(await GetInventoryAsync(productId, ct))
-    .EnsureAsync(
-        async (product, inventory, ct) =>
-        {
-            var reserved = await GetReservedInventoryAsync(productId, ct);
-            return inventory.Available >= reserved + requestedQty;
-        },
-        Error.Conflict("Insufficient inventory"),
-        cancellationToken
-    );
+public async Task<Result<Reservation>> CheckInventoryAsync(
+    ProductId productId,
+    int quantity,
+    CancellationToken ct)
+    => await GetProductAsync(productId, ct)
+        .ParallelAsync(GetInventoryAsync(productId, ct))
+        .AwaitAsync()
+        .EnsureAsync(
+            (product, inventory) => 
+                CheckAvailabilityAsync(inventory, quantity, ct),
+            Error.Conflict("Insufficient inventory"),
+            ct);
 ```
 
-### Map with Tuples and CancellationToken
+### Tap with Tuples
 
 ```csharp
-var result = await GetUserAsync(userId, ct)
-    .Combine(await GetSettingsAsync(userId, ct))
-    .Combine(await GetPreferencesAsync(userId, ct))
-    .MapAsync(
-        async (user, settings, preferences, ct) =>
-        {
-            var enriched = await EnrichUserDataAsync(user, ct);
-            return new UserProfile(enriched, settings, preferences);
-        },
-        cancellationToken
-    );
+public async Task<Result<OrderConfirmation>> ProcessOrderAsync(
+    OrderId orderId,
+    CancellationToken ct)
+    => await GetOrderAsync(orderId, ct)
+        .ParallelAsync(GetCustomerAsync(orderId, ct))
+        .AwaitAsync()
+        .TapAsync(
+            (order, customer) => 
+                LogOrderProcessedAsync(order.Id, customer.Id, ct),
+            ct)
+        .MapAsync((order, customer) => 
+            new OrderConfirmation(order, customer));
+```
+
+## Parallel Operations
+
+Execute multiple async operations concurrently with `CancellationToken` support:
+
+### Basic Parallel Execution
+
+```csharp
+public async Task<Result<StudentReport>> GetStudentReportAsync(
+    StudentId studentId,
+    CancellationToken ct)
+    => await GetStudentInfoAsync(studentId, ct)
+        .ParallelAsync(GetGradesAsync(studentId, ct))
+        .ParallelAsync(GetAttendanceAsync(studentId, ct))
+        .ParallelAsync(GetLibraryBooksAsync(studentId, ct))
+        .AwaitAsync()
+        .MapAsync((info, grades, attendance, books) =>
+            new StudentReport(info, grades, attendance, books));
+```
+
+**Key Points:**
+- All operations run **concurrently**
+- `AwaitAsync()` waits for all to complete
+- If any operation fails, the entire chain fails
+- Cancellation propagates to all parallel operations
+
+### Parallel Validation
+
+```csharp
+public async Task<Result<Transaction>> ValidateTransactionAsync(
+    Transaction transaction,
+    CancellationToken ct)
+    => await CheckBlacklistAsync(transaction.AccountId, ct)
+        .ParallelAsync(CheckVelocityLimitsAsync(transaction, ct))
+        .ParallelAsync(CheckAmountThresholdAsync(transaction, ct))
+        .ParallelAsync(CheckGeolocationAsync(transaction, ct))
+        .AwaitAsync()
+        .BindAsync(
+            (check1, check2, check3, check4) =>
+                ApproveTransactionAsync(transaction, ct),
+            ct);
 ```
 
 ## Timeout Patterns
@@ -202,19 +246,22 @@ Implement timeouts using `CancellationTokenSource`:
 ### Simple Timeout
 
 ```csharp
-using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-var result = await GetUserAsync(userId, cts.Token)
-    .BindAsync(
-        (user, ct) => GetOrdersAsync(user.Id, ct),
-        cts.Token
-    );
+public async Task<Result<User>> GetUserWithTimeoutAsync(
+    UserId userId,
+    CancellationToken ct)
+{
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, cts.Token);
+    
+    return await GetUserAsync(userId, linked.Token)
+        .BindAsync(user => GetOrdersAsync(user.Id, linked.Token), linked.Token);
+}
 ```
 
 ### Timeout with Fallback
 
 ```csharp
-public async Task<Result<User>> GetUserWithTimeoutAsync(
+public async Task<Result<User>> GetUserWithFallbackAsync(
     UserId userId,
     CancellationToken ct)
 {
@@ -224,13 +271,14 @@ public async Task<Result<User>> GetUserWithTimeoutAsync(
     try
     {
         return await GetUserFromPrimaryAsync(userId, cts.Token)
-            .CompensateAsync(error => 
-                GetUserFromSecondaryAsync(userId, ct) // Use original CT, not timeout CT
-            );
+            .CompensateAsync(
+                predicate: error => error is ServiceUnavailableError,
+                func: () => GetUserFromSecondaryAsync(userId, ct),
+                cancellationToken: ct);
     }
     catch (OperationCanceledException) when (!ct.IsCancellationRequested)
     {
-        // Timeout occurred, try fallback
+        // Primary service timed out, use cache
         return await GetUserFromCacheAsync(userId, ct);
     }
 }
@@ -241,27 +289,23 @@ public async Task<Result<User>> GetUserWithTimeoutAsync(
 ```csharp
 app.MapPost("/orders", async (
     CreateOrderRequest request,
+    IMediator mediator,
     CancellationToken ct) =>
-{
-    // ct is automatically provided by ASP.NET Core
-    // It's cancelled when the request is aborted
-    return await ValidateOrderRequest(request)
-        .BindAsync(
-            (validatedRequest, cancellationToken) => 
-                CreateOrderAsync(validatedRequest, cancellationToken),
-            ct
-        )
-        .TapAsync(
-            (order, cancellationToken) => 
-                PublishOrderCreatedEventAsync(order, cancellationToken),
-            ct
-        )
-        .MatchAsync(
+    await CreateOrderCommand.TryCreate(request)
+        .BindAsync(command => mediator.Send(command, ct), ct)
+        .MapAsync(order => order.Adapt<OrderDto>())
+        .MatchErrorAsync(
+            onValidation: err => Results.BadRequest(new { errors = err.FieldErrors }),
+            onNotFound: err => Results.NotFound(new { message = err.Detail }),
+            onConflict: err => Results.Conflict(new { message = err.Detail }),
             onSuccess: order => Results.Created($"/orders/{order.Id}", order),
-            onFailure: error => error.ToHttpResult()
-        );
-});
+            cancellationToken: ct));
 ```
+
+**Note:** ASP.NET Core automatically cancels the `CancellationToken` when:
+- Client disconnects
+- Request timeout is reached
+- Application is shutting down
 
 ## Best Practices
 
@@ -269,103 +313,94 @@ app.MapPost("/orders", async (
 
 ```csharp
 // ✅ Good - Supports cancellation
-public async Task<Result<User>> GetUserAsync(
-    UserId userId, 
-    CancellationToken cancellationToken)
-{
-    return await _repository.GetByIdAsync(userId, cancellationToken)
+public async Task<Result<User>> GetUserAsync(UserId userId, CancellationToken ct)
+    => await _repository.GetByIdAsync(userId, ct)
         .ToResultAsync(Error.NotFound($"User {userId} not found"));
-}
 
 // ❌ Bad - No cancellation support
 public async Task<Result<User>> GetUserAsync(UserId userId)
+    => await _repository.GetByIdAsync(userId)
+        .ToResultAsync(Error.NotFound($"User not found"));
+```
+
+### 2. Use Expression Bodies
+
+```csharp
+// ✅ Good - Clean expression body
+public async Task<Result<Order>> ProcessOrderAsync(Order order, CancellationToken ct)
+    => await ValidateOrderAsync(order, ct)
+        .BindAsync(o => SaveOrderAsync(o, ct), ct)
+        .TapAsync(o => PublishEventAsync(o, ct), ct);
+
+// ❌ Bad - Unnecessary block
+public async Task<Result<Order>> ProcessOrderAsync(Order order, CancellationToken ct)
 {
-    return await _repository.GetByIdAsync(userId)
-        .ToResultAsync(Error.NotFound($"User {userId} not found"));
+    return await ValidateOrderAsync(order, ct)
+        .BindAsync(o => SaveOrderAsync(o, ct), ct)
+        .TapAsync(o => PublishEventAsync(o, ct), ct);
 }
 ```
 
-### 2. Pass CancellationToken Through Chains
+### 3. Pass CancellationToken Through Chains
 
 ```csharp
 // ✅ Good - CT passed through entire chain
-await GetUserAsync(userId, ct)
-    .BindAsync((user, cancellationToken) => 
-        GetOrdersAsync(user.Id, cancellationToken), ct)
-    .TapAsync((orders, cancellationToken) => 
-        LogAsync(orders, cancellationToken), ct);
+public async Task<Result<Dashboard>> GetDashboardAsync(UserId userId, CancellationToken ct)
+    => await GetUserAsync(userId, ct)
+        .BindAsync(user => GetOrdersAsync(user.Id, ct), ct)
+        .TapAsync(orders => LogAsync(orders, ct), ct);
 
-// ❌ Bad - CT not passed
-await GetUserAsync(userId, ct)
-    .BindAsync(user => GetOrdersAsync(user.Id, default))
-    .TapAsync(orders => LogAsync(orders, default));
+// ❌ Bad - CT not passed (ignores cancellation)
+public async Task<Result<Dashboard>> GetDashboardAsync(UserId userId, CancellationToken ct)
+    => await GetUserAsync(userId, ct)
+        .BindAsync(user => GetOrdersAsync(user.Id, default), ct)
+        .TapAsync(orders => LogAsync(orders, default), ct);
 ```
 
-### 3. Use ConfigureAwait in Libraries
+### 4. Don't Catch OperationCanceledException
 
 ```csharp
-// ✅ Good - For library code
-public async Task<Result<User>> GetUserAsync(
-    UserId userId,
-    CancellationToken ct)
-{
-    return await _repository
-        .GetByIdAsync(userId, ct)
-        .ConfigureAwait(false)
-        .ToResultAsync(Error.NotFound($"User {userId} not found"));
-}
+// ✅ Good - Let cancellation propagate
+public async Task<Result<Order>> ProcessOrderAsync(Order order, CancellationToken ct)
+    => await ValidateOrderAsync(order, ct)
+        .BindAsync(o => SaveOrderAsync(o, ct), ct);
 
-// ✅ Also fine - For application code (ASP.NET, etc.)
-public async Task<Result<User>> GetUserAsync(
-    UserId userId,
-    CancellationToken ct)
-{
-    return await _repository
-        .GetByIdAsync(userId, ct)
-        .ToResultAsync(Error.NotFound($"User {userId} not found"));
-}
-```
-
-### 4. Handle OperationCanceledException Appropriately
-
-```csharp
-public async Task<Result<Order>> ProcessOrderAsync(
-    Order order,
-    CancellationToken ct)
+// ❌ Bad - Swallowing cancellation
+public async Task<Result<Order>> ProcessOrderAsync(Order order, CancellationToken ct)
 {
     try
     {
         return await ValidateOrderAsync(order, ct)
-            .BindAsync((o, cancellationToken) => 
-                SaveOrderAsync(o, cancellationToken), ct);
+            .BindAsync(o => SaveOrderAsync(o, ct), ct);
     }
     catch (OperationCanceledException)
     {
-        // Don't convert to error - let it propagate
-        // ASP.NET Core handles this gracefully
-        throw;
+        return Error.Unexpected("Operation was cancelled");
     }
 }
 ```
 
-### 5. Avoid Blocking Async Code
+**Why?** ASP.NET Core and other frameworks handle `OperationCanceledException` gracefully. Let it propagate naturally.
+
+### 5. Never Block Async Code
 
 ```csharp
-// ❌ Bad - Blocks the thread
+// ❌ Bad - Blocks the thread, deadlock risk
+public Result<User> GetUser(UserId userId)
+    => GetUserAsync(userId, CancellationToken.None).Result;
+
+// ❌ Bad - Same problem with .Wait()
 public Result<User> GetUser(UserId userId)
 {
-    return GetUserAsync(userId, CancellationToken.None)
-        .Result; // Deadlock risk!
+    var task = GetUserAsync(userId, CancellationToken.None);
+    task.Wait();
+    return task.Result;
 }
 
-// ✅ Good - Keep it async
-public async Task<Result<User>> GetUserAsync(
-    UserId userId,
-    CancellationToken ct)
-{
-    return await _repository.GetByIdAsync(userId, ct)
+// ✅ Good - Keep it async all the way
+public async Task<Result<User>> GetUserAsync(UserId userId, CancellationToken ct)
+    => await _repository.GetByIdAsync(userId, ct)
         .ToResultAsync(Error.NotFound($"User {userId} not found"));
-}
 ```
 
 ### 6. Link CancellationTokens for Composite Operations
@@ -375,16 +410,34 @@ public async Task<Result<Report>> GenerateReportAsync(
     ReportId reportId,
     CancellationToken ct)
 {
-    // Create a linked token source for internal timeout
+    // Create linked token with internal timeout
     using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
     cts.CancelAfter(TimeSpan.FromMinutes(5));
 
     return await GetReportDataAsync(reportId, cts.Token)
-        .BindAsync((data, cancellationToken) => 
-            ProcessDataAsync(data, cancellationToken), cts.Token)
-        .BindAsync((processed, cancellationToken) => 
-            GeneratePdfAsync(processed, cancellationToken), cts.Token);
+        .BindAsync(data => ProcessDataAsync(data, cts.Token), cts.Token)
+        .BindAsync(processed => GeneratePdfAsync(processed, cts.Token), cts.Token);
 }
+```
+
+### 7. Use Parallel Operations for Independent Work
+
+```csharp
+// ✅ Good - Parallel execution for independent operations
+public async Task<Result<Summary>> GetSummaryAsync(UserId userId, CancellationToken ct)
+    => await GetUserAsync(userId, ct)
+        .ParallelAsync(GetOrdersAsync(userId, ct))
+        .ParallelAsync(GetInvoicesAsync(userId, ct))
+        .AwaitAsync()
+        .MapAsync((user, orders, invoices) => 
+            new Summary(user, orders, invoices));
+
+// ❌ Bad - Sequential execution (slower)
+public async Task<Result<Summary>> GetSummaryAsync(UserId userId, CancellationToken ct)
+    => await GetUserAsync(userId, ct)
+        .BindAsync(user => GetOrdersAsync(userId, ct)
+            .Bind(orders => GetInvoicesAsync(userId, ct)
+                .Map(invoices => new Summary(user, orders, invoices))), ct);
 ```
 
 ## Common Patterns
@@ -397,22 +450,17 @@ public async Task ProcessQueueAsync(CancellationToken ct)
     while (!ct.IsCancellationRequested)
     {
         var result = await GetNextMessageAsync(ct)
-            .BindAsync((msg, cancellationToken) => 
-                ProcessMessageAsync(msg, cancellationToken), ct)
-            .TapAsync((processed, cancellationToken) => 
-                AcknowledgeMessageAsync(processed, cancellationToken), ct)
-            .CompensateAsync(error => 
-                HandleErrorAsync(error, ct));
+            .BindAsync(msg => ProcessMessageAsync(msg, ct), ct)
+            .TapAsync(processed => AcknowledgeMessageAsync(processed, ct), ct)
+            .TapErrorAsync(error => LogErrorAsync(error, ct), ct);
 
         if (result.IsFailure)
-        {
             await Task.Delay(TimeSpan.FromSeconds(5), ct);
-        }
     }
 }
 ```
 
-### Retry with Cancellation
+### Retry with Exponential Backoff
 
 ```csharp
 public async Task<Result<T>> RetryAsync<T>(
@@ -425,25 +473,109 @@ public async Task<Result<T>> RetryAsync<T>(
         ct.ThrowIfCancellationRequested();
 
         var result = await operation(ct);
+        
         if (result.IsSuccess || attempt == maxAttempts)
             return result;
 
-        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
+        var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+        await Task.Delay(delay, ct);
     }
 
     return Result.Failure<T>(Error.Unexpected("Max retries exceeded"));
 }
 
-// Usage
-var result = await RetryAsync(
-    ct => GetUserAsync(userId, ct),
-    maxAttempts: 3,
-    cancellationToken
-);
+// Usage with lambda capture
+public async Task<Result<User>> GetUserWithRetryAsync(UserId userId, CancellationToken ct)
+    => await RetryAsync(
+        token => GetUserAsync(userId, token),
+        maxAttempts: 3,
+        ct);
 ```
+
+### Batch Processing with Cancellation
+
+```csharp
+public async Task<Result<BatchResult>> ProcessBatchAsync(
+    IEnumerable<Order> orders,
+    CancellationToken ct)
+{
+    var results = new List<Result<ProcessedOrder>>();
+    
+    foreach (var order in orders)
+    {
+        ct.ThrowIfCancellationRequested();
+        
+        var result = await ProcessOrderAsync(order, ct);
+        results.Add(result);
+    }
+    
+    return BatchResult.Create(results);
+}
+```
+
+### Timeout with Retry
+
+```csharp
+public async Task<Result<T>> GetWithTimeoutAndRetryAsync<T>(
+    Func<CancellationToken, Task<Result<T>>> operation,
+    TimeSpan timeout,
+    int maxRetries,
+    CancellationToken ct)
+{
+    for (int attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout);
+
+        try
+        {
+            return await operation(cts.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            if (attempt == maxRetries)
+                return Result.Failure<T>(Error.Unexpected("Operation timed out after retries"));
+            
+            await Task.Delay(TimeSpan.FromSeconds(attempt), ct);
+        }
+    }
+
+    return Result.Failure<T>(Error.Unexpected("Max retries exceeded"));
+}
+```
+
+## Performance Considerations
+
+### ConfigureAwait is Optional in Modern .NET
+
+In .NET 6+ and ASP.NET Core applications, you generally **don't need** `ConfigureAwait(false)`:
+
+```csharp
+// ✅ Fine for ASP.NET Core / Console apps (.NET 6+)
+public async Task<Result<User>> GetUserAsync(UserId userId, CancellationToken ct)
+    => await _repository.GetByIdAsync(userId, ct)
+        .ToResultAsync(Error.NotFound($"User {userId} not found"));
+
+// ✅ Use ConfigureAwait(false) ONLY in library code targeting .NET Standard
+public async Task<Result<User>> GetUserAsync(UserId userId, CancellationToken ct)
+    => await _repository.GetByIdAsync(userId, ct)
+        .ConfigureAwait(false)
+        .ToResultAsync(Error.NotFound($"User {userId} not found"));
+```
+
+**When to use `ConfigureAwait(false)`:**
+- You're writing a library targeting .NET Standard 2.0
+- You need maximum performance in library code
+- You're not using any `SynchronizationContext` features
+
+**When NOT to use it:**
+- ASP.NET Core applications (.NET 6+)
+- Console applications
+- Modern .NET applications with no special sync context
 
 ## Next Steps
 
 - See [Error Handling](error-handling.md) for handling cancellation-related errors
-- Check [Advanced Features](advanced-features.md) for parallel async operations
-- Learn about [Integration](integration.md) for ASP.NET Core cancellation
+- Check [Advanced Features](advanced-features.md) for more parallel patterns
+- Learn about [Integration](integration.md) for ASP.NET Core best practices
+- Review [Examples](examples.md) for complete real-world scenarios

@@ -2,17 +2,47 @@
   href: intro.md
 - name: Basics
   href: basics.md
-- name: Advanced Features
-  href: advanced-features.md
-- name: Error Handling
-  href: error-handling.md
-- name: Async & Cancellation
-  href: async-cancellation.md
-- name: Debugging
-  href: debugging.md
-- name: Performance
-  href: performance.md
-- name: Integration
-  href: integration.md
 - name: Examples
-  href: examples.md  
+  href: examples.md
+- name: Core Concepts
+  items:
+  - name: Result Type
+    href: basics.md#resulttvalue-type
+  - name: Core Operations
+    items:
+    - name: Combine (Validate Multiple)
+      href: basics.md#combine---validate-multiple-inputs
+    - name: Bind (Chain Operations)
+      href: basics.md#bind---chain-operations
+    - name: Map (Transform Values)
+      href: basics.md#map---transform-values
+    - name: Tap (Side Effects)
+      href: basics.md#tap---execute-side-effects
+    - name: Ensure (Add Validation)
+      href: basics.md#ensure---add-validation
+    - name: Compensate (Error Recovery)
+      href: basics.md#compensate---recover-from-errors
+    - name: Match (Unwrap Result)
+      href: basics.md#match---unwrap-the-result
+  - name: Error Handling
+    href: error-handling.md
+  - name: Async & Cancellation
+    href: async-cancellation.md
+- name: Integration
+  items:
+  - name: ASP.NET Core
+    href: integration.md
+  - name: FluentValidation
+    href: integration.md#fluentvalidation-integration
+  - name: Entity Framework Core
+    href: integration.md#entity-framework-core
+  - name: OpenTelemetry
+    href: integration.md#opentelemetry-tracing
+- name: Advanced
+  items:
+  - name: Advanced Features
+    href: advanced-features.md
+  - name: Debugging
+    href: debugging.md
+  - name: Performance
+    href: performance.md

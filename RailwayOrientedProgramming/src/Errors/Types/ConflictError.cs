@@ -27,6 +27,12 @@
 /// </example>
 public sealed class ConflictError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConflictError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of the conflict.</param>
+    /// <param name="code">The error code identifying this type of conflict error.</param>
+    /// <param name="instance">Optional identifier for the conflicting resource.</param>
     public ConflictError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

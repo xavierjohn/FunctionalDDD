@@ -5,7 +5,35 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
 
-public static partial class HttpResponseMessageJsonExtensionsAsync
+/// <summary>
+/// Provides extension methods for handling HTTP response messages with Result and Maybe monads.
+/// </summary>
+/// <remarks>
+/// <para>
+/// These extension methods simplify common patterns when working with HTTP responses in a functional style:
+/// <list type="bullet">
+/// <item>Error handling for specific status codes (404 Not Found)</item>
+/// <item>Custom error handling for failed responses</item>
+/// <item>JSON deserialization with Result&lt;T&gt; and Maybe&lt;T&gt; support</item>
+/// <item>Fluent composition with Railway Oriented Programming</item>
+/// </list>
+/// </para>
+/// <para>
+/// All methods are designed to integrate seamlessly with functional result types, enabling fluent error
+/// handling and composition in asynchronous workflows. The caller is responsible for disposing of the
+/// underlying HttpResponseMessage and handling cancellation via CancellationToken where applicable.
+/// </para>
+/// </remarks>
+/// <example>
+/// Typical usage with Railway Oriented Programming:
+/// <code>
+/// var result = await httpClient.GetAsync(url, ct)
+///     .HandleNotFoundAsync(Error.NotFound("User", userId))
+///     .ReadResultFromJsonAsync(UserJsonContext.Default.User, ct)
+///     .TapAsync(user => _logger.LogInformation("Retrieved user: {UserId}", user.Id));
+/// </code>
+/// </example>
+public static partial class HttpResponseExtensions
 {
     /// <summary>
     /// Handles the case when the HTTP response has a status code of NotFound.

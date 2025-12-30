@@ -1,8 +1,7 @@
 ﻿namespace FunctionalDdd;
 
-using System.Collections.Immutable;
-using System.Text;
 
+using System.Collections.Immutable;
 /// <summary>
 /// Represents validation errors for one or more fields. Used when input data fails business rules or constraints.
 /// </summary>

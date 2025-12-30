@@ -4,16 +4,45 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-[DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure\"}, Value = {(_value is null ? \"<null>\" : _value)}, Error = {(_error is null ? \"<none>\" : _error.Code)}")]
 /// <summary>
 /// Represents either a successful computation (with a value) or a failure (with an <see cref="Error"/>).
 /// </summary>
 /// <typeparam name="TValue">Success value type.</typeparam>
+/// <remarks>
+/// Result is the core type for Railway Oriented Programming. It forces explicit handling of both
+/// success and failure cases, making error handling visible in the type system. Use Result when
+/// an operation can fail in a predictable way that should be handled by the caller.
+/// </remarks>
+/// <example>
+/// <code>
+/// // Creating results
+/// Result&lt;User&gt; success = Result.Success(user);
+/// Result&lt;User&gt; failure = Error.NotFound("User not found");
+/// 
+/// // Pattern matching
+/// var message = result switch
+/// {
+///     { IsSuccess: true } => $"Found user: {result.Value.Name}",
+///     { IsFailure: true } => $"Error: {result.Error.Detail}"
+/// };
+/// 
+/// // Chaining operations
+/// var finalResult = GetUser(id)
+///     .Bind(user => ValidateUser(user))
+///     .Map(user => user.Name);
+/// </code>
+/// </example>
+[DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure\"}, Value = {(_value is null ? \"<null>\" : _value)}, Error = {(_error is null ? \"<none>\" : _error.Code)}")]
 public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>
 {
     /// <summary>
     /// Gets the underlying value if the result is successful; otherwise throws.
     /// </summary>
+    /// <value>The success value.</value>
+    /// <exception cref="InvalidOperationException">Thrown when accessing Value on a failed result.</exception>
+    /// <remarks>
+    /// Always check <see cref="IsSuccess"/> before accessing this property, or use <see cref="TryGetValue"/> instead.
+    /// </remarks>
     public TValue Value =>
         IsSuccess
             ? _value!
@@ -22,6 +51,11 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <summary>
     /// Gets the error if the result is a failure; otherwise throws.
     /// </summary>
+    /// <value>The error describing why the result failed.</value>
+    /// <exception cref="InvalidOperationException">Thrown when accessing Error on a successful result.</exception>
+    /// <remarks>
+    /// Always check <see cref="IsFailure"/> before accessing this property, or use <see cref="TryGetError"/> instead.
+    /// </remarks>
     public Error Error =>
         IsFailure
             ? _error!
@@ -30,21 +64,27 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <summary>
     /// True when the result represents success.
     /// </summary>
+    /// <value>True if successful; otherwise false.</value>
     public bool IsSuccess => !IsFailure;
 
     /// <summary>
     /// True when the result represents failure.
     /// </summary>
+    /// <value>True if failed; otherwise false.</value>
     public bool IsFailure { get; }
 
     /// <summary>
     /// Implicitly converts a value to a successful result.
     /// </summary>
+    /// <param name="value">The value to wrap in a success result.</param>
+    /// <returns>A successful result containing the value.</returns>
     public static implicit operator Result<TValue>(TValue value) => Result.Success(value);
 
     /// <summary>
     /// Implicitly converts an error to a failed result.
     /// </summary>
+    /// <param name="error">The error to wrap in a failed result.</param>
+    /// <returns>A failed result containing the error.</returns>
     public static implicit operator Result<TValue>(Error error) => Result.Failure<TValue>(error);
 
     internal Result(bool isFailure, TValue? ok, Error? error)
@@ -76,11 +116,17 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     private readonly TValue? _value;
     private readonly Error? _error;
 
-    // ------------- Convenience / ergonomic APIs -------------
+    // ------------- Convenience / ergonomic APIs ------------
 
     /// <summary>
     /// Attempts to get the success value without throwing.
     /// </summary>
+    /// <param name="value">When this method returns true, contains the success value; otherwise, the default value.</param>
+    /// <returns>True if the result is successful; otherwise false.</returns>
+    /// <remarks>
+    /// This is the recommended safe way to access the value without exception handling.
+    /// Similar to the TryParse pattern in .NET.
+    /// </remarks>
     public bool TryGetValue(out TValue value)
     {
         if (IsSuccess)
@@ -96,6 +142,11 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <summary>
     /// Attempts to get the error without throwing.
     /// </summary>
+    /// <param name="error">When this method returns true, contains the error; otherwise, null.</param>
+    /// <returns>True if the result is a failure; otherwise false.</returns>
+    /// <remarks>
+    /// This is the recommended safe way to access the error without exception handling.
+    /// </remarks>
     public bool TryGetError(out Error error)
     {
         if (IsFailure)
@@ -109,8 +160,20 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     }
 
     /// <summary>
-    /// Deconstructs into success flag, value (may be default if failure) and error (may be null if success).
+    /// Deconstructs the result into its components for pattern matching.
     /// </summary>
+    /// <param name="isSuccess">True if the result is successful; otherwise false.</param>
+    /// <param name="value">The success value if successful; otherwise default.</param>
+    /// <param name="error">The error if failed; otherwise null.</param>
+    /// <example>
+    /// <code>
+    /// var (success, value, error) = GetUser(id);
+    /// if (success)
+    ///     Console.WriteLine($"User: {value.Name}");
+    /// else
+    ///     Console.WriteLine($"Error: {error.Detail}");
+    /// </code>
+    /// </example>
     public void Deconstruct(out bool isSuccess, out TValue? value, out Error? error)
     {
         isSuccess = IsSuccess;
@@ -120,6 +183,14 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
 
     // ------------- Equality & hashing -------------
 
+    /// <summary>
+    /// Determines whether the specified result is equal to the current result.
+    /// </summary>
+    /// <param name="other">The result to compare with the current result.</param>
+    /// <returns>True if the specified result is equal to the current result; otherwise false.</returns>
+    /// <remarks>
+    /// Two results are equal if they have the same success/failure state and equal values/errors.
+    /// </remarks>
     public bool Equals(Result<TValue> other)
     {
         if (IsFailure != other.IsFailure) return false;
@@ -127,16 +198,42 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
         return EqualityComparer<TValue>.Default.Equals(_value, other._value);
     }
 
+    /// <summary>
+    /// Determines whether the specified object is equal to the current result.
+    /// </summary>
+    /// <param name="obj">The object to compare with the current result.</param>
+    /// <returns>True if the specified object is a Result and is equal to the current result; otherwise false.</returns>
     public override bool Equals(object? obj) => obj is Result<TValue> other && Equals(other);
 
+    /// <summary>
+    /// Returns a hash code for the current result.
+    /// </summary>
+    /// <returns>A hash code for the current result.</returns>
     public override int GetHashCode() =>
         IsFailure
             ? HashCode.Combine(true, _error)
             : HashCode.Combine(false, _value);
 
+    /// <summary>
+    /// Determines whether two results are equal.
+    /// </summary>
+    /// <param name="left">The first result to compare.</param>
+    /// <param name="right">The second result to compare.</param>
+    /// <returns>True if the results are equal; otherwise false.</returns>
     public static bool operator ==(Result<TValue> left, Result<TValue> right) => left.Equals(right);
+    
+    /// <summary>
+    /// Determines whether two results are not equal.
+    /// </summary>
+    /// <param name="left">The first result to compare.</param>
+    /// <param name="right">The second result to compare.</param>
+    /// <returns>True if the results are not equal; otherwise false.</returns>
     public static bool operator !=(Result<TValue> left, Result<TValue> right) => !left.Equals(right);
 
+    /// <summary>
+    /// Returns a string representation of the result.
+    /// </summary>
+    /// <returns>A string in the format "Success(value)" or "Failure(ErrorCode: detail)".</returns>
     public override string ToString() =>
         IsFailure
             ? $"Failure({Error.Code}: {Error.Detail})"

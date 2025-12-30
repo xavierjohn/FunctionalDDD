@@ -276,7 +276,6 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     /// <remarks>
     /// <para>
     /// This regex is generated at compile-time using the <see cref="GeneratedRegexAttribute"/>,
-
     /// providing optimal performance without runtime regex compilation overhead.
     /// </para>
     /// <para>

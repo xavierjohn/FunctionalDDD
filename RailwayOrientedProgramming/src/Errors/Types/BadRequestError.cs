@@ -23,6 +23,12 @@
 /// </example>
 public sealed class BadRequestError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BadRequestError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of why the request is bad.</param>
+    /// <param name="code">The error code identifying this type of bad request error.</param>
+    /// <param name="instance">Optional identifier for the bad request.</param>
     public BadRequestError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

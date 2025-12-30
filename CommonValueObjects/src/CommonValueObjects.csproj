@@ -6,6 +6,7 @@
     </Description>
     <PackageTags>value-objects;source-generation;required-string;required-guid;email;ddd;strongly-typed</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\" />

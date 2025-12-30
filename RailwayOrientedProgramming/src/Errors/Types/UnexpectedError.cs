@@ -31,6 +31,12 @@
 /// </example>
 public sealed class UnexpectedError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnexpectedError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of the unexpected error.</param>
+    /// <param name="code">The error code identifying this type of unexpected error.</param>
+    /// <param name="instance">Optional identifier for the operation or resource that failed.</param>
     public UnexpectedError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

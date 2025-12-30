@@ -26,6 +26,12 @@
 /// </example>
 public sealed class UnauthorizedError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnauthorizedError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of why authorization failed.</param>
+    /// <param name="code">The error code identifying this type of unauthorized error.</param>
+    /// <param name="instance">Optional identifier for the unauthorized request.</param>
     public UnauthorizedError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

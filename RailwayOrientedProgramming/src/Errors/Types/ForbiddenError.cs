@@ -26,6 +26,12 @@
 /// </example>
 public sealed class ForbiddenError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ForbiddenError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of why access is forbidden.</param>
+    /// <param name="code">The error code identifying this type of forbidden error.</param>
+    /// <param name="instance">Optional identifier for the forbidden resource.</param>
     public ForbiddenError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

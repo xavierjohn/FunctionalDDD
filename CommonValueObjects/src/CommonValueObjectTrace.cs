@@ -24,7 +24,7 @@ using System.Reflection;
 /// </para>
 /// <para>
 /// To enable tracing in your application, register the activity source with your
-/// OpenTelemetry configuration using <see cref="CommonValueObjectTraceProviderBuilderExtensions.AddFunctionalDddCvoInstrumentation"/>.
+/// OpenTelemetry configuration using <see cref="CvoTracingExtensions.AddFunctionalDddCvoInstrumentation"/>.
 /// </para>
 /// </remarks>
 /// <example>
@@ -35,7 +35,7 @@ using System.Reflection;
 /// builder.Services.AddOpenTelemetry()
 ///     .WithTracing(tracerProviderBuilder =>
 ///         tracerProviderBuilder
-///             .AddCommonValueObjectInstrumentation()  // Adds CVO activity source
+///             .AddFunctionalDddCvoInstrumentation()  // Adds CVO activity source
 ///             .AddAspNetCoreInstrumentation()
 ///             .AddHttpClientInstrumentation()
 ///             .AddConsoleExporter());
@@ -67,7 +67,7 @@ using System.Reflection;
 /// // - Parent/child relationships
 /// </code>
 /// </example>
-/// <seealso cref="CommonValueObjectTraceProviderBuilderExtensions"/>
+/// <seealso cref="CvoTracingExtensions"/>
 /// <seealso cref="ActivitySource"/>
 public static class CommonValueObjectTrace
 {
@@ -107,7 +107,7 @@ public static class CommonValueObjectTrace
     /// To enable tracing, add this source to your OpenTelemetry configuration:
     /// <code>
     /// builder.Services.AddOpenTelemetry()
-    ///     .WithTracing(b => b.AddCommonValueObjectInstrumentation());
+    ///     .WithTracing(b => b.AddFunctionalDddCvoInstrumentation());
     /// </code>
     /// </para>
     /// <para>

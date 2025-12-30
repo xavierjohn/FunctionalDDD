@@ -127,7 +127,7 @@ using static FunctionalDdd.ValidationError;
 /// // Validation errors automatically formatted with field names
 /// </code>
 /// </example>
-public static class FunctionalDDDValidationExtension
+public static class FluentValidationResultExtensions
 {
     /// <summary>
     /// Converts a FluentValidation <see cref="ValidationResult"/> to a <see cref="Result{T}"/>.

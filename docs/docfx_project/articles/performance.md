@@ -374,9 +374,3 @@ dotnet run --project Benchmark/Benchmark.csproj -c Release
 ### Q: Can I use ROP in high-performance scenarios?
 
 **A:** Yes! The overhead is minimal. Many high-throughput systems use ROP successfully. Profile your specific use case if concerned.
-
-## Next Steps
-
-- Review [detailed benchmarks](https://github.com/xavierjohn/FunctionalDDD/blob/main/BENCHMARKS.md) for comprehensive results
-- Learn [optimization techniques](advanced-features.md) for parallel operations  
-- See [debugging tips](debugging.md) for profiling ROP chains

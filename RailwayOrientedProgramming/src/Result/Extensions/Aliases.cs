@@ -22,16 +22,21 @@ namespace FunctionalDdd.Aliases;
 /// var result = GetUser(id)
 ///     .Then(user => ValidateUser(user))    // Alias for Bind
 ///     .OrElse(() => GetDefaultUser())      // Alias for Compensate
-///     .Do(user => Log(user));              // Alias for Tap
+///     .Peek(user => Log(user));            // Alias for Tap
 /// </code>
 /// </para>
 /// </remarks>
 public static class ResultAliases
 {
     /// <summary>
-    /// Alias for <see cref="BindExtensions.Bind{TIn, TOut}"/>.
+    /// Alias for <see cref="BindExtensions.Bind{TValue, TResult}"/>.
     /// Chains an operation that can fail. If current result is success, calls the function.
     /// </summary>
+    /// <typeparam name="TIn">Type of the input result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output result value.</typeparam>
+    /// <param name="result">The result to bind.</param>
+    /// <param name="func">The function to call if the result is successful.</param>
+    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     /// <remarks>
     /// This is an alias for developers familiar with promise/continuation patterns.
     /// In functional programming, this operation is called "Bind" or "FlatMap".
@@ -42,9 +47,13 @@ public static class ResultAliases
         => result.Bind(func);
 
     /// <summary>
-    /// Alias for <see cref="TapExtensions.Tap{T}"/>.
+    /// Alias for <see cref="TapExtensions.Tap{TValue}(Result{TValue}, Action{TValue})"/>.
     /// Executes a side effect on success without transforming the value.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to tap.</param>
+    /// <param name="action">The action to execute with the value if the result is successful.</param>
+    /// <returns>The original result unchanged.</returns>
     /// <remarks>
     /// This is an alias for developers familiar with stream processing or debugging patterns (Peek in Rx, Java Streams).
     /// In functional programming, this operation is called "Tap".
@@ -56,9 +65,13 @@ public static class ResultAliases
         => result.Tap(action);
 
     /// <summary>
-    /// Alias for <see cref="CompensateExtensions.Compensate{T}"/>.
+    /// Alias for <see cref="CompensateExtensions.Compensate{T}(Result{T}, Func{Result{T}})"/>.
     /// Provides a fallback result when the current result is failure.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to compensate if it's a failure.</param>
+    /// <param name="fallback">The function to call for compensation.</param>
+    /// <returns>The original result if success; otherwise the result from the fallback function.</returns>
     /// <remarks>
     /// This is an alias for developers familiar with LINQ's null-coalescing or default patterns.
     /// In functional programming, this operation is called "Compensate" or "OrElse".
@@ -72,6 +85,11 @@ public static class ResultAliases
     /// Alias for <see cref="CompensateExtensions.Compensate{T}(Result{T}, Func{Error, bool}, Func{Result{T}})"/>.
     /// Provides a fallback result when failure matches the predicate.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to compensate if it's a failure.</param>
+    /// <param name="predicate">The predicate to test the error.</param>
+    /// <param name="fallback">The function to call for compensation if the predicate is true.</param>
+    /// <returns>The original result if success or predicate is false; otherwise the result from the fallback function.</returns>
     public static Result<T> OrElse<T>(
         this Result<T> result,
         Func<Error, bool> predicate,
@@ -79,9 +97,14 @@ public static class ResultAliases
         => result.Compensate(predicate, fallback);
 
     /// <summary>
-    /// Alias for <see cref="EnsureExtensions.Ensure{T}"/>.
+    /// Alias for <see cref="EnsureExtensions.Ensure{TValue}(Result{TValue}, Func{TValue, bool}, Error)"/>.
     /// Validates a condition, returning failure if false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The predicate function to test the value.</param>
+    /// <param name="error">The error to return if the predicate is false.</param>
+    /// <returns>The original result if success and predicate is true; otherwise a failure with the specified error.</returns>
     /// <remarks>
     /// This is an alias for developers familiar with assertion or guard clause patterns.
     /// In functional programming, this operation is called "Ensure" or "Filter".
@@ -98,6 +121,11 @@ public static class ResultAliases
     /// Alias for BindAsync.
     /// Async version of Then.
     /// </summary>
+    /// <typeparam name="TIn">Type of the input result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output result value.</typeparam>
+    /// <param name="result">The result to bind.</param>
+    /// <param name="func">The async function to call if the result is successful.</param>
+    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static Task<Result<TOut>> ThenAsync<TIn, TOut>(
         this Result<TIn> result,
         Func<TIn, Task<Result<TOut>>> func)
@@ -107,6 +135,11 @@ public static class ResultAliases
     /// Alias for BindAsync with Task-wrapped results.
     /// Async version of Then for Task-wrapped results.
     /// </summary>
+    /// <typeparam name="TIn">Type of the input result value.</typeparam>
+    /// <typeparam name="TOut">Type of the output result value.</typeparam>
+    /// <param name="resultTask">The task containing the result to bind.</param>
+    /// <param name="func">The async function to call if the result is successful.</param>
+    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static Task<Result<TOut>> ThenAsync<TIn, TOut>(
         this Task<Result<TIn>> resultTask,
         Func<TIn, Task<Result<TOut>>> func)
@@ -116,6 +149,10 @@ public static class ResultAliases
     /// Alias for TapAsync.
     /// Async version of Peek.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to tap.</param>
+    /// <param name="action">The async action to execute with the value if the result is successful.</param>
+    /// <returns>The original result unchanged.</returns>
     public static Task<Result<T>> PeekAsync<T>(
         this Result<T> result,
         Func<T, Task> action)
@@ -125,6 +162,10 @@ public static class ResultAliases
     /// Alias for TapAsync with Task-wrapped results.
     /// Async version of Peek for Task-wrapped results.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">The task containing the result to tap.</param>
+    /// <param name="action">The async action to execute with the value if the result is successful.</param>
+    /// <returns>The original result unchanged.</returns>
     public static Task<Result<T>> PeekAsync<T>(
         this Task<Result<T>> resultTask,
         Func<T, Task> action)
@@ -134,6 +175,10 @@ public static class ResultAliases
     /// Alias for CompensateAsync.
     /// Async version of OrElse.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to compensate if it's a failure.</param>
+    /// <param name="fallbackAsync">The async function to call for compensation.</param>
+    /// <returns>The original result if success; otherwise the result from the fallback function.</returns>
     public static Task<Result<T>> OrElseAsync<T>(
         this Result<T> result,
         Func<Task<Result<T>>> fallbackAsync)
@@ -143,6 +188,11 @@ public static class ResultAliases
     /// Alias for EnsureAsync.
     /// Async version of Require.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicateAsync">The async predicate function to test the value.</param>
+    /// <param name="error">The error to return if the predicate is false.</param>
+    /// <returns>The original result if success and predicate is true; otherwise a failure with the specified error.</returns>
     public static Task<Result<T>> RequireAsync<T>(
         this Result<T> result,
         Func<T, Task<bool>> predicateAsync,
