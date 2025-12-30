@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDdd;
 
-
 using System.Collections.Immutable;
+
 /// <summary>
 /// Represents validation errors for one or more fields. Used when input data fails business rules or constraints.
 /// </summary>
@@ -56,6 +56,10 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
                 throw new ArgumentException("At least one detail message is required.", nameof(details));
         }
 
+        /// <summary>
+        /// Returns a string representation of this field error showing the field name and all detail messages.
+        /// </summary>
+        /// <returns>A formatted string in the form "FieldName: detail1, detail2, ..."</returns>
         public override string ToString() => $"{FieldName}: {string.Join(", ", Details)}";
     }
 
@@ -212,6 +216,11 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
         return new ValidationError(grouped, mergedCode, mergedDetail, Instance ?? other.Instance);
     }
 
+    /// <summary>
+    /// Determines whether the specified <see cref="ValidationError"/> is equal to the current instance.
+    /// </summary>
+    /// <param name="other">The <see cref="ValidationError"/> to compare with the current instance.</param>
+    /// <returns><c>true</c> if the specified object is equal to the current instance; otherwise, <c>false</c>.</returns>
     public bool Equals(ValidationError? other)
     {
         if (other is null) return false;
@@ -229,8 +238,17 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
         return true;
     }
 
+    /// <summary>
+    /// Determines whether the specified object is equal to the current instance.
+    /// </summary>
+    /// <param name="obj">The object to compare with the current instance.</param>
+    /// <returns><c>true</c> if the specified object is equal to the current instance; otherwise, <c>false</c>.</returns>
     public override bool Equals(object? obj) => obj is ValidationError ve && Equals(ve);
 
+    /// <summary>
+    /// Returns the hash code for this instance.
+    /// </summary>
+    /// <returns>A 32-bit signed integer hash code.</returns>
     public override int GetHashCode()
     {
         var hash = new HashCode();
@@ -245,6 +263,10 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
         return hash.ToHashCode();
     }
 
+    /// <summary>
+    /// Returns a string representation of this validation error including all field errors.
+    /// </summary>
+    /// <returns>A formatted string containing the base error information and all field-specific error details.</returns>
     public override string ToString()
         => base.ToString() + "\r\n" + string.Join("\r\n", FieldErrors.Select(e => $"{e.FieldName}: {string.Join(", ", e.Details)}"));
 }
