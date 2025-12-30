@@ -2,14 +2,9 @@
 
 This directory contains comprehensive real-world examples demonstrating how to use the FunctionalDDD library in production scenarios. Each example showcases Railway Oriented Programming (ROP), Domain-Driven Design (DDD), and functional programming patterns.
 
-## 🚀 Quick Starts
+## 🚀 Quick Start
 
-**New to functional programming?** Start here:
-
-- **[Quick Start for C# Developers](./QUICKSTART_CSHARP.md)** - Uses familiar C# patterns and alias methods (`Then`, `Peek`, `OrElse`, `Require`). Perfect if you're coming from traditional C# or LINQ backgrounds.
-- **[Quick Start Guide](./QUICKSTART.md)** - Uses standard functional programming terminology (`Bind`, `Map`, `Tap`, `Ensure`). Good if you want to learn the canonical FP approach.
-
-Both guides cover the same concepts - choose based on your comfort level!
+- **[Quick Start Guide](./QUICKSTART.md)** - Learn Railway Oriented Programming fundamentals using standard functional programming terminology (`Bind`, `Map`, `Tap`, `Ensure`, `Combine`, `Compensate`, `Match`).
 
 ---
 
