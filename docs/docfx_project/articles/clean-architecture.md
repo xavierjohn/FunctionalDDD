@@ -1,6 +1,6 @@
 # Architecture Patterns with Functional DDD
 
-**Level:** Intermediate to Advanced ????? | **Time:** 30-60 min | **Prerequisites:** [Basics](basics.md), [Error Handling](error-handling.md)
+**Level:** Intermediate to Advanced 📚→🚀 | **Time:** 30-60 min | **Prerequisites:** [Basics](basics.md), [Error Handling](error-handling.md)
 
 Learn how to architect applications with **Railway-Oriented Programming** and **Domain-Driven Design**, from simple controller-based patterns to advanced CQRS architectures. Choose the pattern that fits your needs.
 
@@ -8,7 +8,7 @@ Learn how to architect applications with **Railway-Oriented Programming** and **
 
 - [Overview](#overview)
 - [Choosing Your Architecture](#choosing-your-architecture)
-- [Simple Pattern: Controller ? Domain ? Repository](#simple-pattern-controller--domain--repository)
+- [Simple Pattern: Controller → Domain → Repository](#simple-pattern-controller--domain--repository)
   - [Architecture Diagram](#simple-architecture-diagram)
   - [Complete Example: User Registration](#simple-example-user-registration)
   - [When to Use Simple Pattern](#when-to-use-simple-pattern)
@@ -40,14 +40,17 @@ Both patterns are **valid for production** - choose based on your application's 
 | **Team Size** | 1-10 developers | 10+ developers |
 | **Domain Complexity** | Straightforward business rules | Complex, evolving business logic |
 | **Read vs Write** | Similar concerns | Need separate optimization |
-| **Layers** | 3 (API, Domain, Infrastructure) | 4 (API, Application, Domain, Infrastructure) |
-| **Learning Curve** | Gentle - Start here ? | Steep - Graduate to this |
+| **Layers** | 3 (API, Domain, Infrastructure) | 3 (API, Domain*, Infrastructure) |
+| **Assemblies** | 3 assemblies | 4 assemblies (2 in Domain Layer) |
+| **Learning Curve** | Gentle - Start here ✅ | Steep - Graduate to this |
 | **Example Code** | SampleWebApplication (Examples folder) | Enterprise applications |
-| **Time to Market** | Fast ?? | Slower (more structure) |
+| **Time to Market** | Fast 🚀 | Slower (more structure) |
+
+*Domain Layer contains 2 assemblies: Application (use cases) + Domain (business rules)
 
 **Recommendation:** Start with the **Simple Pattern** and evolve to CQRS **only when you need it**.
 
-## Simple Pattern: Controller ? Domain ? Repository
+## Simple Pattern: Controller → Domain → Repository
 
 The **Simple Pattern** goes directly from Controllers to Domain logic, with minimal layers. This is perfect for most applications and matches the **SampleWebApplication** example in the Examples folder.
 
@@ -121,7 +124,7 @@ public class UsersController : ControllerBase
 2. **Combine** - Collects all validations (returns all errors if multiple fail)
 3. **Bind** - Creates domain aggregate (User)
 4. **Tap** - Saves to database (side effect)
-5. **ToActionResult** - Converts `Result<User>` ? `ActionResult<User>`
+5. **ToActionResult** - Converts `Result<User>` → `ActionResult<User>`
 
 ### Railway-Oriented Flow
 
@@ -263,16 +266,16 @@ public class UserRepository : IUserRepository
 
 **Use the Simple Pattern when:**
 
-- ? **Small to medium applications** - Most web APIs, microservices
-- ? **Straightforward business logic** - CRUD + validation + some rules
-- ? **Small teams** - 1-10 developers
-- ? **Fast iteration** - Need to ship features quickly
-- ? **Learning ROP/DDD** - Best place to start
-- ? **Microservices** - Each service is focused and simple
+- ✅ **Small to medium applications** - Most web APIs, microservices
+- ✅ **Straightforward business logic** - CRUD + validation + some rules
+- ✅ **Small teams** - 1-10 developers
+- ✅ **Fast iteration** - Need to ship features quickly
+- ✅ **Learning ROP/DDD** - Best place to start
+- ✅ **Microservices** - Each service is focused and simple
 
 **Benefits:**
 - **Less code** - Fewer layers, less boilerplate
-- **Easier to understand** - Direct flow from controller ? domain ? database
+- **Easier to understand** - Direct flow from controller → domain → database
 - **Faster development** - No command/query objects, no handlers
 - **Still testable** - Domain logic pure, easy to test
 - **Production-ready** - Fully capable for most applications
@@ -286,7 +289,7 @@ public class UserRepository : IUserRepository
 
 The **CQRS Pattern** adds a dedicated Application Layer between API and Domain for complex orchestration, separate read/write models, and cross-cutting concerns.
 
-**?? Only graduate to this pattern when you experience pain with the Simple Pattern.**
+**⚠️ Only graduate to this pattern when you experience pain with the Simple Pattern.**
 
 ### CQRS Architecture Diagram
 
@@ -297,18 +300,20 @@ graph TB
         HTTP[ToActionResult/ToHttpResult]
     end
     
-    subgraph Application["Application Layer (CQRS)"]
-        CMD[Commands]
-        QRY[Queries]
-        HAND[Handlers]
-        VAL[Validation]
-    end
-    
-    subgraph Domain["Domain Layer (DDD)"]
-        AGG[Aggregates]
-        ENT[Entities]
-        VO[Value Objects]
-        EVT[Domain Events]
+    subgraph DomainCore["Domain Layer - Core Business Logic"]
+        subgraph Application["Application Assembly<br/>(Use Cases & Orchestration)"]
+            CMD[Commands]
+            QRY[Queries]
+            HAND[Handlers]
+            VAL[Validation]
+        end
+        
+        subgraph Domain["Domain Assembly<br/>(Business Rules & Models)"]
+            AGG[Aggregates]
+            ENT[Entities]
+            VO[Value Objects]
+            EVT[Domain Events]
+        end
     end
     
     subgraph Infrastructure["Infrastructure Layer"]
@@ -334,12 +339,37 @@ graph TB
     HAND --> EXT
     
     style API fill:#e1f5ff
-    style Application fill:#ffe1f5
-    style Domain fill:#fff4e1
+    style DomainCore fill:#fff4e1
+    style Application fill:#fffacd
+    style Domain fill:#ffe4b5
     style Infrastructure fill:#f0f0f0
 ```
 
 ## Architecture Layers
+
+**Note:** In this architecture, both the **Application** and **Domain** assemblies are part of the **Domain Layer**. They represent different concerns within the core business logic but share the same architectural layer.
+
+### Assembly Organization
+
+The Domain Layer is split into two assemblies for better organization:
+
+- **Domain Assembly** - Pure business logic with zero dependencies
+  - Aggregates, Entities, Value Objects
+  - Domain Events
+  - Repository interfaces
+  - Domain services
+
+- **Application Assembly** - Use case orchestration (depends only on Domain)
+  - Commands and Queries (CQRS)
+  - Command/Query Handlers
+  - Application services
+  - DTOs and mapping logic
+
+This separation allows you to:
+- Keep domain logic pure and framework-agnostic
+- Organize complex use cases separately from core business rules
+- Test business logic in complete isolation
+- Share the domain assembly across multiple applications
 
 ### 1. API Layer (Presentation)
 
@@ -619,7 +649,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
 **What it does:**
 - Implements repository interfaces from domain
-- Handles database exceptions ? `Result<T>` errors
+- Handles database exceptions → `Result<T>` errors
 - Configures EF Core mappings for value objects
 - **No business logic**
 
@@ -765,12 +795,12 @@ Content-Type: application/problem+json
 
 **Use the CQRS Pattern when you experience these pain points:**
 
-- ? **Complex orchestration** - Controllers juggling multiple services/repositories
-- ? **Cross-cutting concerns** - Need logging, caching, authorization across many operations
-- ? **Different read/write needs** - Queries need denormalized views, commands need rich validation
-- ? **Large teams** - Need clear boundaries between teams working on different features
-- ? **Event-driven architecture** - Publishing domain events to message buses
-- ? **Complex transactions** - Multi-aggregate transactions with compensation logic
+- ✅ **Complex orchestration** - Controllers juggling multiple services/repositories
+- ✅ **Cross-cutting concerns** - Need logging, caching, authorization across many operations
+- ✅ **Different read/write needs** - Queries need denormalized views, commands need rich validation
+- ✅ **Large teams** - Need clear boundaries between teams working on different features
+- ✅ **Event-driven architecture** - Publishing domain events to message buses
+- ✅ **Complex transactions** - Multi-aggregate transactions with compensation logic
 
 **Benefits of CQRS:**
 - **Dedicated orchestration layer** - Commands/Queries handle complex workflows
@@ -986,197 +1016,17 @@ public class UsersControllerTests : IClassFixture<WebApplicationFactory<Program>
 ### 1. Dependencies Always Point Inward
 
 ```
-API ? Application ? Domain ? Infrastructure
+API → Application → Domain ← Infrastructure
+     (Both in Domain Layer)
 ```
 
-- Domain has **zero** dependencies
+- **Domain Assembly** has **zero** external dependencies
+- **Application Assembly** depends only on Domain Assembly  
 - Infrastructure implements domain interfaces
 - Application orchestrates domain + infrastructure
-- API converts `Result<T>` to HTTP
+- API depends on Application (or Domain for simple scenarios)
 
-### Dependency Flow Diagram
-
-```mermaid
-graph TB
-    subgraph API["API Layer"]
-        CTRL[Controllers]
-    end
-    
-    subgraph APP["Application Layer<br/>(CQRS only)"]
-        CMD[Commands]
-        HAND[Handlers]
-    end
-    
-    subgraph DOM["Domain Layer<br/>(Pure Logic)"]
-        AGG[Aggregates]
-        VO[Value Objects]
-        IFACE[Interfaces]
-    end
-    
-    subgraph INFRA["Infrastructure Layer"]
-        REPO[Repositories]
-        DB[(Database)]
-    end
-    
-    CTRL -->|depends on| APP
-    APP -->|depends on| DOM
-    INFRA -->|implements| IFACE
-    REPO -.->|uses| DB
-    
-    style DOM fill:#fff4e1
-    style API fill:#e1f5ff
-    style APP fill:#ffe1f5
-    style INFRA fill:#f0f0f0
-    
-    note1[Domain has<br/>ZERO dependencies]
-    note2[Infrastructure<br/>implements<br/>domain interfaces]
-    
-    DOM -.-> note1
-    INFRA -.-> note2
-```
-
-### 2. Keep Domain Pure
-
-```csharp
-// ? Good - pure domain logic
-public Result<User> Deactivate(string reason)
-{
-    if (!IsActive)
-        return Error.Domain("User is already deactivated");
-    
-    IsActive = false;
-    return Result.Success(this);
-}
-
-// ? Bad - infrastructure leak
-public async Task<User> Deactivate(string reason)
-{
-    if (!IsActive)
-        throw new InvalidOperationException();
-    
-    IsActive = false;
-    await _context.SaveChangesAsync();  // ? Database in domain
-    return this;
-}
-```
-
-### 3. Validate at Boundaries Using Value Objects
-
-**Don't use DTO validation** - leverage the power of Railway-Oriented Programming instead:
-
-```csharp
-// ? Bad - DTO validation with data annotations
-public record RegisterUserRequest
-{
-    [Required]
-    [EmailAddress]
-    public string Email { get; init; }
-    
-    [Required]
-    [MaxLength(50)]
-    public string FirstName { get; init; }
-}
-
-// Controller still needs to check ModelState
-public ActionResult<User> Register([FromBody] RegisterUserRequest request)
-{
-    if (!ModelState.IsValid)  // ? Imperative validation check
-        return BadRequest(ModelState);
-    
-    // Now do domain validation...
-}
-
-// ? Good - Pure ROP with value objects
-public record RegisterUserRequest(
-    string Email,
-    string FirstName,
-    string LastName
-);
-
-// Controller validates using value objects (Railway track)
-public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
-    EmailAddress.TryCreate(request.Email)  // ? Validates at boundary
-        .Combine(FirstName.TryCreate(request.FirstName))
-        .Combine(LastName.TryCreate(request.LastName))
-        .Bind((email, firstName, lastName) => 
-            User.TryCreate(email, firstName, lastName))
-        .ToActionResult(this);  // ? Automatic 400 with field-level errors
-```
-
-**Validation layers:**
-- **API Layer (Boundary)**: Value object validation via `TryCreate` - catches invalid inputs
-- **Domain Layer**: Business invariants via domain validators - enforces business rules
-- **Application Layer** (CQRS only): Application-level concerns (uniqueness, authorization)
-
-### Validation Layers Diagram
-
-```mermaid
-flowchart TB
-    INPUT[HTTP Request<br/>Raw JSON Data] --> API_LAYER[API Layer<br/>Boundary Validation]
-    
-    API_LAYER -->|TryCreate| VO1[EmailAddress.TryCreate]
-    API_LAYER -->|TryCreate| VO2[FirstName.TryCreate]
-    API_LAYER -->|TryCreate| VO3[LastName.TryCreate]
-    
-    VO1 -->|Validated| COMBINE[Combine Results]
-    VO2 -->|Validated| COMBINE
-    VO3 -->|Validated| COMBINE
-    
-    VO1 -.->|Invalid Format| VAL_ERR[ValidationError<br/>400 Bad Request]
-    VO2 -.->|Empty String| VAL_ERR
-    VO3 -.->|Null Value| VAL_ERR
-    
-    COMBINE --> APP_LAYER[Application Layer<br/>App-Level Concerns]
-    APP_LAYER -->|Check| UNIQUE{Email<br/>Unique?}
-    UNIQUE -.->|Duplicate| CONFLICT[ConflictError<br/>409 Conflict]
-    UNIQUE -->|Unique| DOMAIN_LAYER[Domain Layer<br/>Business Rules]
-    
-    DOMAIN_LAYER -->|Validate| BIZ{Business<br/>Rules}
-    BIZ -.->|Invariant Violated| DOMAIN_ERR[DomainError<br/>422 Unprocessable]
-    BIZ -->|Valid| SUCCESS[Result Success<br/>200 OK]
-    
-    style API_LAYER fill:#e1f5ff
-    style APP_LAYER fill:#ffe1f5
-    style DOMAIN_LAYER fill:#fff4e1
-    style SUCCESS fill:#90EE90
-    style VAL_ERR fill:#FFB6C6
-    style CONFLICT fill:#FFB6C6
-    style DOMAIN_ERR fill:#FFD700
-```
-
-**Why avoid DTO validation?**
-- Imperative checks (`if (!ModelState.IsValid)`) break the Railway flow
-- Data annotations mix concerns (validation + serialization)
-- Value object validation is composable and reusable
-- Railway-Oriented Programming provides automatic error aggregation
-
-### 4. Use Value Objects
-
-```csharp
-// ? Good - type safety
-public Result<User> Create(EmailAddress email, FirstName firstName)
-
-// ? Bad - primitive obsession
-public Result<User> Create(string email, string firstName)
-```
-
-### 5. Async All the Way
-
-```csharp
-// ? Good - async throughout
-return await _validator.ValidateToResultAsync(command, ct)
-    .BindAsync(async (cmd, cancellationToken) => 
-        await CreateUserAsync(cmd, cancellationToken), ct);
-
-// ? Bad - sync over async
-return _validator.ValidateToResult(command)
-    .Bind(cmd => CreateUserAsync(cmd, ct).Result);  // ? Deadlock risk
-```
-
-## Next Steps
-
-- See [ASP.NET Core Integration](integration-aspnet.md) for HTTP conversion details
-- Learn about [FluentValidation Integration](integration-fluentvalidation.md) for validation
-- Review [Entity Framework Core Integration](integration-ef.md) for data access patterns
-- Check [Error Handling](error-handling.md) for comprehensive error type usage
-- Explore [Examples](examples.md) for more complete working applications
+**Layer vs Assembly:**
+- **3 Layers**: API, Domain, Infrastructure
+- **4 Assemblies**: API, Application (in Domain Layer), Domain (in Domain Layer), Infrastructure
+````````
