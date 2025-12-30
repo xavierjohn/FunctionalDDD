@@ -2,6 +2,18 @@
 
 Learn the fundamentals of Railway-Oriented Programming (ROP) and type-safe domain modeling in just a few minutes.
 
+## Table of Contents
+
+- [What is Railway-Oriented Programming?](#what-is-railway-oriented-programming)
+- [Why Avoid Primitive Obsession?](#why-avoid-primitive-obsession)
+- [Result Type](#resulttvalue-type)
+- [Core Extension Methods](#core-extension-methods-building-blocks)
+- [Putting It All Together](#putting-it-all-together)
+- [Working with Async Operations](#working-with-async-operations)
+- [Common Beginner Questions](#common-beginner-questions)
+- [Quick Reference](#quick-reference)
+- [Next Steps](#next-steps)
+
 ## What is Railway-Oriented Programming?
 
 Railway-Oriented Programming is a functional programming pattern that treats your code like a railway track with **two paths**:
@@ -11,11 +23,60 @@ Railway-Oriented Programming is a functional programming pattern that treats you
 
 Instead of checking for errors after every operation, ROP lets you chain operations together. If any step fails, the rest are automatically skipped—like a train switching to an error track.
 
+```mermaid
+graph LR
+    A[Start] --> B{Operation 1}
+    B -->|Success| C{Operation 2}
+    B -->|Failure| E[Error Track]
+    C -->|Success| D{Operation 3}
+    C -->|Failure| E
+    D -->|Success| F[Success Result]
+    D -->|Failure| E
+    E --> G[Failure Result]
+    
+    style F fill:#90EE90
+    style G fill:#FFB6C6
+    style E fill:#FFD700
+```
+
 **Benefits:**
 - ✅ Explicit error handling (no hidden exceptions)
 - ✅ Clean, readable code without nested if-statements
 - ✅ Type-safe operations that prevent runtime errors
 - ✅ Compiler-enforced error handling
+
+### Visual Comparison: Traditional vs Railway-Oriented
+
+**Traditional Approach:**
+```csharp
+// ❌ Nested error checking - hard to read
+var firstName = ValidateFirstName(input.FirstName);
+if (firstName == null) return BadRequest("Invalid first name");
+
+var lastName = ValidateLastName(input.LastName);
+if (lastName == null) return BadRequest("Invalid last name");
+
+var email = ValidateEmail(input.Email);
+if (email == null) return BadRequest("Invalid email");
+
+var user = CreateUser(firstName, lastName, email);
+if (user == null) return BadRequest("Cannot create user");
+
+return Ok(user);
+```
+
+**Railway-Oriented Approach:**
+```csharp
+// ✅ Clean railway - automatic error handling
+return FirstName.TryCreate(input.FirstName)
+    .Combine(LastName.TryCreate(input.LastName))
+    .Combine(EmailAddress.TryCreate(input.Email))
+    .Bind((first, last, email) => User.TryCreate(first, last, email))
+    .Match(
+        onSuccess: user => Ok(user),
+        onFailure: error => BadRequest(error.Detail)
+    );
+```
 
 ## Why Avoid Primitive Obsession?
 
@@ -164,6 +225,42 @@ Console.WriteLine(message);
 ## Core Extension Methods (Building Blocks)
 
 Extension methods eliminate tedious failure handling after each call, enabling Railway-Oriented Programming.
+
+### Railway Operations Flow
+
+```mermaid
+flowchart TB
+    START[Input Data] --> COMBINE[Combine<br/>Validate All Inputs]
+    COMBINE -->|All Valid| BIND[Bind<br/>Chain Operation]
+    COMBINE -->|Any Invalid| ERROR[Error Result]
+    
+    BIND -->|Success| MAP[Map<br/>Transform Value]
+    BIND -->|Failure| ERROR
+    
+    MAP --> ENSURE[Ensure<br/>Business Rules]
+    
+    ENSURE -->|Valid| TAP[Tap<br/>Side Effects]
+    ENSURE -->|Invalid| ERROR
+    
+    TAP --> MATCH[Match<br/>Extract Result]
+    
+    MATCH --> SUCCESS[Success Output]
+    MATCH --> FAILURE[Failure Output]
+    
+    ERROR --> COMPENSATE{Compensate<br/>Retry/Fallback?}
+    COMPENSATE -->|Recover| TAP
+    COMPENSATE -->|No Recovery| FAILURE
+    
+    style SUCCESS fill:#90EE90
+    style FAILURE fill:#FFB6C6
+    style ERROR fill:#FFD700
+    style COMBINE fill:#E1F5FF
+    style BIND fill:#FFE1F5
+    style MAP fill:#FFF4E1
+    style ENSURE fill:#E1FFE1
+    style TAP fill:#FFE4B5
+    style MATCH fill:#F0E68C
+```
 
 ### Combine - Validate Multiple Inputs
 
@@ -504,15 +601,137 @@ Now that you understand the basics:
 1. ✅ **Practice** - Try refactoring some of your existing validation code to use ROP
 2. 📚 **Learn more** - Read [Advanced Features](advanced-features.md) for LINQ syntax, parallel operations
 3. 🔍 **See examples** - Check out [Examples](examples.md) for real-world patterns
-4. 🏗️ **Integration** - Learn how to use this in [ASP.NET Core](integration.md)
+4. 🏗️ **Architecture** - Learn how to structure apps with [Clean Architecture](clean-architecture.md)
+5. 🔌 **Integration** - See [ASP.NET Core Integration](integration-aspnet.md) for web APIs
 
-## Conclusion
+## Quick Reference
 
-Railway-Oriented Programming with strongly-typed classes provides:
-- ✅ **Type safety** - Compiler prevents parameter swap errors
-- ✅ **Explicit errors** - No hidden exceptions
-- ✅ **Clean code** - Chainable operations eliminate nested if-statements
-- ✅ **Better testing** - Pure functions are easy to test
-- ✅ **Self-documenting** - Code clearly shows success and failure paths
+### Creating Value Objects
 
-**Core operations** (`Combine`, `Bind`, `Map`, `Tap`, `Ensure`, `Compensate`, `Match`) work together to create readable, maintainable code with explicit error handling.
+```csharp
+// Define your value object (must be partial)
+public partial class EmailAddress : RequiredString { }
+
+// Use the generated TryCreate method
+var result = EmailAddress.TryCreate("user@example.com");
+```
+
+### Cheat Sheet: Operation Selection
+
+```mermaid
+flowchart TD
+    START{What do you<br/>need to do?}
+    
+    START -->|Validate multiple inputs| COMBINE[Use Combine]
+    START -->|Call another Result operation| BIND[Use Bind]
+    START -->|Transform a value| MAP[Use Map]
+    START -->|Log/Save/Notify| TAP[Use Tap]
+    START -->|Add validation rule| ENSURE[Use Ensure]
+    START -->|Provide fallback| COMPENSATE[Use Compensate]
+    START -->|Get final value| MATCH[Use Match]
+    
+    COMBINE --> CODE1["firstName.Combine(lastName)"]
+    BIND --> CODE2["userId.Bind(GetUser)"]
+    MAP --> CODE3["email.Map(e => e.ToUpper())"]
+    TAP --> CODE4["user.Tap(u => Log(u))"]
+    ENSURE --> CODE5["age.Ensure(a => a >= 18, error)"]
+    COMPENSATE --> CODE6["cache.Compensate(() => db)"]
+    MATCH --> CODE7["result.Match(success, failure)"]
+    
+    style COMBINE fill:#E1F5FF
+    style BIND fill:#FFE1F5
+    style MAP fill:#FFF4E1
+    style TAP fill:#FFE4B5
+    style ENSURE fill:#E1FFE1
+    style COMPENSATE fill:#FFE4E1
+    style MATCH fill:#F0E68C
+```
+
+### Common Patterns
+
+**Form Validation:**
+```csharp
+FirstName.TryCreate(input.FirstName)
+    .Combine(LastName.TryCreate(input.LastName))
+    .Combine(EmailAddress.TryCreate(input.Email))
+    .Bind((first, last, email) => User.TryCreate(first, last, email))
+    .ToActionResult(this);
+```
+
+**Database Operations:**
+```csharp
+await GetUserAsync(userId, ct)
+    .BindAsync(user => UpdateUserAsync(user, ct), ct)
+    .TapAsync(user => SaveAsync(user, ct), ct)
+    .TapAsync(user => PublishEventAsync(user, ct), ct);
+```
+
+**Retry Pattern:**
+```csharp
+CallServiceA()
+    .Compensate(error => CallServiceB())
+    .Compensate(error => GetCachedData())
+    .Ensure(data => data.IsValid, Error.Validation("Invalid data"));
+```
+
+### Error Handling Patterns
+
+**Simple Match:**
+```csharp
+result.Match(
+    onSuccess: value => Ok(value),
+    onFailure: error => BadRequest(error.Detail)
+);
+```
+
+**Discriminated Union:**
+```csharp
+result.MatchError(
+    onValidation: err => BadRequest(err.FieldErrors),
+    onNotFound: err => NotFound(err.Detail),
+    onConflict: err => Conflict(err.Detail),
+    onError: err => StatusCode(500, err.Detail),
+    onSuccess: value => Ok(value)
+);
+```
+
+**Pattern Matching:**
+```csharp
+return result.Match(
+    onSuccess: user => Ok(user),
+    onFailure: error => error switch
+    {
+        ValidationError e => BadRequest(e.FieldErrors),
+        NotFoundError e => NotFound(e.Detail),
+        ConflictError e => Conflict(e.Detail),
+        _ => StatusCode(500, error.Detail)
+    }
+);
+```
+
+### Async + CancellationToken
+
+```csharp
+public async Task<IActionResult> ProcessAsync(int id, CancellationToken ct)
+{
+    return await GetItemAsync(id, ct)
+        .BindAsync(item => ValidateAsync(item, ct), ct)
+        .TapAsync(item => SaveAsync(item, ct), ct)
+        .MatchAsync(
+            onSuccess: item => Results.Ok(item),
+            onFailure: error => Results.BadRequest(error.Detail),
+            cancellationToken: ct
+        );
+}
+```
+
+### Key Reminders
+
+| ✅ Do | ❌ Don't |
+|-------|----------|
+| Use `Bind` when function returns `Result<T>` | Use `Map` when function returns `Result<T>` |
+| Use `Map` when function returns plain `T` | Access `.Value` without checking `IsSuccess` |
+| Chain operations for readability | Nest if-statements for error checking |
+| Use `Combine` to collect all validation errors | Check each validation separately |
+| Use `TryCreate` for value object construction | Use constructors directly |
+| Handle errors with `Match` or `MatchError` | Throw exceptions for business logic errors |
