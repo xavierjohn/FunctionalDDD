@@ -176,7 +176,7 @@ Ready to get started? Choose your learning path:
    - HTTP response handling
    - Common patterns library
 
-3. 🔗 **[ASP.NET Core Integration](integration.md#aspnet-core-integration)** - Connect to your API
+3. 🔗 **[ASP.NET Core Integration](integration-aspnet.md)** - Connect to your API
    - ToActionResult, ToHttpResult
    - Automatic error-to-HTTP mapping
    - MVC and Minimal API examples
@@ -194,7 +194,7 @@ Ready to get started? Choose your learning path:
    - Parallel execution
    - Timeout and retry patterns
 
-3. ✅ **[FluentValidation Integration](integration.md#fluentvalidation-integration)** - Domain validation
+3. ✅ **[FluentValidation Integration](integration-fluentvalidation.md)** - Domain validation
    - InlineValidator
    - Async validation rules
    - Reuse domain validation at API layer
@@ -213,12 +213,12 @@ Ready to get started? Choose your learning path:
    - Pattern matching
    - Exception capture
 
-2. 🏗️ **[Entity Framework Core](integration.md#entity-framework-core)** - Repository patterns
+2. 🏗️ **[Entity Framework Core](integration-ef.md)** - Repository patterns
    - Result-based repositories
    - Async database operations
    - Transaction handling
 
-3. 📊 **[OpenTelemetry Integration](integration.md#opentelemetry-tracing)** - Observability
+3. 📊 **[OpenTelemetry Integration](integration-observability.md)** - Observability
    - Automatic ROP tracing
    - Distributed tracing
    - Performance monitoring
@@ -243,6 +243,6 @@ Ready to get started? Choose your learning path:
 
 **Coming from F# or Haskell?** Jump to [Advanced Features](advanced-features.md) and [Examples](examples.md)
 
-**Need to integrate with existing code?** See [Integration](integration.md) and [FluentValidation](integration.md#fluentvalidation-integration)
+**Need to integrate with existing code?** See [Integration](integration.md) and [FluentValidation](integration-fluentvalidation.md)
 
 **Looking for specific patterns?** Check [Examples](examples.md) and [Error Handling](error-handling.md)

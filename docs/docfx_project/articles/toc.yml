@@ -30,14 +30,20 @@
     href: async-cancellation.md
 - name: Integration
   items:
-  - name: ASP.NET Core
+  - name: Overview
     href: integration.md
+  - name: ASP.NET Core
+    href: integration-aspnet.md
   - name: FluentValidation
-    href: integration.md#fluentvalidation-integration
+    href: integration-fluentvalidation.md
   - name: Entity Framework Core
-    href: integration.md#entity-framework-core
-  - name: OpenTelemetry
-    href: integration.md#opentelemetry-tracing
+    href: integration-ef.md
+  - name: Observability & Monitoring
+    href: integration-observability.md
+- name: Architecture
+  items:
+  - name: Clean Architecture Example
+    href: clean-architecture.md
 - name: Advanced
   items:
   - name: Advanced Features
