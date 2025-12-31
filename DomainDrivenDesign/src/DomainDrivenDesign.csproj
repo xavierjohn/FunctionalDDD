@@ -6,6 +6,7 @@
     </Description>
     <PackageTags>ddd;domain-driven-design;aggregate;entity;value-object;domain-events;tactical-patterns</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   
   <ItemGroup>

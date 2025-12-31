@@ -19,6 +19,12 @@ namespace FunctionalDdd;
 /// </example>
 public sealed class ServiceUnavailableError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ServiceUnavailableError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of why the service is unavailable.</param>
+    /// <param name="code">The error code identifying this type of service unavailable error.</param>
+    /// <param name="instance">Optional identifier for the unavailable service or resource.</param>
     public ServiceUnavailableError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

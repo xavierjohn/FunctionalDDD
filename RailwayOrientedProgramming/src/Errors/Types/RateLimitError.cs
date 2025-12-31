@@ -18,6 +18,12 @@ namespace FunctionalDdd;
 /// </example>
 public sealed class RateLimitError : Error
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitError"/> class.
+    /// </summary>
+    /// <param name="detail">Description of the rate limit violation.</param>
+    /// <param name="code">The error code identifying this type of rate limit error.</param>
+    /// <param name="instance">Optional identifier for the client or resource being rate limited.</param>
     public RateLimitError(string detail, string code, string? instance = null) : base(detail, code, instance)
     {
     }

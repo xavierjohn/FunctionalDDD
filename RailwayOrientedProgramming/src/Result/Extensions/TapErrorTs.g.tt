@@ -6,22 +6,56 @@
 <#@ output extension=".cs" #>
 <#@ include file="CommonFunction.t4" #>
 
-// Generated code
 namespace FunctionalDdd;
 using System.Diagnostics;
 
 /// <summary>
-/// Executes the given action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.
-/// These extensions support tuple-based operations (2-9 parameters).
+/// Provides TapError extension methods for Result types containing tuples (2-9 elements).
+/// TapError executes side effects (logging, notifications, cleanup) on failure without modifying the result.
 /// </summary>
+/// <remarks>
+/// <para>
+/// These overloads enable error handling side effects on tuple-based results from combined operations.
+/// The result is returned unchanged, making TapError ideal for error logging and monitoring in Railway Oriented Programming chains.
+/// </para>
+/// <para>
+/// Use TapError when you need to:
+/// <list type="bullet">
+/// <item>Log errors and exceptions</item>
+/// <item>Send error notifications or alerts</item>
+/// <item>Record error metrics</item>
+/// <item>Clean up resources on failure</item>
+/// <item>Debug failure paths</item>
+/// </list>
+/// </para>
+/// </remarks>
+/// <example>
+/// <code>
+/// var result = EmailAddress.TryCreate("invalid-email")
+///     .Combine(UserId.TryCreate("123"))
+///     .TapError(error => _logger.LogError("Validation failed: {Error}", error.Detail))
+///     .TapError(error => _metrics.RecordValidationFailure())
+///     .Bind((email, userId) => CreateUser(email, userId));
+/// </code>
+/// </example>
 public static partial class TapErrorExtensions
 {
 <#
   for(var i = 2; i <=9; i++) { 
 #>
     /// <summary>
-    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// Executes a side effect action when the <#= i #>-element tuple result is a failure.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="action">The side effect action to execute on failure.</param>
+    /// <returns>The original result unchanged.</returns>
+    /// <remarks>
+    /// If the result is successful, the action is not executed and the success is returned unchanged.
+    /// This is the inverse of Tap, executing only on the error track.
+    /// </remarks>
     public static Result<(<# WriteTs(i); #>)> TapError<<# WriteTs(i); #>>(
                   this Result<(<# WriteTs(i); #>)> result,
                   Action action)
@@ -36,8 +70,22 @@ public static partial class TapErrorExtensions
     }
 
     /// <summary>
-    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// Executes a side effect action with the error when the <#= i #>-element tuple result is a failure.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="action">The side effect action to execute with the error on failure.</param>
+    /// <returns>The original result unchanged.</returns>
+    /// <remarks>
+    /// This overload provides access to the Error object for detailed error logging or handling.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// .TapError(error => _logger.LogError("Error: {Code} - {Detail}", error.Code, error.Detail))
+    /// </code>
+    /// </example>
     public static Result<(<# WriteTs(i); #>)> TapError<<# WriteTs(i); #>>(
                   this Result<(<# WriteTs(i); #>)> result,
                   Action<Error> action)
@@ -56,17 +104,48 @@ public static partial class TapErrorExtensions
 }
 
 /// <summary>
-/// Executes the given async action if the calling <see cref="Result{TValue}"/> is a failure. Returns the calling <see cref="Result{TValue}"/>.
-/// These extensions support tuple-based operations (2-9 parameters) with CancellationToken support.
+/// Provides asynchronous TapError extension methods for Result types containing tuples (2-9 elements).
+/// Supports both Task and ValueTask with optional CancellationToken parameters.
 /// </summary>
+/// <remarks>
+/// <para>
+/// These methods handle various async scenarios for error handling:
+/// <list type="bullet">
+/// <item>Async result ? sync error handler</item>
+/// <item>Sync result ? async error handler with CancellationToken</item>
+/// <item>Sync result ? async error handler without CancellationToken</item>
+/// <item>Async result ? async error handler with CancellationToken</item>
+/// <item>Async result ? async error handler without CancellationToken</item>
+/// </list>
+/// </para>
+/// <para>
+/// Both Task and ValueTask variants are provided for performance optimization scenarios.
+/// </para>
+/// </remarks>
+/// <example>
+/// <code>
+/// var result = await ValidateUserInputAsync(data)
+///     .TapErrorAsync(error => _logger.LogError("Validation failed: {Error}", error))
+///     .TapErrorAsync(async (error, ct) => await SendErrorNotificationAsync(error, ct), cancellationToken)
+///     .BindAsync(validData => ProcessDataAsync(validData));
+/// </code>
+/// </example>
 public static partial class TapErrorExtensionsAsync
 {
 <# 
   for(var i = 2; i <= 9; i++) { 
 #>
+    // ==================== <#= i #>-Tuple Methods ====================
+
     /// <summary>
-    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// Executes a synchronous side effect action when an asynchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="action">The side effect action to execute on failure.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action action)
@@ -76,8 +155,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// Executes a synchronous side effect action with the error when an asynchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="action">The side effect action to execute with the error on failure.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action<Error> action)
@@ -87,8 +172,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action when a synchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Task> func)
@@ -103,8 +194,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error when a synchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Error, Task> func)
@@ -119,8 +216,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with cancellation support when a synchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<CancellationToken, Task> func,
@@ -136,8 +240,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error and cancellation support when a synchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Error, CancellationToken, Task> func,
@@ -153,8 +264,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action when an asynchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<Task> func)
@@ -164,8 +281,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error when an asynchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<Error, Task> func)
@@ -175,8 +298,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with cancellation support when an asynchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<CancellationToken, Task> func,
@@ -187,8 +317,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error and cancellation support when an asynchronous <#= i #>-element tuple result fails.
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async Task<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<Error, CancellationToken, Task> func,
@@ -198,9 +335,17 @@ public static partial class TapErrorExtensionsAsync
         return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
+    // ValueTask variants
+
     /// <summary>
-    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// Executes a synchronous side effect action when an asynchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="action">The side effect action to execute on failure.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action action)
@@ -210,8 +355,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given action if the result is a failure. Returns the calling result.
+    /// Executes a synchronous side effect action with the error when an asynchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="action">The side effect action to execute with the error on failure.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action<Error> action)
@@ -221,8 +372,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action when a synchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<ValueTask> func)
@@ -237,8 +394,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error when a synchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Error, ValueTask> func)
@@ -253,8 +416,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with cancellation support when a synchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<CancellationToken, ValueTask> func,
@@ -270,8 +440,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error and cancellation support when a synchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Error, CancellationToken, ValueTask> func,
@@ -287,8 +464,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action when an asynchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<ValueTask> func)
@@ -298,8 +481,14 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error when an asynchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<Error, ValueTask> func)
@@ -309,8 +498,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with cancellation support when an asynchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<CancellationToken, ValueTask> func,
@@ -321,8 +517,15 @@ public static partial class TapErrorExtensionsAsync
     }
 
     /// <summary>
-    /// Executes the given async function with Error and CancellationToken if the result is a failure. Returns the calling result.
+    /// Executes an asynchronous side effect action with the error and cancellation support when an asynchronous <#= i #>-element tuple result fails (ValueTask variant).
     /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
+<# } #>
+    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
+    /// <param name="func">The async side effect function to execute with the error on failure.</param>
+    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
     public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapErrorAsync<<# WriteTs(i); #>>
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<Error, CancellationToken, ValueTask> func,

@@ -32,48 +32,53 @@ See the [Examples README](https://github.com/xavierjohn/FunctionalDDD/tree/main/
 
 ## Quick Code Snippets
 
-## Compose multiple operations in a single chain
-
- ```csharp
-await GetCustomerByIdAsync(id)
-.ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
-.EnsureAsync(customer => customer.CanBePromoted,
-   Error.Validation("The customer has the highest status possible"))
-.TapAsync(customer => customer.Promote())
-.BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
-.MatchAsync(ok => "Okay", error => error.Message);
- ```
-
-`GetCustomerByIdAsync` is a repository method that will return a `Customer?`.
-
-If `GetCustomerByIdAsync` returns `null`, then `ToResultAsync` will convert it to a `Result` type which contains the error.
-
-If `GetCustomerByIdAsync` returned a customer, then `EnsureAsync` is called to check if the customer can be promoted.
-If not, return a `Validation` error.
-
-If there is no error, `TapAsync` will execute the `Promote` method and then send an email.
-
-`MatchAsync` will terminate the chain and return a `string` if there is no error, otherwise it will return the error message.
-
-## Multi-Expression Evaluation
+### Compose Multiple Operations in a Single Chain
 
 ```csharp
- EmailAddress.TryCreate("xavier@somewhere.com")
-    .Combine(FirstName.TryCreate("Xavier"))
-    .Combine(LastName.TryCreate("John"))
+await GetCustomerByIdAsync(id, cancellationToken)
+    .ToResultAsync(Error.NotFound($"Customer {id} not found"))
+    .EnsureAsync(customer => customer.CanBePromoted,
+        Error.Validation("The customer has the highest status possible"))
+    .TapAsync(customer => customer.Promote())
+    .TapAsync(async (customer, ct) => 
+        await EmailGateway.SendPromotionNotificationAsync(customer.Email, ct), 
+        cancellationToken)
+    .MatchAsync(
+        onSuccess: _ => "Okay",
+        onFailure: error => error.Detail
+    );
+```
+
+**Explanation**:
+- `GetCustomerByIdAsync` returns a `Customer?` (nullable)
+- `ToResultAsync` converts `null` to a failure `Result` with `NotFoundError`
+- `EnsureAsync` validates business rules (can the customer be promoted?)
+- `TapAsync` executes side effects (promote the customer)
+- `TapAsync` sends email notification (side effect - doesn't change the result)
+- `MatchAsync` terminates the chain and returns a string
+
+### Multi-Field Validation with Combine
+
+```csharp
+EmailAddress.TryCreate("user@example.com")
+    .Combine(FirstName.TryCreate("John"))
+    .Combine(LastName.TryCreate("Doe"))
     .Bind((email, firstName, lastName) =>
-       Result.Success(string.Join(" ", firstName, lastName, email)));
- ```
+        User.Create(email, firstName, lastName));
+```
 
- `Combine` is used to combine multiple `Result` objects. If any of the `Result` objects have failed, it will return a `Result` containing each of the errors which arose during evaluation. Avoiding primitive obsession prevents using parameters out of order.
+**Key Points**:
+- `Combine` validates multiple fields independently
+- If **any** fail, all errors are collected (validation errors are merged)
+- Tuple destructuring automatically unpacks the three values
+- Avoiding primitive obsession prevents parameter confusion
 
-## Validation
+### Validation with FluentValidation
 
-This library supports validation using [FluentValidation](https://docs.fluentvalidation.net).
-The API layer can reuse the Domain validation logic to return `BadRequest` with the validation errors.
+This library integrates with [FluentValidation](https://docs.fluentvalidation.net). Domain validation logic can be reused at the API layer to return `BadRequest` with detailed validation errors.
 
 ```csharp
- public class User : Aggregate<UserId>
+public class User : Aggregate<UserId>
 {
     public FirstName FirstName { get; }
     public LastName LastName { get; }
@@ -84,34 +89,27 @@ The API layer can reuse the Domain validation logic to return `BadRequest` with 
         return Validator.ValidateToResult(user);
     }
 
-
     private User(FirstName firstName, LastName lastName)
-    : base(UserId.NewUnique())
+        : base(UserId.NewUnique())
     {
         FirstName = firstName;
         LastName = lastName;
     }
 
-    // Fluent Validation
+    // FluentValidation rules
     private static readonly InlineValidator<User> Validator = new()
     {
         v => v.RuleFor(x => x.FirstName).NotNull(),
         v => v.RuleFor(x => x.LastName).NotNull(),
     };
 }
- ```
-
-`InlineValidator` does the [FluentValidation](https://docs.fluentvalidation.net)
-
-Calling the API with missing LastName will return a `BadRequest` with the error message.
-
 ```
+
+**API Response** when LastName is missing:
+
+```http
 HTTP/1.1 400 Bad Request
-Connection: close
 Content-Type: application/problem+json; charset=utf-8
-Date: Thu, 21 Sep 2023 16:40:27 GMT
-Server: Kestrel
-Transfer-Encoding: chunked
 
 {
   "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
@@ -126,39 +124,298 @@ Transfer-Encoding: chunked
 }
 ```
 
-### Running Parallel Tasks
+### Running Parallel Async Operations
+
+Execute multiple independent async operations concurrently for better performance:
 
 ```csharp
-var r = await _sender.Send(new StudentInformationQuery(studentId)
-    .ParallelAsync(_sender.Send(new StudentGradeQuery(studentId))
-    .ParallelAsync(_sender.Send(new LibraryCheckedOutBooksQuery(studentId))
-    .BindAsync((studentInformation, studentGrades, checkoutBooks)
-       => PrepareReport(studentInformation, studentGrades, checkoutBooks));
+var result = await GetStudentInfoAsync(studentId, cancellationToken)
+    .ParallelAsync(GetStudentGradesAsync(studentId, cancellationToken))
+    .ParallelAsync(GetLibraryBooksAsync(studentId, cancellationToken))
+    .AwaitAsync()
+    .BindAsync(
+        (info, grades, books, ct) => PrepareReportAsync(info, grades, books, ct),
+        cancellationToken
+    );
 ```
 
-## Read HTTP response as Result
+**Key Points**:
+- All three `Get*Async` operations run **concurrently** (not sequentially)
+- `AwaitAsync()` waits for all operations to complete
+- Results are automatically destructured into `(info, grades, books)` tuple
+- `BindAsync` processes the combined results with `CancellationToken` support
 
-Handles HTTP NotFound and throws for all other failures.
+### Error Matching and Handling
+
+Handle different error types with specific logic:
 
 ```csharp
-var result = await _httpClient.GetAsync($"person/{id}")
-    .ReadResultWithNotFoundAsync<Person>(Error.NotFound("Person not found"));
+return await ProcessOrderAsync(order, cancellationToken)
+    .MatchErrorAsync(
+        onValidation: err => 
+            Results.BadRequest(new { 
+                errors = err.FieldErrors.ToDictionary(
+                    f => f.FieldName, 
+                    f => f.Details.ToArray()
+                )
+            }),
+        onNotFound: err => 
+            Results.NotFound(new { message = err.Detail }),
+        onConflict: err => 
+            Results.Conflict(new { message = err.Detail }),
+        onDomain: err =>
+            Results.UnprocessableEntity(new { message = err.Detail }),
+        onError: err => 
+            Results.StatusCode(500),  // Fallback for all other errors
+        onSuccess: order => 
+            Results.Ok(new { orderId = order.Id }),
+        cancellationToken: cancellationToken
+    );
 ```
 
-Or handle the errors yourself by using a callback.
-  
-  ```csharp
-async Task<Error> FailureCallback(HttpResponseMessage response, int personId)
+**Key Points**:
+- `MatchErrorAsync` discriminates between error types
+- Each error type can have its own handler
+- `onError` provides a fallback for unhandled error types
+- Automatically maps to appropriate HTTP status codes
+
+### Error Side Effects with TapError
+
+Execute side effects when errors occur without changing the result:
+
+```csharp
+var result = await ProcessPaymentAsync(order, cancellationToken)
+    .TapAsync(payment => 
+        _logger.LogInformation("Payment succeeded: {PaymentId}", payment.Id))
+    .TapErrorAsync(async (error, ct) => 
+        await _logger.LogErrorAsync("Payment failed: {Error}", error.Detail, ct),
+        cancellationToken)
+    .TapErrorAsync(async (error, ct) => 
+        await _notificationService.NotifyAdminAsync(error, ct),
+        cancellationToken);
+```
+
+**Key Points**:
+- `TapAsync` executes only on **success**
+- `TapErrorAsync` executes only on **failure**
+- Side effects don't change the `Result` value
+- Perfect for logging, metrics, and notifications
+
+### Error Recovery with Compensate
+
+Provide fallback behavior when specific errors occur:
+
+```csharp
+var result = await GetUserFromCacheAsync(userId, cancellationToken)
+    .CompensateAsync(
+        predicate: error => error is NotFoundError,
+        func: async ct => await GetUserFromDatabaseAsync(userId, ct),
+        cancellationToken: cancellationToken
+    )
+    .TapAsync(user => 
+        _logger.LogInformation("User retrieved from {Source}", 
+            user.Source == "cache" ? "cache" : "database"));
+```
+
+**Key Points**:
+- `CompensateAsync` provides fallback on specific error types
+- Predicate determines which errors trigger compensation
+- Useful for retry logic, fallback services, default values
+
+### Retry Transient Failures
+
+Automatically retry operations that may fail temporarily:
+
+```csharp
+var result = await RetryExtensions.RetryAsync(
+    operation: async ct => await CallExternalServiceAsync(ct),
+    maxRetries: 3,
+    initialDelay: TimeSpan.FromMilliseconds(100),
+    shouldRetry: error => error is ServiceUnavailableError,
+    cancellationToken: cancellationToken
+);
+```
+
+**Key Points**:
+- Retries up to `maxRetries` times (3 in this example = 4 total attempts)
+- Exponential backoff with `initialDelay` (100ms, 200ms, 400ms)
+- `shouldRetry` predicate controls which errors to retry
+- Supports `CancellationToken` for graceful cancellation
+
+### Read HTTP Response as Result
+
+Convert HTTP responses to `Result` with proper error handling:
+
+#### Option 1: Handle NotFound Specifically
+
+```csharp
+var result = await _httpClient.GetAsync($"api/person/{id}", cancellationToken)
+    .HandleNotFoundAsync(Error.NotFound($"Person {id} not found"))
+    .BindAsync(response => 
+        response.ReadResultMaybeFromJsonAsync<Person>(
+            PersonContext.Default.Person, 
+            cancellationToken))
+    .BindAsync(maybePerson => 
+        maybePerson.ToResult(Error.NotFound($"Person {id} returned null")));
+```
+
+#### Option 2: Custom Error Handling
+
+```csharp
+async Task<Error> HandleFailure(
+    HttpResponseMessage response, 
+    string personId, 
+    CancellationToken ct)
 {
-    var content = await response.Content.ReadAsStringAsync();
-    // Log/Handle error
-    _logger.LogError("Person API Failed: code :{code}, message:{message}", response.StatusCode, content);
-    return Error.NotFound("Person not found");
+    var content = await response.Content.ReadAsStringAsync(ct);
+    _logger.LogError(
+        "Person API failed: {StatusCode}, {Content}, PersonId: {PersonId}", 
+        response.StatusCode, content, personId);
+    
+    return response.StatusCode switch
+    {
+        HttpStatusCode.NotFound => Error.NotFound($"Person {personId} not found"),
+        HttpStatusCode.BadRequest => Error.BadRequest("Invalid person ID format"),
+        HttpStatusCode.Unauthorized => Error.Unauthorized("Authentication required"),
+        _ => Error.Unexpected($"Unexpected error: {response.StatusCode}")
+    };
 }
 
-var result = await _httpClient.GetAsync($"person/{id}")
-    .ReadResultAsync<Person, int>(FailureCallback, 5);
+var result = await _httpClient.GetAsync($"api/person/{id}", cancellationToken)
+    .HandleFailureAsync(HandleFailure, id, cancellationToken)
+    .ReadResultFromJsonAsync<Person>(
+        PersonContext.Default.Person, 
+        cancellationToken);
+```
 
-  ```
+**Key Points**:
+- `HandleNotFoundAsync` specifically handles 404 responses
+- `HandleFailureAsync` provides custom error handling for all failure status codes
+- `ReadResultMaybeFromJsonAsync` returns `Result<Maybe<Person>>` (handles null JSON)
+- `ReadResultFromJsonAsync` returns `Result<Person>` (fails if JSON is null)
 
-Look at the [examples folder](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples) for more sample use cases.
+### Converting Nullable to Result
+
+Convert nullable values to `Result` for consistent error handling:
+
+```csharp
+// Convert nullable reference type
+User? user = await _repository.GetByIdAsync(userId);
+var userResult = user.ToResult(Error.NotFound($"User {userId} not found"));
+
+// Convert nullable value type
+int? age = GetAge();
+var ageResult = age.ToResult(Error.Validation("Age is required"));
+
+// Async variant
+var result = await _repository.GetByIdAsync(userId)
+    .ToResultAsync(Error.NotFound($"User {userId} not found"));
+```
+
+### Exception Handling with Try/TryAsync
+
+Safely wrap exception-throwing code:
+
+```csharp
+// Synchronous
+Result<string> LoadFile(string path)
+{
+    return Result.Try(() => File.ReadAllText(path));
+    // Or with custom error mapping:
+    // return Result.Try(
+    //     () => File.ReadAllText(path),
+    //     ex => ex switch
+    //     {
+    //         FileNotFoundException => Error.NotFound($"File not found: {path}"),
+    //         UnauthorizedAccessException => Error.Forbidden("Access denied"),
+    //         _ => Error.Unexpected(ex.Message)
+    //     }
+    // );
+}
+
+// Asynchronous
+async Task<Result<User>> FetchUserAsync(string url, CancellationToken ct)
+{
+    return await Result.TryAsync(
+        async ct => await _httpClient.GetFromJsonAsync<User>(url, ct),
+        cancellationToken: ct
+    );
+}
+```
+
+### LINQ Query Syntax
+
+Use C# query syntax for multi-step operations:
+
+```csharp
+var result = 
+    from user in GetUser(userId)
+    from order in GetLastOrder(user)
+    from payment in ProcessPayment(order)
+    select new OrderConfirmation(user, order, payment);
+
+// Async variant
+var asyncResult = await (
+    from userId in UserId.TryCreate(userIdInput)
+    from user in GetUserAsync(userId)
+    from permissions in GetPermissionsAsync(user.Id)
+    select new UserWithPermissions(user, permissions)
+).ConfigureAwait(false);
+```
+
+**Note**: `where` clauses use a generic "filtered out" error. For domain-specific errors, use `Ensure` instead.
+
+## Common Patterns
+
+### 1. Validation Pipeline
+
+```csharp
+public Result<Order> ProcessOrder(OrderRequest request)
+{
+    return ValidateRequest(request)
+        .Bind(req => CheckInventory(req.ProductId, req.Quantity))
+        .Bind(product => ValidatePayment(request.PaymentInfo))
+        .Bind(payment => CreateOrder(request, payment))
+        .Tap(order => SendConfirmationEmail(order))
+        .TapError(error => LogOrderFailure(error));
+}
+```
+
+### 2. Async Workflow with Cancellation
+
+```csharp
+public async Task<Result<string>> PromoteCustomerAsync(
+    string customerId, 
+    CancellationToken ct)
+{
+    return await GetCustomerByIdAsync(customerId, ct)
+        .ToResultAsync(Error.NotFound($"Customer {customerId} not found"))
+        .EnsureAsync(customer => customer.CanBePromoted,
+            Error.Validation("Customer has highest status"))
+        .TapAsync(async (customer, ct) => await customer.PromoteAsync(ct), ct)
+        .BindAsync(
+            async (customer, ct) => 
+                await SendPromotionEmailAsync(customer.Email, ct), 
+            ct);
+}
+```
+
+### 3. Parallel Fraud Detection
+
+```csharp
+public async Task<Result<Transaction>> ValidateTransactionAsync(
+    Transaction transaction,
+    CancellationToken ct)
+{
+    return await CheckBlacklistAsync(transaction.AccountId, ct)
+        .ParallelAsync(CheckVelocityLimitsAsync(transaction, ct))
+        .ParallelAsync(CheckAmountThresholdAsync(transaction, ct))
+        .ParallelAsync(CheckGeolocationAsync(transaction, ct))
+        .AwaitAsync()
+        .BindAsync(
+            (check1, check2, check3, check4, ct) => 
+                ApproveTransactionAsync(transaction, ct),
+            ct
+        );
+}
+```

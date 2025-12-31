@@ -681,7 +681,7 @@ public class OrderService
         
         return paymentResult.IsSuccess
             ? order.ToResult()
-            : Error.Validation($"Payment failed: {paymentResult.Error.Message}");
+            : Error.Validation($"Payment failed: {paymentResult.Error.Detail}");
     }
     
     private async Task PublishEventsAsync(Order order, CancellationToken ct)
@@ -744,8 +744,10 @@ public class BulkOrderService
             .Select(req => Order.TryCreate(req.CustomerId))
             .ToList();
         
-        // Use tuple destructuring with Match
-        return Result.Combine(orderResults[0], orderResults[1], orderResults[2])
+        // Use Combine extension method with tuple destructuring
+        return orderResults[0]
+            .Combine(orderResults[1])
+            .Combine(orderResults[2])
             .Match(
                 // Success - all three orders created
                 (order1, order2, order3) => ProcessOrders(order1, order2, order3),

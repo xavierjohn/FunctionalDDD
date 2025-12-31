@@ -4,20 +4,98 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
-/// These extension methods are used to convert the Result object to ActionResult.
-/// If the Result is in a failed state, it returns the corresponding HTTP error code.
+/// Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses.
+/// These methods enable clean async/await patterns in controllers while maintaining Railway Oriented Programming benefits.
 /// </summary>
+/// <remarks>
+/// <para>
+/// These extensions are async variants of <see cref="ActionResultExtensions"/>, designed for use with
+/// async service methods. They support both <see cref="Task{TResult}"/> and <see cref="ValueTask{TResult}"/>
+/// for maximum flexibility and performance.
+/// </para>
+/// <para>
+/// Key benefits:
+/// <list type="bullet">
+/// <item>Clean async controller code without manual awaiting</item>
+/// <item>Automatic HTTP status code selection based on error type</item>
+/// <item>Support for both Task and ValueTask for performance optimization</item>
+/// <item>Consistent error handling across async operations</item>
+/// <item>Seamless integration with async Railway Oriented Programming chains</item>
+/// </list>
+/// </para>
+/// <para>
+/// Usage pattern in async controllers:
+/// <code>
+/// public class UsersController : ControllerBase
+/// {
+///     [HttpGet("{id}")]
+///     public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(string id) =>
+///         UserId.TryCreate(id)
+///             .BindAsync(_userService.GetUserAsync)
+///             .MapAsync(user => new UserDto(user))
+///             .ToActionResultAsync(this);
+/// }
+/// </code>
+/// </para>
+/// </remarks>
 public static class ActionResultExtensionsAsync
 {
 
     /// <summary>
-    /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.<br/>
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a Task-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with appropriate HTTP status code.
     /// </summary>
-    /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="resultTask">The result object.</param>
-    /// <param name="controllerBase">The controller object.</param>
-    /// <returns><see cref="ActionResult{TValue}"/> </returns>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>200 OK with value if result is successful (except for Unit)</item>
+    /// <item>204 No Content if result is successful and TValue is Unit</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the primary async method for converting domain results to HTTP responses.
+    /// It awaits the result task and delegates to <see cref="ActionResultExtensions.ToActionResult{TValue}(Result{TValue}, ControllerBase)"/>.
+    /// </para>
+    /// <para>
+    /// For performance-critical scenarios where the operation frequently completes synchronously,
+    /// consider using the ValueTask overload instead.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Async GET endpoint with database query:
+    /// <code>
+    /// [HttpGet("{id}")]
+    /// public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(Guid id) =>
+    ///     UserId.TryCreate(id)
+    ///         .BindAsync(_repository.GetByIdAsync)
+    ///         .MapAsync(user => new UserDto(user))
+    ///         .ToActionResultAsync(this);
+    /// 
+    /// // Success: 200 OK with UserDto
+    /// // Not found: 404 Not Found with Problem Details
+    /// </code>
+    /// </example>
+    /// <example>
+    /// Async POST endpoint with multiple operations:
+    /// <code>
+    /// [HttpPost]
+    /// public Task&lt;ActionResult&lt;OrderDto&gt;&gt; CreateOrderAsync(CreateOrderRequest request) =>
+    ///     CustomerId.TryCreate(request.CustomerId)
+    ///         .BindAsync(_customerService.GetCustomerAsync)
+    ///         .BindAsync(customer => _orderService.CreateOrderAsync(customer, request.Items))
+    ///         .TapAsync(async order => await _eventBus.PublishAsync(new OrderCreatedEvent(order.Id)))
+    ///         .MapAsync(order => new OrderDto(order))
+    ///         .ToActionResultAsync(this);
+    /// 
+    /// // Success: 200 OK with OrderDto
+    /// // Validation error: 400 Bad Request
+    /// // Customer not found: 404 Not Found
+    /// </code>
+    /// </example>
     public static async Task<ActionResult<TValue>> ToActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
         Result<TValue> result = await resultTask;
@@ -25,13 +103,38 @@ public static class ActionResultExtensionsAsync
     }
 
     /// <summary>
-    /// <see cref="Result{TValue}"/> extension method that returns Okay (200) status if the result is in success state.<br/>
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a ValueTask-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with appropriate HTTP status code.
     /// </summary>
-    /// <typeparam name="TValue">The type of the data contained within the <see cref="Result{TValue}"/></typeparam>
-    /// <param name="resultTask">The result object.</param>
-    /// <param name="controllerBase">The controller object.</param>
-    /// <returns><see cref="ActionResult{TValue}"/></returns>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>200 OK with value if result is successful (except for Unit)</item>
+    /// <item>204 No Content if result is successful and TValue is Unit</item>
+    /// <item>Appropriate error status code based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This overload is optimized for scenarios where the async operation frequently completes synchronously
+    /// (e.g., cached results, in-memory operations). ValueTask can reduce allocations in these cases.
+    /// </para>
+    /// <para>
+    /// Use this when your service methods return ValueTask for performance optimization.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// [HttpGet("{id}")]
+    /// public ValueTask&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(Guid id) =>
+    ///     UserId.TryCreate(id)
+    ///         .BindAsync(_cacheService.GetUserAsync) // Returns ValueTask
+    ///         .MapAsync(user => new UserDto(user))
+    ///         .ToActionResultAsync(this);
+    /// </code>
+    /// </example>
     public static async ValueTask<ActionResult<TValue>> ToActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
         Result<TValue> result = await resultTask;
@@ -39,20 +142,46 @@ public static class ActionResultExtensionsAsync
     }
 
     /// <summary>
-    /// If <see cref="Result{TIn}"/> is in success state this extension method returns
-    /// <list type="bullet">
-    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
-    /// <item><description>Okay (200) status for complete results.</description></item>
-    /// </list>
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a Task-wrapped <see cref="Result{TIn}"/> to an <see cref="ActionResult{TOut}"/> with support for partial content responses (Task variant).
     /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <param name="resultTask"></param>
-    /// <param name="controllerBase"></param>
-    /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
-    /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
-    /// <returns></returns>
+    /// <typeparam name="TIn">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the output ActionResult.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="funcRange">Function that extracts <see cref="ContentRangeHeaderValue"/> from the input value.</param>
+    /// <param name="funcValue">Function that transforms the input value to the output type.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>206 Partial Content with Content-Range header if the range is a subset</item>
+    /// <item>200 OK if the range represents the complete set</item>
+    /// <item>Appropriate error status code if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// Async variant of <see cref="ActionResultExtensions.ToActionResult{TIn, TOut}(Result{TIn}, ControllerBase, Func{TIn, ContentRangeHeaderValue}, Func{TIn, TOut})"/>.
+    /// Useful for async paginated queries.
+    /// </remarks>
+    /// <example>
+    /// Async paginated endpoint:
+    /// <code>
+    /// [HttpGet]
+    /// public Task&lt;ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt;&gt; GetUsersAsync(
+    ///     [FromQuery] int page = 0,
+    ///     [FromQuery] int pageSize = 25) =>
+    ///     _userService
+    ///         .GetPagedUsersAsync(page, pageSize)
+    ///         .ToActionResultAsync(
+    ///             this,
+    ///             funcRange: result => new ContentRangeHeaderValue(
+    ///                 result.From, result.To, result.TotalCount),
+    ///             funcValue: result => result.Items.Select(u => new UserDto(u))
+    ///         );
+    /// 
+    /// // Returns 206 Partial Content with range headers for partial pages
+    /// // Returns 200 OK when all items fit in response
+    /// </code>
+    /// </example>
     public static async Task<ActionResult<TOut>> ToActionResultAsync<TIn, TOut>(
         this Task<Result<TIn>> resultTask,
         ControllerBase controllerBase,
@@ -64,20 +193,25 @@ public static class ActionResultExtensionsAsync
     }
 
     /// <summary>
-    /// If <see cref="Result{TIn}"/> is in success state this extension method returns
-    /// <list type="bullet">
-    /// <item><description>Partial Content (206) with header <see cref="ContentRangeHeaderValue "/> for partial results</description></item>
-    /// <item><description>Okay (200) status for complete results.</description></item>
-    /// </list>
-    /// Otherwise it returns the error code corresponding to the failure error object.
+    /// Converts a ValueTask-wrapped <see cref="Result{TIn}"/> to an <see cref="ActionResult{TOut}"/> with support for partial content responses (ValueTask variant).
     /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <param name="resultTask"></param>
-    /// <param name="controllerBase"></param>
-    /// <param name="funcRange">Function is called if the <see cref="Result{TIn}"/> is in success state to get the <see cref="ContentRangeHeaderValue "/>.</param>
-    /// <param name="funcValue">Function is called if the <see cref="Result{TIn}"/> is in success state to get the value.</param>
-    /// <returns></returns>
+    /// <typeparam name="TIn">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the output ActionResult.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="funcRange">Function that extracts <see cref="ContentRangeHeaderValue"/> from the input value.</param>
+    /// <param name="funcValue">Function that transforms the input value to the output type.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>206 Partial Content with Content-Range header if the range is a subset</item>
+    /// <item>200 OK if the range represents the complete set</item>
+    /// <item>Appropriate error status code if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// ValueTask variant optimized for scenarios with cached or frequently synchronous results.
+    /// </remarks>
     public static async ValueTask<ActionResult<TOut>> ToActionResultAsync<TIn, TOut>(
     this ValueTask<Result<TIn>> resultTask,
     ControllerBase controllerBase,
@@ -88,6 +222,46 @@ public static class ActionResultExtensionsAsync
         return result.ToActionResult(controllerBase, funcRange, funcValue);
     }
 
+    /// <summary>
+    /// Converts a Task-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with support for partial content responses using explicit range values.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="from">The starting index of the range (inclusive, 0-based).</param>
+    /// <param name="to">The ending index of the range (inclusive, 0-based).</param>
+    /// <param name="totalLength">The total number of items available.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>206 Partial Content with Content-Range header if the range is a subset of the total</item>
+    /// <item>200 OK if the range represents the complete set</item>
+    /// <item>Appropriate error status code if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// Async variant of <see cref="ActionResultExtensions.ToActionResult{TValue}(Result{TValue}, ControllerBase, long, long, long)"/>.
+    /// Useful for async paginated queries where range values are computed separately.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// [HttpGet]
+    /// public async Task&lt;ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt;&gt; GetUsersAsync(
+    ///     [FromQuery] int page = 0,
+    ///     [FromQuery] int pageSize = 25)
+    /// {
+    ///     var from = page * pageSize;
+    ///     var to = from + pageSize - 1;
+    ///     
+    ///     var totalCount = await _userService.GetTotalCountAsync();
+    ///     
+    ///     return await _userService
+    ///         .GetUsersAsync(from, pageSize)
+    ///         .MapAsync(users => users.Select(u => new UserDto(u)))
+    ///         .ToActionResultAsync(this, from, to, totalCount);
+    /// }
+    /// </code>
+    /// </example>
     public static async Task<ActionResult<TValue>> ToActionResultAsync<TValue>(
         this Task<Result<TValue>> resultTask,
         ControllerBase controllerBase,
@@ -97,6 +271,26 @@ public static class ActionResultExtensionsAsync
         return result.ToActionResult(controllerBase, from, to, totalLength);
     }
 
+    /// <summary>
+    /// Converts a ValueTask-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with support for partial content responses using explicit range values (ValueTask variant).
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="from">The starting index of the range (inclusive, 0-based).</param>
+    /// <param name="to">The ending index of the range (inclusive, 0-based).</param>
+    /// <param name="totalLength">The total number of items available.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>206 Partial Content with Content-Range header if the range is a subset</item>
+    /// <item>200 OK if the range represents the complete set</item>
+    /// <item>Appropriate error status code if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// ValueTask variant optimized for cached or frequently synchronous pagination scenarios.
+    /// </remarks>
     public static async ValueTask<ActionResult<TValue>> ToActionResultAsync<TValue>(
         this ValueTask<Result<TValue>> resultTask,
         ControllerBase controllerBase,

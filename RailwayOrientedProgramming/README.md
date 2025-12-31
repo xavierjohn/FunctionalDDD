@@ -806,7 +806,7 @@ public async Task Should_Process_Valid_User()
     
     Assert.NotNull(capturedUser);
     Assert.Equal("123", capturedUser.Id);
-    result.Should().BeSuccess();
+    result.IsSuccess.Should().BeTrue();
 }
 ```
 
@@ -898,42 +898,54 @@ public Result<User> ValidateAndProcessUser(string id) =>
 public void GetActiveUser_Should_Fail_For_Inactive_User()
 {
     var result = GetActiveUser("inactive-user-id");
-    result.Should().BeFailure();
+    result.IsFailure.Should().BeTrue();
     result.Error.Code.Should().Be("validation.error");
 }
 ```
 
 #### 5. Combine Errors Are Aggregated
 
-**Problem**: When using `Combine`, all errors are collected. Understanding which validations failed requires inspecting the aggregated error.
+**Problem**: When using `Combine`, all errors are collected. Understanding which operations failed requires inspecting the error type.
 
 ```csharp
-var result = EmailAddress.TryCreate("invalid-email")
-    .Combine(FirstName.TryCreate(""))
-    .Combine(Age.Ensure(age => age >= 18, Error.Validation("Must be 18+")));
+var result = GetUserAsync(userId)
+    .ToResultAsync(Error.NotFound("User not found"))
+    .Combine(FetchUserPreferencesAsync(userId))
+    .Combine(ValidateSubscriptionAsync(userId));
 
-// This might fail with 3 errors - which ones?
+// This might fail with multiple errors - which operations failed?
 ```
 
-**Solution**: Use `TapError` to log all aggregated errors:
+**Solution**: Use `TapError` to log errors, handling both `AggregateError` (mixed error types) and `ValidationError` (merged validations):
 
 ```csharp
-var result = EmailAddress.TryCreate(email)
-    .Combine(FirstName.TryCreate(firstName))
-    .Combine(Age.TryCreate(age))
+var result = GetUserAsync(userId)
+    .ToResultAsync(Error.NotFound($"User {userId} not found"))
+    .Combine(FetchUserSettingsAsync(userId))
+    .Combine(EmailAddress.TryCreate(email))
     .TapError(error => 
     {
-        if (error is AggregatedError aggregated)
+        if (error is AggregateError aggregated)
         {
+            // Mixed error types (e.g., NotFound + Validation)
             foreach (var err in aggregated.Errors)
             {
-                _logger.LogWarning("Validation failed: {Property} - {Message}", 
-                    err.Property, err.Message);
+                _logger.LogWarning("Operation failed: {ErrorType} - {Code} - {Detail}", 
+                    err.GetType().Name, err.Code, err.Detail);
+            }
+        }
+        else if (error is ValidationError validation)
+        {
+            // Multiple validation errors merged into one
+            foreach (var fieldError in validation.FieldErrors)
+            {
+                _logger.LogWarning("Validation failed for {Field}: {Details}", 
+                    fieldError.FieldName, string.Join(", ", fieldError.Details));
             }
         }
         else
         {
-            _logger.LogWarning("Validation failed: {Message}", error.Message);
+            _logger.LogWarning("Operation failed: {Detail}", error.Detail);
         }
     });
 ```
@@ -948,14 +960,14 @@ public void Combine_Should_Return_All_Validation_Errors()
         .Combine(FirstName.TryCreate(""))
         .Combine(Age.Ensure(15, e => e >= 18, Error.Validation("Age requirement")));
     
-    result.Should().BeFailure();
-    result.Error.Should().BeOfType<AggregatedError>();
+    result.IsFailure.Should().BeTrue();
+    result.Error.Should().BeOfType<ValidationError>();
     
-    var aggregated = (AggregatedError)result.Error;
-    aggregated.Errors.Should().HaveCount(3);
-    aggregated.Errors.Should().Contain(e => e.Property == "email");
-    aggregated.Errors.Should().Contain(e => e.Property == "firstName");
-    aggregated.Errors.Should().Contain(e => e.Message.Contains("Age"));
+    var validation = (ValidationError)result.Error;
+    validation.FieldErrors.Should().HaveCount(3);
+    validation.FieldErrors.Should().Contain(e => e.FieldName == "email");
+    validation.FieldErrors.Should().Contain(e => e.FieldName == "firstName");
+    validation.FieldErrors.Should().Contain(e => e.Details.Any(d => d.Contains("Age")));
 }
 ```
 
@@ -1010,7 +1022,7 @@ var result = GetUser(id)
     .DebugOnFailure(error => 
     {
         Console.WriteLine($"Error Type: {error.GetType().Name}");
-        Console.WriteLine($"Message: {error.Message}");
+        Console.WriteLine($"Message: {error.Detail}");
     });
 
 // Async variants available
@@ -1034,10 +1046,10 @@ public void Should_Fail_With_Validation_Error()
 {
     var result = ProcessOrder(invalidOrder);
     
-    result.Should().BeFailure();
+    result.IsFailure.Should().BeTrue();
     result.Error.Should().BeOfType<ValidationError>();
     result.Error.Code.Should().Be("validation.error");
-    result.Error.Message.Should().Contain("invalid quantity");
+    result.Error.Detail.Should().Contain("invalid quantity");
 }
 
 [Fact]
@@ -1045,7 +1057,7 @@ public void Should_Return_Processed_User()
 {
     var result = ProcessUser(validUserId);
     
-    result.Should().BeSuccess();
+    result.IsSuccess.Should().BeTrue();
     result.Value.Should().NotBeNull();
     result.Value.Status.Should().Be(UserStatus.Active);
 }
@@ -1065,7 +1077,7 @@ public static class ResultLoggingExtensions
     {
         return result.TapError(error => 
             logger.LogWarning("Operation {Operation} failed: {ErrorCode} - {Message}",
-                operation, error.Code, error.Message));
+                operation, error.Code, error.Detail));
     }
     
     public static Result<T> LogOnSuccess<T>(
@@ -1172,7 +1184,7 @@ var result = GetUser(id)
 
 When debugging a failing ROP chain, ask yourself:
 
-- [ ] **What error am I getting?** Check `result.Error.Code`, `.Message`, `.Property`
+- [ ] **What error am I getting?** Check `result.Error.Code`, `.Detail`, `.Instance`
 - [ ] **Where did it fail?** Add `Tap`/`TapError` to narrow down the step
 - [ ] **What was the input?** Log the initial parameters
 - [ ] **What's the value at each step?** Use `Tap` to inspect intermediate values

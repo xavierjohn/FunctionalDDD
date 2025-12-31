@@ -129,7 +129,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is true.</param>
+    /// <returns>Result from the operation if predicate is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Result<T> result,
         Func<T, bool> predicate,
@@ -149,7 +153,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is true.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if predicate is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Result<T> result,
         Func<T, bool> predicate,
@@ -170,6 +179,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is true.</param>
+    /// <returns>Result from the operation if condition is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Result<T> result,
         bool condition,
@@ -189,7 +203,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is true.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if condition is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Result<T> result,
         bool condition,
@@ -210,6 +229,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is true.</param>
+    /// <returns>Result from the operation if predicate is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Task<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -222,7 +246,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is true.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if predicate is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Task<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -236,6 +265,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is true.</param>
+    /// <returns>Result from the operation if condition is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Task<Result<T>> resultTask,
         bool condition,
@@ -248,7 +282,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is true.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if condition is true and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> WhenAsync<T>(
         this Task<Result<T>> resultTask,
         bool condition,
@@ -262,6 +301,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is false.</param>
+    /// <returns>Result from the operation if predicate is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Result<T> result,
         Func<T, bool> predicate,
@@ -281,7 +325,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is false.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if predicate is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Result<T> result,
         Func<T, bool> predicate,
@@ -302,6 +351,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is false.</param>
+    /// <returns>Result from the operation if condition is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Result<T> result,
         bool condition,
@@ -321,7 +375,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="result">The result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is false.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if condition is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Result<T> result,
         bool condition,
@@ -342,6 +401,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is false.</param>
+    /// <returns>Result from the operation if predicate is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Task<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -354,7 +418,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is false.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if predicate is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Task<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -368,6 +437,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is false.</param>
+    /// <returns>Result from the operation if condition is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Task<Result<T>> resultTask,
         bool condition,
@@ -380,7 +454,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the condition is false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">Task containing the result to test.</param>
+    /// <param name="condition">Boolean condition.</param>
+    /// <param name="operation">Async operation to execute if condition is false.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if condition is false and result is success; otherwise the original result.</returns>
     public static async Task<Result<T>> UnlessAsync<T>(
         this Task<Result<T>> resultTask,
         bool condition,
@@ -396,7 +475,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">ValueTask containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is true.</param>
+    /// <returns>Result from the operation if predicate is true and result is success; otherwise the original result.</returns>
     public static async ValueTask<Result<T>> WhenAsync<T>(
         this ValueTask<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -417,7 +500,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">ValueTask containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is true.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if predicate is true and result is success; otherwise the original result.</returns>
     public static async ValueTask<Result<T>> WhenAsync<T>(
         this ValueTask<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -439,7 +527,11 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns false.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">ValueTask containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is false.</param>
+    /// <returns>Result from the operation if predicate is false and result is success; otherwise the original result.</returns>
     public static async ValueTask<Result<T>> UnlessAsync<T>(
         this ValueTask<Result<T>> resultTask,
         Func<T, bool> predicate,
@@ -460,7 +552,12 @@ public static class WhenExtensionsAsync
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns false.
     /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">ValueTask containing the result to test.</param>
+    /// <param name="predicate">Predicate function to test the value.</param>
+    /// <param name="operation">Async operation to execute if predicate is false.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
+    /// <returns>Result from the operation if predicate is false and result is success; otherwise the original result.</returns>
     public static async ValueTask<Result<T>> UnlessAsync<T>(
         this ValueTask<Result<T>> resultTask,
         Func<T, bool> predicate,

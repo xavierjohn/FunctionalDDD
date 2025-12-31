@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using static FunctionalDdd.ValidationError;
 
-[DebuggerDisplay("{Detail}")]
 /// <summary>
 /// Base class for all error types in the functional DDD library.
 /// Errors represent failure states and contain structured information about what went wrong.
@@ -13,6 +12,7 @@ using static FunctionalDdd.ValidationError;
 /// Use the static factory methods (Validation, NotFound, etc.) to create specific error types.
 /// All errors have a Code for programmatic handling and a Detail for human-readable messages.
 /// </remarks>
+[DebuggerDisplay("{Detail}")]
 #pragma warning disable CA1716 // Identifiers should not match keywords
 public class Error : IEquatable<Error>
 #pragma warning restore CA1716 // Identifiers should not match keywords
@@ -35,11 +35,23 @@ public class Error : IEquatable<Error>
     /// <value>An instance identifier, or null if not applicable.</value>
     public string? Instance { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Error"/> class with the specified detail and code.
+    /// </summary>
+    /// <param name="detail">The human-readable error description.</param>
+    /// <param name="code">The machine-readable error code.</param>
     public Error(string detail, string code)
     {
         Detail = detail;
         Code = code;
     }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Error"/> class with the specified detail, code, and instance identifier.
+    /// </summary>
+    /// <param name="detail">The human-readable error description.</param>
+    /// <param name="code">The machine-readable error code.</param>
+    /// <param name="instance">An optional identifier for the specific instance that caused the error.</param>
     public Error(string detail, string code, string? instance)
     {
         Detail = detail;
@@ -64,6 +76,14 @@ public class Error : IEquatable<Error>
         if (other == null) return false;
         return Code == other.Code;
     }
+
+    /// <summary>
+    /// Determines whether the specified object is equal to the current Error instance.
+    /// </summary>
+    /// <remarks>This method supports object-based equality comparison. Use this method when the type of the
+    /// object to compare is not known at compile time.</remarks>
+    /// <param name="obj">The object to compare with the current Error instance.</param>
+    /// <returns>true if the specified object is an Error and is equal to the current instance; otherwise, false.</returns>
     public override bool Equals(object? obj)
     {
         if (obj is Error error)
@@ -72,8 +92,17 @@ public class Error : IEquatable<Error>
             return false;
     }
 
+    /// <summary>
+    /// Serves as the default hash function.
+    /// </summary>
+    /// <returns>A hash code for the current object.</returns>
     public override int GetHashCode() => Code.GetHashCode();
 
+    /// <summary>
+    /// Returns a string that represents the current object, including its type, code, detail, and instance information.
+    /// </summary>
+    /// <returns>A string containing the type name, code, detail, and instance values of the object. If the instance is null,
+    /// "N/A" is used.</returns>
     public override string ToString()
         => $"Type: {GetType().Name}, Code: {Code}, Detail: {Detail}, Instance: {Instance ?? "N/A"}";
 
@@ -113,6 +142,14 @@ public class Error : IEquatable<Error>
     public static ValidationError Validation(ImmutableArray<FieldError> fieldDetails, string detail = "", string? instance = null)
         => new(fieldDetails, "validation.error", detail, instance);
 
+    /// <summary>
+    /// Creates a <see cref="ValidationError"/> for multiple field validation failures with a custom error code.
+    /// </summary>
+    /// <param name="fieldDetails">Collection of field-specific validation errors.</param>
+    /// <param name="detail">Overall error description.</param>
+    /// <param name="instance">Optional identifier for the instance being validated.</param>
+    /// <param name="code">Custom error code to use instead of the default "validation.error".</param>
+    /// <returns>A <see cref="ValidationError"/> containing all field errors with the specified code.</returns>
     public static ValidationError Validation(ImmutableArray<FieldError> fieldDetails, string detail, string? instance, string code)
         => new(fieldDetails, code, detail, instance);
 
@@ -249,30 +286,93 @@ public class Error : IEquatable<Error>
     public static ServiceUnavailableError ServiceUnavailable(string detail, string? instance = null) =>
         new(detail, "service.unavailable.error", instance);
 
+    /// <summary>
+    /// Creates a <see cref="BadRequestError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of why the request is bad.</param>
+    /// <param name="code">Custom error code to use instead of the default "bad.request.error".</param>
+    /// <param name="instance">Optional identifier for the bad request.</param>
+    /// <returns>A <see cref="BadRequestError"/> with the specified code.</returns>
     public static BadRequestError BadRequest(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates a <see cref="ConflictError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of the conflict.</param>
+    /// <param name="code">Custom error code to use instead of the default "conflict.error".</param>
+    /// <param name="instance">Optional identifier for the conflicting resource.</param>
+    /// <returns>A <see cref="ConflictError"/> with the specified code.</returns>
     public static ConflictError Conflict(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates a <see cref="NotFoundError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of what was not found.</param>
+    /// <param name="code">Custom error code to use instead of the default "not.found.error".</param>
+    /// <param name="instance">Optional identifier for the missing resource.</param>
+    /// <returns>A <see cref="NotFoundError"/> with the specified code.</returns>
     public static NotFoundError NotFound(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates an <see cref="UnauthorizedError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of why authorization failed.</param>
+    /// <param name="code">Custom error code to use instead of the default "unauthorized.error".</param>
+    /// <param name="instance">Optional identifier for the unauthorized request.</param>
+    /// <returns>An <see cref="UnauthorizedError"/> with the specified code.</returns>
     public static UnauthorizedError Unauthorized(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates a <see cref="ForbiddenError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of why access is forbidden.</param>
+    /// <param name="code">Custom error code to use instead of the default "forbidden.error".</param>
+    /// <param name="instance">Optional identifier for the forbidden resource.</param>
+    /// <returns>A <see cref="ForbiddenError"/> with the specified code.</returns>
     public static ForbiddenError Forbidden(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates an <see cref="UnexpectedError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of what went wrong.</param>
+    /// <param name="code">Custom error code to use instead of the default "unexpected.error".</param>
+    /// <param name="instance">Optional identifier for the operation that failed.</param>
+    /// <returns>An <see cref="UnexpectedError"/> with the specified code.</returns>
     public static UnexpectedError Unexpected(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates a <see cref="DomainError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of the business rule that was violated.</param>
+    /// <param name="code">Custom error code to use instead of the default "domain.error".</param>
+    /// <param name="instance">Optional identifier for the entity or operation.</param>
+    /// <returns>A <see cref="DomainError"/> with the specified code.</returns>
     public static DomainError Domain(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates a <see cref="RateLimitError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of the rate limit violation.</param>
+    /// <param name="code">Custom error code to use instead of the default "rate.limit.error".</param>
+    /// <param name="instance">Optional identifier for the client or resource being rate limited.</param>
+    /// <returns>A <see cref="RateLimitError"/> with the specified code.</returns>
     public static RateLimitError RateLimit(string detail, string code, string? instance) =>
         new(detail, code, instance);
 
+    /// <summary>
+    /// Creates a <see cref="ServiceUnavailableError"/> with a custom error code.
+    /// </summary>
+    /// <param name="detail">Description of why the service is unavailable.</param>
+    /// <param name="code">Custom error code to use instead of the default "service.unavailable.error".</param>
+    /// <param name="instance">Optional identifier for the unavailable service or resource.</param>
+    /// <returns>A <see cref="ServiceUnavailableError"/> with the specified code.</returns>
     public static ServiceUnavailableError ServiceUnavailable(string detail, string code, string? instance) =>
         new(detail, code, instance);
 }
