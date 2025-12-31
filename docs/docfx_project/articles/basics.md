@@ -78,6 +78,8 @@ return FirstName.TryCreate(input.FirstName)
     );
 ```
 
+![Railway-Oriented Programming Concept](../images/railway-oriented-programming.jpg)
+
 ## Why Avoid Primitive Obsession?
 
 Passing strings as parameters can cause errors. Consider this example where first and last names could be swapped:
