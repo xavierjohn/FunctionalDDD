@@ -112,14 +112,8 @@ var result = await GetUserAsync(userId)
     .TapAsync(user => SendEmailAsync(user.Email));
 ```
 
-#### 🚀 Quick Start Guides
+#### 🚀 [Quick Start Guide](Examples/QUICKSTART.md)
 
-Choose your preferred learning path:
-
-- **[Quick Start for C# Developers](Examples/QUICKSTART_CSHARP.md)** - Uses familiar C# patterns with alias methods like `Then`, `Peek`, `OrElse`, and `Require`
-- **[Standard Quick Start](Examples/QUICKSTART.md)** - Uses canonical functional programming terminology (`Bind`, `Map`, `Tap`, `Ensure`)
-
-Both guides cover the same concepts—choose based on your comfort level!
 
 👉 **Next Steps**: Browse the [Examples](#examples) section or explore the [complete documentation](https://xavierjohn.github.io/FunctionalDDD/)
 
