@@ -1,10 +1,11 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
 using System.Net.Http.Json;
 using System.Net;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using FunctionalDdd;
 
 public class ReadResultMaybeFromJsonTests
 {
