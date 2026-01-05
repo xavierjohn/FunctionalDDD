@@ -3,9 +3,9 @@ namespace Example.Tests;
 using FunctionalDdd;
 
 /// <summary>
-/// Demonstrates parallel execution and retry patterns using railway-oriented programming.
+/// Demonstrates parallel execution patterns using railway-oriented programming.
 /// </summary>
-public class ParallelAndRetryExamples
+public class ParallelExamples
 {
     [Fact]
     public async Task Execute_three_operations_in_parallel_all_succeed()
@@ -43,61 +43,6 @@ public class ParallelAndRetryExamples
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("validation.error");
         result.Error.Detail.Should().Contain("Payment validation failed");
-    }
-
-    [Fact]
-    public async Task Retry_transient_failures_succeeds_on_second_attempt()
-    {
-        // Arrange
-        var attempt = 0;
-
-        // Simulate transient failure that succeeds on retry
-        async Task<Result<string>> FlakeyOperation()
-        {
-            attempt++;
-            if (attempt == 1)
-                return Result.Failure<string>(Error.ServiceUnavailable("Service temporarily unavailable"));
-
-            await Task.Delay(10);
-            return Result.Success("Operation succeeded");
-        }
-
-        // Act - Retry up to 3 times
-        var result = await RetryExtensions.RetryAsync(
-            FlakeyOperation,
-            maxRetries: 3,
-            initialDelay: TimeSpan.FromMilliseconds(10));
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Operation succeeded");
-        attempt.Should().Be(2); // Failed once, succeeded on second attempt
-    }
-
-    [Fact]
-    public async Task Retry_exhausts_all_attempts_and_fails()
-    {
-        // Arrange
-        var attempt = 0;
-
-        // Simulate persistent failure
-        async Task<Result<string>> AlwaysFailsOperation()
-        {
-            attempt++;
-            await Task.Delay(10);
-            return Result.Failure<string>(Error.ServiceUnavailable($"Attempt {attempt} failed"));
-        }
-
-        // Act - Retry up to 3 times, all fail
-        var result = await RetryExtensions.RetryAsync(
-            AlwaysFailsOperation,
-            maxRetries: 3,
-            initialDelay: TimeSpan.FromMilliseconds(10));
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Detail.Should().Contain("Attempt 4 failed"); // Initial + 3 retries = 4 attempts
-        attempt.Should().Be(4); // Initial attempt + 3 retries
     }
 
     [Fact]
@@ -155,68 +100,6 @@ public class ParallelAndRetryExamples
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Detail.Should().Contain("invalid-order");
-    }
-
-    [Fact]
-    public async Task Retry_with_compensate_provides_fallback_on_final_failure()
-    {
-        // Arrange
-        var attempt = 0;
-
-        async Task<Result<string>> UnreliableService()
-        {
-            attempt++;
-            await Task.Delay(10);
-            return Result.Failure<string>(Error.ServiceUnavailable("Primary service down"));
-        }
-
-        async Task<Result<string>> FallbackService()
-        {
-            await Task.Delay(10);
-            return Result.Success("Fallback service response");
-        }
-
-        // Act - Retry primary service, then fall back to secondary
-        var result = await RetryExtensions.RetryAsync(
-                UnreliableService,
-                maxRetries: 2,
-                initialDelay: TimeSpan.FromMilliseconds(10))
-            .CompensateAsync(FallbackService);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Fallback service response");
-        attempt.Should().Be(3); // Initial attempt + 2 retries
-    }
-
-    [Fact]
-    public async Task Retry_only_specific_error_types()
-    {
-        // Arrange
-        var attempt = 0;
-
-        async Task<Result<string>> ServiceWithValidationError()
-        {
-            attempt++;
-            await Task.Delay(10);
-            
-            if (attempt == 1)
-                return Result.Failure<string>(Error.ServiceUnavailable("Temporary issue")); // Should retry
-            
-            return Result.Failure<string>(Error.Validation("Invalid input")); // Should not retry
-        }
-
-        // Act - Only retry service unavailable errors, not validation errors
-        var result = await RetryExtensions.RetryAsync(
-            ServiceWithValidationError,
-            maxRetries: 3,
-            initialDelay: TimeSpan.FromMilliseconds(10),
-            shouldRetry: error => error is ServiceUnavailableError);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        attempt.Should().Be(2); // Initial + 1 retry, then stopped on validation error
     }
 
     [Fact]
