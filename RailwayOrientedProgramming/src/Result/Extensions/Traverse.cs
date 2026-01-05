@@ -35,10 +35,14 @@ public static class TraverseExtensions
     /// <param name="source">Source collection to transform.</param>
     /// <param name="selector">Transformation function returning a Result.</param>
     /// <returns>Success with all items if all succeed; otherwise the first failure.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="selector"/> is null.</exception>
     public static Result<IEnumerable<TOut>> Traverse<TIn, TOut>(
         this IEnumerable<TIn> source,
         Func<TIn, Result<TOut>> selector)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(selector);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
         
@@ -66,10 +70,14 @@ public static class TraverseExtensions
     /// <param name="source">Source collection to transform.</param>
     /// <param name="selector">Async transformation function returning a Result.</param>
     /// <returns>Task producing Success with all items if all succeed; otherwise the first failure.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="selector"/> is null.</exception>
     public static async Task<Result<IEnumerable<TOut>>> TraverseAsync<TIn, TOut>(
         this IEnumerable<TIn> source,
         Func<TIn, Task<Result<TOut>>> selector)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(selector);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
         
@@ -98,11 +106,15 @@ public static class TraverseExtensions
     /// <param name="selector">Async transformation function with cancellation support.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
     /// <returns>Task producing Success with all items if all succeed; otherwise the first failure.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="selector"/> is null.</exception>
     public static async Task<Result<IEnumerable<TOut>>> TraverseAsync<TIn, TOut>(
         this IEnumerable<TIn> source,
         Func<TIn, CancellationToken, Task<Result<TOut>>> selector,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(selector);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
         
@@ -131,10 +143,14 @@ public static class TraverseExtensions
     /// <param name="source">Source collection to transform.</param>
     /// <param name="selector">Async transformation function returning a Result.</param>
     /// <returns>ValueTask producing Success with all items if all succeed; otherwise the first failure.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="selector"/> is null.</exception>
     public static async ValueTask<Result<IEnumerable<TOut>>> TraverseAsync<TIn, TOut>(
         this IEnumerable<TIn> source,
         Func<TIn, ValueTask<Result<TOut>>> selector)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(selector);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
         
@@ -163,11 +179,15 @@ public static class TraverseExtensions
     /// <param name="selector">Async transformation function with cancellation support.</param>
     /// <param name="cancellationToken">Cancellation token to observe.</param>
     /// <returns>ValueTask producing Success with all items if all succeed; otherwise the first failure.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="selector"/> is null.</exception>
     public static async ValueTask<Result<IEnumerable<TOut>>> TraverseAsync<TIn, TOut>(
         this IEnumerable<TIn> source,
         Func<TIn, CancellationToken, ValueTask<Result<TOut>>> selector,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(selector);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
         

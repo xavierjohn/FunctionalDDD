@@ -1,0 +1,539 @@
+namespace RailwayOrientedProgramming.Tests.Results.Extensions.Traverse;
+
+using FunctionalDdd.Testing;
+using System.Globalization;
+
+public class TraverseTests : TestBase
+{
+    #region Traverse Sync
+
+    [Fact]
+    public void Traverse_EmptyCollection_ReturnsEmptySuccess()
+    {
+        // Arrange
+        var items = Array.Empty<int>();
+
+        // Act
+        var result = items.Traverse(x => Result.Success(x * 2));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Traverse_AllItemsSucceed_ReturnsAllTransformed()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = items.Traverse(x => Result.Success(x * 2));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(2, 4, 6, 8, 10);
+    }
+
+    [Fact]
+    public void Traverse_FirstItemFails_ReturnsFirstFailure()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = items.Traverse(x =>
+            x == 1 ? Result.Failure<int>(Error1) : Result.Success(x * 2));
+
+        // Assert
+        result.Should().BeFailure()
+            .Which.Should().HaveCode(Error1.Code);
+    }
+
+    [Fact]
+    public void Traverse_MiddleItemFails_ReturnsFailureAndStopsProcessing()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+        var processedItems = new List<int>();
+
+        // Act
+        var result = items.Traverse(x =>
+        {
+            processedItems.Add(x);
+            return x == 3
+                ? Result.Failure<int>(Error2)
+                : Result.Success(x * 2);
+        });
+
+        // Assert
+        result.Should().BeFailure()
+            .Which.Should().HaveCode(Error2.Code);
+        processedItems.Should().Equal(1, 2, 3); // Short-circuits after failure
+    }
+
+    [Fact]
+    public void Traverse_LastItemFails_ReturnsFailure()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = items.Traverse(x =>
+            x == 5 ? Result.Failure<int>(Error1) : Result.Success(x * 2));
+
+        // Assert
+        result.Should().BeFailure();
+    }
+
+    [Fact]
+    public void Traverse_TransformToComplexType_Succeeds()
+    {
+        // Arrange
+        var items = new[] { "apple", "banana", "cherry" };
+
+        // Act
+        var result = items.Traverse(s => Result.Success(new Fruit { Name = s, Length = s.Length }));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().HaveCount(3);
+        result.Value.First().Name.Should().Be("apple");
+    }
+
+    [Fact]
+    public void Traverse_WithValidation_FiltersInvalidItems()
+    {
+        // Arrange
+        var items = new[] { "a", "ab", "abc", "abcd", "abcde" };
+
+        // Act
+        var result = items.Traverse(s =>
+            s.Length >= 3
+                ? Result.Success(s.ToUpper(CultureInfo.InvariantCulture))
+                : Result.Failure<string>(Error.Validation($"String too short: {s}")));
+
+        // Assert
+        result.Should().BeFailure();
+        result.Error.Detail.Should().Contain("String too short: a");
+    }
+
+    #endregion
+
+    #region TraverseAsync with Task
+
+    [Fact]
+    public async Task TraverseAsync_EmptyCollection_ReturnsEmptySuccess()
+    {
+        // Arrange
+        var items = Array.Empty<int>();
+
+        // Act
+        var result = await items.TraverseAsync((int x) => Task.FromResult(Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_AllItemsSucceed_ReturnsAllTransformed()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = await items.TraverseAsync((int x) => Task.FromResult(Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(2, 4, 6, 8, 10);
+    }
+
+    [Fact]
+    public async Task TraverseAsync_FirstItemFails_ReturnsFirstFailure()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = await items.TraverseAsync((int x) =>
+            Task.FromResult(x == 1 ? Result.Failure<int>(Error1) : Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeFailure()
+            .Which.Should().HaveCode(Error1.Code);
+    }
+
+    [Fact]
+    public async Task TraverseAsync_MiddleItemFails_ShortCircuits()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+        var processedItems = new List<int>();
+
+        // Act
+        var result = await items.TraverseAsync((int x) =>
+        {
+            processedItems.Add(x);
+            return Task.FromResult(x == 3
+                ? Result.Failure<int>(Error2)
+                : Result.Success(x * 2));
+        });
+
+        // Assert
+        result.Should().BeFailure();
+        processedItems.Should().Equal(1, 2, 3);
+    }
+
+    #endregion
+
+    #region TraverseAsync with CancellationToken
+
+    [Fact]
+    public async Task TraverseAsync_WithCancellationToken_AllItemsSucceed()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var result = await items.TraverseAsync(
+            (int x, CancellationToken ct) => Task.FromResult(Result.Success(x * 2)),
+            cts.Token);
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(2, 4, 6, 8, 10);
+    }
+
+    [Fact]
+    public async Task TraverseAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => items.TraverseAsync(
+                (int x, CancellationToken ct) => Task.FromResult(Result.Success(x * 2)),
+                cts.Token));
+    }
+
+    [Fact]
+    public async Task TraverseAsync_CancellationDuringProcessing_StopsImmediately()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+        using var cts = new CancellationTokenSource();
+        var processedItems = new List<int>();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => items.TraverseAsync((int x, CancellationToken ct) =>
+            {
+                processedItems.Add(x);
+                if (x == 3) cts.Cancel();
+                ct.ThrowIfCancellationRequested();
+                return Task.FromResult(Result.Success(x * 2));
+            }, cts.Token));
+
+        processedItems.Should().BeEquivalentTo(new List<int> { 1, 2, 3 });
+    }
+
+    [Fact]
+    public async Task TraverseAsync_WithTimeout_ThrowsWhenExceeded()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(10));
+        Func<int, CancellationToken, Task<Result<int>>> asyncOp = async (int x, CancellationToken ct) =>
+        {
+            await Task.Delay(100, ct);
+            return Result.Success(x * 2);
+        };
+
+        // Act & Assert - TaskCanceledException is a subtype of OperationCanceledException
+        await Assert.ThrowsAsync<TaskCanceledException>(
+            async () => await items.TraverseAsync(asyncOp, cts.Token));
+    }
+
+    #endregion
+
+    #region TraverseAsync with ValueTask
+
+    [Fact]
+    public async Task TraverseAsync_ValueTask_AllItemsSucceed()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = await items.TraverseAsync((int x) => ValueTask.FromResult(Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(2, 4, 6, 8, 10);
+    }
+
+    [Fact]
+    public async Task TraverseAsync_ValueTask_FirstItemFails()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        // Act
+        var result = await items.TraverseAsync((int x) =>
+            ValueTask.FromResult(x == 1
+                ? Result.Failure<int>(Error1)
+                : Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeFailure()
+            .Which.Should().HaveCode(Error1.Code);
+    }
+
+    [Fact]
+    public async Task TraverseAsync_ValueTask_WithCancellationToken_Succeeds()
+    {
+        // Arrange
+        var items = new[] { 1, 2, 3 };
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var result = await items.TraverseAsync(
+            (int x, CancellationToken ct) => ValueTask.FromResult(Result.Success(x * 2)),
+            cts.Token);
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(2, 4, 6);
+    }
+
+    #endregion
+
+    #region Real-World Scenarios
+
+    [Fact]
+    public void Traverse_ValidateMultipleEmails_AllValid()
+    {
+        // Arrange
+        var emails = new[] { "user1@test.com", "user2@test.com", "user3@test.com" };
+
+        // Act
+        var result = emails.Traverse(email =>
+            email.Contains('@')
+                ? Result.Success(email.ToLower(CultureInfo.InvariantCulture))
+                : Result.Failure<string>(Error.Validation($"Invalid email: {email}")));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().AllSatisfy(e => e.Should().Contain("@"));
+    }
+
+    [Fact]
+    public void Traverse_ValidateMultipleEmails_OneInvalid()
+    {
+        // Arrange
+        var emails = new[] { "user1@test.com", "invalid-email", "user3@test.com" };
+
+        // Act
+        var result = emails.Traverse(email =>
+            email.Contains('@')
+                ? Result.Success(email.ToLower(CultureInfo.InvariantCulture))
+                : Result.Failure<string>(Error.Validation($"Invalid email: {email}")));
+
+        // Assert
+        result.Should().BeFailure();
+        result.Error.Detail.Should().Contain("invalid-email");
+    }
+
+    [Fact]
+    public async Task TraverseAsync_FetchMultipleUsers_AllFound()
+    {
+        // Arrange
+        var userIds = new[] { 1, 2, 3 };
+
+        // Act
+        var result = await userIds.TraverseAsync((int id) =>
+            Task.FromResult(Result.Success($"User{id}")));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal("User1", "User2", "User3");
+    }
+
+    [Fact]
+    public async Task TraverseAsync_FetchMultipleUsers_OneNotFound()
+    {
+        // Arrange
+        var userIds = new[] { 1, 2, 999, 4 };
+
+        // Act
+        var result = await userIds.TraverseAsync((int id) =>
+            Task.FromResult(id == 999
+                ? Result.Failure<string>(Error.NotFound($"User {id} not found"))
+                : Result.Success($"User{id}")));
+
+        // Assert
+        result.Should().BeFailure();
+        result.Error.Should().BeOfType<NotFoundError>();
+        result.Error.Detail.Should().Contain("999");
+    }
+
+    [Fact]
+    public async Task TraverseAsync_ProcessOrders_WithCancellation()
+    {
+        // Arrange
+        var orderIds = new[] { "order-1", "order-2", "order-3" };
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var result = await orderIds.TraverseAsync(
+            (string orderId, CancellationToken ct) =>
+                Task.FromResult(Result.Success($"Processed {orderId}")),
+            cts.Token);
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public void Traverse_ParseNumbers_MixedValidInvalid()
+    {
+        // Arrange
+        var strings = new[] { "1", "2", "invalid", "4", "5" };
+
+        // Act
+        var result = strings.Traverse(s =>
+            int.TryParse(s, out var number)
+                ? Result.Success(number)
+                : Result.Failure<int>(Error.Validation($"Invalid number: {s}")));
+
+        // Assert
+        result.Should().BeFailure();
+        result.Error.Detail.Should().Contain("invalid");
+    }
+
+    [Fact]
+    public async Task TraverseAsync_LargeCollection_ProcessesAll()
+    {
+        // Arrange
+        var items = Enumerable.Range(1, 100).ToArray();
+
+        // Act
+        var result = await items.TraverseAsync((int x) =>
+            Task.FromResult(Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().HaveCount(100);
+        result.Value.Should().Equal(Enumerable.Range(1, 100).Select(x => x * 2));
+    }
+
+    [Fact]
+    public void Traverse_TransformStringsToValueObjects_AllValid()
+    {
+        // Arrange
+        var names = new[] { "Alice", "Bob", "Charlie" };
+
+        // Act
+        var result = names.Traverse(name =>
+            !string.IsNullOrWhiteSpace(name)
+                ? Result.Success(new Name(name))
+                : Result.Failure<Name>(Error.Validation("Name cannot be empty")));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().HaveCount(3);
+        result.Value.Should().AllSatisfy(n => n.Value.Should().NotBeNullOrEmpty());
+    }
+
+    [Fact]
+    public async Task TraverseAsync_ComplexBusinessValidation_ChainedOperations()
+    {
+        // Arrange
+        var items = new[] { 10, 20, 30, 40, 50 };
+
+        // Act - Simulate complex async validation
+        var result = await items.TraverseAsync((int x) =>
+            Task.FromResult(x is < 0 or > 100
+                ? Result.Failure<int>(Error.Validation("Out of range"))
+                : Result.Success(x * 2)));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(20, 40, 60, 80, 100);
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    [Fact]
+    public void Traverse_SingleItem_Success()
+    {
+        // Arrange
+        var items = new[] { 42 };
+
+        // Act
+        var result = items.Traverse(x => Result.Success(x * 2));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().ContainSingle()
+            .Which.Should().Be(84);
+    }
+
+    [Fact]
+    public void Traverse_SingleItem_Failure()
+    {
+        // Arrange
+        var items = new[] { 42 };
+
+        // Act
+        var result = items.Traverse(x => Result.Failure<int>(Error1));
+
+        // Assert
+        result.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_NullCollection_ThrowsArgumentNullException()
+    {
+        // Arrange
+        IEnumerable<int>? items = null;
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => items!.TraverseAsync((int x) => Task.FromResult(Result.Success(x * 2))));
+    }
+
+    [Fact]
+    public void Traverse_MaintainsOrder_WhenAllSucceed()
+    {
+        // Arrange
+        var items = new[] { 5, 3, 8, 1, 9, 2 };
+
+        // Act
+        var result = items.Traverse(x => Result.Success(x * 10));
+
+        // Assert
+        result.Should().BeSuccess();
+        result.Value.Should().Equal(50, 30, 80, 10, 90, 20);
+    }
+
+    #endregion
+
+    // Helper classes
+    private class Fruit
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Length { get; set; }
+    }
+
+    private record Name(string Value);
+}

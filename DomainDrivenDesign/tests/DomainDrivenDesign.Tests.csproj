@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\src\DomainDrivenDesign.csproj" />
+    <ProjectReference Include="..\..\Testing\src\Testing.csproj" />
   </ItemGroup>
 </Project>

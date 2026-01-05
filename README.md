@@ -1,6 +1,7 @@
 ﻿# Functional Domain Driven Design
 
 [![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/xavierjohn/FunctionalDDD/branch/main/graph/badge.svg)](https://codecov.io/gh/xavierjohn/FunctionalDDD)
 [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
