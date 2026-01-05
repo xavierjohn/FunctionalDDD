@@ -13,17 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0 # depth is needed for nbgv
+        
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.0.x'
-            
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0 # depth is needed for nbgv
-    - uses: dotnet/nbgv@master
+        
+    - name: Setup versioning
+      uses: dotnet/nbgv@master
       with:
         setAllVars: true
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
 
     - name: Restore dependencies
       run: dotnet restore
@@ -32,7 +43,14 @@ jobs:
       run: dotnet build --no-restore -c Release
 
     - name: Test
-      run: dotnet test --no-build  -l "console;verbosity=normal" -c Release
+      run: dotnet test --no-build -l "console;verbosity=normal" -c Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          TestResults/**/*.trx
 
     - name: Update doc tools
       run: dotnet tool update -g docfx
@@ -45,7 +63,8 @@ jobs:
       run: |
         dotnet pack --no-build --verbosity normal -c Release -o artifacts/
         
-    - uses: actions/upload-artifact@v4
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
       if: ${{ success() && !github.base_ref }}
       with:
         name: artifact

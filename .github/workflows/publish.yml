@@ -1,31 +1,84 @@
 name: Publish NuGet Package
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (do not publish)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0 # depth is needed for nbgv
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.0.x'
 
-    - uses: actions/checkout@v5
+    - name: Setup versioning
+      uses: dotnet/nbgv@master
       with:
-          fetch-depth: 0 # depth is needed for nbgv
+        setAllVars: true
 
-    - uses: dotnet/nbgv@master
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
       with:
-          setAllVars: true
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
   
     - name: Restore dependencies
-      run: dotnet restore        
+      run: dotnet restore
 
-    - name: Build and Pack
-      run: dotnet pack --configuration Release --output nupkgs
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
 
-    - name: Publish
-      run: dotnet nuget push nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+    - name: Run tests
+      run: dotnet test --no-build --configuration Release --logger "console;verbosity=normal"
+
+    - name: Pack
+      run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols --include-source
+
+    - name: Verify packages
+      run: |
+        echo "Verifying package contents..."
+        for pkg in nupkgs/*.nupkg; do
+          if [[ "$pkg" != *".symbols."* ]]; then
+            echo "Verifying $pkg"
+            dotnet nuget verify "$pkg"
+          fi
+        done
+
+    - name: List packages
+      run: |
+        echo "Packages to be published:"
+        ls -lh nupkgs/*.nupkg
+
+    - name: Publish to NuGet
+      if: ${{ inputs.dry_run == 'false' }}
+      run: |
+        dotnet nuget push nupkgs/*.nupkg \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
+
+    - name: Dry run summary
+      if: ${{ inputs.dry_run == 'true' }}
+      run: |
+        echo "DRY RUN - Packages NOT published:"
+        ls -lh nupkgs/*.nupkgs
+        echo ""
+        echo "To publish for real, re-run with dry_run = false"
