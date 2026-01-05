@@ -42,8 +42,8 @@ jobs:
     - name: Build
       run: dotnet build --no-restore -c Release
 
-    - name: Test
-      run: dotnet test --no-build -l "console;verbosity=normal" -c Release --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
+    - name: Test with Coverage
+      run: dotnet test --no-build -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=normal" --results-directory ./TestResults
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
@@ -51,6 +51,15 @@ jobs:
       with:
         files: |
           TestResults/**/*.trx
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        files: ./TestResults/**/coverage.cobertura.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+        verbose: true
 
     - name: Update doc tools
       run: dotnet tool update -g docfx
