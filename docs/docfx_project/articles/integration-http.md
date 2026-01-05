@@ -550,5 +550,5 @@ public async Task<Result<User>> GetUserAsync(string userId, CancellationToken ct
 ## API Reference
 
 For complete API documentation, see:
-- [HttpResponseExtensions API Reference](../api/FunctionalDdd.HttpResponseExtensions.html)
 - [Package README](https://www.nuget.org/packages/FunctionalDDD.Http)
+- Browse the API reference in the documentation site
