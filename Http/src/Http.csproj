@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>HTTP client extensions for Railway Oriented Programming. Provides fluent extension methods to handle HttpResponseMessage with Result and Maybe monads, including error handling for specific status codes and JSON deserialization.</Description>
+    <PackageTags>http;httpclient;railway-oriented;result;maybe;functional-programming;error-handling;json</PackageTags>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
+  </ItemGroup>
+</Project>

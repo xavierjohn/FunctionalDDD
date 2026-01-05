@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+namespace FunctionalDdd;
 
 using System;
 using System.Net;
@@ -63,6 +63,230 @@ public static partial class HttpResponseExtensions
     {
         var response = await responseTask;
         return response.HandleNotFound(notFoundError);
+    }
+
+    /// <summary>
+    /// Handles the case when the HTTP response has a status code of Unauthorized (401).
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="unauthorizedError">The error to return if the response has a status code of Unauthorized.</param>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
+    public static Result<HttpResponseMessage> HandleUnauthorized(
+        this HttpResponseMessage response,
+        UnauthorizedError unauthorizedError)
+    {
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+            return Result.Failure<HttpResponseMessage>(unauthorizedError);
+
+        return Result.Success(response);
+    }
+
+    /// <summary>
+    /// Handles the case when the HTTP response has a status code of Unauthorized (401) asynchronously.
+    /// </summary>
+    /// <param name="responseTask">The task representing the HTTP response message.</param>
+    /// <param name="unauthorizedError">The error to return if the response has a status code of Unauthorized.</param>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
+    public static async Task<Result<HttpResponseMessage>> HandleUnauthorizedAsync(
+        this Task<HttpResponseMessage> responseTask,
+        UnauthorizedError unauthorizedError)
+    {
+        var response = await responseTask;
+        return response.HandleUnauthorized(unauthorizedError);
+    }
+
+    /// <summary>
+    /// Handles the case when the HTTP response has a status code of Forbidden (403).
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="forbiddenError">The error to return if the response has a status code of Forbidden.</param>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
+    public static Result<HttpResponseMessage> HandleForbidden(
+        this HttpResponseMessage response,
+        ForbiddenError forbiddenError)
+    {
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+            return Result.Failure<HttpResponseMessage>(forbiddenError);
+
+        return Result.Success(response);
+    }
+
+    /// <summary>
+    /// Handles the case when the HTTP response has a status code of Forbidden (403) asynchronously.
+    /// </summary>
+    /// <param name="responseTask">The task representing the HTTP response message.</param>
+    /// <param name="forbiddenError">The error to return if the response has a status code of Forbidden.</param>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
+    public static async Task<Result<HttpResponseMessage>> HandleForbiddenAsync(
+        this Task<HttpResponseMessage> responseTask,
+        ForbiddenError forbiddenError)
+    {
+        var response = await responseTask;
+        return response.HandleForbidden(forbiddenError);
+    }
+
+    /// <summary>
+    /// Handles the case when the HTTP response has a status code of Conflict (409).
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="conflictError">The error to return if the response has a status code of Conflict.</param>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
+    public static Result<HttpResponseMessage> HandleConflict(
+        this HttpResponseMessage response,
+        ConflictError conflictError)
+    {
+        if (response.StatusCode == HttpStatusCode.Conflict)
+            return Result.Failure<HttpResponseMessage>(conflictError);
+
+        return Result.Success(response);
+    }
+
+    /// <summary>
+    /// Handles the case when the HTTP response has a status code of Conflict (409) asynchronously.
+    /// </summary>
+    /// <param name="responseTask">The task representing the HTTP response message.</param>
+    /// <param name="conflictError">The error to return if the response has a status code of Conflict.</param>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
+    public static async Task<Result<HttpResponseMessage>> HandleConflictAsync(
+        this Task<HttpResponseMessage> responseTask,
+        ConflictError conflictError)
+    {
+        var response = await responseTask;
+        return response.HandleConflict(conflictError);
+    }
+
+    /// <summary>
+    /// Handles any client error (4xx) status codes with a custom error factory.
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="errorFactory">A function that creates an error based on the status code.</param>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
+    /// <remarks>
+    /// This method intercepts HTTP responses with status codes in the 400-499 range.
+    /// Use this when you want to handle all client errors uniformly, or when you need
+    /// to create context-specific errors based on the actual status code received.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var result = await httpClient.GetAsync(url, ct)
+    ///     .HandleClientErrorAsync(code => Error.BadRequest($"Client error: {code}"))
+    ///     .ReadResultFromJsonAsync(jsonContext, ct);
+    /// </code>
+    /// </example>
+    public static Result<HttpResponseMessage> HandleClientError(
+        this HttpResponseMessage response,
+        Func<HttpStatusCode, Error> errorFactory)
+    {
+        var statusCode = (int)response.StatusCode;
+        if (statusCode is >= 400 and < 500)
+            return Result.Failure<HttpResponseMessage>(errorFactory(response.StatusCode));
+
+        return Result.Success(response);
+    }
+
+    /// <summary>
+    /// Handles any client error (4xx) status codes with a custom error factory asynchronously.
+    /// </summary>
+    /// <param name="responseTask">The task representing the HTTP response message.</param>
+    /// <param name="errorFactory">A function that creates an error based on the status code.</param>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
+    public static async Task<Result<HttpResponseMessage>> HandleClientErrorAsync(
+        this Task<HttpResponseMessage> responseTask,
+        Func<HttpStatusCode, Error> errorFactory)
+    {
+        var response = await responseTask;
+        return response.HandleClientError(errorFactory);
+    }
+
+    /// <summary>
+    /// Handles any server error (5xx) status codes with a custom error factory.
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="errorFactory">A function that creates an error based on the status code.</param>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
+    /// <remarks>
+    /// This method intercepts HTTP responses with status codes in the 500-599 range.
+    /// Use this when you want to handle all server errors uniformly, such as for retry
+    /// logic or fallback mechanisms.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var result = await httpClient.GetAsync(url, ct)
+    ///     .HandleServerErrorAsync(code => Error.ServiceUnavailable($"Server error: {code}"))
+    ///     .ReadResultFromJsonAsync(jsonContext, ct);
+    /// </code>
+    /// </example>
+    public static Result<HttpResponseMessage> HandleServerError(
+        this HttpResponseMessage response,
+        Func<HttpStatusCode, Error> errorFactory)
+    {
+        var statusCode = (int)response.StatusCode;
+        if (statusCode >= 500)
+            return Result.Failure<HttpResponseMessage>(errorFactory(response.StatusCode));
+
+        return Result.Success(response);
+    }
+
+    /// <summary>
+    /// Handles any server error (5xx) status codes with a custom error factory asynchronously.
+    /// </summary>
+    /// <param name="responseTask">The task representing the HTTP response message.</param>
+    /// <param name="errorFactory">A function that creates an error based on the status code.</param>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
+    public static async Task<Result<HttpResponseMessage>> HandleServerErrorAsync(
+        this Task<HttpResponseMessage> responseTask,
+        Func<HttpStatusCode, Error> errorFactory)
+    {
+        var response = await responseTask;
+        return response.HandleServerError(errorFactory);
+    }
+
+    /// <summary>
+    /// Ensures the HTTP response has a success status code, otherwise returns an error.
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="errorFactory">Optional function to create a custom error based on the status code.
+    /// If not provided, a default unexpected error will be created.</param>
+    /// <returns>A <see cref="Result{TValue}"/> of <see cref="HttpResponseMessage"/>.</returns>
+    /// <remarks>
+    /// This is a functional alternative to HttpResponseMessage.EnsureSuccessStatusCode(),
+    /// which throws an exception. This method returns a Result instead, making it compatible
+    /// with Railway Oriented Programming patterns.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var result = await httpClient.GetAsync(url, ct)
+    ///     .EnsureSuccessAsync()
+    ///     .ReadResultFromJsonAsync(jsonContext, ct);
+    /// </code>
+    /// </example>
+    public static Result<HttpResponseMessage> EnsureSuccess(
+        this HttpResponseMessage response,
+        Func<HttpStatusCode, Error>? errorFactory = null)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = errorFactory?.Invoke(response.StatusCode)
+                ?? Error.Unexpected($"HTTP request failed with status code {response.StatusCode}");
+            return Result.Failure<HttpResponseMessage>(error);
+        }
+
+        return Result.Success(response);
+    }
+
+    /// <summary>
+    /// Ensures the HTTP response has a success status code, otherwise returns an error asynchronously.
+    /// </summary>
+    /// <param name="responseTask">The task representing the HTTP response message.</param>
+    /// <param name="errorFactory">Optional function to create a custom error based on the status code.
+    /// If not provided, a default unexpected error will be created.</param>
+    /// <returns>A <see cref="Task{TResult}"/> of <see cref="Result{TValue}"/> containing the <see cref="HttpResponseMessage"/>.</returns>
+    public static async Task<Result<HttpResponseMessage>> EnsureSuccessAsync(
+        this Task<HttpResponseMessage> responseTask,
+        Func<HttpStatusCode, Error>? errorFactory = null)
+    {
+        var response = await responseTask;
+        return response.EnsureSuccess(errorFactory);
     }
 
     /// <summary>

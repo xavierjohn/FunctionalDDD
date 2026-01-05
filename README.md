@@ -237,6 +237,7 @@ Robust, Maintainable Software
 |---------|---------|-------------|---------------|
 | **[RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming) | Core Result/Maybe types, error handling, async support | [📖 Docs](RailwayOrientedProgramming/README.md) |
 | **[Asp](https://www.nuget.org/packages/FunctionalDDD.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp) | Convert Result → HTTP responses (MVC & Minimal API) | [📖 Docs](Asp/README.md) |
+| **[Http](https://www.nuget.org/packages/FunctionalDDD.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Http.svg)](https://www.nuget.org/packages/FunctionalDDD.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Http/README.md) |
 | **[FluentValidation](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
 | **[CommonValueObjects](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects) | RequiredString, RequiredGuid, EmailAddress | [📖 Docs](CommonValueObjects/README.md) |
 | **[CommonValueObjectGenerator](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator) | Source generator for value object boilerplate | - |
@@ -401,11 +402,18 @@ return ProcessOrder(order).MatchError(
 <summary><b>HTTP Integration</b></summary>
 
 ```csharp
-// Read HTTP response as Result
-var result = await _httpClient.GetAsync($"person/{id}", ct)
-    .HandleNotFoundAsync(Error.NotFound("Person not found"))
-    .BindAsync(response => 
-        response.ReadResultMaybeFromJsonAsync<Person>(PersonContext.Default.Person, ct));
+// Read HTTP response as Result with status code handling
+var result = await _httpClient.GetAsync($"api/users/{userId}", ct)
+    .HandleNotFoundAsync(Error.NotFound("User not found"))
+    .HandleUnauthorizedAsync(Error.Unauthorized("Please login"))
+    .HandleServerErrorAsync(code => Error.ServiceUnavailable($"API error: {code}"))
+    .ReadResultFromJsonAsync(UserContext.Default.User, ct)
+    .TapAsync(user => _logger.LogInformation("Retrieved user: {UserId}", user.Id));
+
+// Or use EnsureSuccess for generic error handling
+var product = await _httpClient.GetAsync($"api/products/{productId}", ct)
+    .EnsureSuccessAsync(code => Error.Unexpected($"Failed to get product: {code}"))
+    .ReadResultFromJsonAsync(ProductContext.Default.Product, ct);
 ```
 
 </details>

@@ -34,6 +34,8 @@
     href: integration.md
   - name: ASP.NET Core
     href: integration-aspnet.md
+  - name: HTTP Client
+    href: integration-http.md
   - name: FluentValidation
     href: integration-fluentvalidation.md
   - name: Entity Framework Core
