@@ -60,13 +60,13 @@ A value object is an object that represents a descriptive aspect of the domain w
 
 ### ASP.NET Core Integration
 
-#### [ToActionResult Extensions](xref:FunctionalDdd.ToActionResultExtensions)
+#### [ActionResult Extensions](xref:FunctionalDdd.ActionResultExtensions)
 
 Convert `Result<T>` to ASP.NET Core action results for MVC controllers.
 
 **Features:** Automatic status code mapping, Problem Details (RFC 7807) format, field-level validation errors
 
-#### [ToHttpResult Extensions](xref:FunctionalDdd.ToHttpResultExtensions)
+#### [HttpResult Extensions](xref:FunctionalDdd.HttpResultExtensions)
 
 Convert `Result<T>` to `IResult` for Minimal API endpoints.
 
@@ -87,7 +87,7 @@ Extension methods for `HttpResponseMessage` that enable functional HTTP communic
 
 ### FluentValidation Integration
 
-#### [ValidateToResult Extensions](xref:FunctionalDdd.ValidateToResultExtensions)
+#### [FluentValidation Extensions](xref:FunctionalDdd.FluentValidationResultExtensions)
 
 Convert FluentValidation results to `Result<T>` for seamless integration with Railway-Oriented Programming.
 
