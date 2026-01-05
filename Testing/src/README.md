@@ -1,4 +1,4 @@
-# FunctionalDDD.Testing
+﻿# FunctionalDDD.Testing
 
 Testing utilities and FluentAssertions extensions for **FunctionalDDD** - Write expressive, maintainable tests for Railway-Oriented Programming patterns.
 
@@ -10,11 +10,11 @@ dotnet add package FunctionalDDD.Testing
 
 ## Features
 
-? **FluentAssertions Extensions** - Expressive assertions for `Result<T>`, `Maybe<T>`, and `Error` types  
-? **Test Builders** - Fluent builders for creating test data  
-? **Fake Implementations** - In-memory fakes for repositories and infrastructure  
-? **Readable Tests** - Write tests that read like specifications  
-? **IntelliSense Support** - Discover test utilities through IntelliSense
+✅ **FluentAssertions Extensions** - Expressive assertions for `Result<T>`, `Maybe<T>`, and `Error` types  
+🏗️ **Test Builders** - Fluent builders for creating test data  
+🎭 **Fake Implementations** - In-memory fakes for repositories and infrastructure  
+📖 **Readable Tests** - Write tests that read like specifications  
+💡 **IntelliSense Support** - Discover test utilities through IntelliSense
 
 ## Quick Start
 
@@ -192,11 +192,11 @@ public class UserServiceTests
 | Manual repository setup with mocks | `new FakeRepository<User, UserId>()` |
 
 **Advantages:**
-- ? **60% Less Code** - More concise assertions
-- ? **Better Error Messages** - Detailed failure descriptions
-- ? **IntelliSense Guided** - Discover test patterns through IDE
-- ? **Readable Tests** - Tests read like specifications
-- ? **Type Safe** - Compiler-enforced correctness
+- ✂️ **60% Less Code** - More concise assertions
+- 💬 **Better Error Messages** - Detailed failure descriptions
+- 💡 **IntelliSense Guided** - Discover test patterns through IDE
+- 📖 **Readable Tests** - Tests read like specifications
+- 🔒 **Type Safe** - Compiler-enforced correctness
 
 ## Related Packages
 
