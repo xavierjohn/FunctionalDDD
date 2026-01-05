@@ -1,6 +1,7 @@
 namespace RailwayOrientedProgramming.Tests;
 
 using FluentAssertions;
+using FunctionalDdd.Testing;
 using Xunit;
 
 public class MatchErrorTests
@@ -36,6 +37,7 @@ public class MatchErrorTests
 
         // Assert
         output.Should().Be("Validation: Invalid email");
+        result.Should().BeFailureOfType<ValidationError>();
     }
 
     [Fact]
@@ -53,6 +55,8 @@ public class MatchErrorTests
 
         // Assert
         output.Should().Be("NotFound: User not found");
+        result.Should().BeFailureOfType<NotFoundError>()
+            .Which.Should().HaveDetail("User not found");
     }
 
     [Fact]
@@ -70,6 +74,7 @@ public class MatchErrorTests
 
         // Assert
         output.Should().Be("Conflict: Email already exists");
+        result.Should().BeFailureOfType<ConflictError>();
     }
 
     [Fact]

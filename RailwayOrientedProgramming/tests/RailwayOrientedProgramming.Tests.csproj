@@ -10,6 +10,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\src\RailwayOrientedProgramming.csproj" />
+	  <ProjectReference Include="..\..\Testing\src\Testing.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -12,10 +12,7 @@ public static class MaybeAssertionsExtensions
     /// <summary>
     /// Returns an assertions object for fluent assertions on Maybe.
     /// </summary>
-    public static MaybeAssertions<T> Should<T>(this Maybe<T> maybe) where T : notnull
-    {
-        return new MaybeAssertions<T>(maybe);
-    }
+    public static MaybeAssertions<T> Should<T>(this Maybe<T> maybe) where T : notnull => new MaybeAssertions<T>(maybe);
 }
 
 /// <summary>

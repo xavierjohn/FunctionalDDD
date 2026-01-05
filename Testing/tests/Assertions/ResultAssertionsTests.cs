@@ -93,7 +93,7 @@ public class ResultAssertionsTests
         var act = () => result.Should().BeFailureOfType<NotFoundError>();
         
         act.Should().Throw<Exception>()
-            .WithMessage("*to be of type NotFoundError*found ValidationError*");
+            .WithMessage("*to be of type*NotFoundError*found*ValidationError*");
     }
 
     [Fact]

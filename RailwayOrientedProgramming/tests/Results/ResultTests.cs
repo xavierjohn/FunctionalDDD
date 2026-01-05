@@ -1,5 +1,6 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results;
-using Xunit;
+
+using FunctionalDdd.Testing;
 
 public class ResultTests
 {
@@ -8,8 +9,8 @@ public class ResultTests
     {
         var result = Result.Success("Hello");
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Hello");
+        result.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -17,8 +18,8 @@ public class ResultTests
     {
         var result = Result.Success(() => "Hello");
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Hello");
+        result.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -26,7 +27,7 @@ public class ResultTests
     {
         var result = Result.Success(default(string));
 
-        result.IsSuccess.Should().BeTrue();
+        result.Should().BeSuccess();
     }
 
     [Fact]
@@ -34,8 +35,8 @@ public class ResultTests
     {
         var result = Result.Failure<string>(Error.Validation("Bad first name"));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Validation("Bad first name"));
+        result.Should().BeFailure()
+            .Which.Should().HaveDetail("Bad first name");
     }
 
     [Fact]
@@ -43,8 +44,8 @@ public class ResultTests
     {
         var result = Result.Failure<string>(() => Error.Validation("Bad first name"));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Validation("Bad first name"));
+        result.Should().BeFailure()
+            .Which.Should().HaveDetail("Bad first name");
     }
 
     [Fact]
@@ -52,7 +53,7 @@ public class ResultTests
     {
         var result = Result.FailureIf(false, "Hello", Error.Validation("Bad first name"));
 
-        result.IsSuccess.Should().BeTrue();
+        result.Should().BeSuccess();
     }
 
     [Fact]
@@ -60,7 +61,7 @@ public class ResultTests
     {
         var result = Result.FailureIf(() => false, string.Empty, Error.Unexpected(string.Empty));
 
-        result.IsSuccess.Should().BeTrue();
+        result.Should().BeSuccess();
     }
 
     [Fact]
@@ -68,8 +69,8 @@ public class ResultTests
     {
         var result = Result.FailureIf(() => true, "Hello", Error.Unexpected("You can't touch this."));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("You can't touch this."));
+        result.Should().BeFailure()
+            .Which.Should().HaveDetail("You can't touch this.");
     }
 
     [Fact]
@@ -77,8 +78,8 @@ public class ResultTests
     {
         var result = await Result.FailureIfAsync(() => Task.FromResult(false), "Hello", Error.Unexpected(string.Empty));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Hello");
+        result.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -86,8 +87,8 @@ public class ResultTests
     {
         var result = await Result.FailureIfAsync(() => Task.FromResult(true), "Hello", Error.Unexpected("You can't touch this."));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("You can't touch this."));
+        result.Should().BeFailure()
+            .Which.Should().HaveDetail("You can't touch this.");
     }
 
     [Fact]
@@ -96,8 +97,8 @@ public class ResultTests
         byte val = 7;
         var result = Result.FailureIf(false, val, Error.Unexpected(string.Empty));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(val);
+        result.Should().BeSuccess()
+            .Which.Should().Be(val);
     }
 
     [Fact]
@@ -106,8 +107,8 @@ public class ResultTests
         var val = .56;
         var result = Result.FailureIf(true, val, Error.Unexpected("simple result error"));
 
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(Error.Unexpected("simple result error"));
+        result.Should().BeFailure()
+            .Which.Should().HaveDetail("simple result error");
     }
 
     [Fact]
@@ -115,8 +116,8 @@ public class ResultTests
     {
         var result = Result.Success((DateTime?)null);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(null);
+        result.Should().BeSuccess()
+            .Which.Should().Be(null);
     }
 
     [Fact]
@@ -129,7 +130,7 @@ public class ResultTests
         Result<string> result = hello;
 
         // Assert
-        result.Value.Should().Be(hello);
+        result.Should().HaveValue(hello);
     }
 
     [Fact]
@@ -138,11 +139,9 @@ public class ResultTests
         // Arrange
         var result = Result.Success();
 
-        // Act
-        result.IsSuccess.Should().BeTrue();
-
         // Assert
-        result.Value.Should().Be(default(Unit));
+        result.Should().BeSuccess()
+            .Which.Should().Be(default(Unit));
     }
 
     [Fact]
@@ -151,11 +150,9 @@ public class ResultTests
         // Arrange
         var result = Result.Failure(Error.Forbidden("Testing"));
 
-        // Act
-        result.IsFailure.Should().BeTrue();
-
         // Assert
-        result.Error.Should().Be(Error.Forbidden("Testing"));
+        result.Should().BeFailureOfType<ForbiddenError>()
+            .Which.Should().HaveDetail("Testing");
     }
 
     [Fact]
@@ -168,8 +165,8 @@ public class ResultTests
         var result = value.ToResult();
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(value);
+        result.Should().BeSuccess()
+            .Which.Should().Be(value);
     }
 
     [Fact]
@@ -182,7 +179,7 @@ public class ResultTests
         var result = value.ToResult();
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(value);
+        result.Should().BeSuccess()
+            .Which.Should().Be(value);
     }
 }

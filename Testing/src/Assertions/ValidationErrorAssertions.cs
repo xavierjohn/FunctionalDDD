@@ -12,10 +12,7 @@ public static class ValidationErrorAssertionsExtensions
     /// <summary>
     /// Returns an assertions object for fluent assertions on ValidationError.
     /// </summary>
-    public static ValidationErrorAssertions Should(this ValidationError error)
-    {
-        return new ValidationErrorAssertions(error);
-    }
+    public static ValidationErrorAssertions Should(this ValidationError error) => new ValidationErrorAssertions(error);
 }
 
 /// <summary>

@@ -11,10 +11,7 @@ public static class ErrorAssertionsExtensions
     /// <summary>
     /// Returns an assertions object for fluent assertions on Error.
     /// </summary>
-    public static ErrorAssertions Should(this Error error)
-    {
-        return new ErrorAssertions(error);
-    }
+    public static ErrorAssertions Should(this Error error) => new ErrorAssertions(error);
 }
 
 /// <summary>

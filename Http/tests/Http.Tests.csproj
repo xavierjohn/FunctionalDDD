@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\src\Http.csproj" />
+	  <ProjectReference Include="..\..\Testing\src\Testing.csproj" />
 	</ItemGroup>
 
 </Project>

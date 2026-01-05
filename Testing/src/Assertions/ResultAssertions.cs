@@ -12,10 +12,7 @@ public static class ResultAssertionsExtensions
     /// <summary>
     /// Returns an assertions object for fluent assertions on Result.
     /// </summary>
-    public static ResultAssertions<TValue> Should<TValue>(this Result<TValue> result)
-    {
-        return new ResultAssertions<TValue>(result);
-    }
+    public static ResultAssertions<TValue> Should<TValue>(this Result<TValue> result) => new ResultAssertions<TValue>(result);
 }
 
 /// <summary>

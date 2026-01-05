@@ -1,7 +1,9 @@
 namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+
 using System.Net;
 using System.Threading.Tasks;
 using FunctionalDdd;
+using FunctionalDdd.Testing;
 
 /// <summary>
 /// Tests for HandleNotFound and HandleNotFoundAsync extension methods.
@@ -23,8 +25,8 @@ public class HandleNotFoundTests
         var result = httpResponseMessage.HandleNotFound(_notFoundError);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(_notFoundError);
+        result.Should().BeFailureOfType<NotFoundError>()
+            .Which.Should().HaveDetail("Person not found");
     }
 
     [Fact]
@@ -37,8 +39,8 @@ public class HandleNotFoundTests
         var result = httpResponseMessage.HandleNotFound(_notFoundError);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().BeSuccess()
+            .Which.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Theory]
@@ -57,8 +59,8 @@ public class HandleNotFoundTests
         var result = httpResponseMessage.HandleNotFound(_notFoundError);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(statusCode);
+        result.Should().BeSuccess()
+            .Which.StatusCode.Should().Be(statusCode);
     }
 
     [Theory]
@@ -75,8 +77,8 @@ public class HandleNotFoundTests
         var result = httpResponseMessage.HandleNotFound(_notFoundError);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(statusCode);
+        result.Should().BeSuccess()
+            .Which.StatusCode.Should().Be(statusCode);
     }
 
     #endregion
@@ -94,8 +96,8 @@ public class HandleNotFoundTests
         var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(_notFoundError);
+        result.Should().BeFailureOfType<NotFoundError>()
+            .Which.Should().HaveDetail("Person not found");
     }
 
     [Fact]
@@ -112,8 +114,8 @@ public class HandleNotFoundTests
         var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().BeSuccess()
+            .Which.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Theory]
@@ -132,8 +134,8 @@ public class HandleNotFoundTests
         var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(statusCode);
+        result.Should().BeSuccess()
+            .Which.StatusCode.Should().Be(statusCode);
     }
 
     [Theory]
@@ -151,8 +153,8 @@ public class HandleNotFoundTests
         var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(statusCode);
+        result.Should().BeSuccess()
+            .Which.StatusCode.Should().Be(statusCode);
     }
 
     #endregion
