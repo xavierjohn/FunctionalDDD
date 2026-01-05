@@ -10,14 +10,20 @@
       <IncludeBuildOutput>false</IncludeBuildOutput>
 
       <!-- https://github.com/nuget/home/issues/8583 -->
-      <NoWarn>$(NoWarn);NU5128</NoWarn>
-     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-     <IsTrimmable>false</IsTrimmable>
+      <!-- CS1574: XML comment cref attributes cannot be resolved in generator project (expected) -->
+      <NoWarn>$(NoWarn);NU5128;CS1574</NoWarn>
+      <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+      
+      <!-- .NET Standard 2.0 doesn't support AOT/Trim analyzers -->
+      <IsTrimmable>false</IsTrimmable>
+      <EnableAotAnalyzer>false</EnableAotAnalyzer>
+      <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
    </PropertyGroup>
 
    <!-- This ensures the library will be packaged as a source generator when we use `dotnet pack` -->
    <ItemGroup>
       <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+      <None Include="README.md" Pack="true" PackagePath="\" />
    </ItemGroup>
    
    <ItemGroup>

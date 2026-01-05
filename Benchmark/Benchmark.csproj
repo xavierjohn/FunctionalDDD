@@ -5,6 +5,11 @@
     <AssemblyName>Benchmark</AssemblyName>
     <RootNamespace>Benchmark</RootNamespace>
     <IsPackable>false</IsPackable>
+    
+    <!-- Benchmark projects don't need AOT/Trim compatibility or XML docs -->
+    <EnableAotAnalyzer>false</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

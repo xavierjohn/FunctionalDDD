@@ -1,9 +1,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
+<Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
+  
   <PropertyGroup Label="General">
     <Authors>Xavier John</Authors>
     <Company>$(Authors)</Company>
-    <Copyright>Copyright © $(Company) 2022. All rights reserved.</Copyright>
+    <Copyright>Copyright © $(Company) 2022-2026. All rights reserved.</Copyright>
     <NeutralLanguage>en</NeutralLanguage>
     <DefaultLanguage>en-US</DefaultLanguage>
     <SolutionDir Condition=" '$(SolutionDir)' == '' OR '$(SolutionDir)' == '*Undefined if not building a solution or within Visual Studio*' ">$(MSBuildThisFileDirectory)</SolutionDir>
@@ -15,20 +16,24 @@
     <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <RepositoryType>git</RepositoryType>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+    
+    <!-- Trim/AOT analyzers for library compatibility (opt-in) -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
   
-  <PropertyGroup  Label="nuget">
+  <PropertyGroup Label="nuget">
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
     <PackageProjectUrl>https://xavierjohn.github.io/FunctionalDDD/</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   
-  <PropertyGroup  Label="Build">
+  <PropertyGroup Label="Build">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <!-- Enable linter -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -40,14 +45,18 @@
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
     <RootNamespace>FunctionalDdd</RootNamespace>
     <AssemblyName>FunctionalDdd.$(MSBuildProjectName)</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <DebugType>embedded</DebugType>
+    
+    <!-- Detect breaking changes in library APIs -->
+    <EnablePackageValidation>true</EnablePackageValidation>
   </PropertyGroup>
 
-  <!-- Include icon for non-test projects -->
   <ItemGroup Condition=" '$(IsTestProject)' == 'false' ">
     <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- Test projects. -->
   <ImportGroup Condition=" '$(IsTestProject)' == 'true' ">
     <Import Project="$(MSBuildThisFileDirectory)build/test.props"/>
   </ImportGroup>
