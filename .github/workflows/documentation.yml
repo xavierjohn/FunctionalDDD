@@ -8,24 +8,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0 # depth is needed for nbgv
+        
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.0.x'
 
-    - name: Checkout
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0 # depth is needed for nbgv
-    - uses: dotnet/nbgv@master
+    - name: Setup versioning
+      uses: dotnet/nbgv@master
       with:
         setAllVars: true
 
-    - run: dotnet tool update -g docfx
-    - run: docfx docs/docfx_project/docfx.json
+    - name: Update doc tools
+      run: dotnet tool update -g docfx
+      
+    - name: Build docs
+      run: docfx docs/docfx_project/docfx.json
 
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v4
+    - name: Verify documentation build
+      run: |
+        if [ ! -d "docs/docfx_project/_site" ]; then
+          echo "Documentation build failed - _site directory not found"
+          exit 1
+        fi
+        echo "Documentation build successful"
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v5
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: docs/docfx_project/_site
+        force_orphan: true
