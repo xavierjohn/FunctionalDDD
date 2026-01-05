@@ -1,4 +1,4 @@
-# API Documentation for FunctionalDdd Library
+﻿# API Documentation for FunctionalDdd Library
 
 Welcome to the FunctionalDDD API reference. This library brings Railway-Oriented Programming (ROP) and Domain-Driven Design (DDD) patterns to C#, enabling you to write robust, maintainable code with explicit error handling.
 
@@ -8,17 +8,185 @@ Welcome to the FunctionalDDD API reference. This library brings Railway-Oriented
 
 > **New to Railway-Oriented Programming?** The concept uses a railway track analogy where operations flow along a success track or switch to an error track. For a gentle introduction to the philosophy, see [this introductory article](https://blog.logrocket.com/what-is-railway-oriented-programming/). Our documentation provides a comprehensive, production-ready C# implementation with type safety, async support, and real-world patterns.
 
-#### [Result](xref:FunctionalDdd.Result`1)
+#### [Result&lt;T&gt;](xref:FunctionalDdd.Result`1)
 
-The Result type used in functional programming languages to represent a success value or an error. Core to Railway-Oriented Programming, it allows you to chain operations where each step can succeed or fail, automatically handling the error path.
+The `Result<T>` monad represents an operation that can either succeed with a value of type `T` or fail with an `Error`. This is the foundation of Railway-Oriented Programming, enabling explicit error handling without exceptions.
 
-**Key operations:** `Bind`, `Map`, `Tap`, `Ensure`, `Match`, `Combine`, `Compensate`
+**Type Definition:**
+```csharp
+public readonly struct Result<T>
+{
+    public bool IsSuccess { get; }
+    public bool IsFailure { get; }
+    public T Value { get; }          // Available when IsSuccess is true
+    public Error Error { get; }      // Available when IsFailure is true
+}
+```
 
-#### [Maybe](xref:FunctionalDdd.Maybe`1)
+**Core Operations:**
+- **`Bind`** - Chain operations that return Result (railway switching)
+- **`Map`** - Transform success values while preserving errors
+- **`Tap`** - Execute side effects without changing the result (logging, events, notifications)
+- **`Ensure`** - Apply business rule validation
+- **`Match`** - Pattern match on success/failure for final handling
+- **`Combine`** - Aggregate multiple results and collect all errors (parallel validation)
+- **`Compensate`** - Provide fallback values on failure
+- **`MapError`** - Transform error types
+- **`When`** - Conditional execution based on predicates
 
-The Maybe type represents an optional value that may or may not exist. Use it to eliminate null reference exceptions and make optionality explicit in your type system.
+**Common Usage Patterns:**
 
-**Key operations:** `Map`, `Bind`, `Match`, `GetValueOrDefault`, `ToResult`
+*Railway Pattern - Sequential Chaining:*
+```csharp
+var result = UserId.TryCreate(id)
+    .Bind(repository.GetUser)
+    .Map(user => new UserDto(user))
+    .Tap(dto => logger.LogInformation("User retrieved: {Id}", dto.Id))
+    .Match(
+        onSuccess: dto => Ok(dto),
+        onFailure: error => error.ToActionResult(this)
+    );
+```
+
+*Combine - Parallel Validation (Collects ALL Errors):*
+```csharp
+var result = EmailAddress.TryCreate(email)
+    .Combine(FirstName.TryCreate(firstName))
+    .Combine(LastName.TryCreate(lastName))
+    .Bind((email, first, last) => User.Create(email, first, last));
+```
+
+*Tap - Side Effects Without Breaking the Chain:*
+```csharp
+var result = order.Submit()
+    .Tap(o => logger.LogInformation("Order {Id} submitted", o.Id))
+    .Tap(o => eventBus.Publish(new OrderSubmittedEvent(o.Id)))
+    .Tap(o => emailService.SendConfirmation(o.CustomerEmail))
+    .Tap(o => analytics.Track("OrderSubmitted", o.Id));
+// Result is still Result<Order> after all Taps
+```
+
+**Combine vs Bind:**
+```csharp
+// Combine: ALL validations run, ALL errors collected
+var result = ProductName.TryCreate(name)      // ❌ Error: "Name too short"
+    .Combine(Price.TryCreate(price))          // ❌ Error: "Price must be positive"
+    .Combine(Quantity.TryCreate(quantity));   // ✅ Success
+// Returns errors for BOTH name AND price
+
+// Bind: Sequential - stops at first error
+var result = ProductName.TryCreate(name)      // ❌ Error: "Name too short"
+    .Bind(n => Price.TryCreate(price)         // ⏹️ Never executed
+        .Bind(p => Quantity.TryCreate(quantity)));
+// Only returns the name error
+```
+
+**Factory Methods:**
+- `Result.Success<T>(T value)` - Create a successful result
+- `Result.Failure<T>(Error error)` - Create a failed result
+
+#### Using Result&lt;Unit&gt; for Void Operations
+
+When an operation doesn't return a value (like Delete or Update commands), use `Result<Unit>`:
+
+**What is Unit?**
+- `Unit` is a special type representing "no value" 
+- Similar to `void` but can be used as a generic type parameter
+- `Result<Unit>` indicates success/failure without a data payload
+
+**Type:**
+```csharp
+Result<Unit>  // Success or failure, no value
+```
+
+**Common Use Cases:**
+- Delete operations
+- Update operations that don't return data
+- Void commands
+- Operations that modify state
+
+**Example:**
+```csharp
+// Void operation that can fail
+public Result<Unit> DeleteUser(UserId id) =>
+    repository.Delete(id)
+        .Tap(() => eventBus.Publish(new UserDeletedEvent(id)));
+
+// In API controllers, Unit results automatically return 204 No Content
+[HttpDelete("{id}")]
+public ActionResult<Unit> DeleteUser(Guid id) =>
+    UserId.TryCreate(id)
+        .Bind(DeleteUserCommand)
+        .ToActionResult(this);  // Returns 204 No Content on success
+```
+
+**Factory Methods for Unit Results:**
+- `Result.Success()` - Create successful unit result
+- `Result.Failure(Error error)` - Create failed unit result
+
+#### [Maybe&lt;T&gt;](xref:FunctionalDdd.Maybe`1)
+
+The `Maybe<T>` monad represents an optional value that may or may not exist. Use it to eliminate null reference exceptions and make optionality explicit in your type system. Think of it as a type-safe alternative to nullable references.
+
+**Type Definition:**
+```csharp
+public readonly struct Maybe<T>
+{
+    public bool HasValue { get; }
+    public bool HasNoValue { get; }
+    public T Value { get; }  // Throws if HasNoValue is true
+}
+```
+
+**Core Operations:**
+- **`GetValueOrDefault`** - Safely extract value with fallback
+- **`TryGetValue`** - Try to get the value (out parameter pattern)
+- **`GetValueOrThrow`** - Get value or throw exception
+- **`ToResult`** - Convert to Result (None becomes an Error)
+- **`AsMaybe`** - Convert from nullable to Maybe
+- **`AsNullable`** - Convert Maybe back to nullable
+
+**Properties:**
+- **`HasValue`** - Check if value is present
+- **`HasNoValue`** - Check if value is absent  
+- **`Value`** - Get value (throws if absent)
+
+**Common Patterns:**
+```csharp
+// Repository query (null-safe)
+Maybe<User> FindUserByEmail(EmailAddress email);
+
+// Safe value extraction with fallback
+var user = repository.FindUserByEmail(email);
+var userName = user.HasValue 
+    ? user.Value.FullName 
+    : "Unknown User";
+
+// Or using GetValueOrDefault
+var userName = repository.FindUserByEmail(email)
+    .GetValueOrDefault(defaultUser)
+    .FullName;
+
+// Convert to Result for further processing
+var result = repository.FindUserByEmail(email)
+    .ToResult(Error.NotFound("User", email.Value))
+    .Bind(user => user.UpdateProfile(newData));
+
+// Try pattern for safe access
+if (repository.FindUserByEmail(email).TryGetValue(out var user))
+{
+    // Use user safely
+    ProcessUser(user);
+}
+```
+
+**Factory Methods:**
+- `Maybe.From<T>(T value)` - Create Maybe from nullable value (null becomes None)
+- `Maybe.None<T>()` - Create an empty Maybe
+
+**When to Use:**
+- **Maybe**: When absence is a valid, expected state (e.g., optional config, search results)
+- **Result**: When you need to communicate *why* something failed (validation, business rules)
 
 #### [Error Types](xref:FunctionalDdd.Error)
 
