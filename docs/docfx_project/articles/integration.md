@@ -7,6 +7,7 @@ Integrate FunctionalDDD with popular .NET frameworks and tools for building prod
 This section provides comprehensive guides for integrating the FunctionalDDD library with:
 
 - **ASP.NET Core** - MVC Controllers and Minimal API
+- **HTTP Client** - HttpClient extensions for Result/Maybe patterns
 - **FluentValidation** - Powerful validation framework
 - **Entity Framework Core** - ORM and repository patterns
 - **OpenTelemetry** - Distributed tracing and observability
@@ -32,6 +33,26 @@ Learn how to integrate Railway-Oriented Programming with ASP.NET Core:
 - ✅ Problem Details (RFC 7807) format
 - ✅ Field-level validation errors
 - ✅ Unit type support (204 No Content)
+- ✅ Full async/await with CancellationToken
+
+---
+
+### 🌐 [HTTP Client Integration](integration-http.md)
+**Level:** Beginner | **Time:** 20-30 min
+
+Work with HttpClient using functional patterns:
+
+- **Status Code Handlers** - Handle 401, 403, 404, 409 errors functionally
+- **Range Handlers** - Handle all 4xx or 5xx errors at once
+- **JSON Deserialization** - Convert responses to `Result<T>` or `Result<Maybe<T>>`
+- **Functional Error Handling** - No exceptions, just Result types
+- **Railway Composition** - Chain HTTP calls with other operations
+
+**Key Features:**
+- ✅ Specific status code handling (HandleUnauthorized, HandleForbidden, HandleConflict)
+- ✅ Range-based error handling (HandleClientError, HandleServerError)
+- ✅ EnsureSuccess - Functional alternative to EnsureSuccessStatusCode()
+- ✅ JSON deserialization with Result/Maybe
 - ✅ Full async/await with CancellationToken
 
 ---
@@ -102,6 +123,9 @@ Enable distributed tracing and monitoring:
 ```bash
 # ASP.NET Core integration
 dotnet add package FunctionalDDD.Asp
+
+# HttpClient integration
+dotnet add package FunctionalDDD.HttpClient
 
 # FluentValidation integration
 dotnet add package FunctionalDDD.FluentValidation
