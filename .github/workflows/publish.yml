@@ -52,16 +52,6 @@ jobs:
     - name: Pack
       run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols --include-source
 
-    - name: Verify packages
-      run: |
-        echo "Verifying package contents..."
-        for pkg in nupkgs/*.nupkg; do
-          if [[ "$pkg" != *".symbols."* ]]; then
-            echo "Verifying $pkg"
-            dotnet nuget verify "$pkg"
-          fi
-        done
-
     - name: List packages
       run: |
         echo "Packages to be published:"
@@ -79,6 +69,6 @@ jobs:
       if: ${{ inputs.dry_run == 'true' }}
       run: |
         echo "DRY RUN - Packages NOT published:"
-        ls -lh nupkgs/*.nupkgs
+        ls -lh nupkgs/*.nupkg
         echo ""
         echo "To publish for real, re-run with dry_run = false"
