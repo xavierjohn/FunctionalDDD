@@ -8,6 +8,9 @@ This library provides fluent extension methods for working with `HttpResponseMes
 
 ## Features
 
+- **Specific Status Code Handling**: Handle 401 Unauthorized, 403 Forbidden, 409 Conflict
+- **Range-based Error Handling**: Handle all 4xx client errors or 5xx server errors at once
+- **EnsureSuccess**: Functional alternative to `EnsureSuccessStatusCode()` that returns Result
 - **Error Handling for HTTP Status Codes**: Handle specific status codes (404 Not Found) functionally
 - **Custom Error Handling**: Flexible callbacks for failed HTTP responses
 - **JSON Deserialization**: Native support for deserializing to `Result<T>` and `Maybe<T>`
@@ -36,6 +39,51 @@ var result = await httpClient.GetAsync($"api/users/{userId}", ct)
 // Result will contain either:
 // - Success with User object
 // - Failure with NotFoundError
+```
+
+### Handle Specific HTTP Status Codes
+
+```csharp
+// Handle authentication/authorization errors
+var result = await httpClient.PostAsync("api/admin/users", content, ct)
+    .HandleUnauthorizedAsync(Error.Unauthorized("Please login"))
+    .HandleForbiddenAsync(Error.Forbidden("Admin access required"))
+    .HandleConflictAsync(Error.Conflict("Username already exists"))
+    .ReadResultFromJsonAsync(UserJsonContext.Default.User, ct);
+
+// Each handler only intercepts its specific status code
+// - 401 ? UnauthorizedError
+// - 403 ? ForbiddenError
+// - 409 ? ConflictError
+// - Other codes pass through to next handler
+```
+
+### Handle Error Ranges
+
+```csharp
+// Handle all client errors (4xx) or server errors (5xx) at once
+var result = await httpClient.GetAsync("api/data", ct)
+    .HandleClientErrorAsync(code => Error.BadRequest($"Client error: {code}"))
+    .HandleServerErrorAsync(code => Error.ServiceUnavailable($"Server error: {code}"))
+    .ReadResultFromJsonAsync(DataJsonContext.Default.Data, ct);
+
+// Client errors (400-499) ? Custom error via factory
+// Server errors (500+) ? Custom error via factory
+// Success codes ? Continue to JSON deserialization
+```
+
+### Ensure Success Status
+
+```csharp
+// Functional alternative to EnsureSuccessStatusCode()
+var result = await httpClient.DeleteAsync($"api/items/{id}", ct)
+    .EnsureSuccessAsync()  // Returns Result instead of throwing
+    .TapAsync(response => _logger.LogInformation("Deleted item {Id}", id));
+
+// With custom error factory
+var result = await httpClient.GetAsync("api/data", ct)
+    .EnsureSuccessAsync(code => Error.Unexpected($"API call failed with {code}"))
+    .ReadResultFromJsonAsync(jsonContext, ct);
 ```
 
 ### Custom Error Handling
@@ -76,6 +124,22 @@ var result = await httpClient.GetAsync($"api/products/{productId}", ct)
     .MapAsync(p => new ProductViewModel(p));
 ```
 
+### Composing Multiple Status Handlers
+
+```csharp
+// Chain multiple handlers for comprehensive error handling
+var result = await httpClient.PostAsync("api/orders", orderContent, ct)
+    .HandleUnauthorizedAsync(Error.Unauthorized("Please login to place orders"))
+    .HandleForbiddenAsync(Error.Forbidden("Your account cannot place orders"))
+    .HandleConflictAsync(Error.Conflict("Order already exists"))
+    .HandleClientErrorAsync(code => Error.BadRequest($"Invalid order data: {code}"))
+    .HandleServerErrorAsync(code => Error.ServiceUnavailable($"Order service unavailable: {code}"))
+    .ReadResultFromJsonAsync(OrderJsonContext.Default.Order, ct)
+    .TapAsync(order => _logger.LogInformation("Order {OrderId} created", order.Id));
+
+// Handlers are evaluated in order - first match wins
+```
+
 ### Working with Result<HttpResponseMessage>
 
 ```csharp
@@ -91,7 +155,9 @@ var data = await responseResult
 
 ## API Reference
 
-### HandleNotFound / HandleNotFoundAsync
+### Status Code Handlers
+
+#### HandleNotFound / HandleNotFoundAsync
 
 Converts HTTP 404 responses to `NotFoundError`.
 
@@ -105,7 +171,126 @@ Task<Result<HttpResponseMessage>> HandleNotFoundAsync(
     NotFoundError notFoundError)
 ```
 
-### HandleFailureAsync
+#### HandleUnauthorized / HandleUnauthorizedAsync
+
+Converts HTTP 401 responses to `UnauthorizedError`.
+
+```csharp
+Result<HttpResponseMessage> HandleUnauthorized(
+    this HttpResponseMessage response, 
+    UnauthorizedError unauthorizedError)
+
+Task<Result<HttpResponseMessage>> HandleUnauthorizedAsync(
+    this Task<HttpResponseMessage> responseTask, 
+    UnauthorizedError unauthorizedError)
+```
+
+#### HandleForbidden / HandleForbiddenAsync
+
+Converts HTTP 403 responses to `ForbiddenError`.
+
+```csharp
+Result<HttpResponseMessage> HandleForbidden(
+    this HttpResponseMessage response, 
+    ForbiddenError forbiddenError)
+
+Task<Result<HttpResponseMessage>> HandleForbiddenAsync(
+    this Task<HttpResponseMessage> responseTask, 
+    ForbiddenError forbiddenError)
+```
+
+#### HandleConflict / HandleConflictAsync
+
+Converts HTTP 409 responses to `ConflictError`.
+
+```csharp
+Result<HttpResponseMessage> HandleConflict(
+    this HttpResponseMessage response, 
+    ConflictError conflictError)
+
+Task<Result<HttpResponseMessage>> HandleConflictAsync(
+    this Task<HttpResponseMessage> responseTask, 
+    ConflictError conflictError)
+```
+
+### Range Handlers
+
+#### HandleClientError / HandleClientErrorAsync
+
+Handles any HTTP client error (4xx) status codes with a custom error factory.
+
+```csharp
+Result<HttpResponseMessage> HandleClientError(
+    this HttpResponseMessage response,
+    Func<HttpStatusCode, Error> errorFactory)
+
+Task<Result<HttpResponseMessage>> HandleClientErrorAsync(
+    this Task<HttpResponseMessage> responseTask,
+    Func<HttpStatusCode, Error> errorFactory)
+```
+
+**Example:**
+```csharp
+var result = httpClient.GetAsync(url, ct)
+    .HandleClientErrorAsync(code => code switch
+    {
+        HttpStatusCode.BadRequest => Error.BadRequest("Invalid request"),
+        HttpStatusCode.NotFound => Error.NotFound("Resource not found"),
+        _ => Error.Unexpected($"Client error: {code}")
+    });
+```
+
+#### HandleServerError / HandleServerErrorAsync
+
+Handles any HTTP server error (5xx) status codes with a custom error factory.
+
+```csharp
+Result<HttpResponseMessage> HandleServerError(
+    this HttpResponseMessage response,
+    Func<HttpStatusCode, Error> errorFactory)
+
+Task<Result<HttpResponseMessage>> HandleServerErrorAsync(
+    this Task<HttpResponseMessage> responseTask,
+    Func<HttpStatusCode, Error> errorFactory)
+```
+
+**Example:**
+```csharp
+var result = httpClient.PostAsync(url, content, ct)
+    .HandleServerErrorAsync(code => Error.ServiceUnavailable($"API error: {code}"));
+```
+
+### Success Validation
+
+#### EnsureSuccess / EnsureSuccessAsync
+
+Ensures the HTTP response has a success status code, otherwise returns an error.
+This is a functional alternative to `HttpResponseMessage.EnsureSuccessStatusCode()`.
+
+```csharp
+Result<HttpResponseMessage> EnsureSuccess(
+    this HttpResponseMessage response,
+    Func<HttpStatusCode, Error>? errorFactory = null)
+
+Task<Result<HttpResponseMessage>> EnsureSuccessAsync(
+    this Task<HttpResponseMessage> responseTask,
+    Func<HttpStatusCode, Error>? errorFactory = null)
+```
+
+**Example:**
+```csharp
+// Default error
+var result = await httpClient.DeleteAsync($"api/items/{id}", ct)
+    .EnsureSuccessAsync();
+
+// Custom error
+var result = await httpClient.PutAsync(url, content, ct)
+    .EnsureSuccessAsync(code => Error.Unexpected($"Update failed: {code}"));
+```
+
+### Custom Error Handling
+
+#### HandleFailureAsync
 
 Custom error handling for any non-success status code.
 
@@ -117,7 +302,9 @@ Task<Result<HttpResponseMessage>> HandleFailureAsync<TContext>(
     CancellationToken cancellationToken)
 ```
 
-### ReadResultFromJsonAsync
+### JSON Deserialization
+
+#### ReadResultFromJsonAsync
 
 Deserialize JSON response to `Result<T>`. Returns error if response is null.
 
@@ -128,7 +315,7 @@ Task<Result<TValue>> ReadResultFromJsonAsync<TValue>(
     CancellationToken cancellationToken)
 ```
 
-### ReadResultMaybeFromJsonAsync
+#### ReadResultMaybeFromJsonAsync
 
 Deserialize JSON response to `Result<Maybe<T>>`. Null responses become `Maybe.None`.
 
@@ -147,6 +334,7 @@ This library follows these design principles:
 2. **Dependency Inversion**: Infrastructure depends on core abstractions, not vice versa
 3. **Composability**: All methods integrate with Railway Oriented Programming patterns
 4. **Explicit Error Handling**: No hidden exceptions; all errors are represented in the type system
+5. **No Polly Overlap**: Focused on status code handling, not resilience patterns (use Polly for retry/circuit breaker)
 
 ## Related Packages
 
