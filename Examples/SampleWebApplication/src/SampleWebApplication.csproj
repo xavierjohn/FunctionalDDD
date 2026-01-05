@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
-    <EmitCompilerGeneratedFiles>true </EmitCompilerGeneratedFiles>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsTrimmable>false</IsTrimmable>
   </PropertyGroup>
 
