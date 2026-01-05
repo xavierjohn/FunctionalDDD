@@ -64,7 +64,7 @@ public class ReadResultFromJsonTests
     }
 
     [Fact]
-    public async Task Will_throw_JsonException_with_nulll_content()
+    public async Task Will_throw_JsonException_with_null_content()
     {
         // Arrange
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
