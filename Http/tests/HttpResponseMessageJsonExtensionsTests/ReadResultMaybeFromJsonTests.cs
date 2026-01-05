@@ -316,72 +316,11 @@ public class ReadResultMaybeFromJsonTests
         result.Error.Should().Be(error);
     }
 
-    [Fact]
-    public async Task Task_wrapped_not_found_response_Returns_specified_error()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
-        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
-
-        // Act
-        var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(_notFoundError);
-    }
-
-    [Fact]
-    public async Task Task_wrapped_ok_response_Returns_success()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
-        {
-            Content = new StringContent("Success")
-        };
-        var taskHttpResponseMessage = Task.FromResult(httpResponseMessage);
-
-        // Act
-        var result = await taskHttpResponseMessage.HandleNotFoundAsync(_notFoundError);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
     private Task<Error> CallbackFailedStatusCode(HttpResponseMessage response, string context, CancellationToken cancellationToken)
     {
         _callbackCalled = true;
         context.Should().Be("Common");
         return Task.FromResult((Error)Error.NotFound("Bad request"));
-    }
-
-    [Fact]
-    public void Not_found_response_Returns_specified_error()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.NotFound);
-
-        // Act
-        var result = httpResponseMessage.HandleNotFound(_notFoundError);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be(_notFoundError);
-    }
-
-    [Fact]
-    public void Ok_response_Returns_success()
-    {
-        // Arrange
-        using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK);
-
-        // Act
-        var result = httpResponseMessage.HandleNotFound(_notFoundError);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }
 
