@@ -5,35 +5,26 @@ using FunctionalDdd;
 using System.Diagnostics;
 using Xunit;
 
-public class AsyncUsageExamples : IClassFixture<TraceFixture>, IDisposable
+public class AsyncUsageExamples : IClassFixture<TraceFixture>
 {
-    private readonly List<Activity> _completedActivities = [];
-    private readonly ActivityListener _listener;
-
-    public AsyncUsageExamples()
-    {
-        // Set up ActivityListener to capture all activities from both test and ROP sources
-        _listener = new ActivityListener
-        {
-            ShouldListenTo = source =>
-                source.Name == TraceFixture.ActivitySourceName ||
-                source.Name == "Functional DDD ROP",  // ROP ActivitySource name
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = _completedActivities.Add
-        };
-        ActivitySource.AddActivityListener(_listener);
-    }
-    public void Dispose()
-    {
-        _listener?.Dispose();
-        GC.SuppressFinalize(this);
-    }
 
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
     public async Task Promote_customer(int id)
     {
+        List<Activity> completedActivities = [];
+
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source =>
+                source.Name == TraceFixture.ActivitySourceName ||
+                source.Name == "Functional DDD ROP",  // ROP ActivitySource name
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = completedActivities.Add
+        };
+        ActivitySource.AddActivityListener(listener);
+
         using var activity = TraceFixture.ActivitySource.StartActivity();
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
@@ -48,9 +39,9 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>, IDisposable
             result.Should().Be("Failed");
 
         // Analyze the complete trace tree
-        _completedActivities.Should().HaveCount(5);
+        completedActivities.Should().HaveCount(5);
         
-        var activities = _completedActivities;
+        var activities = completedActivities;
         activities[0].OperationName.Should().Be("ToResult");
         activities[0].Status.Should().Be(ActivityStatusCode.Ok);
 
@@ -68,7 +59,6 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>, IDisposable
     public static async Task PromoteAsync_customer()
     {
         var id = 1;
-
         using var activity = TraceFixture.ActivitySource.StartActivity();
 
         var result = await GetCustomerByIdAsync(id)
