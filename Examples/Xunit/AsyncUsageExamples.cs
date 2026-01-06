@@ -1,14 +1,38 @@
 ﻿
 namespace Example.Tests;
+
 using FunctionalDdd;
+using System.Diagnostics;
 using Xunit;
 
-public class AsyncUsageExamples : IClassFixture<TraceFixture>
+public class AsyncUsageExamples : IClassFixture<TraceFixture>, IDisposable
 {
+    private readonly List<Activity> _completedActivities = [];
+    private readonly ActivityListener _listener;
+
+    public AsyncUsageExamples()
+    {
+        // Set up ActivityListener to capture all activities from both test and ROP sources
+        _listener = new ActivityListener
+        {
+            ShouldListenTo = source =>
+                source.Name == TraceFixture.ActivitySourceName ||
+                source.Name == "Functional DDD ROP",  // ROP ActivitySource name
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = _completedActivities.Add
+        };
+        ActivitySource.AddActivityListener(_listener);
+    }
+    public void Dispose()
+    {
+        _listener?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
-    public static async Task Promote_customer(int id)
+    public async Task Promote_customer(int id)
     {
         using var activity = TraceFixture.ActivitySource.StartActivity();
         var result = await GetCustomerByIdAsync(id)
@@ -22,6 +46,22 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             result.Should().Be("Okay");
         else
             result.Should().Be("Failed");
+
+        // Analyze the complete trace tree
+        _completedActivities.Should().HaveCount(5);
+        
+        var activities = _completedActivities;
+        activities[0].OperationName.Should().Be("ToResult");
+        activities[0].Status.Should().Be(ActivityStatusCode.Ok);
+
+        var expectedStatus = id == 1 ? ActivityStatusCode.Ok : ActivityStatusCode.Error;
+        var expectedOperations = new[] { "Ensure", "Tap", "Bind", "Match" };
+        
+        for (int i = 0; i < expectedOperations.Length; i++)
+        {
+            activities[i + 1].OperationName.Should().Be(expectedOperations[i]);
+            activities[i + 1].Status.Should().Be(expectedStatus);
+        }
     }
 
     [Fact]

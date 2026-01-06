@@ -105,7 +105,7 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, CancellationToken, Task<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -128,7 +128,7 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, CancellationToken, ValueTask<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -149,7 +149,7 @@ public static partial class BindExtensionsAsync
         this Result<(T1, T2)> result,
         Func<T1, T2, Task<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -170,7 +170,7 @@ public static partial class BindExtensionsAsync
         this Result<(T1, T2)> result,
         Func<T1, T2, ValueTask<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -199,7 +199,7 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, CancellationToken, Task<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -223,7 +223,7 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, CancellationToken, ValueTask<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -245,7 +245,7 @@ public static partial class BindExtensionsAsync
         this Result<(<# WriteTs(i); #>)> result,
         Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -267,7 +267,7 @@ public static partial class BindExtensionsAsync
         this Result<(<# WriteTs(i); #>)> result,
         Func<<# WriteTs(i); #>, ValueTask<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
@@ -294,7 +294,7 @@ public static partial class BindExtensionsAsync
         this Task<Result<(T1, T2)>> resultTask,
         Func<T1, T2, Result<TResult>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -316,7 +316,7 @@ public static partial class BindExtensionsAsync
         this ValueTask<Result<(T1, T2)>> resultTask,
         Func<T1, T2, Result<TResult>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -342,7 +342,7 @@ public static partial class BindExtensionsAsync
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -365,7 +365,7 @@ public static partial class BindExtensionsAsync
         this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -394,7 +394,7 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, CancellationToken, Task<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -418,7 +418,7 @@ public static partial class BindExtensionsAsync
         Func<T1, T2, CancellationToken, ValueTask<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -440,7 +440,7 @@ public static partial class BindExtensionsAsync
         this Task<Result<(T1, T2)>> resultTask,
         Func<T1, T2, Task<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -462,7 +462,7 @@ public static partial class BindExtensionsAsync
         this ValueTask<Result<(T1, T2)>> resultTask,
         Func<T1, T2, ValueTask<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -490,7 +490,7 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, CancellationToken, Task<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -515,7 +515,7 @@ public static partial class BindExtensionsAsync
         Func<<# WriteTs(i); #>, CancellationToken, ValueTask<Result<TResult>>> func,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -538,7 +538,7 @@ public static partial class BindExtensionsAsync
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -561,7 +561,7 @@ public static partial class BindExtensionsAsync
         this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, ValueTask<Result<TResult>>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         var result = await resultTask.ConfigureAwait(false);
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);

@@ -32,11 +32,9 @@ public static partial class TapExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess)
-        {
             action();
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -51,11 +49,9 @@ public static partial class TapExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess)
-        {
             action(result.Value);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 }
@@ -104,13 +100,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<Task> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func().ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -124,13 +118,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<CancellationToken, Task> func, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func(cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -203,13 +195,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, Task> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func(result.Value).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -223,13 +213,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, CancellationToken, Task> func, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func(result.Value, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -245,13 +233,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<CancellationToken, ValueTask> func, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func(cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -264,13 +250,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<ValueTask> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func().ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
-
+        
+        result.LogActivityStatus();
         return result;
     }
 
@@ -284,13 +268,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, CancellationToken, ValueTask> func, CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func(result.Value, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -303,13 +285,11 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, ValueTask> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
-        {
             await func(result.Value).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
