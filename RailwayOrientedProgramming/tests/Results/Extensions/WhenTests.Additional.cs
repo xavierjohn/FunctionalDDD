@@ -1,6 +1,7 @@
 namespace RailwayOrientedProgramming.Tests.Results.Extensions.WhenTests;
 
 using FunctionalDdd.Testing;
+using RailwayOrientedProgramming.Tests.Helpers;
 using System.Diagnostics;
 
 public class WhenAdditionalTests : TestBase
@@ -438,15 +439,7 @@ public class WhenAdditionalTests : TestBase
     public void When_CreatesActivity_WithCorrectName()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -455,23 +448,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("When");
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("When");
     }
 
     [Fact]
     public void Unless_CreatesActivity_WithCorrectName()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -480,23 +466,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("Unless");
+        var activity = activityTest.GetActivity("Unless");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("Unless");
     }
 
     [Fact]
     public async Task WhenAsync_CreatesActivity_WithCorrectName()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -505,23 +484,16 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("When");
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("When");
     }
 
     [Fact]
     public async Task UnlessAsync_CreatesActivity_WithCorrectName()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -530,23 +502,16 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("Unless");
+        var activity = activityTest.GetActivity("Unless");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("Unless");
     }
 
     [Fact]
     public void When_LogsActivityStatus_OnSuccess()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -555,23 +520,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
     public void When_LogsActivityStatus_OnFailure()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Failure<int>(Error1);
 
         // Act
@@ -580,23 +538,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Error);
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Error);
     }
 
     [Fact]
     public void When_LogsActivityStatus_WhenOperationReturnsFailure()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -605,23 +556,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Failure<int>(Error2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Error);
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Error);
     }
 
     [Fact]
     public void When_LogsActivityStatus_WhenConditionNotMet()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -630,23 +574,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
     public async Task WhenAsync_LogsActivityStatus_OnSuccess()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -655,23 +592,16 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
     public async Task WhenAsync_LogsActivityStatus_OnFailure()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Failure<int>(Error1);
 
         // Act
@@ -680,23 +610,16 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Error);
+        var activity = activityTest.GetActivity("When");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Error);
     }
 
     [Fact]
     public void Unless_LogsActivityStatus_OnSuccess()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -705,23 +628,16 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("Unless");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
     public async Task UnlessAsync_LogsActivityStatus_OnSuccess()
     {
         // Arrange
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity => capturedActivity = activity
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
         var result = Result.Success(42);
 
         // Act
@@ -730,8 +646,9 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("Unless");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     #endregion

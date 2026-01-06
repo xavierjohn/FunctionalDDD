@@ -1,5 +1,6 @@
 namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
+using RailwayOrientedProgramming.Tests.Helpers;
 using System.Diagnostics;
 
 public class DebugTests : TestBase
@@ -344,354 +345,168 @@ public class DebugTests : TestBase
 
 #if DEBUG
     [Fact]
-    public void Debug_creates_activity_with_success_result()
-    {
-        var debugActivityCreated = false;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) || activity.DisplayName == "Debug")
-                    debugActivityCreated = true;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
-        var result = Result.Success("Test value");
-        result.Debug("Test message");
-
-        debugActivityCreated.Should().BeTrue();
-    }
-
-    [Fact]
-    public void Debug_creates_activity_with_failure_result()
-    {
-        var debugActivityCreated = false;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) || activity.DisplayName == "Debug")
-                    debugActivityCreated = true;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
-        var result = Result.Failure<string>(Error.Unexpected("Test error"));
-        result.Debug("Test message");
-
-        debugActivityCreated.Should().BeTrue();
-    }
-
-    [Fact]
-    public void DebugOnSuccess_creates_activity_when_result_is_success()
-    {
-        var activityStarted = false;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: OnSuccess")
-                    activityStarted = true;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
-        var result = Result.Success("Test value");
-        result.DebugOnSuccess(_ => { });
-
-        activityStarted.Should().BeTrue();
-    }
-
-    [Fact]
-    public void DebugOnFailure_creates_activity_when_result_is_failure()
-    {
-        var activityStarted = false;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: OnFailure")
-                    activityStarted = true;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
-        var result = Result.Failure<string>(Error.Unexpected("Test error"));
-        result.DebugOnFailure(_ => { });
-
-        activityStarted.Should().BeTrue();
-    }
-
-    [Fact]
     public void Debug_creates_activity_with_correct_name_and_tags_for_success()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: Test message")
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var result = Result.Success("Test value");
         result.Debug("Test message");
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("Debug: Test message");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Success");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.result.value");
-        capturedActivity.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("Debug: Test message");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("Debug: Test message");
+        activity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Success");
+        activity.Tags.Should().Contain(t => t.Key == "debug.result.value");
+        activity.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
     public void Debug_creates_activity_with_correct_name_and_tags_for_failure()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: Error test")
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var error = Error.NotFound("User not found");
         var result = Result.Failure<string>(error);
         result.Debug("Error test");
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("Debug: Error test");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Failure");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "not.found.error");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.detail" && t.Value == "User not found");
-        capturedActivity.Status.Should().Be(ActivityStatusCode.Error);
+        var activity = activityTest.GetActivity("Debug: Error test");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("Debug: Error test");
+        activity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Failure");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "not.found.error");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.detail" && t.Value == "User not found");
+        activity.Status.Should().Be(ActivityStatusCode.Error);
     }
 
     [Fact]
     public void DebugDetailed_includes_type_information_for_success()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: Detailed test (Detailed)")
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var result = Result.Success(42);
         result.DebugDetailed("Detailed test");
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Tags.Should().Contain(t => t.Key == "debug.result.type" && t.Value == "Int32");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.result.value" && t.Value == "42");
+        var activity = activityTest.GetActivity("Debug: Detailed test (Detailed)");
+        activity.Should().NotBeNull();
+        activity!.Tags.Should().Contain(t => t.Key == "debug.result.type" && t.Value == "Int32");
+        activity.Tags.Should().Contain(t => t.Key == "debug.result.value" && t.Value == "42");
     }
 
     [Fact]
     public void DebugDetailed_includes_validation_error_field_details()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName.Contains("Validation error test", StringComparison.Ordinal))
-                    capturedActivity = activity;
-            },
-            ActivityStopped = activity =>
-            {
-                if (activity.DisplayName.Contains("Validation error test", StringComparison.Ordinal))
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var validationError = Error.Validation("Email is required", "email")
             .And("password", "Password too short");
         var result = Result.Failure<string>(validationError);
         result.DebugDetailed("Validation error test");
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "ValidationError");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.validation.field[0].name" && t.Value == "email");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.validation.field[1].name" && t.Value == "password");
+        var activities = activityTest.GetAllActivities();
+        var activity = activities.FirstOrDefault(a => 
+            a.DisplayName.Contains("Validation error test", StringComparison.Ordinal));
+        
+        activity.Should().NotBeNull();
+        activity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "ValidationError");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.validation.field[0].name" && t.Value == "email");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.validation.field[1].name" && t.Value == "password");
     }
 
     [Fact]
     public void DebugDetailed_includes_aggregate_error_details()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName.Contains("Aggregate error test", StringComparison.Ordinal))
-                    capturedActivity = activity;
-            },
-            ActivityStopped = activity =>
-            {
-                if (activity.DisplayName.Contains("Aggregate error test", StringComparison.Ordinal))
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var error1 = Error.NotFound("User not found");
         var error2 = Error.Unauthorized("Not authorized");
         var aggregateError = new AggregateError([error1, error2]);
         var result = Result.Failure<string>(aggregateError);
         result.DebugDetailed("Aggregate error test");
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "AggregateError");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.aggregate[0].code" && t.Value == "not.found.error");
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.aggregate[1].code" && t.Value == "unauthorized.error");
+        var activities = activityTest.GetAllActivities();
+        var activity = activities.FirstOrDefault(a => 
+            a.DisplayName.Contains("Aggregate error test", StringComparison.Ordinal));
+        
+        activity.Should().NotBeNull();
+        activity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "AggregateError");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.aggregate[0].code" && t.Value == "not.found.error");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.aggregate[1].code" && t.Value == "unauthorized.error");
     }
 
     [Fact]
     public void DebugWithStack_includes_stack_trace_information()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) && 
-                    activity.DisplayName.Contains("(with stack)", StringComparison.Ordinal))
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var result = Result.Success("Test");
         result.DebugWithStack("Stack test");
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Tags.Should().Contain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.stack[0].method");
+        var activities = activityTest.GetAllActivities();
+        var activity = activities.FirstOrDefault(a => 
+            a.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) && 
+            a.DisplayName.Contains("(with stack)", StringComparison.Ordinal));
+        
+        activity.Should().NotBeNull();
+        activity!.Tags.Should().Contain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
+        activity.Tags.Should().Contain(t => t.Key == "debug.stack[0].method");
     }
 
     [Fact]
     public void DebugWithStack_excludes_stack_trace_when_disabled()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) && 
-                    activity.DisplayName.Contains("(with stack)", StringComparison.Ordinal))
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var result = Result.Success("Test");
         result.DebugWithStack("No stack test", includeStackTrace: false);
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Tags.Should().NotContain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
+        var activities = activityTest.GetAllActivities();
+        var activity = activities.FirstOrDefault(a => 
+            a.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) && 
+            a.DisplayName.Contains("(with stack)", StringComparison.Ordinal));
+        
+        activity.Should().NotBeNull();
+        activity!.Tags.Should().NotContain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
     }
 
     [Fact]
     public void DebugOnSuccess_creates_activity_with_correct_status()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: OnSuccess")
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var result = Result.Success("Test value");
         result.DebugOnSuccess(_ => { });
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.GetActivity("Debug: OnSuccess");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
     public void DebugOnFailure_creates_activity_with_error_status_and_tags()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug: OnFailure")
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var error = Error.BadRequest("Invalid request");
         var result = Result.Failure<string>(error);
         result.DebugOnFailure(_ => { });
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.Status.Should().Be(ActivityStatusCode.Error);
-        capturedActivity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "bad.request.error");
+        var activity = activityTest.GetActivity("Debug: OnFailure");
+        activity.Should().NotBeNull();
+        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "bad.request.error");
     }
 
     [Fact]
     public void Debug_without_message_creates_activity_with_default_name()
     {
-        Activity? capturedActivity = null;
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == "Functional DDD ROP",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStarted = activity =>
-            {
-                if (activity.DisplayName == "Debug")
-                    capturedActivity = activity;
-            }
-        };
-        ActivitySource.AddActivityListener(listener);
-
+        using var activityTest = new ActivityTestHelper();
+        
         var result = Result.Success("Test");
         result.Debug();
 
-        capturedActivity.Should().NotBeNull();
-        capturedActivity!.DisplayName.Should().Be("Debug");
+        var activity = activityTest.GetActivity("Debug");
+        activity.Should().NotBeNull();
+        activity!.DisplayName.Should().Be("Debug");
     }
 #endif
 
