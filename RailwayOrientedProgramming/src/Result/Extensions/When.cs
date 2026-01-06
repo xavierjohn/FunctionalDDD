@@ -37,14 +37,21 @@ public static class WhenExtensions
         Func<T, bool> predicate,
         Func<T, Result<T>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (predicate(result.Value))
         {
-            return operation(result.Value);
+            var operationResult = operation(result.Value);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -61,14 +68,21 @@ public static class WhenExtensions
         bool condition,
         Func<T, Result<T>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (condition)
         {
-            return operation(result.Value);
+            var operationResult = operation(result.Value);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -85,14 +99,21 @@ public static class WhenExtensions
         Func<T, bool> predicate,
         Func<T, Result<T>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!predicate(result.Value))
         {
-            return operation(result.Value);
+            var operationResult = operation(result.Value);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -109,14 +130,21 @@ public static class WhenExtensions
         bool condition,
         Func<T, Result<T>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!condition)
         {
-            return operation(result.Value);
+            var operationResult = operation(result.Value);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 }
@@ -139,14 +167,21 @@ public static class WhenExtensionsAsync
         Func<T, bool> predicate,
         Func<T, Task<Result<T>>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (predicate(result.Value))
         {
-            return await operation(result.Value).ConfigureAwait(false);
+            var operationResult = await operation(result.Value).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -165,14 +200,21 @@ public static class WhenExtensionsAsync
         Func<T, CancellationToken, Task<Result<T>>> operation,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (predicate(result.Value))
         {
-            return await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            var operationResult = await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -189,14 +231,21 @@ public static class WhenExtensionsAsync
         bool condition,
         Func<T, Task<Result<T>>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (condition)
         {
-            return await operation(result.Value).ConfigureAwait(false);
+            var operationResult = await operation(result.Value).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -215,14 +264,21 @@ public static class WhenExtensionsAsync
         Func<T, CancellationToken, Task<Result<T>>> operation,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (condition)
         {
-            return await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            var operationResult = await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -311,14 +367,21 @@ public static class WhenExtensionsAsync
         Func<T, bool> predicate,
         Func<T, Task<Result<T>>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!predicate(result.Value))
         {
-            return await operation(result.Value).ConfigureAwait(false);
+            var operationResult = await operation(result.Value).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -337,14 +400,21 @@ public static class WhenExtensionsAsync
         Func<T, CancellationToken, Task<Result<T>>> operation,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!predicate(result.Value))
         {
-            return await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            var operationResult = await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -361,14 +431,21 @@ public static class WhenExtensionsAsync
         bool condition,
         Func<T, Task<Result<T>>> operation)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!condition)
         {
-            return await operation(result.Value).ConfigureAwait(false);
+            var operationResult = await operation(result.Value).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -387,14 +464,21 @@ public static class WhenExtensionsAsync
         Func<T, CancellationToken, Task<Result<T>>> operation,
         CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!condition)
         {
-            return await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            var operationResult = await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -486,14 +570,21 @@ public static class WhenExtensionsAsync
         Func<T, ValueTask<Result<T>>> operation)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (predicate(result.Value))
         {
-            return await operation(result.Value).ConfigureAwait(false);
+            var operationResult = await operation(result.Value).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -513,14 +604,21 @@ public static class WhenExtensionsAsync
         CancellationToken cancellationToken = default)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.When));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (predicate(result.Value))
         {
-            return await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            var operationResult = await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -538,14 +636,21 @@ public static class WhenExtensionsAsync
         Func<T, ValueTask<Result<T>>> operation)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!predicate(result.Value))
         {
-            return await operation(result.Value).ConfigureAwait(false);
+            var operationResult = await operation(result.Value).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 
@@ -565,14 +670,21 @@ public static class WhenExtensionsAsync
         CancellationToken cancellationToken = default)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure) return result;
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(WhenExtensions.Unless));
+        if (result.IsFailure)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
         
         if (!predicate(result.Value))
         {
-            return await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            var operationResult = await operation(result.Value, cancellationToken).ConfigureAwait(false);
+            operationResult.LogActivityStatus();
+            return operationResult;
         }
         
+        result.LogActivityStatus();
         return result;
     }
 }

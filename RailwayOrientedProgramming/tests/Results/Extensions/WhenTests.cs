@@ -1,6 +1,7 @@
 namespace RailwayOrientedProgramming.Tests.Results.Extensions.WhenTests;
 
 using FunctionalDdd.Testing;
+using System.Diagnostics;
 
 public class WhenTests : TestBase
 {
@@ -133,6 +134,22 @@ public class WhenTests : TestBase
         actual.Should().BeFailure();
     }
 
+    [Fact]
+    public void When_WithBoolean_OperationReturnsFailure_ReturnsFailure()
+    {
+        // Arrange
+        var result = Result.Success(42);
+
+        // Act
+        var actual = result.When(
+            true,
+            x => Result.Failure<int>(Error2));
+
+        // Assert
+        actual.Should().BeFailure()
+            .Which.Should().HaveCode(Error2.Code);
+    }
+
     #endregion
 
     #region Unless with Predicate
@@ -190,6 +207,22 @@ public class WhenTests : TestBase
         actual.Should().BeFailure();
     }
 
+    [Fact]
+    public void Unless_WithPredicate_OperationReturnsFailure_ReturnsFailure()
+    {
+        // Arrange
+        var result = Result.Success(42);
+
+        // Act
+        var actual = result.Unless(
+            x => x > 50,
+            x => Result.Failure<int>(Error2));
+
+        // Assert
+        actual.Should().BeFailure()
+            .Which.Should().HaveCode(Error2.Code);
+    }
+
     #endregion
 
     #region Unless with Boolean Condition
@@ -228,6 +261,39 @@ public class WhenTests : TestBase
         operationExecuted.Should().BeFalse();
         actual.Should().BeSuccess()
             .Which.Should().Be(42);
+    }
+
+    [Fact]
+    public void Unless_WithBoolean_FailureResult_SkipsOperation()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1);
+        var operationExecuted = false;
+
+        // Act
+        var actual = result.Unless(
+            false,
+            x => { operationExecuted = true; return Result.Success(x * 2); });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public void Unless_WithBoolean_OperationReturnsFailure_ReturnsFailure()
+    {
+        // Arrange
+        var result = Result.Success(42);
+
+        // Act
+        var actual = result.Unless(
+            false,
+            x => Result.Failure<int>(Error2));
+
+        // Assert
+        actual.Should().BeFailure()
+            .Which.Should().HaveCode(Error2.Code);
     }
 
     #endregion
@@ -276,6 +342,27 @@ public class WhenTests : TestBase
         operationExecuted.Should().BeFalse();
         actual.Should().BeSuccess()
             .Which.Should().Be(42);
+    }
+
+    [Fact]
+    public async Task WhenAsync_WithPredicate_FailureResult_SkipsOperation()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1);
+        var operationExecuted = false;
+
+        // Act
+        var actual = await result.WhenAsync(
+            x => x > 40,
+            x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x * 2));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeFailure();
     }
 
     [Fact]
