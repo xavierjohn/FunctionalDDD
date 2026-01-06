@@ -6,35 +6,39 @@
 graph TB
     subgraph Input["What You Write"]
         FP[Functional<br/>Programming]
-        DDD[Domain-Driven<br/>Design]
-        TS[Type Safety]
+        RT[Result Types<br/>Result&lt;T&gt; & Maybe&lt;T&gt;]
+        DDD_IN[Domain-Driven<br/>Design]
+        VO[Value Objects<br/>FirstName, EmailAddress]
     end
     
     subgraph Pattern["How You Write It"]
         ROP[Railway-Oriented<br/>Programming]
+        DDD_PAT[Domain-Driven<br/>Design<br/>Patterns]
     end
     
     subgraph Output["What You Get"]
         READ[📖 Readable Code<br/><i>60% less boilerplate</i>]
         SUCC[✨ Succinct Code<br/><i>Reads like English</i>]
-        SAFE[🔒 Safe Code<br/><i>Compiler-enforced</i>]
+        SAFE[🔒 Type-Safe Code<br/><i>Compiler-enforced</i>]
     end
     
     FP --> ROP
-    DDD --> ROP
-    TS --> ROP
+    RT --> ROP
+    DDD_IN --> DDD_PAT
+    VO --> DDD_PAT
     
     ROP --> READ
     ROP --> SUCC
-    ROP --> SAFE
+    DDD_PAT --> SAFE
     
     style Input fill:#F0F0F0
     style Pattern fill:#FFE1F5
     style Output fill:#E8F5E9
     
     style FP fill:#E1F5FF
-    style DDD fill:#FFF4E1
-    style TS fill:#E1FFE1
+    style RT fill:#E1F5FF
+    style DDD_IN fill:#FFF4E1
+    style VO fill:#FFF4E1
     
     style READ fill:#90EE90
     style SUCC fill:#90EE90
