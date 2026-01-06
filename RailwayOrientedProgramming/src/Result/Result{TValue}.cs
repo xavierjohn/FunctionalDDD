@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Represents either a successful computation (with a value) or a failure (with an <see cref="Error"/>).
@@ -112,6 +111,8 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
             act.SetTag("result.error.code", error.Code);
         }
     }
+
+    internal void LogActivityStatus() => Activity.Current?.SetStatus(IsFailure ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
 
     private readonly TValue? _value;
     private readonly Error? _error;

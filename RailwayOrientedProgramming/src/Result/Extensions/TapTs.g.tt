@@ -86,9 +86,9 @@ public static partial class TapExtensions
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             action(<# WriteArgs(i); #>);
-            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
+        result.LogActivityStatus();
         return result;
     }
 <#
@@ -163,13 +163,13 @@ public static partial class TapExtensionsAsync
                   Func<<# WriteTs(i); #>, CancellationToken, Task> func,
                   CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity("tap");
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -186,13 +186,13 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, Task> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity("tap");
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -266,13 +266,13 @@ public static partial class TapExtensionsAsync
                   Func<<# WriteTs(i); #>, CancellationToken, ValueTask> func,
                   CancellationToken cancellationToken = default)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity("tap");
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -289,13 +289,13 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, ValueTask> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity("tap");
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
             await func(<# WriteArgs(i); #>).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Ok);
         }
 
+        result.LogActivityStatus();
         return result;
     }
 

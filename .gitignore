@@ -351,3 +351,4 @@ MigrationBackup/
 
 # Ignore generated cs files
 *.g.cs
+/CoverageReport

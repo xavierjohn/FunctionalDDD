@@ -19,17 +19,15 @@ public static class EnsureExtensions
     /// <typeparam name="TValue">Type of the result value.</typeparam>
     /// <param name="result">The result to validate.</param>
     /// <param name="predicate">The predicate to test.</param>
-    /// <param name="errors">The error to return if the predicate is false.</param>
+    /// <param name="error">The error to return if the predicate is false.</param>
     /// <returns>The original result if success and predicate is true; otherwise a failure with the specified error.</returns>
-    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error errors)
+    public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error error)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-            return result;
+        if (result.IsSuccess && !predicate())
+            return Result.Failure<TValue>(error);
 
-        if (!predicate())
-            return Result.Failure<TValue>(errors);
-
+        result.LogActivityStatus();
         return result;
     }
 
@@ -44,12 +42,10 @@ public static class EnsureExtensions
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-            return result;
-
-        if (!predicate(result.Value))
+        if (result.IsSuccess && !predicate(result.Value))
             return Result.Failure<TValue>(error);
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -65,12 +61,10 @@ public static class EnsureExtensions
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-            return result;
-
-        if (!predicate(result.Value))
+        if (result.IsSuccess && !predicate(result.Value))
             return Result.Failure<TValue>(errorPredicate(result.Value));
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -84,14 +78,17 @@ public static class EnsureExtensions
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
+        if (result.IsFailure) {
+            result.LogActivityStatus();
             return result;
+        }
 
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
             return Result.Failure<TValue>(predicateResult.Error);
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -107,13 +104,17 @@ public static class EnsureExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         var predicateResult = predicate(result.Value);
 
         if (predicateResult.IsFailure)
             return Result.Failure<TValue>(predicateResult.Error);
 
+        result.LogActivityStatus();
         return result;
     }
 
