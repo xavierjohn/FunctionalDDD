@@ -17,7 +17,6 @@ public sealed class ActivityTestHelper : IDisposable
 
     public ActivityTestHelper()
     {
-        // Começando uma nova linha para melhor legibilidade
         // Create a unique ActivitySource for this test
         _testActivitySource = new ActivitySource($"Test-ROP-{Guid.NewGuid():N}");
         
