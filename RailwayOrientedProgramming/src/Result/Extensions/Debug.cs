@@ -11,17 +11,30 @@ using System.Diagnostics;
 /// The methods are always available to prevent compilation errors in RELEASE builds,
 /// but their implementation is conditionally compiled and becomes empty in RELEASE mode.
 /// The compiler will inline and optimize away these empty methods, resulting in zero runtime overhead.
+/// 
+/// These methods create dedicated Activities for debug operations, making them compatible with OpenTelemetry
+/// and modern observability systems like .NET Aspire, Application Insights, and Jaeger.
+/// Debug activities appear as child spans in distributed traces, making it easy to filter them out in production.
 /// </remarks>
 public static class ResultDebugExtensions
 {
     /// <summary>
-    /// Writes debug information about the Result to the console and returns the same Result.
+    /// Writes debug information about the Result to a new Activity and returns the same Result.
     /// This method only executes in DEBUG builds.
     /// </summary>
     /// <typeparam name="TValue">The type of the value in the Result.</typeparam>
     /// <param name="result">The Result to debug.</param>
     /// <param name="message">Optional message to prefix the debug output.</param>
     /// <returns>The same Result that was passed in.</returns>
+    /// <remarks>
+    /// Creates a new Activity span for the debug operation, making it visible as a child span in:
+    /// <list type="bullet">
+    /// <item>.NET Aspire dashboard</item>
+    /// <item>Application Insights</item>
+    /// <item>Jaeger, Zipkin, and other OpenTelemetry-compatible tools</item>
+    /// </list>
+    /// The debug span includes result status, value/error information as tags.
+    /// </remarks>
     /// <example>
     /// <code>
     /// var result = GetUser(id)
@@ -35,17 +48,24 @@ public static class ResultDebugExtensions
     public static Result<TValue> Debug<TValue>(this Result<TValue> result, string message = "")
     {
 #if DEBUG
-        var prefix = string.IsNullOrEmpty(message) ? "[DEBUG]" : $"[DEBUG] {message}";
+        var activityName = string.IsNullOrEmpty(message) ? "Debug" : $"Debug: {message}";
+        using var activity = RopTrace.ActivitySource.StartActivity(activityName, ActivityKind.Internal);
         
-        if (result.IsSuccess)
+        if (activity != null)
         {
-            System.Diagnostics.Debug.WriteLine($"{prefix} Success: {result.Value}");
-            Console.WriteLine($"{prefix} Success: {result.Value}");
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine($"{prefix} Failure: {result.Error.Code} - {result.Error.Detail}");
-            Console.WriteLine($"{prefix} Failure: {result.Error.Code} - {result.Error.Detail}");
+            activity.SetTag("debug.result.status", result.IsSuccess ? "Success" : "Failure");
+            
+            if (result.IsSuccess)
+            {
+                activity.SetTag("debug.result.value", result.Value?.ToString() ?? "<null>");
+                activity.SetStatus(ActivityStatusCode.Ok);
+            }
+            else
+            {
+                activity.SetTag("debug.error.code", result.Error.Code);
+                activity.SetTag("debug.error.detail", result.Error.Detail);
+                activity.SetStatus(ActivityStatusCode.Error, result.Error.Detail);
+            }
         }
 #endif
         
@@ -53,7 +73,7 @@ public static class ResultDebugExtensions
     }
 
     /// <summary>
-    /// Writes detailed debug information about the Result to the console, including error properties.
+    /// Writes detailed debug information about the Result to a new Activity, including error properties.
     /// This method only executes in DEBUG builds.
     /// </summary>
     /// <typeparam name="TValue">The type of the value in the Result.</typeparam>
@@ -70,45 +90,50 @@ public static class ResultDebugExtensions
     public static Result<TValue> DebugDetailed<TValue>(this Result<TValue> result, string message = "")
     {
 #if DEBUG
-        var prefix = string.IsNullOrEmpty(message) ? "[DEBUG]" : $"[DEBUG] {message}";
+        var activityName = string.IsNullOrEmpty(message) ? "Debug (Detailed)" : $"Debug: {message} (Detailed)";
+        using var activity = RopTrace.ActivitySource.StartActivity(activityName, ActivityKind.Internal);
         
-        if (result.IsSuccess)
+        if (activity != null)
         {
-            var valueType = typeof(TValue).Name;
-            var output = $"{prefix} Success\n  Type: {valueType}\n  Value: {result.Value}";
-            System.Diagnostics.Debug.WriteLine(output);
-            Console.WriteLine(output);
-        }
-        else
-        {
-            var error = result.Error;
-            var output = $"{prefix} Failure\n" +
-                        $"  Error Type: {error.GetType().Name}\n" +
-                        $"  Code: {error.Code}\n" +
-                        $"  Detail: {error.Detail}\n" +
-                        $"  Instance: {error.Instance ?? "(none)"}";
+            activity.SetTag("debug.result.status", result.IsSuccess ? "Success" : "Failure");
             
-            if (error is ValidationError validationError)
+            if (result.IsSuccess)
             {
-                output += $"\n  Field Errors: {validationError.FieldErrors.Length}";
-                for (int i = 0; i < validationError.FieldErrors.Length; i++)
-                {
-                    var fieldError = validationError.FieldErrors[i];
-                    output += $"\n    [{i + 1}] {fieldError.FieldName}: {string.Join(", ", fieldError.Details)}";
-                }
+                activity.SetTag("debug.result.type", typeof(TValue).Name);
+                activity.SetTag("debug.result.value", result.Value?.ToString() ?? "<null>");
+                activity.SetStatus(ActivityStatusCode.Ok);
             }
-            else if (error is AggregateError aggregated)
+            else
             {
-                output += $"\n  Aggregated Errors: {aggregated.Errors.Count}";
-                for (int i = 0; i < aggregated.Errors.Count; i++)
+                var error = result.Error;
+                activity.SetTag("debug.error.type", error.GetType().Name);
+                activity.SetTag("debug.error.code", error.Code);
+                activity.SetTag("debug.error.detail", error.Detail);
+                activity.SetTag("debug.error.instance", error.Instance ?? "(none)");
+                
+                if (error is ValidationError validationError)
                 {
-                    var err = aggregated.Errors[i];
-                    output += $"\n    [{i + 1}] {err.Code}: {err.Detail} (Instance: {err.Instance ?? "none"})";
+                    activity.SetTag("debug.error.validation.field_count", validationError.FieldErrors.Length);
+                    for (int i = 0; i < Math.Min(validationError.FieldErrors.Length, 10); i++)
+                    {
+                        var fieldError = validationError.FieldErrors[i];
+                        activity.SetTag($"debug.error.validation.field[{i}].name", fieldError.FieldName);
+                        activity.SetTag($"debug.error.validation.field[{i}].details", string.Join(", ", fieldError.Details));
+                    }
                 }
+                else if (error is AggregateError aggregated)
+                {
+                    activity.SetTag("debug.error.aggregate.count", aggregated.Errors.Count);
+                    for (int i = 0; i < Math.Min(aggregated.Errors.Count, 10); i++)
+                    {
+                        var err = aggregated.Errors[i];
+                        activity.SetTag($"debug.error.aggregate[{i}].code", err.Code);
+                        activity.SetTag($"debug.error.aggregate[{i}].detail", err.Detail);
+                    }
+                }
+                
+                activity.SetStatus(ActivityStatusCode.Error, error.Detail);
             }
-            
-            System.Diagnostics.Debug.WriteLine(output);
-            Console.WriteLine(output);
         }
 #endif
         
@@ -125,17 +150,51 @@ public static class ResultDebugExtensions
     /// <param name="message">Optional message to prefix the debug output.</param>
     /// <param name="includeStackTrace">Whether to include the stack trace. Default is true.</param>
     /// <returns>The same Result that was passed in.</returns>
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Debug-only code not included in Release builds")]
     public static Result<TValue> DebugWithStack<TValue>(this Result<TValue> result, string message = "", bool includeStackTrace = true)
     {
 #if DEBUG
-        result.Debug(message);
+        var activityName = string.IsNullOrEmpty(message) ? "Debug (with stack)" : $"Debug: {message} (with stack)";
+        using var activity = RopTrace.ActivitySource.StartActivity(activityName, ActivityKind.Internal);
         
-        if (includeStackTrace)
+        if (activity != null)
         {
-            var stackTrace = new StackTrace(true);
-            var output = $"[DEBUG] Stack Trace:\n{stackTrace}";
-            System.Diagnostics.Debug.WriteLine(output);
-            Console.WriteLine(output);
+            activity.SetTag("debug.result.status", result.IsSuccess ? "Success" : "Failure");
+            
+            if (result.IsSuccess)
+            {
+                activity.SetTag("debug.result.value", result.Value?.ToString() ?? "<null>");
+                activity.SetStatus(ActivityStatusCode.Ok);
+            }
+            else
+            {
+                activity.SetTag("debug.error.code", result.Error.Code);
+                activity.SetTag("debug.error.detail", result.Error.Detail);
+                activity.SetStatus(ActivityStatusCode.Error, result.Error.Detail);
+            }
+            
+            if (includeStackTrace)
+            {
+                var stackTrace = new StackTrace(true);
+                var frames = stackTrace.GetFrames();
+                
+                // Capture up to 10 stack frames
+                for (int i = 0; i < Math.Min(frames.Length, 10); i++)
+                {
+                    var frame = frames[i];
+                    var method = frame.GetMethod();
+                    if (method != null)
+                    {
+                        activity.SetTag($"debug.stack[{i}].method", $"{method.DeclaringType?.Name}.{method.Name}");
+                        var fileName = frame.GetFileName();
+                        if (fileName != null)
+                        {
+                            activity.SetTag($"debug.stack[{i}].file", fileName);
+                            activity.SetTag($"debug.stack[{i}].line", frame.GetFileLineNumber());
+                        }
+                    }
+                }
+            }
         }
 #endif
         
@@ -155,8 +214,10 @@ public static class ResultDebugExtensions
     /// var result = GetUser(id)
     ///     .DebugOnSuccess(user => 
     ///     {
-    ///         Console.WriteLine($"User: {user.Id}, Email: {user.Email}");
-    ///         Console.WriteLine($"IsActive: {user.IsActive}");
+    ///         var activity = Activity.Current;
+    ///         activity?.SetTag("user.id", user.Id);
+    ///         activity?.SetTag("user.email", user.Email);
+    ///         activity?.SetTag("user.is_active", user.IsActive);
     ///     });
     /// </code>
     /// </example>
@@ -165,6 +226,12 @@ public static class ResultDebugExtensions
 #if DEBUG
         if (result.IsSuccess)
         {
+            using var activity = RopTrace.ActivitySource.StartActivity("Debug: OnSuccess", ActivityKind.Internal);
+            if (activity != null)
+            {
+                activity.SetStatus(ActivityStatusCode.Ok);
+            }
+
             action(result.Value);
         }
 #endif
@@ -185,8 +252,10 @@ public static class ResultDebugExtensions
     /// var result = GetUser(id)
     ///     .DebugOnFailure(error => 
     ///     {
-    ///         Console.WriteLine($"Error Type: {error.GetType().Name}");
-    ///         Console.WriteLine($"Message: {error.Message}");
+    ///         var activity = Activity.Current;
+    ///         activity?.SetTag("error.type", error.GetType().Name);
+    ///         activity?.SetTag("error.code", error.Code);
+    ///         activity?.SetTag("error.detail", error.Detail);
     ///     });
     /// </code>
     /// </example>
@@ -195,6 +264,13 @@ public static class ResultDebugExtensions
 #if DEBUG
         if (result.IsFailure)
         {
+            using var activity = RopTrace.ActivitySource.StartActivity("Debug: OnFailure", ActivityKind.Internal);
+            if (activity != null)
+            {
+                activity.SetTag("debug.error.code", result.Error.Code);
+                activity.SetStatus(ActivityStatusCode.Error, result.Error.Detail);
+            }
+
             action(result.Error);
         }
 #endif
@@ -206,11 +282,12 @@ public static class ResultDebugExtensions
 /// <summary>
 /// Debug-only async extension methods for inspecting Result values during development.
 /// These methods are only available in DEBUG builds and are automatically excluded from RELEASE builds.
+/// Debug information is written to dedicated Activity spans for OpenTelemetry compatibility.
 /// </summary>
 public static class ResultDebugExtensionsAsync
 {
     /// <summary>
-    /// Writes debug information about the Result to the console and returns the same Result.
+    /// Writes debug information about the Result to a new Activity and returns the same Result.
     /// This method only executes in DEBUG builds.
     /// </summary>
     public static async Task<Result<TValue>> DebugAsync<TValue>(this Task<Result<TValue>> resultTask, string message = "")
@@ -224,7 +301,7 @@ public static class ResultDebugExtensionsAsync
     }
 
     /// <summary>
-    /// Writes detailed debug information about the Result to the console.
+    /// Writes detailed debug information about the Result to a new Activity.
     /// This method only executes in DEBUG builds.
     /// </summary>
     public static async Task<Result<TValue>> DebugDetailedAsync<TValue>(this Task<Result<TValue>> resultTask, string message = "")
@@ -289,6 +366,12 @@ public static class ResultDebugExtensionsAsync
 #if DEBUG
         if (result.IsSuccess)
         {
+            using var activity = RopTrace.ActivitySource.StartActivity("Debug: OnSuccess", ActivityKind.Internal);
+            if (activity != null)
+            {
+                activity.SetStatus(ActivityStatusCode.Ok);
+            }
+
             await action(result.Value).ConfigureAwait(false);
         }
 #endif
@@ -306,6 +389,13 @@ public static class ResultDebugExtensionsAsync
 #if DEBUG
         if (result.IsFailure)
         {
+            using var activity = RopTrace.ActivitySource.StartActivity("Debug: OnFailure", ActivityKind.Internal);
+            if (activity != null)
+            {
+                activity.SetTag("debug.error.code", result.Error.Code);
+                activity.SetStatus(ActivityStatusCode.Error, result.Error.Detail);
+            }
+
             await action(result.Error).ConfigureAwait(false);
         }
 #endif
