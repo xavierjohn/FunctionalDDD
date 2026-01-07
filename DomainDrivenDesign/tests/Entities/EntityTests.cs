@@ -160,6 +160,18 @@ public class EntityTests
     }
 
     [Fact]
+    public void Entity_NullOnLeftSide_IsNotEqual()
+    {
+        // Arrange
+        TestEntity? nullEntity = null;
+        var entity = TestEntity.Create("123");
+
+        // Act & Assert
+        (nullEntity == entity).Should().BeFalse();
+        (nullEntity != entity).Should().BeTrue();
+    }
+
+    [Fact]
     public void Entity_TwoNulls_AreEqual()
     {
         // Arrange
@@ -190,8 +202,20 @@ public class EntityTests
         var entity1 = TestEntityWithDefaultableId.Create(Guid.Empty);
         var entity2 = TestEntityWithDefaultableId.Create(Guid.Empty);
 
-        // Act & Assert - Entities with default IDs should not be equal
+        // Act & Assert - Entities with default IDs should not be equal (transient entities)
         entity1.Equals(entity2).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Entity_OneDefaultId_OneValidId_AreNotEqual()
+    {
+        // Arrange
+        var transientEntity = TestEntityWithDefaultableId.Create(Guid.Empty);
+        var persistedEntity = TestEntityWithDefaultableId.Create(Guid.NewGuid());
+
+        // Act & Assert
+        transientEntity.Equals(persistedEntity).Should().BeFalse();
+        persistedEntity.Equals(transientEntity).Should().BeFalse();
     }
 
     [Fact]
@@ -203,6 +227,55 @@ public class EntityTests
 
         // Act & Assert
         entity1.Equals(entity2).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Entity_ComparedToNonEntity_IsNotEqual()
+    {
+        // Arrange
+        var entity = TestEntity.Create("123");
+        object notAnEntity = "123";
+
+        // Act & Assert
+        entity.Equals(notAnEntity).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Entity_ComparedToDifferentObjectType_IsNotEqual()
+    {
+        // Arrange
+        var entity = TestEntity.Create("123");
+        object obj = new { Id = "123" };
+
+        // Act & Assert
+        entity.Equals(obj).Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Id Property Tests
+
+    [Fact]
+    public void Entity_Id_IsSetCorrectly()
+    {
+        // Arrange & Act
+        var entity = TestEntity.Create("my-id");
+
+        // Assert
+        entity.Id.Should().Be("my-id");
+    }
+
+    [Fact]
+    public void Entity_Id_WithGuidType_IsSetCorrectly()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+
+        // Act
+        var entity = TestEntityWithDefaultableId.Create(id);
+
+        // Assert
+        entity.Id.Should().Be(id);
     }
 
     #endregion
