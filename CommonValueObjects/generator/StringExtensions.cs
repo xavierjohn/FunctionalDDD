@@ -1,4 +1,4 @@
-namespace SourceGenerator;
+﻿namespace SourceGenerator;
 
 using System.Text.RegularExpressions;
 
@@ -26,10 +26,10 @@ internal static class StringExtensions
     /// <para>
     /// Examples:
     /// <list type="bullet">
-    /// <item>"FirstName" ? "First Name"</item>
-    /// <item>"EmailAddress" ? "Email Address"</item>
-    /// <item>"OrderId" ? "Order Id"</item>
-    /// <item>"SKU" ? "SKU" (no change for all caps)</item>
+    /// <item>"FirstName" → "First Name"</item>
+    /// <item>"EmailAddress" → "Email Address"</item>
+    /// <item>"OrderId" → "Order Id"</item>
+    /// <item>"SKU" → "SKU" (no change for all caps)</item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -51,10 +51,10 @@ internal static class StringExtensions
     /// <para>
     /// Examples:
     /// <list type="bullet">
-    /// <item>"FirstName" ? "firstName"</item>
-    /// <item>"Email" ? "email"</item>
-    /// <item>"ID" ? "iD" (only first char lowercased)</item>
-    /// <item>"" ? ""</item>
+    /// <item>"FirstName" → "firstName"</item>
+    /// <item>"Email" → "email"</item>
+    /// <item>"ID" → "iD" (only first char lowercased)</item>
+    /// <item>"" → ""</item>
     /// </list>
     /// </para>
     /// <para>
