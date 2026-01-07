@@ -56,6 +56,20 @@ public sealed class ActivityTestHelper : IDisposable
     }
 
     /// <summary>
+    /// Gets a read-only snapshot of all captured activities.
+    /// </summary>
+    public IReadOnlyList<Activity> CapturedActivities
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _capturedActivities.ToArray();
+            }
+        }
+    }
+
+    /// <summary>
     /// Waits until the specified number of activities have been captured.
     /// </summary>
     public bool WaitForActivityCount(int expectedCount, TimeSpan? timeout = null)

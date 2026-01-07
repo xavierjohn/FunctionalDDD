@@ -1,0 +1,405 @@
+namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+
+using FunctionalDdd.Testing;
+using RailwayOrientedProgramming.Tests.Helpers;
+using System.Diagnostics;
+
+/// <summary>
+/// Integration tests for Activity tracing across complex ROP pipelines.
+/// Tests the complete observability story when multiple operations are chained together.
+/// </summary>
+public class ResultTracingIntegrationTests
+{
+    #region Success Path Integration Tests
+
+    [Fact]
+    public void SuccessPath_MultipleEnsure_Bind_Tap_TracesAllOperations()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Multiple validations followed by transformations
+        var result = Result.Success(50)
+            .Ensure(x => x > 0, Error.Validation("Must be positive"))
+            .Ensure(x => x < 100, Error.Validation("Must be < 100"))
+            .Bind(x => Result.Success(x * 2))
+            .Tap(x => Console.WriteLine($"Doubled: {x}"))
+            .Bind(x => Result.Success(x + 10));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(110);
+
+        // Verify activity counts
+        var ensureActivities = activityTest.AssertActivityCaptured("Ensure", 2);
+        ensureActivities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
+
+        var bindActivities = activityTest.AssertActivityCaptured("Bind", 2);
+        bindActivities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
+
+        activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
+    }
+
+    #endregion
+
+    #region Failure Path Integration Tests
+
+    [Fact]
+    public void FailurePath_Bind_Fails_PropagatesErrorThroughPipeline()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Bind fails in the middle of pipeline
+        var result = Result.Success(42)
+            .Ensure(x => x > 0, Error.Validation("Must be positive"))
+            .Bind(x => Result.Failure<int>(Error.Unexpected("Database error")))
+            .Tap(x => Console.WriteLine(x))
+            .Bind(x => Result.Success(x + 10));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("unexpected.error");
+
+        // Ensure should succeed
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
+
+        // Bind operations should reflect the failure
+        var bindActivities = activityTest.AssertActivityCaptured("Bind", 2);
+        bindActivities.First().Status.Should().Be(ActivityStatusCode.Error); // First Bind fails
+        bindActivities.Last().Status.Should().Be(ActivityStatusCode.Error);  // Second Bind short-circuits
+    }
+
+    #endregion
+
+    #region Compensation Path Integration Tests
+
+    [Fact]
+    public void CompensationPath_MultipleCompensations_FirstSucceeds()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Multiple compensations, first one succeeds
+        var result = Result.Success(5)
+            .Ensure(x => x > 10, Error.Validation("Must be > 10"))
+            .Compensate(() => Result.Success(50))
+            .Compensate(() => Result.Success(999)); // Should not execute
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(50);
+
+        // First Compensate should execute and succeed
+        var compensateActivities = activityTest.AssertActivityCaptured("Compensate", 1);
+        compensateActivities.First().Status.Should().Be(ActivityStatusCode.Ok);
+    }
+
+    #endregion
+
+    #region Complex Real-World Scenarios
+
+    [Fact]
+    public void ComplexScenario_ValidationPipeline_WithRecovery()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Simulate a real-world validation and processing pipeline
+        var result = ProcessOrder(orderId: 123)
+            .Ensure(order => order > 0, Error.Validation("Order ID must be positive"))
+            .Bind(ValidateInventory)
+            .Bind(ApplyDiscount)
+            .Ensure(price => price >= 10, Error.Validation("Price must be at least $10"))
+            .Compensate(() => Result.Success(10)) // Floor price at $10
+            .Tap(price => Console.WriteLine($"Final price: ${price}"));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify the complete trace
+        var ensureActivities = activityTest.AssertActivityCaptured("Ensure", 2);
+        var bindActivities = activityTest.AssertActivityCaptured("Bind", 2);
+        
+        // All operations should have created activities
+        activityTest.AssertActivityCaptured("Tap", 1);
+    }
+
+    [Fact]
+    public void ComplexScenario_FailureRecoveryChain()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Complex failure and recovery scenario
+        var result = Result.Success("user@example.com")
+            .Bind(FetchUserFromDatabase)      // Fails
+            .Compensate(CreateGuestUser)
+            .Ensure(user => !string.IsNullOrEmpty(user), Error.Unexpected("User cannot be null"))
+            .Bind(user => Result.Success(user.ToUpperInvariant()))
+            .Tap(user => Console.WriteLine($"Processing: {user}"));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("GUEST_USER");
+
+        // Verify compensation was triggered
+        activityTest.AssertActivityCaptured("Bind", 2);
+        activityTest.AssertActivityCapturedWithStatus("Compensate", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
+    }
+
+    #endregion
+
+    #region Async Pipeline Integration Tests
+
+    [Fact]
+    public async Task AsyncPipeline_Ensure_BindAsync_TapAsync_MaintainsTraceContext()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Async pipeline
+        var result = await Result.Success(42)
+            .Ensure(x => x > 0, Error.Validation("Must be positive"))
+            .BindAsync(x => Task.FromResult(Result.Success(x * 2)))
+            .TapAsync(x => Task.CompletedTask);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(84);
+
+        // Verify activities were captured across async boundaries
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Bind", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
+    }
+
+    [Fact]
+    public async Task AsyncPipeline_ComplexChain_PreservesActivities()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Mix of sync and async operations
+        var result = await Result.Success(10)
+            .Ensure(x => x > 0, Error.Validation("Positive"))
+            .BindAsync(x => Task.FromResult(Result.Success(x * 2)))
+            .BindAsync(async x =>
+            {
+                var r = Result.Success(x);
+                return await Task.FromResult(r.Ensure(y => y < 100, Error.Validation("< 100")));
+            })
+            .TapAsync(async x => await Task.Delay(1))
+            .BindAsync(x => Task.FromResult(Result.Success(x + 5)));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(25);
+
+        // Verify all operations were traced
+        activityTest.AssertActivityCaptured("Ensure", 2);
+        activityTest.AssertActivityCaptured("Bind", 3);
+        activityTest.AssertActivityCaptured("Tap", 1);
+    }
+
+    #endregion
+
+    #region Track Transition Tests
+
+    [Fact]
+    public void TrackTransition_SuccessToError_LogsCorrectActivityStatuses()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Success track changes to error track at Ensure
+        var result = Result.Success(42)
+            .Bind(x => Result.Success(x * 2))          // Success track: 84
+            .Tap(x => Console.WriteLine($"Before: {x}"))  // Success track
+            .Ensure(x => x < 50, Error.Validation("Must be < 50")) // TRANSITION: Success ? Error
+            .Bind(x => Result.Success(x + 10))         // Error track (short-circuited)
+            .Tap(x => Console.WriteLine($"After: {x}")); // Error track (short-circuited)
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("validation.error");
+
+        // Get all activities by name
+        var activities = activityTest.CapturedActivities;
+        var bindActivities = activities.Where(a => a.DisplayName == "Bind").ToArray();
+        var tapActivities = activities.Where(a => a.DisplayName == "Tap").ToArray();
+        var ensureActivity = activities.First(a => a.DisplayName == "Ensure");
+
+        // Verify activities before the transition are OK
+        bindActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
+        tapActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
+
+        // Verify the transition point logs Error
+        ensureActivity.Status.Should().Be(ActivityStatusCode.Error);
+
+        // Verify activities after the transition are Error (short-circuited)
+        bindActivities[1].Status.Should().Be(ActivityStatusCode.Error);
+        tapActivities[1].Status.Should().Be(ActivityStatusCode.Error);
+    }
+
+    [Fact]
+    public void TrackTransition_ErrorToSuccess_LogsCorrectActivityStatuses()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Error track changes to success track via Compensate
+        var result = Result.Success(5)
+            .Ensure(x => x > 10, Error.Validation("Must be > 10")) // TRANSITION: Success ? Error
+            .Bind(x => Result.Success(x * 2))         // Error track (short-circuited)
+            .Compensate(() => Result.Success(100))    // TRANSITION: Error ? Success
+            .Bind(x => Result.Success(x + 50))        // Success track: 150
+            .Tap(x => Console.WriteLine($"Final: {x}")); // Success track
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(150);
+
+        // Get all activities
+        var activities = activityTest.CapturedActivities;
+        var bindActivities = activities.Where(a => a.DisplayName == "Bind").ToArray();
+
+        // Verify the first transition (Success ? Error)
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
+        bindActivities[0].Status.Should().Be(ActivityStatusCode.Error); // Short-circuited
+
+        // Verify the compensation (Error ? Success)
+        activityTest.AssertActivityCapturedWithStatus("Compensate", ActivityStatusCode.Ok);
+
+        // Verify activities after compensation are OK
+        bindActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
+    }
+
+    [Fact]
+    public void TrackTransition_MultipleTransitions_LogsAllStatusChanges()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Multiple track transitions in one pipeline
+        var result = Result.Success(100)
+            .Ensure(x => x > 50, Error.Validation("Must be > 50"))  // OK: Success track
+            .Bind(x => Result.Failure<int>(Error.Unexpected("DB Error"))) // TRANSITION: Success ? Error
+            .Tap(x => Console.WriteLine($"After error: {x}"))         // Error track
+            .Compensate(() => Result.Success(200))                     // TRANSITION: Error ? Success
+            .Ensure(x => x < 150, Error.Validation("Must be < 150"))  // TRANSITION: Success ? Error (200 > 150)
+            .Compensate(() => Result.Success(50))                      // TRANSITION: Error ? Success
+            .Bind(x => Result.Success(x * 2));                         // Success track: 100
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(100);
+
+        // Get all activities
+        var activities = activityTest.CapturedActivities;
+        var ensureActivities = activities.Where(a => a.DisplayName == "Ensure").ToArray();
+        var bindActivities = activities.Where(a => a.DisplayName == "Bind").ToArray();
+        var compensateActivities = activities.Where(a => a.DisplayName == "Compensate").ToArray();
+        var tapActivity = activities.First(a => a.DisplayName == "Tap");
+
+        // Verify first transition: Success ? Error (at Bind)
+        ensureActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
+        bindActivities[0].Status.Should().Be(ActivityStatusCode.Error);
+        tapActivity.Status.Should().Be(ActivityStatusCode.Error);
+
+        // Verify first compensation: Error ? Success
+        compensateActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
+
+        // Verify second transition: Success ? Error (at Ensure)
+        ensureActivities[1].Status.Should().Be(ActivityStatusCode.Error);
+
+        // Verify second compensation: Error ? Success
+        compensateActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
+
+        // Verify final operation on success track
+        bindActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
+    }
+
+    [Fact]
+    public async Task TrackTransition_AsyncPipeline_MaintainsStatusAcrossTransitions()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Track transitions in async pipeline
+        var result = await Result.Success(42)
+            .BindAsync(x => Task.FromResult(Result.Success(x * 2))) // Success: 84
+            .BindAsync(async x =>
+            {
+                await Task.Delay(1);
+                return Result.Failure<int>(Error.Unexpected("Async error"));
+            }) // TRANSITION: Success ? Error
+            .TapAsync(x => Task.CompletedTask)                      // Error track
+            .CompensateAsync(() => Task.FromResult(Result.Success(200))) // TRANSITION: Error ? Success
+            .BindAsync(x => Task.FromResult(Result.Success(x / 2))); // Success track: 100
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(100);
+
+        // Get all activities
+        var activities = activityTest.CapturedActivities;
+        var bindActivities = activities.Where(a => a.DisplayName == "Bind").ToArray();
+        var tapActivity = activities.First(a => a.DisplayName == "Tap");
+        var compensateActivity = activities.First(a => a.DisplayName == "Compensate");
+
+        // Verify transitions
+        bindActivities[0].Status.Should().Be(ActivityStatusCode.Ok);  // First Bind: Success
+        bindActivities[1].Status.Should().Be(ActivityStatusCode.Error); // Second Bind: Error
+        tapActivity.Status.Should().Be(ActivityStatusCode.Error);
+        compensateActivity.Status.Should().Be(ActivityStatusCode.Ok);
+        bindActivities[2].Status.Should().Be(ActivityStatusCode.Ok);  // Third Bind: Success after compensation
+    }
+
+    [Fact]
+    public void TrackTransition_FailedCompensation_MaintainsErrorTrack()
+    {
+        // Arrange
+        using var activityTest = new ActivityTestHelper();
+
+        // Act - Compensation fails, stays on error track
+        var result = Result.Success(5)
+            .Ensure(x => x > 10, Error.Validation("Must be > 10"))     // TRANSITION: Success ? Error
+            .Compensate(() => Result.Failure<int>(Error.Unexpected("Compensation failed"))) // Failed compensation
+            .Bind(x => Result.Success(x * 2))                           // Still on error track
+            .Tap(x => Console.WriteLine($"Value: {x}"));                // Still on error track
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("unexpected.error");
+        result.Error.Detail.Should().Be("Compensation failed");
+
+        // Verify transition and failed compensation
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Compensate", ActivityStatusCode.Error);
+
+        // Verify subsequent operations stay on error track
+        activityTest.AssertActivityCapturedWithStatus("Bind", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Error);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static Result<int> ProcessOrder(int orderId) => Result.Success(orderId);
+
+    private static Result<int> ValidateInventory(int orderId) => Result.Success(100); // Price
+
+    private static Result<int> ApplyDiscount(int price) => Result.Success(price - 95); // Discount brings it to $5
+
+    private static Result<string> FetchUserFromDatabase(string email) =>
+        Result.Failure<string>(Error.NotFound("User not found"));
+
+    private static Result<string> CreateGuestUser() => Result.Success("guest_user");
+
+    #endregion
+}
