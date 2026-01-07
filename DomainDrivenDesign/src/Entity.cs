@@ -149,6 +149,10 @@ public abstract class Entity<TId>
         if (ReferenceEquals(this, other))
             return true;
 
+        // Different entity types are never equal, even if they share the same ID type
+        if (GetType() != other.GetType())
+            return false;
+
         if (Id is null || Id.Equals(default(TId)) || other.Id is null || other.Id.Equals(default(TId)))
             return false;
 
