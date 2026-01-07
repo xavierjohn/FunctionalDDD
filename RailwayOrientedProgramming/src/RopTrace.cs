@@ -11,28 +11,23 @@ internal static class RopTrace
     
     private static readonly ActivitySource DefaultActivitySource = new(ActivitySourceName, Version.ToString());
     
-#if DEBUG
-    private static ActivitySource? _testActivitySource;
-#endif
+    // Use AsyncLocal for test isolation - works across async boundaries and is thread-safe
+    private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
     
     internal static ActivitySource ActivitySource =>
-#if DEBUG
-        _testActivitySource ??
-#endif
-        DefaultActivitySource;
+        _testActivitySource.Value ?? DefaultActivitySource;
 
-#if DEBUG
     /// <summary>
-    /// Sets a custom ActivitySource for testing purposes only.
+    /// Sets a custom ActivitySource for testing purposes.
     /// This allows tests to have complete isolation from other tests.
+    /// Uses AsyncLocal to ensure proper isolation even with async tests and parallel execution.
     /// </summary>
     /// <param name="source">The test-specific ActivitySource to use.</param>
-    internal static void SetTestActivitySource(ActivitySource source) => _testActivitySource = source;
+    internal static void SetTestActivitySource(ActivitySource source) => _testActivitySource.Value = source;
     
     /// <summary>
     /// Resets the ActivitySource to the default production source.
     /// Should be called in test cleanup/dispose.
     /// </summary>
-    internal static void ResetTestActivitySource() => _testActivitySource = null;
-#endif
+    internal static void ResetTestActivitySource() => _testActivitySource.Value = null;
 }

@@ -1,7 +1,6 @@
 namespace RailwayOrientedProgramming.Tests.Helpers;
 
 using FunctionalDdd;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 /// <summary>
@@ -24,13 +23,8 @@ public sealed class ActivityTestHelper : IDisposable
         // Configure the listener to capture activities from our test source
         _listener = new ActivityListener
         {
-#if DEBUG
-            // In DEBUG mode, only listen to our test-specific source
+            // Always listen to our test-specific source for isolation
             ShouldListenTo = source => source == _testActivitySource,
-#else
-            // In RELEASE mode, listen to the default ROP activity source
-            ShouldListenTo = source => source.Name == RopTrace.ActivitySourceName,
-#endif
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity =>
             {
@@ -43,10 +37,8 @@ public sealed class ActivityTestHelper : IDisposable
         
         ActivitySource.AddActivityListener(_listener);
         
-#if DEBUG
-        // Inject our test source into RopTrace
+        // Inject our test source into RopTrace (works in both DEBUG and RELEASE)
         RopTrace.SetTestActivitySource(_testActivitySource);
-#endif
     }
 
     /// <summary>
@@ -95,6 +87,13 @@ public sealed class ActivityTestHelper : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Waits for multiple activities with the specified display name to be captured.
+    /// </summary>
+    /// <param name="displayName">The activity display name to search for.</param>
+    /// <param name="count">The minimum number of activities with this name to wait for.</param>
+    /// <param name="timeout">Optional timeout period. Defaults to 2 seconds.</param>
+    /// <returns>An enumerable of activities with the specified name, or null if not found within timeout.</returns>
     public IEnumerable<Activity>? WaitForActivities(string displayName, int count, TimeSpan? timeout = null)
     {
         var maxWait = timeout ?? TimeSpan.FromSeconds(2);
@@ -104,9 +103,9 @@ public sealed class ActivityTestHelper : IDisposable
         {
             lock (_lock)
             {
-                IEnumerable<Activity> activity = _capturedActivities.Where(a => a.DisplayName == displayName);
-                if (activity != null && activity.Count() >= count)
-                    return activity;
+                var activities = _capturedActivities.Where(a => a.DisplayName == displayName);
+                if (activities != null && activities.Count() >= count)
+                    return activities;
             }
 
             Thread.Sleep(10);
@@ -127,10 +126,8 @@ public sealed class ActivityTestHelper : IDisposable
         // This trade-off between test speed and reliability is acceptable for integration tests.
         Thread.Sleep(1000);
         
-#if DEBUG
         // Reset RopTrace to use the default ActivitySource
         RopTrace.ResetTestActivitySource();
-#endif
         
         // Dispose resources
         _listener.Dispose();

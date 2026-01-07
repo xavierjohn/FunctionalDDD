@@ -216,10 +216,12 @@ public class EnsureTracingTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(84);
         
+        // Verify that each Ensure operation created its own activity with OK status
         var ensureActivities = activityTest.AssertActivityCaptured("Ensure", 2).ToArray();
         ensureActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
         ensureActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
-
+        
+        // Verify that Bind operation created its activity with OK status
         var bindActivity = activityTest.AssertActivityCaptured("Bind", 1).First();
         bindActivity.Status.Should().Be(ActivityStatusCode.Ok);
     }

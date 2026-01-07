@@ -72,6 +72,15 @@ public static class ActivityTestHelperExtensions
         return activity;
     }
 
+    /// <summary>
+    /// Asserts that multiple activities with the specified display name have been captured.
+    /// Waits for the activities with a timeout and fails the test if the count is not reached.
+    /// </summary>
+    /// <param name="helper">The ActivityTestHelper instance.</param>
+    /// <param name="displayName">The expected activity display name.</param>
+    /// <param name="expectedCount">The minimum number of activities expected.</param>
+    /// <param name="timeout">Optional timeout period. Defaults to 2 seconds.</param>
+    /// <returns>An enumerable of captured activities for further assertions.</returns>
     public static IEnumerable<Activity> AssertActivityCaptured(
         this ActivityTestHelper helper,
         string displayName,
@@ -80,7 +89,7 @@ public static class ActivityTestHelperExtensions
     {
         var actualTimeout = timeout ?? TimeSpan.FromSeconds(2);
         var activities = helper.WaitForActivities(displayName, expectedCount, actualTimeout);
-        activities.Should().NotBeNull($"expected at least {expectedCount} activities with name '{displayName}' within {actualTimeout.TotalSeconds}s");
+        activities.Should().NotBeNull($"expected at least {expectedCount} activities with name '{displayName}' to be captured within {actualTimeout.TotalSeconds}s");
         return activities!;
     }
 }
