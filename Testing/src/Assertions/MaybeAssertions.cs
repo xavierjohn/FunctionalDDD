@@ -94,4 +94,51 @@ public class MaybeAssertions<T> : ReferenceTypeAssertions<Maybe<T>, MaybeAsserti
 
         return new AndConstraint<MaybeAssertions<T>>(this);
     }
+
+    /// <summary>
+    /// Asserts that the Maybe has a value that satisfies the given predicate.
+    /// </summary>
+    /// <param name="predicate">The predicate the value should satisfy.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<MaybeAssertions<T>> HaveValueMatching(
+        Func<T, bool> predicate,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        HaveValue(because, becauseArgs);
+
+        Execute.Assertion
+            .BecauseOf(because, becauseArgs)
+            .ForCondition(predicate(Subject.Value))
+            .FailWith("Expected {context:maybe} value to match predicate{reason}, but it did not. Value: {0}",
+                Subject.Value);
+
+        return new AndConstraint<MaybeAssertions<T>>(this);
+    }
+
+    /// <summary>
+    /// Asserts that the Maybe has a value that is equivalent to the expected value using structural comparison.
+    /// </summary>
+    /// <param name="expectedValue">The expected value.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<MaybeAssertions<T>> HaveValueEquivalentTo(
+        T expectedValue,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        HaveValue(because, becauseArgs);
+        Subject.Value.Should().BeEquivalentTo(expectedValue, because, becauseArgs);
+
+        return new AndConstraint<MaybeAssertions<T>>(this);
+    }
 }

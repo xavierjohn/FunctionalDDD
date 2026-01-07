@@ -213,6 +213,75 @@ public class MaybeAssertionsTests
 
     #endregion
 
+    #region HaveValueMatching Tests
+
+    [Fact]
+    public void HaveValueMatching_Should_Pass_When_Predicate_Satisfied()
+    {
+        // Arrange
+        var maybe = Maybe.From(42);
+
+        // Act & Assert
+        maybe.Should().HaveValueMatching(x => x > 40);
+    }
+
+    [Fact]
+    public void HaveValueMatching_Should_Fail_When_Predicate_Not_Satisfied()
+    {
+        // Arrange
+        var maybe = Maybe.From(42);
+
+        // Act
+        var act = () => maybe.Should().HaveValueMatching(x => x > 50);
+
+        // Assert
+        act.Should().Throw<Exception>()
+            .WithMessage("*value to match predicate*");
+    }
+
+    [Fact]
+    public void HaveValueMatching_Should_Fail_When_None()
+    {
+        // Arrange
+        var maybe = Maybe.None<int>();
+
+        // Act
+        var act = () => maybe.Should().HaveValueMatching(x => x > 0);
+
+        // Assert
+        act.Should().Throw<Exception>()
+            .WithMessage("*to have a value*");
+    }
+
+    #endregion
+
+    #region HaveValueEquivalentTo Tests
+
+    [Fact]
+    public void HaveValueEquivalentTo_Should_Pass_When_Equivalent()
+    {
+        // Arrange
+        var maybe = Maybe.From(new { Name = "John", Age = 30 });
+
+        // Act & Assert
+        maybe.Should().HaveValueEquivalentTo(new { Name = "John", Age = 30 });
+    }
+
+    [Fact]
+    public void HaveValueEquivalentTo_Should_Fail_When_Not_Equivalent()
+    {
+        // Arrange
+        var maybe = Maybe.From(new { Name = "John", Age = 30 });
+
+        // Act
+        var act = () => maybe.Should().HaveValueEquivalentTo(new { Name = "Jane", Age = 25 });
+
+        // Assert
+        act.Should().Throw<Exception>();
+    }
+
+    #endregion
+
     #region Chaining Tests
 
     [Fact]

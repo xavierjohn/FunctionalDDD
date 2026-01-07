@@ -137,4 +137,198 @@ public class ActionResultTests
         objectResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
 
+    #region Error Type Tests
+
+    [Fact]
+    public void Will_return_NotFound_for_NotFoundError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.NotFound("Resource not found");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+    }
+
+    [Fact]
+    public void Will_return_Unauthorized_for_UnauthorizedError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Unauthorized("Not authenticated");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+    }
+
+    [Fact]
+    public void Will_return_Forbidden_for_ForbiddenError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Forbidden("Access denied");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
+
+    [Fact]
+    public void Will_return_Conflict_for_ConflictError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Conflict("Resource already exists");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+    }
+
+    [Fact]
+    public void Will_return_UnprocessableEntity_for_DomainError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Domain("Business rule violation");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    [Fact]
+    public void Will_return_TooManyRequests_for_RateLimitError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.RateLimit("Too many requests");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status429TooManyRequests);
+    }
+
+    [Fact]
+    public void Will_return_InternalServerError_for_UnexpectedError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.Unexpected("Something went wrong");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+    }
+
+    [Fact]
+    public void Will_return_ServiceUnavailable_for_ServiceUnavailableError()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.ServiceUnavailable("Service is down");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    #endregion
+
+    #region Partial Content Tests
+
+    [Fact]
+    public void ToActionResult_with_range_returns_PartialContent_when_subset()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var result = Result.Success("Test");
+
+        // Act
+        var response = result.ToActionResult(controller, 0, 4, 10);
+
+        // Assert
+        var partialResult = response.Result.As<PartialObjectResult>();
+        partialResult.StatusCode.Should().Be(StatusCodes.Status206PartialContent);
+        partialResult.Value.Should().Be("Test");
+    }
+
+    [Fact]
+    public void ToActionResult_with_range_returns_failure_for_error()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var error = Error.NotFound("Not found");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var response = result.ToActionResult(controller, 0, 4, 10);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = response.Result.As<ObjectResult>();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+    }
+
+    [Fact]
+    public void ToActionResult_with_funcRange_returns_Ok_when_complete()
+    {
+        // Arrange
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var result = Result.Success("Test");
+
+        // Act
+        var response = result.ToActionResult(controller,
+            static r => new ContentRangeHeaderValue(0, 9, 10),
+            static r => "Transformed");
+
+        // Assert
+        var okResult = response.Result.As<OkObjectResult>();
+        okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        okResult.Value.Should().Be("Transformed");
+    }
+
+    #endregion
 }

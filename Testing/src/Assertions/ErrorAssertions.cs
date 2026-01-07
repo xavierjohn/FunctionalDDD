@@ -1,6 +1,7 @@
 namespace FunctionalDdd.Testing;
 
 using FluentAssertions;
+using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
 
 /// <summary>
@@ -85,5 +86,49 @@ public class ErrorAssertions : ReferenceTypeAssertions<Error, ErrorAssertions>
     {
         Subject.Detail.Should().Contain(substring, because, becauseArgs);
         return new AndConstraint<ErrorAssertions>(this);
+    }
+
+    /// <summary>
+    /// Asserts that the error has the specified instance identifier.
+    /// </summary>
+    /// <param name="expectedInstance">The expected instance identifier.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<ErrorAssertions> HaveInstance(
+        string expectedInstance,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        Subject.Instance.Should().Be(expectedInstance, because, becauseArgs);
+        return new AndConstraint<ErrorAssertions>(this);
+    }
+
+    /// <summary>
+    /// Asserts that the error is of the specified type and returns a typed constraint for further assertions.
+    /// </summary>
+    /// <typeparam name="TError">The expected error type.</typeparam>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public new AndWhichConstraint<ErrorAssertions, TError> BeOfType<TError>(
+        string because = "",
+        params object[] becauseArgs)
+        where TError : Error
+    {
+        Execute.Assertion
+            .BecauseOf(because, becauseArgs)
+            .ForCondition(Subject is TError)
+            .FailWith("Expected {context:error} to be of type {0}{reason}, but found {1}",
+                typeof(TError).Name,
+                Subject.GetType().Name);
+
+        return new AndWhichConstraint<ErrorAssertions, TError>(this, (TError)Subject);
     }
 }

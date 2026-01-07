@@ -154,4 +154,109 @@ public class FluentTests
         ValidationError error = (ValidationError)result.Error;
         error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
     }
+
+    #region ValidateToResultAsync Tests
+
+    [Fact]
+    public async Task ValidateToResultAsync_WithValidValue_ReturnsSuccess()
+    {
+        // Arrange
+        var validator = new InlineValidator<string>
+        {
+            v => v.RuleFor(x => x).NotEmpty().MinimumLength(3)
+        };
+
+        // Act
+        var result = await validator.ValidateToResultAsync("valid");
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("valid");
+    }
+
+    [Fact]
+    public async Task ValidateToResultAsync_WithInvalidValue_ReturnsFailure()
+    {
+        // Arrange
+        var validator = new InlineValidator<string>
+        {
+            v => v.RuleFor(x => x).NotEmpty().MinimumLength(5)
+        };
+
+        // Act
+        var result = await validator.ValidateToResultAsync("ab");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    [Fact]
+    public async Task ValidateToResultAsync_WithNullValue_ReturnsFailure()
+    {
+        // Arrange
+        string? value = null;
+        var validator = new InlineValidator<string?>
+        {
+            v => v.RuleFor(x => x).NotEmpty()
+        };
+
+        ImmutableArray<FieldError> expectedValidationErrors =
+        [
+            new("value", ["'value' must not be empty."])
+        ];
+
+        // Act
+        var result = await validator.ValidateToResultAsync(value);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+        var error = (ValidationError)result.Error;
+        error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+    }
+
+    [Fact]
+    public async Task ValidateToResultAsync_WithNullValue_CustomMessage_ReturnsFailure()
+    {
+        // Arrange
+        string? myValue = null;
+        var validator = new InlineValidator<string?>
+        {
+            v => v.RuleFor(x => x).NotEmpty()
+        };
+
+        ImmutableArray<FieldError> expectedValidationErrors =
+        [
+            new("CustomParam", ["Custom error message"])
+        ];
+
+        // Act
+        var result = await validator.ValidateToResultAsync(myValue, "CustomParam", "Custom error message");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+        var error = (ValidationError)result.Error;
+        error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+    }
+
+    [Fact]
+    public async Task ValidateToResultAsync_WithCancellationToken_RespectsToken()
+    {
+        // Arrange
+        var validator = new InlineValidator<string>
+        {
+            v => v.RuleFor(x => x).NotEmpty()
+        };
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var result = await validator.ValidateToResultAsync("test", cancellationToken: cts.Token);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    #endregion
 }
