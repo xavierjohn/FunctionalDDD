@@ -1,5 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Bind;
 
+using FunctionalDdd.Testing;
+
 public partial class BindTests : TestBase
 {
 
@@ -19,8 +21,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        newResult.IsSuccess.Should().BeTrue();
-        newResult.Value.Should().Be("Value: 42");
+        newResult.Should().BeSuccess()
+            .Which.Should().Be("Value: 42");
     }
 
     [Fact]
@@ -39,8 +41,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        Assert.True(newResult.IsFailure);
-        Assert.Equal(Error1, newResult.Error);
+        newResult.Should().BeFailure();
+        newResult.Error.Should().Be(Error1);
     }
 
     [Fact]
@@ -59,8 +61,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        actual.IsSuccess.Should().BeTrue();
-        actual.Value.Should().Be("Hello");
+        actual.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -79,7 +81,7 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        actual.IsFailure.Should().BeTrue();
+        actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
     }
 
@@ -99,8 +101,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        actual.IsSuccess.Should().BeTrue();
-        actual.Value.Should().Be("Hello");
+        actual.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -119,7 +121,7 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        actual.IsFailure.Should().BeTrue();
+        actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
     }
 
@@ -139,8 +141,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        actual.IsSuccess.Should().BeTrue();
-        actual.Value.Should().Be("Hello");
+        actual.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -159,7 +161,7 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        actual.IsFailure.Should().BeTrue();
+        actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
     }
 
@@ -180,8 +182,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        actual.IsSuccess.Should().BeTrue();
-        actual.Value.Should().Be("Hello");
+        actual.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -200,7 +202,7 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        actual.IsFailure.Should().BeTrue();
+        actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
     }
 
@@ -220,8 +222,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        actual.IsSuccess.Should().BeTrue();
-        actual.Value.Should().Be("Hello");
+        actual.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -240,7 +242,7 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        actual.IsFailure.Should().BeTrue();
+        actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
     }
 
@@ -260,8 +262,8 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeTrue();
-        actual.IsSuccess.Should().BeTrue();
-        actual.Value.Should().Be("Hello");
+        actual.Should().BeSuccess()
+            .Which.Should().Be("Hello");
     }
 
     [Fact]
@@ -280,7 +282,7 @@ public partial class BindTests : TestBase
 
         // Assert
         functionCalled.Should().BeFalse();
-        actual.IsFailure.Should().BeTrue();
+        actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
     }
 

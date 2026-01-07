@@ -152,4 +152,92 @@ public class ResultAssertions<TValue> : ReferenceTypeAssertions<Result<TValue>, 
 
         return new AndConstraint<ResultAssertions<TValue>>(this);
     }
+
+    /// <summary>
+    /// Asserts that the success value is equivalent to the expected value using structural comparison.
+    /// </summary>
+    /// <param name="expectedValue">The expected value.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<ResultAssertions<TValue>> HaveValueEquivalentTo(
+        TValue expectedValue,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        BeSuccess(because, becauseArgs);
+
+        Subject.Value.Should().BeEquivalentTo(expectedValue, because, becauseArgs);
+
+        return new AndConstraint<ResultAssertions<TValue>>(this);
+    }
+
+    /// <summary>
+    /// Asserts that the failure has a specific error code.
+    /// </summary>
+    /// <param name="expectedCode">The expected error code.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<ResultAssertions<TValue>> HaveErrorCode(
+        string expectedCode,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        BeFailure(because, becauseArgs);
+
+        Subject.Error.Code.Should().Be(expectedCode, because, becauseArgs);
+
+        return new AndConstraint<ResultAssertions<TValue>>(this);
+    }
+
+    /// <summary>
+    /// Asserts that the failure has a specific error detail.
+    /// </summary>
+    /// <param name="expectedDetail">The expected error detail.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<ResultAssertions<TValue>> HaveErrorDetail(
+        string expectedDetail,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        BeFailure(because, becauseArgs);
+
+        Subject.Error.Detail.Should().Be(expectedDetail, because, becauseArgs);
+
+        return new AndConstraint<ResultAssertions<TValue>>(this);
+    }
+
+    /// <summary>
+    /// Asserts that the failure error detail contains the specified substring.
+    /// </summary>
+    /// <param name="substring">The substring to search for.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<ResultAssertions<TValue>> HaveErrorDetailContaining(
+        string substring,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        BeFailure(because, becauseArgs);
+
+        Subject.Error.Detail.Should().Contain(substring, because, becauseArgs);
+
+        return new AndConstraint<ResultAssertions<TValue>>(this);
+    }
 }

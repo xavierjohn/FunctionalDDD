@@ -1,0 +1,126 @@
+namespace FunctionalDdd.Testing.Tests.Assertions;
+
+public class ResultAssertionsAsyncTests
+{
+    [Fact]
+    public async Task BeSuccessAsync_Should_Pass_When_Success()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Success(42));
+
+        // Act & Assert
+        var constraint = await resultTask.BeSuccessAsync();
+        constraint.Which.Should().Be(42);
+    }
+
+    [Fact]
+    public async Task BeSuccessAsync_Should_Fail_When_Failure()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act
+        var act = async () => await resultTask.BeSuccessAsync();
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>();
+    }
+
+    [Fact]
+    public async Task BeFailureAsync_Should_Pass_When_Failure()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act & Assert
+        var constraint = await resultTask.BeFailureAsync();
+        constraint.Which.Should().BeOfType<NotFoundError>();
+    }
+
+    [Fact]
+    public async Task BeFailureAsync_Should_Fail_When_Success()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Success(42));
+
+        // Act
+        var act = async () => await resultTask.BeFailureAsync();
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>();
+    }
+
+    [Fact]
+    public async Task BeFailureOfTypeAsync_Should_Pass_When_Type_Matches()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act & Assert
+        var constraint = await resultTask.BeFailureOfTypeAsync<int, NotFoundError>();
+        constraint.Which.Detail.Should().Be("Not found");
+    }
+
+    [Fact]
+    public async Task BeFailureOfTypeAsync_Should_Fail_When_Type_Different()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act
+        var act = async () => await resultTask.BeFailureOfTypeAsync<int, ValidationError>();
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>();
+    }
+
+    #region ValueTask Tests
+
+    [Fact]
+    public async Task BeSuccessAsync_ValueTask_Should_Pass_When_Success()
+    {
+        // Arrange
+        var resultTask = ValueTask.FromResult(Result.Success(42));
+
+        // Act & Assert
+        var constraint = await resultTask.BeSuccessAsync();
+        constraint.Which.Should().Be(42);
+    }
+
+    [Fact]
+    public async Task BeSuccessAsync_ValueTask_Should_Fail_When_Failure()
+    {
+        // Arrange
+        var resultTask = ValueTask.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act
+        var act = async () => await resultTask.BeSuccessAsync();
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>();
+    }
+
+    [Fact]
+    public async Task BeFailureAsync_ValueTask_Should_Pass_When_Failure()
+    {
+        // Arrange
+        var resultTask = ValueTask.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act & Assert
+        var constraint = await resultTask.BeFailureAsync();
+        constraint.Which.Should().BeOfType<NotFoundError>();
+    }
+
+    [Fact]
+    public async Task BeFailureOfTypeAsync_ValueTask_Should_Pass_When_Type_Matches()
+    {
+        // Arrange
+        var resultTask = ValueTask.FromResult(Result.Failure<int>(Error.NotFound("Not found")));
+
+        // Act & Assert
+        var constraint = await resultTask.BeFailureOfTypeAsync<int, NotFoundError>();
+        constraint.Which.Detail.Should().Be("Not found");
+    }
+
+    #endregion
+}

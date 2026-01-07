@@ -152,4 +152,112 @@ public class ResultAssertionsTests
         act.Should().Throw<Exception>()
             .WithMessage("*value to match predicate*");
     }
+
+    #region HaveValueEquivalentTo Tests
+
+    [Fact]
+    public void HaveValueEquivalentTo_Should_Pass_When_Equivalent()
+    {
+        // Arrange
+        var result = Result.Success(new { Name = "John", Age = 30 });
+
+        // Act & Assert
+        result.Should().HaveValueEquivalentTo(new { Name = "John", Age = 30 });
+    }
+
+    [Fact]
+    public void HaveValueEquivalentTo_Should_Fail_When_Not_Equivalent()
+    {
+        // Arrange
+        var result = Result.Success(new { Name = "John", Age = 30 });
+
+        // Act
+        var act = () => result.Should().HaveValueEquivalentTo(new { Name = "Jane", Age = 25 });
+
+        // Assert
+        act.Should().Throw<Exception>();
+    }
+
+    #endregion
+
+    #region HaveErrorCode Tests
+
+    [Fact]
+    public void HaveErrorCode_Should_Pass_When_Code_Matches()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.NotFound("Not found"));
+
+        // Act & Assert
+        result.Should().HaveErrorCode("not.found.error");
+    }
+
+    [Fact]
+    public void HaveErrorCode_Should_Fail_When_Code_Different()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.NotFound("Not found"));
+
+        // Act
+        var act = () => result.Should().HaveErrorCode("wrong.code");
+
+        // Assert
+        act.Should().Throw<Exception>();
+    }
+
+    #endregion
+
+    #region HaveErrorDetail Tests
+
+    [Fact]
+    public void HaveErrorDetail_Should_Pass_When_Detail_Matches()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.NotFound("Resource not found"));
+
+        // Act & Assert
+        result.Should().HaveErrorDetail("Resource not found");
+    }
+
+    [Fact]
+    public void HaveErrorDetail_Should_Fail_When_Detail_Different()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.NotFound("Resource not found"));
+
+        // Act
+        var act = () => result.Should().HaveErrorDetail("Wrong detail");
+
+        // Assert
+        act.Should().Throw<Exception>();
+    }
+
+    #endregion
+
+    #region HaveErrorDetailContaining Tests
+
+    [Fact]
+    public void HaveErrorDetailContaining_Should_Pass_When_Contains()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.NotFound("User with ID 123 not found"));
+
+        // Act & Assert
+        result.Should().HaveErrorDetailContaining("123");
+    }
+
+    [Fact]
+    public void HaveErrorDetailContaining_Should_Fail_When_Not_Contains()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.NotFound("User not found"));
+
+        // Act
+        var act = () => result.Should().HaveErrorDetailContaining("456");
+
+        // Assert
+        act.Should().Throw<Exception>();
+    }
+
+    #endregion
 }
