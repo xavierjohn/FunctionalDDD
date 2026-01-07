@@ -4,46 +4,175 @@ using FunctionalDdd;
 
 public class AggregateTests
 {
+    #region Type Tests
+
     [Fact]
     public void Aggregate_is_abstract() => typeof(Aggregate<>).IsAbstract.Should().BeTrue();
 
     [Fact]
-    public void Aggregate_with_same_ids_is_equal()
+    public void Aggregate_inherits_from_Entity()
     {
-        User user1 = User.TryCreate("1", "John", "Doe", "john@doe.com");
-        User user2 = User.TryCreate("1", "Jane", "Doe", "jane@doecom");
-
-        user1.Should().Be(user2);
+        // Use a closed generic type to test inheritance
+        typeof(TestAggregate).BaseType.Should().Be<Aggregate<string>>();
+        typeof(Aggregate<string>).BaseType.Should().Be<Entity<string>>();
     }
 
     [Fact]
-    public void Aggregate_with_different_ids_are_not_equal()
-    {
-        User user1 = User.TryCreate("1", "John", "Doe", "john@doe.com");
-        User user2 = User.TryCreate("2", "John", "Doe", "john@doe.com");
+    public void Aggregate_implements_IAggregate() => typeof(IAggregate).IsAssignableFrom(typeof(Aggregate<string>)).Should().BeTrue();
 
-        user1.Should().NotBe(user2);
+    #endregion
+
+    #region Domain Events Tests
+
+    [Fact]
+    public void NewAggregate_HasNoUncommittedEvents()
+    {
+        // Arrange & Act
+        var aggregate = TestAggregate.Create("1");
+
+        // Assert
+        aggregate.UncommittedEvents().Should().BeEmpty();
+        aggregate.IsChanged.Should().BeFalse();
     }
+
+    [Fact]
+    public void Aggregate_RaisingEvent_AddsToUncommittedEvents()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+
+        // Act
+        aggregate.DoSomething();
+
+        // Assert
+        aggregate.UncommittedEvents().Should().HaveCount(1);
+        aggregate.UncommittedEvents()[0].Should().BeOfType<TestEvent>();
+        aggregate.IsChanged.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Aggregate_RaisingMultipleEvents_TracksAllEvents()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+
+        // Act
+        aggregate.DoSomething();
+        aggregate.DoSomething();
+        aggregate.DoSomething();
+
+        // Assert
+        aggregate.UncommittedEvents().Should().HaveCount(3);
+        aggregate.IsChanged.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AcceptChanges_ClearsUncommittedEvents()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+        aggregate.DoSomething();
+        aggregate.DoSomething();
+
+        // Act
+        aggregate.AcceptChanges();
+
+        // Assert
+        aggregate.UncommittedEvents().Should().BeEmpty();
+        aggregate.IsChanged.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AcceptChanges_AllowsNewEventsToBeAdded()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+        aggregate.DoSomething();
+        aggregate.AcceptChanges();
+
+        // Act
+        aggregate.DoSomething();
+
+        // Assert
+        aggregate.UncommittedEvents().Should().HaveCount(1);
+        aggregate.IsChanged.Should().BeTrue();
+    }
+
+    [Fact]
+    public void UncommittedEvents_ReturnsReadOnlyList()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+        aggregate.DoSomething();
+
+        // Act
+        var events = aggregate.UncommittedEvents();
+
+        // Assert
+        events.Should().BeAssignableTo<IReadOnlyList<IDomainEvent>>();
+    }
+
+    #endregion
+
+    #region IsChanged Tests
+
+    [Fact]
+    public void IsChanged_IsFalse_WhenNoEvents()
+    {
+        // Arrange & Act
+        var aggregate = TestAggregate.Create("1");
+
+        // Assert
+        aggregate.IsChanged.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsChanged_IsTrue_WhenEventsExist()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+
+        // Act
+        aggregate.DoSomething();
+
+        // Assert
+        aggregate.IsChanged.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsChanged_IsFalse_AfterAcceptChanges()
+    {
+        // Arrange
+        var aggregate = TestAggregate.Create("1");
+        aggregate.DoSomething();
+
+        // Act
+        aggregate.AcceptChanges();
+
+        // Assert
+        aggregate.IsChanged.Should().BeFalse();
+    }
+
+    #endregion
 }
 
-internal class User : Aggregate<string>
+#region Test Aggregate and Events
+
+internal record TestEvent(string AggregateId, DateTime OccurredAt) : IDomainEvent;
+
+internal class TestAggregate : Aggregate<string>
 {
-    public string FirstName { get; }
-    public string LastName { get; }
-    public string Email { get; }
+    public string Name { get; private set; }
 
-    public static User TryCreate(string id, string firstName, string lastName, string email)
-    {
-        // Validate parameters.
-        var user = new User(id, firstName, lastName, email);
-        return user;
-    }
+    private TestAggregate(string id, string name) : base(id) => Name = name;
 
-    private User(string id, string firstName, string lastName, string email)
-        : base(id)
+    public static TestAggregate Create(string id, string name = "Test") => new(id, name);
+
+    public void DoSomething()
     {
-        FirstName = firstName;
-        LastName = lastName;
-        Email = email;
+        Name = $"{Name}_modified";
+        DomainEvents.Add(new TestEvent(Id, DateTime.UtcNow));
     }
 }
+
+#endregion

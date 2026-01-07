@@ -22,7 +22,7 @@
 /// <item>Make events immutable - use readonly properties or init-only setters</item>
 /// <item>Include all relevant data needed by handlers to avoid querying</item>
 /// <item>Keep events focused on domain concepts, not technical implementation</item>
-/// <item>Include metadata like timestamps, user IDs, and correlation IDs</item>
+/// <item>Use <see cref="OccurredAt"/> for the event timestamp - avoid redundant timestamp fields</item>
 /// </list>
 /// </para>
 /// <para>
@@ -35,17 +35,20 @@
 /// </remarks>
 /// <example>
 /// <code>
-/// // Define a domain event as an immutable record
-/// public record OrderSubmittedEvent(
-///     OrderId OrderId,
-///     CustomerId CustomerId,
-///     Money Total,
-///     DateTime SubmittedAt
-/// ) : IDomainEvent;
+/// // Define domain events as immutable records with OccurredAt as the timestamp
+/// public record OrderCreatedEvent(OrderId OrderId, CustomerId CustomerId, DateTime OccurredAt) : IDomainEvent;
+/// public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
 /// 
-/// // Raise the event from an aggregate
+/// // Raise events from an aggregate
 /// public class Order : Aggregate&lt;OrderId&gt;
 /// {
+///     private Order(OrderId id, CustomerId customerId) : base(id)
+///     {
+///         CustomerId = customerId;
+///         CreatedAt = DateTime.UtcNow;
+///         DomainEvents.Add(new OrderCreatedEvent(id, customerId, DateTime.UtcNow));
+///     }
+///     
 ///     public Result&lt;Order&gt; Submit()
 ///     {
 ///         return this.ToResult()
@@ -54,7 +57,7 @@
 ///             {
 ///                 Status = OrderStatus.Submitted;
 ///                 SubmittedAt = DateTime.UtcNow;
-///                 DomainEvents.Add(new OrderSubmittedEvent(Id, CustomerId, Total, SubmittedAt.Value));
+///                 DomainEvents.Add(new OrderSubmittedEvent(Id, Total, DateTime.UtcNow));
 ///             });
 ///     }
 /// }
@@ -64,12 +67,37 @@
 /// {
 ///     public async Task Handle(OrderSubmittedEvent evt, CancellationToken ct)
 ///     {
-///         await _emailService.SendOrderConfirmationAsync(evt.CustomerId, evt.OrderId, ct);
-///         await _inventoryService.ReserveStockAsync(evt.OrderId, ct);
+///         _logger.LogInformation("Order {OrderId} submitted at {OccurredAt}", 
+///             evt.OrderId, evt.OccurredAt);
+///         await _emailService.SendOrderConfirmationAsync(evt.OrderId, ct);
 ///     }
 /// }
 /// </code>
 /// </example>
 public interface IDomainEvent
 {
+    /// <summary>
+    /// Gets the UTC timestamp when this domain event occurred.
+    /// </summary>
+    /// <value>
+    /// The date and time in UTC when the event was raised.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// This timestamp represents when the business action occurred, not when the event was persisted or published.
+    /// Always use UTC to ensure consistency across distributed systems and time zones.
+    /// </para>
+    /// <para>
+    /// Use <c>OccurredAt</c> as the single timestamp for your events - avoid adding redundant fields like 
+    /// <c>CreatedAt</c>, <c>SubmittedAt</c>, etc. that duplicate this information:
+    /// <code>
+    /// // Good - OccurredAt captures when the event happened
+    /// public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
+    /// 
+    /// // Avoid - redundant SubmittedAt duplicates OccurredAt
+    /// public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime SubmittedAt, DateTime OccurredAt) : IDomainEvent;
+    /// </code>
+    /// </para>
+    /// </remarks>
+    DateTime OccurredAt { get; }
 }

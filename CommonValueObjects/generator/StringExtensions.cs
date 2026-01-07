@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 /// These extension methods help format class names and property names for generated code
 /// and error messages, ensuring consistent naming conventions and readability.
 /// </remarks>
-internal static class StringExtenstions
+internal static class StringExtensions
 {
     /// <summary>
     /// Splits PascalCase strings into space-separated words for human-readable error messages.

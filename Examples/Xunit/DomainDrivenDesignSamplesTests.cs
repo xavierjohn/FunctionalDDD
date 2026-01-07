@@ -555,12 +555,12 @@ public class DomainDrivenDesignSamplesTests
     #region Aggregate Examples Tests
 
     // Domain Events
-    public record OrderCreatedEvent(OrderId OrderId, CustomerId CustomerId, DateTime CreatedAt) : IDomainEvent;
-    public record OrderLineAddedEvent(OrderId OrderId, ProductId ProductId, int Quantity) : IDomainEvent;
-    public record OrderLineRemovedEvent(OrderId OrderId, ProductId ProductId) : IDomainEvent;
-    public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime SubmittedAt) : IDomainEvent;
-    public record OrderCancelledEvent(OrderId OrderId, string Reason, DateTime CancelledAt) : IDomainEvent;
-    public record OrderShippedEvent(OrderId OrderId, DateTime ShippedAt) : IDomainEvent;
+    public record OrderCreatedEvent(OrderId OrderId, CustomerId CustomerId, DateTime OccurredAt) : IDomainEvent;
+    public record OrderLineAddedEvent(OrderId OrderId, ProductId ProductId, int Quantity, DateTime OccurredAt) : IDomainEvent;
+    public record OrderLineRemovedEvent(OrderId OrderId, ProductId ProductId, DateTime OccurredAt) : IDomainEvent;
+    public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
+    public record OrderCancelledEvent(OrderId OrderId, string Reason, DateTime OccurredAt) : IDomainEvent;
+    public record OrderShippedEvent(OrderId OrderId, DateTime OccurredAt) : IDomainEvent;
 
     public enum OrderStatus
     {
@@ -617,7 +617,7 @@ public class DomainDrivenDesignSamplesTests
             CreatedAt = DateTime.UtcNow;
             Total = Money.TryCreate(0).Value;
 
-            DomainEvents.Add(new OrderCreatedEvent(id, customerId, CreatedAt));
+            DomainEvents.Add(new OrderCreatedEvent(id, customerId, DateTime.UtcNow));
         }
 
         public static Result<Order> TryCreate(CustomerId customerId) =>
@@ -641,13 +641,13 @@ public class DomainDrivenDesignSamplesTests
                     }
                     else
                     {
-                    var line = new OrderLine(productId, productName, price, quantity);
-                    _lines.Add(line);
-                }
+                        var line = new OrderLine(productId, productName, price, quantity);
+                        _lines.Add(line);
+                    }
 
-                RecalculateTotal();
-                DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
-            });
+                    RecalculateTotal();
+                    DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity, DateTime.UtcNow));
+                });
 
         public Result<Order> RemoveLine(ProductId productId) =>
             this.ToResult()
@@ -660,7 +660,7 @@ public class DomainDrivenDesignSamplesTests
                     var line = _lines.First(l => l.ProductId == productId);
                     _lines.Remove(line);
                     RecalculateTotal();
-                    DomainEvents.Add(new OrderLineRemovedEvent(Id, productId));
+                    DomainEvents.Add(new OrderLineRemovedEvent(Id, productId, DateTime.UtcNow));
                 });
 
         public Result<Order> Submit() =>
@@ -675,7 +675,7 @@ public class DomainDrivenDesignSamplesTests
                 {
                     Status = OrderStatus.Submitted;
                     SubmittedAt = DateTime.UtcNow;
-                    DomainEvents.Add(new OrderSubmittedEvent(Id, Total, SubmittedAt.Value));
+                    DomainEvents.Add(new OrderSubmittedEvent(Id, Total, DateTime.UtcNow));
                 });
 
         public Result<Order> Ship() =>
@@ -686,7 +686,7 @@ public class DomainDrivenDesignSamplesTests
                 {
                     Status = OrderStatus.Shipped;
                     ShippedAt = DateTime.UtcNow;
-                    DomainEvents.Add(new OrderShippedEvent(Id, ShippedAt.Value));
+                    DomainEvents.Add(new OrderShippedEvent(Id, DateTime.UtcNow));
                 });
 
         public Result<Order> Cancel(string reason) =>
@@ -699,7 +699,7 @@ public class DomainDrivenDesignSamplesTests
                 {
                     Status = OrderStatus.Cancelled;
                     CancelledAt = DateTime.UtcNow;
-                    DomainEvents.Add(new OrderCancelledEvent(Id, reason, CancelledAt.Value));
+                    DomainEvents.Add(new OrderCancelledEvent(Id, reason, DateTime.UtcNow));
                 });
 
         private void RecalculateTotal()
