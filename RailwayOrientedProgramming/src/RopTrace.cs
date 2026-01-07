@@ -10,9 +10,16 @@ internal static class RopTrace
     internal static readonly Version Version = AssemblyName.Version!;
     
     private static readonly ActivitySource DefaultActivitySource = new(ActivitySourceName, Version.ToString());
-    private static ActivitySource? _testActivitySource;
     
-    internal static ActivitySource ActivitySource => _testActivitySource ?? DefaultActivitySource;
+#if DEBUG
+    private static ActivitySource? _testActivitySource;
+#endif
+    
+    internal static ActivitySource ActivitySource =>
+#if DEBUG
+        _testActivitySource ??
+#endif
+        DefaultActivitySource;
 
 #if DEBUG
     /// <summary>

@@ -352,7 +352,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test value");
         result.Debug("Test message");
 
-        var activity = activityTest.GetActivity("Debug: Test message");
+        var activity = activityTest.WaitForActivity("Debug: Test message");
         activity.Should().NotBeNull();
         activity!.DisplayName.Should().Be("Debug: Test message");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Success");
@@ -369,7 +369,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(error);
         result.Debug("Error test");
 
-        var activity = activityTest.GetActivity("Debug: Error test");
+        var activity = activityTest.WaitForActivity("Debug: Error test");
         activity.Should().NotBeNull();
         activity!.DisplayName.Should().Be("Debug: Error test");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Failure");
@@ -386,7 +386,7 @@ public class DebugTests : TestBase
         var result = Result.Success(42);
         result.DebugDetailed("Detailed test");
 
-        var activity = activityTest.GetActivity("Debug: Detailed test (Detailed)");
+        var activity = activityTest.WaitForActivity("Debug: Detailed test (Detailed)");
         activity.Should().NotBeNull();
         activity!.Tags.Should().Contain(t => t.Key == "debug.result.type" && t.Value == "Int32");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.value" && t.Value == "42");
@@ -402,9 +402,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(validationError);
         result.DebugDetailed("Validation error test");
 
-        var activities = activityTest.GetAllActivities();
-        var activity = activities.FirstOrDefault(a => 
-            a.DisplayName.Contains("Validation error test", StringComparison.Ordinal));
+        var activity = activityTest.WaitForActivity("Debug: Validation error test (Detailed)");
         
         activity.Should().NotBeNull();
         activity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "ValidationError");
@@ -423,9 +421,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(aggregateError);
         result.DebugDetailed("Aggregate error test");
 
-        var activities = activityTest.GetAllActivities();
-        var activity = activities.FirstOrDefault(a => 
-            a.DisplayName.Contains("Aggregate error test", StringComparison.Ordinal));
+        var activity = activityTest.WaitForActivity("Debug: Aggregate error test (Detailed)");
         
         activity.Should().NotBeNull();
         activity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "AggregateError");
@@ -441,17 +437,14 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.DebugWithStack("Stack test");
 
-        var activities = activityTest.GetAllActivities();
-        var activity = activities.FirstOrDefault(a => 
-            a.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) && 
-            a.DisplayName.Contains("(with stack)", StringComparison.Ordinal));
+        var activity = activityTest.WaitForActivity("Debug: Stack test (with stack)");
         
         activity.Should().NotBeNull();
         activity!.Tags.Should().Contain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
         activity.Tags.Should().Contain(t => t.Key == "debug.stack[0].method");
     }
 
-    [Fact]
+    [Fact] 
     public void DebugWithStack_excludes_stack_trace_when_disabled()
     {
         using var activityTest = new ActivityTestHelper();
@@ -459,10 +452,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.DebugWithStack("No stack test", includeStackTrace: false);
 
-        var activities = activityTest.GetAllActivities();
-        var activity = activities.FirstOrDefault(a => 
-            a.DisplayName.StartsWith("Debug:", StringComparison.Ordinal) && 
-            a.DisplayName.Contains("(with stack)", StringComparison.Ordinal));
+        var activity = activityTest.WaitForActivity("Debug: No stack test (with stack)");
         
         activity.Should().NotBeNull();
         activity!.Tags.Should().NotContain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
@@ -476,7 +466,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test value");
         result.DebugOnSuccess(_ => { });
 
-        var activity = activityTest.GetActivity("Debug: OnSuccess");
+        var activity = activityTest.WaitForActivity("Debug: OnSuccess");
         activity.Should().NotBeNull();
         activity!.Status.Should().Be(ActivityStatusCode.Ok);
     }
@@ -490,7 +480,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(error);
         result.DebugOnFailure(_ => { });
 
-        var activity = activityTest.GetActivity("Debug: OnFailure");
+        var activity = activityTest.WaitForActivity("Debug: OnFailure");
         activity.Should().NotBeNull();
         activity!.Status.Should().Be(ActivityStatusCode.Error);
         activity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "bad.request.error");
@@ -504,7 +494,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.Debug();
 
-        var activity = activityTest.GetActivity("Debug");
+        var activity = activityTest.WaitForActivity("Debug");
         activity.Should().NotBeNull();
         activity!.DisplayName.Should().Be("Debug");
     }

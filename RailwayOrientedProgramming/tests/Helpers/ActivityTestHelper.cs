@@ -41,31 +41,6 @@ public sealed class ActivityTestHelper : IDisposable
     }
 
     /// <summary>
-    /// Gets the first activity with the specified display name.
-    /// </summary>
-    /// <param name="displayName">The activity display name to search for.</param>
-    /// <returns>The activity if found; otherwise null.</returns>
-    public Activity? GetActivity(string displayName)
-    {
-        lock (_lock)
-        {
-            return _capturedActivities.FirstOrDefault(a => a.DisplayName == displayName);
-        }
-    }
-
-    /// <summary>
-    /// Gets all captured activities from this test.
-    /// </summary>
-    /// <returns>A read-only list of all captured activities.</returns>
-    public IReadOnlyList<Activity> GetAllActivities()
-    {
-        lock (_lock)
-        {
-            return _capturedActivities.ToList().AsReadOnly();
-        }
-    }
-
-    /// <summary>
     /// Gets the number of activities captured so far.
     /// </summary>
     public int ActivityCount
@@ -80,14 +55,35 @@ public sealed class ActivityTestHelper : IDisposable
     }
 
     /// <summary>
-    /// Clears all captured activities.
+    /// Waits until the specified number of activities have been captured.
     /// </summary>
-    public void ClearActivities()
+    public bool WaitForActivityCount(int expectedCount, TimeSpan? timeout = null)
     {
-        lock (_lock)
+        var maxWait = timeout ?? TimeSpan.FromSeconds(1);
+        return SpinWait.SpinUntil(() => ActivityCount >= expectedCount, maxWait);
+    }
+
+    /// <summary>
+    /// Waits for an activity with the specified display name to be captured.
+    /// </summary>
+    public Activity? WaitForActivity(string displayName, TimeSpan? timeout = null)
+    {
+        var maxWait = timeout ?? TimeSpan.FromSeconds(1);
+        var stopwatch = Stopwatch.StartNew();
+
+        while (stopwatch.Elapsed < maxWait)
         {
-            _capturedActivities.Clear();
+            lock (_lock)
+            {
+                var activity = _capturedActivities.FirstOrDefault(a => a.DisplayName == displayName);
+                if (activity != null)
+                    return activity;
+            }
+
+            Thread.Sleep(10);
         }
+
+        return null;
     }
 
     public void Dispose()
