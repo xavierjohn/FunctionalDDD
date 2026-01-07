@@ -352,6 +352,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test value");
         result.Debug("Test message");
 
+        activityTest.WaitForActivityCount(1);
         var activity = activityTest.WaitForActivity("Debug: Test message");
         activity.Should().NotBeNull();
         activity!.DisplayName.Should().Be("Debug: Test message");
@@ -369,6 +370,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(error);
         result.Debug("Error test");
 
+        activityTest.WaitForActivityCount(1);
         var activity = activityTest.WaitForActivity("Debug: Error test");
         activity.Should().NotBeNull();
         activity!.DisplayName.Should().Be("Debug: Error test");
@@ -386,6 +388,7 @@ public class DebugTests : TestBase
         var result = Result.Success(42);
         result.DebugDetailed("Detailed test");
 
+        activityTest.WaitForActivityCount(1);
         var activity = activityTest.WaitForActivity("Debug: Detailed test (Detailed)");
         activity.Should().NotBeNull();
         activity!.Tags.Should().Contain(t => t.Key == "debug.result.type" && t.Value == "Int32");
@@ -466,6 +469,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test value");
         result.DebugOnSuccess(_ => { });
 
+        activityTest.WaitForActivityCount(1);
         var activity = activityTest.WaitForActivity("Debug: OnSuccess");
         activity.Should().NotBeNull();
         activity!.Status.Should().Be(ActivityStatusCode.Ok);
@@ -480,6 +484,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(error);
         result.DebugOnFailure(_ => { });
 
+        activityTest.WaitForActivityCount(1);
         var activity = activityTest.WaitForActivity("Debug: OnFailure");
         activity.Should().NotBeNull();
         activity!.Status.Should().Be(ActivityStatusCode.Error);
@@ -494,6 +499,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.Debug();
 
+        activityTest.WaitForActivityCount(1);
         var activity = activityTest.WaitForActivity("Debug");
         activity.Should().NotBeNull();
         activity!.DisplayName.Should().Be("Debug");

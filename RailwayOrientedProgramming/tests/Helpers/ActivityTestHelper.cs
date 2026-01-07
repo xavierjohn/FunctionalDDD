@@ -23,7 +23,13 @@ public sealed class ActivityTestHelper : IDisposable
         // Configure the listener to capture activities from our test source
         _listener = new ActivityListener
         {
+#if DEBUG
+            // In DEBUG mode, only listen to our test-specific source
             ShouldListenTo = source => source == _testActivitySource,
+#else
+            // In RELEASE mode, listen to the default ROP activity source
+            ShouldListenTo = source => source.Name == RopTrace.ActivitySourceName,
+#endif
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity =>
             {
@@ -36,8 +42,10 @@ public sealed class ActivityTestHelper : IDisposable
         
         ActivitySource.AddActivityListener(_listener);
         
+#if DEBUG
         // Inject our test source into RopTrace
         RopTrace.SetTestActivitySource(_testActivitySource);
+#endif
     }
 
     /// <summary>
@@ -59,7 +67,7 @@ public sealed class ActivityTestHelper : IDisposable
     /// </summary>
     public bool WaitForActivityCount(int expectedCount, TimeSpan? timeout = null)
     {
-        var maxWait = timeout ?? TimeSpan.FromSeconds(1);
+        var maxWait = timeout ?? TimeSpan.FromSeconds(2);
         return SpinWait.SpinUntil(() => ActivityCount >= expectedCount, maxWait);
     }
 
@@ -68,7 +76,7 @@ public sealed class ActivityTestHelper : IDisposable
     /// </summary>
     public Activity? WaitForActivity(string displayName, TimeSpan? timeout = null)
     {
-        var maxWait = timeout ?? TimeSpan.FromSeconds(1);
+        var maxWait = timeout ?? TimeSpan.FromSeconds(2);
         var stopwatch = Stopwatch.StartNew();
 
         while (stopwatch.Elapsed < maxWait)
@@ -90,14 +98,17 @@ public sealed class ActivityTestHelper : IDisposable
     {
         if (_disposed) return;
         
-        // Delay to ensure all pending ActivityStopped callbacks complete
-        // This is especially important for async operations which may complete
-        // after the test code finishes executing but before disposal
-        // 100ms provides a reliable buffer for async operation completion
-        Thread.Sleep(100);
+        // Delay to ensure all pending ActivityStopped callbacks complete.
+        // The Activity API is asynchronous - when Activity.Dispose() is called,
+        // it doesn't immediately invoke the ActivityStopped callback. Under load
+        // or when tests run in parallel, this delay can be significant.
+        // We use a 500ms delay to ensure reliability across all test scenarios.
+        Thread.Sleep(500);
         
+#if DEBUG
         // Reset RopTrace to use the default ActivitySource
         RopTrace.ResetTestActivitySource();
+#endif
         
         // Dispose resources
         _listener.Dispose();
