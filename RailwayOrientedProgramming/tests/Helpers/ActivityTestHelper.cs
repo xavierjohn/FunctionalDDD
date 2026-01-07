@@ -118,14 +118,6 @@ public sealed class ActivityTestHelper : IDisposable
     {
         if (_disposed) return;
         
-        // Delay to ensure all pending ActivityStopped callbacks complete.
-        // The Activity API is asynchronous - when Activity.Dispose() is called,
-        // it doesn't immediately invoke the ActivityStopped callback. Under load
-        // or when tests run in parallel, this delay can be significant.
-        // We use a 1000ms (1 second) delay to ensure maximum reliability across all test scenarios.
-        // This trade-off between test speed and reliability is acceptable for integration tests.
-        Thread.Sleep(1000);
-        
         // Reset RopTrace to use the default ActivitySource
         RopTrace.ResetTestActivitySource();
         
