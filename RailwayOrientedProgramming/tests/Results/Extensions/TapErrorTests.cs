@@ -328,6 +328,251 @@ public class TapErrorTests : TestBase
 
     #endregion
 
+    #region TapErrorAsync - ValueTask<Result<T>> with Action
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithAction_FailureResult_ExecutesAction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1).AsValueTask();
+
+        // Act
+        var actual = await result.TapErrorAsync(() => _actionExecuted = true);
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithAction_SuccessResult_DoesNotExecuteAction()
+    {
+        // Arrange
+        var result = Result.Success(42).AsValueTask();
+
+        // Act
+        var actual = await result.TapErrorAsync(() => _actionExecuted = true);
+
+        // Assert
+        _actionExecuted.Should().BeFalse();
+        actual.Should().BeSuccess();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithActionError_FailureResult_ExecutesAction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1).AsValueTask();
+
+        // Act
+        var actual = await result.TapErrorAsync(error =>
+        {
+            _actionExecuted = true;
+            _capturedError = error;
+        });
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        Assert.NotNull(_capturedError);
+        actual.Should().BeFailure();
+    }
+
+    #endregion
+
+    #region TapErrorAsync - Result<T> with Func<ValueTask>
+
+    [Fact]
+    public async Task TapErrorAsync_Result_WithFuncValueTask_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1);
+
+        // Act
+        var actual = await result.TapErrorAsync(() =>
+        {
+            _actionExecuted = true;
+            return ValueTask.CompletedTask;
+        });
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_Result_WithFuncValueTask_SuccessResult_DoesNotExecuteFunction()
+    {
+        // Arrange
+        var result = Result.Success(42);
+
+        // Act
+        var actual = await result.TapErrorAsync(() =>
+        {
+            _actionExecuted = true;
+            return ValueTask.CompletedTask;
+        });
+
+        // Assert
+        _actionExecuted.Should().BeFalse();
+        actual.Should().BeSuccess();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_Result_WithFuncErrorValueTask_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1);
+
+        // Act
+        var actual = await result.TapErrorAsync(error =>
+        {
+            _actionExecuted = true;
+            _capturedError = error;
+            return ValueTask.CompletedTask;
+        });
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        Assert.NotNull(_capturedError);
+        actual.Should().BeFailure();
+    }
+
+    #endregion
+
+    #region TapErrorAsync - Result<T> with ValueTask and CancellationToken
+
+    [Fact]
+    public async Task TapErrorAsync_Result_ValueTaskWithCancellation_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1);
+        using var cts = new CancellationTokenSource();
+
+        Func<CancellationToken, ValueTask> action = ct =>
+        {
+            _actionExecuted = true;
+            return ValueTask.CompletedTask;
+        };
+
+        // Act
+        var actual = await result.TapErrorAsync(action, cts.Token);
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_Result_ValueTaskWithErrorAndCancellation_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1);
+        using var cts = new CancellationTokenSource();
+
+        Func<Error, CancellationToken, ValueTask> action = (error, ct) =>
+        {
+            _actionExecuted = true;
+            _capturedError = error;
+            return ValueTask.CompletedTask;
+        };
+
+        // Act
+        var actual = await result.TapErrorAsync(action, cts.Token);
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        Assert.NotNull(_capturedError);
+        actual.Should().BeFailure();
+    }
+
+    #endregion
+
+    #region TapErrorAsync - ValueTask<Result<T>> with Func<ValueTask>
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithFuncValueTask_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1).AsValueTask();
+
+        // Act
+        var actual = await result.TapErrorAsync(() =>
+        {
+            _actionExecuted = true;
+            return ValueTask.CompletedTask;
+        });
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithFuncErrorValueTask_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1).AsValueTask();
+
+        // Act
+        var actual = await result.TapErrorAsync(error =>
+        {
+            _actionExecuted = true;
+            _capturedError = error;
+            return ValueTask.CompletedTask;
+        });
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        Assert.NotNull(_capturedError);
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithCancellation_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1).AsValueTask();
+        using var cts = new CancellationTokenSource();
+
+        Func<CancellationToken, ValueTask> action = ct =>
+        {
+            _actionExecuted = true;
+            return ValueTask.CompletedTask;
+        };
+
+        // Act
+        var actual = await result.TapErrorAsync(action, cts.Token);
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task TapErrorAsync_ValueTaskResult_WithErrorAndCancellation_FailureResult_ExecutesFunction()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error1).AsValueTask();
+        using var cts = new CancellationTokenSource();
+
+        Func<Error, CancellationToken, ValueTask> action = (error, ct) =>
+        {
+            _actionExecuted = true;
+            _capturedError = error;
+            return ValueTask.CompletedTask;
+        };
+
+        // Act
+        var actual = await result.TapErrorAsync(action, cts.Token);
+
+        // Assert
+        _actionExecuted.Should().BeTrue();
+        Assert.NotNull(_capturedError);
+        actual.Should().BeFailure();
+    }
+
+    #endregion
+
     #region Real-World Scenarios
 
     [Fact]
