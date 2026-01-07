@@ -188,6 +188,6 @@ public abstract class Entity<TId>
     /// The hash code is based on both the entity type and its ID to ensure proper behavior in collections.
     /// Entities with the same ID but different types will have different hash codes.
     /// </remarks>
-    public override int GetHashCode() => HashCode.Combine(this, Id);
+    public override int GetHashCode() => HashCode.Combine(GetType(), Id);
 }
 
