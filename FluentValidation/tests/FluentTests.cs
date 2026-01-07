@@ -1,9 +1,8 @@
 ﻿namespace FluentValidationExt.Tests;
 
 using FluentValidation;
-using System.Collections.Immutable;
+using FunctionalDdd.Testing;
 using Xunit;
-using static FunctionalDdd.ValidationError;
 
 public class FluentTests
 {
@@ -12,18 +11,20 @@ public class FluentTests
     [Fact]
     public void Can_create_user()
     {
+        // Act
         var rUser = User.TryCreate(
             FirstName.TryCreate("John").Value,
             LastName.TryCreate("Doe").Value,
             EmailAddress.TryCreate("xavier@somewhere.com").Value,
             StrongPassword);
 
-        rUser.IsSuccess.Should().BeTrue();
-        var user = rUser.Value;
-        user.FirstName.Value.Should().Be("John");
-        user.LastName.Value.Should().Be("Doe");
-        user.Email.Value.Should().Be("xavier@somewhere.com");
-        user.Password.Should().Be(StrongPassword);
+        // Assert
+        rUser.Should().BeSuccess()
+            .Which.Should().Match<User>(u =>
+                u.FirstName.Value == "John" &&
+                u.LastName.Value == "Doe" &&
+                u.Email.Value == "xavier@somewhere.com" &&
+                u.Password == StrongPassword);
     }
 
     [Fact]
@@ -33,20 +34,17 @@ public class FluentTests
         FirstName firstName = default!;
         LastName lastName = default!;
         EmailAddress email = default!;
-        ImmutableArray<FieldError> expectedValidationErrors = [
-            new("FirstName", ["'First Name' must not be empty."]),
-            new("LastName", ["'Last Name' must not be empty."]),
-            new("Email", ["'Email' must not be empty."])
-        ];
 
         // Act
         var rUser = User.TryCreate(firstName, lastName, email, StrongPassword);
 
         // Assert
-        rUser.IsFailure.Should().BeTrue();
-        var validationErrors = (ValidationError)rUser.Error;
-        validationErrors.FieldErrors.Should().HaveCount(3);
-        validationErrors.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+        rUser.Should().BeFailureOfType<ValidationError>()
+            .Which.Should()
+            .HaveFieldCount(3)
+            .And.HaveFieldError("FirstName")
+            .And.HaveFieldError("LastName")
+            .And.HaveFieldError("Email");
     }
 
     [Fact]
@@ -56,21 +54,17 @@ public class FluentTests
         FirstName firstName = default!;
         LastName lastName = default!;
         EmailAddress email = EmailAddress.TryCreate("xavier@somewhere.com").Value;
-        ImmutableArray<FieldError> expectedValidationErrors =
-        [
-            new("FirstName", ["'First Name' must not be empty."]),
-            new("LastName", ["'Last Name' must not be empty."] ),
-            new("Password", ["Password must contain at least one number.", "Password must contain at least one special character." ])
-        ];
 
         // Act
         var rUser = User.TryCreate(firstName, lastName, email, "WeakPassword");
 
         // Assert
-        rUser.IsFailure.Should().BeTrue();
-        var validationErrors = (ValidationError)rUser.Error;
-        validationErrors.FieldErrors.Should().HaveCount(3);
-        validationErrors.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+        rUser.Should().BeFailureOfType<ValidationError>()
+            .Which.Should()
+            .HaveFieldCount(3)
+            .And.HaveFieldError("FirstName")
+            .And.HaveFieldError("LastName")
+            .And.HaveFieldErrorWithDetail("Password", "Password must contain at least one number.");
     }
 
     [Theory]
@@ -82,25 +76,21 @@ public class FluentTests
     [InlineData(null, false, "'zipCode' must not be empty.")]
     public void Validate_zipcode(string? strZip, bool success, string? errorMessage)
     {
-        // Arrange
         // Act
         var result = ZipCode.TryCreate(strZip);
 
         // Assert
-        result.IsSuccess.Should().Be(success);
         if (success)
         {
-            result.Value.Value.Should().Be(strZip);
+            result.Should().BeSuccess()
+                .Which.Value.Should().Be(strZip);
         }
         else
         {
-            result.Error.Should().BeOfType<ValidationError>();
-            var validationError = (ValidationError)result.Error;
-            validationError.FieldErrors.Should().HaveCount(1);
-            validationError.FieldErrors[0].FieldName.Should().Be("zipCode");
-            validationError.FieldErrors[0].Details[0].Should().Be(errorMessage);
+            result.Should().BeFailureOfType<ValidationError>()
+                .Which.Should()
+                .HaveFieldErrorWithDetail("zipCode", errorMessage!);
         }
-
     }
 
     [Fact]
@@ -108,25 +98,20 @@ public class FluentTests
     {
         // Arrange
         string? alias = null;
-       InlineValidator<string?> validator = new()
-       {
-          v => v.RuleFor(x => x)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-       };
-
-        ImmutableArray<FieldError> expectedValidationErrors = [
-            new("alias", ["'alias' must not be empty."]),
-        ];
+        InlineValidator<string?> validator = new()
+        {
+            v => v.RuleFor(x => x)
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty()
+        };
 
         // Act
         var result = validator.ValidateToResult(alias);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        ValidationError error = (ValidationError)result.Error;
-        error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+        result.Should().BeFailureOfType<ValidationError>()
+            .Which.Should()
+            .HaveFieldErrorWithDetail("alias", "'alias' must not be empty.");
     }
 
     [Fact]
@@ -135,24 +120,19 @@ public class FluentTests
         // Arrange
         string? alias = null;
         InlineValidator<string?> validator = new()
-       {
-          v => v.RuleFor(x => x)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-       };
-
-        ImmutableArray<FieldError> expectedValidationErrors = [
-            new("Alias", ["Hello There"]),
-        ];
+        {
+            v => v.RuleFor(x => x)
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty()
+        };
 
         // Act
         var result = validator.ValidateToResult(alias, "Alias", "Hello There");
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        ValidationError error = (ValidationError)result.Error;
-        error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+        result.Should().BeFailureOfType<ValidationError>()
+            .Which.Should()
+            .HaveFieldErrorWithDetail("Alias", "Hello There");
     }
 
     #region ValidateToResultAsync Tests
@@ -170,8 +150,8 @@ public class FluentTests
         var result = await validator.ValidateToResultAsync("valid");
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("valid");
+        result.Should().BeSuccess()
+            .Which.Should().Be("valid");
     }
 
     [Fact]
@@ -187,8 +167,7 @@ public class FluentTests
         var result = await validator.ValidateToResultAsync("ab");
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
+        result.Should().BeFailureOfType<ValidationError>();
     }
 
     [Fact]
@@ -201,19 +180,13 @@ public class FluentTests
             v => v.RuleFor(x => x).NotEmpty()
         };
 
-        ImmutableArray<FieldError> expectedValidationErrors =
-        [
-            new("value", ["'value' must not be empty."])
-        ];
-
         // Act
         var result = await validator.ValidateToResultAsync(value);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        var error = (ValidationError)result.Error;
-        error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+        result.Should().BeFailureOfType<ValidationError>()
+            .Which.Should()
+            .HaveFieldErrorWithDetail("value", "'value' must not be empty.");
     }
 
     [Fact]
@@ -226,19 +199,13 @@ public class FluentTests
             v => v.RuleFor(x => x).NotEmpty()
         };
 
-        ImmutableArray<FieldError> expectedValidationErrors =
-        [
-            new("CustomParam", ["Custom error message"])
-        ];
-
         // Act
         var result = await validator.ValidateToResultAsync(myValue, "CustomParam", "Custom error message");
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        var error = (ValidationError)result.Error;
-        error.FieldErrors.Should().BeEquivalentTo(expectedValidationErrors);
+        result.Should().BeFailureOfType<ValidationError>()
+            .Which.Should()
+            .HaveFieldErrorWithDetail("CustomParam", "Custom error message");
     }
 
     [Fact]
@@ -255,7 +222,7 @@ public class FluentTests
         var result = await validator.ValidateToResultAsync("test", cancellationToken: cts.Token);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.Should().BeSuccess();
     }
 
     #endregion

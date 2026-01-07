@@ -32,6 +32,30 @@ public class ErrorAssertions : ReferenceTypeAssertions<Error, ErrorAssertions>
     protected override string Identifier => "error";
 
     /// <summary>
+    /// Asserts that the error equals the expected error (based on Error.Equals which compares by Code).
+    /// </summary>
+    /// <param name="expected">The expected error.</param>
+    /// <param name="because">
+    /// A formatted phrase explaining why the assertion is needed.
+    /// </param>
+    /// <param name="becauseArgs">
+    /// Zero or more objects to format using the placeholders in <paramref name="because" />.
+    /// </param>
+    public AndConstraint<ErrorAssertions> Be(
+        Error expected,
+        string because = "",
+        params object[] becauseArgs)
+    {
+        Execute.Assertion
+            .BecauseOf(because, becauseArgs)
+            .ForCondition(Subject.Equals(expected))
+            .FailWith("Expected {context:error} to be {0}{reason}, but found {1}",
+                expected, Subject);
+
+        return new AndConstraint<ErrorAssertions>(this);
+    }
+
+    /// <summary>
     /// Asserts that the error has the specified code.
     /// </summary>
     /// <param name="expectedCode">The expected error code.</param>

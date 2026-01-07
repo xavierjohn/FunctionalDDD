@@ -180,4 +180,44 @@ public class ErrorAssertionsTests
     }
 
     #endregion
+
+    #region Be Tests
+
+    [Fact]
+    public void Be_Should_Pass_When_Errors_Are_Equal()
+    {
+        // Arrange
+        var error1 = Error.NotFound("Not found");
+        var error2 = Error.NotFound("Different detail but same code");
+
+        // Act & Assert (Errors are equal by Code)
+        error1.Should().Be(error2);
+    }
+
+    [Fact]
+    public void Be_Should_Fail_When_Errors_Are_Different()
+    {
+        // Arrange
+        var error1 = Error.NotFound("Not found");
+        var error2 = Error.BadRequest("Bad request");
+
+        // Act
+        var act = () => error1.Should().Be(error2);
+
+        // Assert
+        act.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    public void Be_Should_Support_Because_Reason()
+    {
+        // Arrange
+        var error1 = Error.Conflict("Conflict");
+        var error2 = Error.Conflict("Same conflict");
+
+        // Act & Assert
+        error1.Should().Be(error2, "because they have the same error code");
+    }
+
+    #endregion
 }
