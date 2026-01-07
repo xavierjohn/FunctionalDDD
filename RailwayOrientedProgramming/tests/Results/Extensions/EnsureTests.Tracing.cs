@@ -19,9 +19,8 @@ public class EnsureTracingTests
         var actual = result.Ensure(x => x > 40, Error.Validation("Value must be > 40"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("Ensure");
+        var activity = activityTest.AssertActivityCaptured("Ensure");
+        activity.DisplayName.Should().Be("Ensure");
     }
 
     [Fact]
@@ -34,9 +33,8 @@ public class EnsureTracingTests
         var actual = "test".EnsureNotNullOrWhiteSpace(Error.Validation("String is required"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("EnsureNotNullOrWhiteSpace");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("EnsureNotNullOrWhiteSpace");
+        var activity = activityTest.AssertActivityCaptured("EnsureNotNullOrWhiteSpace");
+        activity.DisplayName.Should().Be("EnsureNotNullOrWhiteSpace");
     }
 
     #endregion
@@ -54,9 +52,7 @@ public class EnsureTracingTests
         var actual = result.Ensure(x => x > 40, Error.Validation("Value must be > 40"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
         actual.IsSuccess.Should().BeTrue();
     }
 
@@ -71,9 +67,7 @@ public class EnsureTracingTests
         var actual = result.Ensure(() => true, Error.Validation("Must be true"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
         actual.IsSuccess.Should().BeTrue();
     }
 
@@ -87,9 +81,7 @@ public class EnsureTracingTests
         var actual = "test".EnsureNotNullOrWhiteSpace(Error.Validation("String is required"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("EnsureNotNullOrWhiteSpace");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("EnsureNotNullOrWhiteSpace", ActivityStatusCode.Ok);
         actual.IsSuccess.Should().BeTrue();
     }
 
@@ -108,9 +100,7 @@ public class EnsureTracingTests
         var actual = result.Ensure(x => x < 40, Error.Validation("Value must be < 40"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -126,9 +116,7 @@ public class EnsureTracingTests
         var actual = result.Ensure(x => x > 40, Error.Validation("Value must be > 40"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -143,9 +131,7 @@ public class EnsureTracingTests
         var actual = result.Ensure(x => x > 10, Error.Validation("Value must be > 10"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -160,9 +146,7 @@ public class EnsureTracingTests
         var actual = result.Ensure(x => x > 100, Error.Validation("Predicate failed"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -179,9 +163,7 @@ public class EnsureTracingTests
             value => Error.Validation($"Value {value} is invalid"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("Ensure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -196,9 +178,7 @@ public class EnsureTracingTests
         var actual = str.EnsureNotNullOrWhiteSpace(Error.Validation("String is required"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("EnsureNotNullOrWhiteSpace");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("EnsureNotNullOrWhiteSpace", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -212,9 +192,7 @@ public class EnsureTracingTests
         var actual = "   ".EnsureNotNullOrWhiteSpace(Error.Validation("String is required"));
 
         // Assert
-        var activity = activityTest.WaitForActivity("EnsureNotNullOrWhiteSpace");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("EnsureNotNullOrWhiteSpace", ActivityStatusCode.Error);
         actual.IsFailure.Should().BeTrue();
     }
 
@@ -238,14 +216,12 @@ public class EnsureTracingTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(84);
         
-        // Verify activities were created - wait for at least 3 activities (2 Ensure + 1 Bind)
-        var activityCountReached = activityTest.WaitForActivityCount(3);
-        activityCountReached.Should().BeTrue("because we expect at least 2 Ensure and 1 Bind activity");
-        
-        // Verify both Ensure activities succeeded
-        var firstEnsure = activityTest.WaitForActivity("Ensure");
-        firstEnsure.Should().NotBeNull();
-        firstEnsure!.Status.Should().Be(ActivityStatusCode.Ok, "because the first Ensure operation succeeded");
+        var ensureActivities = activityTest.AssertActivityCaptured("Ensure", 2).ToArray();
+        ensureActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
+        ensureActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
+
+        var bindActivity = activityTest.AssertActivityCaptured("Bind", 1).First();
+        bindActivity.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     #endregion

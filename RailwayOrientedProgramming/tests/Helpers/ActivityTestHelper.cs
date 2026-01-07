@@ -1,6 +1,7 @@
 namespace RailwayOrientedProgramming.Tests.Helpers;
 
 using FunctionalDdd;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 /// <summary>
@@ -94,6 +95,26 @@ public sealed class ActivityTestHelper : IDisposable
         return null;
     }
 
+    public IEnumerable<Activity>? WaitForActivities(string displayName, int count, TimeSpan? timeout = null)
+    {
+        var maxWait = timeout ?? TimeSpan.FromSeconds(2);
+        var stopwatch = Stopwatch.StartNew();
+
+        while (stopwatch.Elapsed < maxWait)
+        {
+            lock (_lock)
+            {
+                IEnumerable<Activity> activity = _capturedActivities.Where(a => a.DisplayName == displayName);
+                if (activity != null && activity.Count() >= count)
+                    return activity;
+            }
+
+            Thread.Sleep(10);
+        }
+
+        return null;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -102,8 +123,9 @@ public sealed class ActivityTestHelper : IDisposable
         // The Activity API is asynchronous - when Activity.Dispose() is called,
         // it doesn't immediately invoke the ActivityStopped callback. Under load
         // or when tests run in parallel, this delay can be significant.
-        // We use a 500ms delay to ensure reliability across all test scenarios.
-        Thread.Sleep(500);
+        // We use a 1000ms (1 second) delay to ensure maximum reliability across all test scenarios.
+        // This trade-off between test speed and reliability is acceptable for integration tests.
+        Thread.Sleep(1000);
         
 #if DEBUG
         // Reset RopTrace to use the default ActivitySource

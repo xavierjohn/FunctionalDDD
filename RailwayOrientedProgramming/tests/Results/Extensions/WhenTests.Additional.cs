@@ -448,10 +448,8 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("When");
+        var activity = activityTest.AssertActivityCaptured("When");
+        activity.DisplayName.Should().Be("When");
     }
 
     [Fact]
@@ -467,10 +465,8 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Unless");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("Unless");
+        var activity = activityTest.AssertActivityCaptured("Unless");
+        activity.DisplayName.Should().Be("Unless");
     }
 
     [Fact]
@@ -486,10 +482,8 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("When");
+        var activity = activityTest.AssertActivityCaptured("When");
+        activity.DisplayName.Should().Be("When");
     }
 
     [Fact]
@@ -505,10 +499,8 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Unless");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("Unless");
+        var activity = activityTest.AssertActivityCaptured("Unless");
+        activity.DisplayName.Should().Be("Unless");
     }
 
     [Fact]
@@ -524,10 +516,7 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("When", ActivityStatusCode.Ok);
     }
 
     [Fact]
@@ -543,10 +532,7 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("When", ActivityStatusCode.Error);
     }
 
     [Fact]
@@ -562,10 +548,7 @@ public class WhenAdditionalTests : TestBase
             x => Result.Failure<int>(Error2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("When", ActivityStatusCode.Error);
     }
 
     [Fact]
@@ -581,10 +564,7 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("When", ActivityStatusCode.Ok);
     }
 
     [Fact]
@@ -600,10 +580,7 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("When", ActivityStatusCode.Ok);
     }
 
     [Fact]
@@ -619,10 +596,7 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("When");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("When", ActivityStatusCode.Error);
     }
 
     [Fact]
@@ -638,10 +612,7 @@ public class WhenAdditionalTests : TestBase
             x => Result.Success(x * 2));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Unless");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Unless", ActivityStatusCode.Ok);
     }
 
     [Fact]
@@ -657,10 +628,7 @@ public class WhenAdditionalTests : TestBase
             x => Task.FromResult(Result.Success(x * 2)));
 
         // Assert
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Unless");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("Unless", ActivityStatusCode.Ok);
     }
 
     #endregion

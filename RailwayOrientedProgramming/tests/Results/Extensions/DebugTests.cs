@@ -352,10 +352,8 @@ public class DebugTests : TestBase
         var result = Result.Success("Test value");
         result.Debug("Test message");
 
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Debug: Test message");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("Debug: Test message");
+        var activity = activityTest.AssertActivityCaptured("Debug: Test message");
+        activity.DisplayName.Should().Be("Debug: Test message");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Success");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.value");
         activity.Status.Should().Be(ActivityStatusCode.Ok);
@@ -370,10 +368,8 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(error);
         result.Debug("Error test");
 
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Debug: Error test");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("Debug: Error test");
+        var activity = activityTest.AssertActivityCaptured("Debug: Error test");
+        activity.DisplayName.Should().Be("Debug: Error test");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.status" && t.Value == "Failure");
         activity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "not.found.error");
         activity.Tags.Should().Contain(t => t.Key == "debug.error.detail" && t.Value == "User not found");
@@ -388,10 +384,8 @@ public class DebugTests : TestBase
         var result = Result.Success(42);
         result.DebugDetailed("Detailed test");
 
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Debug: Detailed test (Detailed)");
-        activity.Should().NotBeNull();
-        activity!.Tags.Should().Contain(t => t.Key == "debug.result.type" && t.Value == "Int32");
+        var activity = activityTest.AssertActivityCaptured("Debug: Detailed test (Detailed)");
+        activity.Tags.Should().Contain(t => t.Key == "debug.result.type" && t.Value == "Int32");
         activity.Tags.Should().Contain(t => t.Key == "debug.result.value" && t.Value == "42");
     }
 
@@ -405,10 +399,8 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(validationError);
         result.DebugDetailed("Validation error test");
 
-        var activity = activityTest.WaitForActivity("Debug: Validation error test (Detailed)");
-        
-        activity.Should().NotBeNull();
-        activity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "ValidationError");
+        var activity = activityTest.AssertActivityCaptured("Debug: Validation error test (Detailed)");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "ValidationError");
         activity.Tags.Should().Contain(t => t.Key == "debug.error.validation.field[0].name" && t.Value == "email");
         activity.Tags.Should().Contain(t => t.Key == "debug.error.validation.field[1].name" && t.Value == "password");
     }
@@ -424,10 +416,8 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(aggregateError);
         result.DebugDetailed("Aggregate error test");
 
-        var activity = activityTest.WaitForActivity("Debug: Aggregate error test (Detailed)");
-        
-        activity.Should().NotBeNull();
-        activity!.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "AggregateError");
+        var activity = activityTest.AssertActivityCaptured("Debug: Aggregate error test (Detailed)");
+        activity.Tags.Should().Contain(t => t.Key == "debug.error.type" && t.Value == "AggregateError");
         activity.Tags.Should().Contain(t => t.Key == "debug.error.aggregate[0].code" && t.Value == "not.found.error");
         activity.Tags.Should().Contain(t => t.Key == "debug.error.aggregate[1].code" && t.Value == "unauthorized.error");
     }
@@ -440,10 +430,8 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.DebugWithStack("Stack test");
 
-        var activity = activityTest.WaitForActivity("Debug: Stack test (with stack)");
-        
-        activity.Should().NotBeNull();
-        activity!.Tags.Should().Contain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
+        var activity = activityTest.AssertActivityCaptured("Debug: Stack test (with stack)");
+        activity.Tags.Should().Contain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
         activity.Tags.Should().Contain(t => t.Key == "debug.stack[0].method");
     }
 
@@ -455,10 +443,8 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.DebugWithStack("No stack test", includeStackTrace: false);
 
-        var activity = activityTest.WaitForActivity("Debug: No stack test (with stack)");
-        
-        activity.Should().NotBeNull();
-        activity!.Tags.Should().NotContain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
+        var activity = activityTest.AssertActivityCaptured("Debug: No stack test (with stack)");
+        activity.Tags.Should().NotContain(t => t.Key.StartsWith("debug.stack[", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -469,10 +455,7 @@ public class DebugTests : TestBase
         var result = Result.Success("Test value");
         result.DebugOnSuccess(_ => { });
 
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Debug: OnSuccess");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Ok);
+        var activity = activityTest.AssertActivityCapturedWithStatus("Debug: OnSuccess", ActivityStatusCode.Ok);
     }
 
     [Fact]
@@ -484,10 +467,7 @@ public class DebugTests : TestBase
         var result = Result.Failure<string>(error);
         result.DebugOnFailure(_ => { });
 
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Debug: OnFailure");
-        activity.Should().NotBeNull();
-        activity!.Status.Should().Be(ActivityStatusCode.Error);
+        var activity = activityTest.AssertActivityCapturedWithStatus("Debug: OnFailure", ActivityStatusCode.Error);
         activity.Tags.Should().Contain(t => t.Key == "debug.error.code" && t.Value == "bad.request.error");
     }
 
@@ -499,10 +479,8 @@ public class DebugTests : TestBase
         var result = Result.Success("Test");
         result.Debug();
 
-        activityTest.WaitForActivityCount(1);
-        var activity = activityTest.WaitForActivity("Debug");
-        activity.Should().NotBeNull();
-        activity!.DisplayName.Should().Be("Debug");
+        var activity = activityTest.AssertActivityCaptured("Debug");
+        activity.DisplayName.Should().Be("Debug");
     }
 #endif
 
