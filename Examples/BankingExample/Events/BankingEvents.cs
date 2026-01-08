@@ -7,7 +7,7 @@ using FunctionalDdd;
 /// <summary>
 /// Raised when a new bank account is opened.
 /// </summary>
-public record AccountOpenedEvent(
+public record AccountOpened(
     AccountId AccountId,
     CustomerId CustomerId,
     AccountType AccountType,
@@ -17,7 +17,7 @@ public record AccountOpenedEvent(
 /// <summary>
 /// Raised when money is deposited into an account.
 /// </summary>
-public record MoneyDepositedEvent(
+public record MoneyDeposited(
     AccountId AccountId,
     Money Amount,
     Money NewBalance,
@@ -27,7 +27,7 @@ public record MoneyDepositedEvent(
 /// <summary>
 /// Raised when money is withdrawn from an account.
 /// </summary>
-public record MoneyWithdrawnEvent(
+public record MoneyWithdrawn(
     AccountId AccountId,
     Money Amount,
     Money NewBalance,
@@ -37,7 +37,7 @@ public record MoneyWithdrawnEvent(
 /// <summary>
 /// Raised when a transfer is completed between accounts.
 /// </summary>
-public record TransferCompletedEvent(
+public record TransferCompleted(
     AccountId FromAccountId,
     AccountId ToAccountId,
     Money Amount,
@@ -47,7 +47,7 @@ public record TransferCompletedEvent(
 /// <summary>
 /// Raised when an account is frozen due to suspicious activity.
 /// </summary>
-public record AccountFrozenEvent(
+public record AccountFrozen(
     AccountId AccountId,
     string Reason,
     DateTime OccurredAt) : IDomainEvent;
@@ -55,21 +55,21 @@ public record AccountFrozenEvent(
 /// <summary>
 /// Raised when an account is unfrozen.
 /// </summary>
-public record AccountUnfrozenEvent(
+public record AccountUnfrozen(
     AccountId AccountId,
     DateTime OccurredAt) : IDomainEvent;
 
 /// <summary>
 /// Raised when an account is closed.
 /// </summary>
-public record AccountClosedEvent(
+public record AccountClosed(
     AccountId AccountId,
     DateTime OccurredAt) : IDomainEvent;
 
 /// <summary>
 /// Raised when interest is paid to a savings account.
 /// </summary>
-public record InterestPaidEvent(
+public record InterestPaid(
     AccountId AccountId,
     Money InterestAmount,
     Money NewBalance,

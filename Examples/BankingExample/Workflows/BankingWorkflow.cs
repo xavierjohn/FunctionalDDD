@@ -198,14 +198,14 @@ public class BankingWorkflow
         // Log the event type and key information
         var eventInfo = domainEvent switch
         {
-            AccountOpenedEvent e => $"AccountOpened: {e.AccountId}, Type: {e.AccountType}, Balance: {e.InitialBalance}",
-            MoneyDepositedEvent e => $"MoneyDeposited: {e.Amount} -> Balance: {e.NewBalance}",
-            MoneyWithdrawnEvent e => $"MoneyWithdrawn: {e.Amount} -> Balance: {e.NewBalance}",
-            TransferCompletedEvent e => $"TransferCompleted: {e.Amount} from {e.FromAccountId} to {e.ToAccountId}",
-            AccountFrozenEvent e => $"AccountFrozen: {e.AccountId}, Reason: {e.Reason}",
-            AccountUnfrozenEvent e => $"AccountUnfrozen: {e.AccountId}",
-            AccountClosedEvent e => $"AccountClosed: {e.AccountId}",
-            InterestPaidEvent e => $"InterestPaid: {e.InterestAmount} at {e.AnnualRate:P2}",
+            AccountOpened e => $"AccountOpened: {e.AccountId}, Type: {e.AccountType}, Balance: {e.InitialBalance}",
+            MoneyDeposited e => $"MoneyDeposited: {e.Amount} -> Balance: {e.NewBalance}",
+            MoneyWithdrawn e => $"MoneyWithdrawn: {e.Amount} -> Balance: {e.NewBalance}",
+            TransferCompleted e => $"TransferCompleted: {e.Amount} from {e.FromAccountId} to {e.ToAccountId}",
+            AccountFrozen e => $"AccountFrozen: {e.AccountId}, Reason: {e.Reason}",
+            AccountUnfrozen e => $"AccountUnfrozen: {e.AccountId}",
+            AccountClosed e => $"AccountClosed: {e.AccountId}",
+            InterestPaid e => $"InterestPaid: {e.InterestAmount} at {e.AnnualRate:P2}",
             _ => domainEvent.GetType().Name
         };
 

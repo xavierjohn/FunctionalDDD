@@ -2,6 +2,7 @@ namespace EcommerceExample.Workflows;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.Entities;
+using EcommerceExample.Events;
 using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using FunctionalDdd;
@@ -9,6 +10,7 @@ using FunctionalDdd;
 /// <summary>
 /// Demonstrates a complete order processing workflow using Railway Oriented Programming.
 /// This showcases how complex business workflows can be composed using Result, Bind, Ensure, Tap, and Compensate.
+/// Also demonstrates domain event publishing with UncommittedEvents and AcceptChanges.
 /// </summary>
 public class OrderWorkflow
 {
@@ -27,8 +29,8 @@ public class OrderWorkflow
     }
 
     /// <summary>
-    /// Complete order processing workflow with error handling and compensations.
-    /// Demonstrates: Bind, Ensure, Tap, BindAsync, TapAsync, CompensateAsync, Finally
+    /// Complete order processing workflow with error handling, compensations, and domain event publishing.
+    /// Demonstrates: Bind, Ensure, Tap, BindAsync, TapAsync, CompensateAsync, UncommittedEvents, AcceptChanges
     /// </summary>
     public async Task<Result<Order>> ProcessOrderAsync(
         CustomerId customerId,
@@ -38,13 +40,13 @@ public class OrderWorkflow
     {
         Order? currentOrder = null;
         var ct = cancellationToken;
-        
+
         return await Order.TryCreate(customerId)
-            .TapAsync(Task (order) =>
+            .TapAsync((Func<Order, Task>)(order =>
             {
                 currentOrder = order;
                 return _notificationService.SendOrderCreatedEmailAsync(customerId, order.Id, ct);
-            })
+            }))
             .BindAsync(order => AddItemsToOrderAsync(order, items, ct))
             .BindAsync(async order =>
             {
@@ -56,9 +58,10 @@ public class OrderWorkflow
                 if (reserveResult.IsFailure)
                 {
                     order.Cancel("Inventory unavailable");
+                    // Don't publish events for cancelled orders due to inventory issues
                     return reserveResult.Error;
                 }
-                
+
                 return Result.Success(order);
             })
             .BindAsync(async order =>
@@ -68,25 +71,32 @@ public class OrderWorkflow
                 {
                     await ReleaseInventoryAsync(currentOrder, ct);
                 }
-                
+
                 return submitResult;
             })
             .BindAsync(async order =>
             {
                 var paymentResult = await ProcessPaymentWithCompensationAsync(order, paymentInfo, ct);
-                
+
                 if (paymentResult.IsFailure)
                 {
                     await ReleaseInventoryAsync(order, ct);
                     order.Cancel("Payment failed");
+                    // Publish events including cancellation
+                    await PublishEventsAndAcceptChangesAsync(order, ct);
                     await _notificationService.SendPaymentFailedEmailAsync(customerId, order.Id, ct);
                     return paymentResult.Error;
                 }
-                
+
                 return Result.Success(order);
             })
             .BindAsync(order => Task.FromResult(order.Confirm()))
-            .TapAsync(Task (order) => _notificationService.SendOrderConfirmedEmailAsync(customerId, order.Id, ct));
+            .TapAsync((Func<Order, Task>)(async order =>
+            {
+                // Publish all domain events after successful confirmation
+                await PublishEventsAndAcceptChangesAsync(order, ct);
+                await _notificationService.SendOrderConfirmedEmailAsync(customerId, order.Id, ct);
+            }));
     }
 
     /// <summary>
@@ -199,7 +209,59 @@ public class OrderWorkflow
 
         // In a real system, this would query for similar products
         // For now, just return the original error
-        return Error.Validation("Products out of stock. Please check alternative products.");
+        return Error.Domain("Products out of stock. Please check alternative products.");
+    }
+
+    /// <summary>
+    /// Demonstrates the repository pattern with domain event publishing.
+    /// This simulates what a real repository would do after saving an aggregate.
+    /// </summary>
+    private static async Task PublishEventsAndAcceptChangesAsync(
+        Order order,
+        CancellationToken cancellationToken)
+    {
+        // 1. Get uncommitted events before accepting changes
+        var events = order.UncommittedEvents();
+
+        if (events.Count == 0)
+            return;
+
+        // 2. Simulate persisting the aggregate (in real code, this would save to database)
+        await Task.Delay(20, cancellationToken);
+
+        // 3. Publish each domain event
+        foreach (var domainEvent in events)
+        {
+            await PublishEventAsync(domainEvent, cancellationToken);
+        }
+
+        // 4. Accept changes - clears the uncommitted events list
+        order.AcceptChanges();
+
+        Console.WriteLine($"?? Published {events.Count} domain event(s) for order {order.Id}");
+    }
+
+    private static async Task PublishEventAsync(IDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        await Task.Delay(10, cancellationToken);
+
+        // Log the event type and key information
+        var eventInfo = domainEvent switch
+        {
+            OrderCreated e => $"OrderCreated: {e.OrderId} for customer {e.CustomerId}",
+            OrderLineAdded e => $"OrderLineAdded: {e.ProductName} x{e.Quantity} = {e.LineTotal}",
+            OrderLineRemoved e => $"OrderLineRemoved: Product {e.ProductId}",
+            OrderSubmitted e => $"OrderSubmitted: {e.OrderId}, Total: {e.Total}, Lines: {e.LineCount}",
+            PaymentProcessingStarted e => $"PaymentProcessingStarted: TxnId: {e.TransactionId}",
+            PaymentFailed e => $"PaymentFailed: Order {e.OrderId}",
+            OrderConfirmed e => $"OrderConfirmed: {e.OrderId}, TxnId: {e.PaymentTransactionId}",
+            OrderCancelled e => $"OrderCancelled: {e.OrderId}, Reason: {e.Reason}",
+            OrderShipped e => $"OrderShipped: {e.OrderId}",
+            OrderDelivered e => $"OrderDelivered: {e.OrderId}",
+            _ => domainEvent.GetType().Name
+        };
+
+        Console.WriteLine($"   ?? Event: {eventInfo}");
     }
 }
 

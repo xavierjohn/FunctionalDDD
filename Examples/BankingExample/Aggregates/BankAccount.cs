@@ -51,7 +51,7 @@ public class BankAccount : Aggregate<AccountId>
         CreatedAt = DateTime.UtcNow;
 
         // Raise domain event for account creation
-        DomainEvents.Add(new AccountOpenedEvent(
+        DomainEvents.Add(new AccountOpened(
             Id,
             customerId,
             accountType,
@@ -93,7 +93,7 @@ public class BankAccount : Aggregate<AccountId>
                 _transactions.Add(Transaction.CreateDeposit(TransactionId.NewUnique(), amount, Balance, description));
 
                 // Raise domain event
-                DomainEvents.Add(new MoneyDepositedEvent(
+                DomainEvents.Add(new MoneyDeposited(
                     Id,
                     amount,
                     Balance,
@@ -127,7 +127,7 @@ public class BankAccount : Aggregate<AccountId>
                 _transactions.Add(Transaction.CreateWithdrawal(TransactionId.NewUnique(), amount, Balance, description));
 
                 // Raise domain event
-                DomainEvents.Add(new MoneyWithdrawnEvent(
+                DomainEvents.Add(new MoneyWithdrawn(
                     Id,
                     amount,
                     Balance,
@@ -153,7 +153,7 @@ public class BankAccount : Aggregate<AccountId>
             .Tap(_ =>
             {
                 // Raise domain event for the transfer (in addition to withdraw/deposit events)
-                DomainEvents.Add(new TransferCompletedEvent(
+                DomainEvents.Add(new TransferCompleted(
                     Id,
                     toAccount.Id,
                     amount,
@@ -178,7 +178,7 @@ public class BankAccount : Aggregate<AccountId>
                 Status = AccountStatus.Frozen;
 
                 // Raise domain event
-                DomainEvents.Add(new AccountFrozenEvent(Id, reason, DateTime.UtcNow));
+                DomainEvents.Add(new AccountFrozen(Id, reason, DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -196,7 +196,7 @@ public class BankAccount : Aggregate<AccountId>
                 Status = AccountStatus.Active;
 
                 // Raise domain event
-                DomainEvents.Add(new AccountUnfrozenEvent(Id, DateTime.UtcNow));
+                DomainEvents.Add(new AccountUnfrozen(Id, DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -216,7 +216,7 @@ public class BankAccount : Aggregate<AccountId>
                 Status = AccountStatus.Closed;
 
                 // Raise domain event
-                DomainEvents.Add(new AccountClosedEvent(Id, DateTime.UtcNow));
+                DomainEvents.Add(new AccountClosed(Id, DateTime.UtcNow));
             })
             .Map(_ => this);
     }

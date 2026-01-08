@@ -7,44 +7,60 @@ using FunctionalDdd;
 namespace EcommerceExample;
 
 /// <summary>
-/// Demonstrates a complete e-commerce order processing system using Railway Oriented Programming.
+/// Demonstrates a complete e-commerce order processing system using Railway Oriented Programming
+/// and Domain-Driven Design patterns.
 /// 
 /// This example showcases:
 /// - Value Objects (Money, OrderId, ProductId, CustomerId)
 /// - Entities (OrderLine)
-/// - Aggregates (Order)
+/// - Aggregates with Domain Events (Order)
 /// - Domain Services (PaymentService, InventoryService, NotificationService)
 /// - Complex Workflows with error handling
 /// - Compensation and retry logic
-/// - Async operations
+/// - Domain Events and Change Tracking (UncommittedEvents, AcceptChanges)
+/// - Various Error Types (Validation, Domain, Conflict, NotFound, Unexpected)
 /// </summary>
 public class EcommerceExamples
 {
     public static async Task RunExamplesAsync()
     {
-        Console.WriteLine("=== E-Commerce Order Processing Examples ===\n");
+        Console.WriteLine("=== E-Commerce Order Processing Examples ===");
+        Console.WriteLine("=== Demonstrating FunctionalDDD Library ===\n");
 
         await Example1_SimpleOrderCreation();
         await Example2_CompleteOrderWorkflow();
         await Example3_PaymentFailureWithCompensation();
         await Example4_InsufficientInventory();
+        await Example5_DomainEventsAndChangeTracking();
     }
 
     /// <summary>
-    /// Example 1: Simple order creation with validation.
+    /// Example 1: Simple order creation with validation and domain events.
+    /// Demonstrates: Aggregate creation, domain events, ROP chaining
     /// </summary>
     private static async Task Example1_SimpleOrderCreation()
     {
-        Console.WriteLine("Example 1: Simple Order Creation");
-        Console.WriteLine("----------------------------------");
+        Console.WriteLine("Example 1: Simple Order Creation with Domain Events");
+        Console.WriteLine("----------------------------------------------------");
 
         var customerId = CustomerId.NewUnique();
         var productId = ProductId.NewUnique();
 
         var result = Order.TryCreate(customerId)
+            .Tap(order => Console.WriteLine($"Order created with {order.UncommittedEvents().Count} uncommitted event(s)"))
             .Bind(order => Money.TryCreate(29.99m)
                 .Bind(price => order.AddLine(productId, "Wireless Mouse", price, 2)))
+            .Tap(order => Console.WriteLine($"After adding line: {order.UncommittedEvents().Count} uncommitted event(s)"))
             .Bind(order => order.Submit())
+            .Tap(order =>
+            {
+                Console.WriteLine($"After submit: {order.UncommittedEvents().Count} uncommitted event(s)");
+                Console.WriteLine($"IsChanged: {order.IsChanged}");
+
+                // Simulate saving to repository
+                order.AcceptChanges();
+                Console.WriteLine($"After AcceptChanges: {order.UncommittedEvents().Count} uncommitted event(s)");
+            })
             .Match(
                 onSuccess: ok => $"? Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
                 onFailure: err => $"? Order creation failed: {err.Detail}"
@@ -56,12 +72,13 @@ public class EcommerceExamples
     }
 
     /// <summary>
-    /// Example 2: Complete order workflow with payment and inventory management.
+    /// Example 2: Complete order workflow with payment, inventory, and event publishing.
+    /// Demonstrates: Workflow orchestration, event publishing pattern
     /// </summary>
     private static async Task Example2_CompleteOrderWorkflow()
     {
-        Console.WriteLine("Example 2: Complete Order Workflow");
-        Console.WriteLine("-----------------------------------");
+        Console.WriteLine("Example 2: Complete Order Workflow with Event Publishing");
+        Console.WriteLine("---------------------------------------------------------");
 
         var paymentService = new PaymentService();
         var inventoryService = new InventoryService();
@@ -93,6 +110,7 @@ public class EcommerceExamples
 
     /// <summary>
     /// Example 3: Payment failure with compensation (retry logic).
+    /// Demonstrates: CompensateAsync, TapErrorAsync, error recovery
     /// </summary>
     private static async Task Example3_PaymentFailureWithCompensation()
     {
@@ -119,7 +137,7 @@ public class EcommerceExamples
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
                 onSuccess: ok => $"? Order processed: {ok.Status}",
-                onFailure: err => $"? Expected failure - Payment declined: {err.Detail}"
+                onFailure: err => $"?? Expected failure - Payment declined: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -128,11 +146,12 @@ public class EcommerceExamples
 
     /// <summary>
     /// Example 4: Insufficient inventory with compensation.
+    /// Demonstrates: Error.Domain for business rule violations
     /// </summary>
     private static async Task Example4_InsufficientInventory()
     {
-        Console.WriteLine("Example 4: Insufficient Inventory");
-        Console.WriteLine("----------------------------------");
+        Console.WriteLine("Example 4: Insufficient Inventory (Domain Error)");
+        Console.WriteLine("-------------------------------------------------");
 
         var paymentService = new PaymentService();
         var inventoryService = new InventoryService();
@@ -154,10 +173,113 @@ public class EcommerceExamples
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
                 onSuccess: ok => $"? Order processed: {ok.Status}",
-                onFailure: err => $"? Expected failure - Insufficient inventory: {err.Detail}"
+                onFailure: err => $"?? Expected failure - Insufficient inventory: {err.Detail}"
             );
 
         Console.WriteLine(result);
         Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Example 5: Deep dive into domain events and change tracking.
+    /// Demonstrates: UncommittedEvents, AcceptChanges, IsChanged, event inspection
+    /// </summary>
+    private static async Task Example5_DomainEventsAndChangeTracking()
+    {
+        Console.WriteLine("Example 5: Domain Events and Change Tracking");
+        Console.WriteLine("---------------------------------------------");
+
+        var customerId = CustomerId.NewUnique();
+        var productId1 = ProductId.NewUnique();
+        var productId2 = ProductId.NewUnique();
+
+        // Create order - this raises OrderCreatedEvent
+        var orderResult = Order.TryCreate(customerId);
+
+        if (orderResult.IsFailure)
+        {
+            Console.WriteLine($"? Order creation failed: {orderResult.Error.Detail}");
+            return;
+        }
+
+        var order = orderResult.Value;
+
+        Console.WriteLine("After order creation:");
+        Console.WriteLine($"  IsChanged: {order.IsChanged}");
+        Console.WriteLine($"  Uncommitted events: {order.UncommittedEvents().Count}");
+        PrintEvents(order);
+
+        // Add lines - raises OrderLineAddedEvent for each
+        var price1 = Money.TryCreate(99.99m).Value;
+        var price2 = Money.TryCreate(149.99m).Value;
+
+        order.AddLine(productId1, "Keyboard", price1, 1);
+        order.AddLine(productId2, "Monitor", price2, 2);
+
+        Console.WriteLine("\nAfter adding 2 lines:");
+        Console.WriteLine($"  IsChanged: {order.IsChanged}");
+        Console.WriteLine($"  Uncommitted events: {order.UncommittedEvents().Count}");
+        Console.WriteLine($"  Order total: {order.Total}");
+        PrintEvents(order);
+
+        // Submit order - raises OrderSubmittedEvent
+        order.Submit();
+
+        Console.WriteLine("\nAfter submit:");
+        Console.WriteLine($"  IsChanged: {order.IsChanged}");
+        Console.WriteLine($"  Uncommitted events: {order.UncommittedEvents().Count}");
+        Console.WriteLine($"  Order status: {order.Status}");
+        PrintEvents(order);
+
+        // Simulate saving to repository - accept changes
+        Console.WriteLine("\nSimulating repository save (AcceptChanges)...");
+        order.AcceptChanges();
+
+        Console.WriteLine("\nAfter AcceptChanges:");
+        Console.WriteLine($"  IsChanged: {order.IsChanged}");
+        Console.WriteLine($"  Uncommitted events: {order.UncommittedEvents().Count}");
+
+        // Process payment and confirm - new events after save
+        order.ProcessPayment("TXN-12345");
+        order.Confirm();
+
+        Console.WriteLine("\nAfter payment and confirmation:");
+        Console.WriteLine($"  IsChanged: {order.IsChanged}");
+        Console.WriteLine($"  Uncommitted events: {order.UncommittedEvents().Count}");
+        Console.WriteLine($"  Order status: {order.Status}");
+        PrintEvents(order);
+
+        // Demonstrate error types
+        Console.WriteLine("\n--- Demonstrating Error Types ---");
+
+        // Try to add line to confirmed order (Conflict error)
+        var addResult = order.AddLine(productId1, "Another Item", price1, 1);
+        if (addResult.IsFailure)
+        {
+            Console.WriteLine($"Error Type: {addResult.Error.GetType().Name}");
+            Console.WriteLine($"Code: {addResult.Error.Code}");
+            Console.WriteLine($"Detail: {addResult.Error.Detail}");
+        }
+
+        // Try to cancel confirmed order (Domain error)
+        var cancelResult = order.Cancel("Changed my mind");
+        if (cancelResult.IsFailure)
+        {
+            Console.WriteLine($"\nError Type: {cancelResult.Error.GetType().Name}");
+            Console.WriteLine($"Code: {cancelResult.Error.Code}");
+            Console.WriteLine($"Detail: {cancelResult.Error.Detail}");
+        }
+
+        Console.WriteLine();
+        await Task.CompletedTask;
+    }
+
+    private static void PrintEvents(Order order)
+    {
+        var events = order.UncommittedEvents();
+        foreach (var evt in events)
+        {
+            Console.WriteLine($"    - {evt.GetType().Name} at {evt.OccurredAt:HH:mm:ss.fff}");
+        }
     }
 }
