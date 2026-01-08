@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
@@ -81,6 +81,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "articles", "articles", "{05
 		docs\docfx_project\articles\error-handling.md = docs\docfx_project\articles\error-handling.md
 		docs\docfx_project\articles\examples.md = docs\docfx_project\articles\examples.md
 		docs\docfx_project\articles\integration.md = docs\docfx_project\articles\integration.md
+		docs\docfx_project\articles\integration-aspnet.md = docs\docfx_project\articles\integration-aspnet.md
+		docs\docfx_project\articles\integration-ef.md = docs\docfx_project\articles\integration-ef.md
+		docs\docfx_project\articles\integration-fluentvalidation.md = docs\docfx_project\articles\integration-fluentvalidation.md
+		docs\docfx_project\articles\integration-http.md = docs\docfx_project\articles\integration-http.md
+		docs\docfx_project\articles\integration-observability.md = docs\docfx_project\articles\integration-observability.md
+		docs\docfx_project\articles\clean-architecture.md = docs\docfx_project\articles\clean-architecture.md
+		docs\docfx_project\articles\BENCHMARKS.md = docs\docfx_project\articles\BENCHMARKS.md
 		docs\docfx_project\articles\intro.md = docs\docfx_project\articles\intro.md
 		docs\docfx_project\articles\performance.md = docs\docfx_project\articles\performance.md
 		docs\docfx_project\articles\toc.yml = docs\docfx_project\articles\toc.yml
