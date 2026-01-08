@@ -545,7 +545,7 @@ public class OrderEventHandler
         _logger = logger;
     }
     
-    public async Task Handle(OrderCreatedEvent evt, CancellationToken cancellationToken)
+    public async Task Handle(OrderCreatedEvent evt)
     {
         _logger.LogInformation("Order {OrderId} created for customer {CustomerId}", 
             evt.OrderId, evt.CustomerId);
@@ -553,7 +553,7 @@ public class OrderEventHandler
         // Could send draft order email, update analytics, etc.
     }
     
-    public async Task Handle(OrderLineAddedEvent evt, CancellationToken cancellationToken)
+    public async Task Handle(OrderLineAddedEvent evt)
     {
         _logger.LogInformation("Product {ProductId} added to order {OrderId}", 
             evt.ProductId, evt.OrderId);
@@ -561,45 +561,45 @@ public class OrderEventHandler
         // Could update product view counts, recommendations, etc.
     }
     
-    public async Task Handle(OrderSubmittedEvent evt, CancellationToken cancellationToken)
+    public async Task Handle(OrderSubmittedEvent evt)
     {
         _logger.LogInformation("Order {OrderId} submitted with total {Total}", 
             evt.OrderId, evt.Total);
         
         // Reserve inventory
-        await _inventoryService.ReserveAsync(evt.OrderId, cancellationToken);
+        await _inventoryService.ReserveAsync(evt.OrderId);
         
         // Send confirmation email
-        await _emailService.SendOrderConfirmationAsync(evt.OrderId, cancellationToken);
+        await _emailService.SendOrderConfirmationAsync(evt.OrderId);
         
         // Notify fulfillment team
-        await _shippingService.NotifyNewOrderAsync(evt.OrderId, cancellationToken);
+        await _shippingService.NotifyNewOrderAsync(evt.OrderId);
     }
     
-    public async Task Handle(OrderShippedEvent evt, CancellationToken cancellationToken)
+    public async Task Handle(OrderShippedEvent evt)
     {
         _logger.LogInformation("Order {OrderId} shipped", evt.OrderId);
         
         // Send shipping notification
-        await _emailService.SendShippingNotificationAsync(evt.OrderId, cancellationToken);
+        await _emailService.SendShippingNotificationAsync(evt.OrderId);
         
         // Update inventory
-        await _inventoryService.CommitReservationAsync(evt.OrderId, cancellationToken);
+        await _inventoryService.CommitReservationAsync(evt.OrderId);
     }
     
-    public async Task Handle(OrderCancelledEvent evt, CancellationToken cancellationToken)
+    public async Task Handle(OrderCancelledEvent evt)
     {
         _logger.LogInformation("Order {OrderId} cancelled: {Reason}", 
             evt.OrderId, evt.Reason);
         
         // Release inventory
-        await _inventoryService.ReleaseAsync(evt.OrderId, cancellationToken);
+        await _inventoryService.ReleaseAsync(evt.OrderId);
         
         // Send cancellation email
-        await _emailService.SendOrderCancellationAsync(evt.OrderId, evt.Reason, cancellationToken);
+        await _emailService.SendOrderCancellationAsync(evt.OrderId, evt.Reason);
         
         // Refund payment if necessary
-        // await _paymentService.RefundAsync(evt.OrderId, cancellationToken);
+        // await _paymentService.RefundAsync(evt.OrderId);
     }
 }
 ```
@@ -624,8 +624,7 @@ public class OrderService
     public async Task<Result<Order>> CreateAndProcessOrderAsync(
         CustomerId customerId,
         List<OrderItemRequest> items,
-        PaymentInfo paymentInfo,
-        CancellationToken cancellationToken)
+        PaymentInfo paymentInfo)
     {
         return await Order.TryCreate(customerId)
             // Add all items using Traverse - cleaner than Aggregate
@@ -633,33 +632,24 @@ public class OrderService
                 order.AddLine(item.ProductId, item.ProductName, item.Price, item.Quantity))
                 .Map(_ => order))
             // Validate inventory
-            .BindAsync(
-                async (order, ct) => await ValidateInventoryAsync(order, ct),
-                cancellationToken)
+            .BindAsync(order => ValidateInventoryAsync(order))
             // Submit order
             .Bind(order => order.Submit())
             // Process payment
-            .BindAsync(
-                async (order, ct) => await ProcessPaymentAsync(order, paymentInfo, ct),
-                cancellationToken)
+            .BindAsync(order => ProcessPaymentAsync(order, paymentInfo))
             // Save to repository
-            .TapAsync(
-                async (order, ct) => await _orderRepository.SaveAsync(order, ct),
-                cancellationToken)
+            .TapAsync(order => _orderRepository.SaveAsync(order))
             // Publish domain events (only if aggregate has changes)
-            .TapAsync(
-                async (order, ct) => await PublishEventsAsync(order, ct),
-                cancellationToken);
+            .TapAsync(order => PublishEventsAsync(order));
     }
     
-    private async Task<Result<Order>> ValidateInventoryAsync(Order order, CancellationToken ct)
+    private async Task<Result<Order>> ValidateInventoryAsync(Order order)
     {
         foreach (var line in order.Lines)
         {
             var available = await _inventoryService.IsAvailableAsync(
                 line.ProductId, 
-                line.Quantity, 
-                ct);
+                line.Quantity);
             
             if (!available)
                 return Error.Validation($"Insufficient inventory for {line.ProductName}");
@@ -670,21 +660,19 @@ public class OrderService
     
     private async Task<Result<Order>> ProcessPaymentAsync(
         Order order, 
-        PaymentInfo paymentInfo, 
-        CancellationToken ct)
+        PaymentInfo paymentInfo)
     {
         var paymentResult = await _paymentService.ProcessAsync(
             order.Id,
             order.Total,
-            paymentInfo,
-            ct);
+            paymentInfo);
         
         return paymentResult.IsSuccess
             ? order.ToResult()
             : Error.Validation($"Payment failed: {paymentResult.Error.Detail}");
     }
     
-    private async Task PublishEventsAsync(Order order, CancellationToken ct)
+    private async Task PublishEventsAsync(Order order)
     {
         // Only publish if there are uncommitted events
         if (order.IsChanged)
@@ -694,7 +682,7 @@ public class OrderService
             
             foreach (var evt in order.UncommittedEvents())
             {
-                await _eventBus.PublishAsync(evt, ct);
+                await _eventBus.PublishAsync(evt);
             }
             
             order.AcceptChanges();
@@ -703,20 +691,13 @@ public class OrderService
     
     public async Task<Result<Order>> CancelOrderAsync(
         OrderId orderId,
-        string reason,
-        CancellationToken cancellationToken)
+        string reason)
     {
-        return await _orderRepository.GetByIdAsync(orderId, cancellationToken)
+        return await _orderRepository.GetByIdAsync(orderId)
             .ToResultAsync(Error.NotFound($"Order {orderId} not found"))
-            .BindAsync(
-                async (order, ct) => await order.Cancel(reason),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _orderRepository.SaveAsync(order, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await PublishEventsAsync(order, ct),
-                cancellationToken);
+            .Bind(order => order.Cancel(reason))
+            .TapAsync(order => _orderRepository.SaveAsync(order))
+            .TapAsync(order => PublishEventsAsync(order));
     }
 }
 ```
@@ -732,8 +713,7 @@ public class BulkOrderService
     private readonly IDiscountService _discountService;
     
     public async Task<Result<OrderConfirmation>> ProcessMultipleOrdersAsync(
-        List<OrderRequest> requests,
-        CancellationToken cancellationToken)
+        List<OrderRequest> requests)
     {
         // Validate minimum order count
         if (requests.Count < 3)
@@ -768,14 +748,10 @@ public class BulkOrderService
             discount).ToResult();
     }
     
-    public async Task<Result<Unit>> ProcessOrderBatchAsync(
-        List<Order> orders,
-        CancellationToken cancellationToken)
+    public async Task<Result<Unit>> ProcessOrderBatchAsync(List<Order> orders)
     {
         // Process each order using Traverse - automatically fails if any order fails
-        return await orders.TraverseAsync(
-                async (order, ct) => await order.Submit(),
-                cancellationToken)
+        return await orders.TraverseAsync(order => order.Submit())
             .Map(_ => Unit.Value);
     }
 }
@@ -795,9 +771,9 @@ public record OrderConfirmation(
 ```csharp
 public interface IOrderRepository
 {
-    Task<Order?> GetByIdAsync(OrderId id, CancellationToken cancellationToken);
-    Task<List<Order>> GetByCustomerIdAsync(CustomerId customerId, CancellationToken cancellationToken);
-    Task SaveAsync(Order order, CancellationToken cancellationToken);
+    Task<Order?> GetByIdAsync(OrderId id);
+    Task<List<Order>> GetByCustomerIdAsync(CustomerId customerId);
+    Task SaveAsync(Order order);
 }
 
 public class OrderRepository : IOrderRepository
@@ -805,18 +781,18 @@ public class OrderRepository : IOrderRepository
     private readonly DbContext _context;
     private readonly IEventBus _eventBus;
     
-    public async Task SaveAsync(Order order, CancellationToken cancellationToken)
+    public async Task SaveAsync(Order order)
     {
         // Save aggregate
         _context.Orders.Update(order);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync();
         
         // Publish events after successful save
         if (order.IsChanged)
         {
             foreach (var evt in order.UncommittedEvents())
             {
-                await _eventBus.PublishAsync(evt, cancellationToken);
+                await _eventBus.PublishAsync(evt);
             }
             
             order.AcceptChanges();
@@ -836,25 +812,23 @@ public class UnitOfWork : IUnitOfWork
     
     public void RegisterAggregate(IAggregate aggregate) => _aggregates.Add(aggregate);
     
-    public async Task<Result<Unit>> CommitAsync(CancellationToken cancellationToken)
+    public async Task<Result<Unit>> CommitAsync()
     {
         try
         {
             // Save all changes
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
             
             // Publish all events
             foreach (var aggregate in _aggregates.Where(a => a.IsChanged))
             {
                 foreach (var evt in aggregate.UncommittedEvents())
                 {
-                    await _eventBus.PublishAsync(evt, cancellationToken);
+                    await _eventBus.PublishAsync(evt);
                 }
                 
                 aggregate.AcceptChanges();
             }
-            
-            
             
             return Result.Success();
         }

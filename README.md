@@ -159,14 +159,14 @@ return ProcessOrder(order).MatchError(
 ```
 
 ### ⚡ Async & Parallel Operations
-Full support for async/await, CancellationToken, and parallel execution.
+Full support for async/await and parallel execution.
 
 ```csharp
-await GetUserAsync(id, ct)
-    .ParallelAsync(GetOrdersAsync(id, ct))
-    .ParallelAsync(GetPreferencesAsync(id, ct))
+var result = await GetUserAsync(id)
+    .ParallelAsync(GetOrdersAsync(id))
+    .ParallelAsync(GetPreferencesAsync(id))
     .AwaitAsync()
-    .BindAsync((user, orders, prefs) => CreateProfileAsync(user, orders, prefs, ct), ct);
+    .MapAsync((user, orders, prefs) => new UserProfile(user, orders, prefs));
 ```
 
 ### 🔍 Built-in Tracing
@@ -222,7 +222,6 @@ Robust, Maintainable Software
 
 **Recent enhancements:**
 - ✨ **Discriminated Error Matching** - Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
-- ✨ **Comprehensive CancellationToken Support** - All async operations support graceful cancellation and timeouts
 - ✨ **Tuple Destructuring** - Automatically destructure tuples in Match/Switch for cleaner code
 - 📚 **Enhanced Documentation** - [Complete documentation site](https://xavierjohn.github.io/FunctionalDDD/) with tutorials, examples, and API reference
 - ⚡ **Performance Optimizations** - Reduced allocation and improved throughput
@@ -345,24 +344,22 @@ public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
 </details>
 
 <details>
-<summary><b>Async Operations with Cancellation</b></summary>
+<summary><b>Async Operations</b></summary>
 
 ```csharp
-public async Task<IResult> ProcessOrderAsync(int orderId, CancellationToken ct)
+public async Task<IResult> ProcessOrderAsync(int orderId)
 {
-    return await GetOrderAsync(orderId, ct)
+    return await GetOrderAsync(orderId)
         .ToResultAsync(Error.NotFound($"Order {orderId} not found"))
         .EnsureAsync(
-            (order, token) => order.CanProcessAsync(token),
-            Error.Validation("Order cannot be processed"),
-            ct)
-        .TapAsync((order, token) => ValidateInventoryAsync(order, token), ct)
-        .BindAsync((order, token) => ChargePaymentAsync(order, token), ct)
-        .TapAsync((order, token) => SendConfirmationAsync(order, token), ct)
+            order => order.CanProcessAsync(),
+            Error.Validation("Order cannot be processed"))
+        .TapAsync(order => ValidateInventoryAsync(order))
+        .BindAsync(order => ChargePaymentAsync(order))
+        .TapAsync(order => SendConfirmationAsync(order))
         .MatchAsync(
             order => Results.Ok(order),
-            error => Results.BadRequest(error.Detail),
-            ct);
+            error => Results.BadRequest(error.Detail));
 }
 ```
 
@@ -373,13 +370,13 @@ public async Task<IResult> ProcessOrderAsync(int orderId, CancellationToken ct)
 
 ```csharp
 // Fetch data from multiple sources in parallel
-var result = await GetUserAsync(userId, ct)
-    .ParallelAsync(GetOrdersAsync(userId, ct))
-    .ParallelAsync(GetPreferencesAsync(userId, ct))
+var result = await GetUserAsync(userId)
+    .ParallelAsync(GetOrdersAsync(userId))
+    .ParallelAsync(GetPreferencesAsync(userId))
     .AwaitAsync()
     .BindAsync(
-        (user, orders, preferences, token) =>
-            CreateProfileAsync(user, orders, preferences, token),
+        (user, orders, preferences) =>
+            CreateProfileAsync(user, orders, preferences),
         ct);
 ```
 

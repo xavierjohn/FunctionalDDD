@@ -26,8 +26,6 @@
       href: basics.md#match---unwrap-the-result
   - name: Error Handling
     href: error-handling.md
-  - name: Async & Cancellation
-    href: async-cancellation.md
 - name: Integration
   items:
   - name: Overview

@@ -6,13 +6,13 @@ This document provides detailed examples and advanced patterns for using the ASP
 
 - [MVC Controllers](#mvc-controllers)
   - [Basic CRUD Operations](#basic-crud-operations)
-  - [Async Operations with CancellationToken](#async-operations-with-cancellationtoken)
+  - [Async Operations](#async-operations)
   - [Complex Validation Scenarios](#complex-validation-scenarios)
   - [Custom Status Codes](#custom-status-codes)
   - [Pagination Support](#pagination-support)
 - [Minimal API](#minimal-api)
   - [Basic Endpoints](#basic-endpoints)
-  - [Async Operations](#async-operations)
+  - [Async Operations](#async-operations-1)
   - [Custom Status Codes](#custom-status-codes-in-minimal-api)
   - [Advanced Patterns](#advanced-patterns)
 - [Error Handling Patterns](#error-handling-patterns)
@@ -104,9 +104,9 @@ public class UsersController : ControllerBase
 }
 ```
 
-### Async Operations with CancellationToken
+### Async Operations
 
-Best practices for async operations with proper cancellation support:
+Best practices for async operations:
 
 ```csharp
 [ApiController]
@@ -117,95 +117,64 @@ public class OrdersController : ControllerBase
     private readonly IInventoryService _inventoryService;
     private readonly IPaymentService _paymentService;
     private readonly IShippingService _shippingService;
+    private readonly IEmailService _emailService;
 
     // Async CREATE with side effects
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrderAsync(
-        [FromBody] CreateOrderRequest request,
-        CancellationToken cancellationToken) =>
-        await ValidateOrderAsync(request, cancellationToken)
-            .BindAsync(
-                async (validatedRequest, ct) => await _orderService.CreateAsync(validatedRequest, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _inventoryService.ReserveAsync(order.Items, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _emailService.SendOrderConfirmationAsync(order, ct),
-                cancellationToken)
+        [FromBody] CreateOrderRequest request) =>
+        await ValidateOrderAsync(request)
+            .BindAsync(validatedRequest => _orderService.CreateAsync(validatedRequest))
+            .TapAsync(order => _inventoryService.ReserveAsync(order.Items))
+            .TapAsync(order => _emailService.SendOrderConfirmationAsync(order))
             .ToActionResultAsync(this);
 
     // Async READ with complex validation
     [HttpGet("{id}")]
-    public async Task<ActionResult<Order>> GetOrderAsync(
-        string id,
-        CancellationToken cancellationToken) =>
-        await _orderService.GetByIdAsync(id, cancellationToken)
+    public async Task<ActionResult<Order>> GetOrderAsync(string id) =>
+        await _orderService.GetByIdAsync(id)
             .ToResultAsync(Error.NotFound($"Order {id} not found"))
             .EnsureAsync(
-                async (order, ct) => await CanAccessOrderAsync(User, order, ct),
-                Error.Forbidden("Access denied to this order"),
-                cancellationToken)
+                order => CanAccessOrderAsync(User, order),
+                Error.Forbidden("Access denied to this order"))
             .ToActionResultAsync(this);
 
     // Async UPDATE with multiple steps
     [HttpPut("{id}/submit")]
-    public async Task<ActionResult<Order>> SubmitOrderAsync(
-        string id,
-        CancellationToken cancellationToken) =>
-        await _orderService.GetByIdAsync(id, cancellationToken)
+    public async Task<ActionResult<Order>> SubmitOrderAsync(string id) =>
+        await _orderService.GetByIdAsync(id)
             .ToResultAsync(Error.NotFound($"Order {id} not found"))
-            .BindAsync(
-                async (order, ct) => await order.SubmitAsync(ct),
-                cancellationToken)
-            .BindAsync(
-                async (order, ct) => await _paymentService.ProcessAsync(order, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _orderService.SaveAsync(order, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _shippingService.ScheduleAsync(order, ct),
-                cancellationToken)
+            .BindAsync(order => order.SubmitAsync())
+            .BindAsync(order => _paymentService.ProcessAsync(order))
+            .TapAsync(order => _orderService.SaveAsync(order))
+            .TapAsync(order => _shippingService.ScheduleAsync(order))
             .ToActionResultAsync(this);
 
     // Async DELETE with cleanup
     [HttpDelete("{id}")]
-    public async Task<ActionResult<Unit>> CancelOrderAsync(
-        string id,
-        CancellationToken cancellationToken) =>
-        await _orderService.GetByIdAsync(id, cancellationToken)
+    public async Task<ActionResult<Unit>> CancelOrderAsync(string id) =>
+        await _orderService.GetByIdAsync(id)
             .ToResultAsync(Error.NotFound($"Order {id} not found"))
             .EnsureAsync(
-                async (order, ct) => await order.CanCancelAsync(ct),
-                Error.Conflict("Order cannot be cancelled"),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _inventoryService.ReleaseAsync(order.Items, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _paymentService.RefundAsync(order, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _orderService.DeleteAsync(order, ct),
-                cancellationToken)
+                order => order.CanCancelAsync(),
+                Error.Conflict("Order cannot be cancelled"))
+            .TapAsync(order => _inventoryService.ReleaseAsync(order.Items))
+            .TapAsync(order => _paymentService.RefundAsync(order))
+            .TapAsync(order => _orderService.DeleteAsync(order))
             .Map(_ => Result.Success())
             .ToActionResultAsync(this);
 
     private async Task<Result<CreateOrderRequest>> ValidateOrderAsync(
-        CreateOrderRequest request,
-        CancellationToken cancellationToken) =>
-        await _inventoryService.CheckAvailabilityAsync(request.Items, cancellationToken)
+        CreateOrderRequest request) =>
+        await _inventoryService.CheckAvailabilityAsync(request.Items)
             .EnsureAsync(
-                async (available, ct) => available,
-                Error.Conflict("Some items are out of stock"),
-                cancellationToken)
+                available => Task.FromResult(available),
+                Error.Conflict("Some items are out of stock"))
             .Map(_ => request);
 
     private async Task<bool> CanAccessOrderAsync(
         ClaimsPrincipal user,
-        Order order,
-        CancellationToken cancellationToken) =>
+        Order order) =>
         await Task.FromResult(
             user.IsInRole("Admin") || 
             user.FindFirst(ClaimTypes.NameIdentifier)?.Value == order.UserId);
@@ -475,7 +444,7 @@ app.Run();
 
 ### Async Operations
 
-Async endpoints with proper CancellationToken support:
+Async endpoints:
 
 ```csharp
 var orderApi = app.MapGroup("/api/orders");
@@ -485,23 +454,17 @@ orderApi.MapPost("/", async (
     CreateOrderRequest request,
     IOrderService orderService,
     IInventoryService inventoryService,
-    IEmailService emailService,
-    CancellationToken cancellationToken) =>
-    await orderService.CreateAsync(request, cancellationToken)
-        .TapAsync(
-            async (order, ct) => await inventoryService.ReserveAsync(order.Items, ct),
-            cancellationToken)
-        .TapAsync(
-            async (order, ct) => await emailService.SendConfirmationAsync(order, ct),
-            cancellationToken)
+    IEmailService emailService) =>
+    await orderService.CreateAsync(request)
+        .TapAsync(order => inventoryService.ReserveAsync(order.Items))
+        .TapAsync(order => emailService.SendConfirmationAsync(order))
         .ToHttpResultAsync());
 
 // Async READ
 orderApi.MapGet("/{id}", async (
     string id,
-    IOrderService orderService,
-    CancellationToken cancellationToken) =>
-    await orderService.GetByIdAsync(id, cancellationToken)
+    IOrderService orderService) =>
+    await orderService.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Order {id} not found"))
         .ToHttpResultAsync());
 
@@ -509,19 +472,12 @@ orderApi.MapGet("/{id}", async (
 orderApi.MapPut("/{id}/submit", async (
     string id,
     IOrderService orderService,
-    IPaymentService paymentService,
-    CancellationToken cancellationToken) =>
-    await orderService.GetByIdAsync(id, cancellationToken)
+    IPaymentService paymentService) =>
+    await orderService.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Order {id} not found"))
-        .BindAsync(
-            async (order, ct) => await order.SubmitAsync(ct),
-            cancellationToken)
-        .BindAsync(
-            async (order, ct) => await paymentService.ProcessAsync(order, ct),
-            cancellationToken)
-        .TapAsync(
-            async (order, ct) => await orderService.SaveAsync(order, ct),
-            cancellationToken)
+        .BindAsync(order => order.SubmitAsync())
+        .BindAsync(order => paymentService.ProcessAsync(order))
+        .TapAsync(order => orderService.SaveAsync(order))
         .ToHttpResultAsync());
 
 // Async DELETE
@@ -529,19 +485,12 @@ orderApi.MapDelete("/{id}", async (
     string id,
     IOrderService orderService,
     IInventoryService inventoryService,
-    IPaymentService paymentService,
-    CancellationToken cancellationToken) =>
-    await orderService.GetByIdAsync(id, cancellationToken)
+    IPaymentService paymentService) =>
+    await orderService.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Order {id} not found"))
-        .TapAsync(
-            async (order, ct) => await inventoryService.ReleaseAsync(order.Items, ct),
-            cancellationToken)
-        .TapAsync(
-            async (order, ct) => await paymentService.RefundAsync(order, ct),
-            cancellationToken)
-        .TapAsync(
-            async (order, ct) => await orderService.DeleteAsync(order, ct),
-            cancellationToken)
+        .TapAsync(order => inventoryService.ReleaseAsync(order.Items))
+        .TapAsync(order => paymentService.RefundAsync(order))
+        .TapAsync(order => orderService.DeleteAsync(order))
         .Map(_ => Result.Success())
         .ToHttpResultAsync());
 ```
@@ -608,21 +557,15 @@ var batchApi = app.MapGroup("/api/batch");
 
 batchApi.MapPost("/users", async (
     List<CreateUserRequest> requests,
-    IUserRepository repository,
-    CancellationToken cancellationToken) =>
+    IUserRepository repository) =>
     await requests.TraverseAsync(
-        async (request, ct) =>
+        async request =>
             await FirstName.TryCreate(request.FirstName)
                 .Combine(LastName.TryCreate(request.LastName))
                 .Combine(EmailAddress.TryCreate(request.Email))
-                .BindAsync(
-                    async (firstName, lastName, email, innerCt) =>
-                        await User.TryCreateAsync(firstName, lastName, email, request.Password, innerCt),
-                    ct)
-                .TapAsync(
-                    async (user, innerCt) => await repository.AddAsync(user, innerCt),
-                    ct),
-        cancellationToken)
+                .BindAsync(async (firstName, lastName, email) =>
+                    await User.TryCreateAsync(firstName, lastName, email, request.Password))
+                .TapAsync(user => repository.AddAsync(user)))
     .ToHttpResultAsync());
 
 // Complex validation chain
@@ -632,17 +575,14 @@ validationApi.MapPost("/order", async (
     CreateOrderRequest request,
     IInventoryService inventoryService,
     ICustomerService customerService,
-    IPricingService pricingService,
-    CancellationToken cancellationToken) =>
-    await customerService.ValidateCustomerAsync(request.CustomerId, cancellationToken)
-        .BindAsync(
-            async (customer, ct) => await inventoryService.ValidateItemsAsync(request.Items, ct)
-                .Map(_ => customer),
-            cancellationToken)
-        .BindAsync(
-            async (customer, ct) => await pricingService.CalculateTotalAsync(request.Items, ct)
-                .Map(total => (customer, total)),
-            cancellationToken)
+    IPricingService pricingService) =>
+    await customerService.ValidateCustomerAsync(request.CustomerId)
+        .BindAsync(async customer => 
+            (await inventoryService.ValidateItemsAsync(request.Items))
+                .Map(_ => customer))
+        .BindAsync(async customer =>
+            (await pricingService.CalculateTotalAsync(request.Items))
+                .Map(total => (customer, total)))
         .Map(tuple => new OrderValidationResult(
             tuple.customer,
             tuple.total,
@@ -656,29 +596,22 @@ processingApi.MapPost("/order/{id}/complete", async (
     string id,
     IOrderService orderService,
     IPaymentService paymentService,
-    IShippingService shippingService,
-    CancellationToken cancellationToken) =>
-    await orderService.GetByIdAsync(id, cancellationToken)
+    IShippingService shippingService) =>
+    await orderService.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Order {id} not found"))
-        .BindAsync(
-            async (order, ct) =>
-            {
-                if (order.RequiresPayment)
-                    return await paymentService.ProcessAsync(order, ct);
-                return order.ToResult();
-            },
-            cancellationToken)
-        .BindAsync(
-            async (order, ct) =>
-            {
-                if (order.RequiresShipping)
-                    return await shippingService.ScheduleAsync(order, ct);
-                return order.ToResult();
-            },
-            cancellationToken)
-        .TapAsync(
-            async (order, ct) => await orderService.SaveAsync(order, ct),
-            cancellationToken)
+        .BindAsync(async order =>
+        {
+            if (order.RequiresPayment)
+                return await paymentService.ProcessAsync(order);
+            return order.ToResult();
+        })
+        .BindAsync(async order =>
+        {
+            if (order.RequiresShipping)
+                return await shippingService.ScheduleAsync(order);
+            return order.ToResult();
+        })
+        .TapAsync(order => orderService.SaveAsync(order))
         .ToHttpResultAsync());
 ```
 
@@ -728,27 +661,22 @@ Handling authentication and authorization:
 ```csharp
 [HttpGet("{id}")]
 [Authorize]
-public async Task<ActionResult<Order>> GetOrderAsync(
-    string id,
-    CancellationToken cancellationToken) =>
-    await _orderService.GetByIdAsync(id, cancellationToken)
+public async Task<ActionResult<Order>> GetOrderAsync(string id) =>
+    await _orderService.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Order {id} not found"))
         // Check ownership
         .EnsureAsync(
-            async (order, ct) => await IsOwnerAsync(User, order, ct),
-            Error.Forbidden("You don't have permission to view this order"),
-            cancellationToken)
+            order => IsOwnerAsync(User, order),
+            Error.Forbidden("You don't have permission to view this order"))
         // Check subscription level
         .EnsureAsync(
-            async (order, ct) => await HasRequiredSubscriptionAsync(User, order, ct),
-            Error.Forbidden("Your subscription level doesn't allow viewing this order type"),
-            cancellationToken)
+            order => HasRequiredSubscriptionAsync(User, order),
+            Error.Forbidden("Your subscription level doesn't allow viewing this order type"))
         .ToActionResultAsync(this);
 
 private async Task<bool> IsOwnerAsync(
     ClaimsPrincipal user,
-    Order order,
-    CancellationToken cancellationToken)
+    Order order)
 {
     var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     return await Task.FromResult(
@@ -757,12 +685,10 @@ private async Task<bool> IsOwnerAsync(
 
 private async Task<bool> HasRequiredSubscriptionAsync(
     ClaimsPrincipal user,
-    Order order,
-    CancellationToken cancellationToken)
+    Order order)
 {
     var subscription = await _subscriptionService.GetUserSubscriptionAsync(
-        user.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-        cancellationToken);
+        user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
     return subscription.Level >= order.RequiredSubscriptionLevel;
 }
 ```
@@ -819,24 +745,16 @@ public ActionResult<User> Register([FromBody] RegisterRequest request) =>
 [HttpPut("{id}/email")]
 public async Task<ActionResult<User>> UpdateEmailAsync(
     string id,
-    [FromBody] UpdateEmailRequest request,
-    CancellationToken cancellationToken) =>
-    await _userRepository.GetByIdAsync(id, cancellationToken)
+    [FromBody] UpdateEmailRequest request) =>
+    await _userRepository.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"User {id} not found"))
-        .BindAsync(
-            async (user, ct) =>
-                await EmailAddress.TryCreate(request.NewEmail)
-                    .EnsureAsync(
-                        async (email, innerCt) => !await _userRepository.ExistsByEmailAsync(email, innerCt),
-                        Error.Conflict("Email already in use"),
-                        ct)
-                    .BindAsync(
-                        async (email, innerCt) => await user.UpdateEmailAsync(email, innerCt),
-                        ct),
-            cancellationToken)
-        .TapAsync(
-            async (user, ct) => await _userRepository.SaveAsync(user, ct),
-            cancellationToken)
+        .BindAsync(async user =>
+            await EmailAddress.TryCreate(request.NewEmail)
+                .EnsureAsync(
+                    async email => !await _userRepository.ExistsByEmailAsync(email),
+                    Error.Conflict("Email already in use"))
+                .BindAsync(email => user.UpdateEmailAsync(email)))
+        .TapAsync(user => _userRepository.SaveAsync(user))
         .ToActionResultAsync(this);
 
 [HttpDelete("{id}")]
@@ -865,56 +783,39 @@ Clean separation between API and service layers:
 public class OrderService : IOrderService
 {
     private readonly IOrderRepository _repository;
+    private readonly ICustomerRepository _customerRepository;
     private readonly IInventoryService _inventoryService;
     private readonly IDomainEventDispatcher _eventDispatcher;
 
-    public async Task<Result<Order>> CreateAsync(
-        CreateOrderRequest request,
-        CancellationToken cancellationToken) =>
-        await ValidateCustomerAsync(request.CustomerId, cancellationToken)
-            .BindAsync(
-                async (customer, ct) => await CreateOrderLinesAsync(request.Items, ct)
-                    .Map(items => (customer, items)),
-                cancellationToken)
-            .BindAsync(
-                async (tuple, ct) => await Order.TryCreateAsync(
-                    tuple.customer.Id,
-                    tuple.items,
-                    ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _repository.AddAsync(order, ct),
-                cancellationToken)
-            .TapAsync(
-                async (order, ct) => await _eventDispatcher.DispatchAsync(order.DomainEvents, ct),
-                cancellationToken);
+    public async Task<Result<Order>> CreateAsync(CreateOrderRequest request) =>
+        await ValidateCustomerAsync(request.CustomerId)
+            .BindAsync(async customer => 
+                (await CreateOrderLinesAsync(request.Items))
+                    .Map(items => (customer, items)))
+            .BindAsync(async tuple => 
+                await Order.TryCreateAsync(tuple.customer.Id, tuple.items))
+            .TapAsync(order => _repository.AddAsync(order))
+            .TapAsync(order => _eventDispatcher.DispatchAsync(order.DomainEvents));
 
-    private async Task<Result<Customer>> ValidateCustomerAsync(
-        string customerId,
-        CancellationToken cancellationToken) =>
-        await _customerRepository.GetByIdAsync(customerId, cancellationToken)
+    private async Task<Result<Customer>> ValidateCustomerAsync(string customerId) =>
+        await _customerRepository.GetByIdAsync(customerId)
             .ToResultAsync(Error.NotFound($"Customer {customerId} not found"))
             .EnsureAsync(
-                async (customer, ct) => await customer.IsActiveAsync(ct),
-                Error.Conflict("Customer account is inactive"),
-                cancellationToken);
+                customer => customer.IsActiveAsync(),
+                Error.Conflict("Customer account is inactive"));
 
     private async Task<Result<IEnumerable<OrderLine>>> CreateOrderLinesAsync(
-        IEnumerable<OrderLineRequest> requests,
-        CancellationToken cancellationToken) =>
+        IEnumerable<OrderLineRequest> requests) =>
         await requests.TraverseAsync(
-            async (request, ct) =>
-                await _inventoryService.GetProductAsync(request.ProductId, ct)
+            async request =>
+                await _inventoryService.GetProductAsync(request.ProductId)
                     .ToResultAsync(Error.NotFound($"Product {request.ProductId} not found"))
-                    .BindAsync(
-                        async (product, innerCt) => await OrderLine.TryCreateAsync(
+                    .BindAsync(product => 
+                        OrderLine.TryCreateAsync(
                             product.Id,
                             product.Name,
                             product.Price,
-                            request.Quantity,
-                            innerCt),
-                        ct),
-            cancellationToken);
+                            request.Quantity)));
 }
 
 // Controller Layer
@@ -926,16 +827,13 @@ public class OrdersController : ControllerBase
 
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrderAsync(
-        [FromBody] CreateOrderRequest request,
-        CancellationToken cancellationToken) =>
-        await _orderService.CreateAsync(request, cancellationToken)
+        [FromBody] CreateOrderRequest request) =>
+        await _orderService.CreateAsync(request)
             .ToActionResultAsync(this);
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Order>> GetOrderAsync(
-        string id,
-        CancellationToken cancellationToken) =>
-        await _orderService.GetByIdAsync(id, cancellationToken)
+    public async Task<ActionResult<Order>> GetOrderAsync(string id) =>
+        await _orderService.GetByIdAsync(id)
             .ToActionResultAsync(this);
 }
 ```
@@ -957,11 +855,9 @@ public class UserRepository : IUserRepository
             : Error.NotFound($"User {id} not found");
     }
 
-    public async Task<Result<User>> GetByIdAsync(
-        string id,
-        CancellationToken cancellationToken)
+    public async Task<Result<User>> GetByIdAsync(string id)
     {
-        var user = await _context.Users.FindAsync(new object[] { id }, cancellationToken);
+        var user = await _context.Users.FindAsync(id);
         return user is not null
             ? user.ToResult()
             : Error.NotFound($"User {id} not found");
@@ -992,14 +888,12 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<Result<Unit>> AddAsync(
-        User user,
-        CancellationToken cancellationToken)
+    public async Task<Result<Unit>> AddAsync(User user)
     {
         try
         {
             _context.Users.Add(user);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
             return Result.Success();
         }
         catch (DbUpdateException ex)
@@ -1019,11 +913,11 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly DbContext _context;
 
-    public async Task<Result<Unit>> CommitAsync(CancellationToken cancellationToken)
+    public async Task<Result<Unit>> CommitAsync()
     {
         try
         {
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
             return Result.Success();
         }
         catch (DbUpdateConcurrencyException ex)
@@ -1040,28 +934,20 @@ public class UnitOfWork : IUnitOfWork
 // Usage in controller
 [HttpPost("transfer")]
 public async Task<ActionResult<TransferResult>> TransferFundsAsync(
-    [FromBody] TransferRequest request,
-    CancellationToken cancellationToken) =>
-    await _accountRepository.GetByIdAsync(request.FromAccountId, cancellationToken)
+    [FromBody] TransferRequest request) =>
+    await _accountRepository.GetByIdAsync(request.FromAccountId)
         .ToResultAsync(Error.NotFound($"Account {request.FromAccountId} not found"))
-        .BindAsync(
-            async (fromAccount, ct) =>
-                await _accountRepository.GetByIdAsync(request.ToAccountId, ct)
-                    .ToResultAsync(Error.NotFound($"Account {request.ToAccountId} not found"))
-                    .Map(toAccount => (fromAccount, toAccount)),
-            cancellationToken)
-        .BindAsync(
-            async (tuple, ct) =>
-                await tuple.fromAccount.WithdrawAsync(request.Amount, ct)
-                    .BindAsync(
-                        async (_, innerCt) => await tuple.toAccount.DepositAsync(request.Amount, innerCt),
-                        ct)
-                    .Map(_ => (tuple.fromAccount, tuple.toAccount)),
-            cancellationToken)
-        .BindAsync(
-            async (tuple, ct) => await _unitOfWork.CommitAsync(ct)
-                .Map(_ => new TransferResult(tuple.fromAccount.Id, tuple.toAccount.Id, request.Amount)),
-            cancellationToken)
+        .BindAsync(async fromAccount =>
+            (await _accountRepository.GetByIdAsync(request.ToAccountId))
+                .ToResult(Error.NotFound($"Account {request.ToAccountId} not found"))
+                .Map(toAccount => (fromAccount, toAccount)))
+        .BindAsync(async tuple =>
+            (await tuple.fromAccount.WithdrawAsync(request.Amount))
+                .BindAsync(_ => tuple.toAccount.DepositAsync(request.Amount))
+                .Map(_ => (tuple.fromAccount, tuple.toAccount)))
+        .BindAsync(async tuple => 
+            (await _unitOfWork.CommitAsync())
+                .Map(_ => new TransferResult(tuple.fromAccount.Id, tuple.toAccount.Id, request.Amount)))
         .ToActionResultAsync(this);
 ```
 
@@ -1074,39 +960,27 @@ Processing multiple items with Traverse:
 ```csharp
 [HttpPost("batch/users")]
 public async Task<ActionResult<BatchResult<User>>> CreateUsersAsync(
-    [FromBody] List<CreateUserRequest> requests,
-    CancellationToken cancellationToken) =>
+    [FromBody] List<CreateUserRequest> requests) =>
     await requests.TraverseAsync(
-        async (request, ct) =>
+        async request =>
             await FirstName.TryCreate(request.FirstName)
                 .Combine(LastName.TryCreate(request.LastName))
                 .Combine(EmailAddress.TryCreate(request.Email))
-                .BindAsync(
-                    async (firstName, lastName, email, innerCt) =>
-                        await User.TryCreateAsync(firstName, lastName, email, request.Password, innerCt),
-                    ct)
-                .TapAsync(
-                    async (user, innerCt) => await _repository.AddAsync(user, innerCt),
-                    ct),
-        cancellationToken)
+                .BindAsync(async (firstName, lastName, email) =>
+                    await User.TryCreateAsync(firstName, lastName, email, request.Password))
+                .TapAsync(user => _repository.AddAsync(user)))
     .Map(users => new BatchResult<User>(users.Count(), users))
     .ToActionResultAsync(this);
 
 [HttpPut("batch/activate")]
 public async Task<ActionResult<Unit>> ActivateUsersAsync(
-    [FromBody] List<string> userIds,
-    CancellationToken cancellationToken) =>
+    [FromBody] List<string> userIds) =>
     await userIds.TraverseAsync(
-        async (id, ct) =>
-            await _repository.GetByIdAsync(id, ct)
+        async id =>
+            await _repository.GetByIdAsync(id)
                 .ToResultAsync(Error.NotFound($"User {id} not found"))
-                .BindAsync(
-                    async (user, innerCt) => await user.ActivateAsync(innerCt),
-                    ct)
-                .TapAsync(
-                    async (user, innerCt) => await _repository.UpdateAsync(user, innerCt),
-                    ct),
-        cancellationToken)
+                .BindAsync(user => user.ActivateAsync())
+                .TapAsync(user => _repository.UpdateAsync(user)))
     .Map(_ => Result.Success())
     .ToActionResultAsync(this);
 ```
@@ -1117,41 +991,31 @@ Conditional logic in pipelines:
 
 ```csharp
 [HttpPost("{id}/process")]
-public async Task<ActionResult<Order>> ProcessOrderAsync(
-    string id,
-    CancellationToken cancellationToken) =>
-    await _orderRepository.GetByIdAsync(id, cancellationToken)
+public async Task<ActionResult<Order>> ProcessOrderAsync(string id) =>
+    await _orderRepository.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Order {id} not found"))
         // Conditionally apply discount
-        .BindAsync(
-            async (order, ct) =>
-            {
-                if (order.Customer.IsVIP)
-                    return await order.ApplyDiscountAsync(0.1m, ct);
-                return order.ToResult();
-            },
-            cancellationToken)
+        .BindAsync(async order =>
+        {
+            if (order.Customer.IsVIP)
+                return await order.ApplyDiscountAsync(0.1m);
+            return order.ToResult();
+        })
         // Conditionally process payment
-        .BindAsync(
-            async (order, ct) =>
-            {
-                if (order.Total > 0)
-                    return await _paymentService.ProcessAsync(order, ct);
-                return order.ToResult();
-            },
-            cancellationToken)
+        .BindAsync(async order =>
+        {
+            if (order.Total > 0)
+                return await _paymentService.ProcessAsync(order);
+            return order.ToResult();
+        })
         // Conditionally schedule shipping
-        .BindAsync(
-            async (order, ct) =>
-            {
-                if (order.RequiresShipping)
-                    return await _shippingService.ScheduleAsync(order, ct);
-                return order.ToResult();
-            },
-            cancellationToken)
-        .TapAsync(
-            async (order, ct) => await _orderRepository.SaveAsync(order, ct),
-            cancellationToken)
+        .BindAsync(async order =>
+        {
+            if (order.RequiresShipping)
+                return await _shippingService.ScheduleAsync(order);
+            return order.ToResult();
+        })
+        .TapAsync(order => _orderRepository.SaveAsync(order))
         .ToActionResultAsync(this);
 ```
 
@@ -1162,90 +1026,71 @@ Executing side effects that shouldn't affect the pipeline:
 ```csharp
 [HttpPost]
 public async Task<ActionResult<User>> RegisterAsync(
-    [FromBody] RegisterRequest request,
-    CancellationToken cancellationToken) =>
+    [FromBody] RegisterRequest request) =>
     await FirstName.TryCreate(request.FirstName)
         .Combine(LastName.TryCreate(request.LastName))
         .Combine(EmailAddress.TryCreate(request.Email))
-        .BindAsync(
-            async (firstName, lastName, email, ct) =>
-                await User.TryCreateAsync(firstName, lastName, email, request.Password, ct),
-            cancellationToken)
+        .BindAsync(async (firstName, lastName, email) =>
+            await User.TryCreateAsync(firstName, lastName, email, request.Password))
         // Save user (critical)
-        .TapAsync(
-            async (user, ct) => await _repository.AddAsync(user, ct),
-            cancellationToken)
+        .TapAsync(user => _repository.AddAsync(user))
         // Send welcome email (non-critical, failures don't affect result)
-        .TapAsync(
-            async (user, ct) =>
+        .TapAsync(async user =>
+        {
+            try
             {
-                try
-                {
-                    await _emailService.SendWelcomeEmailAsync(user.Email, ct);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send welcome email to {Email}", user.Email);
-                }
-            },
-            cancellationToken)
+                await _emailService.SendWelcomeEmailAsync(user.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send welcome email to {Email}", user.Email);
+            }
+        })
         // Log analytics (non-critical)
-        .TapAsync(
-            async (user, ct) =>
+        .TapAsync(async user =>
+        {
+            try
             {
-                try
-                {
-                    await _analyticsService.TrackUserRegistrationAsync(user, ct);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to track registration for {UserId}", user.Id);
-                }
-            },
-            cancellationToken)
+                await _analyticsService.TrackUserRegistrationAsync(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to track registration for {UserId}", user.Id);
+            }
+        })
         .ToActionResultAsync(this);
 
 [HttpPut("{id}")]
 public async Task<ActionResult<Product>> UpdateProductAsync(
     string id,
-    [FromBody] UpdateProductRequest request,
-    CancellationToken cancellationToken) =>
-    await _repository.GetByIdAsync(id, cancellationToken)
+    [FromBody] UpdateProductRequest request) =>
+    await _repository.GetByIdAsync(id)
         .ToResultAsync(Error.NotFound($"Product {id} not found"))
-        .BindAsync(
-            async (product, ct) => await product.UpdateAsync(request, ct),
-            cancellationToken)
+        .BindAsync(product => product.UpdateAsync(request))
         // Save changes (critical)
-        .TapAsync(
-            async (product, ct) => await _repository.UpdateAsync(product, ct),
-            cancellationToken)
+        .TapAsync(product => _repository.UpdateAsync(product))
         // Invalidate cache (best effort)
-        .TapAsync(
-            async (product, ct) =>
+        .TapAsync(async product =>
+        {
+            try
             {
-                try
-                {
-                    await _cache.InvalidateAsync($"product:{product.Id}", ct);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to invalidate cache for product {ProductId}", product.Id);
-                }
-            },
-            cancellationToken)
+                await _cache.InvalidateAsync($"product:{product.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to invalidate cache for product {ProductId}", product.Id);
+            }
+        })
         // Notify subscribers (best effort)
-        .TapAsync(
-            async (product, ct) =>
+        .TapAsync(async product =>
+        {
+            try
             {
-                try
-                {
-                    await _notificationService.NotifyProductUpdateAsync(product, ct);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to notify subscribers for product {ProductId}", product.Id);
-                }
-            },
-            cancellationToken)
+                await _notificationService.NotifyProductUpdateAsync(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to notify subscribers for product {ProductId}", product.Id);
+            }
+        })
         .ToActionResultAsync(this);
-```
