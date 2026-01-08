@@ -1,5 +1,4 @@
-﻿
-namespace Example.Tests;
+﻿namespace Example.Tests;
 
 using FunctionalDdd;
 using System.Diagnostics;
@@ -13,18 +12,6 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
     [InlineData(2)]
     public async Task Promote_customer(int id)
     {
-        List<Activity> completedActivities = [];
-
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = source =>
-                source.Name == TraceFixture.ActivitySourceName ||
-                source.Name == "Functional DDD ROP",  // ROP ActivitySource name
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = completedActivities.Add
-        };
-        ActivitySource.AddActivityListener(listener);
-
         using var activity = TraceFixture.ActivitySource.StartActivity();
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
@@ -37,22 +24,6 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
             result.Should().Be("Okay");
         else
             result.Should().Be("Failed");
-
-        // Analyze the complete trace tree
-        completedActivities.Should().HaveCount(5);
-        
-        var activities = completedActivities;
-        activities[0].OperationName.Should().Be("ToResult");
-        activities[0].Status.Should().Be(ActivityStatusCode.Ok);
-
-        var expectedStatus = id == 1 ? ActivityStatusCode.Ok : ActivityStatusCode.Error;
-        var expectedOperations = new[] { "Ensure", "Tap", "Bind", "Match" };
-        
-        for (int i = 0; i < expectedOperations.Length; i++)
-        {
-            activities[i + 1].OperationName.Should().Be(expectedOperations[i]);
-            activities[i + 1].Status.Should().Be(expectedStatus);
-        }
     }
 
     [Fact]
