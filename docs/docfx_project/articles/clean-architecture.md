@@ -505,7 +505,7 @@ public class User : Aggregate<UserId>
         CreatedAt = DateTime.UtcNow;
 
         // Domain event
-        AddDomainEvent(new UserCreatedEvent(Id, Email));
+        AddDomainEvent(new UserCreated(Id, Email));
     }
 
     // Business operation
@@ -518,7 +518,7 @@ public class User : Aggregate<UserId>
             return Error.Validation("Deactivation reason is required", nameof(reason));
 
         IsActive = false;
-        AddDomainEvent(new UserDeactivatedEvent(Id, reason));
+        AddDomainEvent(new UserDeactivated(Id, reason));
         return Result.Success(this);
     }
 
@@ -553,8 +553,8 @@ public record EmailAddress
 }
 
 // Domain Events
-public record UserCreatedEvent(UserId UserId, EmailAddress Email) : DomainEvent;
-public record UserDeactivatedEvent(UserId UserId, string Reason) : DomainEvent;
+public record UserCreated(UserId UserId, EmailAddress Email) : DomainEvent;
+public record UserDeactivated(UserId UserId, string Reason) : DomainEvent;
 ```
 
 **What it does:**
@@ -730,7 +730,7 @@ sequenceDiagram
     Repository-->>CommandHandler: Result<Unit>
     
     CommandHandler->>Domain: user.UncommittedEvents()
-    Domain-->>CommandHandler: [UserCreatedEvent]
+    Domain-->>CommandHandler: [UserCreated]
     
     CommandHandler->>EventBus: Publish(events)
     EventBus-->>CommandHandler: Ack
@@ -1029,4 +1029,3 @@ API → Application → Domain ← Infrastructure
 **Layer vs Assembly:**
 - **3 Layers**: API, Domain, Infrastructure
 - **4 Assemblies**: API, Application (in Domain Layer), Domain (in Domain Layer), Infrastructure
-````````

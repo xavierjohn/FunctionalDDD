@@ -36,8 +36,8 @@
 /// <example>
 /// <code>
 /// // Define domain events as immutable records with OccurredAt as the timestamp
-/// public record OrderCreatedEvent(OrderId OrderId, CustomerId CustomerId, DateTime OccurredAt) : IDomainEvent;
-/// public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
+/// public record OrderCreated(OrderId OrderId, CustomerId CustomerId, DateTime OccurredAt) : IDomainEvent;
+/// public record OrderSubmitted(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
 /// 
 /// // Raise events from an aggregate
 /// public class Order : Aggregate&lt;OrderId&gt;
@@ -46,7 +46,7 @@
 ///     {
 ///         CustomerId = customerId;
 ///         CreatedAt = DateTime.UtcNow;
-///         DomainEvents.Add(new OrderCreatedEvent(id, customerId, DateTime.UtcNow));
+///         DomainEvents.Add(new OrderCreated(id, customerId, DateTime.UtcNow));
 ///     }
 ///     
 ///     public Result&lt;Order&gt; Submit()
@@ -57,7 +57,7 @@
 ///             {
 ///                 Status = OrderStatus.Submitted;
 ///                 SubmittedAt = DateTime.UtcNow;
-///                 DomainEvents.Add(new OrderSubmittedEvent(Id, Total, DateTime.UtcNow));
+///                 DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
 ///             });
 ///     }
 /// }
@@ -65,7 +65,7 @@
 /// // Handle the event
 /// public class OrderSubmittedHandler
 /// {
-///     public async Task Handle(OrderSubmittedEvent evt, CancellationToken ct)
+///     public async Task Handle(OrderSubmitted evt, CancellationToken ct)
 ///     {
 ///         _logger.LogInformation("Order {OrderId} submitted at {OccurredAt}", 
 ///             evt.OrderId, evt.OccurredAt);
@@ -92,10 +92,10 @@ public interface IDomainEvent
     /// <c>CreatedAt</c>, <c>SubmittedAt</c>, etc. that duplicate this information:
     /// <code>
     /// // Good - OccurredAt captures when the event happened
-    /// public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
+    /// public record OrderSubmitted(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
     /// 
     /// // Avoid - redundant SubmittedAt duplicates OccurredAt
-    /// public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime SubmittedAt, DateTime OccurredAt) : IDomainEvent;
+    /// public record OrderSubmitted(OrderId OrderId, Money Total, DateTime SubmittedAt, DateTime OccurredAt) : IDomainEvent;
     /// </code>
     /// </para>
     /// </remarks>

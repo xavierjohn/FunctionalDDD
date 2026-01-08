@@ -319,12 +319,12 @@ Complete implementation of an aggregate root with business rules:
 
 ```csharp
 // Domain Events
-public record OrderCreatedEvent(OrderId OrderId, CustomerId CustomerId, DateTime CreatedAt) : IDomainEvent;
-public record OrderLineAddedEvent(OrderId OrderId, ProductId ProductId, int Quantity) : IDomainEvent;
-public record OrderLineRemovedEvent(OrderId OrderId, ProductId ProductId) : IDomainEvent;
-public record OrderSubmittedEvent(OrderId OrderId, Money Total, DateTime SubmittedAt) : IDomainEvent;
-public record OrderCancelledEvent(OrderId OrderId, string Reason, DateTime CancelledAt) : IDomainEvent;
-public record OrderShippedEvent(OrderId OrderId, DateTime ShippedAt) : IDomainEvent;
+public record OrderCreated(OrderId OrderId, CustomerId CustomerId, DateTime OccurredAt) : IDomainEvent;
+public record OrderLineAdded(OrderId OrderId, ProductId ProductId, int Quantity, DateTime OccurredAt) : IDomainEvent;
+public record OrderLineRemoved(OrderId OrderId, ProductId ProductId, DateTime OccurredAt) : IDomainEvent;
+public record OrderSubmitted(OrderId OrderId, Money Total, DateTime OccurredAt) : IDomainEvent;
+public record OrderCancelled(OrderId OrderId, string Reason, DateTime OccurredAt) : IDomainEvent;
+public record OrderShipped(OrderId OrderId, DateTime OccurredAt) : IDomainEvent;
 
 // Aggregate Root
 public class Order : Aggregate<OrderId>
@@ -347,7 +347,7 @@ public class Order : Aggregate<OrderId>
         CreatedAt = DateTime.UtcNow;
         Total = Money.TryCreate(0).Value;
         
-        DomainEvents.Add(new OrderCreatedEvent(id, customerId, CreatedAt));
+        DomainEvents.Add(new OrderCreated(id, customerId, CreatedAt));
     }
     
     public static Result<Order> TryCreate(CustomerId customerId) =>
@@ -375,7 +375,7 @@ public class Order : Aggregate<OrderId>
                     _lines.Add(line);
                 }
                 RecalculateTotal();
-                DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
+                DomainEvents.Add(new OrderLineAdded(Id, productId, quantity, DateTime.UtcNow));
             });
     
     public Result<Order> RemoveLine(ProductId productId) =>
@@ -389,7 +389,7 @@ public class Order : Aggregate<OrderId>
                 var line = _lines.First(l => l.ProductId == productId);
                 _lines.Remove(line);
                 RecalculateTotal();
-                DomainEvents.Add(new OrderLineRemovedEvent(Id, productId));
+                DomainEvents.Add(new OrderLineRemoved(Id, productId, DateTime.UtcNow));
             });
     
     public Result<Order> Submit() =>
@@ -404,7 +404,7 @@ public class Order : Aggregate<OrderId>
             {
                 Status = OrderStatus.Submitted;
                 SubmittedAt = DateTime.UtcNow;
-                DomainEvents.Add(new OrderSubmittedEvent(Id, Total, SubmittedAt.Value));
+                DomainEvents.Add(new OrderSubmitted(Id, Total, SubmittedAt.Value));
             });
     
     public Result<Order> Ship() =>
@@ -415,7 +415,7 @@ public class Order : Aggregate<OrderId>
             {
                 Status = OrderStatus.Shipped;
                 ShippedAt = DateTime.UtcNow;
-                DomainEvents.Add(new OrderShippedEvent(Id, ShippedAt.Value));
+                DomainEvents.Add(new OrderShipped(Id, ShippedAt.Value));
             });
     
     public Result<Order> Cancel(string reason) =>
@@ -428,7 +428,7 @@ public class Order : Aggregate<OrderId>
             {
                 Status = OrderStatus.Cancelled;
                 CancelledAt = DateTime.UtcNow;
-                DomainEvents.Add(new OrderCancelledEvent(Id, reason, CancelledAt.Value));
+                DomainEvents.Add(new OrderCancelled(Id, reason, CancelledAt.Value));
             });
     
     private void RecalculateTotal()
@@ -545,7 +545,7 @@ public class OrderEventHandler
         _logger = logger;
     }
     
-    public async Task Handle(OrderCreatedEvent evt)
+    public async Task Handle(OrderCreated evt)
     {
         _logger.LogInformation("Order {OrderId} created for customer {CustomerId}", 
             evt.OrderId, evt.CustomerId);
@@ -553,7 +553,7 @@ public class OrderEventHandler
         // Could send draft order email, update analytics, etc.
     }
     
-    public async Task Handle(OrderLineAddedEvent evt)
+    public async Task Handle(OrderLineAdded evt)
     {
         _logger.LogInformation("Product {ProductId} added to order {OrderId}", 
             evt.ProductId, evt.OrderId);
@@ -561,7 +561,7 @@ public class OrderEventHandler
         // Could update product view counts, recommendations, etc.
     }
     
-    public async Task Handle(OrderSubmittedEvent evt)
+    public async Task Handle(OrderSubmitted evt)
     {
         _logger.LogInformation("Order {OrderId} submitted with total {Total}", 
             evt.OrderId, evt.Total);
@@ -576,7 +576,7 @@ public class OrderEventHandler
         await _shippingService.NotifyNewOrderAsync(evt.OrderId);
     }
     
-    public async Task Handle(OrderShippedEvent evt)
+    public async Task Handle(OrderShipped evt)
     {
         _logger.LogInformation("Order {OrderId} shipped", evt.OrderId);
         
@@ -587,7 +587,7 @@ public class OrderEventHandler
         await _inventoryService.CommitReservationAsync(evt.OrderId);
     }
     
-    public async Task Handle(OrderCancelledEvent evt)
+    public async Task Handle(OrderCancelled evt)
     {
         _logger.LogInformation("Order {OrderId} cancelled: {Reason}", 
             evt.OrderId, evt.Reason);
