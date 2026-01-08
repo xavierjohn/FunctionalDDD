@@ -90,46 +90,6 @@ public class MapErrorTests : TestBase
 
     #endregion
 
-    #region MapErrorAsync - Result<T> with CancellationToken
-
-    [Fact]
-    public async Task MapErrorAsync_Result_WithCancellation_TransformsError()
-    {
-        var original = Result.Failure<int>(Error1);
-        using var cts = new CancellationTokenSource();
-
-        Func<Error, CancellationToken, Task<Error>> mapper = async (e, ct) =>
-        {
-            await Task.Delay(1, ct);
-            return Error.Conflict($"Wrapped: {e.Detail}");
-        };
-
-        var mapped = await original.MapErrorAsync(mapper, cts.Token);
-
-        mapped.Should().BeFailure();
-        mapped.Error.Should().BeOfType<ConflictError>();
-    }
-
-    [Fact]
-    public async Task MapErrorAsync_Result_WithCancellation_DoesNotTouchSuccess()
-    {
-        var original = Result.Success(42);
-        using var cts = new CancellationTokenSource();
-
-        Func<Error, CancellationToken, Task<Error>> mapper = async (e, ct) =>
-        {
-            await Task.Delay(1, ct);
-            return Error.Unexpected("ShouldNotHappen");
-        };
-
-        var mapped = await original.MapErrorAsync(mapper, cts.Token);
-
-        mapped.Should().BeSuccess()
-            .Which.Should().Be(42);
-    }
-
-    #endregion
-
     #region MapErrorAsync - Task<Result<T>> with Func<Error, Task<Error>>
 
     [Fact]
@@ -142,22 +102,6 @@ public class MapErrorTests : TestBase
             await Task.Delay(1);
             return Error.Conflict($"Wrapped: {e.Detail}");
         });
-
-        mapped.Should().BeFailure();
-        mapped.Error.Should().BeOfType<ConflictError>();
-    }
-
-    [Fact]
-    public async Task MapErrorAsync_TaskResult_WithCancellation_TransformsError()
-    {
-        var original = Result.Failure<int>(Error1).AsTask();
-        using var cts = new CancellationTokenSource();
-
-        var mapped = await original.MapErrorAsync(async (e, ct) =>
-        {
-            await Task.Delay(1, ct);
-            return Error.Conflict($"Wrapped: {e.Detail}");
-        }, cts.Token);
 
         mapped.Should().BeFailure();
         mapped.Error.Should().BeOfType<ConflictError>();
@@ -219,40 +163,6 @@ public class MapErrorTests : TestBase
 
     #endregion
 
-    #region MapErrorAsync - Result<T> with ValueTask and CancellationToken
-
-    [Fact]
-    public async Task MapErrorAsync_Result_ValueTaskWithCancellation_TransformsError()
-    {
-        var original = Result.Failure<int>(Error1);
-        using var cts = new CancellationTokenSource();
-
-        Func<Error, CancellationToken, ValueTask<Error>> mapper = (e, ct) =>
-            ValueTask.FromResult<Error>(Error.Conflict($"Wrapped: {e.Detail}"));
-
-        var mapped = await original.MapErrorAsync(mapper, cts.Token);
-
-        mapped.Should().BeFailure();
-        mapped.Error.Should().BeOfType<ConflictError>();
-    }
-
-    [Fact]
-    public async Task MapErrorAsync_Result_ValueTaskWithCancellation_DoesNotTouchSuccess()
-    {
-        var original = Result.Success(42);
-        using var cts = new CancellationTokenSource();
-
-        Func<Error, CancellationToken, ValueTask<Error>> mapper = (e, ct) =>
-            ValueTask.FromResult<Error>(Error.Unexpected("ShouldNotHappen"));
-
-        var mapped = await original.MapErrorAsync(mapper, cts.Token);
-
-        mapped.Should().BeSuccess()
-            .Which.Should().Be(42);
-    }
-
-    #endregion
-
     #region MapErrorAsync - ValueTask<Result<T>> with Func<Error, ValueTask<Error>>
 
     [Fact]
@@ -262,21 +172,6 @@ public class MapErrorTests : TestBase
 
         var mapped = await original.MapErrorAsync(e =>
             ValueTask.FromResult<Error>(Error.Conflict($"Wrapped: {e.Detail}")));
-
-        mapped.Should().BeFailure();
-        mapped.Error.Should().BeOfType<ConflictError>();
-    }
-
-    [Fact]
-    public async Task MapErrorAsync_ValueTaskResult_WithCancellation_TransformsError()
-    {
-        var original = Result.Failure<int>(Error1).AsValueTask();
-        using var cts = new CancellationTokenSource();
-
-        Func<Error, CancellationToken, ValueTask<Error>> mapper = (e, ct) =>
-            ValueTask.FromResult<Error>(Error.Conflict($"Wrapped: {e.Detail}"));
-
-        var mapped = await original.MapErrorAsync(mapper, cts.Token);
 
         mapped.Should().BeFailure();
         mapped.Error.Should().BeOfType<ConflictError>();

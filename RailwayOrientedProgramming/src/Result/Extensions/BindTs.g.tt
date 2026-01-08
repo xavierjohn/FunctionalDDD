@@ -73,166 +73,34 @@ public static partial class BindExtensions
 
 /// <summary>
 /// Provides asynchronous Bind extension methods for Result types containing tuples (2-9 elements).
-/// Supports both Task and ValueTask with optional CancellationToken parameters.
+/// Supports both Task and ValueTask for async operations.
 /// </summary>
 /// <remarks>
-/// These methods handle various async scenarios:
-/// <list type="bullet">
-/// <item>Sync result → async function with CancellationToken</item>
-/// <item>Sync result → async function without CancellationToken</item>
-/// <item>Async result → sync function</item>
-/// <item>Async result → async function with CancellationToken</item>
-/// <item>Async result → async function without CancellationToken</item>
-/// </list>
+/// <para>
+/// These methods handle various async scenarios.
+/// Users should capture CancellationToken in their lambda closures when cancellation support is needed.
+/// </para>
+/// <para>
 /// Both Task and ValueTask variants are provided for performance optimization scenarios.
+/// </para>
 /// </remarks>
+/// <example>
+/// <code>
+/// var ct = cancellationToken;
+/// var result = await emailResult
+///     .Combine(userIdResult)
+///     .BindAsync((email, userId) => CreateUserAsync(email, userId, ct));
+/// </code>
+/// </example>
 public static partial class BindExtensionsAsync
 {
-    // ==================== 2-Tuple Methods ====================
-    
-    /// <summary>
-    /// Asynchronously chains an operation on a 2-element tuple result with cancellation support.
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="result">The result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Result<(T1, T2)> result,
-        Func<T1, T2, CancellationToken, Task<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously chains an operation on a 2-element tuple result with cancellation support (ValueTask variant).
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="result">The result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Result<(T1, T2)> result,
-        Func<T1, T2, CancellationToken, ValueTask<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously chains an operation on a 2-element tuple result without cancellation support.
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="result">The result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Result<(T1, T2)> result,
-        Func<T1, T2, Task<Result<TResult>>> func)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously chains an operation on a 2-element tuple result without cancellation support (ValueTask variant).
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="result">The result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Result<(T1, T2)> result,
-        Func<T1, T2, ValueTask<Result<TResult>>> func)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2).ConfigureAwait(false);
-    }
-
 <# 
-  // Generate 3-9 tuple async methods with CancellationToken
-  for(var i = 3; i <= 9; i++) { 
+  for(var i = 2; i <= 9; i++) { 
 #>
+    // ==================== <#= i #>-Tuple Methods ====================
 
     /// <summary>
-    /// Asynchronously chains an operation on a <#= i #>-element tuple result with cancellation support.
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
-        this Result<(<# WriteTs(i); #>)> result,
-        Func<<# WriteTs(i); #>, CancellationToken, Task<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously chains an operation on a <#= i #>-element tuple result with cancellation support (ValueTask variant).
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
-        this Result<(<# WriteTs(i); #>)> result,
-        Func<<# WriteTs(i); #>, CancellationToken, ValueTask<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously chains an operation on a <#= i #>-element tuple result without cancellation support.
+    /// Asynchronously chains an operation on a <#= i #>-element tuple result.
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -254,7 +122,7 @@ public static partial class BindExtensionsAsync
     }
 
     /// <summary>
-    /// Asynchronously chains an operation on a <#= i #>-element tuple result without cancellation support (ValueTask variant).
+    /// Asynchronously chains an operation on a <#= i #>-element tuple result (ValueTask variant).
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -274,59 +142,6 @@ public static partial class BindExtensionsAsync
         var (<# WriteArgs(i); #>) = result.Value;
         return await func(<# WriteArgs(i); #>).ConfigureAwait(false);
     }
-
-<#
- }
-#>
-
-    // ==================== Task-Wrapped Results → Sync Functions ====================
-
-    /// <summary>
-    /// Chains a synchronous operation on an asynchronous 2-element tuple result.
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The task representing the result containing a 2-element tuple.</param>
-    /// <param name="func">The synchronous function to execute on the tuple elements.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Task<Result<(T1, T2)>> resultTask,
-        Func<T1, T2, Result<TResult>> func)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return func(args1, args2);
-    }
-
-    /// <summary>
-    /// Chains a synchronous operation on an asynchronous 2-element tuple result (ValueTask variant).
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask representing the result containing a 2-element tuple.</param>
-    /// <param name="func">The synchronous function to execute on the tuple elements.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this ValueTask<Result<(T1, T2)>> resultTask,
-        Func<T1, T2, Result<TResult>> func)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return func(args1, args2);
-    }
-<# 
-  for(var i = 3; i <= 9; i++) { 
-#>
 
     /// <summary>
     /// Chains a synchronous operation on an asynchronous <#= i #>-element tuple result.
@@ -373,159 +188,9 @@ public static partial class BindExtensionsAsync
         var (<# WriteArgs(i); #>) = result.Value;
         return func(<# WriteArgs(i); #>);
     }
-<#
- }
-#>
-
-    // ==================== Task-Wrapped Results → Async Functions ====================
 
     /// <summary>
-    /// Chains an asynchronous operation on an asynchronous 2-element tuple result with cancellation support.
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The task representing the result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Task<Result<(T1, T2)>> resultTask,
-        Func<T1, T2, CancellationToken, Task<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Chains an asynchronous operation on an asynchronous 2-element tuple result with cancellation support (ValueTask variant).
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask representing the result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this ValueTask<Result<(T1, T2)>> resultTask,
-        Func<T1, T2, CancellationToken, ValueTask<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Chains an asynchronous operation on an asynchronous 2-element tuple result without cancellation support.
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The task representing the result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this Task<Result<(T1, T2)>> resultTask,
-        Func<T1, T2, Task<Result<TResult>>> func)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Chains an asynchronous operation on an asynchronous 2-element tuple result without cancellation support (ValueTask variant).
-    /// </summary>
-    /// <typeparam name="T1">The type of the first tuple element.</typeparam>
-    /// <typeparam name="T2">The type of the second tuple element.</typeparam>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask representing the result containing a 2-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<T1, T2, TResult>(
-        this ValueTask<Result<(T1, T2)>> resultTask,
-        Func<T1, T2, ValueTask<Result<TResult>>> func)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (args1, args2) = result.Value;
-        return await func(args1, args2).ConfigureAwait(false);
-    }
-<# 
-  for(var i = 3; i <= 9; i++) { 
-#>
-
-    /// <summary>
-    /// Chains an asynchronous operation on an asynchronous <#= i #>-element tuple result with cancellation support.
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
-    public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
-        this Task<Result<(<# WriteTs(i); #>)>> resultTask,
-        Func<<# WriteTs(i); #>, CancellationToken, Task<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Chains an asynchronous operation on an asynchronous <#= i #>-element tuple result with cancellation support (ValueTask variant).
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <typeparam name="TResult">The type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async function to execute on the tuple elements.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the new result.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
-        this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
-        Func<<# WriteTs(i); #>, CancellationToken, ValueTask<Result<TResult>>> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        var result = await resultTask.ConfigureAwait(false);
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        var (<# WriteArgs(i); #>) = result.Value;
-        return await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Chains an asynchronous operation on an asynchronous <#= i #>-element tuple result without cancellation support.
+    /// Chains an asynchronous operation on an asynchronous <#= i #>-element tuple result.
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -548,7 +213,7 @@ public static partial class BindExtensionsAsync
     }
 
     /// <summary>
-    /// Chains an asynchronous operation on an asynchronous <#= i #>-element tuple result without cancellation support (ValueTask variant).
+    /// Chains an asynchronous operation on an asynchronous <#= i #>-element tuple result (ValueTask variant).
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -569,6 +234,7 @@ public static partial class BindExtensionsAsync
         var (<# WriteArgs(i); #>) = result.Value;
         return await func(<# WriteArgs(i); #>).ConfigureAwait(false);
     }
+
 <#
  }
 #>

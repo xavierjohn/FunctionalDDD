@@ -8,22 +8,6 @@ public static partial class EnsureExtensionsAsync
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, CancellationToken, Task<bool>> predicate, Error errors, CancellationToken cancellationToken = default)
-    {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsFailure)
-            return result;
-
-        if (!await predicate(result.Value, cancellationToken).ConfigureAwait(false))
-            return Result.Failure<TOk>(errors);
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
     public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, Task<bool>> predicate, Error errors)
     {
         Result<TOk> result = await resultTask.ConfigureAwait(false);
@@ -33,22 +17,6 @@ public static partial class EnsureExtensionsAsync
 
         if (!await predicate(result.Value).ConfigureAwait(false))
             return Result.Failure<TOk>(errors);
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, CancellationToken, Task<bool>> predicate, Func<TOk, Error> errorPredicate, CancellationToken cancellationToken = default)
-    {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsFailure)
-            return result;
-
-        if (!await predicate(result.Value, cancellationToken).ConfigureAwait(false))
-            return Result.Failure<TOk>(errorPredicate(result.Value));
 
         return result;
     }
@@ -72,22 +40,6 @@ public static partial class EnsureExtensionsAsync
     /// <summary>
     ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, CancellationToken, Task<bool>> predicate, Func<TOk, CancellationToken, Task<Error>> errorPredicate, CancellationToken cancellationToken = default)
-    {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsFailure)
-            return result;
-
-        if (!await predicate(result.Value, cancellationToken).ConfigureAwait(false))
-            return Result.Failure<TOk>(await errorPredicate(result.Value, cancellationToken).ConfigureAwait(false));
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
-    /// </summary>
     public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, Task<bool>> predicate, Func<TOk, Task<Error>> errorPredicate)
     {
         Result<TOk> result = await resultTask.ConfigureAwait(false);
@@ -104,24 +56,6 @@ public static partial class EnsureExtensionsAsync
     /// <summary>
     ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<CancellationToken, Task<Result<TOk>>> predicate, CancellationToken cancellationToken = default)
-    {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsFailure)
-            return result;
-
-        var predicateResult = await predicate(cancellationToken).ConfigureAwait(false);
-
-        if (predicateResult.IsFailure)
-            return Result.Failure<TOk>(predicateResult.Error);
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
-    /// </summary>
     public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<Task<Result<TOk>>> predicate)
     {
         Result<TOk> result = await resultTask.ConfigureAwait(false);
@@ -130,24 +64,6 @@ public static partial class EnsureExtensionsAsync
             return result;
 
         var predicateResult = await predicate().ConfigureAwait(false);
-
-        if (predicateResult.IsFailure)
-            return Result.Failure<TOk>(predicateResult.Error);
-
-        return result;
-    }
-
-    /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
-    /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Task<Result<TOk>> resultTask, Func<TOk, CancellationToken, Task<Result<TOk>>> predicate, CancellationToken cancellationToken = default)
-    {
-        Result<TOk> result = await resultTask.ConfigureAwait(false);
-
-        if (result.IsFailure)
-            return result;
-
-        var predicateResult = await predicate(result.Value, cancellationToken).ConfigureAwait(false);
 
         if (predicateResult.IsFailure)
             return Result.Failure<TOk>(predicateResult.Error);

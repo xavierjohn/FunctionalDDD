@@ -37,69 +37,56 @@ public class OrderWorkflow
         CancellationToken cancellationToken = default)
     {
         Order? currentOrder = null;
+        var ct = cancellationToken;
         
         return await Order.TryCreate(customerId)
-            .TapAsync(
-                async Task (order, ct) =>
-                {
-                    currentOrder = order;
-                    await _notificationService.SendOrderCreatedEmailAsync(customerId, order.Id, ct);
-                },
-                cancellationToken)
-            .BindAsync(
-                async Task<Result<Order>> (order, ct) => await AddItemsToOrderAsync(order, items, ct),
-                cancellationToken)
-            .BindAsync(
-                async Task<Result<Order>> (order, ct) =>
-                {
-                    var reserveResult = await ReserveInventoryAsync(order, ct)
-                        .CompensateAsync(
-                            predicate: error => error is ValidationError,
-                            funcAsync: async () => await SuggestAlternativeProductsAsync(order, ct));
+            .TapAsync(Task (order) =>
+            {
+                currentOrder = order;
+                return _notificationService.SendOrderCreatedEmailAsync(customerId, order.Id, ct);
+            })
+            .BindAsync(order => AddItemsToOrderAsync(order, items, ct))
+            .BindAsync(async order =>
+            {
+                var reserveResult = await ReserveInventoryAsync(order, ct)
+                    .CompensateAsync(
+                        predicate: error => error is ValidationError,
+                        funcAsync: () => SuggestAlternativeProductsAsync(order, ct));
 
-                    if (reserveResult.IsFailure)
-                    {
-                        order.Cancel("Inventory unavailable");
-                        return reserveResult.Error;
-                    }
-                    
-                    return Result.Success(order);
-                },
-                cancellationToken)
-            .BindAsync(
-                async Task<Result<Order>> (order, ct) =>
+                if (reserveResult.IsFailure)
                 {
-                    var submitResult = order.Submit();
-                    if (submitResult.IsFailure && currentOrder != null)
-                    {
-                        await ReleaseInventoryAsync(currentOrder, ct);
-                    }
-                    
-                    return submitResult;
-                },
-                cancellationToken)
-            .BindAsync(
-                async Task<Result<Order>> (order, ct) =>
+                    order.Cancel("Inventory unavailable");
+                    return reserveResult.Error;
+                }
+                
+                return Result.Success(order);
+            })
+            .BindAsync(async order =>
+            {
+                var submitResult = order.Submit();
+                if (submitResult.IsFailure && currentOrder != null)
                 {
-                    var paymentResult = await ProcessPaymentWithCompensationAsync(order, paymentInfo, ct);
-                    
-                    if (paymentResult.IsFailure)
-                    {
-                        await ReleaseInventoryAsync(order, ct);
-                        order.Cancel("Payment failed");
-                        await _notificationService.SendPaymentFailedEmailAsync(customerId, order.Id, ct);
-                        return paymentResult.Error;
-                    }
-                    
-                    return Result.Success(order);
-                },
-                cancellationToken)
-            .BindAsync(
-                Task<Result<Order>> (order, ct) => Task.FromResult(order.Confirm()),
-                cancellationToken)
-            .TapAsync(
-                async Task (order, ct) => await _notificationService.SendOrderConfirmedEmailAsync(customerId, order.Id, ct),
-                cancellationToken);
+                    await ReleaseInventoryAsync(currentOrder, ct);
+                }
+                
+                return submitResult;
+            })
+            .BindAsync(async order =>
+            {
+                var paymentResult = await ProcessPaymentWithCompensationAsync(order, paymentInfo, ct);
+                
+                if (paymentResult.IsFailure)
+                {
+                    await ReleaseInventoryAsync(order, ct);
+                    order.Cancel("Payment failed");
+                    await _notificationService.SendPaymentFailedEmailAsync(customerId, order.Id, ct);
+                    return paymentResult.Error;
+                }
+                
+                return Result.Success(order);
+            })
+            .BindAsync(order => Task.FromResult(order.Confirm()))
+            .TapAsync(Task (order) => _notificationService.SendOrderConfirmedEmailAsync(customerId, order.Id, ct));
     }
 
     /// <summary>
