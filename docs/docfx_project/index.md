@@ -97,9 +97,137 @@ return FirstName.TryCreate(input.FirstName)
 - 🔒 **Impossible to forget** - Can't skip error handling steps
 - ⚡ **Zero performance cost** - Only 11-16 nanoseconds overhead
 
-## Core Concepts
+---
 
-This library combines three powerful approaches that work better together:
+## Core Types
+
+### Result&lt;T&gt; — Success or Failure
+
+The foundation of Railway-Oriented Programming. A `Result<T>` represents either a **successful value** or an **error**—never null, never ambiguous.
+
+```csharp
+// Create results
+Result<User> success = user;                           // Implicit conversion
+Result<User> failure = Error.NotFound("User not found"); // From error
+
+// Safe access
+if (result.TryGetValue(out var user))
+    Console.WriteLine(user.Name);
+
+// Pattern matching
+var message = result.Match(
+    onSuccess: user => $"Hello, {user.Name}!",
+    onFailure: error => $"Error: {error.Detail}"
+);
+```
+
+### Maybe&lt;T&gt; — Optional Values
+
+Represents a value that **may or may not exist**—eliminating null reference exceptions.
+
+```csharp
+Maybe<string> name = "John";           // Has value
+Maybe<string> noName = Maybe.None<string>();  // No value
+
+string greeting = name.GetValueOrDefault("Guest");  // "John"
+if (name.TryGetValue(out var value))
+    Console.WriteLine(value);
+```
+
+---
+
+## Domain-Driven Design Building Blocks
+
+### Value Objects — Immutable, Validated Types
+
+Replace primitive strings and ints with **type-safe domain concepts**. The compiler catches mistakes that runtime never would.
+
+```csharp
+// Define once with the source generator
+public partial class FirstName : RequiredString { }
+public partial class LastName : RequiredString { }
+
+// Compiler prevents parameter mix-ups
+CreateUser(lastName, firstName);  // ❌ Compile error!
+CreateUser(firstName, lastName);  // ✅ Correct
+```
+
+### Entities — Identity-Based Objects
+
+Objects with a **unique identity** that persists through state changes.
+
+```csharp
+public class Customer : Entity<CustomerId>
+{
+    public FirstName Name { get; private set; }
+    
+    public Result<Customer> UpdateName(FirstName newName) =>
+        newName.ToResult()
+            .Tap(name => Name = name)
+            .Map(_ => this);
+}
+```
+
+### Aggregates — Consistency Boundaries
+
+**Cluster related objects** and enforce business rules. Aggregates raise **domain events** to communicate changes.
+
+```csharp
+public class Order : Aggregate<OrderId>
+{
+    public Result<Order> Submit() =>
+        this.ToResult()
+            .Ensure(_ => Lines.Any(), Error.Validation("Order must have items"))
+            .Tap(_ => {
+                Status = OrderStatus.Submitted;
+                DomainEvents.Add(new OrderSubmittedEvent(Id));
+            });
+}
+```
+
+---
+
+## Rich Error Types
+
+Structured errors that map naturally to HTTP status codes and enable **precise error handling**.
+
+```csharp
+// Built-in error types
+Error.Validation("Email is required", "email")  // 400 Bad Request
+Error.NotFound("User not found")                // 404 Not Found  
+Error.Conflict("Email already exists")          // 409 Conflict
+Error.Unauthorized("Please login")              // 401 Unauthorized
+Error.Forbidden("Access denied")                // 403 Forbidden
+Error.Domain("Insufficient balance")            // 422 Unprocessable
+
+// Pattern match on error types
+result.MatchError(
+    onValidation: err => BadRequest(err.FieldErrors),
+    onNotFound: err => NotFound(err.Detail),
+    onConflict: err => Conflict(err.Detail),
+    onSuccess: order => Ok(order)
+);
+```
+
+---
+
+## Key Operations at a Glance
+
+| Operation | Purpose | Example |
+|-----------|---------|---------|
+| **Bind** | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
+| **Map** | Transform success values | `.Map(user => user.Name)` |
+| **Combine** | Merge multiple results | `.Combine(lastName).Combine(email)` |
+| **Ensure** | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
+| **Tap** | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
+| **Match** | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
+| **Compensate** | Recover from errors | `.Compensate(err => GetDefault())` |
+
+All operations have **async variants** (`BindAsync`, `MapAsync`, etc.) for seamless async/await support.
+
+---
+
+## Core Concepts
 
 ### 🎯 Functional Programming
 
@@ -139,3 +267,31 @@ graph LR
 4. Return result
 
 **If any step fails, the rest are skipped automatically.** No `if (error) return` after every line!
+
+### 🏗️ Domain-Driven Design
+
+Model your **business domain** with rich types that enforce rules at compile time:
+
+- **Value Objects** - Immutable, validated primitives (`EmailAddress`, `Money`)
+- **Entities** - Objects with identity (`Customer`, `Order`)
+- **Aggregates** - Consistency boundaries with domain events
+
+**Learn more:** [Domain-Driven Design in Practice (Pluralsight)](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)
+
+---
+
+## Get Started
+
+```bash
+# Core library
+dotnet add package FunctionalDDD.RailwayOrientedProgramming
+
+# ASP.NET Core integration  
+dotnet add package FunctionalDDD.Asp
+
+# Value objects with source generator
+dotnet add package FunctionalDDD.CommonValueObjects
+dotnet add package FunctionalDDD.CommonValueObjectGenerator
+```
+
+**Ready to dive deeper?** Check out the [Introduction](articles/intro.md) or browse the [API Reference](api/FunctionalDdd.html).
