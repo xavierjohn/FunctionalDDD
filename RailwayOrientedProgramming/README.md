@@ -268,33 +268,16 @@ var result = await GetUserAsync("123")
 async Task<Result<User>> GetUserAsync(string id, CancellationToken ct) { /* ... */ }
 async Task<Result<Order>> GetLastOrderAsync(User user, CancellationToken ct) { /* ... */ }
 
-var result = await GetUserAsync("123", cancellationToken)
-    .BindAsync((user, ct) => GetLastOrderAsync(user, ct), cancellationToken);
-```
+var ct = cancellationToken;
 
-**Tuple-based operations with CancellationToken:**
+// Single parameter
+var result = await GetUserAsync("123", ct)
+    .BindAsync(user => GetLastOrderAsync(user, ct));
 
-When working with multiple values from combined results, you can use CancellationToken with tuple operations:
-
-```csharp
-// Combine multiple results into a tuple
-var result = EmailAddress.TryCreate("user@example.com")
+// Works with tuples too
+var complexResult = EmailAddress.TryCreate("user@example.com")
     .Combine(UserId.TryCreate("123"))
-    .Combine(OrderId.TryCreate("456"));
-
-// Bind with tuple parameters and CancellationToken
-var orderResult = await result
-    .BindAsync(
-        (email, userId, orderId, ct) => FetchOrderAsync(email, userId, orderId, ct),
-        cancellationToken
-    );
-
-// Works with tuples of 2-9 parameters
-var complexResult = await GetUserDataAsync()
-    .BindAsync(
-        (id, name, email, phone, ct) => ProcessUserAsync(id, name, email, phone, ct),
-        cancellationToken
-    );
+    .BindAsync((email, userId) => CreateUserAsync(email, userId, ct));
 ```
 
 ### Map
@@ -349,41 +332,12 @@ var result = await GetUserAsync("123")
 **Async with CancellationToken:**
 
 ```csharp
-var result = await GetUserAsync("123", cancellationToken)
-    .TapAsync(
-        async (user, ct) => await AuditLogAsync(user.Id, ct),
-        cancellationToken
-    )
-    .TapAsync(
-        async (user, ct) => await SendWelcomeEmailAsync(user.Email, ct),
-        cancellationToken
-    );
-```
+var ct = cancellationToken;
 
-**Tuple-based operations with CancellationToken:**
-
-When working with tuples, you can use CancellationToken for side effects on multiple values:
-
-```csharp
-// Tap with tuple parameters and CancellationToken
-var result = EmailAddress.TryCreate("user@example.com")
-    .Combine(UserId.TryCreate("123"))
-    .TapAsync(
-        async (email, userId, ct) => await LogUserCreationAsync(email, userId, ct),
-        cancellationToken
-    )
-    .TapAsync(
-        async (email, userId, ct) => await NotifyAdminAsync(email, userId, ct),
-        cancellationToken
-    );
-
-// Works with tuples of 2-9 parameters
-var complexTap = await GetOrderDetailsAsync()
-    .TapAsync(
-        async (orderId, customerId, total, status, ct) => 
-            await SendOrderNotificationAsync(orderId, customerId, total, status, ct),
-        cancellationToken
-    );
+// Single parameter
+var result = await GetUserAsync("123", ct)
+    .TapAsync(user => AuditLogAsync(user.Id, ct))
+    .TapAsync(user => SendWelcomeEmailAsync(user.Email, ct));
 ```
 
 ### Ensure
@@ -756,24 +710,26 @@ if (activeUserResult.IsFailure)
     return activeUserResult.Error;
 }
 
-var ordersResult = await GetOrdersAsync(activeUserResult.Value.Id);
-// ... continue with clearer breakpoints
+var ordersResult = await GetOrdersAsync(activeUserResult.Value.Id);  // Another breakpoint
+if (ordersResult.IsFailure) return ordersResult.Error;
+
 ```
 
 **Solution 3**: Use descriptive error messages with context:
 
 ```csharp
 var result = await GetUserAsync(id)
-    .ToResultAsync(Error.NotFound($"User {id} not found in database"))
+    .ToResultAsync(Error.NotFound($"User {userId} not found in database"))
     .EnsureAsync(u => u.IsActive, 
-        Error.Validation($"User {id} account is inactive since {u.DeactivatedAt}"))
+        Error.Validation($"User {userId} account is inactive since {u.DeactivatedAt}"))
     .BindAsync(u => GetOrdersAsync(u.Id))
     .EnsureAsync(orders => orders.Any(), 
-        Error.NotFound($"No orders found for user {id}"))
+        Error.NotFound($"No orders found for user {userId}"))
     .MapAsync(orders => orders.Sum(o => o.Total));
 
 // When this fails, the error message tells you exactly where it failed
 ```
+
 
 #### 2. Inspecting Values Mid-Chain
 
@@ -958,7 +914,7 @@ public void Combine_Should_Return_All_Validation_Errors()
 {
     var result = EmailAddress.TryCreate("bad-email")
         .Combine(FirstName.TryCreate(""))
-        .Combine(Age.Ensure(15, e => e >= 18, Error.Validation("Age requirement")));
+        .Combine(Age.Ensure(15, e => e >= 18, Error.Validation("Must be 18 or older")));
     
     result.IsFailure.Should().BeTrue();
     result.Error.Should().BeOfType<ValidationError>();
@@ -981,10 +937,10 @@ Set conditional breakpoints in `Tap` operations:
 var result = ProcessUsers(users)
     .Tap(user => 
     {
-        // Set breakpoint here with condition: user.Id == "problem-id"
+        // Breakpoint - only hit when user.Id == "problem-id"
         if (user.Id == "problem-id")
         {
-            Console.WriteLine("Found problem user");
+            _logger.LogDebug("Processing problem user: {@User}", user);
         }
     });
 ```
@@ -1000,7 +956,7 @@ var result = GetUser(id)
     .Ensure(u => u.IsActive, Error.Validation("Inactive"))
     .Debug("After Ensure")
     .Bind(ProcessUser)
-    .Debug("After ProcessUser");
+    .DebugDetailed("Final result");
 
 // Detailed debug output (includes error properties and aggregated errors)
 var result = EmailAddress.TryCreate(email)
@@ -1153,9 +1109,13 @@ var result = await GetUserAsync(id)  // Traced as "GetUserAsync"
    ```
 
 6. **Include property names in validation errors** for easier debugging
+   
    ```csharp
+   // Good
    Error.Validation("Email format is invalid", "email")
-   // Better than: Error.Validation("Invalid format")
+   
+   // Avoid
+   Error.Validation("Invalid format")
    ```
 
 7. **Use built-in debug extension methods** for development
@@ -1167,146 +1127,7 @@ var result = GetUser(id)
     .DebugDetailed("Final result");
 ```
 
-8. **Use `Match` at boundaries** to handle all cases explicitly
-   ```csharp
-   return result.Match(
-       onSuccess: user => Ok(user),
-       onFailure: error => error switch
-       {
-           NotFoundError => NotFound(error),
-           ValidationError => BadRequest(error),
-           _ => StatusCode(500, error)
-       }
-   );
-   ```
-
-### Debugging Checklist
-
-When debugging a failing ROP chain, ask yourself:
-
-- [ ] **What error am I getting?** Check `result.Error.Code`, `.Detail`, `.Instance`
-- [ ] **Where did it fail?** Add `Tap`/`TapError` to narrow down the step
-- [ ] **What was the input?** Log the initial parameters
-- [ ] **What's the value at each step?** Use `Tap` to inspect intermediate values
-- [ ] **Is it always failing?** Test with different inputs to isolate the pattern
-- [ ] **Are errors aggregated?** Check if `Error` is `AggregatedError` with multiple failures
-- [ ] **Is cancellation involved?** Verify `CancellationToken` is passed correctly
-- [ ] **Is timing an issue?** Add timestamps to `Tap` operations for async chains
-- [ ] **Can I reproduce in a test?** Write a unit test to isolate the problem
-- [ ] **Do I need better error messages?** Add context (IDs, parameters) to error creation
-
-### Common Pitfalls
-
-1. **Forgetting that chains short-circuit** - Once an error occurs, subsequent operations don't run
-   ```csharp
-   var result = GetUser(id)  // Returns error
-       .Tap(u => Console.WriteLine("This never runs!"))  // Skipped
-       .Map(u => u.Name);  // Also skipped
-   ```
-
-2. **Not checking IsFailure before accessing Value** - Will throw exception
-   ```csharp
-   var result = GetUser(id);
-   var name = result.Value;  // Throws if IsFailure!
-   
-   // Always check first or use Match/Tap
-   if (result.IsSuccess)
-       var name = result.Value;
-   ```
-
-3. **Mixing Try/Catch with ROP** - Defeats the purpose
-   ```csharp
-   // Avoid
-   try
-   {
-       var result = GetUser(id);
-       return result.Value;
-   }
-   catch { /* handle */ }
-   
-   // Prefer
-   return GetUser(id).Match(
-       onSuccess: user => user,
-       onFailure: error => HandleError(error)
-   );
-   ```
-
-4. **Not using `TryAsync` for exception-throwing code** - Unhandled exceptions will crash
-   ```csharp
-   // Avoid
-   var result = await Result.Success(url)
-       .BindAsync(async u => await _httpClient.GetStringAsync(u));  // Can throw!
-   
-   // Prefer
-   var result = await Result.TryAsync(async () => 
-       await _httpClient.GetStringAsync(url));
-   ```
-
-## Best Practices
-
-1. **Use `Bind` for operations that can fail**, `Map` for pure transformations
-   
-   ```csharp
-   // Good
-   GetUser(id)
-       .Map(user => user.Name)           // Pure transformation
-       .Bind(name => ValidateName(name)) // Can fail
-   
-   // Avoid
-   GetUser(id)
-       .Bind(user => Result.Success(user.Name)) // Unnecessary Result wrapping
-   ```
-
-2. **Prefer `Ensure` over `Bind` for simple validations**
-   
-   ```csharp
-   // Good
-   GetUser(id)
-       .Ensure(user => user.IsActive, Error.Validation("User not active"))
-   
-   // Avoid
-   GetUser(id)
-       .Bind(user => user.IsActive 
-           ? Result.Success(user) 
-           : Error.Validation("User not active"))
-   ```
-
-3. **Use `Tap` for side effects** (logging, metrics, notifications)
-   
-   ```csharp
-   ProcessOrder(order)
-       .Tap(o => _logger.LogInfo($"Order {o.Id} processed"))
-       .Tap(o => _metrics.RecordOrder(o))
-       .TapError(err => _logger.LogError(err.Message))
-   ```
-
-4. **Combine independent validations** instead of nesting
-   
-   ```csharp
-   // Good
-   Email.TryCreate(email)
-       .Combine(Name.TryCreate(name))
-       .Combine(Age.TryCreate(age))
-       .Bind((e, n, a) => User.Create(e, n, a))
-   
-   // Avoid
-   Email.TryCreate(email)
-       .Bind(e => Name.TryCreate(name)
-           .Bind(n => Age.TryCreate(age)
-               .Bind(a => User.Create(e, n, a))))
-   ```
-
-5. **Use domain-specific errors** instead of generic ones
-   
-   ```csharp
-   // Good
-   Error.Validation("Email format is invalid", "email")
-   
-   // Avoid
-   Error.Unexpected("Something went wrong")
-   ```
-
-6. **Handle errors at boundaries** (controllers, entry points)
+8. **Handle errors at boundaries** (controllers, entry points)
    
    ```csharp
    [HttpPost]
@@ -1315,7 +1136,7 @@ When debugging a failing ROP chain, ask yourself:
            .ToActionResult(this);  // Converts Result to ActionResult
    ```
 
-7. **Use `Try/TryAsync` for exception boundaries**
+9. **Use `Try/TryAsync` for exception boundaries**
    
    ```csharp
    Result<Data> LoadData() =>
@@ -1323,32 +1144,25 @@ When debugging a failing ROP chain, ask yourself:
            .Bind(json => ParseJson(json));
    ```
 
-8. **Use CancellationToken with async operations** for proper cancellation support
+10. **Use CancellationToken with async operations** for proper cancellation support
    
    ```csharp
-   // Single-parameter operations
-   var result = await GetUserAsync(id, cancellationToken)
-       .BindAsync((user, ct) => GetOrderAsync(user.Id, ct), cancellationToken)
-       .TapAsync(async (order, ct) => await LogOrderAsync(order, ct), cancellationToken);
+   var ct = cancellationToken;
    
-   // Tuple-based operations
-   var complexResult = EmailAddress.TryCreate(email)
-       .Combine(UserId.TryCreate(userId))
-       .BindAsync(
-           async (email, userId, ct) => await CreateUserAsync(email, userId, ct),
-           cancellationToken
-       );
+   var result = await GetUserAsync(id, ct)
+       .BindAsync(user => GetOrderAsync(user.Id, ct))
+       .TapAsync(order => LogOrderAsync(order, ct));
    ```
 
-9. **Provide CancellationToken parameter** when calling async operations to enable timeouts and graceful shutdown
+11. **Provide CancellationToken parameter** when calling async operations to enable timeouts and graceful shutdown
    
    ```csharp
    // Good - supports cancellation
    async Task<Result<User>> ProcessUserAsync(string id, CancellationToken ct)
    {
        return await GetUserAsync(id, ct)
-           .BindAsync((user, ct) => ValidateAsync(user, ct), ct)
-           .TapAsync(async (user, ct) => await NotifyAsync(user, ct), ct);
+           .BindAsync(user => ValidateAsync(user, ct))
+           .TapAsync(user => NotifyAsync(user, ct));
    }
    
    // Avoid - no cancellation support
@@ -1356,6 +1170,6 @@ When debugging a failing ROP chain, ask yourself:
    {
        return await GetUserAsync(id)
            .BindAsync(user => ValidateAsync(user))
-           .TapAsync(async user => await NotifyAsync(user));
+           .TapAsync(user => NotifyAsync(user));
    }
    ```
