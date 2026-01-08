@@ -32,7 +32,7 @@ Accept: application/json
   "firstName": "Xavier",
   "lastName": "John",
   "email": "xa@somewhere.com",
-  "password": "KeepItSimple"
+  "password": "KeepItSimple1@"
 }
 ###
 
