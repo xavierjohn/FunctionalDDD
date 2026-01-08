@@ -1,5 +1,4 @@
-
-# Domain Driven Design
+﻿# Domain Driven Design
 
 [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
 
@@ -79,8 +78,8 @@ public class Money : ValueObject
 Cluster of entities and value objects treated as a unit. Manages domain events.
 
 ```csharp
-public record OrderCreatedEvent(OrderId Id, CustomerId CustomerId) : IDomainEvent;
-public record OrderSubmittedEvent(OrderId Id, Money Total) : IDomainEvent;
+public record OrderCreated(OrderId Id, CustomerId CustomerId, DateTime OccurredAt) : IDomainEvent;
+public record OrderSubmitted(OrderId Id, Money Total, DateTime OccurredAt) : IDomainEvent;
 
 public class Order : Aggregate<OrderId>
 {
@@ -96,7 +95,7 @@ public class Order : Aggregate<OrderId>
         CustomerId = customerId;
         Status = OrderStatus.Draft;
         Total = Money.TryCreate(0).Value;
-        DomainEvents.Add(new OrderCreatedEvent(id, customerId));
+        DomainEvents.Add(new OrderCreated(id, customerId, DateTime.UtcNow));
     }
     
     public static Result<Order> TryCreate(CustomerId customerId) =>
@@ -119,7 +118,7 @@ public class Order : Aggregate<OrderId>
             .Tap(_ =>
             {
                 Status = OrderStatus.Submitted;
-                DomainEvents.Add(new OrderSubmittedEvent(Id, Total));
+                DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
             });
     
     private void RecalculateTotal()
@@ -190,10 +189,10 @@ public Result<Order> AddLine(...) =>
 
 **5. Use domain events for side effects**
 ```csharp
-// ? Good - domain event
-DomainEvents.Add(new OrderSubmittedEvent(Id));
+// ✅ Good - domain event
+DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
 
-// ? Avoid - direct coupling
+// ❌ Avoid - direct coupling
 _emailService.SendConfirmation();
 ```
 

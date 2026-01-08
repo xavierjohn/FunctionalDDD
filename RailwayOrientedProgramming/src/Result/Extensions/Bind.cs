@@ -43,24 +43,6 @@ public static partial class BindExtensionsAsync
     /// <typeparam name="TResult">Type of the output result value.</typeparam>
     /// <param name="result">The result to bind.</param>
     /// <param name="func">The async function to call if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
-    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, CancellationToken, Task<Result<TResult>>> func, CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error);
-
-        return await func(result.Value, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously binds the result to a function that returns a new result.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the input result value.</typeparam>
-    /// <typeparam name="TResult">Type of the output result value.</typeparam>
-    /// <param name="result">The result to bind.</param>
-    /// <param name="func">The async function to call if the result is successful.</param>
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
@@ -69,21 +51,6 @@ public static partial class BindExtensionsAsync
             return Result.Failure<TResult>(result.Error);
 
         return await func(result.Value).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously binds a task result to a function that returns a new result.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the input result value.</typeparam>
-    /// <typeparam name="TResult">Type of the output result value.</typeparam>
-    /// <param name="resultTask">The task containing the result to bind.</param>
-    /// <param name="func">The async function to call if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
-    public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, CancellationToken, Task<Result<TResult>>> func, CancellationToken cancellationToken = default)
-    {
-        Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.BindAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -121,21 +88,6 @@ public static partial class BindExtensionsAsync
     /// <typeparam name="TResult">Type of the output result value.</typeparam>
     /// <param name="resultTask">The ValueTask containing the result to bind.</param>
     /// <param name="valueTask">The async function to call if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
-    public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this ValueTask<Result<TValue>> resultTask, Func<TValue, CancellationToken, ValueTask<Result<TResult>>> valueTask, CancellationToken cancellationToken = default)
-    {
-        Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.BindAsync(valueTask, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously binds a ValueTask result to a function that returns a new result.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the input result value.</typeparam>
-    /// <typeparam name="TResult">Type of the output result value.</typeparam>
-    /// <param name="resultTask">The ValueTask containing the result to bind.</param>
-    /// <param name="valueTask">The async function to call if the result is successful.</param>
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this ValueTask<Result<TValue>> resultTask, Func<TValue, ValueTask<Result<TResult>>> valueTask)
     {
@@ -155,23 +107,6 @@ public static partial class BindExtensionsAsync
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
-    }
-
-    /// <summary>
-    /// Binds the result to an async function that returns a ValueTask result.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the input result value.</typeparam>
-    /// <typeparam name="TResult">Type of the output result value.</typeparam>
-    /// <param name="result">The result to bind.</param>
-    /// <param name="valueTask">The async function to call if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new result from the function if success; otherwise the original failure.</returns>
-    public static ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, CancellationToken, ValueTask<Result<TResult>>> valueTask, CancellationToken cancellationToken = default)
-    {
-        if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
-
-        return valueTask(result.Value, cancellationToken);
     }
 
     /// <summary>

@@ -36,11 +36,19 @@ using System.Diagnostics;
 /// </remarks>
 /// <example>
 /// <code>
+/// // Without cancellation token
 /// var result = EmailAddress.TryCreate("user@example.com")
 ///     .Combine(UserId.TryCreate("123"))
 ///     .Tap((email, userId) => _logger.LogInformation("Processing user {UserId} with email {Email}", userId, email))
 ///     .Tap((email, userId) => _metrics.RecordUserCreation())
 ///     .Bind((email, userId) => CreateUser(email, userId));
+/// 
+/// // With cancellation token (closure capture)
+/// var ct = cancellationToken;
+/// var result = await EmailAddress.TryCreate("user@example.com")
+///     .Combine(UserId.TryCreate("123"))
+///     .TapAsync((email, userId) => LogAsync(email, userId, ct))
+///     .BindAsync((email, userId) => CreateUserAsync(email, userId, ct));
 /// </code>
 /// </example>
 public static partial class TapExtensions
@@ -98,17 +106,15 @@ public static partial class TapExtensions
 
 /// <summary>
 /// Provides asynchronous Tap extension methods for Result types containing tuples (2-9 elements).
-/// Supports both Task and ValueTask with optional CancellationToken parameters.
+/// Supports both Task and ValueTask for async side effects.
 /// </summary>
 /// <remarks>
 /// <para>
-/// These methods handle various async scenarios:
+/// These methods handle various async scenarios with automatic tuple destructuring:
 /// <list type="bullet">
 /// <item>Async result → sync action</item>
-/// <item>Sync result → async action with CancellationToken</item>
-/// <item>Sync result → async action without CancellationToken</item>
-/// <item>Async result → async action with CancellationToken</item>
-/// <item>Async result → async action without CancellationToken</item>
+/// <item>Sync result → async action</item>
+/// <item>Async result → async action</item>
 /// </list>
 /// </para>
 /// <para>
@@ -118,10 +124,11 @@ public static partial class TapExtensions
 /// </remarks>
 /// <example>
 /// <code>
+/// var ct = cancellationToken;
 /// var result = await GetUserDataAsync(userId)
 ///     .TapAsync((email, name) => _logger.LogInformation("User: {Name} ({Email})", name, email))
-///     .TapAsync(async (email, name, ct) => await SendWelcomeEmailAsync(email, name, ct), cancellationToken)
-///     .BindAsync((email, name) => CreateUserProfileAsync(email, name));
+///     .TapAsync((email, name) => SendWelcomeEmailAsync(email, name, ct))
+///     .BindAsync((email, name) => CreateUserProfileAsync(email, name, ct));
 /// </code>
 /// </example>
 public static partial class TapExtensionsAsync
@@ -149,32 +156,7 @@ public static partial class TapExtensionsAsync
     }
 
     /// <summary>
-    /// Executes an asynchronous side effect action on a synchronous <#= i #>-element tuple result with cancellation support.
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async side effect function to execute on the tuple elements if successful.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
-    public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
-                  (this Result<(<# WriteTs(i); #>)> result,
-                  Func<<# WriteTs(i); #>, CancellationToken, Task> func,
-                  CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
-        if (result.IsSuccess) {
-            var (<# WriteArgs(i); #>) = result.Value;
-            await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-        }
-
-        result.LogActivityStatus();
-        return result;
-    }
-
-    /// <summary>
-    /// Executes an asynchronous side effect action on a synchronous <#= i #>-element tuple result without cancellation support.
+    /// Executes an asynchronous side effect action on a synchronous <#= i #>-element tuple result.
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -197,26 +179,7 @@ public static partial class TapExtensionsAsync
     }
 
     /// <summary>
-    /// Executes an asynchronous side effect action on an asynchronous <#= i #>-element tuple result with cancellation support.
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <param name="resultTask">The task representing the result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async side effect function to execute on the tuple elements if successful.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
-    public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
-                  (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
-                  Func<<# WriteTs(i); #>, CancellationToken, Task> func,
-                  CancellationToken cancellationToken = default)
-    {
-        var result = await resultTask.ConfigureAwait(false);
-        return await result.TapAsync(func, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Executes an asynchronous side effect action on an asynchronous <#= i #>-element tuple result without cancellation support.
+    /// Executes an asynchronous side effect action on an asynchronous <#= i #>-element tuple result.
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -252,32 +215,7 @@ public static partial class TapExtensionsAsync
     }
 
     /// <summary>
-    /// Executes an asynchronous side effect action on a synchronous <#= i #>-element tuple result with cancellation support (ValueTask variant).
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <param name="result">The result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async side effect function to execute on the tuple elements if successful.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
-    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
-                  (this Result<(<# WriteTs(i); #>)> result,
-                  Func<<# WriteTs(i); #>, CancellationToken, ValueTask> func,
-                  CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
-        if (result.IsSuccess) {
-            var (<# WriteArgs(i); #>) = result.Value;
-            await func(<# WriteArgs(i); #>, cancellationToken).ConfigureAwait(false);
-        }
-
-        result.LogActivityStatus();
-        return result;
-    }
-
-    /// <summary>
-    /// Executes an asynchronous side effect action on a synchronous <#= i #>-element tuple result without cancellation support (ValueTask variant).
+    /// Executes an asynchronous side effect action on a synchronous <#= i #>-element tuple result (ValueTask variant).
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
@@ -300,26 +238,7 @@ public static partial class TapExtensionsAsync
     }
 
     /// <summary>
-    /// Executes an asynchronous side effect action on an asynchronous <#= i #>-element tuple result with cancellation support (ValueTask variant).
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>
-<# } #>
-    /// <param name="resultTask">The ValueTask representing the result containing a <#= i #>-element tuple.</param>
-    /// <param name="func">The async side effect function to execute on the tuple elements if successful.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A ValueTask that represents the asynchronous operation containing the original result unchanged.</returns>
-    public static async ValueTask<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
-                  (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
-                  Func<<# WriteTs(i); #>, CancellationToken, ValueTask> func,
-                  CancellationToken cancellationToken = default)
-    {
-        var result = await resultTask.ConfigureAwait(false);
-        return await result.TapAsync(func, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Executes an asynchronous side effect action on an asynchronous <#= i #>-element tuple result without cancellation support (ValueTask variant).
+    /// Executes an asynchronous side effect action on an asynchronous <#= i #>-element tuple result (ValueTask variant).
     /// </summary>
 <# for(var j = 1; j <= i; j++) { #>
     /// <typeparam name="T<#= j #>">The type of element <#= j #> in the tuple.</typeparam>

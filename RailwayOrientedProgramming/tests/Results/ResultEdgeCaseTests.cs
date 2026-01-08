@@ -379,9 +379,9 @@ public class ResultEdgeCaseTests
     public async Task TryAsync_WhenFunctionThrows_ShouldReturnFailureWithUnexpectedError()
     {
         // Act
-        var result = await Result.TryAsync(async ct =>
+        var result = await Result.TryAsync(async () =>
         {
-            await Task.Delay(1, ct);
+            await Task.Delay(1);
             throw new InvalidOperationException("Async test exception");
 #pragma warning disable CS0162 // Unreachable code detected
             return 42;
@@ -400,13 +400,14 @@ public class ResultEdgeCaseTests
         // Arrange
         var cts = new CancellationTokenSource();
         cts.Cancel();
+        var ct = cts.Token;
 
         // Act
-        var result = await Result.TryAsync(async ct =>
+        var result = await Result.TryAsync(async () =>
         {
             await Task.Delay(1000, ct);
             return 42;
-        }, cancellationToken: cts.Token);
+        });
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -448,39 +449,6 @@ public class ResultEdgeCaseTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Detail.Should().Be("Failure condition met");
-    }
-
-    [Fact]
-    public void FailureIf_WithPredicateThrowingException_ShouldPropagateException()
-    {
-        // Act
-        Action act = () => Result.FailureIf(() => throw new InvalidOperationException("Predicate error"), 42, Error.Unexpected("Error"));
-
-        // Assert
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Predicate error");
-    }
-
-    [Fact]
-    public async Task SuccessIfAsync_WithFalsePredicateAndCancellation_ShouldRespectCancellation()
-    {
-        // Arrange
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
-
-        // Act
-        Func<Task> act = async () => await Result.SuccessIfAsync(
-            async ct =>
-            {
-                await Task.Delay(1000, ct);
-                return true;
-            },
-            42,
-            Error.Validation("Error"),
-            cts.Token);
-
-        // Assert
-        await act.Should().ThrowAsync<TaskCanceledException>();
     }
 
     #endregion

@@ -73,7 +73,7 @@ public void ProcessOrder()
     var order = CreateOrder(orderNumber, productSKU, customerName);
 }
 
-// Safe parsing
+// Safe processing
 public void SafeProcessing(string input)
 {
     var result = OrderNumber.TryCreate(input);
@@ -496,21 +496,15 @@ public class UserService
     public async Task<Result<User>> RegisterUserAsync(
         string email,
         string firstName,
-        string lastName,
-        CancellationToken cancellationToken)
+        string lastName)
     {
         return await EmailAddress.TryCreate(email)
             .EnsureAsync(
-                async (e, ct) => !await _repository.EmailExistsAsync(e, ct),
-                Error.Conflict("Email is already registered"),
-                cancellationToken)
-            .BindAsync(
-                async (validEmail, ct) =>
-                    await User.TryCreate(validEmail.Value, firstName, lastName)
-                        .TapAsync(
-                            async (user, innerCt) => await _repository.AddAsync(user, innerCt),
-                            ct),
-                cancellationToken);
+                async e => !await _repository.EmailExistsAsync(e),
+                Error.Conflict("Email is already registered"))
+            .BindAsync(async validEmail =>
+                (await User.TryCreate(validEmail.Value, firstName, lastName))
+                    .TapAsync(user => _repository.AddAsync(user)));
     }
 }
 ```
@@ -799,22 +793,17 @@ public class UserService
     }
     
     // Async version
-    public async Task<Result<User>> CreateUserAsync(
-        CreateUserRequest request,
-        CancellationToken cancellationToken)
+    public async Task<Result<User>> CreateUserAsync(CreateUserRequest request)
     {
         return await FirstName.TryCreate(request.FirstName)
             .Combine(LastName.TryCreate(request.LastName))
             .Combine(EmailAddress.TryCreate(request.Email))
-            .BindAsync(
-                async (firstName, lastName, email, ct) =>
-                    await User.TryCreateAsync(
-                        UserId.NewUnique(),
-                        firstName,
-                        lastName,
-                        email,
-                        ct),
-                cancellationToken);
+            .BindAsync(async (firstName, lastName, email) =>
+                await User.TryCreateAsync(
+                    UserId.NewUnique(),
+                    firstName,
+                    lastName,
+                    email));
     }
 }
 ```
@@ -988,11 +977,13 @@ public class UsersController : ControllerBase
     // UserId automatically parsed from route parameter
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUserAsync(
-        UserId id,
-        CancellationToken cancellationToken) =>
-        await _repository.GetByIdAsync(id, cancellationToken)
-            .ToResultAsync(Error.NotFound($"User {id} not found"))
-            .ToActionResultAsync(this);
+        UserId id)
+    {
+        var user = await _repository.GetByIdAsync(id)
+            .ToResultAsync(Error.NotFound($"User {id} not found"));
+        
+        return user.ToActionResult(this);
+    }
     
     // Request body with value objects
     public record CreateUserRequest(
@@ -1003,17 +994,20 @@ public class UsersController : ControllerBase
     
     [HttpPost]
     public async Task<ActionResult<User>> CreateUserAsync(
-        [FromBody] CreateUserRequest request,
-        CancellationToken cancellationToken) =>
-        await EmailAddress.TryCreate(request.Email)
-            .BindAsync(
-                async (email, ct) =>
-                    await User.TryCreateAsync(email, request.FirstName, request.LastName, ct),
-                cancellationToken)
-            .TapAsync(
-                async (user, ct) => await _repository.AddAsync(user, ct),
-                cancellationToken)
-            .ToActionResultAsync(this);
+        [FromBody] CreateUserRequest request)
+    {
+        var emailResult = await EmailAddress.TryCreate(request.Email)
+            .BindAsync(validEmail =>
+                User.TryCreateAsync(validEmail, request.FirstName, request.LastName));
+        
+        if (emailResult.IsFailure)
+            return emailResult.ToActionResult(this);
+        
+        var user = emailResult.Value;
+        await _repository.AddAsync(user);
+        
+        return user.ToActionResult(this);
+    }
 }
 ```
 
@@ -1082,4 +1076,3 @@ public record UserDto(
             .Bind((userId, email) =>
                 User.TryCreate(userId, email, FirstName, LastName));
 }
-```

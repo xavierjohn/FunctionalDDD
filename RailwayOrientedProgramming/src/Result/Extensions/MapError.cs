@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 /// <para>
 /// The error transformation only occurs if the Result is a failure; successful Results pass through unchanged.
 /// </para>
+/// <para>
+/// Users should capture CancellationToken in their lambda closures when cancellation support is needed.
+/// </para>
 /// </remarks>
 /// <example>
 /// <code>
@@ -25,9 +28,10 @@ using System.Threading.Tasks;
 /// var result = ValidateEmail(email)
 ///     .MapError(err => Error.Validation($"Email validation failed: {err.Detail}", "email"));
 /// 
-/// // Convert between error types for different layers
-/// var apiResult = domainResult
-///     .MapError(domainErr => ConvertToApiError(domainErr));
+/// // Async with CancellationToken using closure capture
+/// var ct = cancellationToken;
+/// var result = await GetUserAsync(id)
+///     .MapErrorAsync(err => TransformErrorAsync(err, ct));
 /// </code>
 /// </example>
 public static class MapErrorExtensions
@@ -78,26 +82,6 @@ public static class MapErrorExtensions
     }
 
     /// <summary>
-    /// Asynchronously transforms the error of a failed Result using the provided async mapping function with cancellation support.
-    /// </summary>
-    /// <typeparam name="T">Type of the result value.</typeparam>
-    /// <param name="result">The result whose error to potentially transform.</param>
-    /// <param name="mapAsync">The async function to transform the error.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async Task<Result<T>> MapErrorAsync<T>(
-        this Result<T> result,
-        Func<Error, CancellationToken, Task<Error>> mapAsync,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsSuccess) return result;
-        activity?.SetStatus(ActivityStatusCode.Error);
-        Error newError = await mapAsync(result.Error, cancellationToken).ConfigureAwait(false);
-        return Result.Failure<T>(newError);
-    }
-
-    /// <summary>
     /// Asynchronously transforms the error of a failed Result using the provided async mapping function.
     /// </summary>
     /// <typeparam name="T">Type of the result value.</typeparam>
@@ -108,23 +92,6 @@ public static class MapErrorExtensions
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
         return await result.MapErrorAsync(mapAsync).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously transforms the error of a failed Result using the provided async mapping function with cancellation support.
-    /// </summary>
-    /// <typeparam name="T">Type of the result value.</typeparam>
-    /// <param name="resultTask">The task containing the result whose error to potentially transform.</param>
-    /// <param name="mapAsync">The async function to transform the error.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async Task<Result<T>> MapErrorAsync<T>(
-        this Task<Result<T>> resultTask,
-        Func<Error, CancellationToken, Task<Error>> mapAsync,
-        CancellationToken cancellationToken = default)
-    {
-        Result<T> result = await resultTask.ConfigureAwait(false);
-        return await result.MapErrorAsync(mapAsync, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -157,26 +124,6 @@ public static class MapErrorExtensions
     }
 
     /// <summary>
-    /// Asynchronously transforms the error of a failed Result using the provided async mapping function with cancellation support.
-    /// </summary>
-    /// <typeparam name="T">Type of the result value.</typeparam>
-    /// <param name="result">The result whose error to potentially transform.</param>
-    /// <param name="mapAsync">The async function to transform the error.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async ValueTask<Result<T>> MapErrorAsync<T>(
-        this Result<T> result,
-        Func<Error, CancellationToken, ValueTask<Error>> mapAsync,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsSuccess) return result;
-        activity?.SetStatus(ActivityStatusCode.Error);
-        Error newError = await mapAsync(result.Error, cancellationToken).ConfigureAwait(false);
-        return Result.Failure<T>(newError);
-    }
-
-    /// <summary>
     /// Asynchronously transforms the error of a failed Result using the provided async mapping function.
     /// </summary>
     /// <typeparam name="T">Type of the result value.</typeparam>
@@ -187,22 +134,5 @@ public static class MapErrorExtensions
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
         return await result.MapErrorAsync(mapAsync).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously transforms the error of a failed Result using the provided async mapping function with cancellation support.
-    /// </summary>
-    /// <typeparam name="T">Type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask containing the result whose error to potentially transform.</param>
-    /// <param name="mapAsync">The async function to transform the error.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async ValueTask<Result<T>> MapErrorAsync<T>(
-        this ValueTask<Result<T>> resultTask,
-        Func<Error, CancellationToken, ValueTask<Error>> mapAsync,
-        CancellationToken cancellationToken = default)
-    {
-        Result<T> result = await resultTask.ConfigureAwait(false);
-        return await result.MapErrorAsync(mapAsync, cancellationToken).ConfigureAwait(false);
     }
 }

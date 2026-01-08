@@ -173,16 +173,12 @@ public static class MatchTupleExtensions
 
 /// <summary>
 /// Provides asynchronous pattern matching extension methods for Result types containing tuples (2-5 elements).
-/// Supports both Task and ValueTask with optional CancellationToken parameters.
+/// Supports both Task and ValueTask for async pattern matching.
 /// </summary>
 /// <remarks>
 /// <para>
-/// These methods handle various async scenarios:
-/// <list type="bullet">
-/// <item>Async result ? sync handlers</item>
-/// <item>Sync result ? async handlers</item>
-/// <item>Async result ? async handlers with CancellationToken</item>
-/// </list>
+/// These methods handle various async scenarios with automatic tuple destructuring.
+/// Users should capture CancellationToken in their lambda closures when cancellation support is needed.
 /// </para>
 /// <para>
 /// All variants automatically destructure tuple values for clean, readable async code.
@@ -190,11 +186,11 @@ public static class MatchTupleExtensions
 /// </remarks>
 /// <example>
 /// <code>
+/// var ct = cancellationToken;
 /// var response = await GetUserDataAsync(userId)
 ///     .MatchAsync(
-///         onSuccess: async (email, name, ct) => await CreateUserAsync(email, name, ct),
-///         onFailure: async (error, ct) => await LogErrorAsync(error, ct),
-///         cancellationToken: cancellationToken
+///         onSuccess: (email, name) => CreateUserAsync(email, name, ct),
+///         onFailure: error => LogErrorAsync(error, ct)
 ///     );
 /// </code>
 /// </example>
@@ -268,68 +264,26 @@ public static class MatchTupleExtensionsAsync
 <# for (int tupleSize = MinTupleSize; tupleSize <= MaxTupleSize; tupleSize++) { 
     string typeParams = GetTypeParams(tupleSize);
     string tupleType = GetTupleType(tupleSize);
-    string valueParams = GetValueParams(tupleSize);
-    string funcParams = GetFuncParams(tupleSize);
-    string destructure = GetDestructure(tupleSize);
-#>
-    /// <summary>
-    /// Matches on a Result containing a <#= tupleSize #>-element tuple with asynchronous handlers and cancellation support, destructuring the tuple values.
-    /// </summary>
-<# for (int i = 1; i <= tupleSize; i++) { #>
-    /// <typeparam name="T<#= i #>">The type of the <#= GetOrdinal(i) #> tuple element.</typeparam>
-<# } #>
-    /// <typeparam name="TOut">The type of the output.</typeparam>
-    /// <param name="result">The result to match on.</param>
-    /// <param name="onSuccess">Async function to execute on success, receiving <#= tupleSize #> destructured tuple values and a cancellation token.</param>
-    /// <param name="onFailure">Async function to execute on failure, receiving the error and a cancellation token.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>A task that represents the asynchronous operation containing the output from either function.</returns>
-    public static async Task<TOut> MatchAsync<<#= typeParams #>, TOut>(
-        this Result<<#= tupleType #>> result,
-        Func<<#= funcParams #>, CancellationToken, Task<TOut>> onSuccess,
-        Func<Error, CancellationToken, Task<TOut>> onFailure,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsSuccess)
-        {
-            activity?.SetStatus(ActivityStatusCode.Ok);
-            <#= destructure #>
-            return await onSuccess(<#= valueParams #>, cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            activity?.SetStatus(ActivityStatusCode.Error);
-            return await onFailure(result.Error, cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-<# } #>
-<# for (int tupleSize = MinTupleSize; tupleSize <= MaxTupleSize; tupleSize++) { 
-    string typeParams = GetTypeParams(tupleSize);
-    string tupleType = GetTupleType(tupleSize);
     string funcParams = GetFuncParams(tupleSize);
 #>
     /// <summary>
-    /// Asynchronously matches on a Result containing a <#= tupleSize #>-element tuple with async handlers and cancellation support, destructuring the tuple values.
+    /// Asynchronously matches on a Result containing a <#= tupleSize #>-element tuple with async handlers, destructuring the tuple values.
     /// </summary>
 <# for (int i = 1; i <= tupleSize; i++) { #>
     /// <typeparam name="T<#= i #>">The type of the <#= GetOrdinal(i) #> tuple element.</typeparam>
 <# } #>
     /// <typeparam name="TOut">The type of the output.</typeparam>
     /// <param name="resultTask">The task representing the result to match on.</param>
-    /// <param name="onSuccess">Async function to execute on success, receiving <#= tupleSize #> destructured tuple values and a cancellation token.</param>
-    /// <param name="onFailure">Async function to execute on failure, receiving the error and a cancellation token.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <param name="onSuccess">Async function to execute on success, receiving <#= tupleSize #> destructured tuple values.</param>
+    /// <param name="onFailure">Async function to execute on failure.</param>
     /// <returns>A task that represents the asynchronous operation containing the output from either function.</returns>
     public static async Task<TOut> MatchAsync<<#= typeParams #>, TOut>(
         this Task<Result<<#= tupleType #>>> resultTask,
-        Func<<#= funcParams #>, CancellationToken, Task<TOut>> onSuccess,
-        Func<Error, CancellationToken, Task<TOut>> onFailure,
-        CancellationToken cancellationToken = default)
+        Func<<#= funcParams #>, Task<TOut>> onSuccess,
+        Func<Error, Task<TOut>> onFailure)
     {
         var result = await resultTask.ConfigureAwait(false);
-        return await result.MatchAsync(onSuccess, onFailure, cancellationToken).ConfigureAwait(false);
+        return await result.MatchAsync(onSuccess, onFailure).ConfigureAwait(false);
     }
 
 <# } #>
@@ -347,18 +301,16 @@ public static class MatchTupleExtensionsAsync
     /// <typeparam name="T<#= i #>">The type of the <#= GetOrdinal(i) #> tuple element.</typeparam>
 <# } #>
     /// <param name="resultTask">The task representing the result to switch on.</param>
-    /// <param name="onSuccess">Async action to execute on success, receiving <#= tupleSize #> destructured tuple values and a cancellation token.</param>
-    /// <param name="onFailure">Async action to execute on failure, receiving the error and a cancellation token.</param>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
+    /// <param name="onSuccess">Async action to execute on success, receiving <#= tupleSize #> destructured tuple values.</param>
+    /// <param name="onFailure">Async action to execute on failure, receiving the error.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     /// <remarks>
     /// Use SwitchAsync for side effects (logging, notifications) without returning a value.
     /// </remarks>
     public static async Task SwitchAsync<<#= typeParams #>>(
         this Task<Result<<#= tupleType #>>> resultTask,
-        Func<<#= funcParams #>, CancellationToken, Task> onSuccess,
-        Func<Error, CancellationToken, Task> onFailure,
-        CancellationToken cancellationToken = default)
+        Func<<#= funcParams #>, Task> onSuccess,
+        Func<Error, Task> onFailure)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         var result = await resultTask.ConfigureAwait(false);
@@ -366,12 +318,12 @@ public static class MatchTupleExtensionsAsync
         {
             activity?.SetStatus(ActivityStatusCode.Ok);
             <#= destructure #>
-            await onSuccess(<#= valueParams #>, cancellationToken).ConfigureAwait(false);
+            await onSuccess(<#= valueParams #>).ConfigureAwait(false);
         }
         else
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            await onFailure(result.Error, cancellationToken).ConfigureAwait(false);
+            await onFailure(result.Error).ConfigureAwait(false);
         }
     }
 

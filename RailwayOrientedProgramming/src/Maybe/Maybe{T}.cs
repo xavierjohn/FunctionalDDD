@@ -1,5 +1,4 @@
 ﻿namespace FunctionalDdd;
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
@@ -116,18 +115,52 @@ public readonly struct Maybe<T> :
     /// <summary>
     /// Determines whether a <see cref="Maybe{T}"/> equals a value of type <typeparamref name="T"/>.
     /// </summary>
+    /// <param name="maybe">The Maybe instance to compare.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <returns>True if the Maybe has a value equal to <paramref name="value"/>; otherwise false.</returns>
     public static bool operator ==(Maybe<T> maybe, T value) => maybe.Equals(value);
 
+    /// <summary>
+    /// Determines whether a <see cref="Maybe{T}"/> does not equal a value of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <param name="maybe">The Maybe instance to compare.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <returns>True if the Maybe does not have a value equal to <paramref name="value"/>; otherwise false.</returns>
     public static bool operator !=(Maybe<T> maybe, T value) => !maybe.Equals(value);
 
+    /// <summary>
+    /// Determines whether a <see cref="Maybe{T}"/> equals another object.
+    /// </summary>
+    /// <param name="maybe">The Maybe instance to compare.</param>
+    /// <param name="other">The object to compare against.</param>
+    /// <returns>True if equal; otherwise false.</returns>
     public static bool operator ==(Maybe<T> maybe, object? other) => maybe.Equals(other);
 
+    /// <summary>
+    /// Determines whether a <see cref="Maybe{T}"/> does not equal another object.
+    /// </summary>
+    /// <param name="maybe">The Maybe instance to compare.</param>
+    /// <param name="other">The object to compare against.</param>
+    /// <returns>True if not equal; otherwise false.</returns>
     public static bool operator !=(Maybe<T> maybe, object? other) => !maybe.Equals(other);
 
+    /// <summary>
+    /// Determines whether two <see cref="Maybe{T}"/> instances are equal.
+    /// </summary>
+    /// <param name="first">The first Maybe instance.</param>
+    /// <param name="second">The second Maybe instance.</param>
+    /// <returns>True if both have no value, or both have equal values; otherwise false.</returns>
     public static bool operator ==(Maybe<T> first, Maybe<T> second) => first.Equals(second);
 
+    /// <summary>
+    /// Determines whether two <see cref="Maybe{T}"/> instances are not equal.
+    /// </summary>
+    /// <param name="first">The first Maybe instance.</param>
+    /// <param name="second">The second Maybe instance.</param>
+    /// <returns>True if the instances are not equal; otherwise false.</returns>
     public static bool operator !=(Maybe<T> first, Maybe<T> second) => !first.Equals(second);
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj switch
         {
@@ -136,18 +169,22 @@ public readonly struct Maybe<T> :
             _ => false,
         };
 
+    /// <inheritdoc />
     public bool Equals(Maybe<T> other) =>
         _isValueSet && other._isValueSet
             ? EqualityComparer<T>.Default.Equals(_value, other._value)
             : !_isValueSet && !other._isValueSet;
 
-    public bool Equals(T? other) => 
+    /// <inheritdoc />
+    public bool Equals(T? other) =>
         (_isValueSet && EqualityComparer<T>.Default.Equals(_value, other))
         || (!_isValueSet && other is null);
 
+    /// <inheritdoc />
     public override int GetHashCode() => _isValueSet
         ? (_value?.GetHashCode() ?? 0)
         : 0;
 
+    /// <inheritdoc />
     public override string ToString() => _value?.ToString() ?? string.Empty;
 }

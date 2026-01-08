@@ -23,11 +23,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>AwaitTs.g.tt</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\TapTs.g.cs">
-      <DependentUpon>TapTs.g.tt</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-    </Compile>
     <Compile Update="Result\Extensions\TapErrorTs.g.cs">
       <DependentUpon>TapErrorTs.g.tt</DependentUpon>
       <DesignTime>True</DesignTime>
@@ -71,6 +66,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>MatchTupleTs.g.tt</DependentUpon>
     </Compile>
+    <Compile Update="Result\Extensions\TapTs.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TapTs.g.tt</DependentUpon>
+    </Compile>
     <Compile Update="Result\Extensions\Ensure.Task.*.cs" DependentUpon="Ensure.Task.cs" />
   </ItemGroup>
 
@@ -87,10 +87,6 @@
       <LastGenOutput>TapErrorTs.g.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
-    <None Update="Result\Extensions\TapTs.g.tt">
-      <LastGenOutput>TapTs.g.cs</LastGenOutput>
-      <Generator>TextTemplatingFileGenerator</Generator>
-    </None>
     <None Update="Result\Extensions\BindTs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>BindTs.g.cs</LastGenOutput>
@@ -102,6 +98,10 @@
     <None Update="Result\Extensions\ParallelAsyncs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ParallelAsyncs.g.cs</LastGenOutput>
+    </None>
+    <None Update="Result\Extensions\TapTs.g.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>TapTs.g.cs</LastGenOutput>
     </None>
   </ItemGroup>
 

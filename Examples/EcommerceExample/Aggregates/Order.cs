@@ -1,6 +1,7 @@
 namespace EcommerceExample.Aggregates;
 
 using EcommerceExample.Entities;
+using EcommerceExample.Events;
 using EcommerceExample.ValueObjects;
 using FunctionalDdd;
 
@@ -20,7 +21,7 @@ public enum OrderStatus
 }
 
 /// <summary>
-/// Order aggregate root managing the complete order lifecycle.
+/// Order aggregate root managing the complete order lifecycle with domain events.
 /// </summary>
 public class Order : Aggregate<OrderId>
 {
@@ -40,6 +41,9 @@ public class Order : Aggregate<OrderId>
         Total = Money.TryCreate(0).Value;
         Status = OrderStatus.Draft;
         CreatedAt = DateTime.UtcNow;
+
+        // Raise domain event for order creation
+        DomainEvents.Add(new OrderCreated(Id, customerId, DateTime.UtcNow));
     }
 
     public static Result<Order> TryCreate(CustomerId customerId)
@@ -56,7 +60,8 @@ public class Order : Aggregate<OrderId>
     public Result<Order> AddLine(ProductId productId, string productName, Money unitPrice, int quantity)
     {
         return this.ToResult()
-            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation($"Cannot add items to order in {Status} status"))
+            .Ensure(_ => Status == OrderStatus.Draft, 
+                Error.Domain($"Cannot add items to order in {Status} status"))
             .Bind(_ => OrderLine.TryCreate(productId, productName, unitPrice, quantity))
             .Tap(line =>
             {
@@ -68,6 +73,16 @@ public class Order : Aggregate<OrderId>
                 }
 
                 _lines.Add(line);
+
+                // Raise domain event
+                DomainEvents.Add(new OrderLineAdded(
+                    Id,
+                    productId,
+                    productName,
+                    unitPrice,
+                    quantity,
+                    line.LineTotal,
+                    DateTime.UtcNow));
             })
             .Bind(_ => RecalculateTotal())
             .Map(_ => this);
@@ -79,9 +94,17 @@ public class Order : Aggregate<OrderId>
     public Result<Order> RemoveLine(ProductId productId)
     {
         return this.ToResult()
-            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation($"Cannot remove items from order in {Status} status"))
-            .Ensure(_ => _lines.Any(l => l.Id.Equals(productId)), Error.NotFound("Product not found in order"))
-            .Tap(_ => _lines.RemoveAll(l => l.Id.Equals(productId)))
+            .Ensure(_ => Status == OrderStatus.Draft, 
+                Error.Domain($"Cannot remove items from order in {Status} status"))
+            .Ensure(_ => _lines.Any(l => l.Id.Equals(productId)), 
+                Error.NotFound("Product not found in order"))
+            .Tap(_ =>
+            {
+                _lines.RemoveAll(l => l.Id.Equals(productId));
+
+                // Raise domain event
+                DomainEvents.Add(new OrderLineRemoved(Id, productId, DateTime.UtcNow));
+            })
             .Bind(_ => RecalculateTotal())
             .Map(_ => this);
     }
@@ -92,10 +115,24 @@ public class Order : Aggregate<OrderId>
     public Result<Order> Submit()
     {
         return this.ToResult()
-            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation($"Cannot submit order in {Status} status"))
-            .Ensure(_ => _lines.Count > 0, Error.Validation("Cannot submit empty order"))
-            .Ensure(_ => Total.Value > 0, Error.Validation("Order total must be greater than zero"))
-            .Tap(_ => Status = OrderStatus.Pending)
+            .Ensure(_ => Status == OrderStatus.Draft, 
+                Error.Conflict($"Cannot submit order in {Status} status"))
+            .Ensure(_ => _lines.Count > 0, 
+                Error.Domain("Cannot submit empty order"))
+            .Ensure(_ => Total.Value > 0, 
+                Error.Domain("Order total must be greater than zero"))
+            .Tap(_ =>
+            {
+                Status = OrderStatus.Pending;
+
+                // Raise domain event
+                DomainEvents.Add(new OrderSubmitted(
+                    Id,
+                    CustomerId,
+                    Total,
+                    _lines.Count,
+                    DateTime.UtcNow));
+            })
             .Map(_ => this);
     }
 
@@ -105,12 +142,17 @@ public class Order : Aggregate<OrderId>
     public Result<Order> ProcessPayment(string transactionId)
     {
         return this.ToResult()
-            .Ensure(_ => Status == OrderStatus.Pending, Error.Validation($"Cannot process payment for order in {Status} status"))
-            .Ensure(_ => !string.IsNullOrWhiteSpace(transactionId), Error.Validation("Transaction ID is required"))
+            .Ensure(_ => Status == OrderStatus.Pending, 
+                Error.Conflict($"Cannot process payment for order in {Status} status"))
+            .Ensure(_ => !string.IsNullOrWhiteSpace(transactionId), 
+                Error.Validation("Transaction ID is required", nameof(transactionId)))
             .Tap(_ =>
             {
                 Status = OrderStatus.PaymentProcessing;
                 PaymentTransactionId = transactionId;
+
+                // Raise domain event
+                DomainEvents.Add(new PaymentProcessingStarted(Id, transactionId, DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -122,13 +164,21 @@ public class Order : Aggregate<OrderId>
     {
         return this.ToResult()
             .Ensure(_ => Status == OrderStatus.PaymentProcessing, 
-                Error.Validation($"Cannot confirm order in {Status} status"))
+                Error.Conflict($"Cannot confirm order in {Status} status"))
             .Ensure(_ => !string.IsNullOrWhiteSpace(PaymentTransactionId), 
-                Error.Validation("Payment transaction ID is missing"))
+                Error.Domain("Payment transaction ID is missing"))
             .Tap(_ =>
             {
                 Status = OrderStatus.Confirmed;
                 ConfirmedAt = DateTime.UtcNow;
+
+                // Raise domain event
+                DomainEvents.Add(new OrderConfirmed(
+                    Id,
+                    CustomerId,
+                    Total,
+                    PaymentTransactionId!,
+                    DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -140,11 +190,14 @@ public class Order : Aggregate<OrderId>
     {
         return this.ToResult()
             .Ensure(_ => Status == OrderStatus.PaymentProcessing, 
-                Error.Validation($"Cannot mark payment failed for order in {Status} status"))
+                Error.Conflict($"Cannot mark payment failed for order in {Status} status"))
             .Tap(_ =>
             {
                 Status = OrderStatus.PaymentFailed;
                 PaymentTransactionId = null;
+
+                // Raise domain event
+                DomainEvents.Add(new PaymentFailed(Id, DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -156,9 +209,17 @@ public class Order : Aggregate<OrderId>
     {
         return this.ToResult()
             .Ensure(_ => Status is OrderStatus.Draft or OrderStatus.Pending or OrderStatus.PaymentFailed,
-                Error.Validation($"Cannot cancel order in {Status} status"))
-            .Ensure(_ => !string.IsNullOrWhiteSpace(reason), Error.Validation("Cancellation reason is required"))
-            .Tap(_ => Status = OrderStatus.Cancelled)
+                Error.Domain($"Cannot cancel order in {Status} status"))
+            .Ensure(_ => !string.IsNullOrWhiteSpace(reason), 
+                Error.Validation("Cancellation reason is required", nameof(reason)))
+            .Tap(_ =>
+            {
+                var previousStatus = Status;
+                Status = OrderStatus.Cancelled;
+
+                // Raise domain event
+                DomainEvents.Add(new OrderCancelled(Id, reason, previousStatus, DateTime.UtcNow));
+            })
             .Map(_ => this);
     }
 
@@ -169,8 +230,14 @@ public class Order : Aggregate<OrderId>
     {
         return this.ToResult()
             .Ensure(_ => Status == OrderStatus.Confirmed, 
-                Error.Validation($"Cannot ship order in {Status} status"))
-            .Tap(_ => Status = OrderStatus.Shipped)
+                Error.Conflict($"Cannot ship order in {Status} status"))
+            .Tap(_ =>
+            {
+                Status = OrderStatus.Shipped;
+
+                // Raise domain event
+                DomainEvents.Add(new OrderShipped(Id, DateTime.UtcNow));
+            })
             .Map(_ => this);
     }
 
@@ -181,8 +248,14 @@ public class Order : Aggregate<OrderId>
     {
         return this.ToResult()
             .Ensure(_ => Status == OrderStatus.Shipped, 
-                Error.Validation($"Cannot mark order as delivered in {Status} status"))
-            .Tap(_ => Status = OrderStatus.Delivered)
+                Error.Conflict($"Cannot mark order as delivered in {Status} status"))
+            .Tap(_ =>
+            {
+                Status = OrderStatus.Delivered;
+
+                // Raise domain event
+                DomainEvents.Add(new OrderDelivered(Id, DateTime.UtcNow));
+            })
             .Map(_ => this);
     }
 

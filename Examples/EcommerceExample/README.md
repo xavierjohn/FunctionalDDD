@@ -1,4 +1,4 @@
-# E-Commerce Order Processing Example
+﻿# E-Commerce Order Processing Example
 
 This example demonstrates a complete e-commerce order processing system using **Railway Oriented Programming** (ROP) and **Domain-Driven Design** (DDD) principles.
 
@@ -33,14 +33,14 @@ The example showcases how to build a robust order processing system with proper 
 ### 1. **Railway Oriented Programming Patterns**
 ```csharp
 return await Order.TryCreate(customerId)
-.Bind(order => order.AddLine(productId, productName, price, quantity))
-.Bind(order => order.Submit())
-.BindAsync(order => ProcessPaymentAsync(order, paymentInfo))
-.TapAsync(order => SendConfirmationEmailAsync(order))
-.MatchAsync(
-    ok => "Order processed successfully",
-    err => $"Order failed: {err.Detail}"
-);
+    .Bind(order => order.AddLine(productId, productName, price, quantity))
+    .Bind(order => order.Submit())
+    .BindAsync(order => ProcessPaymentAsync(order, paymentInfo))
+    .TapAsync(order => SendConfirmationEmailAsync(order))
+    .MatchAsync(
+        ok => "Order processed successfully",
+        err => $"Order failed: {err.Detail}"
+    );
 ```
 
 ### 2. **Error Handling with Compensation**
@@ -84,29 +84,34 @@ await EcommerceExamples.RunExamplesAsync();
 ```
 
 ### Example 1: Simple Order Creation
-Creates an order with basic validation.
+Creates an order with basic validation and domain events.
 
 ### Example 2: Complete Order Workflow
-Demonstrates the full order processing flow:
+Demonstrates the full order processing flow with domain event publishing:
 1. Create order
 2. Add items with inventory validation
 3. Reserve inventory
 4. Process payment
 5. Confirm and send notifications
+6. Publish domain events
 
 ### Example 3: Payment Failure Handling
 Shows how payment failures are handled with:
 - Inventory rollback
 - Order cancellation
 - Customer notifications
+- Domain event publishing
 
 ### Example 4: Insufficient Inventory
 Demonstrates compensation when items are out of stock.
 
+### Example 5: Domain Events and Change Tracking
+Deep dive into domain events, `UncommittedEvents()`, `AcceptChanges()`, and `IsChanged` property.
+
 ## Business Rules Implemented
 
 ### Order Lifecycle
-- **Draft** ? **Pending** ? **PaymentProcessing** ? **Confirmed** ? **Shipped** ? **Delivered**
+- **Draft** -> **Pending** -> **PaymentProcessing** -> **Confirmed** -> **Shipped** -> **Delivered**
 - Orders can be cancelled only in Draft, Pending, or PaymentFailed status
 - Items can only be added/removed in Draft status
 - Payment can only be processed for Pending orders
@@ -132,8 +137,6 @@ Demonstrates compensation when items are out of stock.
 
 ## Related Examples
 - [Banking Transaction Example](../BankingExample/README.md)
-- [Shipping Example](../ShippingExample/README.md)
-- [Healthcare Appointment Example](../HealthcareExample/README.md)
 
 ## How to Use
 
@@ -142,25 +145,26 @@ Demonstrates compensation when items are out of stock.
 await EcommerceExample.EcommerceExamples.RunExamplesAsync();
 ```
 
-**Output**: 4 examples showing order creation, complete workflow, payment failure, inventory shortage
+**Output**: 5 examples showing order creation, complete workflow, payment failure, inventory shortage, and domain events
 
 ### Run from Command Line
 
-#### Navigate to the project directory:
+Navigate to the project directory:
 ```bash
 cd Examples/EcommerceExample
 ```
 
-#### Run the examples:
+Run the examples:
 ```bash
 dotnet run
 ```
 
-This will execute all 4 examples:
-1. **Example 1**: Simple order creation with validation
-2. **Example 2**: Complete order workflow with payment and inventory
+This will execute all 5 examples:
+1. **Example 1**: Simple order creation with domain events
+2. **Example 2**: Complete order workflow with event publishing
 3. **Example 3**: Payment failure with compensation
 4. **Example 4**: Insufficient inventory handling
+5. **Example 5**: Domain events and change tracking
 
 ### Run from Visual Studio
 
@@ -181,6 +185,5 @@ await EcommerceExamples.Example1_SimpleOrderCreation();
 ### Follow Learning Path
 1. Start with [QUICKSTART.md](../QUICKSTART.md) - Choose your path
 2. Read [README.md](../README.md) - Get overview
-3. Pick complexity level (?? to ??????????)
-4. Study code and run examples
-5. Read pattern documentation
+3. Study code and run examples
+4. Read pattern documentation

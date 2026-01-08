@@ -1,12 +1,13 @@
-namespace BankingExample.Workflows;
+﻿namespace BankingExample.Workflows;
 
 using BankingExample.Aggregates;
+using BankingExample.Events;
 using BankingExample.Services;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
 
 /// <summary>
-/// Orchestrates banking operations with fraud detection and validation.
+/// Orchestrates banking operations with fraud detection, validation, and domain event publishing.
 /// </summary>
 public class BankingWorkflow
 {
@@ -19,7 +20,7 @@ public class BankingWorkflow
 
     /// <summary>
     /// Processes a secure withdrawal with fraud detection.
-    /// Demonstrates: Ensure, Bind, EnsureAsync, TapAsync, Compensate
+    /// Demonstrates: Ensure, Bind, EnsureAsync, TapAsync, Compensate, Domain Events
     /// </summary>
     public async Task<Result<BankAccount>> ProcessSecureWithdrawalAsync(
         BankAccount account,
@@ -53,12 +54,13 @@ public class BankingWorkflow
         return await account.ToResult()
             .BindAsync((Func<BankAccount, Task<Result<BankAccount>>>)PerformChecks)
             .BindAsync(acc => Task.FromResult(acc.Withdraw(amount, "ATM Withdrawal")))
-            .TapAsync(acc => LogTransactionAsync(acc.Id, "withdrawal", amount, cancellationToken))
+            .TapAsync((Func<BankAccount, Task>)(acc => PublishEventsAndAcceptChangesAsync(acc, cancellationToken)))
             .CompensateAsync(
-                predicate: error => error.Code == "fraud",
+                predicate: error => error.Code == "fraud.detected",
                 funcAsync: async error =>
                 {
                     await Task.FromResult(account.Freeze("Suspicious activity detected"));
+                    await PublishEventsAndAcceptChangesAsync(account, cancellationToken);
                     await NotifySecurityTeamAsync(account.CustomerId, error, cancellationToken);
                     return error; // Still return error after compensation
                 }
@@ -67,7 +69,7 @@ public class BankingWorkflow
 
     /// <summary>
     /// Processes a transfer between accounts with full validation.
-    /// Demonstrates: Complex workflow with multiple validations and parallel operations using ParallelAsync.
+    /// Demonstrates: Complex workflow with multiple validations, parallel operations using ParallelAsync, and domain events.
     /// </summary>
     public async Task<Result<(BankAccount From, BankAccount To)>> ProcessTransferAsync(
         BankAccount fromAccount,
@@ -83,24 +85,26 @@ public class BankingWorkflow
 
         if (validationResult.IsFailure)
             return validationResult.Error;
+
         // Perform transfer
         return await fromAccount.TransferTo(toAccount, amount, description)
-            .TapAsync(accounts => LogTransactionAsync(
-                fromAccount.Id,
-                "transfer",
-                amount,
-                cancellationToken
-            ))
-            .TapAsync(accounts => NotifyTransferCompleteAsync(
+            .TapAsync((Func<(BankAccount From, BankAccount To), Task>)(async accounts =>
+            {
+                // Publish events from both accounts
+                await PublishEventsAndAcceptChangesAsync(accounts.From, cancellationToken);
+                await PublishEventsAndAcceptChangesAsync(accounts.To, cancellationToken);
+            }))
+            .TapAsync((Func<(BankAccount From, BankAccount To), Task>)(accounts => NotifyTransferCompleteAsync(
                 fromAccount.CustomerId,
                 toAccount.CustomerId,
                 amount,
                 cancellationToken
-            ));
+            )));
     }
 
     /// <summary>
     /// Processes daily interest payment for savings accounts.
+    /// Demonstrates: Domain events for interest payments.
     /// </summary>
     public async Task<Result<BankAccount>> ProcessInterestPaymentAsync(
         BankAccount account,
@@ -109,11 +113,11 @@ public class BankingWorkflow
     {
         return await Task.FromResult(account.ToResult()
             .Ensure(acc => acc.AccountType == AccountType.Savings,
-                Error.Validation("Interest is only paid on savings accounts"))
+                Error.Domain("Interest is only paid on savings accounts"))
             .Ensure(acc => acc.Status == AccountStatus.Active,
-                Error.Validation($"Cannot process interest for {account.Status} account"))
+                Error.Domain($"Cannot process interest for {account.Status} account"))
             .Ensure(acc => acc.Balance.Value > 0,
-                Error.Validation("No interest on accounts with zero or negative balance"))
+                Error.Domain("No interest on accounts with zero or negative balance"))
             .Bind(acc =>
             {
                 var interestAmount = acc.Balance.Value * (interestRate / 365m); // Daily interest
@@ -124,19 +128,18 @@ public class BankingWorkflow
                 await Task.Delay(50, cancellationToken);
                 return account.Deposit(interest, $"Daily interest at {interestRate:P2} APR");
             })
-            .TapAsync(acc => LogTransactionAsync(acc.Id, "interest", acc.Balance, cancellationToken));
+            .TapAsync((Func<BankAccount, Task>)(acc => PublishEventsAndAcceptChangesAsync(acc, cancellationToken)));
     }
 
     /// <summary>
     /// Processes multiple transactions in batch with rollback on any failure.
-    /// Demonstrates: Transaction-like behavior with compensation.
+    /// Demonstrates: Transaction-like behavior with compensation and event handling.
     /// </summary>
     public async Task<Result<BankAccount>> ProcessBatchTransactionsAsync(
         BankAccount account,
         List<(Money Amount, string Description)> transactions,
         CancellationToken cancellationToken = default)
     {
-        var originalBalance = account.Balance;
         var processedCount = 0;
 
         foreach (var (amount, description) in transactions)
@@ -145,38 +148,68 @@ public class BankingWorkflow
 
             if (result.IsFailure)
             {
-                // Rollback all previous transactions
-                Console.WriteLine($"? Transaction failed, rolling back {processedCount} transactions");
-                return await RollbackTransactionsAsync(account, originalBalance, cancellationToken);
+                // Don't accept changes - events will be discarded
+                Console.WriteLine($"❌ Transaction failed at item {processedCount + 1}, discarding {account.UncommittedEvents().Count} uncommitted events");
+                return Error.Domain($"Batch transaction failed at item {processedCount + 1}: {result.Error.Detail}");
             }
 
             processedCount++;
         }
 
-        Console.WriteLine($"? Successfully processed {processedCount} transactions");
+        // All successful - publish events and accept changes
+        await PublishEventsAndAcceptChangesAsync(account, cancellationToken);
+        Console.WriteLine($"✅ Successfully processed {processedCount} transactions");
         return account;
     }
 
-    private static async Task<Result<BankAccount>> RollbackTransactionsAsync(
+    /// <summary>
+    /// Demonstrates the repository pattern with domain event publishing.
+    /// This simulates what a real repository would do.
+    /// </summary>
+    private static async Task PublishEventsAndAcceptChangesAsync(
         BankAccount account,
-        Money originalBalance,
         CancellationToken cancellationToken)
     {
-        await Task.Delay(100, cancellationToken);
-        Console.WriteLine($"Rolling back to original balance: {originalBalance}");
+        // 1. Get uncommitted events before accepting changes
+        var events = account.UncommittedEvents();
 
-        // In a real system, this would involve more complex rollback logic
-        return Error.Unexpected("Batch transaction failed and was rolled back");
+        if (events.Count == 0)
+            return;
+
+        // 2. Simulate persisting the aggregate (in real code, this would save to database)
+        await Task.Delay(20, cancellationToken);
+
+        // 3. Publish each domain event
+        foreach (var domainEvent in events)
+        {
+            await PublishEventAsync(domainEvent, cancellationToken);
+        }
+
+        // 4. Accept changes - clears the uncommitted events list
+        account.AcceptChanges();
+
+        Console.WriteLine($"📤 Published {events.Count} domain event(s) for account {account.Id}");
     }
 
-    private static async Task LogTransactionAsync(
-        AccountId accountId,
-        string type,
-        Money amount,
-        CancellationToken cancellationToken)
+    private static async Task PublishEventAsync(IDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        await Task.Delay(20, cancellationToken);
-        Console.WriteLine($"?? Logged {type} of {amount} for account {accountId}");
+        await Task.Delay(10, cancellationToken);
+
+        // Log the event type and key information
+        var eventInfo = domainEvent switch
+        {
+            AccountOpened e => $"AccountOpened: {e.AccountId}, Type: {e.AccountType}, Balance: {e.InitialBalance}",
+            MoneyDeposited e => $"MoneyDeposited: {e.Amount} -> Balance: {e.NewBalance}",
+            MoneyWithdrawn e => $"MoneyWithdrawn: {e.Amount} -> Balance: {e.NewBalance}",
+            TransferCompleted e => $"TransferCompleted: {e.Amount} from {e.FromAccountId} to {e.ToAccountId}",
+            AccountFrozen e => $"AccountFrozen: {e.AccountId}, Reason: {e.Reason}",
+            AccountUnfrozen e => $"AccountUnfrozen: {e.AccountId}",
+            AccountClosed e => $"AccountClosed: {e.AccountId}",
+            InterestPaid e => $"InterestPaid: {e.InterestAmount} at {e.AnnualRate:P2}",
+            _ => domainEvent.GetType().Name
+        };
+
+        Console.WriteLine($"   📧 Event: {eventInfo}");
     }
 
     private static async Task NotifyTransferCompleteAsync(
@@ -186,7 +219,7 @@ public class BankingWorkflow
         CancellationToken cancellationToken)
     {
         await Task.Delay(50, cancellationToken);
-        Console.WriteLine($"?? Transfer notification sent: {amount} from {fromCustomerId} to {toCustomerId}");
+        Console.WriteLine($"📨 Transfer notification sent: {amount} from {fromCustomerId} to {toCustomerId}");
     }
 
     private static async Task NotifySecurityTeamAsync(
@@ -195,6 +228,6 @@ public class BankingWorkflow
         CancellationToken cancellationToken)
     {
         await Task.Delay(100, cancellationToken);
-        Console.WriteLine($"?? Security alert for customer {customerId}: {error.Detail}");
+        Console.WriteLine($"🚨 Security alert for customer {customerId}: {error.Detail}");
     }
 }

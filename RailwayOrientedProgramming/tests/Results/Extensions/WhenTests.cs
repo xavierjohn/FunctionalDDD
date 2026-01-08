@@ -365,30 +365,6 @@ public class WhenTests : TestBase
         actual.Should().BeFailure();
     }
 
-    [Fact]
-    public async Task WhenAsync_WithPredicate_WithCancellationToken_Success()
-    {
-        // Arrange
-        var result = Result.Success(42);
-        var operationExecuted = false;
-        using var cts = new CancellationTokenSource();
-
-        // Act
-        var actual = await result.WhenAsync(
-            x => x > 40,
-            (x, ct) =>
-            {
-                operationExecuted = true;
-                return Task.FromResult(Result.Success(x * 2));
-            },
-            cts.Token);
-
-        // Assert
-        operationExecuted.Should().BeTrue();
-        actual.Should().BeSuccess()
-            .Which.Should().Be(84);
-    }
-
     #endregion
 
     #region Real-World Scenarios

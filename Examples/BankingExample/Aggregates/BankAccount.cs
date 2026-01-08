@@ -1,6 +1,7 @@
 namespace BankingExample.Aggregates;
 
 using BankingExample.Entities;
+using BankingExample.Events;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
 
@@ -19,7 +20,7 @@ public enum AccountType
 }
 
 /// <summary>
-/// Bank account aggregate demonstrating transaction processing with validation.
+/// Bank account aggregate demonstrating transaction processing with validation and domain events.
 /// </summary>
 public class BankAccount : Aggregate<AccountId>
 {
@@ -48,6 +49,14 @@ public class BankAccount : Aggregate<AccountId>
         OverdraftLimit = overdraftLimit;
         Status = AccountStatus.Active;
         CreatedAt = DateTime.UtcNow;
+
+        // Raise domain event for account creation
+        DomainEvents.Add(new AccountOpened(
+            Id,
+            customerId,
+            accountType,
+            initialBalance,
+            DateTime.UtcNow));
     }
 
     public static Result<BankAccount> TryCreate(
@@ -71,14 +80,25 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Deposit(Money amount, string description = "Deposit")
     {
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Active, Error.Validation($"Cannot deposit to {Status} account"))
-            .Ensure(_ => amount.Value > 0, Error.Validation("Deposit amount must be positive"))
-            .Ensure(_ => amount.Value <= 10000, Error.Validation("Single deposit cannot exceed $10,000"))
+            .Ensure(_ => Status == AccountStatus.Active, 
+                Error.Domain($"Cannot deposit to {Status} account"))
+            .Ensure(_ => amount.Value > 0, 
+                Error.Validation("Deposit amount must be positive", nameof(amount)))
+            .Ensure(_ => amount.Value <= 10000, 
+                Error.Domain("Single deposit cannot exceed $10,000"))
             .Bind(_ => Balance.Add(amount))
             .Tap(newBalance =>
             {
                 Balance = newBalance;
                 _transactions.Add(Transaction.CreateDeposit(TransactionId.NewUnique(), amount, Balance, description));
+
+                // Raise domain event
+                DomainEvents.Add(new MoneyDeposited(
+                    Id,
+                    amount,
+                    Balance,
+                    description,
+                    DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -91,18 +111,28 @@ public class BankAccount : Aggregate<AccountId>
         var todayTotal = GetTodayWithdrawals();
 
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Active, Error.Validation($"Cannot withdraw from {Status} account"))
-            .Ensure(_ => amount.Value > 0, Error.Validation("Withdrawal amount must be positive"))
+            .Ensure(_ => Status == AccountStatus.Active, 
+                Error.Domain($"Cannot withdraw from {Status} account"))
+            .Ensure(_ => amount.Value > 0, 
+                Error.Validation("Withdrawal amount must be positive", nameof(amount)))
             .Bind(_ => todayTotal.Add(amount))
             .Ensure(totalWithToday => totalWithToday.IsGreaterThanOrEqual(DailyWithdrawalLimit) == false,
-                Error.Validation($"Daily withdrawal limit of {DailyWithdrawalLimit} would be exceeded"))
+                Error.Domain($"Daily withdrawal limit of {DailyWithdrawalLimit} would be exceeded"))
             .Bind(_ => Balance.Subtract(amount))
             .Ensure(newBalance => newBalance.Value >= -OverdraftLimit.Value,
-                Error.Validation($"Withdrawal would exceed overdraft limit of {OverdraftLimit}"))
+                Error.Domain($"Withdrawal would exceed overdraft limit of {OverdraftLimit}"))
             .Tap(newBalance =>
             {
                 Balance = newBalance;
                 _transactions.Add(Transaction.CreateWithdrawal(TransactionId.NewUnique(), amount, Balance, description));
+
+                // Raise domain event
+                DomainEvents.Add(new MoneyWithdrawn(
+                    Id,
+                    amount,
+                    Balance,
+                    description,
+                    DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -116,10 +146,20 @@ public class BankAccount : Aggregate<AccountId>
             return Error.Validation("Destination account is required");
 
         if (Id.Equals(toAccount.Id))
-            return Error.Validation("Cannot transfer to the same account");
+            return Error.Conflict("Cannot transfer to the same account");
 
         return Withdraw(amount, $"{description} to {toAccount.Id}")
             .Bind(_ => toAccount.Deposit(amount, $"{description} from {Id}"))
+            .Tap(_ =>
+            {
+                // Raise domain event for the transfer (in addition to withdraw/deposit events)
+                DomainEvents.Add(new TransferCompleted(
+                    Id,
+                    toAccount.Id,
+                    amount,
+                    description,
+                    DateTime.UtcNow));
+            })
             .Map(_ => (this, toAccount));
     }
 
@@ -129,12 +169,16 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Freeze(string reason)
     {
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Active, Error.Validation($"Cannot freeze {Status} account"))
-            .Ensure(_ => !string.IsNullOrWhiteSpace(reason), Error.Validation("Freeze reason is required"))
+            .Ensure(_ => Status == AccountStatus.Active, 
+                Error.Conflict($"Cannot freeze {Status} account"))
+            .Ensure(_ => !string.IsNullOrWhiteSpace(reason), 
+                Error.Validation("Freeze reason is required", nameof(reason)))
             .Tap(_ =>
             {
                 Status = AccountStatus.Frozen;
-                Console.WriteLine($"Account {Id} frozen: {reason}");
+
+                // Raise domain event
+                DomainEvents.Add(new AccountFrozen(Id, reason, DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -145,11 +189,14 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Unfreeze()
     {
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Frozen, Error.Validation("Only frozen accounts can be unfrozen"))
+            .Ensure(_ => Status == AccountStatus.Frozen, 
+                Error.Conflict("Only frozen accounts can be unfrozen"))
             .Tap(_ =>
             {
                 Status = AccountStatus.Active;
-                Console.WriteLine($"Account {Id} unfrozen");
+
+                // Raise domain event
+                DomainEvents.Add(new AccountUnfrozen(Id, DateTime.UtcNow));
             })
             .Map(_ => this);
     }
@@ -160,12 +207,16 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Close()
     {
         return this.ToResult()
-            .Ensure(_ => Status != AccountStatus.Closed, Error.Validation("Account is already closed"))
-            .Ensure(_ => Balance.Value == 0, Error.Validation("Account balance must be zero to close"))
+            .Ensure(_ => Status != AccountStatus.Closed, 
+                Error.Conflict("Account is already closed"))
+            .Ensure(_ => Balance.Value == 0, 
+                Error.Domain("Account balance must be zero to close"))
             .Tap(_ =>
             {
                 Status = AccountStatus.Closed;
-                Console.WriteLine($"Account {Id} closed");
+
+                // Raise domain event
+                DomainEvents.Add(new AccountClosed(Id, DateTime.UtcNow));
             })
             .Map(_ => this);
     }

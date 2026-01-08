@@ -1,4 +1,4 @@
-# Banking Transaction Example
+﻿# Banking Transaction Example
 
 This example demonstrates a complete banking system with account management, fraud detection, and transaction processing using **Railway Oriented Programming** and **Domain-Driven Design**.
 
@@ -31,12 +31,12 @@ A comprehensive banking system showcasing secure transaction processing, fraud d
 ### 1. **Account Operations with Validation**
 ```csharp
 return await account.Deposit(amount, "Salary")
-.Ensure(acc => acc.Status == AccountStatus.Active, Error.Validation("Account not active"))
-.Bind(acc => acc.Withdraw(withdrawAmount, "Rent"))
-.Match(
-    ok => $"Balance: {ok.Balance}",
-    err => $"Failed: {err.Detail}"
-);
+    .Ensure(acc => acc.Status == AccountStatus.Active, Error.Validation("Account not active"))
+    .Bind(acc => acc.Withdraw(withdrawAmount, "Rent"))
+    .Match(
+        ok => $"Balance: {ok.Balance}",
+        err => $"Failed: {err.Detail}"
+    );
 ```
 
 ### 2. **Fraud Detection Integration**
@@ -87,9 +87,9 @@ var results = await Task.WhenAll(fromValidation, toValidation);
 - **MoneyMarket**: Higher interest rates with balance requirements
 
 ### Account Status Transitions
-- **Active** ? **Frozen** (on suspicious activity or manual freeze)
-- **Frozen** ? **Active** (manual unfreeze after review)
-- **Active/Frozen** ? **Closed** (only if balance is zero)
+- **Active** -> **Frozen** (on suspicious activity or manual freeze)
+- **Frozen** -> **Active** (manual unfreeze after review)
+- **Active/Frozen** -> **Closed** (only if balance is zero)
 
 ### Transaction Limits
 - Maximum single deposit: $10,000
@@ -110,32 +110,33 @@ var results = await Task.WhenAll(fromValidation, toValidation);
 await BankingExample.BankingExamples.RunExamplesAsync();
 ```
 
-**Output**: 5 examples showing basic operations, transfers, fraud detection, daily limits, interest
+**Output**: 6 examples showing basic operations, transfers, fraud detection, daily limits, interest, and domain events
 
 ### Run from Command Line
 
-#### Navigate to the project directory:
+Navigate to the project directory:
 ```bash
 cd Examples/BankingExample
 ```
 
-#### Run the examples:
+Run the examples:
 ```bash
 dotnet run
 ```
 
-This will execute all 5 examples:
-1. **Example 1**: Basic account operations (deposit, withdrawal)
-2. **Example 2**: Transfer between accounts with validation
+This will execute all 6 examples:
+1. **Example 1**: Basic account operations with domain events
+2. **Example 2**: Transfer between accounts with event publishing
 3. **Example 3**: Fraud detection preventing suspicious transactions
 4. **Example 4**: Daily withdrawal limit enforcement
 5. **Example 5**: Interest payment calculation
+6. **Example 6**: Domain events and change tracking
 
 ### Run from Visual Studio
 
 1. Set `BankingExample` as the startup project
 2. Press F5 or click "Start Debugging"
-3. Watch the console output showing each example with emojis (?, ?, ??, ??, etc.)
+3. Watch the console output showing each example
 
 ### Run Specific Examples
 
@@ -149,19 +150,7 @@ await BankingExamples.Example3_FraudDetection();
 
 ### Expected Output
 
-You'll see detailed console output for each example:
-- ? Success indicators
-- ? Expected failures (fraud detection, limits)
-- ?? Transaction logging
-- ?? Notification messages
-- ?? Security alerts
-
-### Follow Learning Path
-1. Start with [QUICKSTART.md](../QUICKSTART.md) - Choose your path
-2. Read [README.md](../README.md) - Get overview
-3. Pick complexity level (?? to ??????????)
-4. Study code and run examples
-5. Read pattern documentation
+You'll see detailed console output for each example showing success indicators, expected failures (fraud detection, limits), transaction logging, notification messages, and security alerts.
 
 ## Running the Examples
 
@@ -170,10 +159,10 @@ await BankingExamples.RunExamplesAsync();
 ```
 
 ### Example 1: Basic Account Operations
-Creates account, deposits salary, and makes a withdrawal.
+Creates account, deposits salary, and makes a withdrawal. Demonstrates domain events and change tracking.
 
 ### Example 2: Transfer Between Accounts
-Demonstrates secure transfer with fraud detection on both accounts.
+Demonstrates secure transfer with fraud detection on both accounts and domain event publishing.
 
 ### Example 3: Fraud Detection
 Shows how suspicious large transactions are blocked and require review.
@@ -182,7 +171,10 @@ Shows how suspicious large transactions are blocked and require review.
 Attempts multiple withdrawals and enforces daily limit.
 
 ### Example 5: Interest Payment
-Calculates and applies daily interest to savings account.
+Calculates and applies daily interest to savings account with domain events.
+
+### Example 6: Domain Events and Change Tracking
+Deep dive into domain events, `UncommittedEvents()`, `AcceptChanges()`, and `IsChanged` property.
 
 ## Error Handling Patterns
 

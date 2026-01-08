@@ -1,11 +1,13 @@
 namespace BankingExample.Services;
 
+using System.Globalization;
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
 
 /// <summary>
 /// Detects fraudulent transactions based on patterns.
+/// Demonstrates various error types from the FunctionalDDD library.
 /// </summary>
 public class FraudDetectionService
 {
@@ -15,6 +17,7 @@ public class FraudDetectionService
     /// <summary>
     /// Analyzes a transaction for fraud indicators.
     /// Returns Success if transaction appears legitimate, Failure if suspicious.
+    /// Demonstrates: Error.Domain, Error.Validation, custom error codes
     /// </summary>
     public async Task<Result<Unit>> AnalyzeTransactionAsync(
         BankAccount account,
@@ -25,24 +28,26 @@ public class FraudDetectionService
         await Task.Delay(50, cancellationToken); // Simulate API call
 
         return CheckSuspiciousAmount(amount)
-            .Ensure(_ => !IsHighFrequencyTrading(account), 
-                Error.Validation("Suspicious activity: Too many transactions in short period", "fraud"))
-            .Ensure(_ => !IsUnusualPattern(account, amount), 
-                Error.Validation("Suspicious activity: Unusual transaction pattern", "fraud"))
+            .Ensure(_ => !IsHighFrequencyTrading(account),
+                Error.Domain("Suspicious activity: Too many transactions in short period", "fraud.detected", account.Id.ToString(CultureInfo.InvariantCulture)))
+            .Ensure(_ => !IsUnusualPattern(account, amount),
+                Error.Domain("Suspicious activity: Unusual transaction pattern", "fraud.detected", account.Id.ToString(CultureInfo.InvariantCulture)))
             .Tap(_ => Console.WriteLine($"? Fraud check passed for {transactionType} of {amount}"));
     }
 
     /// <summary>
     /// Checks if amount exceeds suspicious threshold.
+    /// Demonstrates: Error.Domain with custom code for fraud detection
     /// </summary>
     private static Result<Unit> CheckSuspiciousAmount(Money amount)
     {
         if (amount.Value > SuspiciousAmountThreshold)
         {
-            Console.WriteLine($"? Large transaction detected: {amount}");
-            return Error.Validation(
+            Console.WriteLine($"?? Large transaction detected: {amount}");
+            return Error.Domain(
                 $"Transaction amount {amount} exceeds threshold of ${SuspiciousAmountThreshold}. Manual review required.",
-                "fraud"
+                "fraud.detected",
+                null
             );
         }
 
@@ -78,6 +83,7 @@ public class FraudDetectionService
 
     /// <summary>
     /// Verifies customer identity for high-value transactions.
+    /// Demonstrates: Error.Unauthorized for authentication failures
     /// </summary>
     public async Task<Result<Unit>> VerifyCustomerIdentityAsync(
         CustomerId customerId,
@@ -87,16 +93,52 @@ public class FraudDetectionService
         await Task.Delay(200, cancellationToken); // Simulate MFA verification
 
         if (string.IsNullOrWhiteSpace(verificationCode))
-            return Error.Unauthorized("Verification code required for this transaction");
+            return Error.Unauthorized("Verification code required for this transaction", customerId.ToString(CultureInfo.InvariantCulture));
 
         if (verificationCode.Length != 6 || !verificationCode.All(char.IsDigit))
-            return Error.Unauthorized("Invalid verification code format");
+            return Error.Validation("Invalid verification code format", nameof(verificationCode));
 
         // Simulate verification check
         if (verificationCode == "000000")
-            return Error.Unauthorized("Invalid verification code");
+            return Error.Unauthorized("Invalid verification code", customerId.ToString(CultureInfo.InvariantCulture));
 
         Console.WriteLine($"? Customer {customerId} identity verified");
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Checks if the external fraud detection service is available.
+    /// Demonstrates: Error.ServiceUnavailable for external service failures
+    /// </summary>
+    public async Task<Result<Unit>> CheckServiceHealthAsync(CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(100, cancellationToken);
+
+        // Simulate occasional service unavailability
+        var random = new Random();
+        if (random.Next(100) < 5) // 5% chance of service being down
+        {
+            return Error.ServiceUnavailable(
+                "Fraud detection service is temporarily unavailable. Please try again later.",
+                "fraud-service");
+        }
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Checks if the customer has exceeded their daily transaction rate limit.
+    /// Demonstrates: Error.RateLimit for quota exceeded scenarios
+    /// </summary>
+    public async Task<Result<Unit>> CheckRateLimitAsync(
+        CustomerId customerId,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(50, cancellationToken);
+
+        // Simulate rate limiting (in real implementation, would check against a counter)
+        // For demo purposes, always pass
+        Console.WriteLine($"? Rate limit check passed for customer {customerId}");
         return Result.Success();
     }
 }

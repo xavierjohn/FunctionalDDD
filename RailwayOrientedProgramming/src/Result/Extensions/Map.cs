@@ -42,26 +42,6 @@ public static partial class MapExtensionsAsync
     /// <typeparam name="TOut">Type of the output result value.</typeparam>
     /// <param name="result">The result to map.</param>
     /// <param name="func">The async function to transform the value if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
-    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, Task<TOut>> func, CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity("map");
-        if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
-
-        TOut value = await func(result.Value, cancellationToken).ConfigureAwait(false);
-
-        return Result.Success<TOut>(value);
-    }
-
-    /// <summary>
-    /// Asynchronously maps the value of a successful result to a new value using the provided async function.
-    /// </summary>
-    /// <typeparam name="TIn">Type of the input result value.</typeparam>
-    /// <typeparam name="TOut">Type of the output result value.</typeparam>
-    /// <param name="result">The result to map.</param>
-    /// <param name="func">The async function to transform the value if the result is successful.</param>
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
@@ -96,48 +76,12 @@ public static partial class MapExtensionsAsync
     /// <typeparam name="TOut">Type of the output result value.</typeparam>
     /// <param name="resultTask">The task containing the result to map.</param>
     /// <param name="func">The async function to transform the value if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
-    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, CancellationToken, Task<TOut>> func, CancellationToken cancellationToken = default)
-    {
-        Result<TIn> result = await resultTask.ConfigureAwait(false);
-
-        return await result.MapAsync(func, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously maps the value of a task result to a new value using an async function.
-    /// </summary>
-    /// <typeparam name="TIn">Type of the input result value.</typeparam>
-    /// <typeparam name="TOut">Type of the output result value.</typeparam>
-    /// <param name="resultTask">The task containing the result to map.</param>
-    /// <param name="func">The async function to transform the value if the result is successful.</param>
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
     {
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return await result.MapAsync(func).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously maps the value of a successful result to a new value using a ValueTask function.
-    /// </summary>
-    /// <typeparam name="TIn">Type of the input result value.</typeparam>
-    /// <typeparam name="TOut">Type of the output result value.</typeparam>
-    /// <param name="result">The result to map.</param>
-    /// <param name="func">The async function to transform the value if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
-    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, ValueTask<TOut>> func, CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity("map");
-        if (result.IsFailure)
-            return Result.Failure<TOut>(result.Error);
-
-        TOut value = await func(result.Value, cancellationToken).ConfigureAwait(false);
-
-        return Result.Success<TOut>(value);
     }
 
     /// <summary>
@@ -172,22 +116,6 @@ public static partial class MapExtensionsAsync
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return result.Map(func);
-    }
-
-    /// <summary>
-    /// Asynchronously maps the value of a ValueTask result to a new value using an async function.
-    /// </summary>
-    /// <typeparam name="TIn">Type of the input result value.</typeparam>
-    /// <typeparam name="TOut">Type of the output result value.</typeparam>
-    /// <param name="resultTask">The ValueTask containing the result to map.</param>
-    /// <param name="func">The async function to transform the value if the result is successful.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
-    public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, CancellationToken, ValueTask<TOut>> func, CancellationToken cancellationToken = default)
-    {
-        Result<TIn> result = await resultTask.ConfigureAwait(false);
-
-        return await result.MapAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

@@ -135,52 +135,6 @@ public static partial class TapErrorExtensionsAsync
     /// Asynchronously executes the given async action if the result is a failure. Returns the original result unchanged.
     /// </summary>
     /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="result">The result to tap.</param>
-    /// <param name="func">The async action to execute if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(
-        this Result<TValue> result,
-        Func<CancellationToken, Task> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-        {
-            await func(cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action with the error if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="result">The result to tap.</param>
-    /// <param name="func">The async action to execute with the error if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(
-        this Result<TValue> result,
-        Func<Error, CancellationToken, Task> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-        {
-            await func(result.Error, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
     /// <param name="resultTask">The task containing the result to tap.</param>
     /// <param name="func">The async action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
@@ -201,40 +155,6 @@ public static partial class TapErrorExtensionsAsync
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.TapErrorAsync(func).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="resultTask">The task containing the result to tap.</param>
-    /// <param name="func">The async action to execute if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(
-        this Task<Result<TValue>> resultTask,
-        Func<CancellationToken, Task> func,
-        CancellationToken cancellationToken = default)
-    {
-        Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action with the error if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="resultTask">The task containing the result to tap.</param>
-    /// <param name="func">The async action to execute with the error if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(
-        this Task<Result<TValue>> resultTask,
-        Func<Error, CancellationToken, Task> func,
-        CancellationToken cancellationToken = default)
-    {
-        Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -305,52 +225,6 @@ public static partial class TapErrorExtensionsAsync
     /// Asynchronously executes the given async action if the result is a failure. Returns the original result unchanged.
     /// </summary>
     /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="result">The result to tap.</param>
-    /// <param name="func">The async action to execute if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(
-        this Result<TValue> result,
-        Func<CancellationToken, ValueTask> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-        {
-            await func(cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action with the error if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="result">The result to tap.</param>
-    /// <param name="func">The async action to execute with the error if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(
-        this Result<TValue> result,
-        Func<Error, CancellationToken, ValueTask> func,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        if (result.IsFailure)
-        {
-            await func(result.Error, cancellationToken).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
     /// <param name="resultTask">The ValueTask containing the result to tap.</param>
     /// <param name="func">The async action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
@@ -371,39 +245,5 @@ public static partial class TapErrorExtensionsAsync
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.TapErrorAsync(func).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask containing the result to tap.</param>
-    /// <param name="func">The async action to execute if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(
-        this ValueTask<Result<TValue>> resultTask,
-        Func<CancellationToken, ValueTask> func,
-        CancellationToken cancellationToken = default)
-    {
-        Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously executes the given async action with the error if the result is a failure. Returns the original result unchanged.
-    /// </summary>
-    /// <typeparam name="TValue">Type of the result value.</typeparam>
-    /// <param name="resultTask">The ValueTask containing the result to tap.</param>
-    /// <param name="func">The async action to execute with the error if the result is a failure.</param>
-    /// <param name="cancellationToken">Cancellation token to observe.</param>
-    /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(
-        this ValueTask<Result<TValue>> resultTask,
-        Func<Error, CancellationToken, ValueTask> func,
-        CancellationToken cancellationToken = default)
-    {
-        Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func, cancellationToken).ConfigureAwait(false);
     }
 }
