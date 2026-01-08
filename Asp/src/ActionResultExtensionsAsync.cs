@@ -24,18 +24,23 @@ using Microsoft.AspNetCore.Mvc;
 /// </list>
 /// </para>
 /// <para>
-/// Usage pattern in async controllers:
+/// Usage pattern in async controllers (with CancellationToken):
 /// <code>
 /// public class UsersController : ControllerBase
 /// {
 ///     [HttpGet("{id}")]
-///     public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(string id) =>
+///     public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(string id, CancellationToken ct) =>
 ///         UserId.TryCreate(id)
-///             .BindAsync(_userService.GetUserAsync)
+///             .BindAsync(userId => _userService.GetUserAsync(userId, ct))
 ///             .MapAsync(user => new UserDto(user))
 ///             .ToActionResultAsync(this);
 /// }
 /// </code>
+/// </para>
+/// <para>
+/// <strong>Best Practice:</strong> Always accept a <see cref="CancellationToken"/> parameter in async controller 
+/// methods and pass it through to all async service calls. This enables proper request cancellation, 
+/// graceful shutdown, and timeout handling.
 /// </para>
 /// </remarks>
 public static class ActionResultExtensionsAsync
@@ -64,14 +69,19 @@ public static class ActionResultExtensionsAsync
     /// For performance-critical scenarios where the operation frequently completes synchronously,
     /// consider using the ValueTask overload instead.
     /// </para>
+    /// <para>
+    /// <strong>CancellationToken Best Practice:</strong> The controller method should accept a 
+    /// <see cref="CancellationToken"/> parameter (ASP.NET Core automatically provides request cancellation)
+    /// and pass it to all async service calls in the chain.
+    /// </para>
     /// </remarks>
     /// <example>
-    /// Async GET endpoint with database query:
+    /// Async GET endpoint with database query and CancellationToken:
     /// <code>
     /// [HttpGet("{id}")]
-    /// public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(Guid id) =>
+    /// public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(Guid id, CancellationToken ct) =>
     ///     UserId.TryCreate(id)
-    ///         .BindAsync(_repository.GetByIdAsync)
+    ///         .BindAsync(userId => _repository.GetByIdAsync(userId, ct))
     ///         .MapAsync(user => new UserDto(user))
     ///         .ToActionResultAsync(this);
     /// 
@@ -80,14 +90,16 @@ public static class ActionResultExtensionsAsync
     /// </code>
     /// </example>
     /// <example>
-    /// Async POST endpoint with multiple operations:
+    /// Async POST endpoint with multiple operations and CancellationToken:
     /// <code>
     /// [HttpPost]
-    /// public Task&lt;ActionResult&lt;OrderDto&gt;&gt; CreateOrderAsync(CreateOrderRequest request) =>
+    /// public Task&lt;ActionResult&lt;OrderDto&gt;&gt; CreateOrderAsync(
+    ///     CreateOrderRequest request,
+    ///     CancellationToken ct) =>
     ///     CustomerId.TryCreate(request.CustomerId)
-    ///         .BindAsync(_customerService.GetCustomerAsync)
-    ///         .BindAsync(customer => _orderService.CreateOrderAsync(customer, request.Items))
-    ///         .TapAsync(async order => await _eventBus.PublishAsync(new OrderCreatedEvent(order.Id)))
+    ///         .BindAsync(customerId => _customerService.GetCustomerAsync(customerId, ct))
+    ///         .BindAsync(customer => _orderService.CreateOrderAsync(customer, request.Items, ct))
+    ///         .TapAsync(order => _eventBus.PublishAsync(new OrderCreatedEvent(order.Id), ct))
     ///         .MapAsync(order => new OrderDto(order))
     ///         .ToActionResultAsync(this);
     /// 

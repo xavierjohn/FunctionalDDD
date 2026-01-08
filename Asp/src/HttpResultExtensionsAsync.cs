@@ -22,15 +22,20 @@
 /// </list>
 /// </para>
 /// <para>
-/// Usage pattern in async Minimal APIs:
+/// Usage pattern in async Minimal APIs (with CancellationToken):
 /// <code>
-/// app.MapGet("/users/{id}", async (string id, IUserService userService) =>
+/// app.MapGet("/users/{id}", async (string id, IUserService userService, CancellationToken ct) =>
 ///     await UserId.TryCreate(id)
-///         .BindAsync(userService.GetUserAsync)
+///         .BindAsync(userId => userService.GetUserAsync(userId, ct))
 ///         .MapAsync(user => new UserDto(user))
 ///         .ToHttpResultAsync()
 /// );
 /// </code>
+/// </para>
+/// <para>
+/// <strong>Best Practice:</strong> Always accept a <see cref="CancellationToken"/> parameter in async endpoints
+/// and pass it through to all async service calls. ASP.NET Core automatically provides request cancellation
+/// through this token, enabling proper timeout handling and graceful shutdown.
 /// </para>
 /// </remarks>
 public static class HttpResultExtensionsAsync
@@ -58,13 +63,18 @@ public static class HttpResultExtensionsAsync
     /// For performance-critical scenarios where the operation frequently completes synchronously,
     /// consider using the ValueTask overload instead.
     /// </para>
+    /// <para>
+    /// <strong>CancellationToken Best Practice:</strong> The endpoint should accept a 
+    /// <see cref="CancellationToken"/> parameter (ASP.NET Core automatically provides request cancellation)
+    /// and pass it to all async service calls in the chain.
+    /// </para>
     /// </remarks>
     /// <example>
-    /// Async GET endpoint with database query:
+    /// Async GET endpoint with database query and CancellationToken:
     /// <code>
-    /// app.MapGet("/users/{id}", async (Guid id, IUserRepository repository) =>
+    /// app.MapGet("/users/{id}", async (Guid id, IUserRepository repository, CancellationToken ct) =>
     ///     await UserId.TryCreate(id)
-    ///         .BindAsync(repository.GetByIdAsync)
+    ///         .BindAsync(userId => repository.GetByIdAsync(userId, ct))
     ///         .MapAsync(user => new UserDto(user))
     ///         .ToHttpResultAsync());
     /// 
@@ -74,17 +84,17 @@ public static class HttpResultExtensionsAsync
     /// </code>
     /// </example>
     /// <example>
-    /// Async POST endpoint with multiple operations:
+    /// Async POST endpoint with multiple operations and CancellationToken:
     /// <code>
     /// app.MapPost("/orders", async (
     ///     CreateOrderRequest request,
     ///     IOrderService orderService,
-    ///     IEventBus eventBus) =>
+    ///     IEventBus eventBus,
+    ///     CancellationToken ct) =>
     ///     await CustomerId.TryCreate(request.CustomerId)
-    ///         .BindAsync(orderService.GetCustomerAsync)
-    ///         .BindAsync(customer => orderService.CreateOrderAsync(customer, request.Items))
-    ///         .TapAsync(async order => 
-    ///             await eventBus.PublishAsync(new OrderCreatedEvent(order.Id)))
+    ///         .BindAsync(customerId => orderService.GetCustomerAsync(customerId, ct))
+    ///         .BindAsync(customer => orderService.CreateOrderAsync(customer, request.Items, ct))
+    ///         .TapAsync(order => eventBus.PublishAsync(new OrderCreatedEvent(order.Id), ct))
     ///         .MapAsync(order => new OrderDto(order))
     ///         .ToHttpResultAsync());
     /// 
@@ -95,11 +105,11 @@ public static class HttpResultExtensionsAsync
     /// </code>
     /// </example>
     /// <example>
-    /// Async DELETE endpoint returning Unit:
+    /// Async DELETE endpoint returning Unit with CancellationToken:
     /// <code>
-    /// app.MapDelete("/users/{id}", async (Guid id, IUserRepository repository) =>
+    /// app.MapDelete("/users/{id}", async (Guid id, IUserRepository repository, CancellationToken ct) =>
     ///     await UserId.TryCreate(id)
-    ///         .BindAsync(repository.DeleteAsync)
+    ///         .BindAsync(userId => repository.DeleteAsync(userId, ct))
     ///         .ToHttpResultAsync());
     /// 
     /// // Success: 204 No Content (automatic for Unit)
@@ -112,13 +122,14 @@ public static class HttpResultExtensionsAsync
     /// app.MapPost("/payments", async (
     ///     ProcessPaymentRequest request,
     ///     IPaymentService paymentService,
-    ///     INotificationService notificationService) =>
+    ///     INotificationService notificationService,
+    ///     CancellationToken ct) =>
     ///     await Amount.TryCreate(request.Amount)
     ///         .Combine(CardNumber.TryCreate(request.CardNumber))
     ///         .BindAsync((amount, card) => 
-    ///             paymentService.ProcessPaymentAsync(amount, card))
-    ///         .TapAsync(async payment => 
-    ///             await notificationService.SendReceiptAsync(payment))
+    ///             paymentService.ProcessPaymentAsync(amount, card, ct))
+    ///         .TapAsync(payment => 
+    ///             notificationService.SendReceiptAsync(payment, ct))
     ///         .MapAsync(payment => new PaymentDto(payment))
     ///         .ToHttpResultAsync());
     /// 
@@ -158,9 +169,9 @@ public static class HttpResultExtensionsAsync
     /// <example>
     /// Using with cached data that might complete synchronously:
     /// <code>
-    /// app.MapGet("/users/{id}", async (Guid id, IUserCache cache) =>
+    /// app.MapGet("/users/{id}", async (Guid id, IUserCache cache, CancellationToken ct) =>
     ///     await UserId.TryCreate(id)
-    ///         .BindAsync(cache.GetUserAsync) // Returns ValueTask
+    ///         .BindAsync(userId => cache.GetUserAsync(userId, ct)) // Returns ValueTask
     ///         .MapAsync(user => new UserDto(user))
     ///         .ToHttpResultAsync());
     /// 
@@ -170,9 +181,9 @@ public static class HttpResultExtensionsAsync
     /// <example>
     /// High-performance endpoint with ValueTask throughout:
     /// <code>
-    /// app.MapGet("/metrics/{id}", async (string id, IMetricsService service) =>
+    /// app.MapGet("/metrics/{id}", async (string id, IMetricsService service, CancellationToken ct) =>
     ///     await MetricId.TryCreate(id)
-    ///         .BindAsync(service.GetMetricAsync) // ValueTask
+    ///         .BindAsync(metricId => service.GetMetricAsync(metricId, ct)) // ValueTask
     ///         .MapAsync(metric => new MetricDto(metric))
     ///         .ToHttpResultAsync());
     /// 
