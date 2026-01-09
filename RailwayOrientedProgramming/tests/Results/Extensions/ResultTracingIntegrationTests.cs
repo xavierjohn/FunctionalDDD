@@ -72,15 +72,15 @@ public class ResultTracingIntegrationTests
 
     #endregion
 
-    #region Compensation Path Integration Tests
+    #region Recovery Path Integration Tests
 
     [Fact]
-    public void CompensationPath_MultipleCompensations_FirstSucceeds()
+    public void RecoveryPath_MultipleRecoveries_FirstSucceeds()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
 
-        // Act - Multiple compensations, first one succeeds
+        // Act - Multiple recoveries, first one succeeds
         var result = Result.Success(5)
             .Ensure(x => x > 10, Error.Validation("Must be > 10"))
             .RecoverOnFailure(() => Result.Success(50))
@@ -90,9 +90,9 @@ public class ResultTracingIntegrationTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(50);
 
-        // First Compensate should execute and succeed
-        var compensateActivities = activityTest.AssertActivityCaptured("Compensate", 1);
-        compensateActivities.First().Status.Should().Be(ActivityStatusCode.Ok);
+        // First RecoverOnFailure should execute and succeed
+        var recoverActivities = activityTest.AssertActivityCaptured("RecoverOnFailure", 1);
+        recoverActivities.First().Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     #endregion
@@ -143,9 +143,9 @@ public class ResultTracingIntegrationTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be("GUEST_USER");
 
-        // Verify compensation was triggered
+        // Verify recovery was triggered
         activityTest.AssertActivityCaptured("Bind", 2);
-        activityTest.AssertActivityCapturedWithStatus("Compensate", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("RecoverOnFailure", ActivityStatusCode.Ok);
         activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
         activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
     }
@@ -270,8 +270,8 @@ public class ResultTracingIntegrationTests
         activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
         bindActivities[0].Status.Should().Be(ActivityStatusCode.Error); // Short-circuited
 
-        // Verify the compensation (Error ? Success)
-        activityTest.AssertActivityCapturedWithStatus("Compensate", ActivityStatusCode.Ok);
+        // Verify the recovery (Error ? Success)
+        activityTest.AssertActivityCapturedWithStatus("RecoverOnFailure", ActivityStatusCode.Ok);
 
         // Verify activities after compensation are OK
         bindActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
@@ -302,7 +302,7 @@ public class ResultTracingIntegrationTests
         var activities = activityTest.CapturedActivities;
         var ensureActivities = activities.Where(a => a.DisplayName == "Ensure").ToArray();
         var bindActivities = activities.Where(a => a.DisplayName == "Bind").ToArray();
-        var compensateActivities = activities.Where(a => a.DisplayName == "Compensate").ToArray();
+        var recoverActivities = activities.Where(a => a.DisplayName == "RecoverOnFailure").ToArray();
         var tapActivity = activities.First(a => a.DisplayName == "Tap");
 
         // Verify first transition: Success ? Error (at Bind)
@@ -310,14 +310,14 @@ public class ResultTracingIntegrationTests
         bindActivities[0].Status.Should().Be(ActivityStatusCode.Error);
         tapActivity.Status.Should().Be(ActivityStatusCode.Error);
 
-        // Verify first compensation: Error ? Success
-        compensateActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
+        // Verify first recovery: Error ? Success
+        recoverActivities[0].Status.Should().Be(ActivityStatusCode.Ok);
 
         // Verify second transition: Success ? Error (at Ensure)
         ensureActivities[1].Status.Should().Be(ActivityStatusCode.Error);
 
-        // Verify second compensation: Error ? Success
-        compensateActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
+        // Verify second recovery: Error ? Success
+        recoverActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
 
         // Verify final operation on success track
         bindActivities[1].Status.Should().Be(ActivityStatusCode.Ok);
@@ -349,37 +349,37 @@ public class ResultTracingIntegrationTests
         var activities = activityTest.CapturedActivities;
         var bindActivities = activities.Where(a => a.DisplayName == "Bind").ToArray();
         var tapActivity = activities.First(a => a.DisplayName == "Tap");
-        var compensateActivity = activities.First(a => a.DisplayName == "Compensate");
+        var recoverActivity = activities.First(a => a.DisplayName == "RecoverOnFailure");
 
         // Verify transitions
         bindActivities[0].Status.Should().Be(ActivityStatusCode.Ok);  // First Bind: Success
         bindActivities[1].Status.Should().Be(ActivityStatusCode.Error); // Second Bind: Error
         tapActivity.Status.Should().Be(ActivityStatusCode.Error);
-        compensateActivity.Status.Should().Be(ActivityStatusCode.Ok);
+        recoverActivity.Status.Should().Be(ActivityStatusCode.Ok);
         bindActivities[2].Status.Should().Be(ActivityStatusCode.Ok);  // Third Bind: Success after compensation
     }
 
     [Fact]
-    public void TrackTransition_FailedCompensation_MaintainsErrorTrack()
+    public void TrackTransition_FailedRecovery_MaintainsErrorTrack()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
 
-        // Act - Compensation fails, stays on error track
+        // Act - Recovery fails, stays on error track
         var result = Result.Success(5)
             .Ensure(x => x > 10, Error.Validation("Must be > 10"))     // TRANSITION: Success ? Error
-            .RecoverOnFailure(() => Result.Failure<int>(Error.Unexpected("Compensation failed"))) // Failed compensation
+            .RecoverOnFailure(() => Result.Failure<int>(Error.Unexpected("Recovery failed"))) // Failed recovery
             .Bind(x => Result.Success(x * 2))                           // Still on error track
             .Tap(x => Console.WriteLine($"Value: {x}"));                // Still on error track
 
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("unexpected.error");
-        result.Error.Detail.Should().Be("Compensation failed");
+        result.Error.Detail.Should().Be("Recovery failed");
 
-        // Verify transition and failed compensation
+        // Verify transition and failed recovery
         activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Error);
-        activityTest.AssertActivityCapturedWithStatus("Compensate", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("RecoverOnFailure", ActivityStatusCode.Error);
 
         // Verify subsequent operations stay on error track
         activityTest.AssertActivityCapturedWithStatus("Bind", ActivityStatusCode.Error);
