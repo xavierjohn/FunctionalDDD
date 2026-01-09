@@ -1,4 +1,4 @@
-namespace Example.Tests;
+﻿namespace Example.Tests;
 
 using FunctionalDdd;
 using System.Diagnostics;
@@ -103,7 +103,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
         }
     }
 
-    public class EmailGateway
+    public static class EmailGateway
     {
         public static Result<Unit> SendPromotionNotification(string email) => Result.Success<Unit>(new Unit());
 

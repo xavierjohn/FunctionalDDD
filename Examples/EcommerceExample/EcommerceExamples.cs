@@ -20,7 +20,7 @@ namespace EcommerceExample;
 /// - Domain Events and Change Tracking (UncommittedEvents, AcceptChanges)
 /// - Various Error Types (Validation, Domain, Conflict, NotFound, Unexpected)
 /// </summary>
-public class EcommerceExamples
+public static class EcommerceExamples
 {
     public static async Task RunExamplesAsync()
     {

@@ -46,6 +46,7 @@
     <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
     <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="All"/>
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">

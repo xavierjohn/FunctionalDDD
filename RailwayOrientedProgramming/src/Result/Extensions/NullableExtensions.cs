@@ -33,7 +33,7 @@ public static class NullableExtensions
     /// <param name="nullable">The nullable value to convert.</param>
     /// <param name="error">The error to return if the value is null.</param>
     /// <returns>A success Result containing the value if not null; otherwise a failure Result with the specified error.</returns>
-    public static Result<T> ToResult<T>(in this T? nullable, Error error)
+    public static Result<T> ToResult<T>(this T? nullable, Error error)
         where T : struct
     {
         using var activity = RopTrace.ActivitySource.StartActivity();

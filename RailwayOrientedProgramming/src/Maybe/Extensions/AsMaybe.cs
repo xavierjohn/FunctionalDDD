@@ -8,7 +8,7 @@ public static partial class MaybeExtensions
     /// Converts the <see cref="Nullable"/> struct to a <see cref="Maybe{T}"/>.
     /// </summary>
     /// <returns>Returns the <see cref="Maybe{T}"/> equivalent to the <see cref="Nullable{T}"/>.</returns>
-    public static Maybe<T> AsMaybe<T>(in this T? value) where T : struct =>
+    public static Maybe<T> AsMaybe<T>(this T? value) where T : struct =>
         value is null ? default : new(value.Value);
 
     /// <summary>
