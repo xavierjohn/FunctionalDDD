@@ -249,7 +249,7 @@ flowchart TB
     MATCH --> SUCCESS[Success Output]
     MATCH --> FAILURE[Failure Output]
     
-    ERROR --> COMPENSATE{Compensate<br/>Retry/Fallback?}
+    ERROR --> RecoverOnFailure{RecoverOnFailure<br/>Retry/Fallback?}
     RecoverOnFailure -->|Recover| TAP
     RecoverOnFailure -->|No Recovery| FAILURE
     
@@ -401,7 +401,7 @@ var result = GetUserFromCache(id)
 // Try cache first, fallback to database on ANY error
 ```
 
-**With predicate for selective compensation:**
+**With predicate for selective recovery:**
 ```csharp
 var result = CallExternalApi()
     .RecoverOnFailure(
@@ -629,7 +629,7 @@ flowchart TD
     START -->|Transform a value| MAP[Use Map]
     START -->|Log/Save/Notify| TAP[Use Tap]
     START -->|Add validation rule| ENSURE[Use Ensure]
-    START -->|Provide fallback| COMPENSATE[Use Compensate]
+    START -->|Provide fallback| RecoverOnFailure[Use RecoverOnFailure]
     START -->|Get final value| MATCH[Use Match]
     
     COMBINE --> CODE1["firstName.Combine(lastName)"]
@@ -645,7 +645,7 @@ flowchart TD
     style MAP fill:#FFF4E1
     style TAP fill:#FFE4B5
     style ENSURE fill:#E1FFE1
-    style COMPENSATE fill:#FFE4E1
+    style RecoverOnFailure fill:#FFE4E1
     style MATCH fill:#F0E68C
 ```
 

@@ -4,8 +4,8 @@ using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
 
 /// <summary>
-/// Benchmarks for Compensate operation testing error recovery and fallback mechanisms.
-/// Compensate is used to provide alternative paths when operations fail.
+/// Benchmarks for RecoverOnFailure operation testing error recovery and fallback mechanisms.
+/// RecoverOnFailure is used to provide alternative paths when operations fail.
 /// </summary>
 [MemoryDiagnoser]
 public class RecoverBenchmarks
@@ -25,28 +25,28 @@ public class RecoverBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public Result<int> Compensate_OnSuccess()
+    public Result<int> RecoverOnFailure_OnSuccess()
     {
         return _successResult
             .RecoverOnFailure(() => Result.Success(100));
     }
 
     [Benchmark]
-    public Result<int> Compensate_OnFailure()
+    public Result<int> RecoverOnFailure_OnFailure()
     {
         return _failureResult
             .RecoverOnFailure(() => Result.Success(100));
     }
 
     [Benchmark]
-    public Result<int> Compensate_OnFailure_WithErrorAccess()
+    public Result<int> RecoverOnFailure_OnFailure_WithErrorAccess()
     {
         return _failureResult
             .RecoverOnFailure(error => Result.Success(100));
     }
 
     [Benchmark]
-    public Result<int> Compensate_WithPredicate_Match()
+    public Result<int> RecoverOnFailure_WithPredicate_Match()
     {
         return _notFoundFailure
             .RecoverOnFailure(
@@ -55,7 +55,7 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_WithPredicate_NoMatch()
+    public Result<int> RecoverOnFailure_WithPredicate_NoMatch()
     {
         return _validationFailure
             .RecoverOnFailure(
@@ -64,7 +64,7 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_WithPredicate_AndErrorAccess_Match()
+    public Result<int> RecoverOnFailure_WithPredicate_AndErrorAccess_Match()
     {
         return _notFoundFailure
             .RecoverOnFailure(
@@ -73,7 +73,7 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_Chain_TwoLevels()
+    public Result<int> RecoverOnFailure_Chain_TwoLevels()
     {
         return _failureResult
             .RecoverOnFailure(() => Result.Failure<int>(Error.NotFound("Still failing")))
@@ -81,7 +81,7 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_Chain_ThreeLevels()
+    public Result<int> RecoverOnFailure_Chain_ThreeLevels()
     {
         return _failureResult
             .RecoverOnFailure(() => Result.Failure<int>(Error.NotFound("Fail 1")))
@@ -90,14 +90,14 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_WithComplexRecovery()
+    public Result<int> RecoverOnFailure_WithComplexRecovery()
     {
         return _failureResult
             .RecoverOnFailure(error => RecoverFromError(error));
     }
 
     [Benchmark]
-    public Result<int> Compensate_Multiple_DifferentErrorTypes()
+    public Result<int> RecoverOnFailure_Multiple_DifferentErrorTypes()
     {
         return _failureResult
             .RecoverOnFailure(error => error is NotFoundError, () => Result.Success(10))
@@ -106,14 +106,14 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_WithExpensiveRecovery()
+    public Result<int> RecoverOnFailure_WithExpensiveRecovery()
     {
         return _failureResult
             .RecoverOnFailure(error => PerformExpensiveRecovery());
     }
 
     [Benchmark]
-    public Result<int> Compensate_MixedWithBind_Success()
+    public Result<int> RecoverOnFailure_MixedWithBind_Success()
     {
         return _successResult
             .Bind(x => Result.Success(x * 2))
@@ -122,7 +122,7 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_MixedWithBind_Failure()
+    public Result<int> RecoverOnFailure_MixedWithBind_Failure()
     {
         return _failureResult
             .Bind(x => Result.Success(x * 2))
@@ -131,14 +131,14 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_WithDefaultValue()
+    public Result<int> RecoverOnFailure_WithDefaultValue()
     {
         return _failureResult
             .RecoverOnFailure(() => Result.Success(0));
     }
 
     [Benchmark]
-    public Result<string> Compensate_TypeTransformation()
+    public Result<string> RecoverOnFailure_TypeTransformation()
     {
         var failureString = Result.Failure<string>(Error.NotFound("String not found"));
         return failureString
@@ -146,7 +146,7 @@ public class RecoverBenchmarks
     }
 
     [Benchmark]
-    public Result<int> Compensate_NestedPredicates()
+    public Result<int> RecoverOnFailure_NestedPredicates()
     {
         return _failureResult
             .RecoverOnFailure(

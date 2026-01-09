@@ -34,7 +34,7 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Error.Unexpected("Compensated Error"));
+        output.Error.Should().Be(Error.Unexpected("Recovered Error"));
     }
 
     /// <summary>
@@ -70,14 +70,14 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     #endregion
 
     #region RecoverOnFailure_async_Result_sync_func
     [Fact]
-    public async Task Task_Result_success_and_compensate_func_does_not_execute()
+    public async Task Task_Result_success_and_recovery_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
         Result<string> output = await input.RecoverOnFailureAsync(GetErrorResult);
@@ -88,29 +88,29 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_func_does_execute_and_succeed()
+    public async Task Task_Result_failure_and_recovery_func_does_execute_and_succeed()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResult);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_func_does_execute_and_fail()
+    public async Task Task_Result_failure_and_recovery_func_does_execute_and_fail()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(GetErrorResult);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Error.Unexpected("Compensated Error"));
+        output.Error.Should().Be(Error.Unexpected("Recovered Error"));
     }
 
     [Fact]
-    public async Task Task_Compensate_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
+    public async Task Task_RecoverOnFailure_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(e =>
@@ -121,13 +121,13 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
     #endregion
 
     #region RecoverOnFailure_sync_Result_async_func
     [Fact]
-    public async Task Result_success_and_compensate_async_func_does_not_execute()
+    public async Task Result_success_and_recovery_async_func_does_not_execute()
     {
         Result<string> input = Result.Success("Success");
         Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
@@ -138,25 +138,25 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Result_failure_and_compensate_async_func_does_execute_and_succeed()
+    public async Task Result_failure_and_recovery_async_func_does_execute_and_succeed()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
         Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResultAsync);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Result_failure_and_compensate_async_func_does_execute_and_fail()
+    public async Task Result_failure_and_recovery_async_func_does_execute_and_fail()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
         Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Error.Unexpected("Compensated Error"));
+        output.Error.Should().Be(Error.Unexpected("Recovered Error"));
     }
 
     [Fact]
@@ -171,14 +171,14 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     #endregion
 
     #region RecoverOnFailure_async_Result_async_func
     [Fact]
-    public async Task Task_Result_success_and_compensate_async_func_does_not_execute()
+    public async Task Task_Result_success_and_recovery_async_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
         Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
@@ -189,29 +189,29 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_succeed()
+    public async Task Task_Result_failure_and_recovery_async_func_does_execute_and_succeed()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResultAsync);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_fail()
+    public async Task Task_Result_failure_and_recovery_async_func_does_execute_and_fail()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
-        output.Error.Should().Be(Error.Unexpected("Compensated Error"));
+        output.Error.Should().Be(Error.Unexpected("Recovered Error"));
     }
 
     [Fact]
-    public async Task Task_Compensate_async_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
+    public async Task Task_RecoverOnFailure_async_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(async e =>
@@ -222,7 +222,7 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
     #endregion
 
@@ -256,7 +256,7 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     /// <summary>
@@ -288,7 +288,7 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     /// <summary>
@@ -308,7 +308,7 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     /// <summary>
@@ -331,7 +331,7 @@ public class RecoverOnFailureTests
 
     #region RecoverOnFailure_with_predicate_async_Result_sync_func
     [Fact]
-    public async Task Task_Result_success_and_compensate_with_predicate_func_does_not_execute()
+    public async Task Task_Result_success_and_recovery_with_predicate_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
@@ -342,18 +342,18 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_func_does_execute_when_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_func_does_not_execute_when_not_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
@@ -364,7 +364,7 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_func_does_execute_when_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_and_error_param_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
@@ -375,11 +375,11 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_func_does_not_execute_when_not_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_and_error_param_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e => GetSuccessResult());
@@ -392,7 +392,7 @@ public class RecoverOnFailureTests
 
     #region RecoverOnFailure_with_predicate_sync_Result_async_func
     [Fact]
-    public async Task Result_success_and_compensate_with_predicate_async_func_does_not_execute()
+    public async Task Result_success_and_recovery_with_predicate_async_func_does_not_execute()
     {
         Result<string> input = Result.Success("Success");
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
@@ -403,18 +403,18 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Result_failure_and_compensate_with_predicate_async_func_does_execute_when_matches()
+    public async Task Result_failure_and_recovery_with_predicate_async_func_does_execute_when_matches()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Not found"));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Result_failure_and_compensate_with_predicate_async_func_does_not_execute_when_not_matches()
+    public async Task Result_failure_and_recovery_with_predicate_async_func_does_not_execute_when_not_matches()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
@@ -425,7 +425,7 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_execute_when_matches()
+    public async Task Result_failure_and_recovery_with_predicate_and_error_param_async_func_does_execute_when_matches()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Not found"));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
@@ -436,11 +436,11 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_not_execute_when_not_matches()
+    public async Task Result_failure_and_recovery_with_predicate_and_error_param_async_func_does_not_execute_when_not_matches()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e => GetSuccessResultAsync());
@@ -454,7 +454,7 @@ public class RecoverOnFailureTests
 
     #region RecoverOnFailure_with_predicate_async_Result_async_func
     [Fact]
-    public async Task Task_Result_success_and_compensate_with_predicate_async_func_does_not_execute()
+    public async Task Task_Result_success_and_recovery_with_predicate_async_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
@@ -465,18 +465,18 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_async_func_does_execute_when_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_async_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_async_func_does_not_execute_when_not_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_async_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
@@ -487,7 +487,7 @@ public class RecoverOnFailureTests
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_execute_when_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_and_error_param_async_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
@@ -498,11 +498,11 @@ public class RecoverOnFailureTests
 
         _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
-        output.Value.Should().Be("Compensated Success");
+        output.Value.Should().Be("Recovered Success");
     }
 
     [Fact]
-    public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_not_execute_when_not_matches()
+    public async Task Task_Result_failure_and_recovery_with_predicate_and_error_param_async_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
         Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e => GetSuccessResultAsync());
@@ -513,27 +513,202 @@ public class RecoverOnFailureTests
     }
     #endregion
 
+    #region RecoverOnFailure_ValueTask_sync_func
+    [Fact]
+    public async Task ValueTask_Result_success_and_recovery_func_does_not_execute()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Success("Success"));
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResult);
+
+        _recoveryFunctionCalled.Should().BeFalse();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_func_does_execute_and_succeed()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
+        Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResult);
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_func_with_error_param()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
+        Result<string> output = await input.RecoverOnFailureAsync(e =>
+        {
+            e.Should().Be(Error.Unexpected("Error"));
+            return GetSuccessResult();
+        });
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+    #endregion
+
+    #region RecoverOnFailure_ValueTask_async_func
+    [Fact]
+    public async Task ValueTask_Result_success_and_recovery_ValueTask_func_does_not_execute()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Success("Success"));
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultValueTaskAsync);
+
+        _recoveryFunctionCalled.Should().BeFalse();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_ValueTask_func_does_execute_and_succeed()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
+        Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResultValueTaskAsync);
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_ValueTask_func_with_error_param()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
+        Result<string> output = await input.RecoverOnFailureAsync(e =>
+        {
+            e.Should().Be(Error.Unexpected("Error"));
+            return GetSuccessResultValueTaskAsync();
+        });
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+    #endregion
+
+    #region RecoverOnFailure_ValueTask_with_predicate_sync_func
+    [Fact]
+    public async Task ValueTask_Result_success_and_recovery_with_predicate_func_does_not_execute()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Success("Success"));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
+
+        _recoveryFunctionCalled.Should().BeFalse();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_with_predicate_func_does_execute_when_matches()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_with_predicate_func_does_not_execute_when_not_matches()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
+
+        _recoveryFunctionCalled.Should().BeFalse();
+        output.IsFailure.Should().BeTrue();
+        output.Error.Should().Be(Error.Unexpected("Error"));
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_with_predicate_and_error_param_func_does_execute_when_matches()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
+        {
+            e.Should().Be(Error.NotFound("Not found"));
+            return GetSuccessResult();
+        });
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+    #endregion
+
+    #region RecoverOnFailure_ValueTask_with_predicate_async_func
+    [Fact]
+    public async Task ValueTask_Result_success_and_recovery_with_predicate_ValueTask_func_does_not_execute()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Success("Success"));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultValueTaskAsync);
+
+        _recoveryFunctionCalled.Should().BeFalse();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_with_predicate_ValueTask_func_does_execute_when_matches()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultValueTaskAsync);
+
+        _recoveryFunctionCalled.Should().BeTrue();
+        output.IsSuccess.Should().BeTrue();
+        output.Value.Should().Be("Recovered Success");
+    }
+
+    [Fact]
+    public async Task ValueTask_Result_failure_and_recovery_with_predicate_ValueTask_func_does_not_execute_when_not_matches()
+    {
+        ValueTask<Result<string>> input = ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultValueTaskAsync);
+
+        _recoveryFunctionCalled.Should().BeFalse();
+        output.IsFailure.Should().BeTrue();
+        output.Error.Should().Be(Error.Unexpected("Error"));
+    }
+    #endregion
+
     private Result<string> GetSuccessResult()
     {
         _recoveryFunctionCalled = true;
-        return Result.Success("Compensated Success");
+        return Result.Success("Recovered Success");
     }
 
     private Result<string> GetErrorResult()
     {
         _recoveryFunctionCalled = true;
-        return Result.Failure<string>(Error.Unexpected("Compensated Error"));
+        return Result.Failure<string>(Error.Unexpected("Recovered Error"));
     }
 
     private Task<Result<string>> GetSuccessResultAsync()
     {
         _recoveryFunctionCalled = true;
-        return Task.FromResult(Result.Success("Compensated Success"));
+        return Task.FromResult(Result.Success("Recovered Success"));
     }
 
     private Task<Result<string>> GetErrorResultAsync()
     {
         _recoveryFunctionCalled = true;
-        return Task.FromResult(Result.Failure<string>(Error.Unexpected("Compensated Error")));
+        return Task.FromResult(Result.Failure<string>(Error.Unexpected("Recovered Error")));
+    }
+
+    private ValueTask<Result<string>> GetSuccessResultValueTaskAsync()
+    {
+        _recoveryFunctionCalled = true;
+        return ValueTask.FromResult(Result.Success("Recovered Success"));
+    }
+
+    private ValueTask<Result<string>> GetErrorResultValueTaskAsync()
+    {
+        _recoveryFunctionCalled = true;
+        return ValueTask.FromResult(Result.Failure<string>(Error.Unexpected("Recovered Error")));
     }
 }

@@ -1,17 +1,57 @@
-# Auto detect text files and perform LF normalization
+﻿# Auto detect text files and perform LF normalization
 * text=auto
 
-# Custom for Visual Studio
-*.cs     diff=csharp
+# Source code files - enforce UTF-8
+*.cs text diff=csharp encoding=utf-8
+*.csx text diff=csharp encoding=utf-8
+*.vb text encoding=utf-8
+*.fs text encoding=utf-8
 
-# Standard to msysgit
-*.doc	 diff=astextplain
-*.DOC	 diff=astextplain
-*.docx diff=astextplain
-*.DOCX diff=astextplain
-*.dot  diff=astextplain
-*.DOT  diff=astextplain
-*.pdf  diff=astextplain
-*.PDF	 diff=astextplain
-*.rtf	 diff=astextplain
-*.RTF	 diff=astextplain
+# Documentation - enforce UTF-8 for emoji support
+*.md text encoding=utf-8
+*.txt text encoding=utf-8
+
+# Configuration files
+*.json text encoding=utf-8
+*.xml text encoding=utf-8
+*.yml text encoding=utf-8
+*.yaml text encoding=utf-8
+*.config text encoding=utf-8
+*.props text encoding=utf-8
+*.targets text encoding=utf-8
+.editorconfig text encoding=utf-8
+
+# Project files
+*.csproj text encoding=utf-8
+*.vbproj text encoding=utf-8
+*.fsproj text encoding=utf-8
+*.sln text encoding=utf-8 merge=union
+
+# Scripts
+*.ps1 text encoding=utf-8
+*.sh text eol=lf encoding=utf-8
+*.cmd text encoding=utf-8
+*.bat text encoding=utf-8
+
+# Standard to msysgit - Binary files
+*.doc	 diff=astextplain binary
+*.DOC	 diff=astextplain binary
+*.docx diff=astextplain binary
+*.DOCX diff=astextplain binary
+*.dot  diff=astextplain binary
+*.DOT  diff=astextplain binary
+*.pdf  diff=astextplain binary
+*.PDF	 diff=astextplain binary
+*.rtf	 diff=astextplain binary
+*.RTF	 diff=astextplain binary
+
+# Other binary files
+*.dll binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.snk binary

@@ -155,7 +155,7 @@ public class AsyncBenchmarks
     }
 
     [Benchmark]
-    public async Task<Result<int>> CompensateAsync_OnFailure()
+    public async Task<Result<int>> RecoverOnFailureAsync_OnFailure()
     {
         return await _failureResult
             .RecoverOnFailureAsync(() => Task.FromResult(Result.Success(100)));

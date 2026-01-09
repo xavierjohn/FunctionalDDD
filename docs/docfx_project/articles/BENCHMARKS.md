@@ -1,4 +1,4 @@
-﻿# Performance Benchmarks
+# Performance Benchmarks
 
 This document provides detailed performance analysis of the FunctionalDDD library using [BenchmarkDotNet](https://benchmarkdotnet.org/).
 
@@ -351,7 +351,7 @@ dotnet run --project Benchmark/Benchmark.csproj -c Release -- --filter *ROP* --m
 - `AsyncBenchmarks` - Asynchronous operations
 - `MaybeBenchmarks` - Optional value handling
 - `ErrorBenchmarks` - Error creation and aggregation
-- `CompensateBenchmarks` - Error recovery patterns
+- `RecoverOnFailureBenchmarks` - Error recovery patterns
 
 ## Interpreting Results
 

@@ -17,7 +17,7 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
   - [Map](#map)
   - [Tap](#tap)
   - [Ensure](#ensure)
-  - [Compensate](#compensate)
+  - [RecoverOnFailure](#RecoverOnFailure)
   - [Combine](#combine)
 - [Advanced Features](#advanced-features)
   - [LINQ Query Syntax](#linq-query-syntax)
@@ -375,53 +375,53 @@ var result = await GetUserAsync("123")
                 Error.Validation("Email not verified"));
 ```
 
-### Compensate
+### RecoverOnFailure
 
-`Compensate` provides error recovery by calling a fallback function when a result fails. Useful for providing default values or alternative paths.
+`RecoverOnFailure` provides error recovery by calling a fallback function when a result fails. Useful for providing default values or alternative paths.
 
 **Use when:** You need fallback behavior or error recovery.
 
-**Basic compensation:**
+**Basic recovery:**
 
 ```csharp
-// Compensate without accessing the error
+// RecoverOnFailure without accessing the error
 Result<User> result = GetUser(userId)
-    .Compensate(() => CreateGuestUser());
+    .RecoverOnFailure(() => CreateGuestUser());
 
-// Compensate with access to the error
+// RecoverOnFailure with access to the error
 Result<User> result = GetUser(userId)
-    .Compensate(error => CreateUserFromError(error));
+    .RecoverOnFailure(error => CreateUserFromError(error));
 ```
 
-**Conditional compensation with predicate:**
+**Conditional recovery with predicate:**
 
-Compensate only when specific error conditions are met:
+RecoverOnFailure only when specific error conditions are met:
 
 ```csharp
-// Compensate only for NotFound errors
+// RecoverOnFailure only for NotFound errors
 Result<User> result = GetUser(userId)
-    .Compensate(
+    .RecoverOnFailure(
         predicate: error => error is NotFoundError,
         func: () => CreateDefaultUser()
     );
 
-// Compensate with error context
+// RecoverOnFailure with error context
 Result<User> result = GetUser(userId)
-    .Compensate(
+    .RecoverOnFailure(
         predicate: error => error is NotFoundError,
         func: error => CreateUserFromError(error)
     );
 
-// Compensate based on error code
+// RecoverOnFailure based on error code
 Result<Data> result = FetchData(id)
-    .Compensate(
+    .RecoverOnFailure(
         predicate: error => error.Code == "not.found.error",
         func: () => GetCachedData(id)
     );
 
-// Compensate for multiple error types
+// RecoverOnFailure for multiple error types
 Result<Config> result = LoadConfig()
-    .Compensate(
+    .RecoverOnFailure(
         predicate: error => error is NotFoundError or UnauthorizedError,
         func: () => GetDefaultConfig()
     );
@@ -431,7 +431,7 @@ Result<Config> result = LoadConfig()
 
 ```csharp
 var result = await GetUserAsync(userId)
-    .CompensateAsync(async error => await GetFromCacheAsync(userId));
+    .RecoverOnFailureAsync(async error => await GetFromCacheAsync(userId));
 ```
 
 ### Combine
@@ -602,9 +602,9 @@ public Result<Order> ProcessOrder(OrderRequest request)
 public Result<Config> LoadConfiguration()
 {
     return LoadFromFile("config.json")
-        .Compensate(error => error is NotFoundError, 
+        .RecoverOnFailure(error => error is NotFoundError, 
                    () => LoadFromEnvironment())
-        .Compensate(error => error is NotFoundError, 
+        .RecoverOnFailure(error => error is NotFoundError, 
                    () => GetDefaultConfig())
         .Ensure(cfg => cfg.IsValid, 
                Error.Validation("Invalid configuration"));

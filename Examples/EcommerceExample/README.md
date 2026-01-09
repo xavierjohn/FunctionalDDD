@@ -1,10 +1,10 @@
-﻿# E-Commerce Order Processing Example
+# E-Commerce Order Processing Example
 
 This example demonstrates a complete e-commerce order processing system using **Railway Oriented Programming** (ROP) and **Domain-Driven Design** (DDD) principles.
 
 ## Overview
 
-The example showcases how to build a robust order processing system with proper error handling, validation, and compensation logic using the FunctionalDDD library.
+The example showcases how to build a robust order processing system with proper error handling, validation, and recovery logic using the FunctionalDDD library.
 
 ## Key Components
 
@@ -26,7 +26,7 @@ The example showcases how to build a robust order processing system with proper 
 - **NotificationService**: Sends email notifications to customers
 
 ### Workflows
-- **OrderWorkflow**: Orchestrates the complete order processing flow with error handling and compensations
+- **OrderWorkflow**: Orchestrates the complete order processing flow with error handling and recoverys
 
 ## Features Demonstrated
 
@@ -43,14 +43,14 @@ return await Order.TryCreate(customerId)
     );
 ```
 
-### 2. **Error Handling with Compensation**
-The workflow demonstrates compensation patterns for:
+### 2. **Error Handling with recovery**
+The workflow demonstrates recovery patterns for:
 - **Payment failures**: Automatic retry on gateway timeouts
 - **Inventory shortages**: Suggesting alternative products
 - **Transaction rollback**: Releasing reserved inventory on failures
 
 ```csharp
-.CompensateAsync(
+.RecoverOnFailureAsync(
     predicate: error => error is UnexpectedError,
     func: async () => await RetryPaymentAsync(order, paymentInfo)
 )
@@ -103,7 +103,7 @@ Shows how payment failures are handled with:
 - Domain event publishing
 
 ### Example 4: Insufficient Inventory
-Demonstrates compensation when items are out of stock.
+Demonstrates recovery when items are out of stock.
 
 ### Example 5: Domain Events and Change Tracking
 Deep dive into domain events, `UncommittedEvents()`, `AcceptChanges()`, and `IsChanged` property.
@@ -131,7 +131,7 @@ Deep dive into domain events, `UncommittedEvents()`, `AcceptChanges()`, and `IsC
 
 1. **Composability**: Complex workflows are built by composing simple operations
 2. **Explicit Error Handling**: All error cases are explicit and typed
-3. **Compensation Patterns**: Automatic rollback and retry logic
+3. **recovery Patterns**: Automatic rollback and retry logic
 4. **Type Safety**: Value objects prevent primitive obsession
 5. **Testability**: Each component can be tested independently
 
@@ -162,7 +162,7 @@ dotnet run
 This will execute all 5 examples:
 1. **Example 1**: Simple order creation with domain events
 2. **Example 2**: Complete order workflow with event publishing
-3. **Example 3**: Payment failure with compensation
+3. **Example 3**: Payment failure with recovery
 4. **Example 4**: Insufficient inventory handling
 5. **Example 5**: Domain events and change tracking
 

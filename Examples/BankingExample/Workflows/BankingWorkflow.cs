@@ -20,7 +20,7 @@ public class BankingWorkflow
 
     /// <summary>
     /// Processes a secure withdrawal with fraud detection.
-    /// Demonstrates: Ensure, Bind, EnsureAsync, TapAsync, Compensate, Domain Events
+    /// Demonstrates: Ensure, Bind, EnsureAsync, TapAsync, RecoverOnFailure, Domain Events
     /// </summary>
     public async Task<Result<BankAccount>> ProcessSecureWithdrawalAsync(
         BankAccount account,
@@ -62,7 +62,7 @@ public class BankingWorkflow
                     await Task.FromResult(account.Freeze("Suspicious activity detected"));
                     await PublishEventsAndAcceptChangesAsync(account, cancellationToken);
                     await NotifySecurityTeamAsync(account.CustomerId, error, cancellationToken);
-                    return error; // Still return error after compensation
+                    return error; // Still return error after recovery
                 }
             );
     }
@@ -133,7 +133,7 @@ public class BankingWorkflow
 
     /// <summary>
     /// Processes multiple transactions in batch with rollback on any failure.
-    /// Demonstrates: Transaction-like behavior with compensation and event handling.
+    /// Demonstrates: Transaction-like behavior with recovery and event handling.
     /// </summary>
     public async Task<Result<BankAccount>> ProcessBatchTransactionsAsync(
         BankAccount account,

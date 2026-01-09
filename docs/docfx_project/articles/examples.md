@@ -7,9 +7,9 @@ This page provides quick code snippets to get you started. For comprehensive rea
 The repository includes production-ready examples demonstrating complete systems:
 
 ### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample)
-Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, compensation patterns, and transaction-like behavior.
+Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, recovery patterns, and transaction-like behavior.
 
-**Key Concepts**: Aggregate lifecycle, compensation, parallel validation, async workflows
+**Key Concepts**: Aggregate lifecycle, recovery, parallel validation, async workflows
 
 ### 🏦 [Banking Transactions](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample)
 Banking system with fraud detection, daily limits, overdraft protection, and interest calculations. Shows security patterns and state machines.
@@ -196,7 +196,7 @@ var result = await ProcessPaymentAsync(order, cancellationToken)
 - Side effects don't change the `Result` value
 - Perfect for logging, metrics, and notifications
 
-### Error Recovery with Compensate
+### Error Recovery with RecoverOnFailure
 
 Provide fallback behavior when specific errors occur:
 
@@ -213,8 +213,8 @@ var result = await GetUserFromCacheAsync(userId, cancellationToken)
 ```
 
 **Key Points**:
-- `CompensateAsync` provides fallback on specific error types
-- Predicate determines which errors trigger compensation
+- `RecoverOnFailureAsync` provides fallback on specific error types
+- Predicate determines which errors trigger recovery
 - Useful for retry logic, fallback services, default values
 
 ### Retry Transient Failures

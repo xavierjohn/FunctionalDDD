@@ -1,5 +1,11 @@
-# Remove the line below if you want to inherit .editorconfig settings from higher directories
+﻿# Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
+
+# All files
+[*]
+charset = utf-8-bom
+insert_final_newline = true
+trim_trailing_whitespace = true
 
 # C# files
 [*.cs]
@@ -305,3 +311,13 @@ dotnet_diagnostic.CA5359.severity = warning
 dotnet_diagnostic.CA5360.severity = warning
 dotnet_diagnostic.CA5363.severity = warning
 dotnet_diagnostic.CA5364.severity = warning
+
+# Markdown files
+[*.md]
+charset = utf-8-bom
+trim_trailing_whitespace = false
+
+# JSON, XML, YAML files
+[*.{json,xml,yml,yaml}]
+charset = utf-8-bom
+indent_size = 2

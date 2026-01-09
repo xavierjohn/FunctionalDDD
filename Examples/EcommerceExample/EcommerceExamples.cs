@@ -1,4 +1,4 @@
-using EcommerceExample.Aggregates;
+﻿using EcommerceExample.Aggregates;
 using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;
@@ -16,7 +16,7 @@ namespace EcommerceExample;
 /// - Aggregates with Domain Events (Order)
 /// - Domain Services (PaymentService, InventoryService, NotificationService)
 /// - Complex Workflows with error handling
-/// - Compensation and retry logic
+/// - recovery and retry logic
 /// - Domain Events and Change Tracking (UncommittedEvents, AcceptChanges)
 /// - Various Error Types (Validation, Domain, Conflict, NotFound, Unexpected)
 /// </summary>
@@ -29,7 +29,7 @@ public class EcommerceExamples
 
         await Example1_SimpleOrderCreation();
         await Example2_CompleteOrderWorkflow();
-        await Example3_PaymentFailureWithCompensation();
+        await Example3_PaymentFailureWithrecovery();
         await Example4_InsufficientInventory();
         await Example5_DomainEventsAndChangeTracking();
     }
@@ -62,8 +62,8 @@ public class EcommerceExamples
                 Console.WriteLine($"After AcceptChanges: {order.UncommittedEvents().Count} uncommitted event(s)");
             })
             .Match(
-                onSuccess: ok => $"? Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
-                onFailure: err => $"? Order creation failed: {err.Detail}"
+                onSuccess: ok => $"✅ Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
+                onFailure: err => $"❌ Order creation failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -100,8 +100,8 @@ public class EcommerceExamples
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
-                onSuccess: ok => $"? Order {ok.Id} processed successfully! Status: {ok.Status}, Total: {ok.Total}",
-                onFailure: err => $"? Order processing failed: {err.Detail}"
+                onSuccess: ok => $"✅ Order {ok.Id} processed successfully! Status: {ok.Status}, Total: {ok.Total}",
+                onFailure: err => $"❌ Order processing failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -109,12 +109,12 @@ public class EcommerceExamples
     }
 
     /// <summary>
-    /// Example 3: Payment failure with compensation (retry logic).
-    /// Demonstrates: CompensateAsync, TapErrorAsync, error recovery
+    /// Example 3: Payment failure with recovery (retry logic).
+    /// Demonstrates: RecoverOnFailureAsync, TapErrorAsync, error recovery
     /// </summary>
-    private static async Task Example3_PaymentFailureWithCompensation()
+    private static async Task Example3_PaymentFailureWithrecovery()
     {
-        Console.WriteLine("Example 3: Payment Failure with Compensation");
+        Console.WriteLine("Example 3: Payment Failure with recovery");
         Console.WriteLine("---------------------------------------------");
 
         var paymentService = new PaymentService();
@@ -136,8 +136,8 @@ public class EcommerceExamples
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
-                onSuccess: ok => $"? Order processed: {ok.Status}",
-                onFailure: err => $"?? Expected failure - Payment declined: {err.Detail}"
+                onSuccess: ok => $"✅ Order processed: {ok.Status}",
+                onFailure: err => $"⚠️ Expected failure - Payment declined: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -145,7 +145,7 @@ public class EcommerceExamples
     }
 
     /// <summary>
-    /// Example 4: Insufficient inventory with compensation.
+    /// Example 4: Insufficient inventory with recovery.
     /// Demonstrates: Error.Domain for business rule violations
     /// </summary>
     private static async Task Example4_InsufficientInventory()
@@ -172,8 +172,8 @@ public class EcommerceExamples
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
-                onSuccess: ok => $"? Order processed: {ok.Status}",
-                onFailure: err => $"?? Expected failure - Insufficient inventory: {err.Detail}"
+                onSuccess: ok => $"✅ Order processed: {ok.Status}",
+                onFailure: err => $"⚠️ Expected failure - Insufficient inventory: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -198,7 +198,7 @@ public class EcommerceExamples
 
         if (orderResult.IsFailure)
         {
-            Console.WriteLine($"? Order creation failed: {orderResult.Error.Detail}");
+            Console.WriteLine($"❌ Order creation failed: {orderResult.Error.Detail}");
             return;
         }
 

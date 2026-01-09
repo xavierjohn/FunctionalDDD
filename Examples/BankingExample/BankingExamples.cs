@@ -14,7 +14,7 @@ namespace BankingExample;
 /// - Aggregates with domain events
 /// - Change tracking with UncommittedEvents and AcceptChanges
 /// - Various error types (Validation, Domain, Conflict, Unauthorized)
-/// - Async workflows with ParallelAsync and CompensateAsync
+/// - Async workflows with ParallelAsync and RecoverOnFailureAsync
 /// - Value objects with validation
 /// </summary>
 public class BankingExamples
@@ -130,7 +130,7 @@ public class BankingExamples
 
     /// <summary>
     /// Example 3: Fraud detection with various error types.
-    /// Demonstrates: Error.Domain with custom codes, CompensateAsync
+    /// Demonstrates: Error.Domain with custom codes, RecoverOnFailureAsync
     /// </summary>
     private static async Task Example3_FraudDetection()
     {
