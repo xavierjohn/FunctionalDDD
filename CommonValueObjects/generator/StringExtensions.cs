@@ -62,11 +62,20 @@ internal static class StringExtensions
     /// For null or empty strings, returns the lowercase version.
     /// </para>
     /// </remarks>
-    public static string ToCamelCase(this string str)
+    public static string ToCamelCase(this string? str)
     {
-        if (!string.IsNullOrEmpty(str) && str.Length > 1)
-            return char.ToLowerInvariant(str[0]) + str.Substring(1);
+        if (string.IsNullOrEmpty(str))
+        {
+            return string.Empty;
+        }
 
-        return str.ToLowerInvariant();
+        var value = str!;
+
+        if (value.Length == 1)
+        {
+            return value.ToLowerInvariant();
+        }
+
+        return char.ToLowerInvariant(value[0]) + value.Substring(1);
     }
 }
