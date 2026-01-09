@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
   
   <PropertyGroup Label="General">
@@ -34,6 +34,12 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Coverage">
+    <!-- Exclude generated regex state machines and other obj artifacts from coverage to keep metrics meaningful -->
+    <ExcludeByFile>$(ExcludeByFile);**/System.Text.RegularExpressions.Generator/**/*.g.cs;**/System.Text.RegularExpressions.Generator/**/*.cs;**/obj/**/RegexGenerator.g.cs</ExcludeByFile>
+    <Exclude>$(Exclude);[System.Text.RegularExpressions.Generated.*]*</Exclude>
   </PropertyGroup>
 
   <ItemGroup>
