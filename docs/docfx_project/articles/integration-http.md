@@ -544,7 +544,7 @@ public async Task<Result<User>> GetUserAsync(string userId, CancellationToken ct
 
 1. **Explore** [ASP.NET Core Integration](integration-aspnet.md) to convert Result back to HTTP responses
 2. **Learn** [Error Handling](error-handling.md) for working with different error types
-3. **Master** [Async & Cancellation](async-cancellation.md) for proper cancellation support
+3. **Master** [Working with Async Operations](basics.md#working-with-async-operations) for proper cancellation support
 4. **See** [Examples](examples.md) for more real-world patterns
 
 ## API Reference

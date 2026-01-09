@@ -292,15 +292,18 @@ Model your **business domain** with rich types that enforce rules at compile tim
 ## Get Started
 
 ```bash
-# Core library
+# Core library - Railway Oriented Programming
 dotnet add package FunctionalDDD.RailwayOrientedProgramming
 
-# ASP.NET Core integration  
+# Domain-Driven Design - Entities, Aggregates, Value Objects
+dotnet add package FunctionalDDD.DomainDrivenDesign
+
+# ASP.NET Core integration - ToActionResult, ToHttpResult
 dotnet add package FunctionalDDD.Asp
 
-# Value objects with source generator
+# Value objects with source generator - RequiredString, etc.
 dotnet add package FunctionalDDD.CommonValueObjects
 dotnet add package FunctionalDDD.CommonValueObjectGenerator
 ```
 
-**Ready to dive deeper?** Check out the [Introduction](articles/intro.md) or browse the [API Reference](api/FunctionalDdd.html).
+**Ready to dive deeper?** Check out the [Introduction](articles/intro.md) or browse the [API Documentation](api/index.md).
