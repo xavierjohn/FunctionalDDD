@@ -1,28 +1,28 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.TapError;
+namespace RailwayOrientedProgramming.Tests.Results.Extensions.TapOnFailure;
 
 using FunctionalDdd.Testing;
 
-public class TapErrorTests : TestBase
+public class TapOnFailureTests : TestBase
 {
     private bool _actionExecuted;
     private Error? _capturedError;
 
-    public TapErrorTests()
+    public TapOnFailureTests()
     {
         _actionExecuted = false;
         _capturedError = null;
     }
 
-    #region TapError with Action
+    #region TapOnFailure with Action
 
     [Fact]
-    public void TapError_WithAction_FailureResult_ExecutesAction()
+    public void TapOnFailure_WithAction_FailureResult_ExecutesAction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1);
 
         // Act
-        var actual = result.TapError(() => _actionExecuted = true);
+        var actual = result.TapOnFailure(() => _actionExecuted = true);
 
         // Assert
         _actionExecuted.Should().BeTrue();
@@ -31,13 +31,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public void TapError_WithAction_SuccessResult_DoesNotExecuteAction()
+    public void TapOnFailure_WithAction_SuccessResult_DoesNotExecuteAction()
     {
         // Arrange
         var result = Result.Success(42);
 
         // Act
-        var actual = result.TapError(() => _actionExecuted = true);
+        var actual = result.TapOnFailure(() => _actionExecuted = true);
 
         // Assert
         _actionExecuted.Should().BeFalse();
@@ -47,16 +47,16 @@ public class TapErrorTests : TestBase
 
     #endregion
 
-    #region TapError with Action<Error>
+    #region TapOnFailure with Action<Error>
 
     [Fact]
-    public void TapError_WithActionError_FailureResult_ExecutesActionWithError()
+    public void TapOnFailure_WithActionError_FailureResult_ExecutesActionWithError()
     {
         // Arrange
         var result = Result.Failure<int>(Error1);
 
         // Act
-        var actual = result.TapError(error =>
+        var actual = result.TapOnFailure(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -71,13 +71,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public void TapError_WithActionError_SuccessResult_DoesNotExecuteAction()
+    public void TapOnFailure_WithActionError_SuccessResult_DoesNotExecuteAction()
     {
         // Arrange
         var result = Result.Success(42);
 
         // Act
-        var actual = result.TapError(error =>
+        var actual = result.TapOnFailure(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -94,13 +94,13 @@ public class TapErrorTests : TestBase
     #region TapErrorAsync - Task<Result<T>> with Action
 
     [Fact]
-    public async Task TapErrorAsync_TaskResult_WithAction_FailureResult_ExecutesAction()
+    public async Task TapOnFailureAsync_TaskResult_WithAction_FailureResult_ExecutesAction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1).AsTask();
 
         // Act
-        var actual = await result.TapErrorAsync(() => _actionExecuted = true);
+        var actual = await result.TapOnFailureAsync(() => _actionExecuted = true);
 
         // Assert
         _actionExecuted.Should().BeTrue();
@@ -108,13 +108,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_TaskResult_WithAction_SuccessResult_DoesNotExecuteAction()
+    public async Task TapOnFailureAsync_TaskResult_WithAction_SuccessResult_DoesNotExecuteAction()
     {
         // Arrange
         var result = Result.Success(42).AsTask();
 
         // Act
-        var actual = await result.TapErrorAsync(() => _actionExecuted = true);
+        var actual = await result.TapOnFailureAsync(() => _actionExecuted = true);
 
         // Assert
         _actionExecuted.Should().BeFalse();
@@ -122,13 +122,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_TaskResult_WithActionError_FailureResult_ExecutesAction()
+    public async Task TapOnFailureAsync_TaskResult_WithActionError_FailureResult_ExecutesAction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1).AsTask();
 
         // Act
-        var actual = await result.TapErrorAsync(error =>
+        var actual = await result.TapOnFailureAsync(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -145,13 +145,13 @@ public class TapErrorTests : TestBase
     #region TapErrorAsync - Result<T> with Func<Task>
 
     [Fact]
-    public async Task TapErrorAsync_Result_WithFuncTask_FailureResult_ExecutesFunction()
+    public async Task TapOnFailureAsync_Result_WithFuncTask_FailureResult_ExecutesFunction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1);
 
         // Act
-        var actual = await result.TapErrorAsync(() =>
+        var actual = await result.TapOnFailureAsync(() =>
         {
             _actionExecuted = true;
             return Task.CompletedTask;
@@ -163,13 +163,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_Result_WithFuncTask_SuccessResult_DoesNotExecuteFunction()
+    public async Task TapOnFailureAsync_Result_WithFuncTask_SuccessResult_DoesNotExecuteFunction()
     {
         // Arrange
         var result = Result.Success(42);
 
         // Act
-        var actual = await result.TapErrorAsync(() =>
+        var actual = await result.TapOnFailureAsync(() =>
         {
             _actionExecuted = true;
             return Task.CompletedTask;
@@ -181,13 +181,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_Result_WithFuncErrorTask_FailureResult_ExecutesFunction()
+    public async Task TapOnFailureAsync_Result_WithFuncErrorTask_FailureResult_ExecutesFunction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1);
 
         // Act
-        var actual = await result.TapErrorAsync(error =>
+        var actual = await result.TapOnFailureAsync(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -205,13 +205,13 @@ public class TapErrorTests : TestBase
     #region TapErrorAsync - Task<Result<T>> with Func<Task>
 
     [Fact]
-    public async Task TapErrorAsync_TaskResult_WithFuncTask_FailureResult_ExecutesFunction()
+    public async Task TapOnFailureAsync_TaskResult_WithFuncTask_FailureResult_ExecutesFunction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1).AsTask();
 
         // Act
-        var actual = await result.TapErrorAsync(() =>
+        var actual = await result.TapOnFailureAsync(() =>
         {
             _actionExecuted = true;
             return Task.CompletedTask;
@@ -223,13 +223,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_TaskResult_WithFuncErrorTask_FailureResult_ExecutesFunction()
+    public async Task TapOnFailureAsync_TaskResult_WithFuncErrorTask_FailureResult_ExecutesFunction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1).AsTask();
 
         // Act
-        var actual = await result.TapErrorAsync(error =>
+        var actual = await result.TapOnFailureAsync(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -247,13 +247,13 @@ public class TapErrorTests : TestBase
     #region TapErrorAsync - ValueTask<Result<T>> with Action
 
     [Fact]
-    public async Task TapErrorAsync_ValueTaskResult_WithAction_FailureResult_ExecutesAction()
+    public async Task TapOnFailureAsync_ValueTaskResult_WithAction_FailureResult_ExecutesAction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1).AsValueTask();
 
         // Act
-        var actual = await result.TapErrorAsync(() => _actionExecuted = true);
+        var actual = await result.TapOnFailureAsync(() => _actionExecuted = true);
 
         // Assert
         _actionExecuted.Should().BeTrue();
@@ -261,13 +261,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_ValueTaskResult_WithAction_SuccessResult_DoesNotExecuteAction()
+    public async Task TapOnFailureAsync_ValueTaskResult_WithAction_SuccessResult_DoesNotExecuteAction()
     {
         // Arrange
         var result = Result.Success(42).AsValueTask();
 
         // Act
-        var actual = await result.TapErrorAsync(() => _actionExecuted = true);
+        var actual = await result.TapOnFailureAsync(() => _actionExecuted = true);
 
         // Assert
         _actionExecuted.Should().BeFalse();
@@ -275,13 +275,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_ValueTaskResult_WithActionError_FailureResult_ExecutesAction()
+    public async Task TapOnFailureAsync_ValueTaskResult_WithActionError_FailureResult_ExecutesAction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1).AsValueTask();
 
         // Act
-        var actual = await result.TapErrorAsync(error =>
+        var actual = await result.TapOnFailureAsync(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -298,13 +298,13 @@ public class TapErrorTests : TestBase
     #region TapErrorAsync - Result<T> with Func<ValueTask>
 
     [Fact]
-    public async Task TapErrorAsync_Result_WithFuncValueTask_FailureResult_ExecutesFunction()
+    public async Task TapOnFailureAsync_Result_WithFuncValueTask_FailureResult_ExecutesFunction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1);
 
         // Act
-        var actual = await result.TapErrorAsync(() =>
+        var actual = await result.TapOnFailureAsync(() =>
         {
             _actionExecuted = true;
             return ValueTask.CompletedTask;
@@ -316,13 +316,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_Result_WithFuncValueTask_SuccessResult_DoesNotExecuteFunction()
+    public async Task TapOnFailureAsync_Result_WithFuncValueTask_SuccessResult_DoesNotExecuteFunction()
     {
         // Arrange
         var result = Result.Success(42);
 
         // Act
-        var actual = await result.TapErrorAsync(() =>
+        var actual = await result.TapOnFailureAsync(() =>
         {
             _actionExecuted = true;
             return ValueTask.CompletedTask;
@@ -334,13 +334,13 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_Result_WithFuncErrorValueTask_FailureResult_ExecutesFunction()
+    public async Task TapOnFailureAsync_Result_WithFuncErrorValueTask_FailureResult_ExecutesFunction()
     {
         // Arrange
         var result = Result.Failure<int>(Error1);
 
         // Act
-        var actual = await result.TapErrorAsync(error =>
+        var actual = await result.TapOnFailureAsync(error =>
         {
             _actionExecuted = true;
             _capturedError = error;
@@ -358,7 +358,7 @@ public class TapErrorTests : TestBase
     #region Real-World Scenarios
 
     [Fact]
-    public void TapError_LoggingErrorDetails()
+    public void TapOnFailure_LoggingErrorDetails()
     {
         // Arrange
         var result = Result.Failure<string>(Error.NotFound("User not found", "user-123"));
@@ -366,7 +366,7 @@ public class TapErrorTests : TestBase
 
         // Act
 #pragma warning disable IDE0053 // Multi-statement lambda cannot use expression body
-        var actual = result.TapError(error =>
+        var actual = result.TapOnFailure(error =>
         {
             loggedMessage = $"Error: {error.Code} - {error.Detail} (Instance: {error.Instance})";
         });
@@ -380,14 +380,14 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task TapErrorAsync_IncrementErrorMetrics()
+    public async Task TapOnFailureAsync_IncrementErrorMetrics()
     {
         // Arrange
         var result = Result.Failure<int>(Error.ServiceUnavailable("External service down"));
         var errorCount = 0;
 
         // Act
-        var actual = await result.TapErrorAsync(error =>
+        var actual = await result.TapOnFailureAsync(error =>
         {
             if (error is ServiceUnavailableError)
                 errorCount++;
@@ -400,16 +400,16 @@ public class TapErrorTests : TestBase
     }
 
     [Fact]
-    public void TapError_ChainedWithOtherOperations()
+    public void TapOnFailure_ChainedWithOtherOperations()
     {
         // Arrange
         var errorMessages = new List<string>();
 
         // Act
         var result = Result.Failure<int>(Error.Validation("Invalid input"))
-            .TapError(error => errorMessages.Add("First handler"))
-            .TapError(error => errorMessages.Add("Second handler"))
-            .TapError(error => errorMessages.Add("Third handler"));
+            .TapOnFailure(error => errorMessages.Add("First handler"))
+            .TapOnFailure(error => errorMessages.Add("Second handler"))
+            .TapOnFailure(error => errorMessages.Add("Third handler"));
 
         // Assert
         errorMessages.Should().HaveCount(3);

@@ -1,88 +1,88 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-public class CompensateTests
+public class RecoverOnFailureTests
 {
-    bool _compensatingFunctionCalled;
+    bool _recoveryFunctionCalled;
 
-    #region Compensate_Sync
+    #region RecoverOnFailure_Sync
     /// <summary>
     /// Given a successful result
-    /// When Compensate is called
-    /// Then the compensating function is not called.
+    /// When RecoverOnFailure is called
+    /// Then the recovery function is not called.
     /// </summary>
     [Fact]
-    public void Compensate_function_does_not_get_executed_for_successful_result()
+    public void RecoverOnFailure_function_does_not_get_executed_for_successful_result()
     {
         Result<string> input = Result.Success("Success");
-        Result<string> output = input.Compensate(GetErrorResult);
+        Result<string> output = input.RecoverOnFailure(GetErrorResult);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
 
     /// <summary>
     /// Given a failed result
-    /// When Compensate is called with a compensating function that succeeds
-    /// Then the compensating function is called and returns success result.
+    /// When RecoverOnFailure is called with a recovery function that succeeds
+    /// Then the recovery function is called and returns success result.
     /// </summary>
     [Fact]
-    public void Compensate_function_gets_executed_for_failed_result_and_returns_success()
+    public void RecoverOnFailure_function_gets_executed_for_failed_result_and_returns_success()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = input.Compensate(GetSuccessResult);
+        Result<string> output = input.RecoverOnFailure(GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
 
     /// <summary>
     /// Given a failed result
-    /// When Compensate is called with a compensating function that fails
-    /// Then the compensating function is called and returns failed result.
+    /// When RecoverOnFailure is called with a recovery function that fails
+    /// Then the recovery function is called and returns failed result.
     /// </summary>
     [Fact]
-    public void Compensate_function_gets_executed_for_failed_result_and_returns_failure()
+    public void RecoverOnFailure_function_gets_executed_for_failed_result_and_returns_failure()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = input.Compensate(GetErrorResult);
+        Result<string> output = input.RecoverOnFailure(GetErrorResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
 
     /// <summary>
     /// Given a failed result
-    /// When Compensate is called with a compensating function that fails
-    /// Then the compensating function with the Error is called and returns success.
+    /// When RecoverOnFailure is called with a recovery function that fails
+    /// Then the recovery function with the Error is called and returns success.
     /// </summary>
     [Fact]
-    public void Compensate_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
+    public void RecoverOnFailure_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = input.Compensate(e => 
+        Result<string> output = input.RecoverOnFailure(e => 
         {
             e.Should().Be(Error.Unexpected("Error"));
             return GetSuccessResult();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
 
     #endregion
 
-    #region Compensate_async_Result_sync_func
+    #region RecoverOnFailure_async_Result_sync_func
     [Fact]
     public async Task Task_Result_success_and_compensate_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.CompensateAsync(GetErrorResult);
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResult);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
@@ -91,9 +91,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_succeed()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetSuccessResult);
+        Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -102,9 +102,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_func_does_execute_and_fail()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetErrorResult);
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
@@ -113,26 +113,26 @@ public class CompensateTests
     public async Task Task_Compensate_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(e =>
+        Result<string> output = await input.RecoverOnFailureAsync(e =>
         {
             e.Should().Be(Error.Unexpected("Error"));
             return GetSuccessResult();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
     #endregion
 
-    #region Compensate_sync_Result_async_func
+    #region RecoverOnFailure_sync_Result_async_func
     [Fact]
     public async Task Result_success_and_compensate_async_func_does_not_execute()
     {
         Result<string> input = Result.Success("Success");
-        Result<string> output = await input.CompensateAsync(GetErrorResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
@@ -141,9 +141,9 @@ public class CompensateTests
     public async Task Result_failure_and_compensate_async_func_does_execute_and_succeed()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = await input.CompensateAsync(GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -152,38 +152,38 @@ public class CompensateTests
     public async Task Result_failure_and_compensate_async_func_does_execute_and_fail()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = await input.CompensateAsync(GetErrorResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
 
     [Fact]
-    public async Task Compensate_async_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
+    public async Task RecoverOnFailure_async_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = await input.CompensateAsync(async e =>
+        Result<string> output = await input.RecoverOnFailureAsync(async e =>
         {
             e.Should().Be(Error.Unexpected("Error"));
             return await GetSuccessResultAsync();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
 
     #endregion
 
-    #region Compensate_async_Result_async_func
+    #region RecoverOnFailure_async_Result_async_func
     [Fact]
     public async Task Task_Result_success_and_compensate_async_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.CompensateAsync(GetErrorResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
@@ -192,9 +192,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_succeed()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -203,9 +203,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_async_func_does_execute_and_fail()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(GetErrorResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(GetErrorResultAsync);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Compensated Error"));
     }
@@ -214,129 +214,129 @@ public class CompensateTests
     public async Task Task_Compensate_async_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(async e =>
+        Result<string> output = await input.RecoverOnFailureAsync(async e =>
         {
             e.Should().Be(Error.Unexpected("Error"));
             return await GetSuccessResultAsync();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
     #endregion
 
-    #region Compensate_with_predicate_sync
+    #region RecoverOnFailure_with_predicate_sync
     /// <summary>
     /// Given a successful result
-    /// When Compensate with predicate is called
-    /// Then the compensating function is not called.
+    /// When RecoverOnFailure with predicate is called
+    /// Then the recovery function is not called.
     /// </summary>
     [Fact]
-    public void Compensate_with_predicate_does_not_execute_for_successful_result()
+    public void RecoverOnFailure_with_predicate_does_not_execute_for_successful_result()
     {
         Result<string> input = Result.Success("Success");
-        Result<string> output = input.Compensate(e => e is NotFoundError, GetSuccessResult);
+        Result<string> output = input.RecoverOnFailure(e => e is NotFoundError, GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
 
     /// <summary>
     /// Given a failed result with NotFound error
-    /// When Compensate is called with a predicate that checks for NotFound
-    /// Then the compensating function is called and returns success result.
+    /// When RecoverOnFailure is called with a predicate that checks for NotFound
+    /// Then the recovery function is called and returns success result.
     /// </summary>
     [Fact]
-    public void Compensate_with_predicate_executes_when_predicate_matches_NotFound()
+    public void RecoverOnFailure_with_predicate_executes_when_predicate_matches_NotFound()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Resource not found"));
-        Result<string> output = input.Compensate(e => e is NotFoundError, GetSuccessResult);
+        Result<string> output = input.RecoverOnFailure(e => e is NotFoundError, GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
 
     /// <summary>
     /// Given a failed result with Unexpected error
-    /// When Compensate is called with a predicate that checks for NotFound
-    /// Then the compensating function is not called and the original error is preserved.
+    /// When RecoverOnFailure is called with a predicate that checks for NotFound
+    /// Then the recovery function is not called and the original error is preserved.
     /// </summary>
     [Fact]
-    public void Compensate_with_predicate_does_not_execute_when_predicate_does_not_match()
+    public void RecoverOnFailure_with_predicate_does_not_execute_when_predicate_does_not_match()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Unexpected error"));
-        Result<string> output = input.Compensate(e => e is NotFoundError, GetSuccessResult);
+        Result<string> output = input.RecoverOnFailure(e => e is NotFoundError, GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Unexpected error"));
     }
 
     /// <summary>
     /// Given a failed result with NotFound error
-    /// When Compensate is called with a predicate that checks for NotFound code
-    /// Then the compensating function is called and returns success result.
+    /// When RecoverOnFailure is called with a predicate that checks for NotFound code
+    /// Then the recovery function is called and returns success result.
     /// </summary>
     [Fact]
-    public void Compensate_with_predicate_executes_when_predicate_matches_error_code()
+    public void RecoverOnFailure_with_predicate_executes_when_predicate_matches_error_code()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Resource not found"));
-        Result<string> output = input.Compensate(e => e.Code == "not.found.error", GetSuccessResult);
+        Result<string> output = input.RecoverOnFailure(e => e.Code == "not.found.error", GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
 
     /// <summary>
     /// Given a failed result with NotFound error
-    /// When Compensate is called with a predicate and function that receives the error
-    /// Then the compensating function is called with the error and returns success result.
+    /// When RecoverOnFailure is called with a predicate and function that receives the error
+    /// Then the recovery function is called with the error and returns success result.
     /// </summary>
     [Fact]
-    public void Compensate_with_predicate_and_error_param_executes_when_predicate_matches()
+    public void RecoverOnFailure_with_predicate_and_error_param_executes_when_predicate_matches()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Resource not found"));
-        Result<string> output = input.Compensate(e => e is NotFoundError, e =>
+        Result<string> output = input.RecoverOnFailure(e => e is NotFoundError, e =>
         {
             e.Should().Be(Error.NotFound("Resource not found"));
             return GetSuccessResult();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
 
     /// <summary>
     /// Given a failed result with Unexpected error
-    /// When Compensate is called with a predicate and function that receives the error
-    /// Then the compensating function is not called and the original error is preserved.
+    /// When RecoverOnFailure is called with a predicate and function that receives the error
+    /// Then the recovery function is not called and the original error is preserved.
     /// </summary>
     [Fact]
-    public void Compensate_with_predicate_and_error_param_does_not_execute_when_predicate_does_not_match()
+    public void RecoverOnFailure_with_predicate_and_error_param_does_not_execute_when_predicate_does_not_match()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Unexpected error"));
-        Result<string> output = input.Compensate(e => e is NotFoundError, e => GetSuccessResult());
+        Result<string> output = input.RecoverOnFailure(e => e is NotFoundError, e => GetSuccessResult());
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Unexpected error"));
     }
 
     #endregion
 
-    #region Compensate_with_predicate_async_Result_sync_func
+    #region RecoverOnFailure_with_predicate_async_Result_sync_func
     [Fact]
     public async Task Task_Result_success_and_compensate_with_predicate_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResult);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
@@ -345,9 +345,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResult);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -356,9 +356,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResult);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResult);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Error"));
     }
@@ -367,13 +367,13 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, e =>
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
         {
             e.Should().Be(Error.NotFound("Not found"));
             return GetSuccessResult();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -382,22 +382,22 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, e => GetSuccessResult());
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e => GetSuccessResult());
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Error"));
     }
     #endregion
 
-    #region Compensate_with_predicate_sync_Result_async_func
+    #region RecoverOnFailure_with_predicate_sync_Result_async_func
     [Fact]
     public async Task Result_success_and_compensate_with_predicate_async_func_does_not_execute()
     {
         Result<string> input = Result.Success("Success");
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
@@ -406,9 +406,9 @@ public class CompensateTests
     public async Task Result_failure_and_compensate_with_predicate_async_func_does_execute_when_matches()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Not found"));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -417,9 +417,9 @@ public class CompensateTests
     public async Task Result_failure_and_compensate_with_predicate_async_func_does_not_execute_when_not_matches()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Error"));
     }
@@ -428,13 +428,13 @@ public class CompensateTests
     public async Task Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_execute_when_matches()
     {
         Result<string> input = Result.Failure<string>(Error.NotFound("Not found"));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, e =>
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
         {
             e.Should().Be(Error.NotFound("Not found"));
             return GetSuccessResultAsync();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -443,23 +443,23 @@ public class CompensateTests
     public async Task Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_not_execute_when_not_matches()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, e => GetSuccessResultAsync());
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e => GetSuccessResultAsync());
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Error"));
     }
 
     #endregion
 
-    #region Compensate_with_predicate_async_Result_async_func
+    #region RecoverOnFailure_with_predicate_async_Result_async_func
     [Fact]
     public async Task Task_Result_success_and_compensate_with_predicate_async_func_does_not_execute()
     {
         Task<Result<string>> input = Task.FromResult(Result.Success("Success"));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Success");
     }
@@ -468,9 +468,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_async_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -479,9 +479,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_async_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, GetSuccessResultAsync);
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, GetSuccessResultAsync);
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Error"));
     }
@@ -490,13 +490,13 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_execute_when_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.NotFound("Not found")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, e =>
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e =>
         {
             e.Should().Be(Error.NotFound("Not found"));
             return GetSuccessResultAsync();
         });
 
-        _compensatingFunctionCalled.Should().BeTrue();
+        _recoveryFunctionCalled.Should().BeTrue();
         output.IsSuccess.Should().BeTrue();
         output.Value.Should().Be("Compensated Success");
     }
@@ -505,9 +505,9 @@ public class CompensateTests
     public async Task Task_Result_failure_and_compensate_with_predicate_and_error_param_async_func_does_not_execute_when_not_matches()
     {
         Task<Result<string>> input = Task.FromResult(Result.Failure<string>(Error.Unexpected("Error")));
-        Result<string> output = await input.CompensateAsync(e => e is NotFoundError, e => GetSuccessResultAsync());
+        Result<string> output = await input.RecoverOnFailureAsync(e => e is NotFoundError, e => GetSuccessResultAsync());
 
-        _compensatingFunctionCalled.Should().BeFalse();
+        _recoveryFunctionCalled.Should().BeFalse();
         output.IsFailure.Should().BeTrue();
         output.Error.Should().Be(Error.Unexpected("Error"));
     }
@@ -515,25 +515,25 @@ public class CompensateTests
 
     private Result<string> GetSuccessResult()
     {
-        _compensatingFunctionCalled = true;
+        _recoveryFunctionCalled = true;
         return Result.Success("Compensated Success");
     }
 
     private Result<string> GetErrorResult()
     {
-        _compensatingFunctionCalled = true;
+        _recoveryFunctionCalled = true;
         return Result.Failure<string>(Error.Unexpected("Compensated Error"));
     }
 
     private Task<Result<string>> GetSuccessResultAsync()
     {
-        _compensatingFunctionCalled = true;
+        _recoveryFunctionCalled = true;
         return Task.FromResult(Result.Success("Compensated Success"));
     }
 
     private Task<Result<string>> GetErrorResultAsync()
     {
-        _compensatingFunctionCalled = true;
+        _recoveryFunctionCalled = true;
         return Task.FromResult(Result.Failure<string>(Error.Unexpected("Compensated Error")));
     }
 }

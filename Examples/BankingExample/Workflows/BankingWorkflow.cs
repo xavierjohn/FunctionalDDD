@@ -1,4 +1,4 @@
-﻿namespace BankingExample.Workflows;
+namespace BankingExample.Workflows;
 
 using BankingExample.Aggregates;
 using BankingExample.Events;
@@ -55,7 +55,7 @@ public class BankingWorkflow
             .BindAsync((Func<BankAccount, Task<Result<BankAccount>>>)PerformChecks)
             .BindAsync(acc => Task.FromResult(acc.Withdraw(amount, "ATM Withdrawal")))
             .TapAsync((Func<BankAccount, Task>)(acc => PublishEventsAndAcceptChangesAsync(acc, cancellationToken)))
-            .CompensateAsync(
+            .RecoverOnFailureAsync(
                 predicate: error => error.Code == "fraud.detected",
                 funcAsync: async error =>
                 {
@@ -149,7 +149,7 @@ public class BankingWorkflow
             if (result.IsFailure)
             {
                 // Don't accept changes - events will be discarded
-                Console.WriteLine($"❌ Transaction failed at item {processedCount + 1}, discarding {account.UncommittedEvents().Count} uncommitted events");
+                Console.WriteLine($"? Transaction failed at item {processedCount + 1}, discarding {account.UncommittedEvents().Count} uncommitted events");
                 return Error.Domain($"Batch transaction failed at item {processedCount + 1}: {result.Error.Detail}");
             }
 
@@ -158,7 +158,7 @@ public class BankingWorkflow
 
         // All successful - publish events and accept changes
         await PublishEventsAndAcceptChangesAsync(account, cancellationToken);
-        Console.WriteLine($"✅ Successfully processed {processedCount} transactions");
+        Console.WriteLine($"? Successfully processed {processedCount} transactions");
         return account;
     }
 
@@ -188,7 +188,7 @@ public class BankingWorkflow
         // 4. Accept changes - clears the uncommitted events list
         account.AcceptChanges();
 
-        Console.WriteLine($"📤 Published {events.Count} domain event(s) for account {account.Id}");
+        Console.WriteLine($"?? Published {events.Count} domain event(s) for account {account.Id}");
     }
 
     private static async Task PublishEventAsync(IDomainEvent domainEvent, CancellationToken cancellationToken)
@@ -209,7 +209,7 @@ public class BankingWorkflow
             _ => domainEvent.GetType().Name
         };
 
-        Console.WriteLine($"   📧 Event: {eventInfo}");
+        Console.WriteLine($"   ?? Event: {eventInfo}");
     }
 
     private static async Task NotifyTransferCompleteAsync(
@@ -219,7 +219,7 @@ public class BankingWorkflow
         CancellationToken cancellationToken)
     {
         await Task.Delay(50, cancellationToken);
-        Console.WriteLine($"📨 Transfer notification sent: {amount} from {fromCustomerId} to {toCustomerId}");
+        Console.WriteLine($"?? Transfer notification sent: {amount} from {fromCustomerId} to {toCustomerId}");
     }
 
     private static async Task NotifySecurityTeamAsync(
@@ -228,6 +228,6 @@ public class BankingWorkflow
         CancellationToken cancellationToken)
     {
         await Task.Delay(100, cancellationToken);
-        Console.WriteLine($"🚨 Security alert for customer {customerId}: {error.Detail}");
+        Console.WriteLine($"?? Security alert for customer {customerId}: {error.Detail}");
     }
 }

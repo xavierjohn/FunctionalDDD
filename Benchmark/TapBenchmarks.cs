@@ -65,16 +65,16 @@ public class TapBenchmarks
     public Result<int> TapError_OnFailure()
     {
         return _failureResult
-            .TapError(err => LogError(err))
-            .TapError(err => IncrementErrorMetric());
+            .TapOnFailure(err => LogError(err))
+            .TapOnFailure(err => IncrementErrorMetric());
     }
 
     [Benchmark]
     public Result<int> TapError_OnSuccess()
     {
         return _successResult
-            .TapError(err => LogError(err))
-            .TapError(err => IncrementErrorMetric());
+            .TapOnFailure(err => LogError(err))
+            .TapOnFailure(err => IncrementErrorMetric());
     }
 
     [Benchmark]

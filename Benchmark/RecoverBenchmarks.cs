@@ -8,7 +8,7 @@ using FunctionalDdd;
 /// Compensate is used to provide alternative paths when operations fail.
 /// </summary>
 [MemoryDiagnoser]
-public class CompensateBenchmarks
+public class RecoverBenchmarks
 {
     private Result<int> _successResult = default!;
     private Result<int> _failureResult = default!;
@@ -28,28 +28,28 @@ public class CompensateBenchmarks
     public Result<int> Compensate_OnSuccess()
     {
         return _successResult
-            .Compensate(() => Result.Success(100));
+            .RecoverOnFailure(() => Result.Success(100));
     }
 
     [Benchmark]
     public Result<int> Compensate_OnFailure()
     {
         return _failureResult
-            .Compensate(() => Result.Success(100));
+            .RecoverOnFailure(() => Result.Success(100));
     }
 
     [Benchmark]
     public Result<int> Compensate_OnFailure_WithErrorAccess()
     {
         return _failureResult
-            .Compensate(error => Result.Success(100));
+            .RecoverOnFailure(error => Result.Success(100));
     }
 
     [Benchmark]
     public Result<int> Compensate_WithPredicate_Match()
     {
         return _notFoundFailure
-            .Compensate(
+            .RecoverOnFailure(
                 predicate: error => error is NotFoundError,
                 func: () => Result.Success(100));
     }
@@ -58,7 +58,7 @@ public class CompensateBenchmarks
     public Result<int> Compensate_WithPredicate_NoMatch()
     {
         return _validationFailure
-            .Compensate(
+            .RecoverOnFailure(
                 predicate: error => error is NotFoundError,
                 func: () => Result.Success(100));
     }
@@ -67,7 +67,7 @@ public class CompensateBenchmarks
     public Result<int> Compensate_WithPredicate_AndErrorAccess_Match()
     {
         return _notFoundFailure
-            .Compensate(
+            .RecoverOnFailure(
                 predicate: error => error is NotFoundError,
                 func: error => Result.Success(100));
     }
@@ -76,40 +76,40 @@ public class CompensateBenchmarks
     public Result<int> Compensate_Chain_TwoLevels()
     {
         return _failureResult
-            .Compensate(() => Result.Failure<int>(Error.NotFound("Still failing")))
-            .Compensate(() => Result.Success(100));
+            .RecoverOnFailure(() => Result.Failure<int>(Error.NotFound("Still failing")))
+            .RecoverOnFailure(() => Result.Success(100));
     }
 
     [Benchmark]
     public Result<int> Compensate_Chain_ThreeLevels()
     {
         return _failureResult
-            .Compensate(() => Result.Failure<int>(Error.NotFound("Fail 1")))
-            .Compensate(() => Result.Failure<int>(Error.Validation("Fail 2")))
-            .Compensate(() => Result.Success(100));
+            .RecoverOnFailure(() => Result.Failure<int>(Error.NotFound("Fail 1")))
+            .RecoverOnFailure(() => Result.Failure<int>(Error.Validation("Fail 2")))
+            .RecoverOnFailure(() => Result.Success(100));
     }
 
     [Benchmark]
     public Result<int> Compensate_WithComplexRecovery()
     {
         return _failureResult
-            .Compensate(error => RecoverFromError(error));
+            .RecoverOnFailure(error => RecoverFromError(error));
     }
 
     [Benchmark]
     public Result<int> Compensate_Multiple_DifferentErrorTypes()
     {
         return _failureResult
-            .Compensate(error => error is NotFoundError, () => Result.Success(10))
-            .Compensate(error => error is ValidationError, () => Result.Success(20))
-            .Compensate(error => error is UnexpectedError, () => Result.Success(30));
+            .RecoverOnFailure(error => error is NotFoundError, () => Result.Success(10))
+            .RecoverOnFailure(error => error is ValidationError, () => Result.Success(20))
+            .RecoverOnFailure(error => error is UnexpectedError, () => Result.Success(30));
     }
 
     [Benchmark]
     public Result<int> Compensate_WithExpensiveRecovery()
     {
         return _failureResult
-            .Compensate(error => PerformExpensiveRecovery());
+            .RecoverOnFailure(error => PerformExpensiveRecovery());
     }
 
     [Benchmark]
@@ -117,7 +117,7 @@ public class CompensateBenchmarks
     {
         return _successResult
             .Bind(x => Result.Success(x * 2))
-            .Compensate(() => Result.Success(0))
+            .RecoverOnFailure(() => Result.Success(0))
             .Bind(x => Result.Success(x + 10));
     }
 
@@ -126,7 +126,7 @@ public class CompensateBenchmarks
     {
         return _failureResult
             .Bind(x => Result.Success(x * 2))
-            .Compensate(() => Result.Success(0))
+            .RecoverOnFailure(() => Result.Success(0))
             .Bind(x => Result.Success(x + 10));
     }
 
@@ -134,7 +134,7 @@ public class CompensateBenchmarks
     public Result<int> Compensate_WithDefaultValue()
     {
         return _failureResult
-            .Compensate(() => Result.Success(0));
+            .RecoverOnFailure(() => Result.Success(0));
     }
 
     [Benchmark]
@@ -142,17 +142,17 @@ public class CompensateBenchmarks
     {
         var failureString = Result.Failure<string>(Error.NotFound("String not found"));
         return failureString
-            .Compensate(() => Result.Success("Default Value"));
+            .RecoverOnFailure(() => Result.Success("Default Value"));
     }
 
     [Benchmark]
     public Result<int> Compensate_NestedPredicates()
     {
         return _failureResult
-            .Compensate(
+            .RecoverOnFailure(
                 predicate: error => error is NotFoundError || error is ValidationError,
                 func: () => Result.Success(50))
-            .Compensate(
+            .RecoverOnFailure(
                 predicate: error => error is UnexpectedError,
                 func: () => Result.Success(100));
     }

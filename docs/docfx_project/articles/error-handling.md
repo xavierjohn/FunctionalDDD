@@ -1,4 +1,4 @@
-﻿# Error Handling
+# Error Handling
 
 This guide covers error types, discriminated matching, and transformation patterns in Railway Oriented Programming.
 
@@ -276,15 +276,15 @@ ProcessOrder(order)
 
 ## Error Side Effects
 
-### TapError - Execute Side Effects on Failure
+### TapOnFailure - Execute Side Effects on Failure
 
-Use `TapError` to perform side effects (like logging) when an error occurs without changing the result:
+Use `TapOnFailure` to perform side effects (like logging) when an error occurs without changing the result:
 
 ```csharp
 var result = ProcessOrder(order)
-    .TapError(error => _logger.LogError("Order processing failed: {Error}", error.Detail))
-    .TapError(error => _metrics.RecordFailure(error.Code))
-    .TapError(error => _notificationService.NotifyAdmin(error));
+    .TapOnFailure(error => _logger.LogError("Order processing failed: {Error}", error.Detail))
+    .TapOnFailure(error => _metrics.RecordFailure(error.Code))
+    .TapOnFailure(error => _notificationService.NotifyAdmin(error));
 
 // TapError only executes on failure
 // On success, TapError is skipped
@@ -295,8 +295,8 @@ var result = ProcessOrder(order)
 ```csharp
 var result = ProcessPayment(order)
     .Tap(payment => _logger.LogInformation("Payment succeeded: {Id}", payment.Id))
-    .TapError(error => _logger.LogError("Payment failed: {Error}", error.Detail))
-    .TapError(error => SendFailureNotification(error))
+    .TapOnFailure(error => _logger.LogError("Payment failed: {Error}", error.Detail))
+    .TapOnFailure(error => SendFailureNotification(error))
     .Tap(payment => SendSuccessEmail(payment));
 ```
 
@@ -304,9 +304,9 @@ var result = ProcessPayment(order)
 
 ```csharp
 var result = await ProcessOrderAsync(order)
-    .TapErrorAsync(async error => 
+    .TapOnFailureAsync(async error => 
         await _auditLog.LogFailureAsync(error, cancellationToken))
-    .TapErrorAsync(async error => 
+    .TapOnFailureAsync(async error => 
         await _notificationService.NotifyAsync(error, cancellationToken),
         cancellationToken);
 ```
@@ -315,11 +315,11 @@ var result = await ProcessOrderAsync(order)
 
 Transform errors as they flow through your pipeline:
 
-### MapError - Transform Error Types
+### MapOnFailure - Transform Error Types
 
 ```csharp
 var result = GetUserFromExternalApi(userId)
-    .MapError(error => error switch
+    .MapOnFailure(error => error switch
     {
         NotFoundError => Error.NotFound(
             "User not found in our system",
@@ -336,19 +336,19 @@ var result = GetUserFromExternalApi(userId)
 
 ```csharp
 var result = ProcessPayment(order)
-    .MapError(error => Error.Unexpected(
+    .MapOnFailure(error => Error.Unexpected(
         $"Payment processing failed for order {order.Id}: {error.Detail}",
         $"order-{order.Id}"
     ));
 ```
 
-### Compensate - Error Recovery
+### RecoverOnFailure - Error Recovery
 
 ```csharp
 var result = GetUserFromCache(userId)
-    .Compensate(cacheError => 
+    .RecoverOnFailure(cacheError => 
         GetUserFromDatabase(userId)
-            .MapError(dbError => Error.NotFound(
+            .MapOnFailure(dbError => Error.NotFound(
                 $"User {userId} not found. Cache: {cacheError.Detail}, DB: {dbError.Detail}",
                 userId
             ))
@@ -564,11 +564,11 @@ await ProcessPaymentAsync(payment, cancellationToken)
 
 ```csharp
 var result = await GetUserAsync(userId, cancellationToken)
-    .TapErrorAsync(
+    .TapOnFailureAsync(
         async (error, ct) => await LogErrorAsync(error, ct),
         cancellationToken
     )
-    .TapErrorAsync(
+    .TapOnFailureAsync(
         async (error, ct) => await NotifyAdminAsync(error, ct),
         cancellationToken
     );
@@ -578,7 +578,7 @@ var result = await GetUserAsync(userId, cancellationToken)
 
 ```csharp
 var result = await FetchDataAsync(id, cancellationToken)
-    .MapErrorAsync(
+    .MapOnFailureAsync(
         async (error, ct) =>
         {
             await LogErrorDetailsAsync(error, ct);
@@ -677,7 +677,7 @@ if (inventory.Available < order.Quantity)
 4. **Handle Errors at Boundaries**: Use MatchError at API boundaries to convert to HTTP responses
 5. **Don't Swallow Errors**: Always propagate or handle errors explicitly
 6. **Use Aggregate for Multiple Errors**: Return all validation errors at once, not just the first one
-7. **Use TapError for Logging**: Add `TapError` calls to log failures without breaking the chain
+7. **Use TapError for Logging**: Add `TapOnFailure` calls to log failures without breaking the chain
 8. **Leverage Fluent API**: Use `ValidationError.For().And()` for building multi-field validations
 9. **Add Tracing IDs**: Include correlation IDs in error instance for distributed tracing
 10. **Use MapError Sparingly**: Only transform errors when you need to add context or change error types

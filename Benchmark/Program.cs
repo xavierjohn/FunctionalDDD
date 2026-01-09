@@ -14,7 +14,7 @@ if (args.Length == 0)
     BenchmarkRunner.Run<AsyncBenchmarks>(config);
     BenchmarkRunner.Run<MaybeBenchmarks>(config);
     BenchmarkRunner.Run<ErrorBenchmarks>(config);
-    BenchmarkRunner.Run<CompensateBenchmarks>(config);
+    BenchmarkRunner.Run<RecoverBenchmarks>(config);
     BenchmarkRunner.Run<CombineBenchmarks>(config);
 }
 else

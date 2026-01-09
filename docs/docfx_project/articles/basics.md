@@ -250,8 +250,8 @@ flowchart TB
     MATCH --> FAILURE[Failure Output]
     
     ERROR --> COMPENSATE{Compensate<br/>Retry/Fallback?}
-    COMPENSATE -->|Recover| TAP
-    COMPENSATE -->|No Recovery| FAILURE
+    RecoverOnFailure -->|Recover| TAP
+    RecoverOnFailure -->|No Recovery| FAILURE
     
     style SUCCESS fill:#90EE90
     style FAILURE fill:#FFB6C6
@@ -360,11 +360,11 @@ var result = FirstName.TryCreate("John")
 - 💾 Caching
 - 🖥️ Updating UI
 
-**Important:** `Tap` only runs on **success**. Use `TapError` for failures:
+**Important:** `Tap` only runs on **success**. Use `TapOnFailure` for failures:
 ```csharp
 var result = FirstName.TryCreate("")
     .Tap(name => Console.WriteLine("Success!"))          // Skipped (failure path)
-    .TapError(error => Console.WriteLine($"Error: {error.Detail}"));  // Runs!
+    .TapOnFailure(error => Console.WriteLine($"Error: {error.Detail}"));  // Runs!
 // Output: "Error: First Name cannot be empty"
 ```
 
@@ -391,20 +391,20 @@ var result = Age.TryCreate(25)
 - **TryCreate validation**: Format and structure rules (email format, non-empty)
 - **Ensure validation**: Business rules and context-specific rules (age limits, domain restrictions)
 
-### Compensate - Recover from Errors
+### RecoverOnFailure - Recover from Errors
 
 **Use when:** You want to try a fallback when an error occurs.
 
 ```csharp
 var result = GetUserFromCache(id)
-    .Compensate(error => GetUserFromDatabase(id));
+    .RecoverOnFailure(error => GetUserFromDatabase(id));
 // Try cache first, fallback to database on ANY error
 ```
 
 **With predicate for selective compensation:**
 ```csharp
 var result = CallExternalApi()
-    .Compensate(
+    .RecoverOnFailure(
         predicate: error => error is ServiceUnavailableError,
         func: () => GetCachedData()
     );
@@ -414,8 +414,8 @@ var result = CallExternalApi()
 **Real-world example:**
 ```csharp
 var result = GetUserFromCache(userId)
-    .Compensate(error => GetUserFromDatabase(userId))
-    .Compensate(error => GetDefaultUser());
+    .RecoverOnFailure(error => GetUserFromDatabase(userId))
+    .RecoverOnFailure(error => GetDefaultUser());
 // Try cache → database → default user
 // Stops at first success
 ```
@@ -530,7 +530,7 @@ public async Task<IActionResult> ProcessOrderAsync(int orderId, CancellationToke
 | **Map** | Transform successful values | `T` | Type conversion, formatting |
 | **Tap** | Execute side effects (logging, etc.) | `void` | Logging, notifications, caching |
 | **Ensure** | Add business rule validation | `bool` | Age limits, domain restrictions |
-| **Compensate** | Provide fallback on errors | `Result<T>` | Retry logic, default values |
+| **RecoverOnFailure** | Provide fallback on errors | `Result<T>` | Retry logic, default values |
 | **Match** | Extract final value | `TResult` | Convert to HTTP response, display message |
 
 **All operations have `Async` variants** that accept `CancellationToken` for async/await support.
@@ -589,11 +589,11 @@ if (result.TryGetError(out var error))
 
 ### Q: What if I need the error in the middle of a chain?
 
-Use `TapError`:
+Use `TapOnFailure`:
 ```csharp
 var result = GetUser(userId)
-    .TapError(error => _logger.LogWarning("User not found: {Error}", error.Detail))
-    .Compensate(error => GetDefaultUser());
+    .TapOnFailure(error => _logger.LogWarning("User not found: {Error}", error.Detail))
+    .RecoverOnFailure(error => GetDefaultUser());
 ```
 
 ## Next Steps
@@ -637,7 +637,7 @@ flowchart TD
     MAP --> CODE3["email.Map(e => e.ToUpper())"]
     TAP --> CODE4["user.Tap(u => Log(u))"]
     ENSURE --> CODE5["age.Ensure(a => a >= 18, error)"]
-    COMPENSATE --> CODE6["cache.Compensate(() => db)"]
+    RecoverOnFailure --> CODE6["cache.RecoverOnFailure(() => db)"]
     MATCH --> CODE7["result.Match(success, failure)"]
     
     style COMBINE fill:#E1F5FF
@@ -671,8 +671,8 @@ await GetUserAsync(userId, ct)
 **Retry Pattern:**
 ```csharp
 CallServiceA()
-    .Compensate(error => CallServiceB())
-    .Compensate(error => GetCachedData())
+    .RecoverOnFailure(error => CallServiceB())
+    .RecoverOnFailure(error => GetCachedData())
     .Ensure(data => data.IsValid, Error.Validation("Invalid data"));
 ```
 

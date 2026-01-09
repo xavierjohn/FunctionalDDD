@@ -6,18 +6,24 @@ using System.Diagnostics;
 /// Provides extension methods for executing side effects on failed Results without changing the Result.
 /// </summary>
 /// <remarks>
-/// TapError is the counterpart to <see cref="TapExtensions"/>. It allows you to perform side effects
+/// <para>
+/// TapOnFailure is the counterpart to <see cref="TapExtensions"/>. It allows you to perform side effects
 /// (like logging, metrics, or debugging) when a Result is in a failed state, without altering the Result itself.
 /// The action is only executed if the Result is a failure, and the original Result is always returned unchanged.
+/// </para>
+/// <para>
+/// This operation runs on the <b>failure track</b> - it only executes when the Result has failed.
+/// If the Result is successful, the operation is skipped entirely.
+/// </para>
 /// </remarks>
 /// <example>
 /// <code>
 /// var result = GetUser(id)
-///     .TapError(error => _logger.LogError("Failed to get user: {Error}", error.Detail))
-///     .TapError(() => _metrics.IncrementCounter("user.get.failed"));
+///     .TapOnFailure(error => _logger.LogError("Failed to get user: {Error}", error.Detail))
+///     .TapOnFailure(() => _metrics.IncrementCounter("user.get.failed"));
 /// </code>
 /// </example>
-public static partial class TapErrorExtensions
+public static partial class TapOnFailureExtensions
 {
     /// <summary>
     /// Executes the given action if the result is a failure. Returns the original result unchanged.
@@ -26,7 +32,11 @@ public static partial class TapErrorExtensions
     /// <param name="result">The result to tap.</param>
     /// <param name="action">The action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static Result<TValue> TapError<TValue>(this Result<TValue> result, Action action)
+    /// <remarks>
+    /// This operation runs on the failure track only. If the result is successful, the action is not executed.
+    /// </remarks>
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static Result<TValue> TapOnFailure<TValue>(this Result<TValue> result, Action action)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
@@ -45,7 +55,12 @@ public static partial class TapErrorExtensions
     /// <param name="result">The result to tap.</param>
     /// <param name="action">The action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static Result<TValue> TapError<TValue>(this Result<TValue> result, Action<Error> action)
+    /// <remarks>
+    /// This operation runs on the failure track only. If the result is successful, the action is not executed.
+    /// The error object is passed to the action for inspection or logging.
+    /// </remarks>
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static Result<TValue> TapOnFailure<TValue>(this Result<TValue> result, Action<Error> action)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
@@ -62,10 +77,15 @@ public static partial class TapErrorExtensions
 /// Provides asynchronous extension methods for executing side effects on failed Results without changing the Result.
 /// </summary>
 /// <remarks>
+/// <para>
 /// These methods enable async error handling patterns such as logging to external services,
 /// sending notifications, or recording metrics when operations fail.
+/// </para>
+/// <para>
+/// All operations run on the <b>failure track</b> - they only execute when the Result has failed.
+/// </para>
 /// </remarks>
-public static partial class TapErrorExtensionsAsync
+public static partial class TapOnFailureExtensionsAsync
 {
     /// <summary>
     /// Asynchronously executes the given action with the error if the result is a failure. Returns the original result unchanged.
@@ -74,10 +94,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The task containing the result to tap.</param>
     /// <param name="action">The action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Action<Error> action)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<TValue>> TapOnFailureAsync<TValue>(this Task<Result<TValue>> resultTask, Action<Error> action)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.TapError(action);
+        return result.TapOnFailure(action);
     }
 
     /// <summary>
@@ -87,10 +108,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The task containing the result to tap.</param>
     /// <param name="action">The action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Action action)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<TValue>> TapOnFailureAsync<TValue>(this Task<Result<TValue>> resultTask, Action action)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.TapError(action);
+        return result.TapOnFailure(action);
     }
 
     /// <summary>
@@ -100,7 +122,8 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="result">The result to tap.</param>
     /// <param name="func">The async action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Result<TValue> result, Func<Task> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<TValue>> TapOnFailureAsync<TValue>(this Result<TValue> result, Func<Task> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
@@ -119,7 +142,8 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="result">The result to tap.</param>
     /// <param name="func">The async action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Result<TValue> result, Func<Error, Task> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<TValue>> TapOnFailureAsync<TValue>(this Result<TValue> result, Func<Error, Task> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
@@ -138,10 +162,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The task containing the result to tap.</param>
     /// <param name="func">The async action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Task> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<TValue>> TapOnFailureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Task> func)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func).ConfigureAwait(false);
+        return await result.TapOnFailureAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -151,10 +176,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The task containing the result to tap.</param>
     /// <param name="func">The async action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async Task<Result<TValue>> TapErrorAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Error, Task> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<TValue>> TapOnFailureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Error, Task> func)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func).ConfigureAwait(false);
+        return await result.TapOnFailureAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -164,10 +190,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The ValueTask containing the result to tap.</param>
     /// <param name="action">The action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action action)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<TValue>> TapOnFailureAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action action)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.TapError(action);
+        return result.TapOnFailure(action);
     }
 
     /// <summary>
@@ -177,10 +204,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The ValueTask containing the result to tap.</param>
     /// <param name="action">The action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action<Error> action)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<TValue>> TapOnFailureAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action<Error> action)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return result.TapError(action);
+        return result.TapOnFailure(action);
     }
 
     /// <summary>
@@ -190,7 +218,8 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="result">The result to tap.</param>
     /// <param name="func">The async action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(this Result<TValue> result, Func<ValueTask> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<TValue>> TapOnFailureAsync<TValue>(this Result<TValue> result, Func<ValueTask> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
@@ -209,7 +238,8 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="result">The result to tap.</param>
     /// <param name="func">The async action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(this Result<TValue> result, Func<Error, ValueTask> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<TValue>> TapOnFailureAsync<TValue>(this Result<TValue> result, Func<Error, ValueTask> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
@@ -228,10 +258,11 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The ValueTask containing the result to tap.</param>
     /// <param name="func">The async action to execute if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<ValueTask> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<TValue>> TapOnFailureAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<ValueTask> func)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func).ConfigureAwait(false);
+        return await result.TapOnFailureAsync(func).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -241,9 +272,10 @@ public static partial class TapErrorExtensionsAsync
     /// <param name="resultTask">The ValueTask containing the result to tap.</param>
     /// <param name="func">The async action to execute with the error if the result is a failure.</param>
     /// <returns>The original result unchanged.</returns>
-    public static async ValueTask<Result<TValue>> TapErrorAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<Error, ValueTask> func)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<TValue>> TapOnFailureAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<Error, ValueTask> func)
     {
         Result<TValue> result = await resultTask.ConfigureAwait(false);
-        return await result.TapErrorAsync(func).ConfigureAwait(false);
+        return await result.TapOnFailureAsync(func).ConfigureAwait(false);
     }
 }

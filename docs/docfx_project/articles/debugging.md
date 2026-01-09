@@ -48,16 +48,16 @@ var result = await GetUserAsync(id)
     .MapAsync(orders => orders.Sum(o => o.Total));
 ```
 
-**Solution 1**: Use `Tap` or `TapError` for logging at each step:
+**Solution 1**: Use `Tap` or `TapOnFailure` for logging at each step:
 
 ```csharp
 var result = await GetUserAsync(id)
     .Tap(u => _logger.LogDebug("Found user: {UserId}", u.Id))
     .ToResultAsync(Error.NotFound("User not found"))
-    .TapError(err => _logger.LogWarning("Failed to find user: {Error}", err))
+    .TapOnFailure(err => _logger.LogWarning("Failed to find user: {Error}", err))
     .EnsureAsync(u => u.IsActive, Error.Validation("User inactive"))
     .Tap(u => _logger.LogDebug("User {UserId} is active", u.Id))
-    .TapError(err => _logger.LogWarning("User validation failed: {Error}", err))
+    .TapOnFailure(err => _logger.LogWarning("User validation failed: {Error}", err))
     .BindAsync(u => GetOrdersAsync(u.Id))
     .Tap(orders => _logger.LogDebug("Found {Count} orders", orders.Count));
 ```
@@ -178,13 +178,13 @@ var result = EmailAddress.TryCreate("invalid")
 // Might fail with 3 errors - which ones?
 ```
 
-**Solution**: Use `TapError` to log aggregated errors:
+**Solution**: Use `TapOnFailure` to log aggregated errors:
 
 ```csharp
 var result = EmailAddress.TryCreate(email)
     .Combine(FirstName.TryCreate(firstName))
     .Combine(Age.TryCreate(age))
-    .TapError(error => 
+    .TapOnFailure(error => 
     {
         if (error is AggregateError aggregated)
         {
@@ -408,15 +408,15 @@ public async Task<Result<Order>> ProcessOrderAsync(OrderId orderId)
     _logger.LogInformation("Processing order {OrderId}", orderId);
     
     return await GetOrderAsync(orderId)
-        .TapError(err => _logger.LogWarning(
+        .TapOnFailure(err => _logger.LogWarning(
             "Failed to get order {OrderId}: {Error}", orderId, err.Detail))
         .BindAsync(order => ValidateOrderAsync(order))
-        .TapError(err => _logger.LogWarning(
+        .TapOnFailure(err => _logger.LogWarning(
             "Order {OrderId} validation failed: {Error}", orderId, err.Detail))
         .BindAsync(order => ProcessPaymentAsync(order))
         .Tap(order => _logger.LogInformation(
             "Successfully processed order {OrderId}", order.Id))
-        .TapError(err => _logger.LogError(
+        .TapOnFailure(err => _logger.LogError(
             "Order {OrderId} processing failed: {Error}", orderId, err.Detail));
 }
 ```
@@ -436,7 +436,7 @@ public async Task<Result<User>> RegisterUserAsync(UserRegistration registration)
         .Tap(_ => _logger.LogDebug("Email validated"))
         .BindAsync(email => CreateUserAsync(email, registration))
         .Tap(user => _logger.LogInformation("User created: {UserId}", user.Id))
-        .TapError(err => _logger.LogWarning("Registration failed: {Error}", err));
+        .TapOnFailure(err => _logger.LogWarning("Registration failed: {Error}", err));
 }
 ```
 
@@ -670,7 +670,7 @@ async Task<Result<Order>> ProcessOrderAsync(Order order)
 When debugging a failing ROP chain, ask yourself:
 
 - [ ] **Check the error message** - Does it tell you which operation failed?
-- [ ] **Add `Tap` or `TapError`** - Log at each step to find the failure point
+- [ ] **Add `Tap` or `TapOnFailure`** - Log at each step to find the failure point
 - [ ] **Use `Debug()` extension** - Add `.Debug("step name")` for quick debugging
 - [ ] **Break the chain** - Split into smaller variables for inspection
 - [ ] **Check aggregated errors** - Are multiple validations failing? Check `ValidationError.FieldErrors`

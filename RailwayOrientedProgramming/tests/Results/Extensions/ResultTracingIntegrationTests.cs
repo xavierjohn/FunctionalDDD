@@ -83,8 +83,8 @@ public class ResultTracingIntegrationTests
         // Act - Multiple compensations, first one succeeds
         var result = Result.Success(5)
             .Ensure(x => x > 10, Error.Validation("Must be > 10"))
-            .Compensate(() => Result.Success(50))
-            .Compensate(() => Result.Success(999)); // Should not execute
+            .RecoverOnFailure(() => Result.Success(50))
+            .RecoverOnFailure(() => Result.Success(999)); // Should not execute
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -111,7 +111,7 @@ public class ResultTracingIntegrationTests
             .Bind(ValidateInventory)
             .Bind(ApplyDiscount)
             .Ensure(price => price >= 10, Error.Validation("Price must be at least $10"))
-            .Compensate(() => Result.Success(10)) // Floor price at $10
+            .RecoverOnFailure(() => Result.Success(10)) // Floor price at $10
             .Tap(price => Console.WriteLine($"Final price: ${price}"));
 
         // Assert
@@ -134,7 +134,7 @@ public class ResultTracingIntegrationTests
         // Act - Complex failure and recovery scenario
         var result = Result.Success("user@example.com")
             .Bind(FetchUserFromDatabase)      // Fails
-            .Compensate(CreateGuestUser)
+            .RecoverOnFailure(CreateGuestUser)
             .Ensure(user => !string.IsNullOrEmpty(user), Error.Unexpected("User cannot be null"))
             .Bind(user => Result.Success(user.ToUpperInvariant()))
             .Tap(user => Console.WriteLine($"Processing: {user}"));
@@ -254,7 +254,7 @@ public class ResultTracingIntegrationTests
         var result = Result.Success(5)
             .Ensure(x => x > 10, Error.Validation("Must be > 10")) // TRANSITION: Success ? Error
             .Bind(x => Result.Success(x * 2))         // Error track (short-circuited)
-            .Compensate(() => Result.Success(100))    // TRANSITION: Error ? Success
+            .RecoverOnFailure(() => Result.Success(100))    // TRANSITION: Error ? Success
             .Bind(x => Result.Success(x + 50))        // Success track: 150
             .Tap(x => Console.WriteLine($"Final: {x}")); // Success track
 
@@ -289,9 +289,9 @@ public class ResultTracingIntegrationTests
             .Ensure(x => x > 50, Error.Validation("Must be > 50"))  // OK: Success track
             .Bind(x => Result.Failure<int>(Error.Unexpected("DB Error"))) // TRANSITION: Success ? Error
             .Tap(x => Console.WriteLine($"After error: {x}"))         // Error track
-            .Compensate(() => Result.Success(200))                     // TRANSITION: Error ? Success
+            .RecoverOnFailure(() => Result.Success(200))                     // TRANSITION: Error ? Success
             .Ensure(x => x < 150, Error.Validation("Must be < 150"))  // TRANSITION: Success ? Error (200 > 150)
-            .Compensate(() => Result.Success(50))                      // TRANSITION: Error ? Success
+            .RecoverOnFailure(() => Result.Success(50))                      // TRANSITION: Error ? Success
             .Bind(x => Result.Success(x * 2));                         // Success track: 100
 
         // Assert
@@ -338,7 +338,7 @@ public class ResultTracingIntegrationTests
                 return Result.Failure<int>(Error.Unexpected("Async error"));
             }) // TRANSITION: Success ? Error
             .TapAsync(x => Task.CompletedTask)                      // Error track
-            .CompensateAsync(() => Task.FromResult(Result.Success(200))) // TRANSITION: Error ? Success
+            .RecoverOnFailureAsync(() => Task.FromResult(Result.Success(200))) // TRANSITION: Error ? Success
             .BindAsync(x => Task.FromResult(Result.Success(x / 2))); // Success track: 100
 
         // Assert
@@ -368,7 +368,7 @@ public class ResultTracingIntegrationTests
         // Act - Compensation fails, stays on error track
         var result = Result.Success(5)
             .Ensure(x => x > 10, Error.Validation("Must be > 10"))     // TRANSITION: Success ? Error
-            .Compensate(() => Result.Failure<int>(Error.Unexpected("Compensation failed"))) // Failed compensation
+            .RecoverOnFailure(() => Result.Failure<int>(Error.Unexpected("Compensation failed"))) // Failed compensation
             .Bind(x => Result.Success(x * 2))                           // Still on error track
             .Tap(x => Console.WriteLine($"Value: {x}"));                // Still on error track
 

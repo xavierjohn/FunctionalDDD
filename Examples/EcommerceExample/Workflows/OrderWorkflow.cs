@@ -51,7 +51,7 @@ public class OrderWorkflow
             .BindAsync(async order =>
             {
                 var reserveResult = await ReserveInventoryAsync(order, ct)
-                    .CompensateAsync(
+                    .RecoverOnFailureAsync(
                         predicate: error => error is ValidationError,
                         funcAsync: () => SuggestAlternativeProductsAsync(order, ct));
 
@@ -183,7 +183,7 @@ public class OrderWorkflow
     {
         return await Task.FromResult(order.ProcessPayment("PENDING"))
             .BindAsync(_ => _paymentService.ProcessPaymentAsync(order, paymentInfo.CardNumber, paymentInfo.CVV, cancellationToken))
-            .CompensateAsync(
+            .RecoverOnFailureAsync(
                 predicate: error => error is UnexpectedError, // Retry on unexpected errors (e.g., timeouts)
                 funcAsync: async () =>
                 {
@@ -191,7 +191,7 @@ public class OrderWorkflow
                     await Task.Delay(1000, cancellationToken);
                     return await _paymentService.ProcessPaymentAsync(order, paymentInfo.CardNumber, paymentInfo.CVV, cancellationToken);
                 })
-            .TapErrorAsync(async error =>
+            .TapOnFailureAsync(async error =>
             {
                 await Task.FromResult(order.MarkPaymentFailed());
                 Console.WriteLine($"Payment failed: {error.Detail}");

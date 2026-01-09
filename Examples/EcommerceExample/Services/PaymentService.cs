@@ -16,7 +16,7 @@ public class PaymentService
             .Ensure(_ => order.Total.Value >= 0.01m, Error.Validation("Payment amount must be at least 0.01")))
             .BindAsync(async _ => await ChargeCardAsync(order.Total, cardNumber, cancellationToken))
             .TapAsync(async transactionId => await LogPaymentSuccessAsync(order.Id, transactionId, cancellationToken))
-            .TapErrorAsync(async error => await LogPaymentFailureAsync(order.Id, error, cancellationToken));
+            .TapOnFailureAsync(async error => await LogPaymentFailureAsync(order.Id, error, cancellationToken));
     }
 
     public async Task<Result<Unit>> RefundPaymentAsync(string transactionId, CancellationToken cancellationToken = default)

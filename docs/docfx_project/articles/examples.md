@@ -16,11 +16,6 @@ Banking system with fraud detection, daily limits, overdraft protection, and int
 
 **Key Concepts**: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail
 
-### 👤 [User Management](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleUserLibrary)
-User registration with FluentValidation integration and value objects.
-
-**Key Concepts**: Aggregates, FluentValidation, value objects, type safety
-
 ### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWebApplication)
 ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.
 
@@ -187,10 +182,10 @@ Execute side effects when errors occur without changing the result:
 var result = await ProcessPaymentAsync(order, cancellationToken)
     .TapAsync(payment => 
         _logger.LogInformation("Payment succeeded: {PaymentId}", payment.Id))
-    .TapErrorAsync(async (error, ct) => 
+    .TapOnFailureAsync(async (error, ct) => 
         await _logger.LogErrorAsync("Payment failed: {Error}", error.Detail, ct),
         cancellationToken)
-    .TapErrorAsync(async (error, ct) => 
+    .TapOnFailureAsync(async (error, ct) => 
         await _notificationService.NotifyAdminAsync(error, ct),
         cancellationToken);
 ```
@@ -207,7 +202,7 @@ Provide fallback behavior when specific errors occur:
 
 ```csharp
 var result = await GetUserFromCacheAsync(userId, cancellationToken)
-    .CompensateAsync(
+    .RecoverOnFailureAsync(
         predicate: error => error is NotFoundError,
         func: async ct => await GetUserFromDatabaseAsync(userId, ct),
         cancellationToken: cancellationToken
@@ -377,7 +372,7 @@ public Result<Order> ProcessOrder(OrderRequest request)
         .Bind(product => ValidatePayment(request.PaymentInfo))
         .Bind(payment => CreateOrder(request, payment))
         .Tap(order => SendConfirmationEmail(order))
-        .TapError(error => LogOrderFailure(error));
+        .TapOnFailure(error => LogOrderFailure(error));
 }
 ```
 
