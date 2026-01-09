@@ -2,25 +2,25 @@ using FunctionalDdd.Testing;
 
 namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-public class MapErrorTests : TestBase
+public class MapOnFailureTests : TestBase
 {
     [Fact]
-    public void MapError_transforms_failure_error()
+    public void MapOnFailure_transforms_failure_error()
     {
         var original = Result.Failure<int>(Error1);
 
-        var mapped = original.MapError(e => Error.Conflict($"Wrapped: {e.Detail}"));
+        var mapped = original.MapOnFailure(e => Error.Conflict($"Wrapped: {e.Detail}"));
 
         mapped.Should().BeFailure();
         mapped.Error.Should().Be(Error.Conflict($"Wrapped: {Error1.Detail}"));
     }
 
     [Fact]
-    public void MapError_does_not_touch_success()
+    public void MapOnFailure_does_not_touch_success()
     {
         var success = Result.Success(42);
 
-        var mapped = success.MapError(e => Error.Unexpected("ShouldNotHappen"));
+        var mapped = success.MapOnFailure(e => Error.Unexpected("ShouldNotHappen"));
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -29,22 +29,22 @@ public class MapErrorTests : TestBase
     #region MapErrorAsync - Task<Result<T>> with Func<Error, Error>
 
     [Fact]
-    public async Task MapErrorAsync_TaskResult_WithFunc_TransformsError()
+    public async Task MapOnFailureAsync_TaskResult_WithFunc_TransformsError()
     {
         var original = Result.Failure<int>(Error1).AsTask();
 
-        var mapped = await original.MapErrorAsync(e => Error.Conflict($"Wrapped: {e.Detail}"));
+        var mapped = await original.MapOnFailureAsync(e => Error.Conflict($"Wrapped: {e.Detail}"));
 
         mapped.Should().BeFailure();
         mapped.Error.Should().BeOfType<ConflictError>();
     }
 
     [Fact]
-    public async Task MapErrorAsync_TaskResult_WithFunc_DoesNotTouchSuccess()
+    public async Task MapOnFailureAsync_TaskResult_WithFunc_DoesNotTouchSuccess()
     {
         var original = Result.Success(42).AsTask();
 
-        var mapped = await original.MapErrorAsync(e => Error.Unexpected("ShouldNotHappen"));
+        var mapped = await original.MapOnFailureAsync(e => Error.Unexpected("ShouldNotHappen"));
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -55,7 +55,7 @@ public class MapErrorTests : TestBase
     #region MapErrorAsync - Result<T> with Func<Error, Task<Error>>
 
     [Fact]
-    public async Task MapErrorAsync_Result_WithAsyncFunc_TransformsError()
+    public async Task MapOnFailureAsync_Result_WithAsyncFunc_TransformsError()
     {
         var original = Result.Failure<int>(Error1);
 
@@ -65,14 +65,14 @@ public class MapErrorTests : TestBase
             return Error.Conflict($"Wrapped: {e.Detail}");
         };
 
-        var mapped = await original.MapErrorAsync(mapper);
+        var mapped = await original.MapOnFailureAsync(mapper);
 
         mapped.Should().BeFailure();
         mapped.Error.Should().BeOfType<ConflictError>();
     }
 
     [Fact]
-    public async Task MapErrorAsync_Result_WithAsyncFunc_DoesNotTouchSuccess()
+    public async Task MapOnFailureAsync_Result_WithAsyncFunc_DoesNotTouchSuccess()
     {
         var original = Result.Success(42);
 
@@ -82,7 +82,7 @@ public class MapErrorTests : TestBase
             return Error.Unexpected("ShouldNotHappen");
         };
 
-        var mapped = await original.MapErrorAsync(mapper);
+        var mapped = await original.MapOnFailureAsync(mapper);
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -93,11 +93,11 @@ public class MapErrorTests : TestBase
     #region MapErrorAsync - Task<Result<T>> with Func<Error, Task<Error>>
 
     [Fact]
-    public async Task MapErrorAsync_TaskResult_WithAsyncFunc_TransformsError()
+    public async Task MapOnFailureAsync_TaskResult_WithAsyncFunc_TransformsError()
     {
         var original = Result.Failure<int>(Error1).AsTask();
 
-        var mapped = await original.MapErrorAsync(async e =>
+        var mapped = await original.MapOnFailureAsync(async e =>
         {
             await Task.Delay(1);
             return Error.Conflict($"Wrapped: {e.Detail}");
@@ -112,22 +112,22 @@ public class MapErrorTests : TestBase
     #region MapErrorAsync - ValueTask<Result<T>> with Func<Error, Error>
 
     [Fact]
-    public async Task MapErrorAsync_ValueTaskResult_WithFunc_TransformsError()
+    public async Task MapOnFailureAsync_ValueTaskResult_WithFunc_TransformsError()
     {
         var original = Result.Failure<int>(Error1).AsValueTask();
 
-        var mapped = await original.MapErrorAsync(e => Error.Conflict($"Wrapped: {e.Detail}"));
+        var mapped = await original.MapOnFailureAsync(e => Error.Conflict($"Wrapped: {e.Detail}"));
 
         mapped.Should().BeFailure();
         mapped.Error.Should().BeOfType<ConflictError>();
     }
 
     [Fact]
-    public async Task MapErrorAsync_ValueTaskResult_WithFunc_DoesNotTouchSuccess()
+    public async Task MapOnFailureAsync_ValueTaskResult_WithFunc_DoesNotTouchSuccess()
     {
         var original = Result.Success(42).AsValueTask();
 
-        var mapped = await original.MapErrorAsync(e => Error.Unexpected("ShouldNotHappen"));
+        var mapped = await original.MapOnFailureAsync(e => Error.Unexpected("ShouldNotHappen"));
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -138,11 +138,11 @@ public class MapErrorTests : TestBase
     #region MapErrorAsync - Result<T> with Func<Error, ValueTask<Error>>
 
     [Fact]
-    public async Task MapErrorAsync_Result_WithValueTaskFunc_TransformsError()
+    public async Task MapOnFailureAsync_Result_WithValueTaskFunc_TransformsError()
     {
         var original = Result.Failure<int>(Error1);
 
-        var mapped = await original.MapErrorAsync(e =>
+        var mapped = await original.MapOnFailureAsync(e =>
             ValueTask.FromResult<Error>(Error.Conflict($"Wrapped: {e.Detail}")));
 
         mapped.Should().BeFailure();
@@ -150,11 +150,11 @@ public class MapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task MapErrorAsync_Result_WithValueTaskFunc_DoesNotTouchSuccess()
+    public async Task MapOnFailureAsync_Result_WithValueTaskFunc_DoesNotTouchSuccess()
     {
         var original = Result.Success(42);
 
-        var mapped = await original.MapErrorAsync(e =>
+        var mapped = await original.MapOnFailureAsync(e =>
             ValueTask.FromResult<Error>(Error.Unexpected("ShouldNotHappen")));
 
         mapped.Should().BeSuccess()
@@ -166,11 +166,11 @@ public class MapErrorTests : TestBase
     #region MapErrorAsync - ValueTask<Result<T>> with Func<Error, ValueTask<Error>>
 
     [Fact]
-    public async Task MapErrorAsync_ValueTaskResult_WithValueTaskFunc_TransformsError()
+    public async Task MapOnFailureAsync_ValueTaskResult_WithValueTaskFunc_TransformsError()
     {
         var original = Result.Failure<int>(Error1).AsValueTask();
 
-        var mapped = await original.MapErrorAsync(e =>
+        var mapped = await original.MapOnFailureAsync(e =>
             ValueTask.FromResult<Error>(Error.Conflict($"Wrapped: {e.Detail}")));
 
         mapped.Should().BeFailure();
@@ -182,13 +182,13 @@ public class MapErrorTests : TestBase
     #region Real-World Scenarios
 
     [Fact]
-    public void MapError_ConvertsDomainErrorToApiError()
+    public void MapOnFailure_ConvertsDomainErrorToApiError()
     {
         // Arrange
         var domainResult = Result.Failure<string>(Error.Domain("Insufficient balance"));
 
         // Act
-        var apiResult = domainResult.MapError(e => Error.BadRequest($"API Error: {e.Detail}"));
+        var apiResult = domainResult.MapOnFailure(e => Error.BadRequest($"API Error: {e.Detail}"));
 
         // Assert
         apiResult.Should().BeFailure();
@@ -197,13 +197,13 @@ public class MapErrorTests : TestBase
     }
 
     [Fact]
-    public void MapError_AddsContextToError()
+    public void MapOnFailure_AddsContextToError()
     {
         // Arrange
         var result = Result.Failure<int>(Error.NotFound("Entity not found"));
 
         // Act
-        var enriched = result.MapError(e =>
+        var enriched = result.MapOnFailure(e =>
             Error.NotFound($"User lookup failed: {e.Detail}", "user-123"));
 
         // Assert
@@ -212,14 +212,14 @@ public class MapErrorTests : TestBase
     }
 
     [Fact]
-    public async Task MapErrorAsync_ChainedErrorTransformations()
+    public async Task MapOnFailureAsync_ChainedErrorTransformations()
     {
         // Arrange
         var result = Result.Failure<int>(Error.Unexpected("Internal error")).AsTask();
 
         // Act
         var transformed = await result
-            .MapErrorAsync(e => Error.ServiceUnavailable($"Service error: {e.Detail}"));
+            .MapOnFailureAsync(e => Error.ServiceUnavailable($"Service error: {e.Detail}"));
 
         // Assert
         transformed.Should().BeFailure();

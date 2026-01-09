@@ -7,19 +7,14 @@ This page provides quick code snippets to get you started. For comprehensive rea
 The repository includes production-ready examples demonstrating complete systems:
 
 ### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample)
-Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, compensation patterns, and transaction-like behavior.
+Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, recovery patterns, and transaction-like behavior.
 
-**Key Concepts**: Aggregate lifecycle, compensation, parallel validation, async workflows
+**Key Concepts**: Aggregate lifecycle, recovery, parallel validation, async workflows
 
 ### 🏦 [Banking Transactions](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample)
 Banking system with fraud detection, daily limits, overdraft protection, and interest calculations. Shows security patterns and state machines.
 
 **Key Concepts**: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail
-
-### 👤 [User Management](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleUserLibrary)
-User registration with FluentValidation integration and value objects.
-
-**Key Concepts**: Aggregates, FluentValidation, value objects, type safety
 
 ### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWebApplication)
 ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.
@@ -187,10 +182,10 @@ Execute side effects when errors occur without changing the result:
 var result = await ProcessPaymentAsync(order, cancellationToken)
     .TapAsync(payment => 
         _logger.LogInformation("Payment succeeded: {PaymentId}", payment.Id))
-    .TapErrorAsync(async (error, ct) => 
+    .TapOnFailureAsync(async (error, ct) => 
         await _logger.LogErrorAsync("Payment failed: {Error}", error.Detail, ct),
         cancellationToken)
-    .TapErrorAsync(async (error, ct) => 
+    .TapOnFailureAsync(async (error, ct) => 
         await _notificationService.NotifyAdminAsync(error, ct),
         cancellationToken);
 ```
@@ -201,13 +196,13 @@ var result = await ProcessPaymentAsync(order, cancellationToken)
 - Side effects don't change the `Result` value
 - Perfect for logging, metrics, and notifications
 
-### Error Recovery with Compensate
+### Error Recovery with RecoverOnFailure
 
 Provide fallback behavior when specific errors occur:
 
 ```csharp
 var result = await GetUserFromCacheAsync(userId, cancellationToken)
-    .CompensateAsync(
+    .RecoverOnFailureAsync(
         predicate: error => error is NotFoundError,
         func: async ct => await GetUserFromDatabaseAsync(userId, ct),
         cancellationToken: cancellationToken
@@ -218,8 +213,8 @@ var result = await GetUserFromCacheAsync(userId, cancellationToken)
 ```
 
 **Key Points**:
-- `CompensateAsync` provides fallback on specific error types
-- Predicate determines which errors trigger compensation
+- `RecoverOnFailureAsync` provides fallback on specific error types
+- Predicate determines which errors trigger recovery
 - Useful for retry logic, fallback services, default values
 
 ### Retry Transient Failures
@@ -377,7 +372,7 @@ public Result<Order> ProcessOrder(OrderRequest request)
         .Bind(product => ValidatePayment(request.PaymentInfo))
         .Bind(payment => CreateOrder(request, payment))
         .Tap(order => SendConfirmationEmail(order))
-        .TapError(error => LogOrderFailure(error));
+        .TapOnFailure(error => LogOrderFailure(error));
 }
 ```
 

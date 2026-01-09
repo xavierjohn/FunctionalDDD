@@ -8,11 +8,14 @@ using System.Threading.Tasks;
 /// </summary>
 /// <remarks>
 /// <para>
-/// MapError is useful when you need to convert, enrich, or translate errors between different layers of your application.
+/// MapOnFailure is useful when you need to convert, enrich, or translate errors between different layers of your application.
 /// For example, converting domain errors to API-specific errors, or adding context to generic errors.
 /// </para>
 /// <para>
 /// The error transformation only occurs if the Result is a failure; successful Results pass through unchanged.
+/// </para>
+/// <para>
+/// This operation runs on the <b>failure track</b> - it only executes when the Result has failed.
 /// </para>
 /// <para>
 /// Users should capture CancellationToken in their lambda closures when cancellation support is needed.
@@ -22,19 +25,19 @@ using System.Threading.Tasks;
 /// <code>
 /// // Convert a generic error to a more specific one
 /// var result = GetUser(id)
-///     .MapError(err => Error.NotFound($"User {id} not found", id));
+///     .MapOnFailure(err => Error.NotFound($"User {id} not found", id));
 /// 
 /// // Add context to an error
 /// var result = ValidateEmail(email)
-///     .MapError(err => Error.Validation($"Email validation failed: {err.Detail}", "email"));
+///     .MapOnFailure(err => Error.Validation($"Email validation failed: {err.Detail}", "email"));
 /// 
 /// // Async with CancellationToken using closure capture
 /// var ct = cancellationToken;
 /// var result = await GetUserAsync(id)
-///     .MapErrorAsync(err => TransformErrorAsync(err, ct));
+///     .MapOnFailureAsync(err => TransformErrorAsync(err, ct));
 /// </code>
 /// </example>
-public static class MapErrorExtensions
+public static class MapOnFailureExtensions
 {
     /// <summary>
     /// Transforms the error of a failed Result using the provided mapping function.
@@ -44,7 +47,11 @@ public static class MapErrorExtensions
     /// <param name="result">The result whose error to potentially transform.</param>
     /// <param name="map">The function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static Result<T> MapError<T>(this Result<T> result, Func<Error, Error> map)
+    /// <remarks>
+    /// This operation runs on the failure track only. If the result is successful, the mapping function is not called.
+    /// </remarks>
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static Result<T> MapOnFailure<T>(this Result<T> result, Func<Error, Error> map)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess) return result;
@@ -59,10 +66,11 @@ public static class MapErrorExtensions
     /// <param name="resultTask">The task containing the result whose error to potentially transform.</param>
     /// <param name="map">The function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async Task<Result<T>> MapErrorAsync<T>(this Task<Result<T>> resultTask, Func<Error, Error> map)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<T>> MapOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Error, Error> map)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        return result.MapError(map);
+        return result.MapOnFailure(map);
     }
 
     /// <summary>
@@ -72,7 +80,8 @@ public static class MapErrorExtensions
     /// <param name="result">The result whose error to potentially transform.</param>
     /// <param name="mapAsync">The async function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async Task<Result<T>> MapErrorAsync<T>(this Result<T> result, Func<Error, Task<Error>> mapAsync)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<T>> MapOnFailureAsync<T>(this Result<T> result, Func<Error, Task<Error>> mapAsync)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess) return result;
@@ -88,10 +97,11 @@ public static class MapErrorExtensions
     /// <param name="resultTask">The task containing the result whose error to potentially transform.</param>
     /// <param name="mapAsync">The async function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async Task<Result<T>> MapErrorAsync<T>(this Task<Result<T>> resultTask, Func<Error, Task<Error>> mapAsync)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async Task<Result<T>> MapOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Error, Task<Error>> mapAsync)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        return await result.MapErrorAsync(mapAsync).ConfigureAwait(false);
+        return await result.MapOnFailureAsync(mapAsync).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -101,10 +111,11 @@ public static class MapErrorExtensions
     /// <param name="resultTask">The ValueTask containing the result whose error to potentially transform.</param>
     /// <param name="map">The function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async ValueTask<Result<T>> MapErrorAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, Error> map)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<T>> MapOnFailureAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, Error> map)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        return result.MapError(map);
+        return result.MapOnFailure(map);
     }
 
     /// <summary>
@@ -114,7 +125,8 @@ public static class MapErrorExtensions
     /// <param name="result">The result whose error to potentially transform.</param>
     /// <param name="mapAsync">The async function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async ValueTask<Result<T>> MapErrorAsync<T>(this Result<T> result, Func<Error, ValueTask<Error>> mapAsync)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<T>> MapOnFailureAsync<T>(this Result<T> result, Func<Error, ValueTask<Error>> mapAsync)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess) return result;
@@ -130,9 +142,10 @@ public static class MapErrorExtensions
     /// <param name="resultTask">The ValueTask containing the result whose error to potentially transform.</param>
     /// <param name="mapAsync">The async function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
-    public static async ValueTask<Result<T>> MapErrorAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, ValueTask<Error>> mapAsync)
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<T>> MapOnFailureAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, ValueTask<Error>> mapAsync)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        return await result.MapErrorAsync(mapAsync).ConfigureAwait(false);
+        return await result.MapOnFailureAsync(mapAsync).ConfigureAwait(false);
     }
 }

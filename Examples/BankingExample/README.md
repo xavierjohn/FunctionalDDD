@@ -1,4 +1,4 @@
-﻿# Banking Transaction Example
+# Banking Transaction Example
 
 This example demonstrates a complete banking system with account management, fraud detection, and transaction processing using **Railway Oriented Programming** and **Domain-Driven Design**.
 
@@ -47,7 +47,7 @@ return await account.ToResult()
         Error.Validation("Fraud check failed")
     )
     .Bind(acc => acc.Withdraw(amount))
-    .CompensateAsync(
+    .RecoverOnFailureAsync(
         predicate: error => error.Code == "fraud",
         func: async error => await account.Freeze("Suspicious activity")
     );
@@ -189,7 +189,7 @@ Deep dive into domain events, `UncommittedEvents()`, `AcceptChanges()`, and `IsC
 - Identity verification failed
 - Account frozen
 
-### Compensation Patterns
+### recovery Patterns
 - Freeze account on fraud detection
 - Notify security team
 - Rollback batch transactions on failure
@@ -202,7 +202,7 @@ Deep dive into domain events, `UncommittedEvents()`, `AcceptChanges()`, and `IsC
 3. **Audit Trail**: All transactions are recorded with timestamps
 4. **Type Safety**: Money value object prevents decimal arithmetic errors
 5. **Parallel Operations**: Fraud detection runs in parallel for transfers
-6. **Compensation**: Automatic freeze on suspicious activity
+6. **recovery**: Automatic freeze on suspicious activity
 
 ## Extensions
 

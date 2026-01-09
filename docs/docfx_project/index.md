@@ -213,17 +213,26 @@ result.MatchError(
 
 ## Key Operations at a Glance
 
-| Operation | Purpose | Example |
-|-----------|---------|---------|
-| **Bind** | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
-| **Map** | Transform success values | `.Map(user => user.Name)` |
-| **Combine** | Merge multiple results | `.Combine(lastName).Combine(email)` |
-| **Ensure** | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
-| **Tap** | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
-| **Match** | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
-| **Compensate** | Recover from errors | `.Compensate(err => GetDefault())` |
+| Operation | Track | Purpose | Example |
+|-----------|-------|---------|---------|
+| **Bind** | 🟢 Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
+| **Map** | 🟢 Success | Transform success values | `.Map(user => user.Name)` |
+| **Tap** | 🟢 Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
+| **TapOnFailure** | 🔴 Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
+| **MapOnFailure** | 🔴 Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
+| **RecoverOnFailure** | 🔴 Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
+| **Ensure** | 🟢→🔴 | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
+| **Combine** | ✅ Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
+| **Match** | ✅ Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
 
-All operations have **async variants** (`BindAsync`, `MapAsync`, etc.) for seamless async/await support.
+**Track Legend:**
+- 🟢 **Success** - Only runs when result is successful
+- 🔴 **Failure** - Only runs when result is a failure  
+- ✅ **Both/Terminal** - Runs on both tracks or handles both
+
+**Naming Pattern:** Success track operations have **no suffix**. Failure track operations have **`OnFailure` suffix**.
+
+All operations have **async variants** (`BindAsync`, `MapAsync`, `TapOnFailureAsync`, etc.) for seamless async/await support.
 
 ---
 

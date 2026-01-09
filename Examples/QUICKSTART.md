@@ -57,7 +57,7 @@ public async Task<Result<Order>> ProcessOrderAsync(
     return await Order.TryCreate(customerId)
         .BindAsync(order => AddItemsAsync(order, items))
         .BindAsync(order => ReserveInventoryAsync(order))
-        .CompensateAsync(
+        .RecoverOnFailureAsync(
             predicate: error => error is ValidationError,
             func: async () => await SuggestAlternativesAsync()
         )
@@ -88,7 +88,7 @@ public async Task<Result<BankAccount>> ProcessSecureWithdrawalAsync(
         )
         .BindAsync(acc => VerifyMFAIfLargeAmountAsync(acc, amount, verificationCode))
         .Bind(acc => acc.Withdraw(amount))
-        .CompensateAsync(
+        .RecoverOnFailureAsync(
             predicate: error => error.Code == "fraud",
             func: async error => {
                 await account.Freeze("Suspicious activity");
@@ -98,7 +98,7 @@ public async Task<Result<BankAccount>> ProcessSecureWithdrawalAsync(
 }
 ```
 
-**Key Pattern**: Security checks, MFA, compensation on fraud detection
+**Key Pattern**: Security checks, MFA, recovery on fraud detection
 
 ---
 
@@ -123,9 +123,9 @@ await GetUserAsync(id)
 ```
 **Use When**: Chaining async operations
 
-### Pattern 3: Compensation (Fallback/Cleanup)
+### Pattern 3: recovery (Fallback/Cleanup)
 ```csharp
-.CompensateAsync(
+.RecoverOnFailureAsync(
     predicate: error => error is UnexpectedError,
     func: async () => await RetryOperationAsync()
 )
@@ -166,10 +166,10 @@ public Result<Order> Submit()
 | `Ensure` | Validate condition | `Result<T>` | Business rule validation |
 | `Tap` | Side effect on success | `Result<T>` | Logging, metrics, notifications |
 | `Combine` | Merge multiple Results | `Result<(T1,T2,...)>` | Multiple independent validations |
-| `Compensate` | Fallback on failure | `Result<T>` | Retry, cleanup, alternative path |
+| `RecoverOnFailure` | Fallback on failure | `Result<T>` | Retry, cleanup, alternative path |
 | `Match` | Unwrap Result | `TOut` | End of chain, handle both success and failure |
 
-**Async Variants**: `BindAsync`, `MapAsync`, `EnsureAsync`, `TapAsync`, `CompensateAsync`, `MatchAsync`
+**Async Variants**: `BindAsync`, `MapAsync`, `EnsureAsync`, `TapAsync`, `RecoverOnFailureAsync`, `MatchAsync`
 
 ---
 
@@ -202,7 +202,7 @@ public void Order_Creation_Fails_With_Invalid_Email()
 }
 ```
 
-### Test Compensation
+### Test recovery
 ```csharp
 [Fact]
 public async Task Payment_Failure_Triggers_Inventory_Release()

@@ -4,14 +4,14 @@ This directory contains comprehensive real-world examples demonstrating how to u
 
 ## 🚀 Quick Start
 
-- **[Quick Start Guide](./QUICKSTART.md)** - Learn Railway Oriented Programming fundamentals using standard functional programming terminology (`Bind`, `Map`, `Tap`, `Ensure`, `Combine`, `Compensate`, `Match`).
+- **[Quick Start Guide](./QUICKSTART.md)** - Learn Railway Oriented Programming fundamentals using standard functional programming terminology (`Bind`, `Map`, `Tap`, `Ensure`, `Combine`, `RecoverOnFailure`, `Match`).
 
 ---
 
 ## Available Examples
 
 ### 1. 🛒 [E-Commerce Order Processing](./EcommerceExample/)
-**Complexity**: 🔵🔵🔵🔵
+**Complexity**: ⭐⭐⭐⭐
 
 A complete e-commerce system with order management, payment processing, and inventory control.
 
@@ -21,11 +21,11 @@ A complete e-commerce system with order management, payment processing, and inve
 - Inventory reservation and rollback
 - Multi-step workflow orchestration
 - Email notifications
-- Compensation patterns for failures
+- recovery patterns for failures
 
 **Learn About**:
 - Complex domain aggregates
-- `Bind`, `Ensure`, `Tap`, `Compensate` in practice
+- `Bind`, `Ensure`, `Tap`, `RecoverOnFailure` in practice
 - Async workflows with cancellation tokens
 - Parallel validation
 - Transaction-like behavior with rollback
@@ -39,7 +39,7 @@ A complete e-commerce system with order management, payment processing, and inve
 ---
 
 ### 2. 🏦 [Banking Transactions](./BankingExample/)
-**Complexity**: 🔵🔵🔵🔵🔵
+**Complexity**: ⭐⭐⭐⭐⭐
 
 A banking system with accounts, transfers, fraud detection, and security features.
 
@@ -56,7 +56,7 @@ A banking system with accounts, transfers, fraud detection, and security feature
 - Security and fraud prevention
 - Complex validation chains
 - Parallel fraud detection
-- Compensation on security violations
+- Recovery on security violations
 - Audit trail with transaction history
 - Status-based state machines
 
@@ -68,7 +68,7 @@ A banking system with accounts, transfers, fraud detection, and security feature
 ---
 
 ### 3. 👤 [User Management](../SampleUserLibrary/)
-**Complexity**: 🔵🔵
+**Complexity**: ⭐⭐
 
 Basic user registration and validation with FluentValidation integration.
 
@@ -91,7 +91,7 @@ Basic user registration and validation with FluentValidation integration.
 ---
 
 ### 4. 🧪 [Unit Test Examples](../Xunit/)
-**Complexity**: 🔵🔵
+**Complexity**: ⭐⭐
 
 Comprehensive test examples using xUnit.
 
@@ -114,7 +114,7 @@ Comprehensive test examples using xUnit.
 ---
 
 ### 5. 🌐 [Web API Examples](../SampleWebApplication/)
-**Complexity**: 🔵🔵🔵
+**Complexity**: ⭐⭐⭐
 
 ASP.NET Core MVC examples showing how to integrate ROP with web APIs.
 
@@ -136,7 +136,7 @@ ASP.NET Core MVC examples showing how to integrate ROP with web APIs.
 ---
 
 ### 6. ⚡ [Minimal API Examples](../SampleMinimalApi/)
-**Complexity**: 🔵🔵🔵
+**Complexity**: ⭐⭐⭐
 
 ASP.NET Core Minimal API examples with ROP integration.
 
@@ -187,9 +187,9 @@ await GetCustomerAsync(id)
 
 ---
 
-### 3. **Compensation Pattern**
+### 3. **Recovery Pattern**
 ```csharp
-.Compensate(
+.RecoverOnFailure(
     predicate: error => error is UnexpectedError,
     func: () => RetryOperation()
 )
@@ -234,38 +234,38 @@ public Result<Order> Submit()
 
 ## Complexity Guide
 
-- 🔵 **Beginner**: Basic ROP concepts, simple validation
-- 🔵🔵 **Intermediate**: Value objects, aggregates, basic workflows
-- 🔵🔵🔵 **Advanced**: Async patterns, API integration, multiple services
-- 🔵🔵🔵🔵 **Expert**: Complex workflows, compensation, parallel operations
-- 🔵🔵🔵🔵🔵 **Master**: Security, fraud detection, advanced state management
+- ⭐⭐ **Beginner**: Basic ROP concepts, simple validation
+- ⭐⭐⭐ **Intermediate**: Value objects, aggregates, basic workflows
+- ⭐⭐⭐⭐ **Advanced**: Async patterns, API integration, multiple services
+- ⭐⭐⭐⭐⭐ **Expert**: Complex workflows, recovery, parallel operations
+- ⭐⭐⭐⭐⭐⭐ **Master**: Security, fraud detection, advanced state management
 
 ## Learning Path
 
-### Step 1: Foundation (🔵)
+### Step 1: Foundation (⭐⭐)
 Start with unit test examples to understand basic patterns:
 1. Read `ValidationExample.cs` - Learn `Combine` and `Bind`
 2. Explore `MaybeExamples.cs` - Understand optional values
 
-### Step 2: Domain Modeling (🔵🔵)
+### Step 2: Domain Modeling (⭐⭐⭐)
 Move to user management:
 1. Study `User.cs` aggregate
 2. See how FluentValidation integrates
 3. Understand value objects
 
-### Step 3: API Integration (🔵🔵🔵)
+### Step 3: API Integration (⭐⭐⭐⭐)
 Learn web integration:
 1. Review `UsersController.cs` for MVC pattern
 2. Explore Minimal API examples
 3. Understand HTTP status mapping
 
-### Step 4: Complex Workflows (🔵🔵🔵🔵)
+### Step 4: Complex Workflows (⭐⭐⭐⭐⭐)
 Dive into e-commerce:
 1. Study `Order.cs` aggregate
 2. Review `OrderWorkflow.cs` for orchestration
-3. Learn compensation patterns
+3. Learn recovery patterns
 
-### Step 5: Advanced Features (🔵🔵🔵🔵🔵)
+### Step 5: Advanced Features (⭐⭐⭐⭐⭐⭐)
 Master banking example:
 1. Analyze `BankAccount.cs` state machine
 2. Study `FraudDetectionService.cs`
@@ -350,7 +350,7 @@ Every example uses value objects to prevent primitive obsession:
 No hidden exceptions or null checks:
 - All failures return typed `Error` objects
 - Errors aggregate when using `Combine`
-- Compensation handles specific error types
+- recovery handles specific error types
 
 ### 3. **Composable Workflows**
 Build complex operations from simple parts:

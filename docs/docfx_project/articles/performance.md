@@ -269,7 +269,7 @@ public async Task<Result<User>> GetUserAsync(UserId id)
 .Tap(user => _logger.LogDebug("Got user {Id}", user.Id))
 
 // ✅ Good - Log only on failures or important events
-.TapError(error => _logger.LogWarning("Failed to get user: {Error}", error))
+.TapOnFailure(error => _logger.LogWarning("Failed to get user: {Error}", error))
 
 // ✅ Good - Use structured logging with guards
 .Tap(user => 

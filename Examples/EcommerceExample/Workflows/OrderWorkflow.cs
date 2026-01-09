@@ -9,7 +9,7 @@ using FunctionalDdd;
 
 /// <summary>
 /// Demonstrates a complete order processing workflow using Railway Oriented Programming.
-/// This showcases how complex business workflows can be composed using Result, Bind, Ensure, Tap, and Compensate.
+/// This showcases how complex business workflows can be composed using Result, Bind, Ensure, Tap, and RecoverOnFailure.
 /// Also demonstrates domain event publishing with UncommittedEvents and AcceptChanges.
 /// </summary>
 public class OrderWorkflow
@@ -29,8 +29,8 @@ public class OrderWorkflow
     }
 
     /// <summary>
-    /// Complete order processing workflow with error handling, compensations, and domain event publishing.
-    /// Demonstrates: Bind, Ensure, Tap, BindAsync, TapAsync, CompensateAsync, UncommittedEvents, AcceptChanges
+    /// Complete order processing workflow with error handling, recoverys, and domain event publishing.
+    /// Demonstrates: Bind, Ensure, Tap, BindAsync, TapAsync, RecoverOnFailureAsync, UncommittedEvents, AcceptChanges
     /// </summary>
     public async Task<Result<Order>> ProcessOrderAsync(
         CustomerId customerId,
@@ -51,7 +51,7 @@ public class OrderWorkflow
             .BindAsync(async order =>
             {
                 var reserveResult = await ReserveInventoryAsync(order, ct)
-                    .CompensateAsync(
+                    .RecoverOnFailureAsync(
                         predicate: error => error is ValidationError,
                         funcAsync: () => SuggestAlternativeProductsAsync(order, ct));
 
@@ -76,7 +76,7 @@ public class OrderWorkflow
             })
             .BindAsync(async order =>
             {
-                var paymentResult = await ProcessPaymentWithCompensationAsync(order, paymentInfo, ct);
+                var paymentResult = await ProcessPaymentWithrecoveryAsync(order, paymentInfo, ct);
 
                 if (paymentResult.IsFailure)
                 {
@@ -174,16 +174,16 @@ public class OrderWorkflow
 
     /// <summary>
     /// Processes payment with automatic retry on transient failures.
-    /// Demonstrates: Compensate with predicate for conditional error recovery.
+    /// Demonstrates: RecoverOnFailure with predicate for conditional error recovery.
     /// </summary>
-    private async Task<Result<string>> ProcessPaymentWithCompensationAsync(
+    private async Task<Result<string>> ProcessPaymentWithrecoveryAsync(
         Order order,
         PaymentInfo paymentInfo,
         CancellationToken cancellationToken)
     {
         return await Task.FromResult(order.ProcessPayment("PENDING"))
             .BindAsync(_ => _paymentService.ProcessPaymentAsync(order, paymentInfo.CardNumber, paymentInfo.CVV, cancellationToken))
-            .CompensateAsync(
+            .RecoverOnFailureAsync(
                 predicate: error => error is UnexpectedError, // Retry on unexpected errors (e.g., timeouts)
                 funcAsync: async () =>
                 {
@@ -191,7 +191,7 @@ public class OrderWorkflow
                     await Task.Delay(1000, cancellationToken);
                     return await _paymentService.ProcessPaymentAsync(order, paymentInfo.CardNumber, paymentInfo.CVV, cancellationToken);
                 })
-            .TapErrorAsync(async error =>
+            .TapOnFailureAsync(async error =>
             {
                 await Task.FromResult(order.MarkPaymentFailed());
                 Console.WriteLine($"Payment failed: {error.Detail}");
@@ -200,7 +200,7 @@ public class OrderWorkflow
 
     /// <summary>
     /// Suggests alternative products when requested items are out of stock.
-    /// Demonstrates: Compensate for providing alternative paths.
+    /// Demonstrates: RecoverOnFailure for providing alternative paths.
     /// </summary>
     private async Task<Result<Unit>> SuggestAlternativeProductsAsync(Order order, CancellationToken cancellationToken)
     {

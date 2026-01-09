@@ -1,4 +1,4 @@
-﻿namespace Example.Tests;
+namespace Example.Tests;
 
 using FunctionalDdd;
 using System.Diagnostics;
@@ -52,8 +52,8 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(Error.NotFound("Customer with such Id is not found: " + id))
             .EnsureAsync(customer => customer.CanBePromoted, Error.Validation("Need to ask manager"))
-            .TapErrorAsync(Log)
-            .CompensateAsync(() => AskManagerAsync(id))
+            .TapOnFailureAsync(Log)
+            .RecoverOnFailureAsync(() => AskManagerAsync(id))
             .TapAsync(static customer => Log("Manager approved promotion"))
             .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
