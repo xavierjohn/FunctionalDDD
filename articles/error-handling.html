@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Error Handling </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Error Handling ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/error-handling.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="error-handling">Error Handling</h1>
+
+<p>This guide covers error types, discriminated matching, and transformation patterns in Railway Oriented Programming.</p>
+<pre><code class="lang-csharp">using FunctionalDdd;
+using System.Collections.Immutable;
+</code></pre>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#error-types">Error Types</a></li>
+<li><a href="#creating-errors">Creating Errors</a></li>
+<li><a href="#discriminated-error-matching">Discriminated Error Matching</a></li>
+<li><a href="#error-side-effects">Error Side Effects</a></li>
+<li><a href="#error-transformation">Error Transformation</a></li>
+<li><a href="#aggregate-errors">Aggregate Errors</a></li>
+<li><a href="#validationerror-fluent-api">ValidationError Fluent API</a></li>
+<li><a href="#async-error-handling">Async Error Handling</a></li>
+<li><a href="#custom-error-types">Custom Error Types</a></li>
+</ul>
+<h2 id="error-types">Error Types</h2>
+<p>Built-in error types map to HTTP status codes and common business scenarios:</p>
+<table>
+<thead>
+<tr>
+<th>Error Type</th>
+<th>HTTP Status</th>
+<th>Use Case</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValidationError</code></td>
+<td>400 Bad Request</td>
+<td>Input validation failures</td>
+<td>Invalid email format, required field missing</td>
+</tr>
+<tr>
+<td><code>BadRequestError</code></td>
+<td>400 Bad Request</td>
+<td>General request errors</td>
+<td>Malformed request</td>
+</tr>
+<tr>
+<td><code>UnauthorizedError</code></td>
+<td>401 Unauthorized</td>
+<td>Authentication required</td>
+<td>Missing token, invalid credentials</td>
+</tr>
+<tr>
+<td><code>ForbiddenError</code></td>
+<td>403 Forbidden</td>
+<td>Insufficient permissions</td>
+<td>User cannot access resource</td>
+</tr>
+<tr>
+<td><code>NotFoundError</code></td>
+<td>404 Not Found</td>
+<td>Resource doesn't exist</td>
+<td>User not found, order not found</td>
+</tr>
+<tr>
+<td><code>ConflictError</code></td>
+<td>409 Conflict</td>
+<td>Resource state conflict</td>
+<td>Duplicate email, concurrent update</td>
+</tr>
+<tr>
+<td><code>DomainError</code></td>
+<td>422 Unprocessable Entity</td>
+<td>Business rule violation</td>
+<td>Cannot withdraw more than balance</td>
+</tr>
+<tr>
+<td><code>RateLimitError</code></td>
+<td>429 Too Many Requests</td>
+<td>Rate limit exceeded</td>
+<td>Too many login attempts</td>
+</tr>
+<tr>
+<td><code>UnexpectedError</code></td>
+<td>500 Internal Server Error</td>
+<td>System errors</td>
+<td>Database connection failed</td>
+</tr>
+<tr>
+<td><code>ServiceUnavailableError</code></td>
+<td>503 Service Unavailable</td>
+<td>Service temporarily down</td>
+<td>Service under maintenance</td>
+</tr>
+<tr>
+<td><code>AggregateError</code></td>
+<td>Varies</td>
+<td>Multiple errors combined</td>
+<td>Multiple validation failures or mixed error types</td>
+</tr>
+</tbody>
+</table>
+<h3 id="error-structure">Error Structure</h3>
+<p>All errors share a common structure:</p>
+<pre><code class="lang-csharp">public class Error
+{
+    public string Code { get; }        // Machine-readable error code
+    public string Detail { get; }      // Human-readable error description
+    public string? Instance { get; }   // Optional resource identifier
+}
+
+// Factory methods create specific error types:
+Error.Validation(...)     // ValidationError
+Error.NotFound(...)       // NotFoundError
+Error.Conflict(...)       // ConflictError
+Error.BadRequest(...)     // BadRequestError
+Error.Unauthorized(...)   // UnauthorizedError
+Error.Forbidden(...)      // ForbiddenError
+Error.Unexpected(...)     // UnexpectedError
+Error.Domain(...)         // DomainError
+Error.RateLimit(...)      // RateLimitError
+Error.ServiceUnavailable(...) // ServiceUnavailableError
+</code></pre>
+<h2 id="creating-errors">Creating Errors</h2>
+<h3 id="validation-errors">Validation Errors</h3>
+<pre><code class="lang-csharp">// Simple validation error for a single field
+var error = Error.Validation(&quot;Email is required&quot;, &quot;email&quot;);
+
+// Results in:
+// Code: &quot;validation.error&quot;
+// Detail: &quot;Email is required&quot;
+// FieldErrors: [{ FieldName: &quot;email&quot;, Details: [&quot;Email is required&quot;] }]
+
+// Multiple validation errors using fluent API (see ValidationError Fluent API section)
+var error = ValidationError.For(&quot;email&quot;, &quot;Email is required&quot;)
+    .And(&quot;password&quot;, &quot;Password must be at least 8 characters&quot;)
+    .And(&quot;age&quot;, &quot;Must be 18 or older&quot;);
+
+// Multiple errors for the same field
+var error = Error.Validation(&quot;Invalid email format&quot;, &quot;email&quot;);
+var error2 = Error.Validation(&quot;Email domain not allowed&quot;, &quot;email&quot;);
+var combined = error.Combine(error2);
+// Results in single ValidationError with multiple details for &quot;email&quot; field
+</code></pre>
+<h3 id="not-found-errors">Not Found Errors</h3>
+<pre><code class="lang-csharp">// Simple not found
+var error = Error.NotFound($&quot;User {userId} not found&quot;);
+// Code: &quot;not.found.error&quot;
+// Detail: &quot;User {userId} not found&quot;
+// Instance: null
+
+// With instance identifier
+var error = Error.NotFound(
+    $&quot;User with ID {userId} does not exist&quot;,
+    userId.ToString()
+);
+// Code: &quot;not.found.error&quot;
+// Detail: &quot;User with ID {userId} does not exist&quot;
+// Instance: &quot;{userId}&quot;
+</code></pre>
+<h3 id="authorization-errors">Authorization Errors</h3>
+<pre><code class="lang-csharp">// Unauthorized (authentication required - user not logged in)
+var error = Error.Unauthorized(&quot;Authentication token missing&quot;);
+// Code: &quot;unauthorized.error&quot;
+// Maps to HTTP 401
+
+// Forbidden (insufficient permissions - user logged in but lacks access)
+var error = Error.Forbidden(&quot;User does not have permission to delete orders&quot;);
+// Code: &quot;forbidden.error&quot;
+// Maps to HTTP 403
+</code></pre>
+<h3 id="conflict-errors">Conflict Errors</h3>
+<pre><code class="lang-csharp">// Resource conflict
+var error = Error.Conflict($&quot;Email {email} is already registered&quot;);
+
+// Concurrent update conflict
+var error = Error.Conflict(&quot;Resource was modified by another user&quot;);
+</code></pre>
+<h3 id="domain-errors">Domain Errors</h3>
+<pre><code class="lang-csharp">// Business rule violations
+var error = Error.Domain(&quot;Cannot withdraw more than account balance&quot;);
+
+// With instance identifier
+var error = Error.Domain(
+    &quot;Order quantity exceeds available inventory&quot;,
+    orderId.ToString()
+);
+</code></pre>
+<h3 id="rate-limit-errors">Rate Limit Errors</h3>
+<pre><code class="lang-csharp">// Rate limit exceeded
+var error = Error.RateLimit(&quot;Too many login attempts. Try again in 60 seconds&quot;);
+
+// With retry information
+var error = Error.RateLimit(&quot;API rate limit exceeded. Retry after 60 seconds&quot;);
+</code></pre>
+<h3 id="service-unavailable-errors">Service Unavailable Errors</h3>
+<pre><code class="lang-csharp">// Temporary service unavailability
+var error = Error.ServiceUnavailable(&quot;Payment service is temporarily unavailable&quot;);
+
+// With maintenance window
+var error = Error.ServiceUnavailable(&quot;System under maintenance until 2:00 AM UTC&quot;);
+</code></pre>
+<h3 id="unexpected-errors">Unexpected Errors</h3>
+<pre><code class="lang-csharp">// System errors
+var error = Error.Unexpected(&quot;Database connection failed&quot;);
+
+// From exception
+try
+{
+    // risky operation
+}
+catch (Exception ex)
+{
+    return Result.Failure&lt;Data&gt;(
+        Error.Unexpected($&quot;Unexpected error: {ex.Message}&quot;)
+    );
+}
+
+// Or use Result.Try to automatically convert exceptions
+var result = Result.Try(() =&gt; RiskyOperation());
+</code></pre>
+<h2 id="discriminated-error-matching">Discriminated Error Matching</h2>
+<p>The <code>MatchError</code> method allows you to handle different error types with specific logic:</p>
+<h3 id="basic-error-matching">Basic Error Matching</h3>
+<pre><code class="lang-csharp">var httpResult = ProcessOrder(order)
+    .MatchError(
+        onValidation: validationErr =&gt; 
+            Results.BadRequest(new { 
+                errors = validationErr.FieldErrors
+                    .ToDictionary(f =&gt; f.FieldName, f =&gt; f.Details.ToArray())
+            }),
+        onNotFound: notFoundErr =&gt; 
+            Results.NotFound(new { message = notFoundErr.Detail }),
+        onConflict: conflictErr =&gt; 
+            Results.Conflict(new { message = conflictErr.Detail }),
+        onSuccess: order =&gt; 
+            Results.Ok(order)
+    );
+</code></pre>
+<h3 id="complete-error-matching">Complete Error Matching</h3>
+<p>Handle all error types explicitly:</p>
+<pre><code class="lang-csharp">return await ProcessTransactionAsync(transaction)
+    .MatchError(
+        onValidation: err =&gt; 
+            Results.BadRequest(new { 
+                message = err.Detail,
+                errors = err.FieldErrors
+                    .ToDictionary(f =&gt; f.FieldName, f =&gt; f.Details.ToArray())
+            }),
+        onBadRequest: err =&gt;
+            Results.BadRequest(new { message = err.Detail }),
+        onNotFound: err =&gt; 
+            Results.NotFound(new { message = err.Detail }),
+        onUnauthorized: err =&gt; 
+            Results.Unauthorized(),
+        onForbidden: err =&gt; 
+            Results.StatusCode(403),
+        onConflict: err =&gt; 
+            Results.Conflict(new { message = err.Detail }),
+        onDomain: err =&gt;
+            Results.UnprocessableEntity(new { message = err.Detail }),
+        onRateLimit: err =&gt;
+            Results.StatusCode(429),
+        onServiceUnavailable: err =&gt;
+            Results.StatusCode(503),
+        onUnexpected: err =&gt; 
+            Results.StatusCode(500),
+        onSuccess: transaction =&gt; 
+            Results.Ok(new { transactionId = transaction.Id })
+    );
+</code></pre>
+<h3 id="partial-error-matching">Partial Error Matching</h3>
+<p>You don't need to handle every error type - provide an <code>onError</code> fallback for unhandled types:</p>
+<pre><code class="lang-csharp">var result = CreateUser(userData)
+    .MatchError(
+        onValidation: err =&gt; Results.BadRequest(err.FieldErrors),
+        onConflict: err =&gt; Results.Conflict(err.Detail),
+        onError: err =&gt; Results.StatusCode(500), // Fallback for all other error types
+        onSuccess: user =&gt; Results.Created($&quot;/users/{user.Id}&quot;, user)
+    );
+</code></pre>
+<p><strong>Note:</strong> If you don't provide handlers for some error types and no <code>onError</code> fallback, <code>MatchError</code> will throw <code>InvalidOperationException</code> when it encounters an unhandled error type.</p>
+<h3 id="switch-error-matching-side-effects-only">Switch Error Matching (Side Effects Only)</h3>
+<p>Use <code>SwitchError</code> when you only need side effects without returning a value:</p>
+<pre><code class="lang-csharp">ProcessOrder(order)
+    .SwitchError(
+        onValidation: err =&gt; _logger.LogWarning(&quot;Validation failed: {Errors}&quot;, err.FieldErrors),
+        onNotFound: err =&gt; _logger.LogWarning(&quot;Order not found: {Detail}&quot;, err.Detail),
+        onConflict: err =&gt; _logger.LogWarning(&quot;Order conflict: {Detail}&quot;, err.Detail),
+        onSuccess: order =&gt; _logger.LogInformation(&quot;Order processed: {OrderId}&quot;, order.Id)
+    );
+</code></pre>
+<h2 id="error-side-effects">Error Side Effects</h2>
+<h3 id="taponfailure---execute-side-effects-on-failure">TapOnFailure - Execute Side Effects on Failure</h3>
+<p>Use <code>TapOnFailure</code> to perform side effects (like logging) when an error occurs without changing the result:</p>
+<pre><code class="lang-csharp">var result = ProcessOrder(order)
+    .TapOnFailure(error =&gt; _logger.LogError(&quot;Order processing failed: {Error}&quot;, error.Detail))
+    .TapOnFailure(error =&gt; _metrics.RecordFailure(error.Code))
+    .TapOnFailure(error =&gt; _notificationService.NotifyAdmin(error));
+
+// TapError only executes on failure
+// On success, TapError is skipped
+</code></pre>
+<h3 id="combined-tap-and-taperror">Combined Tap and TapError</h3>
+<pre><code class="lang-csharp">var result = ProcessPayment(order)
+    .Tap(payment =&gt; _logger.LogInformation(&quot;Payment succeeded: {Id}&quot;, payment.Id))
+    .TapOnFailure(error =&gt; _logger.LogError(&quot;Payment failed: {Error}&quot;, error.Detail))
+    .TapOnFailure(error =&gt; SendFailureNotification(error))
+    .Tap(payment =&gt; SendSuccessEmail(payment));
+</code></pre>
+<h3 id="async-taperror">Async TapError</h3>
+<pre><code class="lang-csharp">var result = await ProcessOrderAsync(order)
+    .TapOnFailureAsync(async error =&gt; 
+        await _auditLog.LogFailureAsync(error, cancellationToken))
+    .TapOnFailureAsync(async error =&gt; 
+        await _notificationService.NotifyAsync(error, cancellationToken),
+        cancellationToken);
+</code></pre>
+<h2 id="error-transformation">Error Transformation</h2>
+<p>Transform errors as they flow through your pipeline:</p>
+<h3 id="maponfailure---transform-error-types">MapOnFailure - Transform Error Types</h3>
+<pre><code class="lang-csharp">var result = GetUserFromExternalApi(userId)
+    .MapOnFailure(error =&gt; error switch
+    {
+        NotFoundError =&gt; Error.NotFound(
+            &quot;User not found in our system&quot;,
+            userId
+        ),
+        UnexpectedError =&gt; Error.ServiceUnavailable(
+            &quot;External service is temporarily unavailable&quot;
+        ),
+        _ =&gt; error
+    });
+</code></pre>
+<h3 id="add-context-to-errors">Add Context to Errors</h3>
+<pre><code class="lang-csharp">var result = ProcessPayment(order)
+    .MapOnFailure(error =&gt; Error.Unexpected(
+        $&quot;Payment processing failed for order {order.Id}: {error.Detail}&quot;,
+        $&quot;order-{order.Id}&quot;
+    ));
+</code></pre>
+<h3 id="recoveronfailure---error-recovery">RecoverOnFailure - Error Recovery</h3>
+<pre><code class="lang-csharp">var result = GetUserFromCache(userId)
+    .RecoverOnFailure(cacheError =&gt; 
+        GetUserFromDatabase(userId)
+            .MapOnFailure(dbError =&gt; Error.NotFound(
+                $&quot;User {userId} not found. Cache: {cacheError.Detail}, DB: {dbError.Detail}&quot;,
+                userId
+            ))
+    );
+</code></pre>
+<h2 id="aggregate-errors">Aggregate Errors</h2>
+<p>When combining multiple Results, errors are intelligently aggregated based on their types:</p>
+<h3 id="validation-error-merging">Validation Error Merging</h3>
+<p>When combining multiple <code>ValidationError</code> instances, they are <strong>merged</strong> into a single <code>ValidationError</code> with all field errors:</p>
+<pre><code class="lang-csharp">var emailError = Error.Validation(&quot;Email is required&quot;, &quot;email&quot;);
+var passwordError = Error.Validation(&quot;Password is required&quot;, &quot;password&quot;);
+var ageError = Error.Validation(&quot;Must be 18 or older&quot;, &quot;age&quot;);
+
+var result = emailError.Combine(passwordError).Combine(ageError);
+
+// Result: Single ValidationError with 3 field errors
+// FieldErrors:
+//   - email: [&quot;Email is required&quot;]
+//   - password: [&quot;Password is required&quot;]
+//   - age: [&quot;Must be 18 or older&quot;]
+</code></pre>
+<h3 id="mixed-error-types-create-aggregateerror">Mixed Error Types Create AggregateError</h3>
+<p>When combining <code>ValidationError</code> with other error types (or combining different non-validation error types), an <code>AggregateError</code> is created:</p>
+<pre><code class="lang-csharp">var validationError = Error.Validation(&quot;Invalid email&quot;, &quot;email&quot;);
+var notFoundError = Error.NotFound(&quot;User not found&quot;);
+var conflictError = Error.Conflict(&quot;Email already exists&quot;);
+
+var result = validationError.Combine(notFoundError).Combine(conflictError);
+
+// Result: AggregateError containing 3 separate errors
+// Errors:
+//   - ValidationError: Invalid email (email field)
+//   - NotFoundError: User not found
+//   - ConflictError: Email already exists
+</code></pre>
+<h3 id="automatic-aggregation-with-combine">Automatic Aggregation with Combine</h3>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(email)
+    .Combine(FirstName.TryCreate(firstName))
+    .Combine(LastName.TryCreate(lastName));
+
+// If all succeed: Result&lt;(EmailAddress, FirstName, LastName)&gt;
+// If any fail with ValidationError: Single merged ValidationError
+// If failures include non-validation errors: AggregateError
+
+// Handling aggregated errors
+if (result.IsFailure)
+{
+    if (result.Error is ValidationError validation)
+    {
+        // All errors were validation errors - merged into one
+        foreach (var fieldError in validation.FieldErrors)
+        {
+            Console.WriteLine($&quot;{fieldError.FieldName}: {string.Join(&quot;, &quot;, fieldError.Details)}&quot;);
+        }
+    }
+    else if (result.Error is AggregateError aggregate)
+    {
+        // Mixed error types or multiple non-validation errors
+        foreach (var error in aggregate.Errors)
+        {
+            Console.WriteLine($&quot;{error.GetType().Name}: {error.Detail}&quot;);
+        }
+    }
+    else
+    {
+        // Single error type
+        Console.WriteLine($&quot;{result.Error.Detail}&quot;);
+    }
+}
+</code></pre>
+<h3 id="manual-error-aggregation">Manual Error Aggregation</h3>
+<pre><code class="lang-csharp">var errors = new List&lt;Error&gt;();
+
+if (string.IsNullOrEmpty(email))
+    errors.Add(Error.Validation(&quot;Email is required&quot;, &quot;email&quot;));
+
+if (age &lt; 18)
+    errors.Add(Error.Validation(&quot;Must be 18 or older&quot;, &quot;age&quot;));
+
+if (errors.Any())
+{
+    // Combine all errors into one
+    var combinedError = errors.Aggregate((acc, err) =&gt; acc.Combine(err));
+    return Result.Failure&lt;User&gt;(combinedError);
+}
+
+return Result.Success(new User(email, age));
+</code></pre>
+<h2 id="validationerror-fluent-api">ValidationError Fluent API</h2>
+<p><code>ValidationError</code> provides a fluent API for building multi-field validation errors:</p>
+<h3 id="building-multi-field-validation-errors">Building Multi-Field Validation Errors</h3>
+<pre><code class="lang-csharp">// Start with one field, then chain with And()
+var error = ValidationError.For(&quot;email&quot;, &quot;Email is required&quot;)
+    .And(&quot;password&quot;, &quot;Password must be at least 8 characters&quot;)
+    .And(&quot;password&quot;, &quot;Password must contain a number&quot;)  // Same field, multiple errors
+    .And(&quot;age&quot;, &quot;Must be 18 or older&quot;);
+
+// Results in single ValidationError with field errors:
+// - email: [&quot;Email is required&quot;]
+// - password: [&quot;Password must be at least 8 characters&quot;, &quot;Password must contain a number&quot;]
+// - age: [&quot;Must be 18 or older&quot;]
+</code></pre>
+<h3 id="adding-multiple-messages-to-one-field">Adding Multiple Messages to One Field</h3>
+<pre><code class="lang-csharp">// Add multiple validation messages for a single field at once
+var error = ValidationError.For(&quot;email&quot;, &quot;Email is required&quot;)
+    .And(&quot;password&quot;, 
+        &quot;Must be at least 8 characters&quot;,
+        &quot;Must contain a number&quot;,
+        &quot;Must contain a special character&quot;);
+
+// Results in:
+// - email: [&quot;Email is required&quot;]
+// - password: [&quot;Must be at least 8 characters&quot;, &quot;Must contain a number&quot;, &quot;Must contain a special character&quot;]
+</code></pre>
+<h3 id="merging-validation-errors">Merging Validation Errors</h3>
+<pre><code class="lang-csharp">var emailValidation = ValidationError.For(&quot;email&quot;, &quot;Invalid format&quot;);
+var passwordValidation = ValidationError.For(&quot;password&quot;, &quot;Too short&quot;)
+    .And(&quot;password&quot;, &quot;Not complex enough&quot;);
+
+var merged = emailValidation.Merge(passwordValidation);
+
+// Results in single ValidationError:
+// - email: [&quot;Invalid format&quot;]
+// - password: [&quot;Too short&quot;, &quot;Not complex enough&quot;]
+</code></pre>
+<h3 id="using-combine-for-automatic-merging">Using Combine for Automatic Merging</h3>
+<pre><code class="lang-csharp">// Combine automatically merges ValidationErrors
+var error1 = Error.Validation(&quot;Email required&quot;, &quot;email&quot;);
+var error2 = Error.Validation(&quot;Password required&quot;, &quot;password&quot;);
+var error3 = Error.Validation(&quot;Password too short&quot;, &quot;password&quot;);
+
+var combined = error1.Combine(error2).Combine(error3);
+
+// Results in single ValidationError:
+// - email: [&quot;Email required&quot;]
+// - password: [&quot;Password required&quot;, &quot;Password too short&quot;]
+</code></pre>
+<h2 id="async-error-handling">Async Error Handling</h2>
+<p>Handle errors in async workflows with full cancellation support:</p>
+<h3 id="async-matcherror">Async MatchError</h3>
+<pre><code class="lang-csharp">return await ProcessOrderAsync(orderId, cancellationToken)
+    .MatchErrorAsync(
+        onValidation: async (err, ct) =&gt;
+        {
+            await LogValidationFailureAsync(err, ct);
+            return Results.BadRequest(err.FieldErrors);
+        },
+        onNotFound: async (err, ct) =&gt;
+        {
+            await NotifyNotFoundAsync(err, ct);
+            return Results.NotFound(err.Detail);
+        },
+        onSuccess: async (order, ct) =&gt;
+        {
+            await SendConfirmationAsync(order, ct);
+            return Results.Ok(order);
+        },
+        cancellationToken: cancellationToken
+    );
+</code></pre>
+<h3 id="async-switcherror">Async SwitchError</h3>
+<pre><code class="lang-csharp">await ProcessPaymentAsync(payment, cancellationToken)
+    .SwitchErrorAsync(
+        onValidation: async (err, ct) =&gt; 
+            await LogErrorAsync(&quot;Validation failed&quot;, err, ct),
+        onUnexpected: async (err, ct) =&gt;
+            await NotifyAdminAsync(&quot;Payment system error&quot;, err, ct),
+        onSuccess: async (result, ct) =&gt;
+            await AuditSuccessAsync(result, ct),
+        cancellationToken: cancellationToken
+    );
+</code></pre>
+<h3 id="async-taperror-with-cancellationtoken">Async TapError with CancellationToken</h3>
+<pre><code class="lang-csharp">var result = await GetUserAsync(userId, cancellationToken)
+    .TapOnFailureAsync(
+        async (error, ct) =&gt; await LogErrorAsync(error, ct),
+        cancellationToken
+    )
+    .TapOnFailureAsync(
+        async (error, ct) =&gt; await NotifyAdminAsync(error, ct),
+        cancellationToken
+    );
+</code></pre>
+<h3 id="async-maperror">Async MapError</h3>
+<pre><code class="lang-csharp">var result = await FetchDataAsync(id, cancellationToken)
+    .MapOnFailureAsync(
+        async (error, ct) =&gt;
+        {
+            await LogErrorDetailsAsync(error, ct);
+            return Error.ServiceUnavailable(&quot;External service unavailable&quot;);
+        },
+        cancellationToken
+    );
+</code></pre>
+<h2 id="custom-error-types">Custom Error Types</h2>
+<p>While the built-in error types cover most scenarios, you can extend the system:</p>
+<h3 id="custom-error-factory-methods">Custom Error Factory Methods</h3>
+<pre><code class="lang-csharp">public static class CustomErrors
+{
+    public static RateLimitError RateLimitExceeded(int retryAfterSeconds)
+    {
+        return Error.RateLimit(
+            $&quot;Too many requests. Please try again after {retryAfterSeconds} seconds.&quot;
+        );
+    }
+
+    public static DomainError PaymentDeclined(string reason)
+    {
+        return Error.Domain(
+            $&quot;Payment declined: {reason}&quot;
+        );
+    }
+    
+    public static ValidationError InvalidCreditCard(string fieldName)
+    {
+        return Error.Validation(
+            &quot;Credit card number is invalid&quot;,
+            fieldName
+        );
+    }
+}
+
+// Usage
+if (requestCount &gt; limit)
+    return Result.Failure&lt;Response&gt;(
+        CustomErrors.RateLimitExceeded(retryAfterSeconds: 60)
+    );
+</code></pre>
+<h3 id="domain-specific-errors">Domain-Specific Errors</h3>
+<pre><code class="lang-csharp">public static class OrderErrors
+{
+    public static Error InsufficientInventory(ProductId productId, int requested, int available)
+    {
+        return Error.Conflict(
+            $&quot;Product {productId} has insufficient inventory. Requested: {requested}, Available: {available}&quot;,
+            productId.Value
+        );
+    }
+
+    public static Error OrderAlreadyShipped(OrderId orderId)
+    {
+        return Error.Conflict(
+            $&quot;Order {orderId} has already been shipped and cannot be modified&quot;,
+            orderId.Value
+        );
+    }
+    
+    public static Error PaymentAmountMismatch(decimal expected, decimal actual)
+    {
+        return Error.Domain(
+            $&quot;Payment amount mismatch. Expected: {expected:C}, Received: {actual:C}&quot;
+        );
+    }
+}
+
+// Usage
+if (inventory.Available &lt; order.Quantity)
+{
+    return Result.Failure&lt;Order&gt;(
+        OrderErrors.InsufficientInventory(
+            order.ProductId, 
+            order.Quantity, 
+            inventory.Available
+        )
+    );
+}
+</code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use Specific Error Types</strong>: Choose the most specific error type (NotFound vs Validation vs Domain)</li>
+<li><strong>Include Context in Instance</strong>: Use the <code>instance</code> parameter for resource identifiers</li>
+<li><strong>Consistent Error Codes</strong>: Use consistent, meaningful error codes across your app</li>
+<li><strong>Handle Errors at Boundaries</strong>: Use MatchError at API boundaries to convert to HTTP responses</li>
+<li><strong>Don't Swallow Errors</strong>: Always propagate or handle errors explicitly</li>
+<li><strong>Use Aggregate for Multiple Errors</strong>: Return all validation errors at once, not just the first one</li>
+<li><strong>Use TapError for Logging</strong>: Add <code>TapOnFailure</code> calls to log failures without breaking the chain</li>
+<li><strong>Leverage Fluent API</strong>: Use <code>ValidationError.For().And()</code> for building multi-field validations</li>
+<li><strong>Add Tracing IDs</strong>: Include correlation IDs in error instance for distributed tracing</li>
+<li><strong>Use MapError Sparingly</strong>: Only transform errors when you need to add context or change error types</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>Learn about async operations in <a href="basics.html#working-with-async-operations">Working with Async Operations</a></li>
+<li>See <a href="integration.html">Integration</a> for converting errors to HTTP responses</li>
+<li>Check <a href="advanced-features.html">Advanced Features</a> for pattern matching and error recovery</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/error-handling.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
