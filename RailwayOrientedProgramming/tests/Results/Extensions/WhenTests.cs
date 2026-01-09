@@ -1,7 +1,7 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.WhenTests;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.WhenTests;
 
 using FunctionalDdd.Testing;
-using System.Diagnostics;
+using System.Threading.Tasks;
 
 public class WhenTests : TestBase
 {
@@ -79,6 +79,241 @@ public class WhenTests : TestBase
 
     #endregion
 
+    #region WhenAsync with Task<Result<T>> input
+
+    [Fact]
+    public async Task WhenAsync_WithTaskResult_PredicateTrue_ExecutesOperation()
+    {
+        // Arrange
+        Task<Result<int>> resultTask = Task.FromResult(Result.Success(21));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.WhenAsync(
+            x => x == 21,
+            x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x * 2));
+            });
+
+        // Assert
+        operationExecuted.Should().BeTrue();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(42);
+    }
+
+    [Fact]
+    public async Task WhenAsync_WithTaskResult_ConditionFalse_SkipsOperation()
+    {
+        // Arrange
+        Task<Result<int>> resultTask = Task.FromResult(Result.Success(21));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.WhenAsync(
+            condition: false,
+            operation: x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x * 2));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(21);
+    }
+
+    [Fact]
+    public async Task WhenAsync_WithTaskResult_FailureShortCircuits()
+    {
+        // Arrange
+        Task<Result<int>> resultTask = Task.FromResult(Result.Failure<int>(Error1));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.WhenAsync(
+            true,
+            x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeFailure()
+            .Which.Should().HaveCode(Error1.Code);
+    }
+
+    #endregion
+
+    #region UnlessAsync with Task<Result<T>> input
+
+    [Fact]
+    public async Task UnlessAsync_WithTaskResult_PredicateFalse_ExecutesOperation()
+    {
+        // Arrange
+        Task<Result<int>> resultTask = Task.FromResult(Result.Success(10));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.UnlessAsync(
+            x => x > 50,
+            x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x + 5));
+            });
+
+        // Assert
+        operationExecuted.Should().BeTrue();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(15);
+    }
+
+    [Fact]
+    public async Task UnlessAsync_WithTaskResult_ConditionTrue_SkipsOperation()
+    {
+        // Arrange
+        Task<Result<int>> resultTask = Task.FromResult(Result.Success(10));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.UnlessAsync(
+            condition: true,
+            operation: x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x + 5));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task UnlessAsync_WithTaskResult_FailureShortCircuits()
+    {
+        // Arrange
+        Task<Result<int>> resultTask = Task.FromResult(Result.Failure<int>(Error2));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.UnlessAsync(
+            false,
+            x =>
+            {
+                operationExecuted = true;
+                return Task.FromResult(Result.Success(x));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeFailure()
+            .Which.Should().HaveCode(Error2.Code);
+    }
+
+    #endregion
+
+    #region WhenAsync with ValueTask<Result<T>> input
+
+    [Fact]
+    public async Task WhenAsync_WithValueTaskResult_PredicateTrue_ExecutesOperation()
+    {
+        // Arrange
+        ValueTask<Result<int>> resultTask = ValueTask.FromResult(Result.Success(7));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.WhenAsync(
+            x => x == 7,
+            x =>
+            {
+                operationExecuted = true;
+                return ValueTask.FromResult(Result.Success(x * 3));
+            });
+
+        // Assert
+        operationExecuted.Should().BeTrue();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(21);
+    }
+
+    [Fact]
+    public async Task WhenAsync_WithValueTaskResult_PredicateFalse_SkipsOperation()
+    {
+        // Arrange
+        ValueTask<Result<int>> resultTask = ValueTask.FromResult(Result.Success(7));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.WhenAsync(
+            x => x < 0,
+            x =>
+            {
+                operationExecuted = true;
+                return ValueTask.FromResult(Result.Success(x * 3));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(7);
+    }
+
+    #endregion
+
+    #region UnlessAsync with ValueTask<Result<T>> input
+
+    [Fact]
+    public async Task UnlessAsync_WithValueTaskResult_PredicateFalse_ExecutesOperation()
+    {
+        // Arrange
+        ValueTask<Result<int>> resultTask = ValueTask.FromResult(Result.Success(5));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.UnlessAsync(
+            x => x > 10,
+            x =>
+            {
+                operationExecuted = true;
+                return ValueTask.FromResult(Result.Success(x + 1));
+            });
+
+        // Assert
+        operationExecuted.Should().BeTrue();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(6);
+    }
+
+    [Fact]
+    public async Task UnlessAsync_WithValueTaskResult_PredicateTrue_SkipsOperation()
+    {
+        // Arrange
+        ValueTask<Result<int>> resultTask = ValueTask.FromResult(Result.Success(5));
+        var operationExecuted = false;
+
+        // Act
+        var actual = await resultTask.UnlessAsync(
+            x => x < 10,
+            x =>
+            {
+                operationExecuted = true;
+                return ValueTask.FromResult(Result.Success(x + 1));
+            });
+
+        // Assert
+        operationExecuted.Should().BeFalse();
+        actual.Should().BeSuccess()
+            .Which.Should().Be(5);
+    }
+
+    #endregion
     #region When with Boolean Condition
 
     [Fact]

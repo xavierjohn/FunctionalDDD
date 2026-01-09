@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests;
+﻿namespace RailwayOrientedProgramming.Tests;
 
 using FluentAssertions;
 using FunctionalDdd.Testing;
@@ -281,6 +281,38 @@ public class MatchErrorTests
     }
 
     [Fact]
+    public async Task MatchErrorAsync_WithTaskResultError_UsesDefaultHandler()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.NotFound("Missing")));
+
+        // Act
+        var output = await resultTask.MatchErrorAsync(
+            onSuccess: value => $"Success: {value}",
+            onError: err => $"Default: {err.Detail}"
+        );
+
+        // Assert
+        output.Should().Be("Default: Missing");
+    }
+
+    [Fact]
+    public async Task MatchErrorAsync_WithTaskResultAndNoHandlers_Throws()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.Forbidden("denied")));
+
+        // Act
+        var act = async () => await resultTask.MatchErrorAsync(
+            onSuccess: value => $"Success: {value}"
+        );
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("No handler provided for error type ForbiddenError*");
+    }
+
+    [Fact]
     public async Task MatchErrorAsync_WithAsyncHandlers_WorksCorrectly()
     {
         // Arrange
@@ -331,6 +363,30 @@ public class MatchErrorTests
 
         // Assert
         output.Should().Be("Validation: Invalid");
+    }
+
+    [Fact]
+    public async Task MatchErrorAsync_WithAsyncHandlers_DefaultsToOnError()
+    {
+        // Arrange
+        var result = Result.Failure<int>(Error.Domain("rule broken"));
+
+        // Act
+        var output = await result.MatchErrorAsync(
+            onSuccess: async (value, ct) =>
+            {
+                await Task.Delay(1, ct);
+                return $"Success: {value}";
+            },
+            onError: async (err, ct) =>
+            {
+                await Task.Delay(1, ct);
+                return $"Default: {err.Detail}";
+            }
+        );
+
+        // Assert
+        output.Should().Be("Default: rule broken");
     }
 
     [Fact]
@@ -386,5 +442,46 @@ public class MatchErrorTests
 
         // Assert
         output.Should().Be("NotFound: Not found");
+    }
+
+    [Fact]
+    public async Task SwitchErrorAsync_WithNoSpecificHandler_UsesOnError()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.Unexpected("boom")));
+        var output = "";
+
+        // Act
+        await resultTask.SwitchErrorAsync(
+            onSuccess: async (value, ct) =>
+            {
+                await Task.Delay(1, ct);
+                output = $"Success: {value}";
+            },
+            onError: async (err, ct) =>
+            {
+                await Task.Delay(1, ct);
+                output = $"Default: {err.Detail}";
+            }
+        );
+
+        // Assert
+        output.Should().Be("Default: boom");
+    }
+
+    [Fact]
+    public async Task SwitchErrorAsync_WithNoHandlers_Throws()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<int>(Error.BadRequest("invalid")));
+
+        // Act
+        var act = async () => await resultTask.SwitchErrorAsync(
+            onSuccess: async (value, ct) => await Task.Delay(1, ct)
+        );
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("No handler provided for error type BadRequestError*");
     }
 }
