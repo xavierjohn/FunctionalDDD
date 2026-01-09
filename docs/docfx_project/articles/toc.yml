@@ -1,4 +1,4 @@
-- name: Introduction
+﻿- name: Introduction
   href: intro.md
 - name: Basics
   href: basics.md
@@ -20,8 +20,8 @@
       href: basics.md#tap---execute-side-effects
     - name: Ensure (Add Validation)
       href: basics.md#ensure---add-validation
-    - name: Compensate (Error Recovery)
-      href: basics.md#compensate---recover-from-errors
+    - name: RecoverOnFailure (Error Recovery)
+      href: basics.md#recoveronfailure---recover-from-errors
     - name: Match (Unwrap Result)
       href: basics.md#match---unwrap-the-result
   - name: Error Handling

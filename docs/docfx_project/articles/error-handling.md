@@ -1,4 +1,4 @@
-# Error Handling
+﻿# Error Handling
 
 This guide covers error types, discriminated matching, and transformation patterns in Railway Oriented Programming.
 
@@ -684,6 +684,6 @@ if (inventory.Available < order.Quantity)
 
 ## Next Steps
 
-- Learn about [Async & Cancellation](async-cancellation.md) for async error handling
+- Learn about async operations in [Working with Async Operations](basics.md#working-with-async-operations)
 - See [Integration](integration.md) for converting errors to HTTP responses
 - Check [Advanced Features](advanced-features.md) for pattern matching and error recovery

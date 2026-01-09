@@ -317,5 +317,5 @@ string preferences = maybeUser.HasValue
 ## Next Steps
 
 - Learn about [Error Handling](error-handling.md) for discriminated error matching
-- See [Async & Cancellation](async-cancellation.md) for CancellationToken support
+- See [Working with Async Operations](basics.md#working-with-async-operations) for CancellationToken support
 - Check [Integration](integration.md) for ASP.NET and FluentValidation usage

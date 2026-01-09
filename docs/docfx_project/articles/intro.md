@@ -219,7 +219,7 @@ await GetCustomerByIdAsync(id, cancellationToken)
       cancellationToken: cancellationToken);
 ```
 
-Learn about async patterns and cancellation in [Async & Cancellation](async-cancellation.md).
+Learn about async patterns in [Working with Async Operations](basics.md#working-with-async-operations).
 
 ### Parallel Execution
 
@@ -337,7 +337,7 @@ graph TD
    - MatchError patterns
    - ValidationError fluent API
 
-2. ⚡ **[Async & Cancellation](async-cancellation.md)** - CancellationToken patterns, timeouts
+2. ⚡ **[Working with Async Operations](basics.md#working-with-async-operations)** - CancellationToken patterns, timeouts
    - Async operation chains
    - Parallel execution
    - Timeout and retry patterns
