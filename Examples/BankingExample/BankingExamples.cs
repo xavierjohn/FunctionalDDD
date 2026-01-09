@@ -17,7 +17,7 @@ namespace BankingExample;
 /// - Async workflows with ParallelAsync and RecoverOnFailureAsync
 /// - Value objects with validation
 /// </summary>
-public class BankingExamples
+public static class BankingExamples
 {
     public static async Task RunExamplesAsync()
     {
