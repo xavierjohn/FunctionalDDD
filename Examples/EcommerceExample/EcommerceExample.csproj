@@ -11,8 +11,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
     <ProjectReference Include="..\..\DomainDrivenDesign\src\DomainDrivenDesign.csproj" />
-    <ProjectReference Include="..\..\CommonValueObjects\generator\CommonValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\..\CommonValueObjects\src\CommonValueObjects.csproj" />
+    <ProjectReference Include="..\..\PrimitiveValueObjects\generator\PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\PrimitiveValueObjects\src\PrimitiveValueObjects.csproj" />
   </ItemGroup>
 
 </Project>

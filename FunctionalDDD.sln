@@ -16,11 +16,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		version.json = version.json
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CommonValueObject", "CommonValueObject", "{AEEADF3F-954E-44CA-8345-E024CC04F405}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PrimitiveValueObject", "PrimitiveValueObject", "{AEEADF3F-954E-44CA-8345-E024CC04F405}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonValueObjects", "CommonValueObjects\src\CommonValueObjects.csproj", "{82A9A3D7-E871-416E-8B5F-67B0425EC073}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveValueObjects", "PrimitiveValueObjects\src\PrimitiveValueObjects.csproj", "{82A9A3D7-E871-416E-8B5F-67B0425EC073}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonValueObjects.Tests", "CommonValueObjects\tests\CommonValueObjects.Tests.csproj", "{52131D0C-76B1-4CA2-86D6-6C10DD9355A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveValueObjects.Tests", "PrimitiveValueObjects\tests\PrimitiveValueObjects.Tests.csproj", "{52131D0C-76B1-4CA2-86D6-6C10DD9355A5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{BD9AFC47-1336-443C-9EBE-3CF52A128194}"
 EndProject
@@ -36,7 +36,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asp", "Asp\src\Asp.csproj",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Tests", "Examples\Xunit\Example.Tests.csproj", "{191EC05C-A865-4396-90FB-7A7D19FF148C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonValueObjectGenerator", "CommonValueObjects\generator\CommonValueObjectGenerator.csproj", "{005FE94C-477D-4B76-A4E5-C229D79F3D71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveValueObjectGenerator", "PrimitiveValueObjects\generator\PrimitiveValueObjectGenerator.csproj", "{005FE94C-477D-4B76-A4E5-C229D79F3D71}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RailwayOrientedProgramming", "RailwayOrientedProgramming", "{3DD76AB1-746D-47AC-B86D-8EC376CD238B}"
 EndProject
