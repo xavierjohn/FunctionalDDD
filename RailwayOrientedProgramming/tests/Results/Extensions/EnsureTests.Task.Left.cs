@@ -148,4 +148,68 @@ public class EnsureTests_Task_Left
         result.IsSuccess.Should().BeFalse("Initial result and predicate is failure result"); ;
         result.Error.Should().Be(Error.Unexpected("Initial Error message"));
     }
+
+    [Fact]
+    public async Task Ensure_Task_Left_with_asyncErrorPredicate_does_not_execute_when_initial_result_is_failure()
+    {
+        var initialError = Error.Conflict("initial error message");
+        var tResult = Task.FromResult(Result.Failure<string>(initialError));
+        bool predicateCalled = false;
+        bool errorPredicateCalled = false;
+
+        var result = await tResult.EnsureAsync(
+            x =>
+            {
+                predicateCalled = true;
+                return x != "";
+            },
+            async x =>
+            {
+                errorPredicateCalled = true;
+                await Task.Yield();
+                return Error.Validation("new error message");
+            });
+
+        result.IsSuccess.Should().BeFalse("Input Result.Failure should be returned");
+        result.Error.Should().Be(initialError);
+        predicateCalled.Should().BeFalse("Predicate should not be called when initial result is failure");
+        errorPredicateCalled.Should().BeFalse("Error predicate should not be called when initial result is failure");
+    }
+
+    [Fact]
+    public async Task Ensure_Task_Left_with_asyncErrorPredicate_predicate_passes()
+    {
+        var tResult = Task.FromResult(Result.Success<string>("initial ok"));
+        bool errorPredicateCalled = false;
+
+        var result = await tResult.EnsureAsync(
+            x => x != "",
+            async x =>
+            {
+                errorPredicateCalled = true;
+                await Task.Yield();
+                return Error.Validation("new error message: string should not be empty");
+            });
+
+        result.IsSuccess.Should().BeTrue("Input Result passes predicate condition");
+        result.Value.Should().Be("initial ok");
+        errorPredicateCalled.Should().BeFalse("Error predicate should not be called when predicate passes");
+    }
+
+    [Fact]
+    public async Task Ensure_Task_Left_with_asyncErrorPredicate_predicate_fails()
+    {
+        var tResult = Task.FromResult(Result.Success<string>(""));
+
+        var result = await tResult.EnsureAsync(
+            x => x != "",
+            async x =>
+            {
+                await Task.Yield();
+                return Error.Validation("new error message: string should not be empty");
+            });
+
+        result.IsSuccess.Should().BeFalse("Input Result fails predicate condition");
+        result.Error.Should().Be(Error.Validation("new error message: string should not be empty"));
+    }
 }
