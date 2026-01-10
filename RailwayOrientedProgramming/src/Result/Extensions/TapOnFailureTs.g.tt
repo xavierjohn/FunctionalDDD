@@ -66,11 +66,10 @@ public static partial class TapOnFailureExtensions
                   Action action)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapOnFailureExtensions.TapOnFailure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
             action();
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -96,11 +95,10 @@ public static partial class TapOnFailureExtensions
                   Action<Error> action)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapOnFailureExtensions.TapOnFailure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
             action(result.Error);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 <#
@@ -185,11 +183,10 @@ public static partial class TapOnFailureExtensionsAsync
                   Func<Task> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapOnFailureExtensions.TapOnFailure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
             await func().ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -207,11 +204,10 @@ public static partial class TapOnFailureExtensionsAsync
                   Func<Error, Task> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapOnFailureExtensions.TapOnFailure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
             await func(result.Error).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -299,11 +295,10 @@ public static partial class TapOnFailureExtensionsAsync
                   Func<ValueTask> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapOnFailureExtensions.TapOnFailure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
             await func().ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -321,11 +316,10 @@ public static partial class TapOnFailureExtensionsAsync
                   Func<Error, ValueTask> func)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapOnFailureExtensions.TapOnFailure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
             await func(result.Error).ConfigureAwait(false);
-            activity?.SetStatus(ActivityStatusCode.Error);
-        }
 
+        result.LogActivityStatus();
         return result;
     }
 

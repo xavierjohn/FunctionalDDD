@@ -141,11 +141,11 @@ public class TupleTracingTests : TestBase
         result.Should().BeSuccess();
         actionCalled.Should().BeFalse();
         
-        // TapOnFailure should still create an activity even when not executed
+        // TapOnFailure creates an activity and logs the result status (Ok for success)
         var activities = activityTest.CapturedActivities;
         var tapActivity = activities.FirstOrDefault(a => a.DisplayName == "TapOnFailure");
         tapActivity.Should().NotBeNull();
-        tapActivity!.Status.Should().Be(ActivityStatusCode.Unset); // Not executed, no status set
+        tapActivity!.Status.Should().Be(ActivityStatusCode.Ok); // Success result gets Ok status
     }
 
     [Fact]
