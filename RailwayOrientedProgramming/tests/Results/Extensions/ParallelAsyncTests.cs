@@ -551,6 +551,7 @@ public class ParallelAsyncTests : TestBase
 
     private static async Task<Result<T>> CreateDelayedSuccessTask<T>(T value, int delayMs)
     {
+        await Task.Yield();
         await Task.Delay(delayMs);
         return Result.Success(value);
     }
