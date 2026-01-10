@@ -144,35 +144,64 @@ Result<string> ReadFileWithCustomErrors(string path)
 
 ## Parallel Operations
 
-Execute multiple async operations in parallel while maintaining ROP style:
+Execute multiple async operations in parallel while maintaining ROP style using `Result.ParallelAsync`:
 
-### Parallel Execution with ParallelAsync and AwaitAsync
+### Parallel Execution with Result.ParallelAsync
 
 ```csharp
-// Execute multiple async operations in parallel using ParallelAsync
-var result = await GetUserAsync(userId, cancellationToken)
-    .ParallelAsync(GetOrdersAsync(userId, cancellationToken))
-    .ParallelAsync(GetPreferencesAsync(userId, cancellationToken))
+// Execute multiple async operations in parallel
+var result = await Result.ParallelAsync(
+    () => GetUserAsync(userId, cancellationToken),
+    () => GetOrdersAsync(userId, cancellationToken),
+    () => GetPreferencesAsync(userId, cancellationToken)
+)
+.AwaitAsync()
+.BindAsync((user, orders, preferences, ct) => 
+    CreateDashboard(user, orders, preferences, ct),
+    cancellationToken
+);
+```
+
+**How it works:**
+1. `Result.ParallelAsync` accepts factory functions (`Func<Task<Result<T>>>`)
+2. All operations **start immediately** and run **concurrently**
+3. `.AwaitAsync()` waits for all operations to complete
+4. Returns `Result<(T1, T2, T3)>` tuple containing all values
+5. If any operation fails, returns combined errors
+6. Tuple is automatically destructured in `BindAsync`
+
+### Multi-Stage Parallel Execution
+
+Execute dependent operations in stages - parallel within stages, sequential between stages:
+
+```csharp
+// Stage 1: Fetch core data in parallel
+var result = await Result.ParallelAsync(
+    () => FetchUserAsync(userId, ct),
+    () => CheckInventoryAsync(productId, ct),
+    () => ValidatePaymentAsync(paymentId, ct)
+)
+.AwaitAsync()  // Wait for Stage 1 to complete
+
+// Stage 2: Use results from Stage 1 to run fraud & shipping in parallel
+.BindAsync((user, inventory, payment, ct) =>
+    Result.ParallelAsync(
+        () => RunFraudDetectionAsync(user, payment, inventory, ct),
+        () => CalculateShippingAsync(address, inventory, ct)
+    )
     .AwaitAsync()
-    .BindAsync((user, orders, preferences) => 
-        CreateDashboard(user, orders, preferences, cancellationToken),
-        cancellationToken);
+    .BindAsync((fraudCheck, shipping, ct2) =>
+        Result.Success(new CheckoutResult(user, inventory, payment, fraudCheck, shipping))
+    ),
+    ct
+);
 ```
 
-### Parallel with Result Collection
-
-```csharp
-// Execute multiple validations in parallel
-var tasks = userIds.Select(id => ValidateUserAsync(id, cancellationToken));
-var results = await Task.WhenAll(tasks);
-
-// Combine all results - fails if any validation fails
-var combinedResult = results
-    .Aggregate(
-        Result.Success(ImmutableList<User>.Empty),
-        (acc, result) => acc.Combine(result).Map((users, user) => users.Add(user))
-    );
-```
+**Why multi-stage?**
+- Stage 2 operations **depend on** Stage 1 results
+- Each stage runs **in parallel** internally
+- Stages run **sequentially** (Stage 2 waits for Stage 1)
+- **2-3x performance** improvement over sequential execution
 
 ### Real-World Example: Fraud Detection
 
@@ -181,19 +210,101 @@ public async Task<Result<Transaction>> ProcessTransactionAsync(
     Transaction transaction,
     CancellationToken ct)
 {
-    // Run all fraud checks in parallel using ParallelAsync
-    var result = await CheckBlacklistAsync(transaction.AccountId, ct)
-        .ParallelAsync(CheckVelocityLimitsAsync(transaction, ct))
-        .ParallelAsync(CheckAmountThresholdAsync(transaction, ct))
-        .ParallelAsync(CheckGeolocationAsync(transaction, ct))
-        .AwaitAsync()
-        .BindAsync((check1, check2, check3, check4) => 
-            ApproveTransactionAsync(transaction, ct), 
-            ct);
+    // Run all fraud checks in parallel
+    var result = await Result.ParallelAsync(
+        () => CheckBlacklistAsync(transaction.AccountId, ct),
+        () => CheckVelocityLimitsAsync(transaction, ct),
+        () => CheckAmountThresholdAsync(transaction, ct),
+        () => CheckGeolocationAsync(transaction, ct)
+    )
+    .AwaitAsync()
+    .BindAsync((check1, check2, check3, check4, ct) => 
+        ApproveTransactionAsync(transaction, ct), 
+        ct
+    );
     
     return result;
 }
 ```
+
+**Performance benefit:**
+- **Sequential:** 4 checks × 50ms each = 200ms
+- **Parallel:** max(50ms, 50ms, 50ms, 50ms) = 50ms
+- **4x faster!**
+
+### Error Handling in Parallel Operations
+
+```csharp
+// If ANY operation fails, the entire result fails
+var result = await Result.ParallelAsync(
+    () => GetUserAsync(userId, ct),           // ✅ Success
+    () => GetOrdersAsync(userId, ct),          // ❌ Fails (user has no orders)
+    () => GetPreferencesAsync(userId, ct)      // ✅ Success
+).AwaitAsync();
+
+// result.IsFailure == true
+// result.Error contains the "no orders" error
+```
+
+**Multiple failures:**
+```csharp
+var result = await Result.ParallelAsync(
+    () => ValidateEmailAsync("invalid"),       // ❌ ValidationError
+    () => ValidatePhoneAsync("bad"),           // ❌ ValidationError
+    () => ValidateAgeAsync(-5)                 // ❌ ValidationError
+).AwaitAsync();
+
+// result.Error is ValidationError with all 3 field errors combined
+```
+
+### Parallel vs Sequential Comparison
+
+**Sequential (old way):**
+```csharp
+var user = await GetUserAsync(userId, ct);
+if (user.IsFailure) return user.Error;
+
+var orders = await GetOrdersAsync(userId, ct);
+if (orders.IsFailure) return orders.Error;
+
+var prefs = await GetPreferencesAsync(userId, ct);
+if (prefs.IsFailure) return prefs.Error;
+
+// Total time: ~150ms (50ms + 50ms + 50ms)
+```
+
+**Parallel (new way):**
+```csharp
+var result = await Result.ParallelAsync(
+    () => GetUserAsync(userId, ct),
+    () => GetOrdersAsync(userId, ct),
+    () => GetPreferencesAsync(userId, ct)
+).AwaitAsync();
+
+// Total time: ~50ms (all run concurrently)
+// 3x faster!
+```
+
+### When to Use Parallel Execution
+
+✅ **DO use `Result.ParallelAsync` when:**
+- Operations are **independent** (no dependencies between them)
+- Operations can run **concurrently** safely
+- **Performance matters** (user-facing, high-throughput)
+- Need to **aggregate errors** from multiple validations
+
+❌ **DON'T use when:**
+- Operations have **dependencies** (use `BindAsync` chain)
+- Operations must run **sequentially**
+- Operations **modify shared state** (need synchronization)
+
+### Best Practices
+
+1. **Use factory functions** - Ensures operations don't start until `ParallelAsync` is called
+2. **Always call `.AwaitAsync()`** - Waits for all operations to complete
+3. **Short-circuit on failure** - If one fails, others may still complete but result will be failure
+4. **Combine errors intelligently** - ValidationErrors merge field errors, different types create AggregateError
+5. **Pass CancellationToken** - Allows graceful cancellation of all operations
 
 ## LINQ Query Syntax
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 /// Non-generic Result utility host containing factory and helper methods to construct <see cref="Result{TValue}"/> instances.
 /// NOTE: This struct is not intended to be instantiated; all members are static.
 /// </summary>
-public readonly struct Result
+public readonly partial struct Result
 {
     /// <summary>
     /// Creates a successful result wrapping the provided <paramref name="value"/>.

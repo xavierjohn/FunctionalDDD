@@ -13,6 +13,8 @@
 
 namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 <#
    void WriteTaskResult(int n) {
      Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Task<Result<T{i}>>")));
@@ -43,6 +45,7 @@ namespace FunctionalDdd;
 /// <item>Waits for all tasks to complete before combining results</item>
 /// <item>If any task's result fails, all errors are aggregated</item>
 /// <item>More efficient than sequential await chains for independent operations</item>
+/// <item>Creates distributed tracing spans for observability</item>
 /// </list>
 /// </para>
 /// <para>
@@ -52,6 +55,7 @@ namespace FunctionalDdd;
 /// <item>Wait for all operations to complete before proceeding</item>
 /// <item>Combine results from parallel operations</item>
 /// <item>Maximize throughput for I/O-bound operations</item>
+/// <item>Monitor parallel operation performance in distributed traces</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -93,6 +97,7 @@ public static partial class AwaitExtensionsAsync
     /// <remarks>
     /// This method uses Task.WhenAll to execute both operations in parallel,
     /// then combines their results using standard Combine semantics.
+    /// Creates a distributed tracing span to monitor parallel execution.
     /// </remarks>
     /// <example>
     /// <code>
@@ -110,8 +115,14 @@ public static partial class AwaitExtensionsAsync
     public static async Task<Result<(T1, T2)>> AwaitAsync<T1, T2>(
        this (Task<Result<T1>>, Task<Result<T2>>) tasks)
     {
+       using var activity = RopTrace.ActivitySource.StartActivity("AwaitAsync");
+       activity?.SetTag("parallel.task_count", 2);
+       
        await Task.WhenAll(tasks.Item1, tasks.Item2);
-       return tasks.Item1.Result.Combine(tasks.Item2.Result);
+       var result = tasks.Item1.Result.Combine(tasks.Item2.Result);
+       
+       result.LogActivityStatus();
+       return result;
     }
 
 <# 
@@ -136,6 +147,7 @@ public static partial class AwaitExtensionsAsync
     /// <para>
     /// All <#= i #> tasks execute in parallel using Task.WhenAll for maximum efficiency.
     /// Results are combined only after all tasks complete.
+    /// Creates a distributed tracing span to monitor parallel execution.
     /// </para>
     /// <para>
     /// This is significantly more efficient than:
@@ -161,8 +173,14 @@ public static partial class AwaitExtensionsAsync
     public static async Task<Result<(<# WriteTs(i); #>)>> AwaitAsync<<# WriteTs(i); #>>(
         this (<# WriteTaskResult(i); #>) tasks)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity("AwaitAsync");
+        activity?.SetTag("parallel.task_count", <#= i #>);
+        
         await Task.WhenAll(<# WriteTaskItem(i); #>);
-        return tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>);
+        var result = tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>);
+        
+        result.LogActivityStatus();
+        return result;
     }
 
 <#

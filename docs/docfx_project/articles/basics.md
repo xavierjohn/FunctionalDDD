@@ -1,4 +1,4 @@
-# Basics
+﻿# Basics
 
 Learn the fundamentals of Railway-Oriented Programming (ROP) and type-safe domain modeling in just a few minutes.
 
@@ -495,6 +495,30 @@ var result = await GetUserAsync(userId, cancellationToken)
     .MapAsync(orders => orders.Count);
 // Returns Result<int> with order count
 ```
+
+### Parallel Async Operations
+
+Execute multiple independent async operations in parallel using `Result.ParallelAsync`:
+
+```csharp
+var result = await Result.ParallelAsync(
+    () => GetStudentInfoAsync(studentId, cancellationToken),
+    () => GetStudentGradesAsync(studentId, cancellationToken),
+    () => GetLibraryBooksAsync(studentId, cancellationToken)
+)
+.AwaitAsync()
+.BindAsync((info, grades, books, ct) => 
+    PrepareReportAsync(info, grades, books, ct),
+    cancellationToken
+);
+```
+
+**Key Points:**
+- `Result.ParallelAsync` takes factory functions (`Func<Task<Result<T>>>`)
+- All operations start **immediately** and run in **parallel**
+- `.AwaitAsync()` waits for all to complete and returns tuple result
+- If any operation fails, the result contains the combined errors
+- Results are automatically destructured for the next operation
 
 ### Complete Async Example
 

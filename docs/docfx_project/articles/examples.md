@@ -124,21 +124,29 @@ Content-Type: application/problem+json; charset=utf-8
 Execute multiple independent async operations concurrently for better performance:
 
 ```csharp
-var result = await GetStudentInfoAsync(studentId, cancellationToken)
-    .ParallelAsync(GetStudentGradesAsync(studentId, cancellationToken))
-    .ParallelAsync(GetLibraryBooksAsync(studentId, cancellationToken))
-    .AwaitAsync()
-    .BindAsync(
-        (info, grades, books, ct) => PrepareReportAsync(info, grades, books, ct),
-        cancellationToken
-    );
+var result = await Result.ParallelAsync(
+    () => GetStudentInfoAsync(studentId, cancellationToken),
+    () => GetStudentGradesAsync(studentId, cancellationToken),
+    () => GetLibraryBooksAsync(studentId, cancellationToken)
+)
+.AwaitAsync()
+.BindAsync(
+    (info, grades, books, ct) => PrepareReportAsync(info, grades, books, ct),
+    cancellationToken
+);
 ```
 
-**Key Points**:
+**Key Points:**
+- `Result.ParallelAsync` accepts factory functions that return `Task<Result<T>>`
 - All three `Get*Async` operations run **concurrently** (not sequentially)
-- `AwaitAsync()` waits for all operations to complete
+- `.AwaitAsync()` waits for all operations to complete
 - Results are automatically destructured into `(info, grades, books)` tuple
 - `BindAsync` processes the combined results with `CancellationToken` support
+
+**Performance:**
+- **Sequential:** 3 × 50ms = 150ms
+- **Parallel:** max(50ms, 50ms, 50ms) = ~50ms
+- **3x faster!**
 
 ### Error Matching and Handling
 
@@ -402,15 +410,16 @@ public async Task<Result<Transaction>> ValidateTransactionAsync(
     Transaction transaction,
     CancellationToken ct)
 {
-    return await CheckBlacklistAsync(transaction.AccountId, ct)
-        .ParallelAsync(CheckVelocityLimitsAsync(transaction, ct))
-        .ParallelAsync(CheckAmountThresholdAsync(transaction, ct))
-        .ParallelAsync(CheckGeolocationAsync(transaction, ct))
-        .AwaitAsync()
-        .BindAsync(
-            (check1, check2, check3, check4, ct) => 
-                ApproveTransactionAsync(transaction, ct),
-            ct
-        );
+    return await Result.ParallelAsync(
+        () => CheckBlacklistAsync(transaction.AccountId, ct),
+        () => CheckVelocityLimitsAsync(transaction, ct),
+        () => CheckAmountThresholdAsync(transaction, ct),
+        () => CheckGeolocationAsync(transaction, ct)
+    )
+    .AwaitAsync()
+    .BindAsync(
+        (check1, check2, check3, check4, ct) => 
+            ApproveTransactionAsync(transaction, ct),
+        ct
+    );
 }
-```

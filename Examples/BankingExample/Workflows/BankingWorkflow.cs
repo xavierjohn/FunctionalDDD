@@ -1,4 +1,4 @@
-namespace BankingExample.Workflows;
+﻿namespace BankingExample.Workflows;
 
 using BankingExample.Aggregates;
 using BankingExample.Events;
@@ -78,10 +78,11 @@ public class BankingWorkflow
         string description,
         CancellationToken cancellationToken = default)
     {
-        // Validate both accounts in parallel using ParallelAsync
-        var validationResult = await _fraudDetection.AnalyzeTransactionAsync(fromAccount, amount, "transfer-out", cancellationToken)
-            .ParallelAsync(_fraudDetection.AnalyzeTransactionAsync(toAccount, amount, "transfer-in", cancellationToken))
-            .AwaitAsync();
+        // Validate both accounts in parallel using Result.ParallelAsync
+        var validationResult = await Result.ParallelAsync(
+            () => _fraudDetection.AnalyzeTransactionAsync(fromAccount, amount, "transfer-out", cancellationToken),
+            () => _fraudDetection.AnalyzeTransactionAsync(toAccount, amount, "transfer-in", cancellationToken)
+        ).AwaitAsync();
 
         if (validationResult.IsFailure)
             return validationResult.Error;
