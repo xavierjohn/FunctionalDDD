@@ -307,7 +307,254 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
 
     #endregion
 
+    #region Multi-Stage Parallel Execution - Real-World Choreography
+
+    [Fact]
+    public async Task ParallelAsync_MultiStage_FetchDataThenProcessInParallel()
+    {
+        // Scenario: E-commerce checkout with 2 stages:
+        // Stage 1: Fetch user, inventory, payment in parallel
+        // Stage 2: Use results to run fraud detection + shipping calculation in parallel
+        
+        // Arrange
+        var request = new CheckoutRequest("user-123", "prod-456", "pm-789", "123 Main St");
+
+        // Act - Multi-stage parallel execution
+        var result = await Result.ParallelAsync(
+            () => FetchUserAsync(request.UserId),
+            () => CheckInventoryAsync(request.ProductId),
+            () => ValidatePaymentAsync(request.PaymentMethodId)
+        )
+        .AwaitAsync()  // ✅ Wait for Stage 1 to complete
+        
+        // Stage 2: Now we have (user, inventory, payment) - run fraud & shipping in parallel
+        .BindAsync((user, inventory, payment) =>
+            Result.ParallelAsync(
+                () => RunFraudDetectionAsync(user, payment, inventory),  // Uses all 3 results
+                () => CalculateShippingWithWeightAsync(request.ShippingAddress, inventory)  // Uses inventory
+            )
+            .AwaitAsync()
+            .BindAsync((fraudCheck, shipping) =>
+                Result.Success(new
+                {
+                    User = user,
+                    Inventory = inventory,
+                    Payment = payment,
+                    FraudCheck = fraudCheck,
+                    Shipping = shipping
+                })
+            )
+        );
+
+        // Assert - all stages completed successfully
+        result.Should().BeSuccess();
+        result.Value.User.UserId.Should().Be("user-123");
+        result.Value.Inventory.Available.Should().BeTrue();
+        result.Value.Payment.IsValid.Should().BeTrue();
+        result.Value.FraudCheck.IsSafe.Should().BeTrue();
+        result.Value.Shipping.Rate.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ParallelAsync_MultiStage_Stage1Failure_SkipsStage2()
+    {
+        // Scenario: If Stage 1 fails, Stage 2 should not execute (short-circuit)
+        
+        // Arrange - user doesn't exist (Stage 1 will fail)
+        var request = new CheckoutRequest("nonexistent-user", "prod-456", "pm-789", "123 Main St");
+        var stage2Executed = false;
+
+        // Act
+        var result = await Result.ParallelAsync(
+            () => FetchUserAsync("nonexistent-user"),  // ❌ This fails
+            () => CheckInventoryAsync(request.ProductId),
+            () => ValidatePaymentAsync(request.PaymentMethodId)
+        )
+        .AwaitAsync()
+        
+        // Stage 2 should NOT execute because Stage 1 failed
+        .BindAsync((user, inventory, payment) =>
+        {
+            stage2Executed = true;  // Track if this executes
+            return Result.ParallelAsync(
+                () => RunFraudDetectionAsync(user, payment, inventory),
+                () => CalculateShippingWithWeightAsync(request.ShippingAddress, inventory)
+            ).AwaitAsync();
+        });
+
+        // Assert - Stage 1 failed, Stage 2 never ran
+        result.Should().BeFailure();
+        result.Error.Should().BeOfType<NotFoundError>();
+        stage2Executed.Should().BeFalse();  // ✅ Stage 2 was skipped (short-circuit)
+    }
+
+    [Fact]
+    public async Task ParallelAsync_MultiStage_Stage2Failure_ReturnsStage2Error()
+    {
+        // Scenario: Stage 1 succeeds, but Stage 2 fails (e.g., fraud detected)
+        
+        // Arrange - high-risk transaction triggers fraud detection
+        var request = new CheckoutRequest("user-high-risk", "prod-expensive", "pm-789", "123 Main St");
+
+        // Act
+        var result = await Result.ParallelAsync(
+            () => FetchUserAsync("user-high-risk"),
+            () => CheckInventoryAsync("prod-expensive"),
+            () => ValidatePaymentAsync(request.PaymentMethodId)
+        )
+        .AwaitAsync()
+        
+        // Stage 2: Fraud detection will fail
+        .BindAsync((user, inventory, payment) =>
+            Result.ParallelAsync(
+                () => RunFraudDetectionAsync(user, payment, inventory),  // ❌ Will fail (fraud)
+                () => CalculateShippingWithWeightAsync(request.ShippingAddress, inventory)
+            )
+            .AwaitAsync()
+        );
+
+        // Assert - Stage 2 fraud check failed
+        result.Should().BeFailure();
+        result.Error.Should().BeOfType<ForbiddenError>();
+        result.Error.Detail.Should().Contain("Suspicious transaction");
+    }
+
+    [Fact]
+    public async Task ParallelAsync_ThreeStages_CascadingParallelExecution()
+    {
+        // Scenario: 3 stages of parallel execution
+        // Stage 1: Fetch user + inventory (2 parallel)
+        // Stage 2: Validate payment + check fraud (2 parallel, needs user from Stage 1)
+        // Stage 3: Calculate shipping + reserve inventory (2 parallel, needs results from Stage 2)
+        
+        // Arrange
+        var userId = "user-123";
+        var productId = "prod-456";
+        var paymentId = "pm-789";
+        var address = "123 Main St";
+
+        // Act - 3-stage pipeline
+        var result = await Result.ParallelAsync(
+            () => FetchUserAsync(userId),
+            () => CheckInventoryAsync(productId)
+        )
+        .AwaitAsync()  // Stage 1 complete
+        
+        .BindAsync((user, inventory) =>
+            Result.ParallelAsync(
+                () => ValidatePaymentAsync(paymentId),
+                () => RunFraudDetectionAsync(user, new PaymentResponse(paymentId, true), inventory)
+            )
+            .AwaitAsync()  // Stage 2 complete
+            
+            .BindAsync((payment, fraudCheck) =>
+                Result.ParallelAsync(
+                    () => CalculateShippingWithWeightAsync(address, inventory),
+                    () => ReserveInventoryAsync(inventory)
+                )
+                .AwaitAsync()  // Stage 3 complete
+                
+                .BindAsync((shipping, reservation) =>
+                    Result.Success(new
+                    {
+                        User = user,
+                        Inventory = inventory,
+                        Payment = payment,
+                        FraudCheck = fraudCheck,
+                        Shipping = shipping,
+                        Reservation = reservation
+                    })
+                )
+            )
+        );
+
+        // Assert - all 3 stages completed
+        result.Should().BeSuccess();
+        result.Value.User.UserId.Should().Be("user-123");
+        result.Value.Reservation.IsReserved.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ParallelAsync_MultiStage_Performance_ComparedToSequential()
+    {
+        // Demonstrate performance benefit of multi-stage parallel vs sequential
+        
+        var stopwatch = Stopwatch.StartNew();
+
+        // Act - Multi-stage parallel execution
+        var result = await Result.ParallelAsync(
+            () => FetchUserAsync("user-123"),         // 50ms
+            () => CheckInventoryAsync("prod-456"),     // 50ms
+            () => ValidatePaymentAsync("pm-789")       // 50ms
+        )
+        .AwaitAsync()  // Stage 1: ~50ms (parallel)
+        
+        .BindAsync((user, inventory, payment) =>
+            Result.ParallelAsync(
+                () => RunFraudDetectionAsync(user, payment, inventory),  // 30ms
+                () => CalculateShippingWithWeightAsync("123 Main St", inventory)  // 40ms
+            )
+            .AwaitAsync()  // Stage 2: ~40ms (parallel)
+        );
+
+        stopwatch.Stop();
+
+        // Assert
+        result.Should().BeSuccess();
+        
+        // Sequential would be: 50 + 50 + 50 + 30 + 40 = 220ms
+        // Parallel is: max(50,50,50) + max(30,40) = 50 + 40 = 90ms
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(150); // ~2.4x faster!
+    }
+
+    #endregion
+
     #region Helper Methods - Simulated HTTP Calls
+
+    private record FraudCheckResponse(bool IsSafe, string RiskLevel);
+    private record InventoryReservation(string ReservationId, bool IsReserved);
+
+    private static async Task<Result<FraudCheckResponse>> RunFraudDetectionAsync(
+        UserResponse user,
+        PaymentResponse payment,
+        InventoryResponse inventory)
+    {
+        await Task.Delay(30); // Simulate fraud detection latency
+
+        // High-risk scenarios
+        if (user.UserId == "user-high-risk")
+            return Error.Forbidden("Suspicious transaction detected: high-risk user");
+
+        if (inventory.ProductId == "prod-expensive" && inventory.StockLevel < 10)
+            return Error.Forbidden("Suspicious transaction: expensive item with low stock");
+
+        return Result.Success(new FraudCheckResponse(true, "Low"));
+    }
+
+    private static async Task<Result<ShippingResponse>> CalculateShippingWithWeightAsync(
+        string address,
+        InventoryResponse inventory)
+    {
+        await Task.Delay(40); // Simulate shipping calculation
+
+        if (string.IsNullOrWhiteSpace(address))
+            return Error.Validation("Shipping address required");
+
+        // Calculate based on inventory (heavier items cost more)
+        var rate = inventory.StockLevel > 50 ? 12.99m : 9.99m;
+        return Result.Success(new ShippingResponse("USPS", rate));
+    }
+
+    private static async Task<Result<InventoryReservation>> ReserveInventoryAsync(
+        InventoryResponse inventory)
+    {
+        await Task.Delay(25); // Simulate reservation
+
+        if (!inventory.Available)
+            return Error.Conflict("Cannot reserve unavailable inventory");
+
+        return Result.Success(new InventoryReservation($"res-{Guid.NewGuid():N}", true));
+    }
 
     private static async Task<Result<UserResponse>> FetchUserAsync(string userId)
     {
@@ -317,6 +564,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         {
             "nonexistent-user" => Error.NotFound($"User not found: {userId}"),
             "user-123" => Result.Success(new UserResponse(userId, "user@example.com", true)),
+            "user-high-risk" => Result.Success(new UserResponse(userId, "highrisk@example.com", true)),
             _ => Error.Unexpected("Unknown user ID")
         };
     }
@@ -329,6 +577,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         {
             "prod-out-of-stock" => Error.Conflict("Out of stock: product is unavailable"),
             "prod-456" => Result.Success(new InventoryResponse(productId, 100, true)),
+            "prod-expensive" => Result.Success(new InventoryResponse(productId, 5, true)),
             _ => Error.NotFound($"Product not found: {productId}")
         };
     }
