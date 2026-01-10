@@ -3,24 +3,24 @@
 using OpenTelemetry.Trace;
 
 /// <summary>
-/// Provides extension methods for configuring OpenTelemetry tracing for Common Value Objects (CVO).
+/// Provides extension methods for configuring OpenTelemetry tracing for Primitive Value Objects (PVO).
 /// </summary>
 /// <remarks>
 /// This class enables distributed tracing and monitoring for value object operations such as
 /// creation, validation, and parsing. When configured, value object operations will automatically
 /// generate trace spans in your OpenTelemetry pipeline.
 /// </remarks>
-public static class CvoTracingExtensions
+public static class PvoTracingExtensions
 {
     /// <summary>
-    /// Adds CommonValueObjects instrumentation to the OpenTelemetry tracing pipeline.
+    /// Adds PrimitiveValueObjects instrumentation to the OpenTelemetry tracing pipeline.
     /// Enables distributed tracing for value object creation, validation, and parsing operations.
     /// </summary>
     /// <param name="builder">The <see cref="TracerProviderBuilder"/> to configure.</param>
     /// <returns>The configured <see cref="TracerProviderBuilder"/> for method chaining.</returns>
     /// <remarks>
     /// <para>
-    /// This extension method registers the CommonValueObjects <see cref="System.Diagnostics.ActivitySource"/> with OpenTelemetry,
+    /// This extension method registers the PrimitiveValueObjects <see cref="System.Diagnostics.ActivitySource"/> with OpenTelemetry,
     /// allowing you to observe and monitor value object operations in your distributed tracing system.
     /// </para>
     /// <para>
@@ -34,7 +34,7 @@ public static class CvoTracingExtensions
     /// </list>
     /// </para>
     /// <para>
-    /// Benefits of enabling CVO instrumentation:
+    /// Benefits of enabling PVO instrumentation:
     /// <list type="bullet">
     /// <item>Monitor validation performance and identify slow operations</item>
     /// <item>Track validation failure rates and patterns</item>
@@ -52,7 +52,7 @@ public static class CvoTracingExtensions
     /// builder.Services.AddOpenTelemetry()
     ///     .WithTracing(tracerProviderBuilder =>
     ///         tracerProviderBuilder
-    ///             .AddFunctionalDddCvoInstrumentation()  // Enable CVO tracing
+    ///             .AddFunctionalDddPvoInstrumentation()  // Enable PVO tracing
     ///             .AddAspNetCoreInstrumentation()         // Add ASP.NET Core tracing
     ///             .AddHttpClientInstrumentation()         // Add HTTP client tracing
     ///             .AddConsoleExporter());                 // Export to console
@@ -67,7 +67,7 @@ public static class CvoTracingExtensions
     /// builder.Services.AddOpenTelemetry()
     ///     .WithTracing(tracerProviderBuilder =>
     ///         tracerProviderBuilder
-    ///             .AddFunctionalDddCvoInstrumentation()
+    ///             .AddFunctionalDddPvoInstrumentation()
     ///             .AddAspNetCoreInstrumentation()
     ///             .AddAzureMonitorTraceExporter(options =>
     ///             {
@@ -75,7 +75,7 @@ public static class CvoTracingExtensions
     ///                     builder.Configuration["ApplicationInsights:ConnectionString"];
     ///             }));
     /// 
-    /// // Now you can see CVO traces in Application Insights:
+    /// // Now you can see PVO traces in Application Insights:
     /// // - Search for operations like "EmailAddress.TryCreate"
     /// // - View validation success/failure rates
     /// // - Analyze performance metrics
@@ -117,8 +117,8 @@ public static class CvoTracingExtensions
     /// // | summarize count() by bin(timestamp, 1h)
     /// </code>
     /// </example>
-    /// <seealso cref="CommonValueObjectTrace"/>
+    /// <seealso cref="PrimitiveValueObjectTrace"/>
     /// <seealso cref="TracerProviderBuilder"/>
-    public static TracerProviderBuilder AddFunctionalDddCvoInstrumentation(this TracerProviderBuilder builder)
-        => builder.AddSource(CommonValueObjectTrace.ActivitySourceName);
+    public static TracerProviderBuilder AddFunctionalDddPvoInstrumentation(this TracerProviderBuilder builder)
+        => builder.AddSource(PrimitiveValueObjectTrace.ActivitySourceName);
 }

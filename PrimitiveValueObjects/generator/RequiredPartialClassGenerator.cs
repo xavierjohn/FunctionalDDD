@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
-using FunctionalDdd.CommonValueObjectGenerator;
+using FunctionalDdd.PrimitiveValueObjectGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -253,7 +253,7 @@ using System.Text.Json.Serialization;
 
     public static Result<{{g.ClassName}}> TryCreate(Guid? requiredGuidOrNothing)
     {
-        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
         return requiredGuidOrNothing
             .ToResult(CannotBeEmptyError)
             .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
@@ -262,7 +262,7 @@ using System.Text.Json.Serialization;
 
     public static Result<{{g.ClassName}}> TryCreate(string? stringOrNull)
     {
-        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
         Guid parsedGuid = Guid.Empty;
         return stringOrNull
             .ToResult(CannotBeEmptyError)
@@ -280,7 +280,7 @@ using System.Text.Json.Serialization;
 
     public static Result<{{g.ClassName}}> TryCreate(string? requiredStringOrNothing)
     {
-        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
         return requiredStringOrNothing
             .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
             .Map(str => new {{g.ClassName}}(str));
