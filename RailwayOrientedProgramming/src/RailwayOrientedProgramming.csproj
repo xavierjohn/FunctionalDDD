@@ -23,11 +23,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>AwaitTs.g.tt</DependentUpon>
     </Compile>
-    <Compile Update="Result\Extensions\TapErrorTs.g.cs">
-      <DependentUpon>TapErrorTs.g.tt</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-    </Compile>
     <Compile Update="Result\Extensions\Ensure.ValueTask.cs">
       <DependentUpon>Ensure.cs</DependentUpon>
     </Compile>
@@ -66,6 +61,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>MatchTupleTs.g.tt</DependentUpon>
     </Compile>
+    <Compile Update="Result\Extensions\TapOnFailureTs.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TapOnFailureTs.g.tt</DependentUpon>
+    </Compile>
     <Compile Update="Result\Extensions\TapTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -83,8 +83,8 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MatchTupleTs.g.cs</LastGenOutput>
     </None>
-    <None Update="Result\Extensions\TapErrorTs.g.tt">
-      <LastGenOutput>TapErrorTs.g.cs</LastGenOutput>
+    <None Update="Result\Extensions\TapOnFailureTs.g.tt">
+      <LastGenOutput>TapOnFailureTs.g.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
     <None Update="Result\Extensions\BindTs.g.tt">
