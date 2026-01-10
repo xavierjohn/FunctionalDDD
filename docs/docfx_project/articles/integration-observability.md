@@ -257,3 +257,46 @@ public class CheckoutWorkflow
         return await CreateOrderAsync(command, ct);
     }
 }
+```
+
+#### Pattern 4: Parallel Operations with Built-in Tracing
+
+The `ParallelAsync` and `AwaitAsync` operations automatically create tracing spans to monitor parallel execution:
+
+```csharp
+public class FraudDetectionService
+{
+    public async Task<Result<FraudCheckResult>> ValidateTransactionAsync(
+        Transaction transaction,
+        CancellationToken ct)
+    {
+        // ParallelAsync and AwaitAsync automatically create "AwaitAsync" spans
+        // with parallel.task_count tags for observability
+        return await Result.ParallelAsync(
+            () => CheckBlacklistAsync(transaction.AccountId, ct),
+            () => CheckVelocityLimitsAsync(transaction, ct),
+            () => CheckAmountThresholdAsync(transaction, ct),
+            () => CheckGeolocationAsync(transaction, ct)
+        )
+        .AwaitAsync()  // Creates span: "AwaitAsync" with tag "parallel.task_count: 4"
+        .BindAsync((blacklist, velocity, amount, geo, cancellationToken) => 
+            CombineChecksAsync(blacklist, velocity, amount, geo, cancellationToken), ct);
+    }
+}
+```
+
+**Automatic tracing benefits:**
+- ✅ **Parallel task count** - `parallel.task_count` tag shows how many operations ran
+- ✅ **Execution duration** - See how long parallel operations took
+- ✅ **Success/failure status** - `ActivityStatusCode.Ok` or `ActivityStatusCode.Error`
+- ✅ **Error correlation** - Failed operations show error status in traces
+
+**Trace example in Jaeger/Application Insights:**
+```
+FraudDetectionService.ValidateTransaction (200ms)
+  └─ AwaitAsync (parallel.task_count: 4) (150ms)
+     ├─ CheckBlacklist (50ms) ✓
+     ├─ CheckVelocityLimits (100ms) ✓
+     ├─ CheckAmountThreshold (30ms) ✓
+     └─ CheckGeolocation (150ms) ✓
+  └─ Bind: CombineChecks (50ms) ✓
