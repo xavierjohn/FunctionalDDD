@@ -347,3 +347,161 @@ When in doubt about test organization:
 - Both async = `[Method]Tests.[Type].cs`
 - Left async = `[Method]Tests.[Type].Left.cs`
 - Right async = `[Method]Tests.[Type].Right.cs`
+
+## Activity Tracing and OpenTelemetry
+
+### Setting Activity Status Correctly
+
+When working with OpenTelemetry `Activity` tracing, **always use the local `activity` variable** returned by `StartActivity()`, not `Activity.Current`:
+
+```csharp
+// ❌ WRONG - Race condition prone
+using var activity = ActivitySource.StartActivity("Operation");
+Activity.Current?.SetStatus(ActivityStatusCode.Ok);  // Don't use Activity.Current!
+
+// ✅ CORRECT - Thread-safe and reliable
+using var activity = ActivitySource.StartActivity("Operation");
+activity?.SetStatus(ActivityStatusCode.Ok);  // Use the local variable
+```
+
+**Why this matters:**
+- `Activity.Current` is a static thread-local property that may not reference the activity you just created
+- In concurrent scenarios, `Activity.Current` can be null or reference a different activity
+- Using the local `activity` variable ensures you're always operating on the correct activity instance
+- This prevents race conditions in both production and test environments
+
+### Test Isolation with AsyncLocal
+
+When testing code that uses `ActivitySource`, use **`AsyncLocal<ActivitySource?>`** for proper test isolation:
+
+```csharp
+// Production code - use AsyncLocal for test injection
+public static class PrimitiveValueObjectTrace
+{
+    private static readonly ActivitySource _defaultActivitySource = new("Functional DDD PVO", "1.0.0");
+    
+    // AsyncLocal provides isolation across async boundaries and parallel tests
+    private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
+    
+    public static ActivitySource ActivitySource => _testActivitySource.Value ?? _defaultActivitySource;
+    
+    internal static void SetTestActivitySource(ActivitySource testSource) 
+        => _testActivitySource.Value = testSource;
+    
+    internal static void ResetTestActivitySource() 
+        => _testActivitySource.Value = null;
+}
+```
+
+**Why AsyncLocal is better than static fields:**
+- ✅ **Isolation**: Each async context gets its own value
+- ✅ **Thread-safe**: No race conditions with parallel tests
+- ✅ **Async-aware**: Works across async/await boundaries
+- ✅ **Parallel execution**: Tests can run in parallel without interference
+- ✅ **No xUnit collections needed**: No need for `[Collection]` attributes
+
+#### Activity Test Helper Pattern
+
+Create test helpers that manage ActivitySource lifecycle:
+
+```csharp
+public sealed class PvoActivityTestHelper : IDisposable
+{
+    private readonly ActivitySource _testActivitySource;
+    private readonly ActivityListener _listener;
+    private readonly List<Activity> _capturedActivities = [];
+
+    public PvoActivityTestHelper()
+    {
+        // Create unique ActivitySource per test instance
+        _testActivitySource = new ActivitySource($"Test-PVO-{Guid.NewGuid():N}");
+        
+        // Configure listener to capture activities
+        _listener = new ActivityListener
+        {
+            ShouldListenTo = source => source == _testActivitySource,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => 
+                ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activity =>
+            {
+                lock (_capturedActivities)
+                {
+                    _capturedActivities.Add(activity);
+                }
+            }
+        };
+        
+        ActivitySource.AddActivityListener(_listener);
+        
+        // Inject test source into AsyncLocal (isolated per test context)
+        PrimitiveValueObjectTrace.SetTestActivitySource(_testActivitySource);
+    }
+
+    public bool WaitForActivityCount(int expectedCount, TimeSpan? timeout = null)
+    {
+        var maxWait = timeout ?? TimeSpan.FromSeconds(2);
+        return SpinWait.SpinUntil(() => ActivityCount >= expectedCount, maxWait);
+    }
+
+    public void Dispose()
+    {
+        // Reset AsyncLocal for this context
+        PrimitiveValueObjectTrace.ResetTestActivitySource();
+        _listener.Dispose();
+        _testActivitySource.Dispose();
+    }
+}
+```
+
+#### Using in Tests
+
+```csharp
+// No [Collection] attribute needed - AsyncLocal provides isolation!
+public class PvoTracingExtensionsTests : IDisposable
+{
+    private readonly PvoActivityTestHelper _activityHelper = new();
+
+    [Fact]
+    public void EmailAddress_ValidationFailure_SetsErrorStatus()
+    {
+        // Act
+        var emailResult = EmailAddress.TryCreate("invalid-email");
+
+        // Assert
+        _activityHelper.WaitForActivityCount(1).Should().BeTrue();
+        var activities = _activityHelper.CapturedActivities;
+        activities.Should().ContainSingle();
+        var activity = activities[0];
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+    }
+
+    public void Dispose() => _activityHelper.Dispose();
+}
+
+// Other test classes can run in parallel - no interference!
+public class EmailAddressTests
+{
+    [Fact]
+    public void Can_create_valid_email()
+    {
+        var result = EmailAddress.TryCreate("test@example.com");
+        result.IsSuccess.Should().BeTrue();
+    }
+}
+```
+
+### Summary: Activity Tracing Best Practices
+
+| Scenario | Correct Pattern | Why |
+|----------|----------------|-----|
+| **Setting activity status** | `activity?.SetStatus(...)` | Avoids `Activity.Current` race conditions |
+| **Test isolation** | `AsyncLocal<ActivitySource?>` | Provides per-context isolation, works with async and parallel execution |
+| **Test helpers** | Unique source + inject/reset pattern | Ensures each test has isolated tracing |
+| **Production code** | Use local `activity` variable | Thread-safe and reliable |
+
+**Key Advantages of AsyncLocal:**
+- ✅ **No `[Collection]` attributes needed** - Tests run in parallel by default
+- ✅ **True isolation** - Each test context gets its own ActivitySource
+- ✅ **Async-aware** - Works correctly across async/await boundaries
+- ✅ **Faster tests** - No forced sequential execution
+- ✅ **Simpler code** - No need to manage test collections
