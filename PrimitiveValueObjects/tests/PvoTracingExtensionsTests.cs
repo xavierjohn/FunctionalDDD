@@ -34,7 +34,7 @@ public class PvoTracingExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_RegistersActivitySource()
+    public void AddPrimitiveValueObjectInstrumentation_RegistersActivitySource()
     {
         // Arrange
         var builder = Sdk.CreateTracerProviderBuilder();
@@ -48,7 +48,7 @@ public class PvoTracingExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_EnablesActivityCapture()
+    public void AddPrimitiveValueObjectInstrumentation_EnablesActivityCapture()
     {
         // Arrange
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -70,7 +70,7 @@ public class PvoTracingExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_SupportsMethodChaining()
+    public void AddPrimitiveValueObjectInstrumentation_SupportsMethodChaining()
     {
         // Arrange & Act
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -83,7 +83,7 @@ public class PvoTracingExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_RegistersCorrectActivitySourceName()
+    public void AddPrimitiveValueObjectInstrumentation_RegistersCorrectActivitySourceName()
     {
         // Arrange
         var expectedSourceName = "Functional DDD PVO";

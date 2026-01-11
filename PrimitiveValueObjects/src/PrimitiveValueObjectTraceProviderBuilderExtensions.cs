@@ -10,7 +10,7 @@ using OpenTelemetry.Trace;
 /// creation, validation, and parsing. When configured, value object operations will automatically
 /// generate trace spans in your OpenTelemetry pipeline.
 /// </remarks>
-public static class PvoTracingExtensions
+public static class PrimitiveValueObjectTraceProviderBuilderExtensions
 {
     /// <summary>
     /// Adds PrimitiveValueObjects instrumentation to the OpenTelemetry tracing pipeline.
@@ -52,7 +52,7 @@ public static class PvoTracingExtensions
     /// builder.Services.AddOpenTelemetry()
     ///     .WithTracing(tracerProviderBuilder =>
     ///         tracerProviderBuilder
-    ///             .AddFunctionalDddPvoInstrumentation()  // Enable PVO tracing
+    ///             .AddPrimitiveValueObjectInstrumentation()  // Enable PVO tracing
     ///             .AddAspNetCoreInstrumentation()         // Add ASP.NET Core tracing
     ///             .AddHttpClientInstrumentation()         // Add HTTP client tracing
     ///             .AddConsoleExporter());                 // Export to console
@@ -67,7 +67,7 @@ public static class PvoTracingExtensions
     /// builder.Services.AddOpenTelemetry()
     ///     .WithTracing(tracerProviderBuilder =>
     ///         tracerProviderBuilder
-    ///             .AddFunctionalDddPvoInstrumentation()
+    ///             .AddPrimitiveValueObjectInstrumentation()
     ///             .AddAspNetCoreInstrumentation()
     ///             .AddAzureMonitorTraceExporter(options =>
     ///             {

@@ -5,7 +5,7 @@ using OpenTelemetry.Trace;
 /// <summary>
 /// Extension methods for configuring OpenTelemetry tracing for Railway Oriented Programming operations.
 /// </summary>
-public static class RopTracerProviderBuilderExtensions
+public static class RailwayOrientedProgrammingTraceProviderBuilderExtensions
 {
     /// <summary>
     /// Adds Functional DDD Railway Oriented Programming instrumentation to the OpenTelemetry tracer provider.

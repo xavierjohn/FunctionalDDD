@@ -89,7 +89,7 @@ builder.Services.AddOpenTelemetry()
     {
         tracerProviderBuilder
             .AddRailwayOrientedProgrammingInstrumentation()      // ⚠️ Traces EVERY Result<T> operation
-            .AddFunctionalDddCvoInstrumentation()      // ⚠️ Traces EVERY value object creation
+            .AddPrimitiveValueObjectInstrumentation()      // ⚠️ Traces EVERY value object creation
             .AddConsoleExporter();  // Console output for debugging
     });
 ```

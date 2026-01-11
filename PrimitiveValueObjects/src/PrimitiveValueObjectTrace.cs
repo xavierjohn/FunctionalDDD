@@ -24,7 +24,7 @@ using System.Reflection;
 /// </para>
 /// <para>
 /// To enable tracing in your application, register the activity source with your
-/// OpenTelemetry configuration using <see cref="PvoTracingExtensions.AddPrimitiveValueObjectInstrumentation"/>.
+/// OpenTelemetry configuration using <see cref="PrimitiveValueObjectTraceProviderBuilderExtensions.AddPrimitiveValueObjectInstrumentation"/>.
 /// </para>
 /// </remarks>
 /// <example>
@@ -35,7 +35,7 @@ using System.Reflection;
 /// builder.Services.AddOpenTelemetry()
 ///     .WithTracing(tracerProviderBuilder =>
 ///         tracerProviderBuilder
-///             .AddFunctionalDddPvoInstrumentation()  // Adds PVO activity source
+///             .AddPrimitiveValueObjectInstrumentation()  // Adds PVO activity source
 ///             .AddAspNetCoreInstrumentation()
 ///             .AddHttpClientInstrumentation()
 ///             .AddConsoleExporter());
@@ -67,7 +67,7 @@ using System.Reflection;
 /// // - Parent/child relationships
 /// </code>
 /// </example>
-/// <seealso cref="PvoTracingExtensions"/>
+/// <seealso cref="PrimitiveValueObjectTraceProviderBuilderExtensions"/>
 /// <seealso cref="ActivitySource"/>
 public static class PrimitiveValueObjectTrace
 {
@@ -107,7 +107,7 @@ public static class PrimitiveValueObjectTrace
     /// To enable tracing, add this source to your OpenTelemetry configuration:
     /// <code>
     /// builder.Services.AddOpenTelemetry()
-    ///     .WithTracing(b => b.AddFunctionalDddPvoInstrumentation());
+    ///     .WithTracing(b => b.AddPrimitiveValueObjectInstrumentation());
     /// </code>
     /// </para>
     /// <para>
