@@ -1,4 +1,4 @@
-# API Documentation for FunctionalDdd Library
+﻿# API Documentation for FunctionalDdd Library
 
 Welcome to the FunctionalDDD API reference. This library brings Railway-Oriented Programming (ROP) and Domain-Driven Design (DDD) patterns to C#, enabling you to write robust, maintainable code with explicit error handling.
 
@@ -316,5 +316,5 @@ Built-in distributed tracing support for Railway-Oriented Programming operations
 | FunctionalDDD.Asp | ASP.NET Core integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp) |
 | FunctionalDDD.Http | HTTP client extensions | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Http.svg)](https://www.nuget.org/packages/FunctionalDDD.Http) |
 | FunctionalDDD.FluentValidation | FluentValidation integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation) |
-| FunctionalDDD.CommonValueObjects | Reusable value objects | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects) |
+| FunctionalDDD.PrimitiveValueObjects | Reusable value objects | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects) |
 | FunctionalDDD.DomainDrivenDesign | DDD building blocks | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign) |

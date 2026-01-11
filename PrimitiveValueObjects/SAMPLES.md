@@ -1,6 +1,6 @@
-# Common Value Objects - Comprehensive Examples
+﻿# Primitive Value Objects - Comprehensive Examples
 
-This document provides detailed examples and patterns for using Common Value Objects with source code generation in domain-driven design applications.
+This document provides detailed examples and patterns for using Primitive Value Objects with source code generation in domain-driven design applications.
 
 ## Table of Contents
 
@@ -896,7 +896,7 @@ public partial class EmailAddress : RequiredString
                 "email");
         
         // Use the existing EmailAddress validation
-        return FunctionalDDD.CommonValueObjects.EmailAddress.TryCreate(value)
+        return FunctionalDDD.PrimitiveValueObjects.EmailAddress.TryCreate(value)
             .Map(email => (EmailAddress)(object)email);
     }
 }

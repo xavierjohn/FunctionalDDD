@@ -1,4 +1,4 @@
-{
+﻿{
   "metadata": [
     {
       "src": [
@@ -10,7 +10,7 @@
             "FluentValidation/src/FluentValidation.csproj",
             "Asp/src/Asp.csproj",
             "Http/src/Http.csproj",
-            "CommonValueObjects/src/CommonValueObjects.csproj"
+            "PrimitiveValueObjects/src/PrimitiveValueObjects.csproj"
           ]
         }
       ],

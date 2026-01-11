@@ -302,8 +302,8 @@ dotnet add package FunctionalDDD.DomainDrivenDesign
 dotnet add package FunctionalDDD.Asp
 
 # Value objects with source generator - RequiredString, etc.
-dotnet add package FunctionalDDD.CommonValueObjects
-dotnet add package FunctionalDDD.CommonValueObjectGenerator
+dotnet add package FunctionalDDD.PrimitiveValueObjects
+dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
 ```
 
 **Ready to dive deeper?** Check out the [Introduction](articles/intro.md) or browse the [API Documentation](api/index.md).

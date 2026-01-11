@@ -8,7 +8,7 @@
 /// <para>
 /// This class extends <see cref="ScalarValueObject{T}"/> to provide a specialized base for string-based value objects
 /// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
-/// the CommonValueObjectGenerator source generator automatically creates:
+/// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
 /// <item>Static factory method (TryCreate) with null/empty validation</item>
 /// <item>String parsing that trims whitespace</item>
