@@ -28,11 +28,11 @@ public static class RopTracerProviderBuilderExtensions
     /// <code>
     /// services.AddOpenTelemetry()
     ///     .WithTracing(builder => builder
-    ///         .AddFunctionalDddRopInstrumentation()
+    ///         .AddRailwayOrientedProgrammingInstrumentation()
     ///         .AddAspNetCoreInstrumentation()
     ///         .AddConsoleExporter());
     /// </code>
     /// </example>
-    public static TracerProviderBuilder AddFunctionalDddRopInstrumentation(this TracerProviderBuilder builder)
+    public static TracerProviderBuilder AddRailwayOrientedProgrammingInstrumentation(this TracerProviderBuilder builder)
         => builder.AddSource(RopTrace.ActivitySourceName);
 }

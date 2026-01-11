@@ -175,7 +175,7 @@ OpenTelemetry integration for automatic distributed tracing.
 ```csharp
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
-        .AddFunctionalDddRopInstrumentation()
+        .AddRailwayOrientedProgrammingInstrumentation()
         .AddOtlpExporter());
 ```
 
