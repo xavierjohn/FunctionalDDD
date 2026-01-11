@@ -17,7 +17,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracing
         => tracing.AddSource("SampleMinimalApi")
             .SetSampler(new AlwaysOnSampler())
-            .AddFunctionalDddPvoInstrumentation()
+            .AddPrimitiveValueObjectInstrumentation()
             .AddOtlpExporter());
 
 var app = builder.Build();

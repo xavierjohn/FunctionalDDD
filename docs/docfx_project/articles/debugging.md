@@ -1,4 +1,4 @@
-# Debugging Railway Oriented Programming
+﻿# Debugging Railway Oriented Programming
 
 Chained operations can be challenging to debug. This guide provides strategies for identifying failures in ROP chains.
 
@@ -319,7 +319,7 @@ Enable distributed tracing to automatically trace your ROP chains:
 // Startup configuration (Program.cs or Startup.cs)
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerBuilder => tracerBuilder
-        .AddFunctionalDddRopInstrumentation()  // Built-in ROP instrumentation!
+        .AddRailwayOrientedProgrammingInstrumentation()  // Built-in ROP instrumentation!
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddOtlpExporter());  // Or .AddConsoleExporter() for development

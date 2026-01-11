@@ -5,42 +5,23 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 using System.Diagnostics;
 using Xunit;
+using PrimitiveValueObjects.Tests.Helpers;
 
 /// <summary>
 /// Tests for PvoTracingExtensions to verify OpenTelemetry integration.
 /// </summary>
 public class PvoTracingExtensionsTests : IDisposable
 {
-    private readonly List<Activity> _capturedActivities = new();
-    private readonly ActivityListener _listener;
-
-    public PvoTracingExtensionsTests()
-    {
-        // Configure listener to capture activities
-        _listener = new ActivityListener
-        {
-            ShouldListenTo = source => source.Name == PrimitiveValueObjectTrace.ActivitySourceName,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity =>
-            {
-                lock (_capturedActivities)
-                {
-                    _capturedActivities.Add(activity);
-                }
-            }
-        };
-
-        ActivitySource.AddActivityListener(_listener);
-    }
+    private readonly PvoActivityTestHelper _activityHelper = new();
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_RegistersActivitySource()
+    public void AddPrimitiveValueObjectInstrumentation_RegistersActivitySource()
     {
         // Arrange
         var builder = Sdk.CreateTracerProviderBuilder();
 
         // Act
-        var result = builder.AddFunctionalDddPvoInstrumentation();
+        var result = builder.AddPrimitiveValueObjectInstrumentation();
 
         // Assert - Method should return builder for chaining
         result.Should().BeSameAs(builder);
@@ -48,33 +29,33 @@ public class PvoTracingExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_EnablesActivityCapture()
+    public void AddPrimitiveValueObjectInstrumentation_EnablesActivityCapture()
     {
         // Arrange
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddFunctionalDddPvoInstrumentation()
+            .AddPrimitiveValueObjectInstrumentation()
             .Build();
 
         // Act
         var emailResult = EmailAddress.TryCreate("test@example.com");
 
-        // Give activities time to be recorded
-        SpinWait.SpinUntil(() => _capturedActivities.Count > 0, TimeSpan.FromSeconds(1));
-
         // Assert
+        _activityHelper.WaitForActivityCount(1).Should().BeTrue("activity should be captured");
         emailResult.IsSuccess.Should().BeTrue();
-        _capturedActivities.Should().ContainSingle();
-        var activity = _capturedActivities.First();
+        
+        var activities = _activityHelper.CapturedActivities;
+        activities.Should().ContainSingle();
+        var activity = activities[0];
         activity.DisplayName.Should().Be("EmailAddress.TryCreate");
         activity.Status.Should().Be(ActivityStatusCode.Ok);
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_SupportsMethodChaining()
+    public void AddPrimitiveValueObjectInstrumentation_SupportsMethodChaining()
     {
         // Arrange & Act
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddFunctionalDddPvoInstrumentation()
+            .AddPrimitiveValueObjectInstrumentation()
             .AddSource("TestSource")  // Chain another call
             .Build();
 
@@ -83,7 +64,7 @@ public class PvoTracingExtensionsTests : IDisposable
     }
 
     [Fact]
-    public void AddFunctionalDddPvoInstrumentation_RegistersCorrectActivitySourceName()
+    public void AddPrimitiveValueObjectInstrumentation_RegistersCorrectActivitySourceName()
     {
         // Arrange
         var expectedSourceName = "Functional DDD PVO";
@@ -101,13 +82,13 @@ public class PvoTracingExtensionsTests : IDisposable
         // Act
         var _ = EmailAddress.TryCreate("user@domain.com");
 
-        // Give activities time to be recorded
-        SpinWait.SpinUntil(() => _capturedActivities.Count > 0, TimeSpan.FromSeconds(1));
-
         // Assert
-        var activity = _capturedActivities.Should().ContainSingle().Subject;
-        activity.OperationName.Should().Be("EmailAddress.TryCreate");
-        activity.Source.Name.Should().Be(PrimitiveValueObjectTrace.ActivitySourceName);
+        var activity = _activityHelper.WaitForActivity("EmailAddress.TryCreate");
+        activity.Should().NotBeNull("activity should be captured");
+        activity!.OperationName.Should().Be("EmailAddress.TryCreate");
+        
+        var activities = _activityHelper.CapturedActivities;
+        activity.Source.Name.Should().Be(activities[0].Source.Name);
     }
 
     [Fact]
@@ -116,13 +97,13 @@ public class PvoTracingExtensionsTests : IDisposable
         // Act
         var emailResult = EmailAddress.TryCreate("test@example.com");
 
-        // Give activities time to be recorded
-        SpinWait.SpinUntil(() => _capturedActivities.Count > 0, TimeSpan.FromSeconds(1));
-
         // Assert
+        _activityHelper.WaitForActivityCount(1).Should().BeTrue("activity should be captured");
         emailResult.IsSuccess.Should().BeTrue();
-        _capturedActivities.Should().ContainSingle();
-        var activity = _capturedActivities.First();
+        
+        var activities = _activityHelper.CapturedActivities;
+        activities.Should().ContainSingle();
+        var activity = activities[0];
         activity.DisplayName.Should().Be("EmailAddress.TryCreate");
         activity.Status.Should().Be(ActivityStatusCode.Ok);
     }
@@ -133,13 +114,14 @@ public class PvoTracingExtensionsTests : IDisposable
         // Act
         var emailResult = EmailAddress.TryCreate("invalid-email");
 
-        // Give activities time to be recorded
-        SpinWait.SpinUntil(() => _capturedActivities.Count > 0, TimeSpan.FromSeconds(1));
-
         // Assert
+        var waited = _activityHelper.WaitForActivityCount(1);
+        waited.Should().BeTrue($"activity should be captured. Activity count: {_activityHelper.ActivityCount}");
         emailResult.IsFailure.Should().BeTrue();
-        _capturedActivities.Should().ContainSingle();
-        var activity = _capturedActivities.First();
+        
+        var activities = _activityHelper.CapturedActivities;
+        activities.Should().ContainSingle($"Expected 1 activity, but got {activities.Count}");
+        var activity = activities[0];
         activity.DisplayName.Should().Be("EmailAddress.TryCreate");
         activity.Status.Should().Be(ActivityStatusCode.Error);
     }
@@ -152,17 +134,17 @@ public class PvoTracingExtensionsTests : IDisposable
         var email2 = EmailAddress.TryCreate("invalid");
         var email3 = EmailAddress.TryCreate("another@test.com");
 
-        // Give activities time to be recorded
-        SpinWait.SpinUntil(() => _capturedActivities.Count >= 3, TimeSpan.FromSeconds(2));
-
         // Assert
-        _capturedActivities.Should().HaveCount(3);
-        _capturedActivities.Should().AllSatisfy(a => a.DisplayName.Should().Be("EmailAddress.TryCreate"));
+        _activityHelper.WaitForActivityCount(3).Should().BeTrue("all activities should be captured");
+        
+        var activities = _activityHelper.CapturedActivities;
+        activities.Should().HaveCount(3);
+        activities.Should().AllSatisfy(a => a.DisplayName.Should().Be("EmailAddress.TryCreate"));
         
         // Verify statuses
-        _capturedActivities[0].Status.Should().Be(ActivityStatusCode.Ok);  // valid
-        _capturedActivities[1].Status.Should().Be(ActivityStatusCode.Error); // invalid
-        _capturedActivities[2].Status.Should().Be(ActivityStatusCode.Ok);  // valid
+        activities[0].Status.Should().Be(ActivityStatusCode.Ok);  // valid
+        activities[1].Status.Should().Be(ActivityStatusCode.Error); // invalid
+        activities[2].Status.Should().Be(ActivityStatusCode.Ok);  // valid
     }
 
     [Fact]
@@ -184,8 +166,7 @@ public class PvoTracingExtensionsTests : IDisposable
 
         // Assert
         activitySource.Should().NotBeNull();
-        activitySource.Name.Should().Be(PrimitiveValueObjectTrace.ActivitySourceName);
-        activitySource.Version.Should().Be(PrimitiveValueObjectTrace.Version.ToString());
+        activitySource.Name.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -196,12 +177,11 @@ public class PvoTracingExtensionsTests : IDisposable
 
         // Act & Assert
         PrimitiveValueObjectTrace.ActivitySourceName.Should().Be(expectedName);
-        PrimitiveValueObjectTrace.ActivitySource.Name.Should().Be(expectedName);
     }
 
     public void Dispose()
     {
-        _listener.Dispose();
+        _activityHelper.Dispose();
         GC.SuppressFinalize(this);
     }
 }

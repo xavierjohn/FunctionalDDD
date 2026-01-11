@@ -24,7 +24,7 @@ using System.Reflection;
 /// </para>
 /// <para>
 /// To enable tracing in your application, register the activity source with your
-/// OpenTelemetry configuration using <see cref="PvoTracingExtensions.AddFunctionalDddPvoInstrumentation"/>.
+/// OpenTelemetry configuration.
 /// </para>
 /// </remarks>
 /// <example>
@@ -35,7 +35,7 @@ using System.Reflection;
 /// builder.Services.AddOpenTelemetry()
 ///     .WithTracing(tracerProviderBuilder =>
 ///         tracerProviderBuilder
-///             .AddFunctionalDddPvoInstrumentation()  // Adds PVO activity source
+///             .AddPrimitiveValueObjectInstrumentation()  // Adds PVO activity source
 ///             .AddAspNetCoreInstrumentation()
 ///             .AddHttpClientInstrumentation()
 ///             .AddConsoleExporter());
@@ -67,7 +67,6 @@ using System.Reflection;
 /// // - Parent/child relationships
 /// </code>
 /// </example>
-/// <seealso cref="PvoTracingExtensions"/>
 /// <seealso cref="ActivitySource"/>
 public static class PrimitiveValueObjectTrace
 {
@@ -94,6 +93,11 @@ public static class PrimitiveValueObjectTrace
     /// The version is included in trace metadata to help correlate behavior with specific library versions.
     /// </remarks>
     internal static readonly Version Version = AssemblyName.Version!;
+
+    private static readonly ActivitySource _defaultActivitySource = new(ActivitySourceName, Version.ToString());
+    
+    // Use AsyncLocal for test isolation - works across async boundaries and is thread-safe
+    private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
     
     /// <summary>
     /// Gets the <see cref="ActivitySource"/> for tracing PrimitiveValueObjects operations.
@@ -107,7 +111,7 @@ public static class PrimitiveValueObjectTrace
     /// To enable tracing, add this source to your OpenTelemetry configuration:
     /// <code>
     /// builder.Services.AddOpenTelemetry()
-    ///     .WithTracing(b => b.AddFunctionalDddPvoInstrumentation());
+    ///     .WithTracing(b => b.AddPrimitiveValueObjectInstrumentation());
     /// </code>
     /// </para>
     /// <para>
@@ -119,5 +123,19 @@ public static class PrimitiveValueObjectTrace
     /// </list>
     /// </para>
     /// </remarks>
-    public static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+    public static ActivitySource ActivitySource => _testActivitySource.Value ?? _defaultActivitySource;
+
+    /// <summary>
+    /// Sets a test-specific ActivitySource for isolated testing.
+    /// This allows tests to capture activities without interfering with each other.
+    /// Uses AsyncLocal to ensure proper isolation even with async tests and parallel execution.
+    /// </summary>
+    /// <param name="testSource">The test-specific ActivitySource to use.</param>
+    internal static void SetTestActivitySource(ActivitySource testSource) => _testActivitySource.Value = testSource;
+
+    /// <summary>
+    /// Resets the ActivitySource to the default production instance.
+    /// Should be called in test cleanup (Dispose).
+    /// </summary>
+    internal static void ResetTestActivitySource() => _testActivitySource.Value = null;
 }
