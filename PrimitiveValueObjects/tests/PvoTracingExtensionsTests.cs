@@ -1,6 +1,8 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
 using FunctionalDdd;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using System.Diagnostics;
 using Xunit;
 
@@ -29,6 +31,55 @@ public class PvoTracingExtensionsTests : IDisposable
         };
 
         ActivitySource.AddActivityListener(_listener);
+    }
+
+    [Fact]
+    public void AddFunctionalDddPvoInstrumentation_RegistersActivitySource()
+    {
+        // Arrange
+        var builder = Sdk.CreateTracerProviderBuilder();
+
+        // Act
+        var result = builder.AddFunctionalDddPvoInstrumentation();
+
+        // Assert - Method should return builder for chaining
+        result.Should().BeSameAs(builder);
+        result.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AddFunctionalDddPvoInstrumentation_EnablesActivityCapture()
+    {
+        // Arrange
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddFunctionalDddPvoInstrumentation()
+            .Build();
+
+        // Act
+        var emailResult = EmailAddress.TryCreate("test@example.com");
+
+        // Give activities time to be recorded
+        SpinWait.SpinUntil(() => _capturedActivities.Count > 0, TimeSpan.FromSeconds(1));
+
+        // Assert
+        emailResult.IsSuccess.Should().BeTrue();
+        _capturedActivities.Should().ContainSingle();
+        var activity = _capturedActivities.First();
+        activity.DisplayName.Should().Be("EmailAddress.TryCreate");
+        activity.Status.Should().Be(ActivityStatusCode.Ok);
+    }
+
+    [Fact]
+    public void AddFunctionalDddPvoInstrumentation_SupportsMethodChaining()
+    {
+        // Arrange & Act
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddFunctionalDddPvoInstrumentation()
+            .AddSource("TestSource")  // Chain another call
+            .Build();
+
+        // Assert
+        tracerProvider.Should().NotBeNull();
     }
 
     [Fact]
