@@ -1,4 +1,4 @@
-﻿namespace CommonValueObjects.Tests;
+﻿namespace PrimitiveValueObjects.Tests;
 
 using FunctionalDdd;
 using System.Globalization;
