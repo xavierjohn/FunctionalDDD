@@ -1,4 +1,4 @@
-# Mermaid Diagrams for Documentation
+﻿# Mermaid Diagrams for Documentation
 
 This document contains reusable Mermaid diagram scripts for the FunctionalDDD documentation. All diagrams use the ````mermaid` code fence and are compatible with DocFX, GitHub, and mermaid.live.
 
@@ -446,7 +446,7 @@ flowchart TB
 
 ## Value Objects
 
-### Value Object Class Diagram (CommonValueObjects README)
+### Value Object Class Diagram (PrimitiveValueObjects README)
 
 ```mermaid
 classDiagram
@@ -496,7 +496,7 @@ classDiagram
     RequiredGuid <|-- OrderId
 ```
 
-### Value Object Validation Flow (CommonValueObjects SAMPLES)
+### Value Object Validation Flow (PrimitiveValueObjects SAMPLES)
 
 ```mermaid
 flowchart LR

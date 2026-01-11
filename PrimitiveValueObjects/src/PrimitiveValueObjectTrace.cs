@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Reflection;
 
 /// <summary>
-/// Provides OpenTelemetry activity tracing for Common Value Objects operations.
+/// Provides OpenTelemetry activity tracing for Primitive Value Objects operations.
 /// Enables monitoring and diagnostics of value object creation, validation, and parsing activities.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This static class configures distributed tracing support for the CommonValueObjects library,
+/// This static class configures distributed tracing support for the PrimitiveValueObjects library,
 /// allowing you to observe value object operations in Application Insights, Jaeger, Zipkin,
 /// or other OpenTelemetry-compatible observability platforms.
 /// </para>
@@ -24,7 +24,7 @@ using System.Reflection;
 /// </para>
 /// <para>
 /// To enable tracing in your application, register the activity source with your
-/// OpenTelemetry configuration using <see cref="CvoTracingExtensions.AddFunctionalDddCvoInstrumentation"/>.
+/// OpenTelemetry configuration using <see cref="PvoTracingExtensions.AddFunctionalDddPvoInstrumentation"/>.
 /// </para>
 /// </remarks>
 /// <example>
@@ -35,14 +35,14 @@ using System.Reflection;
 /// builder.Services.AddOpenTelemetry()
 ///     .WithTracing(tracerProviderBuilder =>
 ///         tracerProviderBuilder
-///             .AddFunctionalDddCvoInstrumentation()  // Adds CVO activity source
+///             .AddFunctionalDddPvoInstrumentation()  // Adds PVO activity source
 ///             .AddAspNetCoreInstrumentation()
 ///             .AddHttpClientInstrumentation()
 ///             .AddConsoleExporter());
 /// 
 /// var app = builder.Build();
 /// 
-/// // Now EmailAddress.TryCreate and other CVO operations will be traced
+/// // Now EmailAddress.TryCreate and other PVO operations will be traced
 /// app.MapPost("/users", (CreateUserRequest request) =>
 ///     EmailAddress.TryCreate(request.Email) // This creates a traced activity
 ///         .Bind(email => _userService.CreateUser(email))
@@ -67,28 +67,28 @@ using System.Reflection;
 /// // - Parent/child relationships
 /// </code>
 /// </example>
-/// <seealso cref="CvoTracingExtensions"/>
+/// <seealso cref="PvoTracingExtensions"/>
 /// <seealso cref="ActivitySource"/>
-public static class CommonValueObjectTrace
+public static class PrimitiveValueObjectTrace
 {
     /// <summary>
-    /// Gets the assembly name of the CommonValueObjects library.
+    /// Gets the assembly name of the PrimitiveValueObjects library.
     /// Used for versioning and metadata in traces.
     /// </summary>
-    internal static readonly AssemblyName AssemblyName = typeof(CommonValueObjectTrace).Assembly.GetName();
+    internal static readonly AssemblyName AssemblyName = typeof(PrimitiveValueObjectTrace).Assembly.GetName();
     
     /// <summary>
-    /// Gets the name of the activity source used for CommonValueObjects tracing.
-    /// Value: "Functional DDD CVO"
+    /// Gets the name of the activity source used for PrimitiveValueObjects tracing.
+    /// Value: "Functional DDD PVO"
     /// </summary>
     /// <remarks>
     /// This name is used to identify traces from this library in observability platforms.
     /// Register this name when configuring OpenTelemetry tracing.
     /// </remarks>
-    internal static readonly string ActivitySourceName = "Functional DDD CVO";
+    internal static readonly string ActivitySourceName = "Functional DDD PVO";
     
     /// <summary>
-    /// Gets the version of the CommonValueObjects library.
+    /// Gets the version of the PrimitiveValueObjects library.
     /// </summary>
     /// <remarks>
     /// The version is included in trace metadata to help correlate behavior with specific library versions.
@@ -96,7 +96,7 @@ public static class CommonValueObjectTrace
     internal static readonly Version Version = AssemblyName.Version!;
     
     /// <summary>
-    /// Gets the <see cref="ActivitySource"/> for tracing CommonValueObjects operations.
+    /// Gets the <see cref="ActivitySource"/> for tracing PrimitiveValueObjects operations.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -107,7 +107,7 @@ public static class CommonValueObjectTrace
     /// To enable tracing, add this source to your OpenTelemetry configuration:
     /// <code>
     /// builder.Services.AddOpenTelemetry()
-    ///     .WithTracing(b => b.AddFunctionalDddCvoInstrumentation());
+    ///     .WithTracing(b => b.AddFunctionalDddPvoInstrumentation());
     /// </code>
     /// </para>
     /// <para>

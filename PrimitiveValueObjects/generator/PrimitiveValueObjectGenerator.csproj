@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Source code generator for RequiredString and RequiredGuid value objects. Automatically generates TryCreate, Parse, TryParse methods and explicit cast operators with IParsable&lt;T&gt; support.</Description>
-    <PackageTags>source-generator;roslyn;code-generation;value-objects;required-string;required-guid;ddd</PackageTags>
+    <Description>Source code generator for RequiredString and RequiredGuid primitive value objects. Automatically generates TryCreate, Parse, TryParse methods and explicit cast operators with IParsable&lt;T&gt; support. Part of the FunctionalDDD.PrimitiveValueObjects library.</Description>
+    <PackageTags>source-generator;roslyn;code-generation;value-objects;required-string;required-guid;ddd;domain-primitives</PackageTags>
   </PropertyGroup>
    <PropertyGroup>
       <!-- 👇 Source generators must target netstandard 2.0 -->

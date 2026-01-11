@@ -1,4 +1,4 @@
-﻿namespace CommonValueObjects.Tests;
+﻿namespace PrimitiveValueObjects.Tests;
 
 using System.Globalization;
 using System.Text.Json;

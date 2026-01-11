@@ -1,8 +1,8 @@
-# Common Value Objects
+﻿# Primitive Value Objects
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjects)
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)
 
-This library provides common value objects with source code generation for eliminating boilerplate code in domain-driven design applications.
+This library provides infrastructure and ready-to-use implementations for primitive value objects with source code generation, eliminating boilerplate code and primitive obsession in domain-driven design applications.
 
 ## Table of Contents
 
@@ -20,13 +20,13 @@ This library provides common value objects with source code generation for elimi
 Install both packages via NuGet:
 
 ```bash
-dotnet add package FunctionalDDD.CommonValueObjects
-dotnet add package FunctionalDDD.CommonValueObjectGenerator
+dotnet add package FunctionalDDD.PrimitiveValueObjects
+dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDDD.CommonValueObjects` - Provides base classes and the `EmailAddress` value object
-- `FunctionalDDD.CommonValueObjectGenerator` - Source generator that creates implementations for `RequiredString` and `RequiredGuid` derived classes
+- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`) and ready-to-use `EmailAddress` value object
+- `FunctionalDDD.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `RequiredString` and `RequiredGuid` derived classes
 
 ## Quick Start
 
@@ -96,9 +96,17 @@ var invalid = EmailAddress.TryCreate("not-an-email");
 
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
-| **RequiredString** | String wrapper | Non-empty strings | Source generation, IParsable, explicit cast |
-| **RequiredGuid** | Guid wrapper | Non-default GUIDs | Source generation, NewUnique(), IParsable |
-| **EmailAddress** | String wrapper | Email validation | RFC 5322 compliant, case-insensitive |
+| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IParsable, explicit cast |
+| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, NewUnique(), IParsable |
+| **EmailAddress** | Domain primitive | Email validation | RFC 5322 compliant, case-insensitive |
+
+**What are Primitive Value Objects?**
+
+Primitive value objects wrap single primitive types (`string`, `Guid`, etc.) to provide:
+- **Type safety**: Prevents mixing semantically different values
+- **Domain semantics**: Makes code self-documenting and expressive
+- **Validation**: Encapsulates validation rules at creation time
+- **Immutability**: Ensures values cannot change after creation
 
 **Generated Code Features:**
 - `TryCreate` methods returning `Result<T>`
@@ -106,6 +114,7 @@ var invalid = EmailAddress.TryCreate("not-an-email");
 - Explicit cast operators
 - Validation with descriptive error messages
 - Property name inference for error messages
+- OpenTelemetry activity tracing support
 
 ## Best Practices
 
@@ -122,7 +131,7 @@ var invalid = EmailAddress.TryCreate("not-an-email");
    Class name becomes part of the error message (e.g., "Employee Id cannot be empty").
 
 5. **Prefer specific types over primitives**  
-   `EmployeeId` is more expressive than `Guid` or `string`.
+   `EmployeeId` is more expressive than `Guid` or `string` - eliminates primitive obsession.
 
 ## Resources
 

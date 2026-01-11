@@ -202,7 +202,7 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     /// </example>
     public static Result<EmailAddress> TryCreate(string? emailString, string? fieldName = null)
     {
-        using var activity = CommonValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' +  nameof(TryCreate));
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' +  nameof(TryCreate));
         if (emailString is not null)
         {
             var isEmail = EmailRegEx().IsMatch(emailString);

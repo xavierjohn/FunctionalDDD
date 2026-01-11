@@ -1,4 +1,4 @@
-using SampleUserLibrary;
+﻿using SampleUserLibrary;
 using System.Text.Json.Serialization;
 using FunctionalDdd;
 using OpenTelemetry.Resources;
@@ -17,7 +17,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracing
         => tracing.AddSource("SampleMinimalApi")
             .SetSampler(new AlwaysOnSampler())
-            .AddFunctionalDddCvoInstrumentation()
+            .AddFunctionalDddPvoInstrumentation()
             .AddOtlpExporter());
 
 var app = builder.Build();
