@@ -119,6 +119,6 @@ public static class PvoTracingExtensions
     /// </example>
     /// <seealso cref="PrimitiveValueObjectTrace"/>
     /// <seealso cref="TracerProviderBuilder"/>
-    public static TracerProviderBuilder AddFunctionalDddPvoInstrumentation(this TracerProviderBuilder builder)
+    public static TracerProviderBuilder AddPrimitiveValueObjectInstrumentation(this TracerProviderBuilder builder)
         => builder.AddSource(PrimitiveValueObjectTrace.ActivitySourceName);
 }

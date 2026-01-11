@@ -40,7 +40,7 @@ public class PvoTracingExtensionsTests : IDisposable
         var builder = Sdk.CreateTracerProviderBuilder();
 
         // Act
-        var result = builder.AddFunctionalDddPvoInstrumentation();
+        var result = builder.AddPrimitiveValueObjectInstrumentation();
 
         // Assert - Method should return builder for chaining
         result.Should().BeSameAs(builder);
@@ -52,7 +52,7 @@ public class PvoTracingExtensionsTests : IDisposable
     {
         // Arrange
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddFunctionalDddPvoInstrumentation()
+            .AddPrimitiveValueObjectInstrumentation()
             .Build();
 
         // Act
@@ -74,7 +74,7 @@ public class PvoTracingExtensionsTests : IDisposable
     {
         // Arrange & Act
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddFunctionalDddPvoInstrumentation()
+            .AddPrimitiveValueObjectInstrumentation()
             .AddSource("TestSource")  // Chain another call
             .Build();
 
