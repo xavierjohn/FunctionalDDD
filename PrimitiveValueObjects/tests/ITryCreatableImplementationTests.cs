@@ -125,6 +125,22 @@ public class ITryCreatableImplementationTests
     }
 
     [Fact]
+    public void EmailAddress_TryCreate_WithCustomFieldName_UsesProvidedFieldNameNotDefault()
+    {
+        // Arrange
+        var customFieldName = "ContactEmailAddress";
+
+        // Act
+        var result = EmailAddress.TryCreate("invalid-email", customFieldName);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var error = (ValidationError)result.Error;
+        error.FieldErrors[0].FieldName.Should().Be("contactEmailAddress"); // Uses provided name, not "email"
+        error.FieldErrors[0].FieldName.Should().NotBe("email"); // Explicitly verify it's not the default
+    }
+
+    [Fact]
     public void RequiredString_TryCreate_WithFieldName_UsesCustomFieldName()
     {
         // Arrange
@@ -140,6 +156,22 @@ public class ITryCreatableImplementationTests
     }
 
     [Fact]
+    public void RequiredString_TryCreate_WithCustomFieldName_UsesProvidedFieldNameNotDefault()
+    {
+        // Arrange
+        var customFieldName = "ProductDescription";
+
+        // Act
+        var result = TestStringValue.TryCreate("", customFieldName);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var error = (ValidationError)result.Error;
+        error.FieldErrors[0].FieldName.Should().Be("productDescription"); // Uses provided name, not "testStringValue"
+        error.FieldErrors[0].FieldName.Should().NotBe("testStringValue"); // Explicitly verify it's not the default
+    }
+
+    [Fact]
     public void RequiredGuid_TryCreate_WithFieldName_UsesCustomFieldName()
     {
         // Arrange
@@ -152,6 +184,22 @@ public class ITryCreatableImplementationTests
         result.IsFailure.Should().BeTrue();
         var error = (ValidationError)result.Error;
         error.FieldErrors[0].FieldName.Should().Be("entityId"); // Should be camelCased
+    }
+
+    [Fact]
+    public void RequiredGuid_TryCreate_WithCustomFieldName_UsesProvidedFieldNameNotDefault()
+    {
+        // Arrange
+        var customFieldName = "OrderIdentifier";
+
+        // Act
+        var result = TestGuidValue.TryCreate(Guid.Empty, customFieldName);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var error = (ValidationError)result.Error;
+        error.FieldErrors[0].FieldName.Should().Be("orderIdentifier"); // Uses provided name, not "testGuidValue"
+        error.FieldErrors[0].FieldName.Should().NotBe("testGuidValue"); // Explicitly verify it's not the default
     }
 
     [Fact]
