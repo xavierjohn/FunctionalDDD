@@ -1,4 +1,4 @@
-@SampleMinimalApi_HostAddress = http://localhost:5157
+﻿@SampleMinimalApi_HostAddress = http://localhost:5157
 
 GET {{SampleMinimalApi_HostAddress}}/todos/
 Accept: application/json
@@ -11,7 +11,7 @@ Accept: application/json
 ###
 
 // Okay
-POST {{SampleMinimalApi_HostAddress}}/users/register
+POST {{SampleMinimalApi_HostAddress}}/usersWithBinding/register
 Content-Type: application/json
 Accept: application/json
 
@@ -24,7 +24,7 @@ Accept: application/json
 ###
 
 // Created
-POST {{SampleMinimalApi_HostAddress}}/users/registerCreated
+POST {{SampleMinimalApi_HostAddress}}/usersWithBinding/registerCreated
 Content-Type: application/json
 Accept: application/json
 
@@ -37,7 +37,7 @@ Accept: application/json
 ###
 
 // Bad request
-POST {{SampleMinimalApi_HostAddress}}/users/register
+POST {{SampleMinimalApi_HostAddress}}/usersWithBinding/register
 Content-Type: application/json
 Accept: application/json
 
@@ -50,7 +50,7 @@ Accept: application/json
 ###
 
 // Bad Request password
-POST {{SampleMinimalApi_HostAddress}}/users/register
+POST {{SampleMinimalApi_HostAddress}}/usersWithBinding/register
 Content-Type: application/json
 Accept: application/json
 
@@ -63,31 +63,31 @@ Accept: application/json
 ###
 
 // Not found
-GET {{SampleMinimalApi_HostAddress}}/users/notfound/213
+GET {{SampleMinimalApi_HostAddress}}/usersWithBinding/notfound/213
 Accept: application/json
 
 ###
 
 // Conflict
-GET {{SampleMinimalApi_HostAddress}}/users/conflict/213
+GET {{SampleMinimalApi_HostAddress}}/usersWithBinding/conflict/213
 Accept: application/json
 
 ###
 
 // Forbidden
-GET {{SampleMinimalApi_HostAddress}}/users/forbidden/213
+GET {{SampleMinimalApi_HostAddress}}/usersWithBinding/forbidden/213
 Accept: application/json
 
 ###
 
 // Unauthorized
-GET {{SampleMinimalApi_HostAddress}}/users/unauthorized/213
+GET {{SampleMinimalApi_HostAddress}}/usersWithBinding/unauthorized/213
 Accept: application/json
 
 ###
 
 // Unexpected
-GET {{SampleMinimalApi_HostAddress}}/users/unexpected/213
+GET {{SampleMinimalApi_HostAddress}}/usersWithBinding/unexpected/213
 Accept: application/json
 
 ###

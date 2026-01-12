@@ -24,7 +24,7 @@ public static class PrimitiveValueObjectTraceProviderBuilderExtensions
     /// allowing you to observe and monitor value object operations in your distributed tracing system.
     /// </para>
     /// <para>
-    /// Once enabled, operations like <see cref="EmailAddress.TryCreate"/> will automatically create
+    /// Once enabled, operations like <see cref="EmailAddress.TryCreate(string?, string?)"/> will automatically create
     /// trace spans with:
     /// <list type="bullet">
     /// <item>Operation name (e.g., "EmailAddress.TryCreate")</item>

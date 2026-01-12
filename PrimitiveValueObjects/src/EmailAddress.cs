@@ -157,14 +157,14 @@ using System.Text.RegularExpressions;
 /// <seealso cref="RequiredString"/>
 /// <seealso cref="IParsable{TSelf}"/>
 [JsonConverter(typeof(ParsableJsonConverter<EmailAddress>))]
-public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAddress>
+public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAddress>, ITryCreatable<EmailAddress>
 {
     private EmailAddress(string value) : base(value) { }
 
     /// <summary>
     /// Attempts to create an <see cref="EmailAddress"/> from the specified string.
     /// </summary>
-    /// <param name="emailString">The email address string to validate.</param>
+    /// <param name="value">The email address string to validate.</param>
     /// <param name="fieldName">
     /// Optional field name to use in validation error messages. 
     /// If not provided, defaults to "email" (camelCase).
@@ -200,14 +200,14 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     ///     .Bind((email, name) => User.Create(email, name));
     /// </code>
     /// </example>
-    public static Result<EmailAddress> TryCreate(string? emailString, string? fieldName = null)
+    public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' +  nameof(TryCreate));
-        if (emailString is not null)
+        if (value is not null)
         {
-            var isEmail = EmailRegEx().IsMatch(emailString);
+            var isEmail = EmailRegEx().IsMatch(value);
             Activity.Current?.SetStatus(ActivityStatusCode.Ok);
-            if (isEmail) return new EmailAddress(emailString);
+            if (isEmail) return new EmailAddress(value);
         }
 
         Activity.Current?.SetStatus(ActivityStatusCode.Error);
@@ -226,7 +226,7 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     /// </exception>
     /// <remarks>
     /// This method implements the <see cref="IParsable{TSelf}"/> interface, providing standard
-    /// .NET parsing behavior. For safer parsing without exceptions, use <see cref="TryParse"/> or <see cref="TryCreate"/>.
+    /// .NET parsing behavior. For safer parsing without exceptions, use <see cref="TryParse(string?, IFormatProvider?, out EmailAddress)"/> or <see cref="TryCreate(string?, string?)"/>.
     /// </remarks>
     public static EmailAddress Parse(string? s, IFormatProvider? provider)
     {

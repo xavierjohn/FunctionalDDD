@@ -1,9 +1,15 @@
-# ASP Extension - Comprehensive Examples
+﻿# ASP Extension - Comprehensive Examples
 
 This document provides detailed examples and advanced patterns for using the ASP extension with Railway Oriented Programming in ASP.NET Core applications.
 
 ## Table of Contents
 
+- [Automatic Value Object Binding](#automatic-value-object-binding)
+  - [Setup and Configuration](#setup-and-configuration)
+  - [Basic Usage](#basic-usage)
+  - [Route and Query Parameters](#route-and-query-parameters)
+  - [Complex DTOs](#complex-dtos)
+  - [Comparison: Before and After](#comparison-before-and-after)
 - [MVC Controllers](#mvc-controllers)
   - [Basic CRUD Operations](#basic-crud-operations)
   - [Async Operations](#async-operations)
@@ -28,6 +34,242 @@ This document provides detailed examples and advanced patterns for using the ASP
   - [Batch Operations](#batch-operations)
   - [Conditional Processing](#conditional-processing)
   - [Side Effects with Tap](#side-effects-with-tap)
+
+## Automatic Value Object Binding
+
+Seamless integration of value objects in ASP.NET Core model binding.
+
+### Setup and Configuration
+
+Enable automatic binding and validation for value objects implementing `ITryCreatable<T>`:
+
+```csharp
+// Program.cs - One-time registration
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers(options =>
+{
+    options.AddValueObjectModelBinding();  // ✅ Enable automatic binding
+});
+
+var app = builder.Build();
+app.MapControllers();
+app.Run();
+```
+
+### **Option 2 (with `AddValueObjectJsonInputFormatter`):**
+```csharp
+// DTO with value objects (automatically validated!)
+public record CreateUserRequest(
+    FirstName FirstName,      // ✅ Automatically validated
+    LastName LastName,        // ✅ Automatically validated
+    EmailAddress Email        // ✅ Automatically validated
+);
+
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    ModelState.ToResult()  // ✅ CRITICAL: Check model binding validation first!
+        .Bind(_ => User.TryCreate(request.FirstName, request.LastName, request.Email))
+        .ToActionResult(this);
+```
+
+**Why `ModelState.ToResult()` is Required:**
+
+When using automatic value object binding in JSON request bodies, model binding validates each value object **before** your controller action executes. If validation fails:
+1. ✅ Errors are added to `ModelState`
+2. ✅ `request` object is still created but with `default` values for invalid properties
+3. ❌ **Without `ModelState.ToResult()`**, you'd call domain logic with potentially `null`/invalid values!
+
+**The Railway Pattern:**
+```csharp
+ModelState.ToResult()  // Converts ModelState to Result<Unit>
+    // If ModelState is invalid → Returns Failure → Stays on failure track
+    // If ModelState is valid → Returns Success → Continues to Bind
+    .Bind(_ => User.TryCreate(...))  // Only called if ModelState was valid
+    .ToActionResult(this);
+```
+
+**What Happens Without It (❌ WRONG):**
+```csharp
+// ❌ DON'T DO THIS!
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    User.TryCreate(request.FirstName, request.LastName, request.Email)
+        .ToActionResult(this);
+
+// Problem: If model binding fails:
+// - request.FirstName might be null/default
+// - User.TryCreate gets called with invalid data
+// - Potential NullReferenceException or invalid state
+// - ModelState errors are ignored!
+```
+
+**Correct Pattern (✅ RIGHT):**
+```csharp
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    ModelState.ToResult()  // ✅ Check validation first
+        .Bind(_ => User.TryCreate(request.FirstName, request.LastName, request.Email))
+        .ToActionResult(this);
+
+// Railway-Oriented Programming:
+// 1. ModelState.ToResult() checks if model binding succeeded
+// 2. If any value object failed validation, returns Failure immediately
+// 3. Bind only executes if ModelState.ToResult() returned Success
+// 4. Domain logic only called with valid value objects
+```
+
+### Basic Usage
+
+After registration, value objects are automatically validated in DTOs:
+
+```csharp
+// DTO using VALUE OBJECTS instead of strings
+public record CreateUserRequest(
+    FirstName FirstName,      // ✅ Automatically validated
+    LastName LastName,        // ✅ Automatically validated
+    EmailAddress Email,       // ✅ Automatically validated
+    string Password           // Regular string
+);
+
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
+        .ToActionResult(this);
+
+// Invalid request automatically returns 400 Bad Request:
+// {
+//   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+//   "title": "One or more validation errors occurred.",
+//   "status": 400,
+//   "errors": {
+//     "FirstName": ["First Name cannot be empty."],
+//     "Email": ["Email address is not valid."]
+//   }
+// }
+```
+
+### Route and Query Parameters
+
+Value objects work seamlessly in route and query parameters:
+
+```csharp
+// Route parameter
+[HttpGet("{id}")]
+public ActionResult<User> GetUser(UserId id) =>
+    _repository.GetById(id)
+        .ToResult(Error.NotFound($"User {id} not found"))
+        .ToActionResult(this);
+
+// GET /users/invalid-guid
+// Returns: 400 Bad Request
+// {
+//   "errors": {
+//     "id": ["Guid should contain 32 digits with 4 dashes..."]
+//   }
+// }
+
+// Query parameter
+[HttpGet("search")]
+public ActionResult<IEnumerable<User>> SearchByEmail([FromQuery] EmailAddress email) =>
+    _repository.FindByEmail(email)
+        .ToActionResult(this);
+
+// GET /users/search?email=invalid
+// Returns: 400 Bad Request with validation errors
+```
+
+### Complex DTOs
+
+Nested value objects and collections are automatically handled:
+
+```csharp
+public record Address(
+    StreetName Street,        // ✅ Validated
+    CityName City,            // ✅ Validated
+    ZipCode Zip               // ✅ Validated
+);
+
+public record OrderLineRequest(
+    ProductId ProductId,      // ✅ Validated
+    Quantity Quantity,        // ✅ Validated
+    Price Price               // ✅ Validated
+);
+
+public record CreateOrderRequest(
+    CustomerId CustomerId,           // ✅ Validated
+    List<OrderLineRequest> Items,    // ✅ Each element validated
+    Address ShippingAddress,         // ✅ Nested properties validated
+    Address BillingAddress           // ✅ Nested properties validated
+);
+
+[HttpPost]
+public ActionResult<Order> CreateOrder([FromBody] CreateOrderRequest request) =>
+    Order.TryCreate(
+        request.CustomerId,
+        request.Items,
+        request.ShippingAddress,
+        request.BillingAddress)
+        .ToActionResult(this);
+
+// Invalid request returns ALL validation errors at once:
+// {
+//   "errors": {
+//     "CustomerId": ["Customer Id cannot be empty."],
+//
+//     "Items[0].Quantity": ["Quantity must be positive."],
+//     "ShippingAddress.ZipCode": ["Invalid ZIP code format."],
+//
+//     "BillingAddress.Street": ["Street Name cannot be empty."]
+//   }
+// }
+```
+
+### Comparison: Before and After
+
+#### Before (Manual Validation)
+
+```csharp
+// DTO with primitive types
+public record CreateUserRequestDto(string FirstName, string LastName, string Email, string Password);
+
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequestDto request) =>
+    FirstName.TryCreate(request.FirstName)
+        .Combine(LastName.TryCreate(request.LastName))
+        .Combine(EmailAddress.TryCreate(request.Email))
+        .Bind((first, last, email) => User.TryCreate(first, last, email, request.Password))
+        .ToActionResult(this);
+
+// ❌ 4 lines of validation boilerplate
+// ❌ Easy to forget validation
+// ❌ Parameter order mistakes possible: User.TryCreate(email, first, last)
+```
+
+#### After (Automatic Binding)
+
+```csharp
+// DTO with value objects
+public record CreateUserRequest(FirstName FirstName, LastName LastName, EmailAddress Email, string Password);
+
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
+        .ToActionResult(this);
+
+// ✅ 1 line - validation happens automatically
+// ✅ Compiler prevents forgetting validation
+// ✅ Type safety prevents parameter order mistakes
+```
+
+**Benefits:**
+- ✅ **60% less boilerplate** - No manual `Combine` chains
+- ✅ **Type-safe DTOs** - Compiler prevents mixing parameters
+- ✅ **Self-documenting** - DTO shows exact types expected
+- ✅ **Consistent validation** - Same rules everywhere
+- ✅ **Better IDE support** - IntelliSense shows exact types
+
+---
 
 ## MVC Controllers
 
@@ -1001,32 +1243,19 @@ public async Task<ActionResult<Unit>> ActivateUsersAsync(
 Conditional logic in pipelines:
 
 ```csharp
-[HttpPost("{id}/process")]
-public async Task<ActionResult<Order>> ProcessOrderAsync(string id, CancellationToken ct) =>
-    await _orderRepository.GetByIdAsync(id, ct)
-        .ToResultAsync(Error.NotFound($"Order {id} not found"))
-        // Conditionally apply discount
+[HttpPost("/conditional/discount")]
+public async Task<ActionResult<Order>> ApplyDiscountAsync(
+    [FromBody] ApplyDiscountRequest request,
+    CancellationToken ct) =>
+    await _orderService.GetByIdAsync(request.OrderId, ct)
+        .ToResultAsync(Error.NotFound($"Order {request.OrderId} not found"))
         .BindAsync(async order =>
         {
-            if (order.Customer.IsVIP)
-                return await order.ApplyDiscountAsync(0.1m, ct);
+            if (order.Total > 100)
+                return await order.ApplyDiscountAsync(10, ct);
             return order.ToResult();
         })
-        // Conditionally process payment
-        .BindAsync(async order =>
-        {
-            if (order.Total > 0)
-                return await _paymentService.ProcessAsync(order, ct);
-            return order.ToResult();
-        })
-        // Conditionally schedule shipping
-        .BindAsync(async order =>
-        {
-            if (order.RequiresShipping)
-                return await _shippingService.ScheduleAsync(order, ct);
-            return order.ToResult();
-        })
-        .TapAsync(order => _orderRepository.SaveAsync(order, ct))
+        .BindAsync(order => _orderService.SaveAsync(order, ct))
         .ToActionResultAsync(this);
 ```
 

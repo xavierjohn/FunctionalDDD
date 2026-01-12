@@ -1,4 +1,4 @@
-# ASP Extension
+﻿# ASP Extension
 
 [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
 
@@ -8,6 +8,7 @@ This library converts Railway Oriented Programming `Result` types to ASP.NET Cor
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+  - [Automatic Value Object Binding (Recommended)](#automatic-value-object-binding-recommended)
   - [MVC Controllers](#mvc-controllers)
   - [Minimal API](#minimal-api)
 - [Core Concepts](#core-concepts)
@@ -23,6 +24,140 @@ dotnet add package FunctionalDDD.Asp
 ```
 
 ## Quick Start
+
+### Automatic Value Object Binding
+
+**Enable automatic binding** for value objects:
+
+#### Option 1: Route/Query/Form Parameters Only (Recommended for most use cases)
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers(options =>
+{
+    options.AddValueObjectModelBinding();  // ✅ Enable for route/query/form params
+});
+
+var app = builder.Build();
+app.MapControllers();
+app.Run();
+```
+
+**Works for:**
+- ✅ Route parameters: `[HttpGet("{id}")]`
+- ✅ Query parameters: `[FromQuery] EmailAddress email`
+- ✅ Form data: `[FromForm] FileName fileName`
+
+**Doesn't work for:**
+- ❌ JSON request bodies (`[FromBody]`) - see Option 2 below
+
+---
+
+#### Option 2: Full Support Including JSON Bodies (Uses Reflection)
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers(options =>
+{
+    options.AddValueObjectJsonInputFormatter(); // ✅ Enable JSON body validation
+    options.AddValueObjectModelBinding();       // ✅ Enable route/query/form validation
+});
+
+var app = builder.Build();
+app.MapControllers();
+app.Run();
+```
+
+**Works for:**
+- ✅ Route parameters
+- ✅ Query parameters
+- ✅ Form data
+- ✅ **JSON request bodies** (`[FromBody]`)
+
+**Trade-offs:**
+- ✅ Full automatic validation everywhere
+- ⚠️ Uses reflection (performance overhead)
+- ⚠️ Requires record-style DTOs with primary constructors
+- ⚠️ Not recommended for AOT scenarios
+
+---
+
+### Usage Examples
+
+#### Route and Query Parameters (Both Options)
+
+```csharp
+// Route parameter
+[HttpGet("{id}")]
+public ActionResult<User> GetUser(UserId id) =>
+    _repository.GetById(id)
+        .ToResult(Error.NotFound($"User {id} not found"))
+        .ToActionResult(this);
+
+// Query parameter
+[HttpGet("search")]
+public ActionResult<IEnumerable<User>> SearchByEmail([FromQuery] EmailAddress email) =>
+    _repository.FindByEmail(email)
+        .ToActionResult(this);
+```
+
+#### JSON Request Bodies
+
+**Option 2 (with `AddValueObjectJsonInputFormatter`):**
+```csharp
+// DTO with value objects (automatically validated!)
+public record CreateUserRequest(
+    FirstName FirstName,      // ✅ Automatically validated
+    LastName LastName,        // ✅ Automatically validated
+    EmailAddress Email        // ✅ Automatically validated
+);
+
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    ModelState.ToResult()  // ✅ Check model binding validation first
+        .Bind(_ => User.TryCreate(request.FirstName, request.LastName, request.Email))
+        .ToActionResult(this);
+
+// Why ModelState.ToResult()?
+// - Model binding validates FirstName, LastName, Email
+// - If invalid, errors are in ModelState
+// - ModelState.ToResult() converts to Result<Unit>
+// - If ModelState is invalid, stays on failure track
+// - User.TryCreate only called if ALL value objects are valid
+```
+
+**Option 1 (without JSON formatter) - Manual Validation:**
+```csharp
+// DTO with strings
+public record RegisterRequest(string FirstName, string LastName, string Email);
+
+[HttpPost]
+public ActionResult<User> Register([FromBody] RegisterRequest request) =>
+    FirstName.TryCreate(request.FirstName)
+        .Combine(LastName.TryCreate(request.LastName))
+        .Combine(EmailAddress.TryCreate(request.Email))
+        .Bind((first, last, email) => User.TryCreate(first, last, email))
+        .ToActionResult(this);
+```
+
+---
+
+### Which Option Should You Choose?
+
+| Scenario | Recommended Approach |
+|----------|---------------------|
+| **Route/query parameters only** | Option 1 - Simple, no overhead |
+| **Prefer explicit validation** | Option 1 - Manual `Combine` chains |
+| **Want automatic JSON validation** | Option 2 - Full automatic binding |
+| **Building for AOT** | Option 1 - Avoid reflection |
+| **High-performance APIs** | Option 1 - No reflection overhead |
+| **Rapid development** | Option 2 - Less boilerplate |
+
+---
 
 ### MVC Controllers
 
