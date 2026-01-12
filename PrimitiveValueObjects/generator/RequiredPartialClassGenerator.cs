@@ -210,10 +210,8 @@ using System.Text.Json.Serialization;
 
 #nullable enable
 [JsonConverter(typeof(ParsableJsonConverter<{{g.ClassName}}>))]
-{{g.Accessibility.ToCamelCase()}} partial class {{g.ClassName}} : {{g.ClassBase}}, IParsable<{{g.ClassName}}>
+{{g.Accessibility.ToCamelCase()}} partial class {{g.ClassName}} : {{g.ClassBase}}, IParsable<{{g.ClassName}}>, ITryCreatable<{{g.ClassName}}>
 {
-    protected static readonly Error CannotBeEmptyError = Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", "{{g.ClassName.ToCamelCase()}}");
-
     private {{g.ClassName}}({{classType}} value) : base(value)
     {
     }
@@ -251,23 +249,29 @@ using System.Text.Json.Serialization;
 
     public static {{g.ClassName}} NewUnique() => new(Guid.NewGuid());
 
-    public static Result<{{g.ClassName}}> TryCreate(Guid? requiredGuidOrNothing)
+    public static Result<{{g.ClassName}}> TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "{{g.ClassName.ToCamelCase()}}";
         return requiredGuidOrNothing
-            .ToResult(CannotBeEmptyError)
-            .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
+            .ToResult(Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
+            .Ensure(x => x != Guid.Empty, Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
             .Map(guid => new {{g.ClassName}}(guid));
      }
 
-    public static Result<{{g.ClassName}}> TryCreate(string? stringOrNull)
+    public static Result<{{g.ClassName}}> TryCreate(string? stringOrNull, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "{{g.ClassName.ToCamelCase()}}";
         Guid parsedGuid = Guid.Empty;
         return stringOrNull
-            .ToResult(CannotBeEmptyError)
-            .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)", "{{g.ClassName.ToCamelCase()}}"))
-            .Ensure(_ => parsedGuid != Guid.Empty, CannotBeEmptyError)
+            .ToResult(Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
+            .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)", field))
+            .Ensure(_ => parsedGuid != Guid.Empty, Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
             .Map(guid => new {{g.ClassName}}(parsedGuid));
     }
 }
@@ -278,11 +282,14 @@ using System.Text.Json.Serialization;
             {
                 source += $$"""
 
-    public static Result<{{g.ClassName}}> TryCreate(string? requiredStringOrNothing)
+    public static Result<{{g.ClassName}}> TryCreate(string? requiredStringOrNothing, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "{{g.ClassName.ToCamelCase()}}";
         return requiredStringOrNothing
-            .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
+            .EnsureNotNullOrWhiteSpace(Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
             .Map(str => new {{g.ClassName}}(str));
     }
 }

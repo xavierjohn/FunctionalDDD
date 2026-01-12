@@ -139,6 +139,27 @@ MapAsync_ValueTask_Right_FailureResult_MapperNotInvoked_ReturnsOriginalError
 
 ## Code Style Guidelines
 
+### Single-Line Statements
+
+Omit braces for single-line statements to improve readability and reduce vertical space:
+
+```csharp
+// ✅ Preferred - no braces for single statement
+if (result.IsSuccess)
+    action(result.Value);
+
+if (value is null)
+    return Error.Validation("Value cannot be null");
+
+// ❌ Avoid - unnecessary braces
+if (result.IsSuccess)
+{
+    action(result.Value);
+}
+```
+
+**Note:** Use braces when the statement is complex or spans multiple lines for clarity.
+
 ### Avoid Task/ValueTask Ambiguities
 
 When both `Task<T>` and `ValueTask<T>` overloads exist, explicitly use constructors:
@@ -359,7 +380,7 @@ When working with OpenTelemetry `Activity` tracing, **always use the local `acti
 using var activity = ActivitySource.StartActivity("Operation");
 Activity.Current?.SetStatus(ActivityStatusCode.Ok);  // Don't use Activity.Current!
 
-// ✅ CORRECT - Thread-safe and reliable
+// ✅ CORRECT - Thread-safe and reliable  
 using var activity = ActivitySource.StartActivity("Operation");
 activity?.SetStatus(ActivityStatusCode.Ok);  // Use the local variable
 ```
@@ -369,6 +390,8 @@ activity?.SetStatus(ActivityStatusCode.Ok);  // Use the local variable
 - In concurrent scenarios, `Activity.Current` can be null or reference a different activity
 - Using the local `activity` variable ensures you're always operating on the correct activity instance
 - This prevents race conditions in both production and test environments
+
+**Important: The Result constructor sets `Activity.Current`, not the local activity variable!**
 
 ### Test Isolation with AsyncLocal
 
@@ -505,3 +528,112 @@ public class EmailAddressTests
 - ✅ **Async-aware** - Works correctly across async/await boundaries
 - ✅ **Faster tests** - No forced sequential execution
 - ✅ **Simpler code** - No need to manage test collections
+
+### IMPORTANT: Result Constructor Automatically Sets Activity Status
+
+**The `Result<T>` constructor automatically sets `Activity.Current` status, but ROP extension methods create their own child activities!**
+
+```csharp
+// Result<T> constructor implementation:
+internal Result(bool isFailure, TValue? ok, Error? error)
+{
+    // ... validation code ...
+    
+    // ✅ AUTOMATIC: Sets Activity.Current status
+    Activity.Current?.SetStatus(IsFailure ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
+    
+    if (IsFailure && Activity.Current is { } act && error is not null)
+    {
+        act.SetTag("result.error.code", error.Code);
+    }
+}
+
+// Implicit operator also triggers Result constructor:
+public static implicit operator Result<TValue>(TValue value) => Result.Success(value);
+```
+
+**Activity status handling in different scenarios:**
+
+### ✅ Value Object Factory Methods (TryCreate)
+
+Value object `TryCreate` methods don't need manual activity status setting because:
+1. No parent activity exists when TryCreate is called
+2. The `using var activity` creates the root activity that becomes `Activity.Current`
+3. Result constructor sets `Activity.Current` status (which is our activity)
+
+```csharp
+// ✅ CORRECT - No manual status setting needed
+public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null)
+{
+    using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("EmailAddress.TryCreate");
+    // At this point: Activity.Current == activity (no parent activity exists)
+    
+    if (value is not null && EmailRegEx().IsMatch(value))
+    {
+        // ✅ Implicit conversion → Result.Success → Result constructor sets Activity.Current
+        // Since Activity.Current == activity, our activity gets the status
+        return new EmailAddress(value);
+    }
+
+    // ✅ Result.Failure → Result constructor sets Activity.Current (which is our activity)
+    return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", field));
+}
+```
+
+**Why it works:** When there's no parent activity, the activity we create becomes `Activity.Current`. The Result constructor sets `Activity.Current` status, which is our activity.
+
+### ⚠️ ROP Extension Methods (Bind, Tap, Map, etc.)
+
+ROP extension methods create **child activities** and must explicitly set their own activity status:
+
+```csharp
+// ✅ CORRECT - Explicitly sets activity status for the Tap operation
+public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
+{
+    using var activity = RopTrace.ActivitySource.StartActivity();  // Child activity
+    if (result.IsSuccess)
+        action(result.Value);
+
+    result.LogActivityStatus();  // ✅ Sets the child activity status
+    return result;
+}
+
+// ✅ CORRECT - Sets activity status on early return
+public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> func)
+{
+    using var activity = RopTrace.ActivitySource.StartActivity();
+    if (result.IsFailure)
+    {
+        result.LogActivityStatus();  // ✅ Must set child activity status before returning
+        return Result.Failure<TResult>(result.Error);
+    }
+
+    var newResult = func(result.Value);
+    newResult.LogActivityStatus();  // ✅ Set status for the new result too
+    return newResult;
+}
+```
+
+**Why ROP methods need manual status:**
+- ROP methods create **child activities** with `StartActivity()`
+- A parent activity already exists (from the calling code)
+- The child activity is different from `Activity.Current`
+- Result constructor sets `Activity.Current`, not the child activity
+- Therefore, ROP methods must explicitly set their child activity status using `result.LogActivityStatus()` or `activity?.SetStatus(...)`
+
+**Note:** `result.LogActivityStatus()` is a helper that calls `Activity.Current?.SetStatus(...)` based on the result's success/failure state.
+
+### Summary: When to Set Activity Status
+
+| Scenario | Manual Status Needed? | Why |
+|----------|----------------------|-----|
+| **Value Object `TryCreate`** | ❌ No | Result constructor sets `Activity.Current` which equals the `activity` variable (no parent activity) |
+| **ROP Extensions (Bind, Map, Tap)** | ✅ **YES - REQUIRED** | Create child activities; Result constructor only sets `Activity.Current`, not the child activity created by the extension method |
+| **Direct Result creation** | ❌ No | Result constructor always sets `Activity.Current` |
+
+**Key Insight:**
+- In `TryCreate` methods, the `using var activity` **IS** `Activity.Current` (no parent activity exists when called)
+- In ROP methods, `using var activity` creates a **child** of `Activity.Current` (parent activity exists from calling code)
+- Result constructor only sets `Activity.Current`, so child activities need explicit status setting via `result.LogActivityStatus()` or `activity?.SetStatus(...)`
+
+**IMPORTANT:** All ROP extension methods (Bind, Map, Tap, Ensure, etc.) **MUST** call `result.LogActivityStatus()` or manually set the activity status. Failure to do so means the child activity will have no status set, which breaks observability.

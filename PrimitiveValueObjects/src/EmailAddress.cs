@@ -156,15 +156,16 @@ using System.Text.RegularExpressions;
 /// <seealso cref="ScalarValueObject{T}"/>
 /// <seealso cref="RequiredString"/>
 /// <seealso cref="IParsable{TSelf}"/>
+/// <seealso cref="ITryCreatable{T}"/>
 [JsonConverter(typeof(ParsableJsonConverter<EmailAddress>))]
-public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAddress>
+public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAddress>, ITryCreatable<EmailAddress>
 {
     private EmailAddress(string value) : base(value) { }
 
     /// <summary>
     /// Attempts to create an <see cref="EmailAddress"/> from the specified string.
     /// </summary>
-    /// <param name="emailString">The email address string to validate.</param>
+    /// <param name="value">The email address string to validate.</param>
     /// <param name="fieldName">
     /// Optional field name to use in validation error messages. 
     /// If not provided, defaults to "email" (camelCase).
@@ -200,18 +201,22 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     ///     .Bind((email, name) => User.Create(email, name));
     /// </code>
     /// </example>
-    public static Result<EmailAddress> TryCreate(string? emailString, string? fieldName = null)
+    public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' +  nameof(TryCreate));
-        if (emailString is not null)
+        if (value is not null)
         {
-            var isEmail = EmailRegEx().IsMatch(emailString);
-            Activity.Current?.SetStatus(ActivityStatusCode.Ok);
-            if (isEmail) return new EmailAddress(emailString);
+            var isEmail = EmailRegEx().IsMatch(value);
+            if (isEmail)
+            {
+                return new EmailAddress(value);
+            }
         }
 
-        Activity.Current?.SetStatus(ActivityStatusCode.Error);
-        return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", fieldName?.ToCamelCase() ?? "email"));
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "email";
+        return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", field));
     }
 
     /// <summary>
