@@ -207,11 +207,12 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
         if (value is not null)
         {
             var isEmail = EmailRegEx().IsMatch(value);
-            Activity.Current?.SetStatus(ActivityStatusCode.Ok);
-            if (isEmail) return new EmailAddress(value);
+            if (isEmail)
+            {
+                return new EmailAddress(value);
+            }
         }
 
-        Activity.Current?.SetStatus(ActivityStatusCode.Error);
         var field = !string.IsNullOrEmpty(fieldName)
             ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
             : "email";
