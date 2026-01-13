@@ -8,13 +8,13 @@
 /// <para>
 /// This class extends <see cref="ScalarValueObject{T}"/> to provide a specialized base for GUID-based value objects
 /// with automatic validation that prevents empty/default GUIDs. When used with the <c>partial</c> keyword,
-/// the CommonValueObjectGenerator source generator automatically creates:
+/// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item>Static factory methods (NewUnique, TryCreate, TryParse)</item>
+/// <item>Static factory methods (<c>NewUnique</c>, <c>TryCreate</c>)</item>
+/// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
 /// <item>Validation logic that ensures non-empty GUIDs</item>
-/// <item>JSON serialization support</item>
-/// <item>Comparison and equality operations</item>
-/// <item>String parsing and formatting</item>
+/// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
+/// <item>OpenTelemetry activity tracing</item>
 /// </list>
 /// </para>
 /// <para>
@@ -47,8 +47,10 @@
 /// 
 /// // The source generator automatically creates:
 /// // - public static CustomerId NewUnique() => new(Guid.NewGuid());
-/// // - public static Result&lt;CustomerId&gt; TryCreate(Guid? value)
-/// // - public static Result&lt;CustomerId&gt; TryParse(string? value)
+/// // - public static Result&lt;CustomerId&gt; TryCreate(Guid? value, string? fieldName = null)
+/// // - public static Result&lt;CustomerId&gt; TryCreate(string? value, string? fieldName = null)
+/// // - public static CustomerId Parse(string s, IFormatProvider? provider)
+/// // - public static bool TryParse(string? s, IFormatProvider? provider, out CustomerId result)
 /// // - private CustomerId(Guid value) : base(value) { }
 /// 
 /// // Usage examples:
@@ -61,10 +63,14 @@
 /// // Returns: Success(CustomerId) if guid != Guid.Empty
 /// // Returns: Failure(ValidationError) if guid == Guid.Empty
 /// 
-/// // Parse from string
-/// var result2 = CustomerId.TryParse("550e8400-e29b-41d4-a716-446655440000");
+/// // Create from string with validation
+/// var result2 = CustomerId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
 /// // Returns: Success(CustomerId) if valid GUID format
 /// // Returns: Failure(ValidationError) if invalid format or empty GUID
+/// 
+/// // With custom field name for validation errors
+/// var result3 = CustomerId.TryCreate(input, "customer.id");
+/// // Error field will be "customer.id" instead of default "customerId"
 /// 
 /// // In entity constructors
 /// public class Customer : Entity&lt;CustomerId&gt;
@@ -90,7 +96,7 @@
 /// 
 /// // API endpoint
 /// app.MapGet("/customers/{id}", (string id) =>
-///     CustomerId.TryParse(id)
+///     CustomerId.TryCreate(id)
 ///         .Bind(_customerRepository.GetAsync)
 ///         .Map(customer => new CustomerDto(customer))
 ///         .ToHttpResult());
@@ -143,8 +149,8 @@ public abstract class RequiredGuid : ScalarValueObject<Guid>
     /// Direct instantiation should be avoided. Instead, use the generated factory methods:
     /// <list type="bullet">
     /// <item><c>NewUnique()</c> - Generate a new unique GUID</item>
-    /// <item><c>TryCreate(Guid?)</c> - Create from GUID with validation</item>
-    /// <item><c>TryParse(string?)</c> - Parse from string with validation</item>
+    /// <item><c>TryCreate(Guid?, string?)</c> - Create from GUID with validation</item>
+    /// <item><c>TryCreate(string?, string?)</c> - Create from string with validation</item>
     /// </list>
     /// </para>
     /// </remarks>
