@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class Error </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class Error ">
+      
+      <meta name="description" content="Base class for all error types in the functional DDD library. Errors represent failure states and contain structured information about what went wrong.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_Error.md&amp;value=---%0Auid%3A%20FunctionalDdd.Error%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.Error">
+
+
+
+  <h1 id="FunctionalDdd_Error" data-uid="FunctionalDdd.Error" class="text-break">
+Class Error  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L15"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.RailwayOrientedProgramming.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Base class for all error types in the functional DDD library.
+Errors represent failure states and contain structured information about what went wrong.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class Error : IEquatable&lt;Error&gt;</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">Error</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</div>
+    </dd>
+  </dl>
+
+  <dl class="typelist derived">
+    <dt>Derived</dt>
+    <dd>
+      <div><a class="xref" href="FunctionalDdd.AggregateError.html">AggregateError</a></div>
+      <div><a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a></div>
+      <div><a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></div>
+      <div><a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a></div>
+      <div><a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></div>
+      <div><a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></div>
+      <div><a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a></div>
+      <div><a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a></div>
+      <div><a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></div>
+      <div><a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a></div>
+      <div><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="FunctionalDdd.CombineErrorExtensions.html#FunctionalDdd_CombineErrorExtensions_Combine_FunctionalDdd_Error_FunctionalDdd_Error_">CombineErrorExtensions.Combine(Error?, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
+  </div>
+  </dd></dl>
+
+
+
+  <h2 id="FunctionalDdd_Error_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>Use the static factory methods (Validation, NotFound, etc.) to create specific error types.
+All errors have a Code for programmatic handling and a Detail for human-readable messages.</p>
+</div>
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="FunctionalDdd_Error__ctor_" data-uid="FunctionalDdd.Error.#ctor*"></a>
+
+  <h3 id="FunctionalDdd_Error__ctor_System_String_System_String_" data-uid="FunctionalDdd.Error.#ctor(System.String,System.String)">
+  Error(string, string)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L43"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="FunctionalDdd.Error.html">Error</a> class with the specified detail and code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Error(string detail, string code)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The human-readable error description.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The machine-readable error code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error__ctor_" data-uid="FunctionalDdd.Error.#ctor*"></a>
+
+  <h3 id="FunctionalDdd_Error__ctor_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.#ctor(System.String,System.String,System.String)">
+  Error(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L55"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="FunctionalDdd.Error.html">Error</a> class with the specified detail, code, and instance identifier.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Error(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The human-readable error description.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The machine-readable error code.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>An optional identifier for the specific instance that caused the error.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="FunctionalDdd_Error_Code_" data-uid="FunctionalDdd.Error.Code*"></a>
+
+  <h3 id="FunctionalDdd_Error_Code" data-uid="FunctionalDdd.Error.Code">
+  Code
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L24"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the machine-readable error code. Use this for programmatic error handling.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public string Code { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>A string code like &quot;validation.error&quot; or &quot;not.found.error&quot;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Detail_" data-uid="FunctionalDdd.Error.Detail*"></a>
+
+  <h3 id="FunctionalDdd_Error_Detail" data-uid="FunctionalDdd.Error.Detail">
+  Detail
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L30"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the human-readable error description. Use this for displaying error messages to users or in logs.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public string Detail { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>A descriptive message explaining what went wrong.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Instance_" data-uid="FunctionalDdd.Error.Instance*"></a>
+
+  <h3 id="FunctionalDdd_Error_Instance" data-uid="FunctionalDdd.Error.Instance">
+  Instance
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L36"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets an optional identifier for the specific instance that caused the error (e.g., a resource ID).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public string? Instance { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>An instance identifier, or null if not applicable.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="FunctionalDdd_Error_BadRequest_" data-uid="FunctionalDdd.Error.BadRequest*"></a>
+
+  <h3 id="FunctionalDdd_Error_BadRequest_System_String_System_String_" data-uid="FunctionalDdd.Error.BadRequest(System.String,System.String)">
+  BadRequest(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L163"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a> indicating the request was malformed or invalid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BadRequestError BadRequest(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why the request is bad.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the bad request.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_BadRequest_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this for syntactic errors or malformed requests, not for business rule violations (use Validation instead).</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_BadRequest_" data-uid="FunctionalDdd.Error.BadRequest*"></a>
+
+  <h3 id="FunctionalDdd_Error_BadRequest_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.BadRequest(System.String,System.String,System.String)">
+  BadRequest(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L296"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static BadRequestError BadRequest(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why the request is bad.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;bad.request.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the bad request.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Conflict_" data-uid="FunctionalDdd.Error.Conflict*"></a>
+
+  <h3 id="FunctionalDdd_Error_Conflict_System_String_System_String_" data-uid="FunctionalDdd.Error.Conflict(System.String,System.String)">
+  Conflict(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L178"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a> indicating a conflict with the current state.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ConflictError Conflict(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the conflict.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the conflicting resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Conflict_System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">Error.Conflict("Email address already in use")
+Error.Conflict("Cannot delete user with active subscriptions")</code></pre>
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Conflict_" data-uid="FunctionalDdd.Error.Conflict*"></a>
+
+  <h3 id="FunctionalDdd_Error_Conflict_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Conflict(System.String,System.String,System.String)">
+  Conflict(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L306"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ConflictError Conflict(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the conflict.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;conflict.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the conflicting resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Domain_" data-uid="FunctionalDdd.Error.Domain*"></a>
+
+  <h3 id="FunctionalDdd_Error_Domain_System_String_System_String_" data-uid="FunctionalDdd.Error.Domain(System.String,System.String)">
+  Domain(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L247"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a> indicating a business rule violation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static DomainError Domain(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the business rule that was violated.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the entity or operation.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Domain_System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">Error.Domain("Cannot withdraw more than account balance")
+Error.Domain("Minimum order quantity is 10 units")
+Error.Domain("Cannot cancel order after shipment")</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Domain_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this for domain logic violations that prevent the operation from completing.
+This is distinct from validation errors (field-level) and conflicts (state-based).
+Maps to HTTP 422 Unprocessable Entity.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_Domain_" data-uid="FunctionalDdd.Error.Domain*"></a>
+
+  <h3 id="FunctionalDdd_Error_Domain_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Domain(System.String,System.String,System.String)">
+  Domain(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L356"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static DomainError Domain(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the business rule that was violated.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;domain.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the entity or operation.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Equals_" data-uid="FunctionalDdd.Error.Equals*"></a>
+
+  <h3 id="FunctionalDdd_Error_Equals_FunctionalDdd_Error_" data-uid="FunctionalDdd.Error.Equals(FunctionalDdd.Error)">
+  Equals(Error?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L74"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines equality based solely on the error Code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool Equals(Error? other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>The error to compare with.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the error codes match; false otherwise.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Equals_FunctionalDdd_Error__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>IMPORTANT: Two errors are considered equal if they have the same Code,
+regardless of their Detail, Instance, or concrete type.
+This design allows treating errors with the same code as equivalent for programmatic handling.
+Example: Error.NotFound(&quot;User not found&quot;, &quot;user-1&quot;) == Error.NotFound(&quot;Product not found&quot;, &quot;user-1&quot;) returns true
+because both have the code &quot;not.found.error&quot;.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_Equals_" data-uid="FunctionalDdd.Error.Equals*"></a>
+
+  <h3 id="FunctionalDdd_Error_Equals_System_Object_" data-uid="FunctionalDdd.Error.Equals(System.Object)">
+  Equals(object?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L87"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether the specified object is equal to the current Error instance.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override bool Equals(object? obj)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>obj</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></dt>
+    <dd><p>The object to compare with the current Error instance.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>true if the specified object is an Error and is equal to the current instance; otherwise, false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Equals_System_Object__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This method supports object-based equality comparison. Use this method when the type of the
+object to compare is not known at compile time.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_Forbidden_" data-uid="FunctionalDdd.Error.Forbidden*"></a>
+
+  <h3 id="FunctionalDdd_Error_Forbidden_System_String_System_String_" data-uid="FunctionalDdd.Error.Forbidden(System.String,System.String)">
+  Forbidden(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L213"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a> indicating the user lacks permission.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ForbiddenError Forbidden(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why access is forbidden.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the forbidden resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Forbidden_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this when the user is authenticated but doesn't have permission to access the resource.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_Forbidden_" data-uid="FunctionalDdd.Error.Forbidden*"></a>
+
+  <h3 id="FunctionalDdd_Error_Forbidden_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Forbidden(System.String,System.String,System.String)">
+  Forbidden(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L336"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ForbiddenError Forbidden(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why access is forbidden.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;forbidden.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the forbidden resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_GetHashCode_" data-uid="FunctionalDdd.Error.GetHashCode*"></a>
+
+  <h3 id="FunctionalDdd_Error_GetHashCode" data-uid="FunctionalDdd.Error.GetHashCode">
+  GetHashCode()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L99"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Serves as the default hash function.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override int GetHashCode()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>A hash code for the current object.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_NotFound_" data-uid="FunctionalDdd.Error.NotFound*"></a>
+
+  <h3 id="FunctionalDdd_Error_NotFound_System_String_System_String_" data-uid="FunctionalDdd.Error.NotFound(System.String,System.String)">
+  NotFound(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L193"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a> indicating a requested resource was not found.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static NotFoundError NotFound(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of what was not found.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the missing resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_NotFound_System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">Error.NotFound($"User with ID {userId} not found", userId)
+Error.NotFound("Product not found in catalog")</code></pre>
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_NotFound_" data-uid="FunctionalDdd.Error.NotFound*"></a>
+
+  <h3 id="FunctionalDdd_Error_NotFound_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.NotFound(System.String,System.String,System.String)">
+  NotFound(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L316"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static NotFoundError NotFound(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of what was not found.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;not.found.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the missing resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_RateLimit_" data-uid="FunctionalDdd.Error.RateLimit*"></a>
+
+  <h3 id="FunctionalDdd_Error_RateLimit_System_String_System_String_" data-uid="FunctionalDdd.Error.RateLimit(System.String,System.String)">
+  RateLimit(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L266"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a> indicating too many requests have been made.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static RateLimitError RateLimit(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the rate limit violation.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the client or resource being rate limited.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_RateLimit_System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">Error.RateLimit("API rate limit exceeded. Please try again in 60 seconds")
+Error.RateLimit("Too many login attempts. Account temporarily locked")</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_Error_RateLimit_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this when a client has exceeded their request quota or rate limit.
+Maps to HTTP 429 Too Many Requests.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_RateLimit_" data-uid="FunctionalDdd.Error.RateLimit*"></a>
+
+  <h3 id="FunctionalDdd_Error_RateLimit_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.RateLimit(System.String,System.String,System.String)">
+  RateLimit(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L366"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static RateLimitError RateLimit(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the rate limit violation.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;rate.limit.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the client or resource being rate limited.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_ServiceUnavailable_" data-uid="FunctionalDdd.Error.ServiceUnavailable*"></a>
+
+  <h3 id="FunctionalDdd_Error_ServiceUnavailable_System_String_System_String_" data-uid="FunctionalDdd.Error.ServiceUnavailable(System.String,System.String)">
+  ServiceUnavailable(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L286"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a> indicating temporary service unavailability.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ServiceUnavailableError ServiceUnavailable(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why the service is unavailable.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the unavailable service or resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_ServiceUnavailable_System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">Error.ServiceUnavailable("Service is under maintenance. Please try again later")
+Error.ServiceUnavailable("External payment gateway is temporarily unavailable")</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_Error_ServiceUnavailable_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this when the service is temporarily unable to handle the request.
+This indicates a temporary condition - the service is expected to be available again.
+Maps to HTTP 503 Service Unavailable.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_ServiceUnavailable_" data-uid="FunctionalDdd.Error.ServiceUnavailable*"></a>
+
+  <h3 id="FunctionalDdd_Error_ServiceUnavailable_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.ServiceUnavailable(System.String,System.String,System.String)">
+  ServiceUnavailable(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L376"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ServiceUnavailableError ServiceUnavailable(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why the service is unavailable.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;service.unavailable.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the unavailable service or resource.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_ToString_" data-uid="FunctionalDdd.Error.ToString*"></a>
+
+  <h3 id="FunctionalDdd_Error_ToString" data-uid="FunctionalDdd.Error.ToString">
+  ToString()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L106"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a string that represents the current object, including its type, code, detail, and instance information.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override string ToString()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>A string containing the type name, code, detail, and instance values of the object. If the instance is null,
+&quot;N/A&quot; is used.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Unauthorized_" data-uid="FunctionalDdd.Error.Unauthorized*"></a>
+
+  <h3 id="FunctionalDdd_Error_Unauthorized_System_String_System_String_" data-uid="FunctionalDdd.Error.Unauthorized(System.String,System.String)">
+  Unauthorized(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L203"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates an <a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a> indicating authentication is required.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static UnauthorizedError Unauthorized(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why authorization failed.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the unauthorized request.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></dt>
+    <dd><p>An <a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Unauthorized_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this when the user is not authenticated (not logged in).</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_Unauthorized_" data-uid="FunctionalDdd.Error.Unauthorized*"></a>
+
+  <h3 id="FunctionalDdd_Error_Unauthorized_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Unauthorized(System.String,System.String,System.String)">
+  Unauthorized(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L326"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates an <a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static UnauthorizedError Unauthorized(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of why authorization failed.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;unauthorized.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the unauthorized request.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></dt>
+    <dd><p>An <a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Unexpected_" data-uid="FunctionalDdd.Error.Unexpected*"></a>
+
+  <h3 id="FunctionalDdd_Error_Unexpected_System_String_System_String_" data-uid="FunctionalDdd.Error.Unexpected(System.String,System.String)">
+  Unexpected(string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L226"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates an <a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a> indicating an unexpected system error occurred.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static UnexpectedError Unexpected(string detail, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of what went wrong.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the operation that failed.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a></dt>
+    <dd><p>An <a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Unexpected_System_String_System_String__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Use this for system errors, infrastructure failures, or exceptions.
+This typically maps to HTTP 500 Internal Server Error.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Error_Unexpected_" data-uid="FunctionalDdd.Error.Unexpected*"></a>
+
+  <h3 id="FunctionalDdd_Error_Unexpected_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Unexpected(System.String,System.String,System.String)">
+  Unexpected(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L346"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates an <a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a> with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static UnexpectedError Unexpected(string detail, string code, string? instance)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of what went wrong.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;unexpected.error&quot;.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the operation that failed.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a></dt>
+    <dd><p>An <a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a> with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Validation_" data-uid="FunctionalDdd.Error.Validation*"></a>
+
+  <h3 id="FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray{FunctionalDdd.ValidationError.FieldError},System.String,System.String)">
+  Validation(ImmutableArray&lt;FieldError&gt;, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L142"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a> for multiple field validation failures.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValidationError Validation(ImmutableArray&lt;ValidationError.FieldError&gt; fieldDetails, string detail = &quot;&quot;, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fieldDetails</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablearray-1">ImmutableArray</a>&lt;<a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.FieldError.html">FieldError</a>&gt;</dt>
+    <dd><p>Collection of field-specific validation errors.</p>
+</dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Overall error description.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the instance being validated.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a> containing all field errors.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">var errors = ImmutableArray.Create(
+    new FieldError("email", "Invalid format"),
+    new FieldError("age", "Must be 18 or older")
+);
+Error.Validation(errors, "User validation failed")</code></pre>
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Validation_" data-uid="FunctionalDdd.Error.Validation*"></a>
+
+  <h3 id="FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(System.Collections.Immutable.ImmutableArray{FunctionalDdd.ValidationError.FieldError},System.String,System.String,System.String)">
+  Validation(ImmutableArray&lt;FieldError&gt;, string, string?, string)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L153"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a> for multiple field validation failures with a custom error code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValidationError Validation(ImmutableArray&lt;ValidationError.FieldError&gt; fieldDetails, string detail, string? instance, string code)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fieldDetails</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.immutable.immutablearray-1">ImmutableArray</a>&lt;<a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>.<a class="xref" href="FunctionalDdd.ValidationError.FieldError.html">FieldError</a>&gt;</dt>
+    <dd><p>Collection of field-specific validation errors.</p>
+</dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Overall error description.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the instance being validated.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Custom error code to use instead of the default &quot;validation.error&quot;.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a> containing all field errors with the specified code.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Error_Validation_" data-uid="FunctionalDdd.Error.Validation*"></a>
+
+  <h3 id="FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_" data-uid="FunctionalDdd.Error.Validation(System.String,System.String,System.String,System.String)">
+  Validation(string, string, string?, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L123"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a> for a single field validation failure.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValidationError Validation(string fieldDetail, string fieldName = &quot;&quot;, string? detail = null, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>fieldDetail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of what's wrong with the field value.</p>
+</dd>
+    <dt><code>fieldName</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Name of the field that failed validation. Empty string if not field-specific.</p>
+</dd>
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional overall error detail. If null, uses fieldDetail.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the instance being validated.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a> representing the validation failure.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String__examples">Examples</h4>
+  <pre><code class="lang-csharp">Error.Validation("Email address is not valid", "email")
+Error.Validation("Age must be 18 or older", "age")</code></pre>
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Error.cs/#L15" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

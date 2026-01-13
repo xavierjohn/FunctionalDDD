@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Struct Unit </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Struct Unit ">
+      
+      <meta name="description" content="Represents the absence of a meaningful value, used for operations that have no return value. This is the functional programming equivalent of void, but as a proper type that can be used with generics.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_Unit.md&amp;value=---%0Auid%3A%20FunctionalDdd.Unit%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.Unit">
+
+
+
+  <h1 id="FunctionalDdd_Unit" data-uid="FunctionalDdd.Unit" class="text-break">
+Struct Unit  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Unit.cs/#L92"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.RailwayOrientedProgramming.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Represents the absence of a meaningful value, used for operations that have no return value.
+This is the functional programming equivalent of <code>void</code>, but as a proper type that can be used with generics.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public record struct Unit : IEquatable&lt;Unit&gt;</code></pre>
+  </div>
+
+
+
+
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="FunctionalDdd.Unit.html">Unit</a>&gt;</div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.equals">ValueType.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.gethashcode">ValueType.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.tostring">ValueType.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  </dd></dl>
+
+
+  <h2 id="FunctionalDdd_Unit_examples">Examples</h2>
+  <p>Basic usage with Result:</p>
+<pre><code class="lang-csharp">// Operation that doesn't return a value
+public Result&lt;Unit&gt; DeleteUser(UserId userId)
+{
+    var user = _repository.Find(userId);
+    if (user == null)
+        return Error.NotFound($"User {userId} not found");
+
+    _repository.Delete(user);
+    return Result.Success(); // Returns Result&lt;Unit&gt;
+}
+
+// Usage
+var result = DeleteUser(userId);
+if (result.IsSuccess)
+    Console.WriteLine("User deleted successfully");</code></pre>
+
+  <p>Chaining operations that don't return values:</p>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Unit&gt;&gt; ProcessOrderAsync(Order order, CancellationToken ct)
+{
+    return await ValidateOrder(order)          // Result&lt;Unit&gt;
+        .BindAsync(() =&gt; ChargePaymentAsync(order, ct))   // Result&lt;Unit&gt;
+        .TapAsync(() =&gt; SendConfirmationEmailAsync(order.Email, ct))
+        .TapAsync(() =&gt; UpdateInventoryAsync(order.Items, ct));
+}</code></pre>
+
+  <p>Converting to HTTP response:</p>
+<pre><code class="lang-csharp">app.MapDelete("/users/{id}", (Guid id, IUserService userService) =&gt;
+    UserId.TryCreate(id)
+        .Bind(userService.DeleteUser)
+        .ToHttpResult());
+// Returns 204 No Content on success, appropriate error status on failure</code></pre>
+
+  <p>Combining Unit results with value results:</p>
+<pre><code class="lang-csharp">public Result&lt;User&gt; CreateAndNotify(CreateUserRequest request)
+{
+    return FirstName.TryCreate(request.FirstName)
+        .Combine(LastName.TryCreate(request.LastName))
+        .Bind((first, last) =&gt; User.Create(first, last))
+        .Combine(ValidateBusinessRules(request))  // Result&lt;Unit&gt; - just validates
+        .Map((user, _) =&gt; user);  // Discard Unit, keep User
+}</code></pre>
+
+
+  <h2 id="FunctionalDdd_Unit_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+In functional programming, every function returns a value. When an operation doesn't have a meaningful
+return value (like <code>void</code> methods in imperative programming), we use <code>Unit</code> as a placeholder type.
+This allows <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to represent both operations that return values and operations
+that only succeed or fail without returning data.
+</p>
+<p>
+Common use cases for <code>Unit</code>:
+<ul><li>DELETE operations that either succeed or fail but don't return data</li><li>State-changing operations (e.g., sending emails, updating records)</li><li>Validation operations that only need to indicate success/failure</li><li>Fire-and-forget side effects in a functional pipeline</li></ul>
+
+<p>
+The <a class="xref" href="FunctionalDdd.Result.html">Result</a> class provides convenience methods for working with <code>Unit</code>:
+<ul><li><a class="xref" href="FunctionalDdd.Result.html#FunctionalDdd_Result_Success">Success()</a> - Creates a successful <code>Result&lt;Unit&gt;</code></li><li><a class="xref" href="FunctionalDdd.Result.html#FunctionalDdd_Result_Failure_FunctionalDdd_Error_">Failure(Error)</a> - Creates a failed <code>Result&lt;Unit&gt;</code></li></ul>
+
+<p>
+When converting <code>Result&lt;Unit&gt;</code> to HTTP responses, successful results automatically
+map to HTTP 204 No Content, indicating success without a response body.
+</p>
+</div>
+
+
+  <h2 id="seealso">See Also</h2>
+  <div class="seealso">
+      <div><a class="xref" href="FunctionalDdd.Result.html">Result</a></div>
+      <div><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</div>
+  </div>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Unit.cs/#L92" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
