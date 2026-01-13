@@ -47,6 +47,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RailwayOrientedProgramming.Tests", "RailwayOrientedProgramming\tests\RailwayOrientedProgramming.Tests.csproj", "{49C37DF6-D4D1-44A1-8E5A-8C5C9B24ACF3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DomainDrivenDesign", "DomainDrivenDesign", "{828D4C8B-EE27-4ECD-8C89-8D4FD7E67BD6}"
+	ProjectSection(SolutionItems) = preProject
+		DomainDrivenDesign\SAMPLES.md = DomainDrivenDesign\SAMPLES.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DomainDrivenDesign", "DomainDrivenDesign\src\DomainDrivenDesign.csproj", "{24B449C0-DC03-43E7-A3FE-1263AEA4F600}"
 EndProject

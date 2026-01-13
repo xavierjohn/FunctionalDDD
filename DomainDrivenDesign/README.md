@@ -250,6 +250,7 @@ public decimal Amount { get; set; }
 - **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
 - **[Main Documentation](https://github.com/xavierjohn/FunctionalDDD)** - Full repository documentation
 - **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)** - Result type and functional patterns
+- **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)** - RequiredString, RequiredGuid, EmailAddress
 
 ## License
 
