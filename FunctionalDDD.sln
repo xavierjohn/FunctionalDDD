@@ -33,6 +33,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentValidation.Tests", "FluentValidation\tests\FluentValidation.Tests.csproj", "{928C2228-3D0F-4253-9705-5E71BAF1AB5B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Asp", "Asp", "{1E3022F4-1620-4087-A015-7FFF0906AE14}"
+	ProjectSection(SolutionItems) = preProject
+		Asp\SAMPLES.md = Asp\SAMPLES.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asp", "Asp\src\Asp.csproj", "{E3349550-D6FD-477D-AFA0-525CE7B7EFD6}"
 EndProject
