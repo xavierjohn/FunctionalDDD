@@ -187,5 +187,282 @@ public class MaybeExtensionTests
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error.Validation("Date is not set."));
     }
+
+    #region ToResult with Error Factory
+
+    [Fact]
+    public void ToResult_WithErrorFactory_HasValue_ReturnsSuccess()
+    {
+        // Arrange
+        var date = DateTime.Now;
+        Maybe<DateTime> maybe = date;
+        var factoryInvoked = false;
+
+        // Act
+        var result = maybe.ToResult(() =>
+        {
+            factoryInvoked = true;
+            return Error.Validation("Date not set.");
+        });
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(date);
+        factoryInvoked.Should().BeFalse("error factory should not be invoked for success");
+    }
+
+    [Fact]
+    public void ToResult_WithErrorFactory_HasNoValue_ReturnsFailure()
+    {
+        // Arrange
+        Maybe<DateTime> maybe = default;
+        var factoryInvoked = false;
+
+        // Act
+        var result = maybe.ToResult(() =>
+        {
+            factoryInvoked = true;
+            return Error.Validation("Date not set.");
+        });
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.Validation("Date not set."));
+        factoryInvoked.Should().BeTrue("error factory should be invoked for failure");
+    }
+
+    [Fact]
+    public void ToResult_WithErrorFactory_Class_HasValue_ReturnsSuccess()
+    {
+        // Arrange
+        var my = new MyClass();
+        Maybe<MyClass> maybe = my;
+
+        // Act
+        var result = maybe.ToResult(() => Error.NotFound("MyClass not found"));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(my);
+    }
+
+    [Fact]
+    public void ToResult_WithErrorFactory_Class_HasNoValue_ReturnsFailure()
+    {
+        // Arrange
+        Maybe<MyClass> maybe = default;
+
+        // Act
+        var result = maybe.ToResult(() => Error.NotFound("MyClass not found"));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+        result.Error.Detail.Should().Be("MyClass not found");
+    }
+
+    #endregion
+
+    #region ToResultAsync with Error Factory (Task)
+
+    [Fact]
+    public async Task ToResultAsync_Task_WithErrorFactory_HasValue_ReturnsSuccess()
+    {
+        // Arrange
+        var my = new MyClass();
+        Maybe<MyClass> maybe = my;
+        var maybeTask = Task.FromResult(maybe);
+        var factoryInvoked = false;
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() =>
+        {
+            factoryInvoked = true;
+            return Error.Validation("MyClass not set.");
+        });
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(my);
+        factoryInvoked.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ToResultAsync_Task_WithErrorFactory_HasNoValue_ReturnsFailure()
+    {
+        // Arrange
+        Maybe<MyClass> maybe = default;
+        var maybeTask = Task.FromResult(maybe);
+        var factoryInvoked = false;
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() =>
+        {
+            factoryInvoked = true;
+            return Error.Conflict("MyClass already exists.");
+        });
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ConflictError>();
+        factoryInvoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ToResultAsync_Task_WithErrorFactory_Struct_HasValue_ReturnsSuccess()
+    {
+        // Arrange
+        var date = DateTime.Now;
+        Maybe<DateTime> maybe = date;
+        var maybeTask = Task.FromResult(maybe);
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() => Error.Validation("Date not set."));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(date);
+    }
+
+    [Fact]
+    public async Task ToResultAsync_Task_WithErrorFactory_Struct_HasNoValue_ReturnsFailure()
+    {
+        // Arrange
+        Maybe<DateTime> maybe = default;
+        var maybeTask = Task.FromResult(maybe);
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() => Error.Validation("Date not set."));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(Error.Validation("Date not set."));
+    }
+
+    #endregion
+
+    #region ToResultAsync with Error Factory (ValueTask)
+
+    [Fact]
+    public async Task ToResultAsync_ValueTask_WithErrorFactory_HasValue_ReturnsSuccess()
+    {
+        // Arrange
+        var my = new MyClass();
+        Maybe<MyClass> maybe = my;
+        var maybeTask = ValueTask.FromResult(maybe);
+        var factoryInvoked = false;
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() =>
+        {
+            factoryInvoked = true;
+            return Error.Unauthorized("Not authorized.");
+        });
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(my);
+        factoryInvoked.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ToResultAsync_ValueTask_WithErrorFactory_HasNoValue_ReturnsFailure()
+    {
+        // Arrange
+        Maybe<MyClass> maybe = default;
+        var maybeTask = ValueTask.FromResult(maybe);
+        var factoryInvoked = false;
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() =>
+        {
+            factoryInvoked = true;
+            return Error.Forbidden("Access denied.");
+        });
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ForbiddenError>();
+        factoryInvoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ToResultAsync_ValueTask_WithErrorFactory_Struct_HasValue_ReturnsSuccess()
+    {
+        // Arrange
+        var date = DateTime.Now;
+        Maybe<DateTime> maybe = date;
+        var maybeTask = ValueTask.FromResult(maybe);
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() => Error.Domain("Business rule violated."));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(date);
+    }
+
+    [Fact]
+    public async Task ToResultAsync_ValueTask_WithErrorFactory_Struct_HasNoValue_ReturnsFailure()
+    {
+        // Arrange
+        Maybe<DateTime> maybe = default;
+        var maybeTask = ValueTask.FromResult(maybe);
+
+        // Act
+        var result = await maybeTask.ToResultAsync(() => Error.ServiceUnavailable("Service down."));
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ServiceUnavailableError>();
+    }
+
+    #endregion
+
+    #region ToResult extension on value
+
+    [Fact]
+    public void ToResult_OnValue_ReturnsSuccessResult()
+    {
+        // Arrange
+        var value = "hello";
+
+        // Act
+        var result = value.ToResult();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("hello");
+    }
+
+    [Fact]
+    public void ToResult_OnComplexType_ReturnsSuccessResult()
+    {
+        // Arrange
+        var myClass = new MyClass();
+
+        // Act
+        var result = myClass.ToResult();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(myClass);
+    }
+
+    [Fact]
+    public void ToResult_OnStruct_ReturnsSuccessResult()
+    {
+        // Arrange
+        var date = DateTime.Now;
+
+        // Act
+        var result = date.ToResult();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(date);
+    }
+
+    #endregion
 }
 
