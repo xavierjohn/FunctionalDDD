@@ -21,8 +21,7 @@ This document provides detailed examples and patterns for using Primitive Value 
   - [IParsable Implementation](#iparsable-implementation)
 - [Advanced Patterns](#advanced-patterns)
   - [Combining Value Objects](#combining-value-objects)
-  - [Value Object Hierarchies](#value-object-hierarchies)
-  - [Custom Error Messages](#custom-error-messages)
+  - [Custom Field Names](#custom-field-names)
 - [Integration Examples](#integration-examples)
   - [Entity Framework Core](#entity-framework-core)
   - [ASP.NET Core](#aspnet-core)
@@ -105,69 +104,67 @@ public void ParseFromString()
 
 ### Custom Validation
 
-Extending RequiredString with custom validation:
+Extending RequiredString with additional validation rules:
 
 ```csharp
-// While RequiredString only validates non-empty,
-// you can add additional validation in your factory methods
+// RequiredString validates non-empty strings.
+// For additional validation, create a separate factory method
+// that builds on the generated TryCreate.
 
 public partial class PhoneNumber : RequiredString
 {
-    // Additional validation logic
-    public new static Result<PhoneNumber> TryCreate(string? value) =>
-        RequiredString.TryCreate(value)
+    // Custom factory with additional validation
+    public static Result<PhoneNumber> TryCreateWithValidation(string? value) =>
+        TryCreate(value) // Use generated method first (validates non-empty)
             .Ensure(
-                phone => phone.Length >= 10,
+                phone => phone.Value.Length >= 10,
                 Error.Validation("Phone number must be at least 10 digits", "phoneNumber"))
             .Ensure(
-                phone => phone.All(c => char.IsDigit(c) || c == '-' || c == ' '),
-                Error.Validation("Phone number can only contain digits, dashes, and spaces", "phoneNumber"))
-            .Map(phone => (PhoneNumber)(object)phone);
+                phone => phone.Value.All(c => char.IsDigit(c) || c == '-' || c == ' '),
+                Error.Validation("Phone number can only contain digits, dashes, and spaces", "phoneNumber"));
 }
 
 public partial class ZipCode : RequiredString
 {
-    public new static Result<ZipCode> TryCreate(string? value) =>
-        RequiredString.TryCreate(value)
+    public static Result<ZipCode> TryCreateWithValidation(string? value) =>
+        TryCreate(value)
             .Ensure(
-                zip => zip.Length == 5 || zip.Length == 10,
+                zip => zip.Value.Length == 5 || zip.Value.Length == 10,
                 Error.Validation("Zip code must be 5 or 10 characters (with dash)", "zipCode"))
             .Ensure(
-                zip => Regex.IsMatch(zip, @"^\d{5}(-\d{4})?$"),
-                Error.Validation("Invalid zip code format (use 12345 or 12345-6789)", "zipCode"))
-            .Map(zip => (ZipCode)(object)zip);
+                zip => Regex.IsMatch(zip.Value, @"^\d{5}(-\d{4})?$"),
+                Error.Validation("Invalid zip code format (use 12345 or 12345-6789)", "zipCode"));
 }
 
 public partial class ProductCode : RequiredString
 {
-    public new static Result<ProductCode> TryCreate(string? value) =>
-        RequiredString.TryCreate(value)
+    public static Result<ProductCode> TryCreateWithValidation(string? value) =>
+        TryCreate(value)
             .Ensure(
-                code => code.Length >= 3 && code.Length <= 20,
+                code => code.Value.Length >= 3 && code.Value.Length <= 20,
                 Error.Validation("Product code must be between 3 and 20 characters", "productCode"))
             .Ensure(
-                code => Regex.IsMatch(code, @"^[A-Z0-9-]+$"),
-                Error.Validation("Product code can only contain uppercase letters, digits, and dashes", "productCode"))
-            .Map(code => (ProductCode)(object)code);
+                code => Regex.IsMatch(code.Value, @"^[A-Z0-9-]+$"),
+                Error.Validation("Product code can only contain uppercase letters, digits, and dashes", "productCode"));
 }
 
 // Usage
 public void ValidateCustom()
 {
     // Phone validation
-    var phone = PhoneNumber.TryCreate("555-1234");
+    var phone = PhoneNumber.TryCreateWithValidation("555-1234");
     // Error: "Phone number must be at least 10 digits"
     
-    var validPhone = PhoneNumber.TryCreate("555-123-4567");
+    var validPhone = PhoneNumber.TryCreateWithValidation("555-123-4567");
     // Success
     
     // Zip code validation
-    var zip = ZipCode.TryCreate("12345").Value;
-    var zipPlus4 = ZipCode.TryCreate("12345-6789").Value;
+    var zip = ZipCode.TryCreateWithValidation("12345").Value;
+    var zipPlus4 = ZipCode.TryCreateWithValidation("12345-6789").Value;
     
     // Product code validation
-    var productCode = ProductCode.TryCreate("PROD-ABC-123").Value;
-    var invalid = ProductCode.TryCreate("prod-abc");
+    var productCode = ProductCode.TryCreateWithValidation("PROD-ABC-123").Value;
+    var invalid = ProductCode.TryCreateWithValidation("prod-abc");
     // Error: "Product code can only contain uppercase letters, digits, and dashes"
 }
 ```
@@ -525,9 +522,6 @@ public class EmailValidator
         var email2 = EmailAddress.TryCreate("john.doe+tag@company.co.uk");
         // Success - supports plus addressing and subdomains
         
-        var email3 = EmailAddress.TryCreate("admin@localhost");
-        // Success - supports local domains
-        
         // Invalid emails
         var invalid1 = EmailAddress.TryCreate("not-an-email");
         // Error: "Email address is not valid."
@@ -545,14 +539,11 @@ public class EmailValidator
         // Error: "Email address is not valid."
     }
     
-    // Email comparison (case-insensitive)
-    public void CompareEmails()
+    // Using custom field name for better error messages
+    public void ValidateWithFieldName()
     {
-        var email1 = EmailAddress.TryCreate("User@Example.COM").Value;
-        var email2 = EmailAddress.TryCreate("user@example.com").Value;
-        
-        // EmailAddress uses case-insensitive comparison
-        var areEqual = email1.Equals(email2); // true
+        var result = EmailAddress.TryCreate("invalid", "contactEmail");
+        // Error field will be "contactEmail" instead of default "email"
     }
     
     // Using in Combine operations
@@ -560,8 +551,8 @@ public class EmailValidator
         string primaryEmail,
         string alternateEmail)
     {
-        return EmailAddress.TryCreate(primaryEmail)
-            .Combine(EmailAddress.TryCreate(alternateEmail))
+        return EmailAddress.TryCreate(primaryEmail, "primaryEmail")
+            .Combine(EmailAddress.TryCreate(alternateEmail, "alternateEmail"))
             .Bind((primary, alternate) =>
                 User.TryCreate(primary, alternate));
     }
@@ -580,32 +571,34 @@ public partial class TrackingId : RequiredString
 {
 }
 
-// Generated code by source generator
-public partial class TrackingId : RequiredString, IParsable<TrackingId>
-{
-    // Error message using class name
-    protected static readonly Error CannotBeEmptyError = 
-        Error.Validation("Tracking Id cannot be empty.", "trackingId");
+// Generated code by source generator (TrackingId.g.cs)
+// <auto-generated/>
+namespace YourNamespace;
+using FunctionalDdd;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
-    // Private constructor
+#nullable enable
+[JsonConverter(typeof(ParsableJsonConverter<TrackingId>))]
+public partial class TrackingId : RequiredString, IParsable<TrackingId>, ITryCreatable<TrackingId>
+{
     private TrackingId(string value) : base(value)
     {
     }
 
-    // Explicit cast operator (throws on failure)
-    public static explicit operator TrackingId(string trackingId) => 
-        TryCreate(trackingId).Value;
+    public static explicit operator TrackingId(string trackingId) => TryCreate(trackingId).Value;
 
-    // IParsable<T>.Parse implementation
     public static TrackingId Parse(string s, IFormatProvider? provider)
     {
         var r = TryCreate(s);
         if (r.IsFailure)
-            throw new FormatException(r.Error.Detail);
+        {
+            var val = (ValidationError)r.Error;
+            throw new FormatException(val.FieldErrors[0].Details[0]);
+        }
         return r.Value;
     }
 
-    // IParsable<T>.TryParse implementation
     public static bool TryParse(
         [NotNullWhen(true)] string? s, 
         IFormatProvider? provider, 
@@ -622,11 +615,16 @@ public partial class TrackingId : RequiredString, IParsable<TrackingId>
         return true;
     }
 
-    // TryCreate method returning Result<T>
-    public static Result<TrackingId> TryCreate(string? requiredStringOrNothing) =>
-        requiredStringOrNothing
-            .EnsureNotNullOrWhiteSpace(CannotBeEmptyError)
+    public static Result<TrackingId> TryCreate(string? requiredStringOrNothing, string? fieldName = null)
+    {
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("TrackingId.TryCreate");
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "trackingId";
+        return requiredStringOrNothing
+            .EnsureNotNullOrWhiteSpace(Error.Validation("Tracking Id cannot be empty.", field))
             .Map(str => new TrackingId(str));
+    }
 }
 ```
 
@@ -640,32 +638,34 @@ public partial class EmployeeId : RequiredGuid
 {
 }
 
-// Generated code by source generator
-public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>
-{
-    // Error message using class name
-    protected static readonly Error CannotBeEmptyError = 
-        Error.Validation("Employee Id cannot be empty.", "employeeId");
+// Generated code by source generator (EmployeeId.g.cs)
+// <auto-generated/>
+namespace YourNamespace;
+using FunctionalDdd;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
-    // Private constructor
+#nullable enable
+[JsonConverter(typeof(ParsableJsonConverter<EmployeeId>))]
+public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>, ITryCreatable<EmployeeId>
+{
     private EmployeeId(Guid value) : base(value)
     {
     }
 
-    // Explicit cast operator (throws on failure)
-    public static explicit operator EmployeeId(Guid employeeId) => 
-        TryCreate(employeeId).Value;
+    public static explicit operator EmployeeId(Guid employeeId) => TryCreate(employeeId).Value;
 
-    // IParsable<T>.Parse implementation
     public static EmployeeId Parse(string s, IFormatProvider? provider)
     {
         var r = TryCreate(s);
         if (r.IsFailure)
-            throw new FormatException(r.Error.Detail);
+        {
+            var val = (ValidationError)r.Error;
+            throw new FormatException(val.FieldErrors[0].Details[0]);
+        }
         return r.Value;
     }
 
-    // IParsable<T>.TryParse implementation
     public static bool TryParse(
         [NotNullWhen(true)] string? s, 
         IFormatProvider? provider, 
@@ -682,28 +682,35 @@ public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>
         return true;
     }
 
-    // Create new unique ID
     public static EmployeeId NewUnique() => new(Guid.NewGuid());
 
-    // TryCreate from Guid
-    public static Result<EmployeeId> TryCreate(Guid? requiredGuidOrNothing) =>
-        requiredGuidOrNothing
-            .ToResult(CannotBeEmptyError)
-            .Ensure(x => x != Guid.Empty, CannotBeEmptyError)
-            .Map(guid => new EmployeeId(guid));
-
-    // TryCreate from string (parses to Guid first)
-    public static Result<EmployeeId> TryCreate(string? stringOrNull)
+    public static Result<EmployeeId> TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
     {
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("EmployeeId.TryCreate");
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "employeeId";
+        return requiredGuidOrNothing
+            .ToResult(Error.Validation("Employee Id cannot be empty.", field))
+            .Ensure(x => x != Guid.Empty, Error.Validation("Employee Id cannot be empty.", field))
+            .Map(guid => new EmployeeId(guid));
+     }
+
+    public static Result<EmployeeId> TryCreate(string? stringOrNull, string? fieldName = null)
+    {
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("EmployeeId.TryCreate");
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "employeeId";
         Guid parsedGuid = Guid.Empty;
         return stringOrNull
-            .ToResult(CannotBeEmptyError)
+            .ToResult(Error.Validation("Employee Id cannot be empty.", field))
             .Ensure(
                 x => Guid.TryParse(x, out parsedGuid), 
                 Error.Validation(
                     "Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)", 
-                    "employeeId"))
-            .Ensure(_ => parsedGuid != Guid.Empty, CannotBeEmptyError)
+                    field))
+            .Ensure(_ => parsedGuid != Guid.Empty, Error.Validation("Employee Id cannot be empty.", field))
             .Map(guid => new EmployeeId(parsedGuid));
     }
 }
@@ -808,98 +815,38 @@ public class UserService
 }
 ```
 
-### Value Object Hierarchies
+### Custom Field Names
 
-Creating domain-specific value object hierarchies:
-
-```csharp
-// Base identifiers
-public partial class EntityId : RequiredGuid
-{
-}
-
-// Specific identifiers inherit behavior
-public partial class UserId : EntityId
-{
-}
-
-public partial class OrderId : EntityId
-{
-}
-
-public partial class ProductId : EntityId
-{
-}
-
-// String-based identifiers
-public partial class Code : RequiredString
-{
-}
-
-public partial class ProductCode : Code
-{
-}
-
-public partial class OrderNumber : Code
-{
-}
-
-public partial class TrackingNumber : Code
-{
-}
-
-// Usage demonstrates type safety
-public class Order : Aggregate<OrderId>
-{
-    public OrderNumber OrderNumber { get; }
-    public TrackingNumber TrackingNumber { get; private set; }
-    
-    public Result<Order> AssignTracking(TrackingNumber trackingNumber)
-    {
-        TrackingNumber = trackingNumber;
-        return this.ToResult();
-    }
-    
-    // Compile-time type safety prevents mixing IDs
-    public Result<Order> AddProduct(ProductId productId, int quantity)
-    {
-        // Cannot pass OrderId where ProductId is expected
-        // Cannot pass UserId where ProductId is expected
-        return this.ToResult();
-    }
-}
-```
-
-### Custom Error Messages
-
-Customizing error messages:
+Using the optional fieldName parameter for better error messages:
 
 ```csharp
-// Override error message by shadowing the field
 public partial class CustomerId : RequiredGuid
 {
-    // Shadow the generated error with custom message
-    protected new static readonly Error CannotBeEmptyError = 
-        Error.Validation(
-            "A valid customer identifier is required for this operation. Please provide a non-empty GUID.",
-            "customerId");
 }
 
-public partial class EmailAddress : RequiredString
+public partial class CustomerName : RequiredString
 {
-    // EmailAddress already has its own validation, but you can extend it
-    public new static Result<EmailAddress> TryCreate(string? value)
+}
+
+public class CustomerService
+{
+    public Result<Customer> CreateCustomer(CreateCustomerRequest request)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return Error.Validation(
-                "Email address is required. Please provide a valid email address.",
-                "email");
-        
-        // Use the existing EmailAddress validation
-        return FunctionalDDD.PrimitiveValueObjects.EmailAddress.TryCreate(value)
-            .Map(email => (EmailAddress)(object)email);
+        // Use fieldName parameter to customize error messages
+        return CustomerId.TryCreate(request.Id, "customer.id")
+            .Combine(CustomerName.TryCreate(request.Name, "customer.name"))
+            .Combine(EmailAddress.TryCreate(request.Email, "customer.email"))
+            .Bind((id, name, email) => Customer.TryCreate(id, name, email));
     }
 }
+
+// Validation error example:
+// When request.Name is empty, error will be:
+// {
+//   "code": "validation.error",
+//   "detail": "Customer Name cannot be empty.",
+//   "fieldErrors": [{ "field": "customer.name", "details": ["Customer Name cannot be empty."] }]
+// }
 ```
 
 ## Integration Examples
@@ -1013,57 +960,44 @@ public class UsersController : ControllerBase
 
 ### JSON Serialization
 
-Configuring JSON serialization:
+Value objects include built-in JSON serialization support via the `[JsonConverter(typeof(ParsableJsonConverter<T>))]` attribute that is automatically added by the source generator:
 
 ```csharp
 public partial class UserId : RequiredGuid
 {
 }
 
-// System.Text.Json converter
-public class RequiredGuidConverter<T> : JsonConverter<T> where T : RequiredGuid
+public partial class CustomerName : RequiredString
 {
-    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        var guid = reader.GetGuid();
-        var method = typeof(T).GetMethod("TryCreate", new[] { typeof(Guid?) });
-        var result = method?.Invoke(null, new object[] { guid }) as Result<T>;
-        
-        if (result?.IsSuccess ?? false)
-            return result.Value;
-        
-        throw new JsonException($"Invalid {typeof(T).Name}");
-    }
-
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.Value);
-    }
 }
 
-// Registration
-public class Startup
-{
-    public void ConfigureServices(IServiceCollection services)
-    {
-        services.AddControllers()
-            .AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.Converters.Add(new RequiredGuidConverter<UserId>());
-                options.JsonSerializerOptions.Converters.Add(new RequiredGuidConverter<OrderId>());
-            });
-    }
-}
+// The generated code already includes:
+// [JsonConverter(typeof(ParsableJsonConverter<UserId>))]
+// [JsonConverter(typeof(ParsableJsonConverter<CustomerName>))]
 
-// Alternatively, use ToString()/Parse pattern
+// Usage in DTOs - serialization works automatically
 public record UserDto(
+    UserId Id,
+    CustomerName Name,
+    EmailAddress Email
+);
+
+// JSON output:
+// {
+//   "id": "550e8400-e29b-41d4-a716-446655440000",
+//   "name": "John Doe",
+//   "email": "john@example.com"
+// }
+
+// For manual DTO mapping when needed:
+public record UserResponseDto(
     string Id,
     string Email,
     string FirstName,
     string LastName
 )
 {
-    public static UserDto FromUser(User user) =>
+    public static UserResponseDto FromUser(User user) =>
         new(
             user.Id.Value.ToString(),
             user.Email.Value,

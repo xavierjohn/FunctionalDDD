@@ -40,6 +40,11 @@ public partial class TrackingId : RequiredString
 }
 
 // Generated methods include:
+// - TryCreate(string?, string? fieldName = null) -> Result<TrackingId>
+// - Parse(string, IFormatProvider?) -> TrackingId
+// - TryParse(string?, IFormatProvider?, out TrackingId) -> bool
+// - explicit operator TrackingId(string)
+
 var result = TrackingId.TryCreate("TRK-12345");
 if (result.IsSuccess)
 {
@@ -47,10 +52,14 @@ if (result.IsSuccess)
     Console.WriteLine(trackingId); // Outputs: TRK-12345
 }
 
+// With custom field name for validation errors
+var result2 = TrackingId.TryCreate(input, "shipment.trackingId");
+// Error field will be "shipment.trackingId" instead of default "trackingId"
+
 // Supports IParsable<T>
 var parsed = TrackingId.Parse("TRK-12345", null);
 
-// Explicit cast operator
+// Explicit cast operator (throws on failure)
 var trackingId = (TrackingId)"TRK-12345";
 ```
 
@@ -64,20 +73,30 @@ public partial class EmployeeId : RequiredGuid
 }
 
 // Generated methods include:
+// - NewUnique() -> EmployeeId
+// - TryCreate(Guid?, string? fieldName = null) -> Result<EmployeeId>
+// - TryCreate(string?, string? fieldName = null) -> Result<EmployeeId>
+// - Parse(string, IFormatProvider?) -> EmployeeId
+// - TryParse(string?, IFormatProvider?, out EmployeeId) -> bool
+// - explicit operator EmployeeId(Guid)
+
 var employeeId = EmployeeId.NewUnique(); // Create new GUID
 var result = EmployeeId.TryCreate(guid);
 var result2 = EmployeeId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
 
+// With custom field name for validation errors
+var result3 = EmployeeId.TryCreate(input, "employee.id");
+
 // Supports IParsable<T>
 var parsed = EmployeeId.Parse("550e8400-e29b-41d4-a716-446655440000", null);
 
-// Explicit cast operator
+// Explicit cast operator (throws on failure)
 var employeeId = (EmployeeId)Guid.NewGuid();
 ```
 
 ### EmailAddress
 
-Pre-built email validation value object:
+Pre-built email validation value object with RFC 5322 compliant validation:
 
 ```csharp
 var result = EmailAddress.TryCreate("user@example.com");
@@ -87,18 +106,29 @@ if (result.IsSuccess)
     Console.WriteLine(email); // Outputs: user@example.com
 }
 
+// With custom field name for validation errors
+var result2 = EmailAddress.TryCreate(input, "contact.email");
+
 // Validation errors
 var invalid = EmailAddress.TryCreate("not-an-email");
 // Returns: Error.Validation("Email address is not valid.", "email")
+
+// Supports IParsable<T>
+var parsed = EmailAddress.Parse("user@example.com", null);
+
+if (EmailAddress.TryParse("user@example.com", null, out var email))
+{
+    Console.WriteLine($"Valid: {email.Value}");
+}
 ```
 
 ## Core Concepts
 
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
-| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IParsable, explicit cast |
-| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, NewUnique(), IParsable |
-| **EmailAddress** | Domain primitive | Email validation | RFC 5322 compliant, case-insensitive |
+| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IParsable, explicit cast, fieldName |
+| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, NewUnique(), IParsable, fieldName |
+| **EmailAddress** | Domain primitive | Email validation | RFC 5322 compliant, IParsable, fieldName |
 
 **What are Primitive Value Objects?**
 
@@ -109,11 +139,12 @@ Primitive value objects wrap single primitive types (`string`, `Guid`, etc.) to 
 - **Immutability**: Ensures values cannot change after creation
 
 **Generated Code Features:**
-- `TryCreate` methods returning `Result<T>`
-- IParsable<T> implementation (Parse/TryParse)
+- `TryCreate` methods returning `Result<T>` with optional `fieldName` parameter
+- `IParsable<T>` implementation (`Parse`/`TryParse`)
 - Explicit cast operators
 - Validation with descriptive error messages
-- Property name inference for error messages
+- Property name inference for error messages (class name converted to camelCase)
+- JSON serialization via `ParsableJsonConverter<T>`
 - OpenTelemetry activity tracing support
 
 ## Best Practices
@@ -124,13 +155,16 @@ Primitive value objects wrap single primitive types (`string`, `Guid`, etc.) to 
 2. **Leverage generated methods**  
    Use `TryCreate` for safe parsing that returns `Result<T>`.
 
-3. **Compose with other value objects**  
+3. **Use the fieldName parameter**  
+   Pass custom field names for better validation error messages in APIs.
+
+4. **Compose with other value objects**  
    Combine multiple value objects using `Combine` for validation.
 
-4. **Use meaningful names**  
-   Class name becomes part of the error message (e.g., "Employee Id cannot be empty").
+5. **Use meaningful names**  
+   Class name becomes part of the error message (e.g., "Employee Id cannot be empty.").
 
-5. **Prefer specific types over primitives**  
+6. **Prefer specific types over primitives**  
    `EmployeeId` is more expressive than `Guid` or `string` - eliminates primitive obsession.
 
 ## Resources

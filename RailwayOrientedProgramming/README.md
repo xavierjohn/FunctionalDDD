@@ -1,4 +1,4 @@
-# Railway Oriented Programming
+﻿# Railway Oriented Programming
 
 [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
 
@@ -1064,7 +1064,7 @@ Enable distributed tracing for ROP operations:
 services.AddOpenTelemetryTracing(builder =>
 {
     builder
-        .AddFunctionalDddRopInstrumentation()  // Built-in instrumentation
+        .AddRailwayOrientedProgrammingInstrumentation()  // Built-in instrumentation
         .AddOtlpExporter();
 });
 

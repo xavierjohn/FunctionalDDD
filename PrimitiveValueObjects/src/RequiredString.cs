@@ -10,11 +10,11 @@
 /// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item>Static factory method (TryCreate) with null/empty validation</item>
-/// <item>String parsing that trims whitespace</item>
-/// <item>JSON serialization support</item>
-/// <item>Comparison and equality operations</item>
-/// <item>Implicit string conversion for easy usage</item>
+/// <item>Static factory method (<c>TryCreate</c>) with null/empty/whitespace validation</item>
+/// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
+/// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
+/// <item>Explicit cast operator from string</item>
+/// <item>OpenTelemetry activity tracing</item>
 /// </list>
 /// </para>
 /// <para>
@@ -47,7 +47,10 @@
 /// }
 /// 
 /// // The source generator automatically creates:
-/// // - public static Result&lt;FirstName&gt; TryCreate(string? value)
+/// // - public static Result&lt;FirstName&gt; TryCreate(string? value, string? fieldName = null)
+/// // - public static FirstName Parse(string s, IFormatProvider? provider)
+/// // - public static bool TryParse(string? s, IFormatProvider? provider, out FirstName result)
+/// // - public static explicit operator FirstName(string value)
 /// // - private FirstName(string value) : base(value) { }
 /// 
 /// // Usage examples:
@@ -57,13 +60,17 @@
 /// // Returns: Success(FirstName("John"))
 /// 
 /// var result2 = FirstName.TryCreate("");
-/// // Returns: Failure(ValidationError("FirstName cannot be empty"))
+/// // Returns: Failure(ValidationError("First Name cannot be empty."))
 /// 
 /// var result3 = FirstName.TryCreate(null);
-/// // Returns: Failure(ValidationError("FirstName cannot be empty"))
+/// // Returns: Failure(ValidationError("First Name cannot be empty."))
 /// 
 /// var result4 = FirstName.TryCreate("  John  ");
 /// // Returns: Success(FirstName("John")) - automatically trimmed
+/// 
+/// // With custom field name for validation errors
+/// var result5 = FirstName.TryCreate(input, "user.firstName");
+/// // Error field will be "user.firstName" instead of default "firstName"
 /// 
 /// // Using in entity creation
 /// public class Person : Entity&lt;PersonId&gt;
@@ -93,9 +100,9 @@
 /// 
 /// // API endpoint with automatic validation
 /// app.MapPost("/users", (CreateUserRequest request) =>
-///     FirstName.TryCreate(request.FirstName)
-///         .Combine(LastName.TryCreate(request.LastName))
-///         .Combine(EmailAddress.TryCreate(request.Email))
+///     FirstName.TryCreate(request.FirstName, nameof(request.FirstName))
+///         .Combine(LastName.TryCreate(request.LastName, nameof(request.LastName)))
+///         .Combine(EmailAddress.TryCreate(request.Email, nameof(request.Email)))
 ///         .Bind((first, last, email) => User.Create(first, last, email))
 ///         .ToHttpResult());
 /// 
@@ -106,7 +113,7 @@
 /// //   "title": "One or more validation errors occurred.",
 /// //   "status": 400,
 /// //   "errors": {
-/// //     "FirstName": ["FirstName cannot be empty"]
+/// //     "firstName": ["First Name cannot be empty."]
 /// //   }
 /// // }
 /// </code>
@@ -143,8 +150,8 @@
 /// public partial class ProductSKU : RequiredString
 /// {
 ///     // Additional validation can be done in factory methods
-///     public static Result&lt;ProductSKU&gt; TryCreateSKU(string? value) =>
-///         TryCreate(value) // Use base validation first
+///     public static Result&lt;ProductSKU&gt; TryCreateWithValidation(string? value) =>
+///         TryCreate(value) // Use generated validation first
 ///             .Ensure(sku => sku.Value.Length &lt;= 20,
 ///                    Error.Validation("SKU must be 20 characters or less", "sku"))
 ///             .Ensure(sku => sku.Value.All(c => char.IsLetterOrDigit(c) || c == '-'),
@@ -152,10 +159,10 @@
 /// }
 /// 
 /// // Usage
-/// var result = ProductSKU.TryCreateSKU("PROD-12345");
+/// var result = ProductSKU.TryCreateWithValidation("PROD-12345");
 /// // Success
 /// 
-/// var invalid = ProductSKU.TryCreateSKU("PROD@12345");
+/// var invalid = ProductSKU.TryCreateWithValidation("PROD@12345");
 /// // Failure: "SKU can only contain letters, digits, and hyphens"
 /// </code>
 /// </example>
@@ -177,7 +184,7 @@ public abstract class RequiredString : ScalarValueObject<string>
     /// <para>
     /// Direct instantiation should be avoided. Instead, use the generated factory method:
     /// <list type="bullet">
-    /// <item><c>TryCreate(string?)</c> - Create from string with validation and trimming</item>
+    /// <item><c>TryCreate(string?, string?)</c> - Create from string with validation and trimming</item>
     /// </list>
     /// </para>
     /// <para>
