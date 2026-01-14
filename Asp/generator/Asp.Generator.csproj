@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Source generator for AOT-compatible ValidatingJsonConverterFactory. Discovers ITryCreatable types at compile time and generates static converter registrations.</Description>
+    <PackageTags>source-generator;roslyn;code-generation;json;validation;aot;value-objects</PackageTags>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Source generators must target netstandard 2.0 -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- We don't want to reference the source generator dll directly in consuming projects -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+
+    <!-- https://github.com/nuget/home/issues/8583 -->
+    <!-- CS1574: XML comment cref attributes cannot be resolved in generator project (expected) -->
+    <NoWarn>$(NoWarn);NU5128;CS1574</NoWarn>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    
+    <!-- .NET Standard 2.0 doesn't support AOT/Trim analyzers -->
+    <IsTrimmable>false</IsTrimmable>
+    <EnableAotAnalyzer>false</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <!-- This ensures the library will be packaged as a source generator when we use `dotnet pack` -->
+  <ItemGroup>
+    <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+   
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,199 @@
+﻿namespace FunctionalDdd.Generators;
+
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using Microsoft.CodeAnalysis;
+
+/// <summary>
+/// Source generator that discovers all types implementing ITryCreatable&lt;T&gt; at compile time
+/// and generates registration code for <see cref="ValidatingConverterRegistry"/>.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This generator eliminates the need for reflection at runtime by:
+/// <list type="bullet">
+/// <item>Scanning the compilation and all referenced assemblies for ITryCreatable&lt;T&gt; implementations</item>
+/// <item>Generating a module initializer that registers pre-instantiated converters</item>
+/// <item>Enabling fully AOT-compatible JSON validation for value objects</item>
+/// </list>
+/// </para>
+/// </remarks>
+[Generator(LanguageNames.CSharp)]
+public class ValidatingConverterGenerator : IIncrementalGenerator
+{
+    private const string ITryCreatableMetadataName = "FunctionalDdd.ITryCreatable`1";
+
+    /// <summary>
+    /// Initializes the incremental generator pipeline.
+    /// </summary>
+    /// <param name="context">The initialization context provided by the compiler.</param>
+    public void Initialize(IncrementalGeneratorInitializationContext context) =>
+        context.RegisterSourceOutput(context.CompilationProvider,
+            static (spc, compilation) => Execute(compilation, spc));
+
+    private static void Execute(Compilation compilation, SourceProductionContext context)
+    {
+        var iTryCreatableSymbol = compilation.GetTypeByMetadataName(ITryCreatableMetadataName);
+        if (iTryCreatableSymbol == null)
+        {
+            // ITryCreatable not referenced, nothing to generate
+            return;
+        }
+
+        var types = new List<TypeInfo>();
+
+        // Scan the current compilation's types
+        ScanNamespace(compilation.Assembly.GlobalNamespace, iTryCreatableSymbol, types);
+
+        // Scan referenced assemblies
+        foreach (var reference in compilation.References)
+        {
+            var assemblySymbol = compilation.GetAssemblyOrModuleSymbol(reference) as IAssemblySymbol;
+            if (assemblySymbol != null)
+            {
+                ScanNamespace(assemblySymbol.GlobalNamespace, iTryCreatableSymbol, types);
+            }
+        }
+
+        if (types.Count == 0)
+            return;
+
+        var distinctTypes = types.Distinct().ToList();
+        GenerateRegistration(context, distinctTypes);
+    }
+
+    private static void ScanNamespace(INamespaceSymbol ns, INamedTypeSymbol iTryCreatableSymbol, List<TypeInfo> types)
+    {
+        foreach (var member in ns.GetMembers())
+        {
+            if (member is INamespaceSymbol childNs)
+            {
+                ScanNamespace(childNs, iTryCreatableSymbol, types);
+            }
+            else if (member is INamedTypeSymbol typeSymbol)
+            {
+                if (ImplementsITryCreatable(typeSymbol, iTryCreatableSymbol))
+                {
+                    types.Add(new TypeInfo(
+                        typeSymbol.ContainingNamespace.ToDisplayString(),
+                        typeSymbol.Name,
+                        typeSymbol.ToDisplayString(),
+                        typeSymbol.IsValueType));
+                }
+
+                // Check nested types
+                foreach (var nestedType in typeSymbol.GetTypeMembers())
+                {
+                    if (ImplementsITryCreatable(nestedType, iTryCreatableSymbol))
+                    {
+                        types.Add(new TypeInfo(
+                            nestedType.ContainingNamespace.ToDisplayString(),
+                            nestedType.Name,
+                            nestedType.ToDisplayString(),
+                            nestedType.IsValueType));
+                    }
+                }
+            }
+        }
+    }
+
+    private static bool ImplementsITryCreatable(INamedTypeSymbol typeSymbol, INamedTypeSymbol iTryCreatableSymbol)
+    {
+        // Skip abstract types
+        if (typeSymbol.IsAbstract)
+            return false;
+
+        foreach (var iface in typeSymbol.AllInterfaces)
+        {
+            if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, iTryCreatableSymbol))
+            {
+                // Check if T is the type itself
+                if (iface.TypeArguments.Length == 1 &&
+                    SymbolEqualityComparer.Default.Equals(iface.TypeArguments[0], typeSymbol))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void GenerateRegistration(
+        SourceProductionContext context,
+        List<TypeInfo> types)
+    {
+        var sb = new StringBuilder();
+        
+        sb.AppendLine(@"// <auto-generated/>
+#nullable enable
+
+namespace FunctionalDdd.Generated;
+
+using System.Runtime.CompilerServices;
+using FunctionalDdd;
+
+/// <summary>
+/// Module initializer that registers all discovered ITryCreatable types with ValidatingConverterRegistry.
+/// This enables AOT-compatible JSON validation for value objects.
+/// </summary>
+internal static class ValidatingConverterRegistration
+{
+    [ModuleInitializer]
+    internal static void Initialize()
+    {");
+
+        foreach (var type in types)
+        {
+            if (type.IsValueType)
+            {
+                sb.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "        ValidatingConverterRegistry.RegisterStruct<{0}>();", type.FullTypeName));
+            }
+            else
+            {
+                sb.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "        ValidatingConverterRegistry.Register<{0}>();", type.FullTypeName));
+            }
+        }
+
+        sb.AppendLine(@"    }
+}
+");
+
+        context.AddSource("ValidatingConverterRegistration.g.cs", sb.ToString());
+    }
+
+    /// <summary>
+    /// Information about a discovered ITryCreatable type.
+    /// </summary>
+    private struct TypeInfo : IEquatable<TypeInfo>
+    {
+        public string Namespace { get; }
+        public string TypeName { get; }
+        public string FullTypeName { get; }
+        public bool IsValueType { get; }
+
+        public TypeInfo(string ns, string typeName, string fullTypeName, bool isValueType)
+        {
+            Namespace = ns;
+            TypeName = typeName;
+            FullTypeName = fullTypeName;
+            IsValueType = isValueType;
+        }
+
+        public bool Equals(TypeInfo other) =>
+            FullTypeName == other.FullTypeName;
+
+        public override bool Equals(object obj) =>
+            obj is TypeInfo other && Equals(other);
+
+        public override int GetHashCode() =>
+            FullTypeName?.GetHashCode() ?? 0;
+    }
+}

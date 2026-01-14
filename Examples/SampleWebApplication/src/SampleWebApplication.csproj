@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Asp\src\Asp.csproj" />
+    <ProjectReference Include="..\..\..\Asp\generator\Asp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\SampleUserLibrary\SampleUserLibrary.csproj" />
   </ItemGroup>
 

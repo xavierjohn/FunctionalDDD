@@ -17,6 +17,12 @@ using System.Text.Json.Serialization;
 /// <para>
 /// The factory creates appropriate converters for both reference types and value types (structs).
 /// </para>
+/// <para>
+/// <strong>AOT Compatibility:</strong> When the Asp.Generator source generator is referenced,
+/// converters are pre-registered at compile time using <see cref="ValidatingConverterRegistry"/>,
+/// making the factory fully AOT-compatible. Without the generator, it falls back to reflection-based
+/// converter creation.
+/// </para>
 /// </remarks>
 /// <example>
 /// Configuring in ASP.NET Core:
@@ -36,9 +42,36 @@ public sealed class ValidatingJsonConverterFactory : JsonConverterFactory
     /// </summary>
     /// <param name="typeToConvert">The type to check.</param>
     /// <returns><c>true</c> if the type implements <see cref="ITryCreatable{T}"/>; otherwise, <c>false</c>.</returns>
-    [UnconditionalSuppressMessage("AOT", "IL2070:RequiresDynamicCode",
-        Justification = "GetInterfaces is safe here as we're checking for a known interface type.")]
     public override bool CanConvert(Type typeToConvert)
+    {
+        // First, check if we have a pre-registered converter (AOT-safe path)
+        if (ValidatingConverterRegistry.HasConverter(typeToConvert))
+            return true;
+
+        // Fall back to reflection-based check for types not discovered at compile time
+        return CanConvertWithReflection(typeToConvert);
+    }
+
+    /// <summary>
+    /// Creates a converter for the specified type.
+    /// </summary>
+    /// <param name="typeToConvert">The type for which to create a converter.</param>
+    /// <param name="options">The serializer options.</param>
+    /// <returns>A <see cref="JsonConverter"/> instance for the specified type.</returns>
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        // First, try to get a pre-registered converter (AOT-safe path)
+        var converter = ValidatingConverterRegistry.GetConverter(typeToConvert);
+        if (converter is not null)
+            return converter;
+
+        // Fall back to reflection-based creation for types not discovered at compile time
+        return CreateConverterWithReflection(typeToConvert);
+    }
+
+    [UnconditionalSuppressMessage("AOT", "IL2070:RequiresDynamicCode",
+        Justification = "This is the fallback path when source generator is not used. Types are known at runtime.")]
+    private static bool CanConvertWithReflection(Type typeToConvert)
     {
         // Check if it's a nullable value type
         var underlyingType = Nullable.GetUnderlyingType(typeToConvert);
@@ -52,19 +85,13 @@ public sealed class ValidatingJsonConverterFactory : JsonConverterFactory
                      i.GetGenericArguments()[0] == typeToCheck);
     }
 
-    /// <summary>
-    /// Creates a converter for the specified type.
-    /// </summary>
-    /// <param name="typeToConvert">The type for which to create a converter.</param>
-    /// <param name="options">The serializer options.</param>
-    /// <returns>A <see cref="JsonConverter"/> instance for the specified type.</returns>
     [UnconditionalSuppressMessage("AOT", "IL2070:RequiresDynamicCode",
-        Justification = "The factory only creates converters for ITryCreatable types which are known at compile time.")]
+        Justification = "This is the fallback path when source generator is not used.")]
     [UnconditionalSuppressMessage("AOT", "IL2071:RequiresDynamicCode",
         Justification = "The converter types have parameterless constructors.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
-        Justification = "The factory is used with types that are already referenced and instantiated elsewhere.")]
-    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        Justification = "This is the fallback path when source generator is not used.")]
+    private static JsonConverter? CreateConverterWithReflection(Type typeToConvert)
     {
         // Handle nullable value types
         var underlyingType = Nullable.GetUnderlyingType(typeToConvert);
