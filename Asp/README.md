@@ -11,6 +11,8 @@ This library converts Railway Oriented Programming `Result` types to ASP.NET Cor
   - [MVC Controllers](#mvc-controllers)
   - [Minimal API](#minimal-api)
 - [Automatic Value Object Validation](#automatic-value-object-validation)
+  - [MVC Controllers Setup](#mvc-controllers-setup)
+  - [Minimal API Setup](#minimal-api-setup)
 - [Core Concepts](#core-concepts)
 - [Best Practices](#best-practices)
 - [Resources](#resources)
@@ -108,16 +110,16 @@ public record CreateUserRequest(
     EmailAddress Email        // ✅ Automatically validated
 );
 
-// ✅ After: Clean controller action
+// ✅ After: Clean controller/endpoint code
 [HttpPost]
 public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
     User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
         .ToActionResult(this);
 ```
 
-### Setup
+### MVC Controllers Setup
 
-1. **Add value object validation services** in `Program.cs`:
+1. **Add services and middleware** in `Program.cs`:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -133,32 +135,52 @@ app.MapControllers();
 app.Run();
 ```
 
-2. **Create DTOs with value objects**:
+2. **Create DTOs with value objects** and use them in controllers - validation happens automatically via the action filter.
+
+### Minimal API Setup
+
+For Minimal APIs, use the `WithValueObjectValidation()` endpoint filter:
+
+1. **Add middleware** in `Program.cs`:
 
 ```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddValueObjectValidation();  // Add validation services
+
+var app = builder.Build();
+
+app.UseValueObjectValidation();  // Enable validation scope per request
+```
+
+2. **Apply the endpoint filter** to routes that accept DTOs with value objects:
+
+```csharp
+// DTO with value objects
 public record CreateUserRequest(
     FirstName FirstName,
     LastName LastName,
     EmailAddress Email,
-    string Password  // Mix value objects and primitives as needed
+    string Password
 );
-```
 
-3. **Use in controllers** - validation happens automatically:
-
-```csharp
-[HttpPost]
-public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
-    // If we get here, FirstName, LastName, and Email are already validated!
+// Apply filter to enable automatic validation
+app.MapPost("/users/register", (CreateUserRequest request) =>
     User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
-        .ToActionResult(this);
+        .ToHttpResult())
+    .WithValueObjectValidation();  // ← Add this!
 ```
+
+The `WithValueObjectValidation()` filter:
+- Checks for validation errors collected during JSON deserialization
+- Returns 400 Bad Request with validation problem details if errors exist
+- Allows the endpoint to execute if no validation errors
 
 ### How It Works
 
 1. **Middleware** (`UseValueObjectValidation`) creates a validation scope for each request
 2. **JSON Converter** deserializes value objects using `TryCreate`, collecting validation errors
-3. **Action Filter** checks for collected errors before the action executes
+3. **Action Filter** (MVC) or **Endpoint Filter** (Minimal API) checks for collected errors
 4. If errors exist, returns **400 Bad Request** with validation problem details
 
 ### Error Response Format
@@ -249,6 +271,9 @@ The ASP extension automatically converts `Result<T>` outcomes to appropriate HTT
 
 8. **Use automatic validation for DTOs with multiple value objects**  
    Reduces boilerplate and ensures consistent validation.
+
+9. **Apply `WithValueObjectValidation()` to Minimal API endpoints**  
+   Required for endpoints that accept DTOs with value objects.
 
 ## Resources
 

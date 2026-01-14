@@ -21,6 +21,15 @@ public static class UserRoutes
             .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
             .ToHttpResult());
 
+        // Register using automatic value object validation in DTOs
+        // The CreateUserWithValidationRequest contains value objects (FirstName, LastName, EmailAddress)
+        // that are automatically validated during JSON deserialization.
+        // If validation fails, the endpoint filter returns 400 Bad Request before this code runs.
+        userApi.MapPost("/registerWithValidation", (CreateUserWithValidationRequest request) =>
+            User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
+                .ToHttpResult())
+            .WithValueObjectValidation();
+
         userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
             FirstName.TryCreate(request.firstName)
             .Combine(LastName.TryCreate(request.lastName))
