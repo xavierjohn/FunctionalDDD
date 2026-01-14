@@ -355,21 +355,6 @@ public class ValidatingJsonConverterEdgeCaseTests
     }
 
     [Fact]
-    public void Deserialize_NonValidationError_StillCollectsAsValidationError()
-    {
-        // This test verifies that non-ValidationError errors are converted properly
-        // The error collection works for all Error types, not just ValidationError
-        var json = "\"\"";
-        using var scope = ValidationErrorsContext.BeginScope();
-
-        // Act
-        JsonSerializer.Deserialize<EmailAddress>(json, s_options);
-
-        // Assert
-        ValidationErrorsContext.HasErrors.Should().BeTrue();
-    }
-
-    [Fact]
     public void Serialize_RoundTrip_PreservesValue()
     {
         // Arrange
@@ -721,3 +706,194 @@ public class ValidatingStructJsonConverterTests
 /// DTO for testing struct and class value objects together.
 /// </summary>
 public record DtoWithStructs(TestStructValueObject? StructValue, EmailAddress? Email);
+
+/// <summary>
+/// Tests for ValidatingJsonConverter covering non-ValidationError and GetDefaultFieldName edge cases.
+/// </summary>
+public class ValidatingJsonConverterCoverageTests
+{
+    private static readonly JsonSerializerOptions s_options = CreateOptions();
+
+    private static JsonSerializerOptions CreateOptions()
+    {
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        options.Converters.Add(new ValidatingJsonConverterFactory());
+        return options;
+    }
+
+    #region Non-ValidationError Tests
+
+    [Fact]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1869:Cache and reuse 'JsonSerializerOptions' instances", Justification = "Test requires custom converter configuration")]
+    public void Read_NonValidationError_CollectsErrorWithFieldNameAndDetail()
+    {
+        // Arrange - use value object that returns NotFoundError instead of ValidationError
+        var converter = new ValidatingJsonConverter<NonValidationErrorValueObject>();
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(converter);
+        var json = "\"trigger-error\"";
+        using var scope = ValidationErrorsContext.BeginScope();
+
+        // Act
+        var result = JsonSerializer.Deserialize<NonValidationErrorValueObject>(json, options);
+
+        // Assert
+        result.Should().BeNull();
+        ValidationErrorsContext.HasErrors.Should().BeTrue();
+        var error = ValidationErrorsContext.GetValidationError();
+        error!.FieldErrors.Should().HaveCount(1);
+        error.FieldErrors[0].FieldName.Should().Be("nonValidationErrorValueObject");
+        error.FieldErrors[0].Details.Should().Contain("Resource not found");
+    }
+
+    [Fact]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1869:Cache and reuse 'JsonSerializerOptions' instances", Justification = "Test requires custom converter configuration")]
+    public void Read_StructNonValidationError_CollectsErrorWithFieldNameAndDetail()
+    {
+        // Arrange - use struct value object that returns DomainError instead of ValidationError
+        var converter = new ValidatingStructJsonConverter<NonValidationErrorStruct>();
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(converter);
+        var json = "\"trigger-error\"";
+        using var scope = ValidationErrorsContext.BeginScope();
+
+        // Act
+        var result = JsonSerializer.Deserialize<NonValidationErrorStruct?>(json, options);
+
+        // Assert
+        result.Should().BeNull();
+        ValidationErrorsContext.HasErrors.Should().BeTrue();
+        var error = ValidationErrorsContext.GetValidationError();
+        error!.FieldErrors.Should().HaveCount(1);
+        error.FieldErrors[0].FieldName.Should().Be("nonValidationErrorStruct");
+        error.FieldErrors[0].Details.Should().Contain("Domain rule violated");
+    }
+
+    #endregion
+
+    #region GetDefaultFieldName Edge Cases
+
+    [Fact]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1869:Cache and reuse 'JsonSerializerOptions' instances", Justification = "Test requires custom converter configuration")]
+    public void Read_SingleCharTypeName_ConvertsToLowercase()
+    {
+        // Arrange - test GetDefaultFieldName with single character type name
+        var converter = new ValidatingJsonConverter<X>();
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(converter);
+        var json = "\"invalid\""; // Will fail validation
+        using var scope = ValidationErrorsContext.BeginScope();
+
+        // Act
+        JsonSerializer.Deserialize<X>(json, options);
+
+        // Assert
+        var error = ValidationErrorsContext.GetValidationError();
+        error!.FieldErrors[0].FieldName.Should().Be("x");
+    }
+
+    [Fact]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1869:Cache and reuse 'JsonSerializerOptions' instances", Justification = "Test requires custom converter configuration")]
+    public void Read_StructSingleCharTypeName_ConvertsToLowercase()
+    {
+        // Arrange - test GetDefaultFieldName with single character struct type name
+        var converter = new ValidatingStructJsonConverter<Y>();
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(converter);
+        var json = "\"invalid\""; // Will fail validation
+        using var scope = ValidationErrorsContext.BeginScope();
+
+        // Act
+        JsonSerializer.Deserialize<Y?>(json, options);
+
+        // Assert
+        var error = ValidationErrorsContext.GetValidationError();
+        error!.FieldErrors[0].FieldName.Should().Be("y");
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Test value object that returns NotFoundError instead of ValidationError.
+/// Used to test the non-ValidationError error path in ValidatingJsonConverter.
+/// </summary>
+public sealed class NonValidationErrorValueObject : ITryCreatable<NonValidationErrorValueObject>
+{
+    public string Value { get; }
+
+    private NonValidationErrorValueObject(string value) => Value = value;
+
+    public static Result<NonValidationErrorValueObject> TryCreate(string? value, string? fieldName = null)
+    {
+        if (value == "valid")
+            return new NonValidationErrorValueObject(value);
+
+        // Return NotFoundError instead of ValidationError to test line 97
+        return Result.Failure<NonValidationErrorValueObject>(Error.NotFound("Resource not found"));
+    }
+
+    public override string ToString() => Value;
+}
+
+/// <summary>
+/// Test struct that returns DomainError instead of ValidationError.
+/// Used to test the non-ValidationError error path in ValidatingStructJsonConverter.
+/// </summary>
+public readonly struct NonValidationErrorStruct : ITryCreatable<NonValidationErrorStruct>
+{
+    public string Value { get; }
+
+    private NonValidationErrorStruct(string value) => Value = value;
+
+    public static Result<NonValidationErrorStruct> TryCreate(string? value, string? fieldName = null)
+    {
+        if (value == "valid")
+            return new NonValidationErrorStruct(value);
+
+        // Return DomainError instead of ValidationError to test line 176
+        return Result.Failure<NonValidationErrorStruct>(Error.Domain("Domain rule violated"));
+    }
+
+    public override string ToString() => Value;
+}
+
+/// <summary>
+/// Single-character class name to test GetDefaultFieldName edge case.
+/// </summary>
+public sealed class X : ITryCreatable<X>
+{
+    public string Value { get; }
+
+    private X(string value) => Value = value;
+
+    public static Result<X> TryCreate(string? value, string? fieldName = null)
+    {
+        if (value == "valid")
+            return new X(value);
+
+        return Result.Failure<X>(Error.Validation("Invalid", fieldName ?? "x"));
+    }
+
+    public override string ToString() => Value;
+}
+
+/// <summary>
+/// Single-character struct name to test GetDefaultFieldName edge case.
+/// </summary>
+public readonly struct Y : ITryCreatable<Y>
+{
+    public string Value { get; }
+
+    private Y(string value) => Value = value;
+
+    public static Result<Y> TryCreate(string? value, string? fieldName = null)
+    {
+        if (value == "valid")
+            return new Y(value);
+
+        return Result.Failure<Y>(Error.Validation("Invalid", fieldName ?? "y"));
+    }
+
+    public override string ToString() => Value;
+}
