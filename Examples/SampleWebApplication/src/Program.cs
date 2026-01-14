@@ -1,8 +1,13 @@
+﻿using FunctionalDdd;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
+
+// Enable automatic validation of value objects in JSON DTOs
+builder.Services.AddValueObjectValidation();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -17,6 +22,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Enable value object validation middleware (must be before routing)
+app.UseValueObjectValidation();
 
 app.UseAuthorization();
 

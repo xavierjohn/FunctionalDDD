@@ -17,6 +17,23 @@ public class UsersController : ControllerBase
         .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
         .ToActionResult(this);
 
+    /// <summary>
+    /// Register a user using automatic value object validation.
+    /// </summary>
+    /// <remarks>
+    /// This action demonstrates the simplified pattern with automatic validation.
+    /// The request DTO contains value objects directly (FirstName, LastName, EmailAddress),
+    /// which are validated automatically during JSON deserialization.
+    /// 
+    /// If any value object validation fails, a 400 Bad Request is returned before
+    /// this method is even called - no manual Combine chains needed!
+    /// </remarks>
+    [HttpPost("[action]")]
+    public ActionResult<User> RegisterWithValidation([FromBody] CreateUserWithValidationRequest request) =>
+        // Value objects are already validated - just use them directly!
+        SampleUserLibrary.User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
+            .ToActionResult(this);
+
     [HttpPost("[action]")]
     public ActionResult<User> RegisterCreated([FromBody] RegisterUserRequest request) =>
         FirstName.TryCreate(request.firstName)
