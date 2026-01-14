@@ -1,6 +1,6 @@
-# ASP.NET Core Integration
+﻿# ASP.NET Core Integration
 
-**Level:** Intermediate ?? | **Time:** 20-30 min | **Prerequisites:** [Basics](basics.md)
+**Level:** Intermediate 🔷 | **Time:** 20-30 min | **Prerequisites:** [Basics](basics.md)
 
 Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalDDD.Asp** package. This package provides extension methods to convert `Result<T>` to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.
 
@@ -12,6 +12,8 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalD
 - [What the Package Provides](#what-the-package-provides)
 - [MVC Controllers](#mvc-controllers)
 - [Minimal API](#minimal-api)
+- [Automatic Value Object Validation](#automatic-value-object-validation)
+- [AOT Compatibility](#aot-compatibility)
 - [Automatic Error Mapping](#automatic-error-mapping)
 - [Custom Error Responses](#custom-error-responses)
 - [Pagination Support](#pagination-support)
@@ -21,6 +23,12 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalD
 
 ```bash
 dotnet add package FunctionalDDD.Asp
+```
+
+For **AOT-compatible** applications, also add the source generator:
+
+```bash
+dotnet add package FunctionalDDD.Asp.Generator
 ```
 
 ## What the Package Provides
@@ -50,9 +58,9 @@ Task<IResult> ToHttpResultAsync<T>(this Task<Result<T>> resultTask);
 ```
 
 **What happens:**
-- ? **Success**: Returns appropriate HTTP status (200 OK, 201 Created, 204 No Content)
-- ? **Failure**: Converts error types to HTTP status codes with Problem Details format
-- ?? **Pagination**: Returns 206 Partial Content with Content-Range headers
+- ✅ **Success**: Returns appropriate HTTP status (200 OK, 201 Created, 204 No Content)
+- ❌ **Failure**: Converts error types to HTTP status codes with Problem Details format
+- 📄 **Pagination**: Returns 206 Partial Content with Content-Range headers
 
 ## MVC Controllers
 
@@ -81,7 +89,7 @@ public class UsersController : ControllerBase
         CancellationToken ct)
         => await _userService.CreateUserAsync(request, ct)
             .MapAsync(user => new UserDto(user))
-            .ToActionResultAsync(this);  // Converts Result<UserDto> ? ActionResult<UserDto>
+            .ToActionResultAsync(this);  // Converts Result<UserDto> → ActionResult<UserDto>
 
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDto>> GetUser(
@@ -112,7 +120,7 @@ public class UsersController : ControllerBase
 **Key Points:**
 - Controller accepts requests and calls service layer
 - Service returns `Result<T>` (success or failure)
-- `ToActionResultAsync` converts `Result<T>` ? `ActionResult<T>` at the API boundary
+- `ToActionResultAsync` converts `Result<T>` → `ActionResult<T>` at the API boundary
 - Automatic error-to-HTTP status mapping (see [Automatic Error Mapping](#automatic-error-mapping))
 
 > **Note:** The service layer (`IUserService`) can use any architecture you prefer. See [Examples](examples.md) for complete application examples with different architectural patterns.
@@ -142,7 +150,7 @@ userApi.MapPost("/", async (
     CancellationToken ct) =>
     await userService.CreateUserAsync(request, ct)
         .MapAsync(user => new UserDto(user))
-        .ToHttpResultAsync())  // Converts Result<UserDto> ? IResult
+        .ToHttpResultAsync())  // Converts Result<UserDto> → IResult
     .WithName("CreateUser")
     .Produces<UserDto>(StatusCodes.Status200OK)
     .ProducesValidationProblem()
@@ -185,6 +193,200 @@ userApi.MapDelete("/{id}", async (
 app.Run();
 ```
 
+## Automatic Value Object Validation
+
+Eliminate manual `Combine` chains by using value objects directly in your DTOs. Validation errors are automatically collected during JSON deserialization.
+
+### The Problem
+
+Every endpoint requires repetitive validation boilerplate:
+
+```csharp
+// ❌ Before: Manual validation in every action
+[HttpPost]
+public ActionResult<User> Register([FromBody] RegisterRequest request) =>
+    FirstName.TryCreate(request.FirstName)
+        .Combine(LastName.TryCreate(request.LastName))
+        .Combine(EmailAddress.TryCreate(request.Email))
+        .Bind((first, last, email) => User.TryCreate(first, last, email))
+        .ToActionResult(this);
+```
+
+### The Solution
+
+Use value objects directly in your DTOs:
+
+```csharp
+// DTO with value objects
+public record CreateUserRequest(
+    FirstName FirstName,      // ✅ Automatically validated
+    LastName LastName,        // ✅ Automatically validated
+    EmailAddress Email        // ✅ Automatically validated
+);
+
+// ✅ After: Clean controller/endpoint code
+[HttpPost]
+public ActionResult<User> Register([FromBody] CreateUserRequest request) =>
+    User.TryCreate(request.FirstName, request.LastName, request.Email)
+        .ToActionResult(this);
+```
+
+### Setup
+
+**1. Configure services and middleware:**
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddValueObjectValidation();  // Add validation services
+
+var app = builder.Build();
+
+app.UseValueObjectValidation();  // Enable validation scope per request
+app.MapControllers();
+
+app.Run();
+```
+
+**2. For Minimal APIs, add the endpoint filter:**
+
+```csharp
+app.MapPost("/users", (CreateUserRequest request) =>
+    User.TryCreate(request.FirstName, request.LastName, request.Email)
+        .ToHttpResult())
+    .WithValueObjectValidation();  // ← Required for Minimal API
+```
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HTTP Request                             │
+│  POST /api/users                                            │
+│  { "firstName": "", "email": "invalid" }                    │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│           ValueObjectValidationMiddleware                   │
+│  Creates ValidationErrorsContext scope for request          │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│           ValidatingJsonConverterFactory                    │
+│  For each value object property:                            │
+│  1. Calls TryCreate(jsonValue, fieldName)                   │
+│  2. If failure → adds error to ValidationErrorsContext      │
+│  3. Returns null (allows deserialization to continue)       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│    ValueObjectValidationFilter (MVC) or                     │
+│    WithValueObjectValidation() (Minimal API)                │
+│                                                             │
+│  Checks ValidationErrorsContext.HasErrors                   │
+│  If errors → returns 400 Bad Request with Problem Details   │
+│  If no errors → continues to endpoint                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Error Response Format
+
+```json
+{
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "errors": {
+        "firstName": ["First Name cannot be empty."],
+        "email": ["Email address is not valid."]
+    }
+}
+```
+
+## AOT Compatibility
+
+The automatic validation system is **fully AOT-compatible** when using the source generator.
+
+### The Challenge
+
+By default, `ValidatingJsonConverterFactory` uses reflection to create converters at runtime:
+
+```csharp
+// ❌ Reflection-based (NOT AOT-compatible)
+var converterType = typeof(ValidatingJsonConverter<>).MakeGenericType(actualType);
+return (JsonConverter?)Activator.CreateInstance(converterType);
+```
+
+This fails with Native AOT because:
+- `MakeGenericType` requires runtime code generation
+- `Activator.CreateInstance` is not trimming-safe
+
+### The Solution: Source Generator
+
+The `FunctionalDDD.Asp.Generator` source generator pre-registers converters at compile time:
+
+```xml
+<!-- Add to your .csproj -->
+<ProjectReference Include="path\to\Asp.Generator.csproj" 
+                  OutputItemType="Analyzer" 
+                  ReferenceOutputAssembly="false" />
+```
+
+The generator automatically:
+1. **Scans** your project and all referenced assemblies for `ITryCreatable<T>` types
+2. **Generates** a module initializer that registers converters at startup
+3. **Eliminates** runtime reflection for discovered types
+
+### Generated Code
+
+```csharp
+// Auto-generated at compile time
+namespace FunctionalDdd.Generated;
+
+internal static class ValidatingConverterRegistration
+{
+    [ModuleInitializer]
+    internal static void Initialize()
+    {
+        // Class value objects
+        ValidatingConverterRegistry.Register<EmailAddress>();
+        ValidatingConverterRegistry.Register<FirstName>();
+        ValidatingConverterRegistry.Register<LastName>();
+        
+        // Struct value objects  
+        ValidatingConverterRegistry.RegisterStruct<Amount>();
+    }
+}
+```
+
+### Runtime Behavior
+
+```csharp
+public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+{
+    // ✅ AOT-safe: Check pre-registered converters first
+    var converter = ValidatingConverterRegistry.GetConverter(typeToConvert);
+    if (converter is not null)
+        return converter;
+
+    // Fallback: Reflection (for types not discovered at compile time)
+    return CreateConverterWithReflection(typeToConvert);
+}
+```
+
+### Benefits
+
+| Feature | Without Generator | With Generator |
+|---------|-------------------|----------------|
+| **Native AOT** | ❌ Fails | ✅ Works |
+| **Assembly Trimming** | ❌ Breaks | ✅ Works |
+| **Startup Performance** | Slower (reflection) | Faster (pre-compiled) |
+| **Single-file Deployment** | ⚠️ Issues | ✅ Works |
+
 ## Automatic Error Mapping
 
 The package automatically maps error types to HTTP status codes:
@@ -204,11 +406,11 @@ The package automatically maps error types to HTTP status codes:
 | `AggregateError` | Varies | Multiple errors (uses first error's status) |
 
 **Key Features:**
-- ? **Automatic Status Codes** - No manual mapping required
-- ? **Problem Details (RFC 7807)** - Standard error response format
-- ? **Validation Error Formatting** - Field-level errors
-- ? **Unit Type Support** - `Result<Unit>` returns 204 No Content
-- ? **Async Support** - Full async/await with `CancellationToken`
+- ✅ **Automatic Status Codes** - No manual mapping required
+- ✅ **Problem Details (RFC 7807)** - Standard error response format
+- ✅ **Validation Error Formatting** - Field-level errors
+- ✅ **Unit Type Support** - `Result<Unit>` returns 204 No Content
+- ✅ **Async Support** - Full async/await with `CancellationToken`
 
 ### Example: Validation Error Response
 
@@ -400,7 +602,7 @@ public ActionResult<IEnumerable<UserDto>> GetUsers(
 Keep `Result<T>` types internal to your application. Convert to HTTP responses only at the controller/endpoint level.
 
 ```csharp
-// ? Good - Result stays in application/domain layer
+// ✅ Good - Result stays in application/domain layer
 public class UserService
 {
     public async Task<Result<User>> CreateUserAsync(
@@ -420,9 +622,9 @@ public async Task<ActionResult<UserDto>> CreateUser(
     CancellationToken ct) =>
     await _userService.CreateUserAsync(request, ct)
         .MapAsync(user => new UserDto(user))
-        .ToActionResultAsync(this);  // ? Convert at boundary
+        .ToActionResultAsync(this);  // ✅ Convert at boundary
 
-// ? Bad - exposing Result in controller return type
+// ❌ Bad - exposing Result in controller return type
 public async Task<Result<User>> CreateUser(...)
 ```
 
@@ -434,7 +636,7 @@ Support graceful cancellation in async operations:
 [HttpPost]
 public async Task<ActionResult<Order>> ProcessOrder(
     CreateOrderRequest request,
-    CancellationToken ct)  // ? Accept CancellationToken
+    CancellationToken ct)  // ✅ Accept CancellationToken
     => await _orderService.ProcessOrderAsync(request, ct)
         .ToActionResultAsync(this);
 ```
@@ -450,7 +652,7 @@ public async Task<ActionResult<Unit>> DeleteUser(
     CancellationToken ct) =>
     await _userService.DeleteUserAsync(id, ct)
         .ToActionResultAsync(this);
-// ? Automatically returns 204 No Content on success
+// ✅ Automatically returns 204 No Content on success
 ```
 
 ### 4. Use Consistent Error Messages
@@ -458,12 +660,12 @@ public async Task<ActionResult<Unit>> DeleteUser(
 Structure error messages with context for better Problem Details responses:
 
 ```csharp
-// ? Good - includes context
+// ✅ Good - includes context
 Error.NotFound($"User {userId} not found", userId.ToString())
 Error.Validation("Email format is invalid", "email")
 Error.Conflict("Email already in use", $"email:{email}")
 
-// ? Bad - generic, no context
+// ❌ Bad - generic, no context
 Error.NotFound("Not found")
 Error.Validation("Invalid")
 ```
@@ -473,19 +675,29 @@ Error.Validation("Invalid")
 Use `ToActionResult`/`ToHttpResult` for consistent error responses. Only use `MatchError` when you need custom logic:
 
 ```csharp
-// ? Good - consistent Problem Details across API
+// ✅ Good - consistent Problem Details across API
 [HttpPost]
 public async Task<ActionResult<User>> CreateUser(CreateUserRequest request, CancellationToken ct)
     => await _userService.CreateUserAsync(request, ct)
         .ToActionResultAsync(this);
 
-// ?? Use only when necessary - custom error handling
+// ⚠️ Use only when necessary - custom error handling
 app.MapPost("/special-endpoint", async (request, service, ct) =>
     await service.ProcessAsync(request, ct)
         .MatchErrorAsync(
             onValidation: err => CustomValidationResponse(err),
             onSuccess: result => CustomSuccessResponse(result),
             cancellationToken: ct));
+```
+
+### 6. Use Source Generator for AOT Applications
+
+For Native AOT, trimmed, or single-file deployments, add the source generator:
+
+```xml
+<ProjectReference Include="path\to\Asp.Generator.csproj" 
+                  OutputItemType="Analyzer" 
+                  ReferenceOutputAssembly="false" />
 ```
 
 ## Next Steps

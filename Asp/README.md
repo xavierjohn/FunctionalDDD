@@ -13,6 +13,7 @@ This library converts Railway Oriented Programming `Result` types to ASP.NET Cor
 - [Automatic Value Object Validation](#automatic-value-object-validation)
   - [MVC Controllers Setup](#mvc-controllers-setup)
   - [Minimal API Setup](#minimal-api-setup)
+  - [AOT Compatibility](#aot-compatibility)
 - [Core Concepts](#core-concepts)
 - [Best Practices](#best-practices)
 - [Resources](#resources)
@@ -23,6 +24,12 @@ Install via NuGet:
 
 ```bash
 dotnet add package FunctionalDDD.Asp
+```
+
+For **AOT-compatible** applications, also reference the source generator:
+
+```bash
+dotnet add package FunctionalDDD.Asp.Generator
 ```
 
 ## Quick Start
@@ -183,6 +190,103 @@ The `WithValueObjectValidation()` filter:
 3. **Action Filter** (MVC) or **Endpoint Filter** (Minimal API) checks for collected errors
 4. If errors exist, returns **400 Bad Request** with validation problem details
 
+### AOT Compatibility
+
+The automatic validation system is **fully AOT-compatible** when using the source generator.
+
+#### Without Source Generator (Reflection-based)
+
+By default, the `ValidatingJsonConverterFactory` uses reflection to create converters at runtime. This works in JIT-compiled applications but **is not AOT-compatible**.
+
+#### With Source Generator (AOT-compatible)
+
+The `FunctionalDDD.Asp.Generator` source generator scans your project and all referenced assemblies for types implementing `ITryCreatable<T>`, then generates a module initializer that pre-registers converters at compile time.
+
+**Setup for AOT:**
+
+1. **Add the generator package** (or project reference):
+
+```xml
+<!-- Option 1: NuGet package (when available) -->
+<PackageReference Include="FunctionalDDD.Asp.Generator" 
+                  OutputItemType="Analyzer" 
+                  ReferenceOutputAssembly="false" />
+
+<!-- Option 2: Project reference -->
+<ProjectReference Include="path\to\Asp.Generator.csproj" 
+                  OutputItemType="Analyzer" 
+                  ReferenceOutputAssembly="false" />
+```
+
+2. **Build your project** - the generator automatically creates registration code:
+
+```csharp
+// Auto-generated at compile time
+namespace FunctionalDdd.Generated;
+
+internal static class ValidatingConverterRegistration
+{
+    [ModuleInitializer]
+    internal static void Initialize()
+    {
+        ValidatingConverterRegistry.Register<EmailAddress>();
+        ValidatingConverterRegistry.Register<FirstName>();
+        ValidatingConverterRegistry.Register<LastName>();
+        ValidatingConverterRegistry.RegisterStruct<Amount>();
+        // All ITryCreatable types from your project and dependencies
+    }
+}
+```
+
+3. **No code changes needed** - the `ValidatingJsonConverterFactory` automatically uses pre-registered converters when available, falling back to reflection only for types not discovered at compile time.
+
+#### How the Generator Works
+
+```
+┌─────────────────────┐
+│   Your Application  │
+│  (references Asp)   │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────┐
+│              Asp.Generator (Source Generator)           │
+├─────────────────────────────────────────────────────────┤
+│  1. Scans current compilation for ITryCreatable<T>     │
+│  2. Scans all referenced assemblies                     │
+│  3. Generates ValidatingConverterRegistration.g.cs     │
+│  4. Uses [ModuleInitializer] for auto-registration     │
+└─────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────┐
+│           ValidatingConverterRegistry                   │
+├─────────────────────────────────────────────────────────┤
+│  • Thread-safe ConcurrentDictionary of converters      │
+│  • Pre-instantiated converters (no reflection needed)  │
+│  • Supports both class and struct value objects        │
+└─────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────┐
+│         ValidatingJsonConverterFactory                  │
+├─────────────────────────────────────────────────────────┤
+│  1. Checks registry first (AOT-safe path)              │
+│  2. Falls back to reflection if type not found         │
+│  3. Returns pre-instantiated converter from registry   │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Benefits of AOT Support
+
+| Feature | Without Generator | With Generator |
+|---------|-------------------|----------------|
+| **AOT Compatible** | ❌ No | ✅ Yes |
+| **Startup Performance** | Slower (reflection) | Faster (pre-compiled) |
+| **Runtime Allocations** | Creates converters on-demand | Pre-instantiated |
+| **Trimming Safe** | ❌ No | ✅ Yes |
+| **Native AOT** | ❌ No | ✅ Yes |
+
 ### Error Response Format
 
 Invalid requests return standard ASP.NET Core validation problem details:
@@ -207,11 +311,7 @@ Invalid requests return standard ASP.NET Core validation problem details:
 - ✅ **Consistent validation** - Same rules everywhere
 - ✅ **All errors collected** - Multiple validation failures returned at once
 - ✅ **Standard error format** - Matches ASP.NET Core validation responses
-
-### Limitations
-
-- **Not AOT-compatible** - Uses reflection for JSON converter factory
-- **Requires ITryCreatable** - Value objects must implement `ITryCreatable<T>`
+- ✅ **AOT-compatible** - With source generator for Native AOT support
 
 ## Core Concepts
 
@@ -274,6 +374,9 @@ The ASP extension automatically converts `Result<T>` outcomes to appropriate HTT
 
 9. **Apply `WithValueObjectValidation()` to Minimal API endpoints**  
    Required for endpoints that accept DTOs with value objects.
+
+10. **Use the source generator for AOT/Native AOT applications**  
+    Add `FunctionalDDD.Asp.Generator` for fully AOT-compatible validation.
 
 ## Resources
 
