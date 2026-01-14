@@ -1,4 +1,4 @@
-@SampleMinimalApi_HostAddress = http://localhost:5157
+﻿@SampleMinimalApi_HostAddress = http://localhost:5157
 
 GET {{SampleMinimalApi_HostAddress}}/todos/
 Accept: application/json
@@ -59,6 +59,78 @@ Accept: application/json
   "lastName": "John",
   "email": "xa@somewhere.com",
   "password": "KeepItSimple"
+}
+###
+
+// ========================================
+// RegisterWithValidation - Automatic Value Object Validation
+// Uses DTOs with value objects (FirstName, LastName, EmailAddress)
+// Validation happens during JSON deserialization automatically
+// ========================================
+
+// Okay - Valid request with value objects
+POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "Keep8Simple!"
+}
+###
+
+// Bad Request - Empty firstName (value object validation fails)
+POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "Keep8Simple!"
+}
+###
+
+// Bad Request - Invalid email format (value object validation fails)
+POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "not-a-valid-email",
+  "password": "Keep8Simple!"
+}
+###
+
+// Bad Request - Multiple validation errors (all collected at once!)
+// firstName empty, lastName empty, email invalid
+POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "",
+  "lastName": "",
+  "email": "invalid-email",
+  "password": "Keep8Simple!"
+}
+###
+
+// Bad Request - Password validation (FluentValidation still runs after value object validation)
+POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "password": "weak"
 }
 ###
 
