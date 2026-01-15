@@ -91,7 +91,10 @@ internal static class PropertyNameAwareConverterFactory
 #pragma warning disable IL2055, IL2060, IL3050 // MakeGenericType and Activator require dynamic code - fallback path when source generator not used
     private static JsonConverter? CreateWithReflection(JsonConverter innerConverter, string propertyName, Type type)
     {
-        var wrapperType = typeof(PropertyNameAwareConverter<>).MakeGenericType(type);
+        // For struct types, we need to create PropertyNameAwareConverter<T?> (nullable)
+        // because ValidatingStructJsonConverter<T> : JsonConverter<T?>
+        var converterTypeArg = type.IsValueType ? typeof(Nullable<>).MakeGenericType(type) : type;
+        var wrapperType = typeof(PropertyNameAwareConverter<>).MakeGenericType(converterTypeArg);
         return Activator.CreateInstance(wrapperType, innerConverter, propertyName) as JsonConverter;
     }
 #pragma warning restore IL2055, IL2060, IL3050
