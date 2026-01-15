@@ -110,14 +110,12 @@ public class ValidatingConverterGenerator : IIncrementalGenerator
 
         foreach (var iface in typeSymbol.AllInterfaces)
         {
-            if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, iTryCreatableSymbol))
+            // Check if implements ITryCreatable<T> where T is the type itself
+            if (SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, iTryCreatableSymbol) &&
+                iface.TypeArguments.Length == 1 &&
+                SymbolEqualityComparer.Default.Equals(iface.TypeArguments[0], typeSymbol))
             {
-                // Check if T is the type itself
-                if (iface.TypeArguments.Length == 1 &&
-                    SymbolEqualityComparer.Default.Equals(iface.TypeArguments[0], typeSymbol))
-                {
-                    return true;
-                }
+                return true;
             }
         }
 

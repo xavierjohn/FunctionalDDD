@@ -129,7 +129,7 @@ public class ValidationErrorsContextTests
         ValidationErrorsContext.AddError("outer", "Outer error");
 
         // Act
-        using (var innerScope = ValidationErrorsContext.BeginScope())
+        using (ValidationErrorsContext.BeginScope())
         {
             ValidationErrorsContext.AddError("inner", "Inner error");
             

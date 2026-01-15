@@ -233,6 +233,39 @@ public class ValidatingConverterRegistryTests : IDisposable
         converter.Should().NotBeNull();
     }
 
+    [Fact]
+    public void Factory_WithoutRegistry_StructType_FallsBackToReflection()
+    {
+        // Arrange - don't register TestStructValueObject
+        var factory = new ValidatingJsonConverterFactory();
+        var options = new JsonSerializerOptions();
+
+        // Act - factory should still work via reflection fallback for struct types
+        var canConvert = factory.CanConvert(typeof(TestStructValueObject));
+        var converter = factory.CreateConverter(typeof(TestStructValueObject), options);
+
+        // Assert
+        canConvert.Should().BeTrue();
+        converter.Should().NotBeNull();
+        converter.Should().BeOfType<ValidatingStructJsonConverter<TestStructValueObject>>();
+    }
+
+    [Fact]
+    public void Factory_WithoutRegistry_NullableStructType_FallsBackToReflection()
+    {
+        // Arrange - don't register TestStructValueObject
+        var factory = new ValidatingJsonConverterFactory();
+        var options = new JsonSerializerOptions();
+
+        // Act - factory should work for nullable struct types
+        var canConvert = factory.CanConvert(typeof(TestStructValueObject?));
+        var converter = factory.CreateConverter(typeof(TestStructValueObject?), options);
+
+        // Assert
+        canConvert.Should().BeTrue();
+        converter.Should().NotBeNull();
+    }
+
     #endregion
 
     #region Concurrency Tests
