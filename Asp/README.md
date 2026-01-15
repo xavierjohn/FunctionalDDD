@@ -313,6 +313,11 @@ Invalid requests return standard ASP.NET Core validation problem details:
 - ✅ **Standard error format** - Matches ASP.NET Core validation responses
 - ✅ **AOT-compatible** - With source generator for Native AOT support
 
+### Limitations
+
+- **JSON only** - Automatic validation only works with `application/json` content type. For other formats (`application/x-www-form-urlencoded`, `multipart/form-data`, XML), use manual validation with `TryCreate` and `Combine`.
+- **Requires ITryCreatable** - Value objects must implement `ITryCreatable<T>`
+
 ## Core Concepts
 
 The ASP extension automatically converts `Result<T>` outcomes to appropriate HTTP responses:

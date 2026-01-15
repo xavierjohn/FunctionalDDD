@@ -307,6 +307,24 @@ app.MapPost("/users", (CreateUserRequest request) =>
 }
 ```
 
+### Limitations
+
+| Limitation | Details |
+|------------|---------|
+| **JSON only** | Automatic validation only works with `application/json` content type. Other formats (`application/x-www-form-urlencoded`, `multipart/form-data`, `application/xml`) require manual validation. |
+| **Requires ITryCreatable** | Value objects must implement `ITryCreatable<T>` |
+
+**For non-JSON content types**, use manual validation:
+
+```csharp
+// For form data or other content types
+app.MapPost("/form-register", ([FromForm] string firstName, [FromForm] string email) =>
+    FirstName.TryCreate(firstName)
+        .Combine(EmailAddress.TryCreate(email))
+        .Bind((first, mail) => User.TryCreate(first, mail))
+        .ToHttpResult());
+```
+
 ## AOT Compatibility
 
 The automatic validation system is **fully AOT-compatible** when using the source generator.
