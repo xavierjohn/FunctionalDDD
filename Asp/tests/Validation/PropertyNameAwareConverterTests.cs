@@ -1,5 +1,6 @@
 ﻿namespace Asp.Tests.Validation;
 
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -429,6 +430,209 @@ public class PropertyNameAwareConverterTests : IDisposable
         var error = ValidationErrorsContext.GetValidationError();
         error.Should().NotBeNull();
         error!.FieldErrors.Should().Contain(fe => fe.FieldName == "structField");
+    }
+
+    #endregion
+
+    #region Parallel Request Simulation Tests
+
+    [Fact]
+    public async Task ParallelRequests_20Concurrent_EachRequestGetsIsolatedErrors()
+    {
+        // This test simulates 20 parallel HTTP requests, each deserializing
+        // a DTO with value objects. Each request should have isolated errors
+        // that don't bleed into other requests.
+
+        // Arrange
+        ValidatingConverterRegistry.Register<EmailAddress>();
+        ValidatingConverterRegistry.Register<TestFirstName>();
+
+        const int requestCount = 20;
+        var results = new ConcurrentBag<(int RequestId, List<string> FieldNames, bool Success)>();
+
+        // Act - simulate 20 parallel requests
+        var tasks = Enumerable.Range(0, requestCount).Select(async requestId =>
+        {
+            await Task.Yield(); // Force async execution
+
+            // Simulate middleware creating a scope (like ValueObjectValidationMiddleware)
+            using var scope = ValidationErrorsContext.BeginScope();
+
+            // Each request has unique field names
+            var emailFieldName = $"email_{requestId}";
+            var nameFieldName = $"name_{requestId}";
+
+            // Simulate deserializing with property-name-aware converters
+            var emailConverter = ValidatingConverterRegistry.GetConverter(typeof(EmailAddress))!;
+            var emailFactory = ValidatingConverterRegistry.GetWrapperFactory(typeof(EmailAddress))!;
+            var emailWrapper = (JsonConverter<EmailAddress?>)emailFactory(emailConverter, emailFieldName);
+
+            var nameConverter = ValidatingConverterRegistry.GetConverter(typeof(TestFirstName))!;
+            var nameFactory = ValidatingConverterRegistry.GetWrapperFactory(typeof(TestFirstName))!;
+            var nameWrapper = (JsonConverter<TestFirstName?>)nameFactory(nameConverter, nameFieldName);
+
+            var options = new JsonSerializerOptions();
+
+            // Simulate invalid values - each request gets different field names
+            var invalidEmailJson = "\"invalid\""u8;
+            var emailReader = new Utf8JsonReader(invalidEmailJson);
+            emailReader.Read();
+            emailWrapper.Read(ref emailReader, typeof(EmailAddress), options);
+
+            // Add some delay to increase chance of interleaving
+            await Task.Delay(Random.Shared.Next(1, 10));
+
+            var emptyNameJson = "\"\""u8;
+            var nameReader = new Utf8JsonReader(emptyNameJson);
+            nameReader.Read();
+            nameWrapper.Read(ref nameReader, typeof(TestFirstName), options);
+
+            // Collect the errors for this request
+            var error = ValidationErrorsContext.GetValidationError();
+            var fieldNames = error?.FieldErrors.Select(fe => fe.FieldName).ToList() ?? [];
+
+            // Verify this request only sees its own errors
+            var success = fieldNames.Count == 2 &&
+                          fieldNames.Contains(emailFieldName) &&
+                          fieldNames.Contains(nameFieldName) &&
+                          !fieldNames.Any(fn => !fn.EndsWith($"_{requestId}", StringComparison.Ordinal));
+
+            results.Add((requestId, fieldNames, success));
+        });
+
+        await Task.WhenAll(tasks.ToArray());
+
+        // Assert
+        results.Should().HaveCount(requestCount);
+
+        // Every request should have succeeded (seen only its own errors)
+        var failedRequests = results.Where(r => !r.Success).ToList();
+        if (failedRequests.Count != 0)
+        {
+            var failureDetails = string.Join("\n", failedRequests.Select(r =>
+                $"Request {r.RequestId}: Fields=[{string.Join(", ", r.FieldNames)}]"));
+            Assert.Fail($"Some requests saw wrong field names:\n{failureDetails}");
+        }
+
+        // Each request should have exactly 2 errors with correct field names
+        foreach (var result in results)
+        {
+            result.FieldNames.Should().HaveCount(2, $"Request {result.RequestId} should have 2 errors");
+            result.FieldNames.Should().Contain($"email_{result.RequestId}");
+            result.FieldNames.Should().Contain($"name_{result.RequestId}");
+        }
+    }
+
+    [Fact]
+    public async Task ParallelRequests_MixOfValidAndInvalid_NoErrorLeakage()
+    {
+        // Some requests have valid data (no errors), some have invalid data
+        // Errors should not leak between requests
+
+        // Arrange
+        ValidatingConverterRegistry.Register<EmailAddress>();
+
+        const int requestCount = 20;
+        var results = new ConcurrentBag<(int RequestId, bool IsValid, int ErrorCount)>();
+
+        // Act
+        var tasks = Enumerable.Range(0, requestCount).Select(async requestId =>
+        {
+            await Task.Yield();
+
+            using var scope = ValidationErrorsContext.BeginScope();
+
+            var fieldName = $"email_{requestId}";
+            var converter = ValidatingConverterRegistry.GetConverter(typeof(EmailAddress))!;
+            var factory = ValidatingConverterRegistry.GetWrapperFactory(typeof(EmailAddress))!;
+            var wrapper = (JsonConverter<EmailAddress?>)factory(converter, fieldName);
+
+            var options = new JsonSerializerOptions();
+
+            // Alternate between valid and invalid values
+            var isValid = requestId % 2 == 0;
+            var json = isValid ? "\"test@example.com\""u8 : "\"invalid\""u8;
+            var reader = new Utf8JsonReader(json);
+            reader.Read();
+            wrapper.Read(ref reader, typeof(EmailAddress), options);
+
+            await Task.Delay(Random.Shared.Next(1, 5));
+
+            var error = ValidationErrorsContext.GetValidationError();
+            var errorCount = error?.FieldErrors.Length ?? 0;
+
+            results.Add((requestId, isValid, errorCount));
+        });
+
+        await Task.WhenAll(tasks.ToArray());
+
+        // Assert
+        results.Should().HaveCount(requestCount);
+
+        foreach (var result in results)
+        {
+            if (result.IsValid)
+                result.ErrorCount.Should().Be(0, $"Valid request {result.RequestId} should have no errors");
+            else
+                result.ErrorCount.Should().Be(1, $"Invalid request {result.RequestId} should have 1 error");
+        }
+    }
+
+    [Fact]
+    public async Task ParallelRequests_NestedObjects_PropertyNamesRestored()
+    {
+        // Simulate nested object deserialization across parallel requests
+        // Property names should be correctly saved/restored per request
+
+        // Arrange
+        ValidatingConverterRegistry.Register<EmailAddress>();
+
+        const int requestCount = 20;
+        var results = new ConcurrentBag<(int RequestId, string? FinalPropertyName, bool Correct)>();
+
+        // Act
+        var tasks = Enumerable.Range(0, requestCount).Select(async requestId =>
+        {
+            await Task.Yield();
+
+            using var scope = ValidationErrorsContext.BeginScope();
+
+            // Simulate parent setting property name
+            var parentProperty = $"parent_{requestId}";
+            ValidationErrorsContext.CurrentPropertyName = parentProperty;
+
+            // Simulate nested object deserialization
+            var converter = ValidatingConverterRegistry.GetConverter(typeof(EmailAddress))!;
+            var factory = ValidatingConverterRegistry.GetWrapperFactory(typeof(EmailAddress))!;
+            var childWrapper = (JsonConverter<EmailAddress?>)factory(converter, $"child_{requestId}");
+
+            var options = new JsonSerializerOptions();
+            var json = "\"test@example.com\""u8;
+            var reader = new Utf8JsonReader(json);
+            reader.Read();
+            childWrapper.Read(ref reader, typeof(EmailAddress), options);
+
+            await Task.Delay(Random.Shared.Next(1, 5));
+
+            // After nested read, parent property name should be restored
+            var finalPropertyName = ValidationErrorsContext.CurrentPropertyName;
+            var correct = finalPropertyName == parentProperty;
+
+            results.Add((requestId, finalPropertyName, correct));
+        });
+
+        await Task.WhenAll(tasks.ToArray());
+
+        // Assert
+        results.Should().HaveCount(requestCount);
+
+        var incorrectResults = results.Where(r => !r.Correct).ToList();
+        if (incorrectResults.Count != 0)
+        {
+            var details = string.Join("\n", incorrectResults.Select(r =>
+                $"Request {r.RequestId}: Expected 'parent_{r.RequestId}', got '{r.FinalPropertyName}'"));
+            Assert.Fail($"Property name restoration failed:\n{details}");
+        }
     }
 
     #endregion
