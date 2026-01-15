@@ -70,16 +70,16 @@ public sealed class ValidatingJsonConverter<T> : JsonConverter<T?> where T : cla
     {
         // Handle null JSON values
         if (reader.TokenType == JsonTokenType.Null)
-        {
             return null;
-        }
 
         // Read the string value
         var stringValue = reader.GetString();
 
         // Determine the field name for error reporting
-        // If we have a property name from the factory, use it; otherwise use the type name
-        var fieldName = _propertyName ?? GetDefaultFieldName(typeToConvert);
+        // Priority: 1) Context property name (set by wrapper), 2) Constructor property name, 3) Type name
+        var fieldName = ValidationErrorsContext.CurrentPropertyName
+                        ?? _propertyName
+                        ?? GetDefaultFieldName(typeToConvert);
 
         // Use TryCreate to validate
         var result = T.TryCreate(stringValue, fieldName);
@@ -89,13 +89,9 @@ public sealed class ValidatingJsonConverter<T> : JsonConverter<T?> where T : cla
 
         // Collect validation error if we're in a validation context
         if (result.Error is ValidationError validationError)
-        {
             ValidationErrorsContext.AddError(validationError);
-        }
         else
-        {
             ValidationErrorsContext.AddError(fieldName, result.Error.Detail);
-        }
 
         // Return null to allow deserialization to continue
         // The caller will check ValidationErrorsContext for errors
@@ -150,15 +146,16 @@ public sealed class ValidatingStructJsonConverter<T> : JsonConverter<T?> where T
     {
         // Handle null JSON values
         if (reader.TokenType == JsonTokenType.Null)
-        {
             return null;
-        }
 
         // Read the string value
         var stringValue = reader.GetString();
 
         // Determine the field name for error reporting
-        var fieldName = _propertyName ?? GetDefaultFieldName(typeof(T));
+        // Priority: 1) Context property name (set by wrapper), 2) Constructor property name, 3) Type name
+        var fieldName = ValidationErrorsContext.CurrentPropertyName
+                        ?? _propertyName
+                        ?? GetDefaultFieldName(typeof(T));
 
         // Use TryCreate to validate
         var result = T.TryCreate(stringValue, fieldName);
@@ -168,13 +165,9 @@ public sealed class ValidatingStructJsonConverter<T> : JsonConverter<T?> where T
 
         // Collect validation error if we're in a validation context
         if (result.Error is ValidationError validationError)
-        {
             ValidationErrorsContext.AddError(validationError);
-        }
         else
-        {
             ValidationErrorsContext.AddError(fieldName, result.Error.Detail);
-        }
 
         // Return null to allow deserialization to continue
         return null;

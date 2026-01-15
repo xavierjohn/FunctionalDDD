@@ -37,11 +37,27 @@ using static FunctionalDdd.ValidationError;
 public static class ValidationErrorsContext
 {
     private static readonly AsyncLocal<ErrorCollector?> s_current = new();
+    private static readonly AsyncLocal<string?> s_currentPropertyName = new();
 
     /// <summary>
     /// Gets the current error collector for the async context, or null if no scope is active.
     /// </summary>
     internal static ErrorCollector? Current => s_current.Value;
+
+    /// <summary>
+    /// Gets or sets the current property name being deserialized.
+    /// Used by <see cref="ValidatingJsonConverter{T}"/> to determine the field name for validation errors.
+    /// </summary>
+    /// <remarks>
+    /// This property is set by the property-aware converter wrapper during JSON deserialization
+    /// and read by the validating converter when creating validation errors.
+    /// Using AsyncLocal ensures thread-safety and proper isolation across concurrent requests.
+    /// </remarks>
+    public static string? CurrentPropertyName
+    {
+        get => s_currentPropertyName.Value;
+        set => s_currentPropertyName.Value = value;
+    }
 
     /// <summary>
     /// Begins a new validation error collection scope.

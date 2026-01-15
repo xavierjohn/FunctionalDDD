@@ -31,7 +31,7 @@ public class UsersController : ControllerBase
     [HttpPost("[action]")]
     public ActionResult<User> RegisterWithValidation([FromBody] CreateUserWithValidationRequest request) =>
         // Value objects are already validated - just use them directly!
-        SampleUserLibrary.User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
+        SampleUserLibrary.User.TryCreate(request.fname, request.lname, request.mail, request.Password)
             .ToActionResult(this);
 
     [HttpPost("[action]")]

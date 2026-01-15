@@ -1,5 +1,8 @@
 ﻿namespace FunctionalDdd;
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -79,17 +82,111 @@ public static class ValueObjectValidationExtensions
     {
         // Configure MVC JSON options (for controllers)
         services.Configure<MvcJsonOptions>(options =>
-            options.JsonSerializerOptions.Converters.Add(new ValidatingJsonConverterFactory()));
+            ConfigureJsonOptions(options.JsonSerializerOptions));
 
         // Configure Minimal API JSON options
         services.Configure<MinimalApiJsonOptions>(options =>
-            options.SerializerOptions.Converters.Add(new ValidatingJsonConverterFactory()));
+            ConfigureJsonOptions(options.SerializerOptions));
 
         // Add the validation filter for MVC
         services.Configure<MvcOptions>(options =>
             options.Filters.Add<ValueObjectValidationFilter>());
 
         return services;
+    }
+
+    /// <summary>
+    /// Configures JSON serializer options to use property-aware value object validation.
+    /// </summary>
+    /// <param name="options">The JSON serializer options to configure.</param>
+    /// <remarks>
+    /// This method configures a type info modifier that assigns converters per-property,
+    /// ensuring that validation error field names match the C# property names.
+    /// </remarks>
+    private static void ConfigureJsonOptions(JsonSerializerOptions options)
+    {
+        // Use TypeInfoResolver modifier to assign converters per-property with property name
+#pragma warning disable IL2026, IL3050 // DefaultJsonTypeInfoResolver requires dynamic code - this is fallback path
+        var existingResolver = options.TypeInfoResolver ?? new DefaultJsonTypeInfoResolver();
+#pragma warning restore IL2026, IL3050
+        options.TypeInfoResolver = existingResolver.WithAddedModifier(ModifyTypeInfo);
+
+        // Also add the factory for direct serialization scenarios (e.g., standalone value objects)
+        options.Converters.Add(new ValidatingJsonConverterFactory());
+    }
+
+    /// <summary>
+    /// Modifies type info to inject property names into ValidationErrorsContext before deserialization.
+    /// </summary>
+    /// <remarks>
+    /// This uses a property-name-aware wrapper converter that sets the property name in 
+    /// <see cref="ValidationErrorsContext.CurrentPropertyName"/> before the inner converter reads the value.
+    /// This approach is AOT-compatible because it uses cached converters from the registry.
+    /// </remarks>
+    private static void ModifyTypeInfo(JsonTypeInfo typeInfo)
+    {
+        if (typeInfo.Kind != JsonTypeInfoKind.Object)
+            return;
+
+        foreach (var property in typeInfo.Properties)
+        {
+            var propertyType = property.PropertyType;
+
+            // Handle nullable value types
+            var underlyingType = Nullable.GetUnderlyingType(propertyType);
+            var actualType = underlyingType ?? propertyType;
+
+            // Check if it's a value object (ITryCreatable<T>)
+            if (!ValidatingConverterRegistry.HasConverter(actualType) &&
+                !ImplementsITryCreatable(actualType))
+                continue;
+
+            // Get the cached converter (or create via factory)
+            var innerConverter = ValidatingConverterRegistry.GetConverter(actualType)
+                                 ?? CreateConverterWithReflection(actualType);
+
+            if (innerConverter is null)
+                continue;
+
+            // Wrap with property name awareness
+            var wrapper = PropertyNameAwareConverterFactory.Create(innerConverter, property.Name, propertyType);
+            if (wrapper is not null)
+                property.CustomConverter = wrapper;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a type implements ITryCreatable&lt;T&gt; where T is itself.
+    /// </summary>
+    private static bool ImplementsITryCreatable(Type type)
+    {
+        var iTryCreatableType = typeof(ITryCreatable<>);
+#pragma warning disable IL2070 // GetInterfaces requires dynamic code - this is fallback path
+        return type
+            .GetInterfaces()
+            .Any(i => i.IsGenericType &&
+                     i.GetGenericTypeDefinition() == iTryCreatableType &&
+                     i.GetGenericArguments()[0] == type);
+#pragma warning restore IL2070
+    }
+
+    /// <summary>
+    /// Creates a validating converter using reflection (fallback for non-AOT scenarios).
+    /// </summary>
+    private static JsonConverter? CreateConverterWithReflection(Type type)
+    {
+#pragma warning disable IL2070, IL2071, IL3050 // MakeGenericType and Activator require dynamic code - this is fallback path
+        if (type.IsValueType)
+        {
+            var converterType = typeof(ValidatingStructJsonConverter<>).MakeGenericType(type);
+            return Activator.CreateInstance(converterType) as JsonConverter;
+        }
+        else
+        {
+            var converterType = typeof(ValidatingJsonConverter<>).MakeGenericType(type);
+            return Activator.CreateInstance(converterType) as JsonConverter;
+        }
+#pragma warning restore IL2070, IL2071, IL3050
     }
 
     /// <summary>

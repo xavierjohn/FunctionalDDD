@@ -66,6 +66,7 @@ Accept: application/json
 // RegisterWithValidation - Automatic Value Object Validation
 // Uses DTOs with value objects (FirstName, LastName, EmailAddress)
 // Validation happens during JSON deserialization automatically
+// Note: Property names (fname, lname, mail) differ from type names!
 // ========================================
 
 // Okay - Valid request with value objects
@@ -74,49 +75,52 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "firstName": "Xavier",
-  "lastName": "John",
-  "email": "xa@somewhere.com",
+  "fname": "Xavier",
+  "lname": "John",
+  "mail": "xa@somewhere.com",
   "password": "Keep8Simple!"
 }
 ###
 
-// Bad Request - Empty firstName (value object validation fails)
+// Bad Request - Empty fname (value object validation fails)
+// Expected error field: "fname" (not "firstName")
 POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
 Content-Type: application/json
 Accept: application/json
 
 {
-  "firstName": "",
-  "lastName": "John",
-  "email": "xa@somewhere.com",
+  "fname": "",
+  "lname": "John",
+  "mail": "xa@somewhere.com",
   "password": "Keep8Simple!"
 }
 ###
 
-// Bad Request - Invalid email format (value object validation fails)
+// Bad Request - Invalid mail format (value object validation fails)
+// Expected error field: "mail" (not "emailAddress")
 POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
 Content-Type: application/json
 Accept: application/json
 
 {
-  "firstName": "Xavier",
-  "lastName": "John",
-  "email": "not-a-valid-email",
+  "fname": "Xavier",
+  "lname": "John",
+  "mail": "not-a-valid-email",
   "password": "Keep8Simple!"
 }
 ###
 
 // Bad Request - Multiple validation errors (all collected at once!)
-// firstName empty, lastName empty, email invalid
+// fname empty, lname empty, mail invalid
+// Expected error fields: "fname", "lname", "mail"
 POST {{SampleMinimalApi_HostAddress}}/users/registerWithValidation
 Content-Type: application/json
 Accept: application/json
 
 {
-  "firstName": "",
-  "lastName": "",
-  "email": "invalid-email",
+  "fname": "",
+  "lname": "",
+  "mail": "invalid-email",
   "password": "Keep8Simple!"
 }
 ###
@@ -127,9 +131,9 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "firstName": "Xavier",
-  "lastName": "John",
-  "email": "xa@somewhere.com",
+  "fname": "Xavier",
+  "lname": "John",
+  "mail": "xa@somewhere.com",
   "password": "weak"
 }
 ###

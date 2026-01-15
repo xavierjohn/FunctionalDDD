@@ -26,7 +26,7 @@ public static class UserRoutes
         // that are automatically validated during JSON deserialization.
         // If validation fails, the endpoint filter returns 400 Bad Request before this code runs.
         userApi.MapPost("/registerWithValidation", (CreateUserWithValidationRequest request) =>
-            User.TryCreate(request.FirstName, request.LastName, request.Email, request.Password)
+            User.TryCreate(request.fname, request.lname, request.mail, request.Password)
                 .ToHttpResult())
             .WithValueObjectValidation();
 
