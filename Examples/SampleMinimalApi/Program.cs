@@ -39,6 +39,8 @@ public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplet
 [JsonSerializable(typeof(Todo[]))]
 [JsonSerializable(typeof(RegisterUserRequest))]
 [JsonSerializable(typeof(CreateUserWithValidationRequest))]
+[JsonSerializable(typeof(NameTestRequest))]
+[JsonSerializable(typeof(NameTestResponse))]
 [JsonSerializable(typeof(User))]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]

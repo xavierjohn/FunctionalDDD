@@ -8,6 +8,7 @@ using Xunit;
 /// <summary>
 /// Tests for ValidatingConverterRegistry - the AOT-compatible converter registration system.
 /// </summary>
+[Collection("ValidatingConverterRegistry")]
 public class ValidatingConverterRegistryTests : IDisposable
 {
     public ValidatingConverterRegistryTests() =>

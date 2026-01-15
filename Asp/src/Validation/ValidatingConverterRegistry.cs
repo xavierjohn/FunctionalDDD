@@ -4,6 +4,14 @@ using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
 /// <summary>
+/// Delegate for creating a property-name-aware wrapper converter.
+/// </summary>
+/// <param name="innerConverter">The inner converter to wrap.</param>
+/// <param name="propertyName">The property name to use for validation errors.</param>
+/// <returns>A wrapper converter that sets the property name in context.</returns>
+public delegate JsonConverter WrapperConverterFactory(JsonConverter innerConverter, string propertyName);
+
+/// <summary>
 /// A registry for pre-instantiated JSON converters for ITryCreatable types.
 /// Used by <see cref="ValidatingJsonConverterFactory"/> to provide AOT-compatible converter lookup.
 /// </summary>
@@ -20,20 +28,29 @@ using System.Text.Json.Serialization;
 public static class ValidatingConverterRegistry
 {
     private static readonly ConcurrentDictionary<Type, JsonConverter> s_converters = new();
+    private static readonly ConcurrentDictionary<Type, WrapperConverterFactory> s_wrapperFactories = new();
 
     /// <summary>
     /// Registers a converter for the specified type.
     /// </summary>
     /// <typeparam name="T">The ITryCreatable type to register.</typeparam>
-    public static void Register<T>() where T : class, ITryCreatable<T> =>
+    public static void Register<T>() where T : class, ITryCreatable<T>
+    {
         s_converters.TryAdd(typeof(T), new ValidatingJsonConverter<T>());
+        s_wrapperFactories.TryAdd(typeof(T), static (inner, propName) =>
+            new PropertyNameAwareConverter<T>((ValidatingJsonConverter<T>)inner, propName));
+    }
 
     /// <summary>
     /// Registers a struct converter for the specified value type.
     /// </summary>
     /// <typeparam name="T">The ITryCreatable value type to register.</typeparam>
-    public static void RegisterStruct<T>() where T : struct, ITryCreatable<T> =>
+    public static void RegisterStruct<T>() where T : struct, ITryCreatable<T>
+    {
         s_converters.TryAdd(typeof(T), new ValidatingStructJsonConverter<T>());
+        s_wrapperFactories.TryAdd(typeof(T), static (inner, propName) =>
+            new PropertyNameAwareConverter<T?>((ValidatingStructJsonConverter<T>)inner, propName));
+    }
 
     /// <summary>
     /// Registers a pre-instantiated converter for the specified type.
@@ -68,7 +85,23 @@ public static class ValidatingConverterRegistry
     }
 
     /// <summary>
+    /// Gets the registered wrapper factory for the specified type.
+    /// </summary>
+    /// <param name="type">The type to get the wrapper factory for.</param>
+    /// <returns>The wrapper factory if registered; otherwise null.</returns>
+    public static WrapperConverterFactory? GetWrapperFactory(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type);
+        var typeToCheck = underlyingType ?? type;
+        return s_wrapperFactories.TryGetValue(typeToCheck, out var factory) ? factory : null;
+    }
+
+    /// <summary>
     /// Clears all registered converters. Primarily for testing.
     /// </summary>
-    internal static void Clear() => s_converters.Clear();
+    internal static void Clear()
+    {
+        s_converters.Clear();
+        s_wrapperFactories.Clear();
+    }
 }

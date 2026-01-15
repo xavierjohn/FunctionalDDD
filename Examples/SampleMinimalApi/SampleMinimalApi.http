@@ -167,3 +167,57 @@ GET {{SampleMinimalApi_HostAddress}}/users/unexpected/213
 Accept: application/json
 
 ###
+
+// ========================================
+// TestNames - Property-Name-Aware Validation Test
+// Both fname and lname use the same type (Name)
+// Errors should show "fname" and "lname", NOT "name" twice!
+// ========================================
+
+// Okay - Both names valid
+POST {{SampleMinimalApi_HostAddress}}/users/testNames
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fname": "John",
+  "lname": "Doe"
+}
+###
+
+// Bad Request - fname empty
+// Expected error: { "errors": { "fname": ["..."] } }
+POST {{SampleMinimalApi_HostAddress}}/users/testNames
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fname": "",
+  "lname": "Doe"
+}
+###
+
+// Bad Request - lname empty
+// Expected error: { "errors": { "lname": ["..."] } }
+POST {{SampleMinimalApi_HostAddress}}/users/testNames
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fname": "John",
+  "lname": ""
+}
+###
+
+// Bad Request - BOTH fname and lname empty
+// Expected error: { "errors": { "fname": ["..."], "lname": ["..."] } }
+// This is the key test - both should have distinct field names!
+POST {{SampleMinimalApi_HostAddress}}/users/testNames
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fname": "",
+  "lname": ""
+}
+###

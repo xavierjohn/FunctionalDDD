@@ -79,22 +79,16 @@ internal static class PropertyNameAwareConverterFactory
         var underlyingType = Nullable.GetUnderlyingType(type);
         var actualType = underlyingType ?? type;
 
-        // Try AOT-safe path first - check if we have a registered converter
-        if (ValidatingConverterRegistry.HasConverter(actualType))
-            return CreateFromRegistry(innerConverter, propertyName, actualType);
+        // Try AOT-safe path first - use registered wrapper factory
+        var factory = ValidatingConverterRegistry.GetWrapperFactory(actualType);
+        if (factory is not null)
+            return factory(innerConverter, propertyName);
 
-        // Fallback to reflection-based creation
-        return CreateWithReflection(innerConverter, propertyName, type);
+        // Fallback to reflection-based creation (non-AOT)
+        return CreateWithReflection(innerConverter, propertyName, actualType);
     }
 
-#pragma warning disable IL2055, IL2060, IL3050 // Reflection - fallback path
-    private static JsonConverter? CreateFromRegistry(JsonConverter innerConverter, string propertyName, Type type)
-    {
-        // Use the registered converter type to create the wrapper
-        var wrapperType = typeof(PropertyNameAwareConverter<>).MakeGenericType(type);
-        return Activator.CreateInstance(wrapperType, innerConverter, propertyName) as JsonConverter;
-    }
-
+#pragma warning disable IL2055, IL2060, IL3050 // MakeGenericType and Activator require dynamic code - fallback path when source generator not used
     private static JsonConverter? CreateWithReflection(JsonConverter innerConverter, string propertyName, Type type)
     {
         var wrapperType = typeof(PropertyNameAwareConverter<>).MakeGenericType(type);

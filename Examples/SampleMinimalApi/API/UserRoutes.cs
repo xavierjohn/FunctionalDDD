@@ -59,6 +59,11 @@ public static class UserRoutes
             Result.Failure(Error.Unexpected("Internal server error.", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
+        // Test route to verify property-name-aware validation works with same type for multiple properties
+        // When fname and lname (both of type Name) fail validation, errors should show
+        // "fname" and "lname" respectively, NOT "name" for both.
+        userApi.MapPost("/testNames", (NameTestRequest request) =>
+            Results.Ok(new NameTestResponse(request.fname.Value, request.lname.Value)))
+            .WithValueObjectValidation();
     }
-
 }
