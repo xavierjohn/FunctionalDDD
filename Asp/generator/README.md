@@ -145,6 +145,8 @@ The generator discovers and registers converters for:
 | `class : ITryCreatable<T>` | `ValidatingJsonConverter<T>` | `Register<T>()` |
 | `struct : ITryCreatable<T>` | `ValidatingStructJsonConverter<T>` | `RegisterStruct<T>()` |
 
+Each registration also includes a **wrapper factory** for property-name-aware validation, enabling AOT-compatible error messages that use DTO property names instead of type names.
+
 ## Requirements
 
 - **.NET Standard 2.0** (generator runs in compiler)

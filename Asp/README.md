@@ -190,6 +190,62 @@ The `WithValueObjectValidation()` filter:
 3. **Action Filter** (MVC) or **Endpoint Filter** (Minimal API) checks for collected errors
 4. If errors exist, returns **400 Bad Request** with validation problem details
 
+### Property-Name-Aware Validation
+
+Validation errors automatically use the **DTO property name** rather than the value object type name. This provides accurate, user-friendly error messages.
+
+#### Example
+
+Given this DTO where the same `Name` type is used for multiple properties:
+
+```csharp
+public partial class Name : RequiredString { }
+
+public record PersonRequest(
+    Name firstName,    // Property name: "firstName"
+    Name lastName      // Property name: "lastName"
+);
+```
+
+When both fields fail validation, the error response correctly identifies each field:
+
+```json
+{
+    "errors": {
+        "firstName": ["Name cannot be empty."],
+        "lastName": ["Name cannot be empty."]
+    }
+}
+```
+
+**Without** property-name-aware validation, you would incorrectly get:
+
+```json
+{
+    "errors": {
+        "name": ["Name cannot be empty.", "Name cannot be empty."]
+    }
+}
+```
+
+#### How It Works
+
+The system uses `PropertyNameAwareConverter<T>` wrappers that:
+
+1. **Set the property name** in `ValidationErrorsContext.CurrentPropertyName` before deserialization
+2. **Delegate** to the inner `ValidatingJsonConverter<T>` for actual validation
+3. **Restore** the previous property name after deserialization (for nested objects)
+
+This is fully AOT-compatible when using the source generator.
+
+#### Thread Safety
+
+The property name is stored in an `AsyncLocal<string?>`, ensuring:
+
+- ✅ **Request isolation** - Each HTTP request has its own property name context
+- ✅ **Parallel safety** - Concurrent requests don't interfere with each other
+- ✅ **Nested object support** - Property names are correctly saved/restored for complex DTOs
+
 ### AOT Compatibility
 
 The automatic validation system is **fully AOT-compatible** when using the source generator.

@@ -307,6 +307,34 @@ app.MapPost("/users", (CreateUserRequest request) =>
 }
 ```
 
+### Property-Name-Aware Errors
+
+Validation errors automatically use the **DTO property name** rather than the value object type name. This is especially important when the same value object type is used for multiple properties.
+
+#### Example
+
+```csharp
+public partial class Name : RequiredString { }
+
+public record PersonRequest(
+    Name firstName,    // Error field: "firstName"
+    Name lastName      // Error field: "lastName" 
+);
+```
+
+When both fields are empty, the error response correctly identifies each:
+
+```json
+{
+    "errors": {
+        "firstName": ["Name cannot be empty."],
+        "lastName": ["Name cannot be empty."]
+    }
+}
+```
+
+This is fully thread-safe for concurrent requests using `AsyncLocal<T>` for request isolation.
+
 ### Limitations
 
 | Limitation | Details |
