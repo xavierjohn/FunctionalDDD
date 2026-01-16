@@ -3,6 +3,13 @@
   <PropertyGroup>
     <PublishAot>true</PublishAot>
     <RootNamespace>SampleMinimalApi</RootNamespace>
+    <!-- 
+      This example uses Native AOT compilation with the Asp.Generator.
+      The source generator pre-registers converters at compile time,
+      eliminating reflection at runtime.
+      
+      For a non-AOT example, see SampleMinimalApiNoAot.
+    -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Asp\src\Asp.csproj" />
+    <!-- Asp.Generator for AOT-compatible value object validation -->
+    <ProjectReference Include="..\..\Asp\generator\Asp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\SampleUserLibrary\SampleUserLibrary.csproj" />
   </ItemGroup>
 

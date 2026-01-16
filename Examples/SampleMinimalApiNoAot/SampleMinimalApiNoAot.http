@@ -1,0 +1,79 @@
+﻿@SampleMinimalApiNoAot_HostAddress = http://localhost:5157
+
+### =============================================================================
+### Non-AOT Example: Reflection-based Value Object Validation
+### =============================================================================
+### This example uses the reflection fallback path (no Asp.Generator).
+### The behavior is identical to the AOT approach.
+
+### =============================================================================
+### Register User - Valid Request
+### =============================================================================
+POST {{SampleMinimalApiNoAot_HostAddress}}/users/register
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "password": "secreT!123"
+}
+
+### =============================================================================
+### Register User - Invalid (empty fields)
+### =============================================================================
+### Demonstrates automatic validation with reflection-based converters
+POST {{SampleMinimalApiNoAot_HostAddress}}/users/register
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "",
+    "email": "invalid-email",
+    "password": "test"
+}
+
+### =============================================================================
+### Name Validation - Property Names Preserved
+### =============================================================================
+### Both fname and lname use the same Name type.
+### Error messages correctly identify each property.
+POST {{SampleMinimalApiNoAot_HostAddress}}/names/validate
+Content-Type: application/json
+
+{
+    "fname": "",
+    "lname": ""
+}
+
+### Expected response (400 Bad Request):
+### {
+###     "errors": {
+###         "fname": ["Name cannot be empty."],
+###         "lname": ["Name cannot be empty."]
+###     }
+### }
+
+### =============================================================================
+### Name Validation - Valid
+### =============================================================================
+POST {{SampleMinimalApiNoAot_HostAddress}}/names/validate
+Content-Type: application/json
+
+{
+    "fname": "John",
+    "lname": "Doe"
+}
+
+### =============================================================================
+### Manual Validation (for comparison)
+### =============================================================================
+POST {{SampleMinimalApiNoAot_HostAddress}}/users/register-manual
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "",
+    "email": "invalid",
+    "password": ""
+}

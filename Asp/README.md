@@ -445,3 +445,11 @@ The ASP extension automatically converts `Result<T>` outcomes to appropriate HTT
 - [Railway Oriented Programming](../RailwayOrientedProgramming/README.md) - Core Result<T> concepts
 - [Domain-Driven Design](../DomainDrivenDesign/README.md) - Entity and value object patterns
 
+## Example Projects
+
+| Example | AOT Support | Description |
+|---------|-------------|-------------|
+| [SampleMinimalApi](../Examples/SampleMinimalApi) | ✅ Yes | Minimal API with source generator for Native AOT |
+| [SampleMinimalApiNoAot](../Examples/SampleMinimalApiNoAot) | ❌ No | Minimal API using reflection fallback (simpler setup) |
+| [SampleWebApplication](../Examples/SampleWebApplication) | ✅ Yes | MVC controllers with source generator |
+
