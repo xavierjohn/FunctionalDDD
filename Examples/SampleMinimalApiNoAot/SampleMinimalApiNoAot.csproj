@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>SampleMinimalApiNoAot</RootNamespace>
+    <!-- 
+      This example intentionally does NOT use the Asp.Generator source generator.
+      It demonstrates the reflection-based fallback path for value object validation.
+      
+      Use this approach when:
+      - You don't need Native AOT compilation
+      - You want simpler setup (no generator reference needed)
+      - You're okay with reflection at runtime
+      
+      For AOT-compatible applications, see SampleWebApplication which uses the generator.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Asp\src\Asp.csproj" />
+    <!-- Note: Asp.Generator is NOT referenced - uses reflection fallback -->
+    <ProjectReference Include="..\SampleUserLibrary\SampleUserLibrary.csproj" />
+  </ItemGroup>
+
+</Project>

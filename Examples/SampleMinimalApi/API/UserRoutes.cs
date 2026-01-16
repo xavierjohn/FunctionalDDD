@@ -21,6 +21,15 @@ public static class UserRoutes
             .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
             .ToHttpResult());
 
+        // Register using automatic value object validation in DTOs
+        // The CreateUserWithValidationRequest contains value objects (FirstName, LastName, EmailAddress)
+        // that are automatically validated during JSON deserialization.
+        // If validation fails, the endpoint filter returns 400 Bad Request before this code runs.
+        userApi.MapPost("/registerWithValidation", (CreateUserWithValidationRequest request) =>
+            User.TryCreate(request.fname, request.lname, request.mail, request.Password)
+                .ToHttpResult())
+            .WithValueObjectValidation();
+
         userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
             FirstName.TryCreate(request.firstName)
             .Combine(LastName.TryCreate(request.lastName))
@@ -50,6 +59,11 @@ public static class UserRoutes
             Result.Failure(Error.Unexpected("Internal server error.", id.ToString(CultureInfo.InvariantCulture)))
             .ToHttpResult());
 
+        // Test route to verify property-name-aware validation works with same type for multiple properties
+        // When fname and lname (both of type Name) fail validation, errors should show
+        // "fname" and "lname" respectively, NOT "name" for both.
+        userApi.MapPost("/testNames", (NameTestRequest request) =>
+            Results.Ok(new NameTestResponse(request.fname.Value, request.lname.Value)))
+            .WithValueObjectValidation();
     }
-
 }
