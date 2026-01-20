@@ -1,4 +1,4 @@
-namespace Example.Tests;
+﻿namespace Example.Tests;
 
 using FunctionalDdd;
 using Xunit;
@@ -12,7 +12,7 @@ public class DomainDrivenDesignSamplesTests
     #region Test Data and Mock Domain Objects
 
     // Entity IDs
-    public class CustomerId : ScalarValueObject<Guid>
+    public class CustomerId : ScalarValueObject<CustomerId, Guid>
     {
         private CustomerId(Guid value) : base(value) { }
 
@@ -24,7 +24,7 @@ public class DomainDrivenDesignSamplesTests
                 .Map(v => new CustomerId(v));
     }
 
-    public class OrderId : ScalarValueObject<Guid>
+    public class OrderId : ScalarValueObject<OrderId, Guid>
     {
         private OrderId(Guid value) : base(value) { }
 
@@ -36,7 +36,7 @@ public class DomainDrivenDesignSamplesTests
                 .Map(v => new OrderId(v));
     }
 
-    public class ProductId : ScalarValueObject<string>
+    public class ProductId : ScalarValueObject<ProductId, string>
     {
         private ProductId(string value) : base(value) { }
 
@@ -47,7 +47,7 @@ public class DomainDrivenDesignSamplesTests
     }
 
     // Simple value object for testing
-    public class EmailAddress : ScalarValueObject<string>
+    public class EmailAddress : ScalarValueObject<EmailAddress, string>
     {
         private EmailAddress(string value) : base(value) { }
 
@@ -303,7 +303,7 @@ public class DomainDrivenDesignSamplesTests
     }
 
     // Temperature (Scalar)
-    public class Temperature : ScalarValueObject<decimal>
+    public class Temperature : ScalarValueObject<Temperature, decimal>
     {
         private Temperature(decimal value) : base(value) { }
 

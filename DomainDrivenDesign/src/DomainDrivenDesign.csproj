@@ -12,4 +12,8 @@
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
+  </ItemGroup>
 </Project>

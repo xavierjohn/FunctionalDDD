@@ -1,5 +1,5 @@
 ﻿namespace FluentValidationExt.Tests;
 
-internal partial class FirstName : RequiredString
+internal partial class FirstName : RequiredString<FirstName>
 {
 }

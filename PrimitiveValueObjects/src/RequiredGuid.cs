@@ -6,7 +6,7 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="ScalarValueObject{T}"/> to provide a specialized base for GUID-based value objects
+/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for GUID-based value objects
 /// with automatic validation that prevents empty/default GUIDs. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
@@ -41,7 +41,7 @@
 /// Creating a strongly-typed entity identifier:
 /// <code>
 /// // Define the value object (partial keyword enables source generation)
-/// public partial class CustomerId : RequiredGuid
+/// public partial class CustomerId : RequiredGuid&lt;CustomerId&gt;
 /// {
 /// }
 /// 
@@ -112,9 +112,9 @@
 /// <example>
 /// Multiple strongly-typed IDs in the same domain:
 /// <code>
-/// public partial class CustomerId : RequiredGuid { }
-/// public partial class OrderId : RequiredGuid { }
-/// public partial class ProductId : RequiredGuid { }
+/// public partial class CustomerId : RequiredGuid&lt;CustomerId&gt; { }
+/// public partial class OrderId : RequiredGuid&lt;OrderId&gt; { }
+/// public partial class ProductId : RequiredGuid&lt;ProductId&gt; { }
 /// 
 /// public class Order : Entity&lt;OrderId&gt;
 /// {
@@ -131,12 +131,13 @@
 /// }
 /// </code>
 /// </example>
-/// <seealso cref="ScalarValueObject{T}"/>
-/// <seealso cref="RequiredString"/>
-public abstract class RequiredGuid : ScalarValueObject<Guid>
+/// <seealso cref="ScalarValueObject{TSelf, T}"/>
+/// <seealso cref="RequiredString{TSelf}"/>
+public abstract class RequiredGuid<TSelf> : ScalarValueObject<TSelf, Guid>
+    where TSelf : RequiredGuid<TSelf>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="RequiredGuid"/> class with the specified GUID value.
+    /// Initializes a new instance of the <see cref="RequiredGuid{TSelf}"/> class with the specified GUID value.
     /// </summary>
     /// <param name="value">The GUID value. Must not be <see cref="Guid.Empty"/>.</param>
     /// <remarks>

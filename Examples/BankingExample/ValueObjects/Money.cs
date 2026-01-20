@@ -1,11 +1,11 @@
-namespace BankingExample.ValueObjects;
+﻿namespace BankingExample.ValueObjects;
 
 using FunctionalDdd;
 
 /// <summary>
 /// Represents a monetary amount in the banking system.
 /// </summary>
-public class Money : ScalarValueObject<decimal>
+public class Money : ScalarValueObject<Money, decimal>
 {
     private Money(decimal value) : base(value) { }
 

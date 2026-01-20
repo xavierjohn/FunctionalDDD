@@ -1,7 +1,7 @@
-namespace BankingExample.ValueObjects;
+﻿namespace BankingExample.ValueObjects;
 
 using FunctionalDdd;
 
-public partial class AccountId : RequiredGuid
+public partial class AccountId : RequiredGuid<AccountId>
 {
 }

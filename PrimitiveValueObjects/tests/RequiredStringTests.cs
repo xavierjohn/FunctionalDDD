@@ -3,10 +3,10 @@
 using System.Globalization;
 using System.Text.Json;
 
-public partial class TrackingId : RequiredString
+public partial class TrackingId : RequiredString<TrackingId>
 {
 }
-internal partial class InternalTrackingId : RequiredString
+internal partial class InternalTrackingId : RequiredString<InternalTrackingId>
 {
 }
 
@@ -16,7 +16,7 @@ public class RequiredStringTests
     [MemberData(nameof(GetBadString))]
     public void Cannot_create_empty_RequiredString(string? input)
     {
-        var trackingId1 = TrackingId.TryCreate(input);
+        var trackingId1 = TrackingId.TryCreate(input, null);
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)trackingId1.Error;

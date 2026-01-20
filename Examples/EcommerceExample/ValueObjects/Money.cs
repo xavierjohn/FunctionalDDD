@@ -1,11 +1,11 @@
-namespace EcommerceExample.ValueObjects;
+﻿namespace EcommerceExample.ValueObjects;
 
 using FunctionalDdd;
 
 /// <summary>
 /// Represents a monetary amount with currency and validation.
 /// </summary>
-public class Money : ScalarValueObject<decimal>
+public class Money : ScalarValueObject<Money, decimal>
 {
     public string Currency { get; }
 

@@ -1,5 +1,5 @@
 ﻿namespace FluentValidationExt.Tests;
 
-internal partial class UserId : RequiredGuid
+internal partial class UserId : RequiredGuid<UserId>
 {
 }

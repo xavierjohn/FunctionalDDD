@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 using Xunit;
 
-public partial class EmployeeId : RequiredGuid
+public partial class EmployeeId : RequiredGuid<EmployeeId>
 {
 }
 

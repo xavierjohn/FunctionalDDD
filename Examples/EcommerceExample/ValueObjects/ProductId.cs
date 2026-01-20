@@ -1,7 +1,7 @@
-namespace EcommerceExample.ValueObjects;
+﻿namespace EcommerceExample.ValueObjects;
 
 using FunctionalDdd;
 
-public partial class ProductId : RequiredGuid
+public partial class ProductId : RequiredGuid<ProductId>
 {
 }

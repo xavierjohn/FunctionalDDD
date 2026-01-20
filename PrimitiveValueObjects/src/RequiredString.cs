@@ -6,7 +6,7 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="ScalarValueObject{T}"/> to provide a specialized base for string-based value objects
+/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for string-based value objects
 /// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
@@ -42,7 +42,7 @@
 /// Creating a strongly-typed name value object:
 /// <code>
 /// // Define the value object (partial keyword enables source generation)
-/// public partial class FirstName : RequiredString
+/// public partial class FirstName : RequiredString&lt;FirstName&gt;
 /// {
 /// }
 /// 
@@ -121,11 +121,11 @@
 /// <example>
 /// Multiple string-based value objects:
 /// <code>
-/// public partial class FirstName : RequiredString { }
-/// public partial class LastName : RequiredString { }
-/// public partial class CompanyName : RequiredString { }
-/// public partial class ProductName : RequiredString { }
-/// public partial class Description : RequiredString { }
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+/// public partial class LastName : RequiredString&lt;LastName&gt; { }
+/// public partial class CompanyName : RequiredString&lt;CompanyName&gt; { }
+/// public partial class ProductName : RequiredString&lt;ProductName&gt; { }
+/// public partial class Description : RequiredString&lt;Description&gt; { }
 /// 
 /// public class Product : Entity&lt;ProductId&gt;
 /// {
@@ -147,7 +147,7 @@
 /// Advanced: Adding custom validation to derived types:
 /// <code>
 /// // While RequiredString handles null/empty, you can add domain-specific rules
-/// public partial class ProductSKU : RequiredString
+/// public partial class ProductSKU : RequiredString&lt;ProductSKU&gt;
 /// {
 ///     // Additional validation can be done in factory methods
 ///     public static Result&lt;ProductSKU&gt; TryCreateWithValidation(string? value) =>
@@ -166,13 +166,14 @@
 /// // Failure: "SKU can only contain letters, digits, and hyphens"
 /// </code>
 /// </example>
-/// <seealso cref="ScalarValueObject{T}"/>
-/// <seealso cref="RequiredGuid"/>
+/// <seealso cref="ScalarValueObject{TSelf, T}"/>
+/// <seealso cref="RequiredGuid{TSelf}"/>
 /// <seealso cref="EmailAddress"/>
-public abstract class RequiredString : ScalarValueObject<string>
+public abstract class RequiredString<TSelf> : ScalarValueObject<TSelf, string>
+    where TSelf : RequiredString<TSelf>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="RequiredString"/> class with the specified string value.
+    /// Initializes a new instance of the <see cref="RequiredString{TSelf}"/> class with the specified string value.
     /// </summary>
     /// <param name="value">The string value. Must not be null or empty.</param>
     /// <remarks>

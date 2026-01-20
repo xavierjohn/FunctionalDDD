@@ -6,19 +6,28 @@ public class ScalarValueObjectTests
 {
     #region Test Value Objects
 
-    internal class PasswordSimple : ScalarValueObject<string>
+    internal class PasswordSimple : ScalarValueObject<PasswordSimple, string>
     {
         public PasswordSimple(string value) : base(value) { }
+
+        public static Result<PasswordSimple> TryCreate(string value) =>
+            Result.Success(new PasswordSimple(value));
     }
 
     internal class DerivedPasswordSimple : PasswordSimple
     {
         public DerivedPasswordSimple(string value) : base(value) { }
+
+        public static new Result<DerivedPasswordSimple> TryCreate(string value) =>
+            Result.Success(new DerivedPasswordSimple(value));
     }
 
-    internal class MoneySimple : ScalarValueObject<decimal>
+    internal class MoneySimple : ScalarValueObject<MoneySimple, decimal>
     {
         public MoneySimple(decimal value) : base(value) { }
+
+        public static Result<MoneySimple> TryCreate(decimal value) =>
+            Result.Success(new MoneySimple(value));
 
         protected override IEnumerable<IComparable> GetEqualityComponents()
         {
@@ -26,24 +35,36 @@ public class ScalarValueObjectTests
         }
     }
 
-    internal class CustomerId : ScalarValueObject<Guid>
+    internal class CustomerId : ScalarValueObject<CustomerId, Guid>
     {
         public CustomerId(Guid value) : base(value) { }
+
+        public static Result<CustomerId> TryCreate(Guid value) =>
+            Result.Success(new CustomerId(value));
     }
 
-    internal class Quantity : ScalarValueObject<int>
+    internal class Quantity : ScalarValueObject<Quantity, int>
     {
         public Quantity(int value) : base(value) { }
+
+        public static Result<Quantity> TryCreate(int value) =>
+            Result.Success(new Quantity(value));
     }
 
-    internal class CharWrapper : ScalarValueObject<char>
+    internal class CharWrapper : ScalarValueObject<CharWrapper, char>
     {
         public CharWrapper(char value) : base(value) { }
+
+        public static Result<CharWrapper> TryCreate(char value) =>
+            Result.Success(new CharWrapper(value));
     }
 
-    internal class DateTimeWrapper : ScalarValueObject<DateTime>
+    internal class DateTimeWrapper : ScalarValueObject<DateTimeWrapper, DateTime>
     {
         public DateTimeWrapper(DateTime value) : base(value) { }
+
+        public static Result<DateTimeWrapper> TryCreate(DateTime value) =>
+            Result.Success(new DateTimeWrapper(value));
     }
 
     #endregion
