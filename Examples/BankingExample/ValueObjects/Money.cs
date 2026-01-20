@@ -5,7 +5,7 @@ using FunctionalDdd;
 /// <summary>
 /// Represents a monetary amount in the banking system.
 /// </summary>
-public class Money : ScalarValueObject<Money, decimal>
+public class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money, decimal>
 {
     private Money(decimal value) : base(value) { }
 

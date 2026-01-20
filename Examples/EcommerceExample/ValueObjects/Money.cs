@@ -5,7 +5,7 @@ using FunctionalDdd;
 /// <summary>
 /// Represents a monetary amount with currency and validation.
 /// </summary>
-public class Money : ScalarValueObject<Money, decimal>
+public class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money, decimal>
 {
     public string Currency { get; }
 
@@ -14,7 +14,9 @@ public class Money : ScalarValueObject<Money, decimal>
         Currency = currency;
     }
 
-    public static Result<Money> TryCreate(decimal amount, string currency = "USD")
+    public static Result<Money> TryCreate(decimal amount) => TryCreate(amount, "USD");
+
+    public static Result<Money> TryCreate(decimal amount, string currency)
     {
         if (amount < 0)
             return Error.Validation("Amount cannot be negative", nameof(amount));

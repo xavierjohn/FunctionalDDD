@@ -157,7 +157,7 @@ using System.Text.RegularExpressions;
 /// <seealso cref="RequiredString{TSelf}"/>
 /// <seealso cref="IParsable{TSelf}"/>
 [JsonConverter(typeof(ParsableJsonConverter<EmailAddress>))]
-public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, IParsable<EmailAddress>
+public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>, IParsable<EmailAddress>
 {
     private EmailAddress(string value) : base(value) { }
 

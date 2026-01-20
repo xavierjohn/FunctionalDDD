@@ -184,7 +184,7 @@
 /// <seealso cref="ScalarValueObject{TSelf, T}"/>
 /// <seealso cref="RequiredString{TSelf}"/>
 public abstract class RequiredGuid<TSelf> : ScalarValueObject<TSelf, Guid>
-    where TSelf : RequiredGuid<TSelf>
+    where TSelf : RequiredGuid<TSelf>, IScalarValueObject<TSelf, Guid>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredGuid{TSelf}"/> class with the specified GUID value.

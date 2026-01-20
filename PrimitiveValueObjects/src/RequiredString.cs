@@ -218,7 +218,7 @@
 /// <seealso cref="RequiredGuid{TSelf}"/>
 /// <seealso cref="EmailAddress"/>
 public abstract class RequiredString<TSelf> : ScalarValueObject<TSelf, string>
-    where TSelf : RequiredString<TSelf>
+    where TSelf : RequiredString<TSelf>, IScalarValueObject<TSelf, string>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredString{TSelf}"/> class with the specified string value.

@@ -29,21 +29,26 @@ using Microsoft.Extensions.DependencyInjection;
 public class ScalarValueObjectModelBinderProvider : IModelBinderProvider
 {
     /// <summary>
-        /// Returns a model binder for ScalarValueObject types, or null for other types.
-        /// </summary>
-        /// <param name="context">The model binder provider context.</param>
-        /// <returns>A model binder for the type, or null if not applicable.</returns>
-    #pragma warning disable IL3050 // Uses MakeGenericType which is not AOT compatible
-    #pragma warning disable IL2075 // GetInterfaces requires DynamicallyAccessedMembers
-    #pragma warning disable IL2070 // GetInterfaces requires DynamicallyAccessedMembers
-        public IModelBinder? GetBinder(ModelBinderProviderContext context)
-        {
-            ArgumentNullException.ThrowIfNull(context);
+    /// Returns a model binder for ScalarValueObject types, or null for other types.
+    /// </summary>
+    /// <param name="context">The model binder provider context.</param>
+    /// <returns>A model binder for the type, or null if not applicable.</returns>
+    /// <remarks>
+    /// This method uses reflection to detect value object types and create binders dynamically.
+    /// It is not compatible with Native AOT scenarios.
+    /// </remarks>
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Value object types are preserved by model binding infrastructure")]
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Value object types are preserved by model binding infrastructure")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "Value object types are preserved by model binding infrastructure")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Model binding is not compatible with Native AOT")]
+    public IModelBinder? GetBinder(ModelBinderProviderContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
 
-            var modelType = context.Metadata.ModelType;
+        var modelType = context.Metadata.ModelType;
 
-            // Check if implements IScalarValueObject<TSelf, TPrimitive>
-            var valueObjectInterface = GetScalarValueObjectInterface(modelType);
+        // Check if implements IScalarValueObject<TSelf, TPrimitive>
+        var valueObjectInterface = GetScalarValueObjectInterface(modelType);
 
             if (valueObjectInterface is null)
                 return null;
@@ -54,17 +59,13 @@ public class ScalarValueObjectModelBinderProvider : IModelBinderProvider
                 .MakeGenericType(modelType, primitiveType);
 
             return (IModelBinder)Activator.CreateInstance(binderType)!;
-                }
+    }
 
-            #pragma warning disable IL2070 // GetInterfaces requires DynamicallyAccessedMembers
-                private static Type? GetScalarValueObjectInterface(Type modelType) =>
-                    modelType
-                        .GetInterfaces()
-                        .FirstOrDefault(i =>
-                            i.IsGenericType &&
-                            i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
-                            i.GetGenericArguments()[0] == modelType);
-            #pragma warning restore IL2070
-            #pragma warning restore IL2075
-            #pragma warning restore IL3050
-            }
+    private static Type? GetScalarValueObjectInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type modelType) =>
+        modelType
+            .GetInterfaces()
+            .FirstOrDefault(i =>
+                i.IsGenericType &&
+                i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
+                i.GetGenericArguments()[0] == modelType);
+}

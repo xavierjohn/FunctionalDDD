@@ -119,7 +119,7 @@
 /// ]]></code>
 /// </example>
 public abstract class ScalarValueObject<TSelf, T> : ValueObject, IConvertible
-    where TSelf : ScalarValueObject<TSelf, T>
+    where TSelf : ScalarValueObject<TSelf, T>, IScalarValueObject<TSelf, T>
     where T : IComparable
 {
     /// <summary>

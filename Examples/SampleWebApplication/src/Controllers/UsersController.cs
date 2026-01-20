@@ -8,7 +8,6 @@ using SampleUserLibrary;
 [Route("[controller]")]
 public class UsersController : ControllerBase
 {
-#pragma warning disable ASP0023 // Route conflict detected between controller actions
     [HttpPost("[action]")]
     public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
         FirstName.TryCreate(request.firstName)

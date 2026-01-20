@@ -36,8 +36,11 @@ public class ScalarValueObjectJsonConverter<TValueObject, TPrimitive> : JsonConv
     /// <param name="options">The serializer options.</param>
     /// <returns>The deserialized value object.</returns>
     /// <exception cref="JsonException">Thrown when the value is null or validation fails.</exception>
-#pragma warning disable IL2026 // RequiresUnreferencedCode
-#pragma warning disable IL3050 // RequiresDynamicCode
+    /// <remarks>
+    /// This method uses JsonSerializer.Deserialize which may require unreferenced code.
+    /// </remarks>
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "TPrimitive type parameter is preserved by JSON serialization infrastructure")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JSON deserialization of primitive types is compatible with AOT")]
     public override TValueObject? Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
@@ -71,10 +74,10 @@ public class ScalarValueObjectJsonConverter<TValueObject, TPrimitive> : JsonConv
     /// <param name="writer">The JSON writer.</param>
     /// <param name="value">The value object to serialize.</param>
     /// <param name="options">The serializer options.</param>
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "TPrimitive type parameter is preserved by JSON serialization infrastructure")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JSON serialization of primitive types is compatible with AOT")]
     public override void Write(
         Utf8JsonWriter writer,
         TValueObject value,
         JsonSerializerOptions options) => JsonSerializer.Serialize(writer, value.Value, options);
-#pragma warning restore IL3050
-#pragma warning restore IL2026
 }
