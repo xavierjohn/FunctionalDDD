@@ -10,10 +10,14 @@
 /// with automatic validation that prevents empty/default GUIDs. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item>Static factory methods (<c>NewUnique</c>, <c>TryCreate</c>)</item>
+/// <item><c>IScalarValueObject&lt;TSelf, Guid&gt;</c> implementation for ASP.NET Core automatic validation</item>
+/// <item><c>NewUnique()</c> - Factory method for generating new unique identifiers</item>
+/// <item><c>TryCreate(Guid)</c> - Factory method for non-nullable GUIDs (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(Guid?, string?)</c> - Factory method with empty GUID validation and custom field name</item>
+/// <item><c>TryCreate(string?, string?)</c> - Factory method for parsing strings with validation</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
-/// <item>Validation logic that ensures non-empty GUIDs</item>
 /// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
+/// <item>Explicit cast operator from Guid</item>
 /// <item>OpenTelemetry activity tracing</item>
 /// </list>
 /// </para>
@@ -46,11 +50,14 @@
 /// }
 /// 
 /// // The source generator automatically creates:
+/// // - IScalarValueObject&lt;CustomerId, Guid&gt; interface implementation
 /// // - public static CustomerId NewUnique() => new(Guid.NewGuid());
+/// // - public static Result&lt;CustomerId&gt; TryCreate(Guid value)
 /// // - public static Result&lt;CustomerId&gt; TryCreate(Guid? value, string? fieldName = null)
 /// // - public static Result&lt;CustomerId&gt; TryCreate(string? value, string? fieldName = null)
 /// // - public static CustomerId Parse(string s, IFormatProvider? provider)
 /// // - public static bool TryParse(string? s, IFormatProvider? provider, out CustomerId result)
+/// // - public static explicit operator CustomerId(Guid value)
 /// // - private CustomerId(Guid value) : base(value) { }
 /// 
 /// // Usage examples:
@@ -89,7 +96,50 @@
 /// </code>
 /// </example>
 /// <example>
-/// Using in API endpoints with automatic JSON serialization:
+/// ASP.NET Core automatic validation with route parameters:
+/// <code>
+/// // 1. Register automatic validation in Program.cs
+/// builder.Services
+///     .AddControllers()
+///     .AddScalarValueObjectValidation(); // Enables automatic validation!
+///
+/// // 2. Use value objects directly in controller actions
+/// [ApiController]
+/// [Route("api/customers")]
+/// public class CustomersController : ControllerBase
+/// {
+///     [HttpGet("{id}")]
+///     public async Task&lt;ActionResult&lt;Customer&gt;&gt; Get(CustomerId id) // Automatically validated!
+///     {
+///         // If we reach here, 'id' is a valid, non-empty CustomerId
+///         // Model binding validated it automatically
+///         var customer = await _repository.GetByIdAsync(id);
+///         return Ok(customer);
+///     }
+///
+///     [HttpDelete("{id}")]
+///     public async Task&lt;IActionResult&gt; Delete(CustomerId id) // Also works here!
+///     {
+///         await _repository.DeleteAsync(id);
+///         return NoContent();
+///     }
+/// }
+///
+/// // Invalid GUID is rejected automatically:
+/// // GET /api/customers/00000000-0000-0000-0000-000000000000
+/// // Response: 400 Bad Request
+/// // {
+/// //   "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+/// //   "title": "One or more validation errors occurred.",
+/// //   "status": 400,
+/// //   "errors": {
+/// //     "id": ["Customer Id cannot be empty."]
+/// //   }
+/// // }
+/// </code>
+/// </example>
+/// <example>
+/// Using in API endpoints with automatic JSON serialization (manual approach):
 /// <code>
 /// // Request DTO
 /// public record GetCustomerRequest(CustomerId CustomerId);

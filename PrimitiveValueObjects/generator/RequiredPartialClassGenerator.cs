@@ -21,8 +21,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// <para>
 /// For each partial class inheriting from <c>RequiredGuid</c>, generates:
 /// <list type="bullet">
+/// <item><c>IScalarValueObject&lt;TSelf, Guid&gt;</c> - Interface for ASP.NET Core automatic validation</item>
 /// <item><c>NewUnique()</c> - Creates a new instance with a unique GUID</item>
-/// <item><c>TryCreate(Guid?)</c> - Creates from GUID with empty validation</item>
+/// <item><c>TryCreate(Guid)</c> - Creates from non-nullable GUID (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(Guid?)</c> - Creates from nullable GUID with empty validation</item>
 /// <item><c>TryCreate(string?)</c> - Parses from string with format and empty validation</item>
 /// <item><c>Parse(string, IFormatProvider?)</c> - IParsable implementation</item>
 /// <item><c>TryParse(...)</c> - IParsable try-parse pattern</item>
@@ -35,7 +37,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// <para>
 /// For each partial class inheriting from <c>RequiredString</c>, generates:
 /// <list type="bullet">
-/// <item><c>TryCreate(string?)</c> - Creates from string with null/empty/whitespace validation</item>
+/// <item><c>IScalarValueObject&lt;TSelf, string&gt;</c> - Interface for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(string)</c> - Creates from non-nullable string (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(string?)</c> - Creates from nullable string with null/empty/whitespace validation</item>
 /// <item><c>Parse(string, IFormatProvider?)</c> - IParsable implementation</item>
 /// <item><c>TryParse(...)</c> - IParsable try-parse pattern</item>
 /// <item>Private constructor calling base class</item>
@@ -81,34 +85,38 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// using FunctionalDdd;
 /// using System.Diagnostics.CodeAnalysis;
 /// using System.Text.Json.Serialization;
-/// 
+///
 /// [JsonConverter(typeof(ParsableJsonConverter&lt;CustomerId&gt;)]
-/// public partial class CustomerId : RequiredGuid, IParsable&lt;CustomerId&gt;
+/// public partial class CustomerId : IScalarValueObject&lt;CustomerId, Guid&gt;, IParsable&lt;CustomerId&gt;
 /// {
-///     protected static readonly Error CannotBeEmptyError = 
-///         Error.Validation("Customer Id cannot be empty.", "customerId");
-///     
 ///     private CustomerId(Guid value) : base(value) { }
-///     
-///     public static explicit operator CustomerId(Guid customerId) 
+///
+///     public static explicit operator CustomerId(Guid customerId)
 ///         =&gt; TryCreate(customerId).Value;
-///     
+///
 ///     public static CustomerId NewUnique() =&gt; new(Guid.NewGuid());
-///     
-///     public static Result&lt;CustomerId&gt; TryCreate(Guid? requiredGuidOrNothing)
+///
+///     // Required by IScalarValueObject - enables automatic ASP.NET Core validation
+///     public static Result&lt;CustomerId&gt; TryCreate(Guid value)
+///         =&gt; TryCreate((Guid?)value, null);
+///
+///     public static Result&lt;CustomerId&gt; TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
 ///     {
-///         using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("CustomerId.TryCreate");
+///         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("CustomerId.TryCreate");
+///         var field = !string.IsNullOrEmpty(fieldName)
+///             ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+///             : "customerId";
 ///         return requiredGuidOrNothing
-///             .ToResult(CannotBeEmptyError)
-///             .Ensure(x =&gt; x != Guid.Empty, CannotBeEmptyError)
+///             .ToResult(Error.Validation("Customer Id cannot be empty.", field))
+///             .Ensure(x =&gt; x != Guid.Empty, Error.Validation("Customer Id cannot be empty.", field))
 ///             .Map(guid =&gt; new CustomerId(guid));
 ///     }
-///     
-///     public static Result&lt;CustomerId&gt; TryCreate(string? stringOrNull)
+///
+///     public static Result&lt;CustomerId&gt; TryCreate(string? stringOrNull, string? fieldName = null)
 ///     {
 ///         // Parsing logic with validation...
 ///     }
-///     
+///
 ///     public static CustomerId Parse(string s, IFormatProvider? provider) { /* ... */ }
 ///     public static bool TryParse(...) { /* ... */ }
 /// }
@@ -204,7 +212,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
     #nullable enable
     [JsonConverter(typeof(ParsableJsonConverter<{g.ClassName}>))]
-    {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : IParsable<{g.ClassName}>
+    {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : IScalarValueObject<{g.ClassName}, {classType}>, IParsable<{g.ClassName}>
     {{
         private {g.ClassName}({classType} value) : base(value)
         {{

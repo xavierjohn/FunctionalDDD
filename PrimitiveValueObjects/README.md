@@ -35,11 +35,13 @@ dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
 Create strongly-typed string value objects using source code generation:
 
 ```csharp
-public partial class TrackingId : RequiredString
+public partial class TrackingId : RequiredString<TrackingId>
 {
 }
 
-// Generated methods include:
+// The source generator automatically creates:
+// - IScalarValueObject<TrackingId, string> interface implementation
+// - TryCreate(string) -> Result<TrackingId> (required by IScalarValueObject)
 // - TryCreate(string?, string? fieldName = null) -> Result<TrackingId>
 // - Parse(string, IFormatProvider?) -> TrackingId
 // - TryParse(string?, IFormatProvider?, out TrackingId) -> bool
@@ -68,12 +70,14 @@ var trackingId = (TrackingId)"TRK-12345";
 Create strongly-typed GUID value objects:
 
 ```csharp
-public partial class EmployeeId : RequiredGuid
+public partial class EmployeeId : RequiredGuid<EmployeeId>
 {
 }
 
-// Generated methods include:
+// The source generator automatically creates:
+// - IScalarValueObject<EmployeeId, Guid> interface implementation
 // - NewUnique() -> EmployeeId
+// - TryCreate(Guid) -> Result<EmployeeId> (required by IScalarValueObject)
 // - TryCreate(Guid?, string? fieldName = null) -> Result<EmployeeId>
 // - TryCreate(string?, string? fieldName = null) -> Result<EmployeeId>
 // - Parse(string, IFormatProvider?) -> EmployeeId
@@ -122,13 +126,66 @@ if (EmailAddress.TryParse("user@example.com", null, out var email))
 }
 ```
 
+### ASP.NET Core Integration
+
+Value objects implementing `IScalarValueObject` work seamlessly with ASP.NET Core for automatic validation:
+
+```csharp
+// 1. Register in Program.cs
+builder.Services
+    .AddControllers()
+    .AddScalarValueObjectValidation(); // Enable automatic validation!
+
+// 2. Define your value objects (source generator adds IScalarValueObject automatically)
+public partial class FirstName : RequiredString<FirstName> { }
+public partial class CustomerId : RequiredGuid<CustomerId> { }
+
+// 3. Use in DTOs
+public record CreateUserDto
+{
+    public FirstName FirstName { get; init; } = null!;
+    public EmailAddress Email { get; init; } = null!;
+}
+
+// 4. Controllers get automatic validation - no manual Result.Combine needed!
+[ApiController]
+[Route("api/users")]
+public class UsersController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Create(CreateUserDto dto)
+    {
+        // If we reach here, dto is FULLY validated!
+        // Model binding validated all value objects automatically
+        var user = new User(dto.FirstName, dto.Email);
+        return Ok(user);
+    }
+
+    [HttpGet("{id}")]
+    public IActionResult Get(CustomerId id) // Route parameter validated automatically!
+    {
+        var user = _repository.GetById(id);
+        return Ok(user);
+    }
+}
+
+// Invalid requests automatically return 400 Bad Request with validation errors
+```
+
+**Benefits:**
+- ✅ No manual `Result.Combine()` calls in controllers
+- ✅ Works with route parameters, query strings, form data, and JSON bodies
+- ✅ Validation errors automatically flow into `ModelState`
+- ✅ Standard ASP.NET Core validation infrastructure
+- ✅ Works with `[ApiController]` attribute for automatic 400 responses
+
 ## Core Concepts
 
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
-| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IParsable, explicit cast, fieldName |
-| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, NewUnique(), IParsable, fieldName |
-| **EmailAddress** | Domain primitive | Email validation | RFC 5322 compliant, IParsable, fieldName |
+| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
+| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValueObject, NewUnique(), ASP.NET validation |
+| **EmailAddress** | Domain primitive | Email validation | RFC 5322 compliant, IScalarValueObject, IParsable, ASP.NET validation |
 
 **What are Primitive Value Objects?**
 
