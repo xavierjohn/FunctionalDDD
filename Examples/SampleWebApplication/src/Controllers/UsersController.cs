@@ -23,10 +23,9 @@ public class UsersController : ControllerBase
     /// <remarks>
     /// This action demonstrates the simplified pattern with automatic validation.
     /// The request DTO contains value objects directly (FirstName, LastName, EmailAddress),
-    /// which are validated automatically during JSON deserialization.
+    /// which are validated automatically during model binding.
     /// 
-    /// If any value object validation fails, a 400 Bad Request is returned before
-    /// this method is even called - no manual Combine chains needed!
+    /// With [ApiController], invalid ModelState automatically returns 400.
     /// </remarks>
     [HttpPost("[action]")]
     public ActionResult<User> RegisterWithValidation([FromBody] CreateUserWithValidationRequest request) =>

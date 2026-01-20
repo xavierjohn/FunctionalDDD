@@ -12,8 +12,18 @@ using System.Text.Json.Serialization;
 public delegate JsonConverter WrapperConverterFactory(JsonConverter innerConverter, string propertyName);
 
 /// <summary>
-/// A registry for pre-instantiated JSON converters for ITryCreatable types.
-/// Used by <see cref="ValidatingJsonConverterFactory"/> to provide AOT-compatible converter lookup.
+/// Delegate for calling TryCreate on a value object type.
+/// Returns a result with the value extracted to avoid reflection.
+/// </summary>
+/// <param name="value">The string value to parse.</param>
+/// <param name="fieldName">The field name for validation errors.</param>
+/// <returns>A tuple containing success state, the value (if successful), and the error (if failed).</returns>
+public delegate (bool IsSuccess, object? Value, Error? Error) TryCreateFactory(string? value, string? fieldName);
+
+/// <summary>
+/// A registry for pre-instantiated JSON converters and TryCreate delegates for ITryCreatable types.
+/// Used by <see cref="ValidatingJsonConverterFactory"/> and <see cref="ValueObjectModelBinder"/> 
+/// to provide AOT-compatible lookup.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -29,9 +39,10 @@ public static class ValidatingConverterRegistry
 {
     private static readonly ConcurrentDictionary<Type, JsonConverter> s_converters = new();
     private static readonly ConcurrentDictionary<Type, WrapperConverterFactory> s_wrapperFactories = new();
+    private static readonly ConcurrentDictionary<Type, TryCreateFactory> s_tryCreateDelegates = new();
 
     /// <summary>
-    /// Registers a converter for the specified type.
+    /// Registers a converter and TryCreate delegate for the specified type.
     /// </summary>
     /// <typeparam name="T">The ITryCreatable type to register.</typeparam>
     public static void Register<T>() where T : class, ITryCreatable<T>
@@ -39,10 +50,15 @@ public static class ValidatingConverterRegistry
         s_converters.TryAdd(typeof(T), new ValidatingJsonConverter<T>());
         s_wrapperFactories.TryAdd(typeof(T), static (inner, propName) =>
             new PropertyNameAwareConverter<T>((ValidatingJsonConverter<T>)inner, propName));
+        s_tryCreateDelegates.TryAdd(typeof(T), static (value, fieldName) =>
+        {
+            var result = T.TryCreate(value, fieldName);
+            return (result.IsSuccess, result.IsSuccess ? result.Value : null, result.IsFailure ? result.Error : null);
+        });
     }
 
     /// <summary>
-    /// Registers a struct converter for the specified value type.
+    /// Registers a struct converter and TryCreate delegate for the specified value type.
     /// </summary>
     /// <typeparam name="T">The ITryCreatable value type to register.</typeparam>
     public static void RegisterStruct<T>() where T : struct, ITryCreatable<T>
@@ -50,6 +66,11 @@ public static class ValidatingConverterRegistry
         s_converters.TryAdd(typeof(T), new ValidatingStructJsonConverter<T>());
         s_wrapperFactories.TryAdd(typeof(T), static (inner, propName) =>
             new PropertyNameAwareConverter<T?>((ValidatingStructJsonConverter<T>)inner, propName));
+        s_tryCreateDelegates.TryAdd(typeof(T), static (value, fieldName) =>
+        {
+            var result = T.TryCreate(value, fieldName);
+            return (result.IsSuccess, result.IsSuccess ? (object?)result.Value : null, result.IsFailure ? result.Error : null);
+        });
     }
 
     /// <summary>
@@ -97,11 +118,36 @@ public static class ValidatingConverterRegistry
     }
 
     /// <summary>
-    /// Clears all registered converters. Primarily for testing.
+    /// Gets the registered TryCreate delegate for the specified type.
+    /// </summary>
+    /// <param name="type">The type to get the TryCreate delegate for.</param>
+    /// <returns>The delegate if registered; otherwise null.</returns>
+    public static TryCreateFactory? GetTryCreateFactory(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type);
+        var typeToCheck = underlyingType ?? type;
+        return s_tryCreateDelegates.TryGetValue(typeToCheck, out var del) ? del : null;
+    }
+
+    /// <summary>
+    /// Checks if a type has a registered TryCreate delegate.
+    /// </summary>
+    /// <param name="type">The type to check.</param>
+    /// <returns>True if a delegate is registered; otherwise false.</returns>
+    public static bool HasTryCreateFactory(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type);
+        var typeToCheck = underlyingType ?? type;
+        return s_tryCreateDelegates.ContainsKey(typeToCheck);
+    }
+
+    /// <summary>
+    /// Clears all registered converters and delegates. Primarily for testing.
     /// </summary>
     internal static void Clear()
     {
         s_converters.Clear();
         s_wrapperFactories.Clear();
+        s_tryCreateDelegates.Clear();
     }
 }

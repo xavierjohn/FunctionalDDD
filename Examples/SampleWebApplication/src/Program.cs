@@ -2,19 +2,20 @@
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add MVC controllers
 builder.Services.AddControllers();
 
-// Enable automatic validation of value objects in JSON DTOs
-builder.Services.AddValueObjectValidation();
+// Enable automatic value object validation for MVC
+// - [FromBody] JSON: validated via JSON converter
+// - [FromQuery], [FromRoute], [FromForm]: validated via model binder
+builder.Services.AddValueObjectModelBinding();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -23,11 +24,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Enable value object validation middleware (must be before routing)
+// Enable validation scope for [FromBody] JSON
 app.UseValueObjectValidation();
 
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

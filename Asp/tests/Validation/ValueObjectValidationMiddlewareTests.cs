@@ -3,7 +3,6 @@
 using FunctionalDdd;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -115,28 +114,10 @@ public class ValueObjectValidationMiddlewareTests
 }
 
 /// <summary>
-/// Tests for ValueObjectValidationExtensions - DI registration methods.
+/// Tests for ValueObjectValidationExtensions - DI registration methods (Minimal API).
 /// </summary>
 public class ValueObjectValidationExtensionsTests
 {
-    [Fact]
-    public void AddValueObjectValidation_RegistersMvcJsonOptions()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.AddControllers();
-
-        // Act
-        services.AddValueObjectValidation();
-        var provider = services.BuildServiceProvider();
-
-        // Assert - MVC JSON options should have the converter
-        var mvcOptions = provider.GetService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Mvc.JsonOptions>>();
-        mvcOptions.Should().NotBeNull();
-        mvcOptions!.Value.JsonSerializerOptions.Converters
-            .Should().ContainSingle(c => c is ValidatingJsonConverterFactory);
-    }
-
     [Fact]
     public void AddValueObjectValidation_RegistersMinimalApiJsonOptions()
     {
@@ -152,23 +133,6 @@ public class ValueObjectValidationExtensionsTests
         minimalApiOptions.Should().NotBeNull();
         minimalApiOptions!.Value.SerializerOptions.Converters
             .Should().ContainSingle(c => c is ValidatingJsonConverterFactory);
-    }
-
-    [Fact]
-    public void AddValueObjectValidation_RegistersValidationFilter()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.AddControllers();
-
-        // Act
-        services.AddValueObjectValidation();
-        var provider = services.BuildServiceProvider();
-
-        // Assert - MVC options should have the validation filter
-        var mvcOptions = provider.GetService<Microsoft.Extensions.Options.IOptions<MvcOptions>>();
-        mvcOptions.Should().NotBeNull();
-        mvcOptions!.Value.Filters.Should().NotBeEmpty();
     }
 
     [Fact]

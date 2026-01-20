@@ -4,93 +4,62 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;
 using MinimalApiJsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 /// <summary>
-/// Extension methods for configuring value object validation in ASP.NET Core applications.
+/// Extension methods for configuring value object validation in Minimal API applications.
 /// </summary>
 /// <remarks>
 /// <para>
-/// These extensions enable automatic validation of value objects during JSON deserialization.
-/// When configured, DTOs can contain value objects directly (like <c>EmailAddress</c>, <c>FirstName</c>),
-/// and validation errors are automatically collected and returned as 400 Bad Request responses.
+/// These extensions enable automatic validation of value objects during JSON deserialization
+/// for <b>Minimal API</b> endpoints. For MVC controllers, use <see cref="ValueObjectModelBindingExtensions.AddValueObjectModelBinding"/>
+/// which provides a more idiomatic model binding approach.
 /// </para>
 /// <para>
-/// This eliminates the need for manual validation chains in every controller action:
-/// <code>
-/// // Before: Manual validation in every action
-/// [HttpPost]
-/// public ActionResult&lt;User&gt; Register([FromBody] RegisterRequest request) =>
-///     FirstName.TryCreate(request.firstName)
-///         .Combine(LastName.TryCreate(request.lastName))
-///         .Combine(EmailAddress.TryCreate(request.email))
-///         .Bind((first, last, email) => User.TryCreate(first, last, email))
-///         .ToActionResult(this);
-/// 
-/// // After: Value objects in DTO, automatic validation
-/// public record CreateUserRequest(FirstName FirstName, LastName LastName, EmailAddress Email);
-/// 
-/// [HttpPost]
-/// public ActionResult&lt;User&gt; Register([FromBody] CreateUserRequest request) =>
-///     User.TryCreate(request.FirstName, request.LastName, request.Email)
-///         .ToActionResult(this);
-/// </code>
+/// When configured, DTOs can contain value objects directly (like <c>EmailAddress</c>, <c>FirstName</c>),
+/// and validation errors are automatically collected and returned as 400 Bad Request responses.
 /// </para>
 /// </remarks>
 public static class ValueObjectValidationExtensions
 {
     /// <summary>
-    /// Adds value object validation services to the specified <see cref="IServiceCollection"/>.
+    /// Adds value object validation services for Minimal API endpoints.
     /// </summary>
     /// <param name="services">The service collection to configure.</param>
     /// <returns>The service collection for chaining.</returns>
     /// <remarks>
     /// <para>
-    /// This method configures:
-    /// <list type="bullet">
-    /// <item>JSON serializer options with <see cref="ValidatingJsonConverterFactory"/></item>
-    /// <item>MVC options with <see cref="ValueObjectValidationFilter"/></item>
-    /// </list>
+    /// This method configures JSON serializer options with <see cref="ValidatingJsonConverterFactory"/>
+    /// for Minimal API endpoints.
     /// </para>
     /// <para>
-    /// Call this method after <c>AddControllers()</c> or <c>AddControllersWithViews()</c>:
-    /// <code>
-    /// builder.Services.AddControllers();
-    /// builder.Services.AddValueObjectValidation();
-    /// </code>
+    /// <b>For MVC controllers</b>, use <see cref="ValueObjectModelBindingExtensions.AddValueObjectModelBinding"/> instead,
+    /// which uses model binding and works with all content types (JSON, XML, Form, Query, Route).
     /// </para>
     /// </remarks>
     /// <example>
     /// <code>
     /// var builder = WebApplication.CreateBuilder(args);
     /// 
-    /// builder.Services.AddControllers();
+    /// // For Minimal API
     /// builder.Services.AddValueObjectValidation();
     /// 
     /// var app = builder.Build();
     /// 
     /// app.UseValueObjectValidation();
-    /// app.MapControllers();
+    /// 
+    /// app.MapPost("/users", (CreateUserRequest request) => ...)
+    ///    .WithValueObjectValidation();
     /// 
     /// app.Run();
     /// </code>
     /// </example>
     public static IServiceCollection AddValueObjectValidation(this IServiceCollection services)
     {
-        // Configure MVC JSON options (for controllers)
-        services.Configure<MvcJsonOptions>(options =>
-            ConfigureJsonOptions(options.JsonSerializerOptions));
-
         // Configure Minimal API JSON options
         services.Configure<MinimalApiJsonOptions>(options =>
             ConfigureJsonOptions(options.SerializerOptions));
-
-        // Add the validation filter for MVC
-        services.Configure<MvcOptions>(options =>
-            options.Filters.Add<ValueObjectValidationFilter>());
 
         return services;
     }
@@ -123,7 +92,7 @@ public static class ValueObjectValidationExtensions
     /// <see cref="ValidationErrorsContext.CurrentPropertyName"/> before the inner converter reads the value.
     /// This approach is AOT-compatible because it uses cached converters from the registry.
     /// </remarks>
-    private static void ModifyTypeInfo(JsonTypeInfo typeInfo)
+    internal static void ModifyTypeInfo(JsonTypeInfo typeInfo)
     {
         if (typeInfo.Kind != JsonTypeInfoKind.Object)
             return;

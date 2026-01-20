@@ -4,7 +4,7 @@ using FunctionalDdd;
 
 /// <summary>
 /// A request DTO that uses value objects directly for automatic validation.
-/// When used with AddValueObjectValidation(), validation happens during JSON deserialization.
+/// When used with AddValueObjectModelBinding(), validation happens during model binding.
 /// </summary>
 /// <remarks>
 /// <para>
