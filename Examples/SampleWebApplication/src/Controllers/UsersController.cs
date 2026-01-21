@@ -76,4 +76,26 @@ public class UsersController : ControllerBase
 
         return userResult.ToActionResult(this);
     }
+
+    /// <summary>
+    /// Tests that the same value object type (Name) used for multiple properties
+    /// correctly reports validation errors with the property name, not the type name.
+    /// </summary>
+    /// <param name="dto">Registration data using Name for both FirstName and LastName.</param>
+    /// <returns>
+    /// 200 OK with success message if all validations pass.
+    /// 400 Bad Request with validation errors showing "FirstName" and "LastName" field names.
+    /// </returns>
+    [HttpPost("[action]")]
+    public ActionResult<object> RegisterWithSharedNameType([FromBody] RegisterWithNameDto dto) =>
+        // If we reach here, all value objects are validated.
+        // The key test: both FirstName and LastName use the "Name" type,
+        // but errors should show "FirstName" and "LastName" as field names.
+        Ok(new
+        {
+            FirstName = dto.FirstName.Value,
+            LastName = dto.LastName.Value,
+            Email = dto.Email.Value,
+            Message = "Validation passed - field names correctly attributed!"
+        });
 }

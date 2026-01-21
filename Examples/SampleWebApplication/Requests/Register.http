@@ -107,3 +107,66 @@ Content-Type: application/json
     "email": "invalid-email",
     "password": "SecurePass123!"
 }
+
+###############################################################################
+# Shared Value Object Type Test
+# This endpoint uses the same "Name" value object for both FirstName and LastName
+# The key test: validation errors should show "FirstName" and "LastName" as field names,
+# NOT "Name" (the type name)
+###############################################################################
+
+### Shared Name Type - Success
+# Both FirstName and LastName use "Name" type - returns 200 OK
+POST {{host}}/users/RegisterWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - Both Names Empty
+# KEY TEST: Both use "Name" type but errors should show "FirstName" and "LastName"
+# Expected response: {"errors":{"FirstName":["Name cannot be empty."],"LastName":["Name cannot be empty."]}}
+POST {{host}}/users/RegisterWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - Only FirstName Empty
+# Error should show "FirstName" not "Name"
+POST {{host}}/users/RegisterWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "Doe",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - Only LastName Empty
+# Error should show "LastName" not "Name"
+POST {{host}}/users/RegisterWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - All Invalid
+# All three fields invalid - errors should show correct field names
+POST {{host}}/users/RegisterWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "",
+    "email": "not-valid"
+}
