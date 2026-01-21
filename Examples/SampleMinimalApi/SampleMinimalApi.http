@@ -139,3 +139,14 @@ Content-Type: application/json
     "email": "invalid-email",
     "password": "SecurePass123!"
 }
+
+### Success
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "password": "Secure!Pass123"
+}
