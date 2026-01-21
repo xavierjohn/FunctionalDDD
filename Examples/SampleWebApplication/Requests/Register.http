@@ -40,3 +40,70 @@ Content-Type: application/json
     "email":"someone@somewhere.com",
     "password":"Amiko1232!"
 }
+
+###############################################################################
+# NEW: Automatic Value Object Validation
+# These endpoints use RegisterUserDto with value objects (FirstName, LastName, EmailAddress)
+# ASP.NET Core automatically validates them during model binding - no manual Result.Combine() needed!
+###############################################################################
+
+### Automatic Validation - Success
+# All value objects are valid - returns 200 OK
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "password": "SecurePass123!"
+}
+
+### Automatic Validation - Invalid Email
+# Email address is invalid (missing @) - returns 400 Bad Request
+# The framework automatically validates EmailAddress during model binding
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "not-an-email",
+    "password": "SecurePass123!"
+}
+
+### Automatic Validation - Missing FirstName
+# FirstName is null - returns 400 Bad Request
+# RequiredString validation happens automatically
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "password": "SecurePass123!"
+}
+
+### Automatic Validation - Empty LastName
+# LastName is empty string - returns 400 Bad Request
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "",
+    "email": "xavier@example.com",
+    "password": "SecurePass123!"
+}
+
+### Automatic Validation - Multiple Errors
+# Multiple validation errors - all are collected and returned
+# No firstName, invalid email format
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "lastName": "John",
+    "email": "invalid-email",
+    "password": "SecurePass123!"
+}

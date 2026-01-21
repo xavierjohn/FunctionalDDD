@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.Asp;
+﻿namespace FunctionalDdd;
 
 using FunctionalDdd.Asp.ModelBinding;
 using FunctionalDdd.Asp.Serialization;

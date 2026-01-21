@@ -44,4 +44,36 @@ public class UsersController : ControllerBase
         UserId.TryCreate(id).Match(
             onSuccess: ok => NoContent(),
             onFailure: err => err.ToActionResult<Unit>(this));
+
+    /// <summary>
+    /// Registers a new user with automatic value object validation.
+    /// No manual validation or Result.Combine() needed - the framework
+    /// handles it automatically via AddScalarValueObjectValidation().
+    /// </summary>
+    /// <param name="dto">Registration data with value objects.</param>
+    /// <returns>
+    /// 200 OK with the created user if all validations pass.
+    /// 400 Bad Request with validation errors if any value object is invalid.
+    /// </returns>
+    /// <remarks>
+    /// This endpoint demonstrates the new automatic validation feature:
+    /// - Value objects (FirstName, LastName, EmailAddress) are validated during model binding
+    /// - Invalid requests automatically return 400 with structured error messages
+    /// - No manual Result.Combine() calls needed in the controller
+    /// - Validation errors include field names and details
+    /// </remarks>
+    [HttpPost("[action]")]
+    public ActionResult<User> RegisterWithAutoValidation([FromBody] RegisterUserDto dto)
+    {
+        // If we reach here, all value objects in dto are already validated!
+        // The [ApiController] attribute automatically returns 400 if validation fails.
+
+        Result<User> userResult = SampleUserLibrary.User.TryCreate(
+            dto.FirstName,
+            dto.LastName,
+            dto.Email,
+            dto.Password);
+
+        return userResult.ToActionResult(this);
+    }
 }
