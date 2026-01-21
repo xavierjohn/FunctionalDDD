@@ -64,12 +64,10 @@ public sealed class ValueObjectValidationFilter : IActionFilter, IOrderedFilter
         }
 
         // Add our validation errors to ModelState
-        foreach (var fieldError in validationError.FieldErrors)
+        foreach (var (fieldName, details) in validationError.ToDictionary())
         {
-            foreach (var detail in fieldError.Details)
-            {
-                context.ModelState.AddModelError(fieldError.FieldName, detail);
-            }
+            foreach (var detail in details)
+                context.ModelState.AddModelError(fieldName, detail);
         }
 
         context.Result = new BadRequestObjectResult(

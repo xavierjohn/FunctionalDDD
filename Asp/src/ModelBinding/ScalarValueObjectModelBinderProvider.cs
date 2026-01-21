@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using FunctionalDdd;
+using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,26 +47,14 @@ public class ScalarValueObjectModelBinderProvider : IModelBinderProvider
         ArgumentNullException.ThrowIfNull(context);
 
         var modelType = context.Metadata.ModelType;
+        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(modelType);
 
-        // Check if implements IScalarValueObject<TSelf, TPrimitive>
-        var valueObjectInterface = GetScalarValueObjectInterface(modelType);
+        if (primitiveType is null)
+            return null;
 
-            if (valueObjectInterface is null)
-                return null;
+        var binderType = typeof(ScalarValueObjectModelBinder<,>)
+            .MakeGenericType(modelType, primitiveType);
 
-            var primitiveType = valueObjectInterface.GetGenericArguments()[1];
-
-            var binderType = typeof(ScalarValueObjectModelBinder<,>)
-                .MakeGenericType(modelType, primitiveType);
-
-            return (IModelBinder)Activator.CreateInstance(binderType)!;
+        return (IModelBinder)Activator.CreateInstance(binderType)!;
     }
-
-    private static Type? GetScalarValueObjectInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type modelType) =>
-        modelType
-            .GetInterfaces()
-            .FirstOrDefault(i =>
-                i.IsGenericType &&
-                i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
-                i.GetGenericArguments()[0] == modelType);
 }

@@ -36,15 +36,7 @@ public sealed class ValueObjectValidationEndpointFilter : IEndpointFilter
     {
         var validationError = ValidationErrorsContext.GetValidationError();
         if (validationError is not null)
-        {
-            var errors = new Dictionary<string, string[]>();
-            foreach (var fieldError in validationError.FieldErrors)
-            {
-                errors[fieldError.FieldName] = [.. fieldError.Details];
-            }
-
-            return Results.ValidationProblem(errors);
-        }
+            return Results.ValidationProblem(validationError.ToDictionary());
 
         return await next(context).ConfigureAwait(false);
     }

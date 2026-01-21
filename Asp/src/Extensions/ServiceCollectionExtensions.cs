@@ -126,6 +126,7 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Modifies type info to inject property names into ValidationErrorsContext before deserialization.
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
     private static void ModifyTypeInfo(JsonTypeInfo typeInfo)
     {
         if (typeInfo.Kind != JsonTypeInfoKind.Object)
@@ -155,32 +156,17 @@ public static class ServiceCollectionExtensions
 
     [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
-    private static bool IsScalarValueObjectProperty(JsonPropertyInfo property)
-    {
-        var propertyType = property.PropertyType;
-        return ImplementsIScalarValueObject(propertyType);
-    }
-
-    private static bool ImplementsIScalarValueObject([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type) =>
-        type.GetInterfaces()
-            .Any(i => i.IsGenericType &&
-                     i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
-                     i.GetGenericArguments()[0] == type);
+    private static bool IsScalarValueObjectProperty(JsonPropertyInfo property) =>
+        ScalarValueObjectTypeHelper.IsScalarValueObject(property.PropertyType);
 
 #pragma warning disable IL2055, IL2060, IL3050, IL2070 // MakeGenericType and Activator require dynamic code
-    private static JsonConverter? CreateValidatingConverter(Type valueObjectType)
+    private static JsonConverter? CreateValidatingConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueObjectType)
     {
-        var valueObjectInterface = valueObjectType.GetInterfaces()
-            .FirstOrDefault(i => i.IsGenericType &&
-                                i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
-                                i.GetGenericArguments()[0] == valueObjectType);
-
-        if (valueObjectInterface is null)
+        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(valueObjectType);
+        if (primitiveType is null)
             return null;
 
-        var primitiveType = valueObjectInterface.GetGenericArguments()[1];
         var converterType = typeof(ValidatingJsonConverter<,>).MakeGenericType(valueObjectType, primitiveType);
-
         return Activator.CreateInstance(converterType) as JsonConverter;
     }
 

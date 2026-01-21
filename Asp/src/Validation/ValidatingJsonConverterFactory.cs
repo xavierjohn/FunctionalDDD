@@ -27,7 +27,7 @@ public sealed class ValidatingJsonConverterFactory : JsonConverterFactory
     /// <returns><c>true</c> if the type implements <see cref="IScalarValueObject{TSelf, TPrimitive}"/>.</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Value object types are preserved by JSON serialization infrastructure")]
     public override bool CanConvert(Type typeToConvert) =>
-        GetScalarValueObjectInterface(typeToConvert) is not null;
+        ScalarValueObjectTypeHelper.IsScalarValueObject(typeToConvert);
 
     /// <summary>
     /// Creates a validating converter for the specified value object type.
@@ -40,23 +40,13 @@ public sealed class ValidatingJsonConverterFactory : JsonConverterFactory
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JsonConverterFactory is not compatible with Native AOT")]
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var valueObjectInterface = GetScalarValueObjectInterface(typeToConvert);
-        if (valueObjectInterface is null)
+        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(typeToConvert);
+        if (primitiveType is null)
             return null;
-
-        var primitiveType = valueObjectInterface.GetGenericArguments()[1];
 
         var converterType = typeof(ValidatingJsonConverter<,>)
             .MakeGenericType(typeToConvert, primitiveType);
 
         return (JsonConverter)Activator.CreateInstance(converterType)!;
     }
-
-    private static Type? GetScalarValueObjectInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type typeToConvert) =>
-        typeToConvert
-            .GetInterfaces()
-            .FirstOrDefault(i =>
-                i.IsGenericType &&
-                i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
-                i.GetGenericArguments()[0] == typeToConvert);
 }

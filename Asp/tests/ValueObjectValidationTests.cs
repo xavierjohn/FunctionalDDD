@@ -1,8 +1,10 @@
 namespace Asp.Tests;
 
 using System.Text.Json;
+using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Asp.Validation;
+using Microsoft.AspNetCore.Http;
 using Xunit;
 
 /// <summary>
@@ -315,6 +317,191 @@ public class ValueObjectValidationTests
             // Property name should be restored to outer value
             ValidationErrorsContext.CurrentPropertyName.Should().Be("OuterProperty");
         }
+    }
+
+    #endregion
+
+    #region ScalarValueObjectTypeHelper Tests
+
+    [Fact]
+    public void ScalarValueObjectTypeHelper_IsScalarValueObject_ReturnsTrueForValueObjects()
+    {
+        // Act & Assert
+        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(Name)).Should().BeTrue();
+        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(TestEmail)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ScalarValueObjectTypeHelper_IsScalarValueObject_ReturnsFalseForNonValueObjects()
+    {
+        // Act & Assert
+        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(string)).Should().BeFalse();
+        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(int)).Should().BeFalse();
+        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(PersonDto)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ScalarValueObjectTypeHelper_GetPrimitiveType_ReturnsCorrectPrimitiveType()
+    {
+        // Act & Assert
+        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(Name)).Should().Be<string>();
+        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(TestEmail)).Should().Be<string>();
+    }
+
+    [Fact]
+    public void ScalarValueObjectTypeHelper_GetPrimitiveType_ReturnsNullForNonValueObjects()
+    {
+        // Act & Assert
+        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(string)).Should().BeNull();
+        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(PersonDto)).Should().BeNull();
+    }
+
+    #endregion
+
+    #region ValidationError ToDictionary Tests
+
+    [Fact]
+    public void ValidationError_ToDictionary_ReturnsCorrectDictionary()
+    {
+        // Arrange
+        var error = ValidationError.For("Email", "Email is required")
+            .And("Password", "Password is too short")
+            .And("Email", "Email format is invalid");
+
+        // Act
+        var dict = error.ToDictionary();
+
+        // Assert
+        dict.Should().HaveCount(2);
+        dict["Email"].Should().Contain("Email is required");
+        dict["Email"].Should().Contain("Email format is invalid");
+        dict["Password"].Should().Contain("Password is too short");
+    }
+
+    [Fact]
+    public void ValidationError_ToDictionary_SingleFieldError()
+    {
+        // Arrange
+        var error = ValidationError.For("Name", "Name cannot be empty");
+
+        // Act
+        var dict = error.ToDictionary();
+
+        // Assert
+        dict.Should().HaveCount(1);
+        dict["Name"].Should().Contain("Name cannot be empty");
+    }
+
+    #endregion
+
+    #region ValueObjectValidationEndpointFilter Tests
+
+    [Fact]
+    public async Task EndpointFilter_WithValidationErrors_ReturnsValidationProblem()
+    {
+        // Arrange
+        var filter = new ValueObjectValidationEndpointFilter();
+        var nextCalled = false;
+
+        EndpointFilterDelegate next = _ =>
+        {
+            nextCalled = true;
+            return ValueTask.FromResult<object?>("success");
+        };
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.AddError("Email", "Email is required");
+
+            // Act
+            var result = await filter.InvokeAsync(null!, next);
+
+            // Assert
+            nextCalled.Should().BeFalse();
+            // Results.ValidationProblem() returns ProblemHttpResult
+            result.Should().BeAssignableTo<Microsoft.AspNetCore.Http.IResult>();
+            var problemResult = result as Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult;
+            problemResult.Should().NotBeNull();
+            problemResult!.StatusCode.Should().Be(400);
+        }
+    }
+
+    [Fact]
+    public async Task EndpointFilter_WithoutValidationErrors_CallsNext()
+    {
+        // Arrange
+        var filter = new ValueObjectValidationEndpointFilter();
+        var nextCalled = false;
+
+        EndpointFilterDelegate next = _ =>
+        {
+            nextCalled = true;
+            return ValueTask.FromResult<object?>("success");
+        };
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // No validation errors added
+
+            // Act
+            var result = await filter.InvokeAsync(null!, next);
+
+            // Assert
+            nextCalled.Should().BeTrue();
+            result.Should().Be("success");
+        }
+    }
+
+    #endregion
+
+    #region ValueObjectValidationMiddleware Tests
+
+    [Fact]
+    public async Task Middleware_CreatesScopeForRequest()
+    {
+        // Arrange
+        var scopeWasActive = false;
+        RequestDelegate next = _ =>
+        {
+            scopeWasActive = ValidationErrorsContext.HasErrors || ValidationErrorsContext.GetValidationError() is null;
+            // Add an error to verify scope is active
+            ValidationErrorsContext.AddError("Test", "TestError");
+            scopeWasActive = ValidationErrorsContext.HasErrors;
+            return Task.CompletedTask;
+        };
+
+        var middleware = new ValueObjectValidationMiddleware(next);
+        var context = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert - scope was active during request
+        scopeWasActive.Should().BeTrue();
+
+        // Assert - scope is cleaned up after request
+        ValidationErrorsContext.GetValidationError().Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Middleware_CleansUpScopeEvenOnException()
+    {
+        // Arrange
+        RequestDelegate next = _ =>
+        {
+            ValidationErrorsContext.AddError("Test", "TestError");
+            throw new InvalidOperationException("Test exception");
+        };
+
+        var middleware = new ValueObjectValidationMiddleware(next);
+        var context = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+
+        // Act
+        var act = async () => await middleware.InvokeAsync(context);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        ValidationErrorsContext.GetValidationError().Should().BeNull();
     }
 
     #endregion
