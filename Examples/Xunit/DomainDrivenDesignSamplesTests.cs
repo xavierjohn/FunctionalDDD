@@ -18,7 +18,10 @@ public class DomainDrivenDesignSamplesTests
 
         public static CustomerId NewUnique() => new(Guid.NewGuid());
 
-        public static Result<CustomerId> TryCreate(Guid value) => TryCreate((Guid?)value);
+        public static Result<CustomerId> TryCreate(Guid value, string? fieldName = null) =>
+            value == Guid.Empty
+                ? Error.Validation("Customer ID cannot be empty", fieldName ?? "customerId")
+                : Result.Success(new CustomerId(value));
 
         public static Result<CustomerId> TryCreate(Guid? value) =>
             value.ToResult(Error.Validation("Customer ID cannot be empty"))
@@ -32,7 +35,10 @@ public class DomainDrivenDesignSamplesTests
 
         public static OrderId NewUnique() => new(Guid.NewGuid());
 
-        public static Result<OrderId> TryCreate(Guid value) => TryCreate((Guid?)value);
+        public static Result<OrderId> TryCreate(Guid value, string? fieldName = null) =>
+            value == Guid.Empty
+                ? Error.Validation("Order ID cannot be empty", fieldName ?? "orderId")
+                : Result.Success(new OrderId(value));
 
         public static Result<OrderId> TryCreate(Guid? value) =>
             value.ToResult(Error.Validation("Order ID cannot be empty"))
@@ -44,9 +50,9 @@ public class DomainDrivenDesignSamplesTests
     {
         private ProductId(string value) : base(value) { }
 
-        public static Result<ProductId> TryCreate(string? value) =>
-            value.ToResult(Error.Validation("Product ID cannot be empty"))
-                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Product ID cannot be empty"))
+        public static Result<ProductId> TryCreate(string? value, string? fieldName = null) =>
+            value.ToResult(Error.Validation("Product ID cannot be empty", fieldName ?? "productId"))
+                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Product ID cannot be empty", fieldName ?? "productId"))
                 .Map(v => new ProductId(v));
     }
 
@@ -55,10 +61,10 @@ public class DomainDrivenDesignSamplesTests
     {
         private EmailAddress(string value) : base(value) { }
 
-        public static Result<EmailAddress> TryCreate(string? value) =>
-            value.ToResult(Error.Validation("Email cannot be empty"))
-                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Email cannot be empty"))
-                .Ensure(v => v.Contains('@'), Error.Validation("Email must contain @"))
+        public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null) =>
+            value.ToResult(Error.Validation("Email cannot be empty", fieldName ?? "email"))
+                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Email cannot be empty", fieldName ?? "email"))
+                .Ensure(v => v.Contains('@'), Error.Validation("Email must contain @", fieldName ?? "email"))
                 .Map(v => new EmailAddress(v));
     }
 
@@ -311,13 +317,16 @@ public class DomainDrivenDesignSamplesTests
     {
         private Temperature(decimal value) : base(value) { }
 
-        public static Result<Temperature> TryCreate(decimal value) =>
-            value.ToResult()
+        public static Result<Temperature> TryCreate(decimal value, string? fieldName = null)
+        {
+            var field = fieldName ?? "temperature";
+            return value.ToResult()
                 .Ensure(v => v >= -273.15m,
-                       Error.Validation("Temperature cannot be below absolute zero"))
+                       Error.Validation("Temperature cannot be below absolute zero", field))
                 .Ensure(v => v <= 1_000_000m,
-                       Error.Validation("Temperature exceeds physical limits"))
+                       Error.Validation("Temperature exceeds physical limits", field))
                 .Map(v => new Temperature(v));
+        }
 
         public static Temperature FromCelsius(decimal celsius) => new(celsius);
         public static Temperature FromFahrenheit(decimal fahrenheit) => new((fahrenheit - 32) * 5 / 9);

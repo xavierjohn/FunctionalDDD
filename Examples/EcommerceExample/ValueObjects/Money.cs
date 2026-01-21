@@ -14,12 +14,13 @@ public class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money
         Currency = currency;
     }
 
-    public static Result<Money> TryCreate(decimal amount) => TryCreate(amount, "USD");
+    public static Result<Money> TryCreate(decimal amount, string? fieldName = null) => TryCreate(amount, "USD", fieldName);
 
-    public static Result<Money> TryCreate(decimal amount, string currency)
+    public static Result<Money> TryCreate(decimal amount, string currency, string? fieldName = null)
     {
+        var field = fieldName ?? "amount";
         if (amount < 0)
-            return Error.Validation("Amount cannot be negative", nameof(amount));
+            return Error.Validation("Amount cannot be negative", field);
 
         if (string.IsNullOrWhiteSpace(currency))
             return Error.Validation("Currency is required", nameof(currency));

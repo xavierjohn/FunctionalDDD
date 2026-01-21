@@ -9,10 +9,11 @@ public class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money
 {
     private Money(decimal value) : base(value) { }
 
-    public static Result<Money> TryCreate(decimal amount)
+    public static Result<Money> TryCreate(decimal amount, string? fieldName = null)
     {
+        var field = fieldName ?? "amount";
         if (amount < 0)
-            return Error.Validation("Amount cannot be negative", nameof(amount));
+            return Error.Validation("Amount cannot be negative", field);
 
         return new Money(Math.Round(amount, 2));
     }

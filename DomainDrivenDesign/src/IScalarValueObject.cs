@@ -26,10 +26,10 @@
 /// public class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>
 /// {
 ///     private EmailAddress(string value) : base(value) { }
-///     
-///     public static Result<EmailAddress> TryCreate(string value) =>
-///         value.ToResult(Error.Validation("Email is required"))
-///             .Ensure(e => e.Contains("@"), Error.Validation("Invalid email"))
+///
+///     public static Result<EmailAddress> TryCreate(string value, string? fieldName = null) =>
+///         value.ToResult(Error.Validation("Email is required", fieldName ?? "email"))
+///             .Ensure(e => e.Contains("@"), Error.Validation("Invalid email", fieldName ?? "email"))
 ///             .Map(e => new EmailAddress(e));
 /// }
 /// ]]></code>
@@ -42,6 +42,10 @@ public interface IScalarValueObject<TSelf, TPrimitive>
     /// Attempts to create a validated value object from a primitive value.
     /// </summary>
     /// <param name="value">The raw primitive value</param>
+    /// <param name="fieldName">
+    /// Optional field name for validation error messages. If null, implementations should use
+    /// a default field name based on the type name (e.g., "emailAddress" for EmailAddress type).
+    /// </param>
     /// <returns>Success with the value object, or Failure with validation errors</returns>
     /// <remarks>
     /// <para>
@@ -50,11 +54,11 @@ public interface IScalarValueObject<TSelf, TPrimitive>
     /// standard ASP.NET Core validation infrastructure.
     /// </para>
     /// <para>
-    /// Note: This overload does not accept a field name parameter. When automatic
-    /// model binding is used, the field name is derived from the model property name.
+    /// When called from ASP.NET Core model binding or JSON deserialization, the fieldName
+    /// parameter is automatically populated with the property name from the DTO.
     /// </para>
     /// </remarks>
-    static abstract Result<TSelf> TryCreate(TPrimitive value);
+    static abstract Result<TSelf> TryCreate(TPrimitive value, string? fieldName = null);
 
     /// <summary>
     /// Gets the underlying primitive value for serialization.

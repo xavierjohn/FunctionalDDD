@@ -21,6 +21,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseValueObjectValidation(); // ← Must be before routing for validation error collection
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

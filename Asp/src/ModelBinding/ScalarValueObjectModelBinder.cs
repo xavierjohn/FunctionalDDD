@@ -56,7 +56,8 @@ public class ScalarValueObjectModelBinder<TValueObject, TPrimitive> : IModelBind
         }
 
         // Call TryCreate directly - no reflection needed due to static abstract interface
-        var result = TValueObject.TryCreate(primitiveValue);
+        // Pass the model name so validation errors have the correct field name
+        var result = TValueObject.TryCreate(primitiveValue, modelName);
 
         if (result.IsSuccess)
         {

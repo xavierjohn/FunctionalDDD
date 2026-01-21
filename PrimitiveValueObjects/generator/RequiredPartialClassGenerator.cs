@@ -251,10 +251,22 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         public static {g.ClassName} NewUnique() => new(Guid.NewGuid());
 
         /// <summary>
-        /// Creates a validated instance from a non-nullable Guid.
+        /// Creates a validated instance from a Guid.
         /// Required by IScalarValueObject interface for model binding and JSON deserialization.
         /// </summary>
-        public static Result<{g.ClassName}> TryCreate(Guid value) => TryCreate((Guid?)value, null);
+        /// <param name=""value"">The Guid value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(Guid value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            if (value == Guid.Empty)
+                return Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field);
+            return new {g.ClassName}(value);
+        }}
 
         public static Result<{g.ClassName}> TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
         {{
@@ -289,18 +301,19 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                     source += $@"
 
         /// <summary>
-        /// Creates a validated instance from a non-nullable string.
+        /// Creates a validated instance from a string.
         /// Required by IScalarValueObject interface for model binding and JSON deserialization.
         /// </summary>
-        public static Result<{g.ClassName}> TryCreate(string value) => TryCreate(value, null);
-
-        public static Result<{g.ClassName}> TryCreate(string? requiredStringOrNothing, string? fieldName = null)
+        /// <param name=""value"">The string value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(string? value, string? fieldName = null)
         {{
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = !string.IsNullOrEmpty(fieldName)
                 ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
                 : ""{g.ClassName.ToCamelCase()}"";
-            return requiredStringOrNothing
+            return value
                 .EnsureNotNullOrWhiteSpace(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
                 .Map(str => new {g.ClassName}(str));
         }}

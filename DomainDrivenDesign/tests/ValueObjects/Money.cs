@@ -6,7 +6,7 @@ internal class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Mon
     {
     }
 
-    public static Result<Money> TryCreate(decimal value) =>
+    public static Result<Money> TryCreate(decimal value, string? fieldName = null) =>
         Result.Success(new Money(value));
 
     protected override IEnumerable<IComparable> GetEqualityComponents()

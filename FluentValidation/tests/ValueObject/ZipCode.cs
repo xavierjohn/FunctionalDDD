@@ -8,7 +8,7 @@ public class ZipCode : ScalarValueObject<ZipCode, string>, IScalarValueObject<Zi
     {
     }
 
-    public static Result<ZipCode> TryCreate(string? zipCode) =>
+    public static Result<ZipCode> TryCreate(string? zipCode, string? fieldName = null) =>
         s_validationRules.ValidateToResult(zipCode)
             .Map(v => new ZipCode(v!));
 

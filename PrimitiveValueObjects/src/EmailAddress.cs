@@ -167,18 +167,6 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
     /// for automatic model binding and JSON deserialization.
     /// </summary>
     /// <param name="value">The email address string to validate.</param>
-    /// <returns>
-    /// <list type="bullet">
-    /// <item>Success with the EmailAddress if the string is a valid email</item>
-    /// <item>Failure with a <see cref="ValidationError"/> if the email is invalid</item>
-    /// </list>
-    /// </returns>
-    public static Result<EmailAddress> TryCreate(string value) => TryCreate(value, null);
-
-    /// <summary>
-    /// Attempts to create an <see cref="EmailAddress"/> from the specified string.
-    /// </summary>
-    /// <param name="value">The email address string to validate.</param>
     /// <param name="fieldName">
     /// Optional field name to use in validation error messages. 
     /// If not provided, defaults to "email" (camelCase).

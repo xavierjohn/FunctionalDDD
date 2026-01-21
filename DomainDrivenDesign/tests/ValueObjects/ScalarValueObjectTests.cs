@@ -10,7 +10,7 @@ public class ScalarValueObjectTests
     {
         public PasswordSimple(string value) : base(value) { }
 
-        public static Result<PasswordSimple> TryCreate(string value) =>
+        public static Result<PasswordSimple> TryCreate(string value, string? fieldName = null) =>
             Result.Success(new PasswordSimple(value));
     }
 
@@ -18,7 +18,7 @@ public class ScalarValueObjectTests
     {
         public DerivedPasswordSimple(string value) : base(value) { }
 
-        public static new Result<DerivedPasswordSimple> TryCreate(string value) =>
+        public static new Result<DerivedPasswordSimple> TryCreate(string value, string? fieldName = null) =>
             Result.Success(new DerivedPasswordSimple(value));
     }
 
@@ -26,7 +26,7 @@ public class ScalarValueObjectTests
     {
         public MoneySimple(decimal value) : base(value) { }
 
-        public static Result<MoneySimple> TryCreate(decimal value) =>
+        public static Result<MoneySimple> TryCreate(decimal value, string? fieldName = null) =>
             Result.Success(new MoneySimple(value));
 
         protected override IEnumerable<IComparable> GetEqualityComponents()
@@ -39,7 +39,7 @@ public class ScalarValueObjectTests
     {
         public CustomerId(Guid value) : base(value) { }
 
-        public static Result<CustomerId> TryCreate(Guid value) =>
+        public static Result<CustomerId> TryCreate(Guid value, string? fieldName = null) =>
             Result.Success(new CustomerId(value));
     }
 
@@ -47,7 +47,7 @@ public class ScalarValueObjectTests
     {
         public Quantity(int value) : base(value) { }
 
-        public static Result<Quantity> TryCreate(int value) =>
+        public static Result<Quantity> TryCreate(int value, string? fieldName = null) =>
             Result.Success(new Quantity(value));
     }
 
@@ -55,7 +55,7 @@ public class ScalarValueObjectTests
     {
         public CharWrapper(char value) : base(value) { }
 
-        public static Result<CharWrapper> TryCreate(char value) =>
+        public static Result<CharWrapper> TryCreate(char value, string? fieldName = null) =>
             Result.Success(new CharWrapper(value));
     }
 
@@ -63,7 +63,7 @@ public class ScalarValueObjectTests
     {
         public DateTimeWrapper(DateTime value) : base(value) { }
 
-        public static Result<DateTimeWrapper> TryCreate(DateTime value) =>
+        public static Result<DateTimeWrapper> TryCreate(DateTime value, string? fieldName = null) =>
             Result.Success(new DateTimeWrapper(value));
     }
 
