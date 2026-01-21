@@ -91,7 +91,55 @@ public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConv
             return;
         }
 
-        JsonSerializer.Serialize(writer, value.Value, options);
+        // Write primitive values directly to avoid requiring type info in source-generated contexts
+        WritePrimitiveValue(writer, value.Value);
+    }
+
+    private static void WritePrimitiveValue(Utf8JsonWriter writer, TPrimitive value)
+    {
+        switch (value)
+        {
+            case string s:
+                writer.WriteStringValue(s);
+                break;
+            case Guid g:
+                writer.WriteStringValue(g);
+                break;
+            case int i:
+                writer.WriteNumberValue(i);
+                break;
+            case long l:
+                writer.WriteNumberValue(l);
+                break;
+            case double d:
+                writer.WriteNumberValue(d);
+                break;
+            case float f:
+                writer.WriteNumberValue(f);
+                break;
+            case decimal m:
+                writer.WriteNumberValue(m);
+                break;
+            case bool b:
+                writer.WriteBooleanValue(b);
+                break;
+            case DateTime dt:
+                writer.WriteStringValue(dt);
+                break;
+            case DateTimeOffset dto:
+                writer.WriteStringValue(dto);
+                break;
+            case DateOnly date:
+                writer.WriteStringValue(date.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+                break;
+            case TimeOnly time:
+                writer.WriteStringValue(time.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+                break;
+            default:
+                // Fallback for other types - convert to string
+                writer.WriteStringValue(value?.ToString());
+                break;
+        }
     }
 
     private static string GetDefaultFieldName(Type type) =>

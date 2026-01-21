@@ -8,6 +8,7 @@ using SampleMinimalApi.API;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
+builder.Services.AddScalarValueObjectValidationForMinimalApi();
 
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: "SampleMinimalApi",
@@ -22,16 +23,21 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
+app.UseValueObjectValidation();
 app.UseToDoRoute();
 app.UseUserRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
 public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
+public record SharedNameTypeResponse(string FirstName, string LastName, string Email, string Message);
 #pragma warning restore CA1050 // Declare types in namespaces
 
 [JsonSerializable(typeof(Todo[]))]
 [JsonSerializable(typeof(RegisterUserRequest))]
+[JsonSerializable(typeof(RegisterUserDto))]
+[JsonSerializable(typeof(RegisterWithNameDto))]
+[JsonSerializable(typeof(SharedNameTypeResponse))]
 [JsonSerializable(typeof(User))]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]

@@ -8,6 +8,8 @@ using FunctionalDdd.Asp.ModelBinding;
 using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;
 
@@ -221,4 +223,65 @@ public static class ServiceCollectionExtensions
     /// </example>
     public static IApplicationBuilder UseValueObjectValidation(this IApplicationBuilder app) =>
         app.UseMiddleware<ValueObjectValidationMiddleware>();
+
+    /// <summary>
+    /// Configures HTTP JSON options to use property-aware value object validation for Minimal APIs.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method configures Minimal API JSON serialization to automatically validate value objects
+    /// that implement <see cref="IScalarValueObject{TSelf, TPrimitive}"/> during JSON deserialization.
+    /// </para>
+    /// <para>
+    /// For Minimal APIs, also use <see cref="UseValueObjectValidation"/> middleware and
+    /// <see cref="WithValueObjectValidation"/> on your route handlers.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var builder = WebApplication.CreateBuilder(args);
+    /// builder.Services.AddScalarValueObjectValidationForMinimalApi();
+    ///
+    /// var app = builder.Build();
+    /// app.UseValueObjectValidation();
+    ///
+    /// app.MapPost("/users", (RegisterUserDto dto) => ...)
+    ///    .WithValueObjectValidation();
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddScalarValueObjectValidationForMinimalApi(this IServiceCollection services)
+    {
+        services.ConfigureHttpJsonOptions(options =>
+            ConfigureJsonOptions(options.SerializerOptions));
+        return services;
+    }
+
+    /// <summary>
+    /// Adds the value object validation endpoint filter to the route handler.
+    /// </summary>
+    /// <param name="builder">The route handler builder.</param>
+    /// <returns>The route handler builder for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// This extension adds <see cref="ValueObjectValidationEndpointFilter"/> to check for
+    /// validation errors collected during JSON deserialization.
+    /// </para>
+    /// <para>
+    /// Ensure <see cref="UseValueObjectValidation"/> middleware is registered and
+    /// <see cref="AddScalarValueObjectValidationForMinimalApi"/> is called for full functionality.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// app.MapPost("/users/register", (RegisterUserDto dto) =>
+    /// {
+    ///     // dto is already validated
+    ///     return Results.Ok(dto);
+    /// }).WithValueObjectValidation();
+    /// </code>
+    /// </example>
+    public static RouteHandlerBuilder WithValueObjectValidation(this RouteHandlerBuilder builder) =>
+        builder.AddEndpointFilter<ValueObjectValidationEndpointFilter>();
 }
