@@ -43,4 +43,25 @@ internal static class ScalarValueObjectTypeHelper
         var interfaceType = GetScalarValueObjectInterface(valueObjectType);
         return interfaceType?.GetGenericArguments()[1];
     }
+
+    /// <summary>
+    /// Creates an instance of a generic type parameterized with a value object type and its primitive type.
+    /// </summary>
+    /// <typeparam name="TResult">The expected result type (usually an interface like IModelBinder or JsonConverter).</typeparam>
+    /// <param name="genericTypeDefinition">The open generic type (e.g., typeof(SomeClass&lt;,&gt;)).</param>
+    /// <param name="valueObjectType">The value object type (first type argument).</param>
+    /// <param name="primitiveType">The primitive type (second type argument).</param>
+    /// <returns>An instance of the constructed generic type, or null if creation fails.</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "MakeGenericType is used with known converter/binder types")]
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Types are preserved by ASP.NET Core serialization infrastructure")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Not compatible with Native AOT")]
+    public static TResult? CreateGenericInstance<TResult>(
+        Type genericTypeDefinition,
+        Type valueObjectType,
+        Type primitiveType)
+        where TResult : class
+    {
+        var constructedType = genericTypeDefinition.MakeGenericType(valueObjectType, primitiveType);
+        return Activator.CreateInstance(constructedType) as TResult;
+    }
 }

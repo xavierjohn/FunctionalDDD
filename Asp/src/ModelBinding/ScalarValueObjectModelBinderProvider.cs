@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using FunctionalDdd;
 using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Detects ScalarValueObject-derived types and provides model binders for them.
@@ -16,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// </para>
 /// <para>
 /// Register this provider using <c>AddScalarValueObjectValidation()</c> extension method
-/// on <see cref="IMvcBuilder"/>.
+/// on <c>IMvcBuilder</c>.
 /// </para>
 /// </remarks>
 /// <example>
@@ -49,12 +48,11 @@ public class ScalarValueObjectModelBinderProvider : IModelBinderProvider
         var modelType = context.Metadata.ModelType;
         var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(modelType);
 
-        if (primitiveType is null)
-            return null;
-
-        var binderType = typeof(ScalarValueObjectModelBinder<,>)
-            .MakeGenericType(modelType, primitiveType);
-
-        return (IModelBinder)Activator.CreateInstance(binderType)!;
+        return primitiveType is null
+            ? null
+            : ScalarValueObjectTypeHelper.CreateGenericInstance<IModelBinder>(
+                typeof(ScalarValueObjectModelBinder<,>),
+                modelType,
+                primitiveType);
     }
 }

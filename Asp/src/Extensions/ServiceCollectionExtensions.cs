@@ -159,23 +159,24 @@ public static class ServiceCollectionExtensions
     private static bool IsScalarValueObjectProperty(JsonPropertyInfo property) =>
         ScalarValueObjectTypeHelper.IsScalarValueObject(property.PropertyType);
 
-#pragma warning disable IL2055, IL2060, IL3050, IL2070 // MakeGenericType and Activator require dynamic code
     private static JsonConverter? CreateValidatingConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueObjectType)
     {
         var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(valueObjectType);
-        if (primitiveType is null)
-            return null;
-
-        var converterType = typeof(ValidatingJsonConverter<,>).MakeGenericType(valueObjectType, primitiveType);
-        return Activator.CreateInstance(converterType) as JsonConverter;
+        return primitiveType is null
+            ? null
+            : ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+                typeof(ValidatingJsonConverter<,>),
+                valueObjectType,
+                primitiveType);
     }
 
+#pragma warning disable IL2055, IL3050 // MakeGenericType and Activator require dynamic code
     private static JsonConverter? CreatePropertyNameAwareConverter(JsonConverter innerConverter, string propertyName, Type type)
     {
         var wrapperType = typeof(PropertyNameAwareConverter<>).MakeGenericType(type);
         return Activator.CreateInstance(wrapperType, innerConverter, propertyName) as JsonConverter;
     }
-#pragma warning restore IL2055, IL2060, IL3050, IL2070
+#pragma warning restore IL2055, IL3050
 
     /// <summary>
     /// Adds middleware that creates a validation error collection scope for each request.

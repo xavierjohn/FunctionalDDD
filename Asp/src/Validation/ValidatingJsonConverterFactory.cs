@@ -41,12 +41,11 @@ public sealed class ValidatingJsonConverterFactory : JsonConverterFactory
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(typeToConvert);
-        if (primitiveType is null)
-            return null;
-
-        var converterType = typeof(ValidatingJsonConverter<,>)
-            .MakeGenericType(typeToConvert, primitiveType);
-
-        return (JsonConverter)Activator.CreateInstance(converterType)!;
+        return primitiveType is null
+            ? null
+            : ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+                typeof(ValidatingJsonConverter<,>),
+                typeToConvert,
+                primitiveType);
     }
 }
