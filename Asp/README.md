@@ -418,7 +418,8 @@ See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for comprehensive
 
 ## Examples
 
-- **[SampleMinimalApi](../Examples/SampleMinimalApi/)** - Minimal API with Native AOT
+- **[SampleMinimalApi](../Examples/SampleMinimalApi/)** - Minimal API with Native AOT and source generator
+- **[SampleMinimalApiNoAot](../Examples/SampleMinimalApiNoAot/)** - Minimal API with reflection fallback (no source generator) **← Start here!**
 - **[SampleWebApplication](../Examples/SampleWebApplication/)** - MVC controllers with validation
 - **[SampleUserLibrary](../Examples/SampleUserLibrary/)** - Shared value objects
 
