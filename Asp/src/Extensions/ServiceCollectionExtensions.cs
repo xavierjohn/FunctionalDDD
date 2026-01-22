@@ -179,6 +179,70 @@ public static class ServiceCollectionExtensions
 #pragma warning restore IL2055, IL3050
 
     /// <summary>
+    /// Adds automatic value object validation for both MVC Controllers and Minimal APIs.
+    /// This is a convenience method that configures validation for all ASP.NET Core application types.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method is equivalent to calling both:
+    /// <list type="bullet">
+    /// <item><see cref="AddScalarValueObjectValidation"/> for MVC JSON options</item>
+    /// <item><see cref="AddScalarValueObjectValidationForMinimalApi"/> for Minimal API JSON options</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// Use this method when you have both controllers and Minimal API endpoints in your application,
+    /// or when you're not sure which style you'll use. For applications using only one approach,
+    /// prefer the specific methods for clarity.
+    /// </para>
+    /// <para>
+    /// <strong>Note:</strong> This method does NOT configure MVC-specific features like model binding
+    /// or the validation filter. If you're using MVC controllers with the <c>[ApiController]</c> attribute,
+    /// use <c>AddControllers().AddScalarValueObjectValidation()</c> instead for full functionality.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Simple setup for mixed applications:
+    /// <code>
+    /// var builder = WebApplication.CreateBuilder(args);
+    ///
+    /// // Unified setup - works for both MVC and Minimal APIs
+    /// builder.Services.AddControllers();
+    /// builder.Services.AddValueObjectValidation();
+    ///
+    /// var app = builder.Build();
+    ///
+    /// app.UseValueObjectValidation();
+    /// app.MapControllers();
+    /// app.MapPost("/api/users", (RegisterDto dto) => ...).WithValueObjectValidation();
+    ///
+    /// app.Run();
+    /// </code>
+    /// </example>
+    /// <example>
+    /// For MVC-only applications, prefer the fluent API:
+    /// <code>
+    /// builder.Services
+    ///     .AddControllers()
+    ///     .AddScalarValueObjectValidation(); // ← Better for MVC-only apps
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddValueObjectValidation(this IServiceCollection services)
+    {
+        // Configure MVC JSON options (for controllers)
+        services.Configure<MvcJsonOptions>(options =>
+            ConfigureJsonOptions(options.JsonSerializerOptions));
+
+        // Configure Minimal API JSON options
+        services.ConfigureHttpJsonOptions(options =>
+            ConfigureJsonOptions(options.SerializerOptions));
+
+        return services;
+    }
+
+    /// <summary>
     /// Adds middleware that creates a validation error collection scope for each request.
     /// This middleware must be registered in the pipeline to enable validation error collection.
     /// </summary>
