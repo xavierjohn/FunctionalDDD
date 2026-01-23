@@ -21,7 +21,7 @@ public class ServiceCollectionExtensionsTests
 {
     #region Test Value Objects
 
-    public class TestName : ScalarValueObject<TestName, string>, IScalarValueObject<TestName, string>
+    public sealed class TestName : ScalarValueObject<TestName, string>, IScalarValueObject<TestName, string>
     {
         private TestName(string value) : base(value) { }
 
@@ -33,6 +33,47 @@ public class ServiceCollectionExtensionsTests
             return new TestName(value);
         }
     }
+
+    public sealed class TestEmail : ScalarValueObject<TestEmail, string>, IScalarValueObject<TestEmail, string>
+    {
+        private TestEmail(string value) : base(value) { }
+
+        public static Result<TestEmail> TryCreate(string? value, string? fieldName = null)
+        {
+            var field = fieldName ?? "email";
+            if (string.IsNullOrWhiteSpace(value))
+                return Error.Validation("Email is required.", field);
+            if (!value.Contains('@'))
+                return Error.Validation("Email must contain @.", field);
+            return new TestEmail(value);
+        }
+    }
+
+    public sealed class TestAge : ScalarValueObject<TestAge, int>, IScalarValueObject<TestAge, int>
+    {
+        private TestAge(int value) : base(value) { }
+
+        public static Result<TestAge> TryCreate(int value, string? fieldName = null) =>
+            value is < 0 or > 150
+                ? Error.Validation("Age must be between 0 and 150.", fieldName ?? "age")
+                : new TestAge(value);
+    }
+
+    #endregion
+
+    #region Test DTOs
+
+    public record SingleValueObjectDto(TestName Name);
+
+    public record MultipleValueObjectsDto(TestName Name, TestEmail Email, TestAge Age);
+
+    public record MixedDto(TestName Name, string Description, int Count);
+
+    public record NestedDto(TestName Name, AddressDto Address);
+
+    public record AddressDto(TestName Street, TestName City);
+
+    public record NullableValueObjectDto(TestName? Name, TestEmail? Email);
 
     #endregion
 
@@ -332,6 +373,206 @@ public class ServiceCollectionExtensionsTests
             error.Should().NotBeNull();
             error!.FieldErrors.Should().ContainSingle()
                 .Which.FieldName.Should().Be("Name");
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithMultipleValueObjects_AllValid_Succeeds()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "John", "Email": "john@example.com", "Age": 30}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<MultipleValueObjectsDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Name.Value.Should().Be("John");
+            result.Email.Value.Should().Be("john@example.com");
+            result.Age.Value.Should().Be(30);
+            ValidationErrorsContext.GetValidationError().Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithMultipleValueObjects_MultipleInvalid_CollectsAllErrors()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "", "Email": "invalid-email", "Age": 200}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<MultipleValueObjectsDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            var error = ValidationErrorsContext.GetValidationError();
+            error.Should().NotBeNull();
+            error!.FieldErrors.Should().HaveCount(3);
+            error.FieldErrors.Should().Contain(e => e.FieldName == "name");
+            error.FieldErrors.Should().Contain(e => e.FieldName == "email");
+            error.FieldErrors.Should().Contain(e => e.FieldName == "age");
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithMixedProperties_Succeeds()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "Product", "Description": "A great product", "Count": 5}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<MixedDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Name.Value.Should().Be("Product");
+            result.Description.Should().Be("A great product");
+            result.Count.Should().Be(5);
+            ValidationErrorsContext.GetValidationError().Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithNestedValueObjects_AllValid_Succeeds()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "John", "Address": {"Street": "123 Main St", "City": "New York"}}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<NestedDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Name.Value.Should().Be("John");
+            result.Address.Street.Value.Should().Be("123 Main St");
+            result.Address.City.Value.Should().Be("New York");
+            ValidationErrorsContext.GetValidationError().Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithNestedValueObjects_NestedInvalid_CollectsErrors()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "John", "Address": {"Street": "", "City": ""}}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<NestedDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            var error = ValidationErrorsContext.GetValidationError();
+            error.Should().NotBeNull();
+            error!.FieldErrors.Should().HaveCountGreaterOrEqualTo(2);
+            // Nested properties get their field names from the JSON property names (lowercase)
+            error.FieldErrors.Should().Contain(e => e.FieldName == "street");
+            error.FieldErrors.Should().Contain(e => e.FieldName == "city");
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithNullableValueObjects_NullValues_Succeeds()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": null, "Email": null}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<NullableValueObjectDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Name.Should().BeNull();
+            result.Email.Should().BeNull();
+            ValidationErrorsContext.GetValidationError().Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithNullableValueObjects_ValidValues_Succeeds()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "John", "Email": "john@example.com"}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<NullableValueObjectDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Name.Should().NotBeNull();
+            result.Name!.Value.Should().Be("John");
+            result.Email.Should().NotBeNull();
+            result.Email!.Value.Should().Be("john@example.com");
+            ValidationErrorsContext.GetValidationError().Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ConfiguredJsonOptions_DeserializeDto_WithNullableValueObjects_InvalidValues_CollectsErrors()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddValueObjectValidation();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
+
+        var json = """{"Name": "", "Email": "invalid"}""";
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = JsonSerializer.Deserialize<NullableValueObjectDto>(json, httpOptions.Value.SerializerOptions);
+
+            // Assert
+            var error = ValidationErrorsContext.GetValidationError();
+            error.Should().NotBeNull();
+            error!.FieldErrors.Should().HaveCount(2);
         }
     }
 
