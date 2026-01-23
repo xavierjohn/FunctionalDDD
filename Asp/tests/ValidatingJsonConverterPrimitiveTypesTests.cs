@@ -1,0 +1,521 @@
+namespace Asp.Tests;
+
+using System;
+using System.Text;
+using System.Text.Json;
+using FluentAssertions;
+using FunctionalDdd;
+using FunctionalDdd.Asp.Validation;
+using Xunit;
+
+/// <summary>
+/// Tests for ValidatingJsonConverter to ensure all primitive types are serialized correctly.
+/// This tests the WritePrimitiveValue switch statement with all 12 type branches.
+/// </summary>
+public class ValidatingJsonConverterPrimitiveTypesTests
+{
+    #region Test Value Objects for Each Primitive Type
+
+    // String
+    public class StringVO : ScalarValueObject<StringVO, string>, IScalarValueObject<StringVO, string>
+    {
+        private StringVO(string value) : base(value) { }
+        public static Result<StringVO> TryCreate(string? value, string? fieldName = null) =>
+            string.IsNullOrEmpty(value) ? Error.Validation("Required", fieldName ?? "field") : new StringVO(value);
+    }
+
+    // Guid
+    public class GuidVO : ScalarValueObject<GuidVO, Guid>, IScalarValueObject<GuidVO, Guid>
+    {
+        private GuidVO(Guid value) : base(value) { }
+        public static Result<GuidVO> TryCreate(Guid value, string? fieldName = null) =>
+            value == Guid.Empty ? Error.Validation("Required", fieldName ?? "field") : new GuidVO(value);
+    }
+
+    // Int
+    public class IntVO : ScalarValueObject<IntVO, int>, IScalarValueObject<IntVO, int>
+    {
+        private IntVO(int value) : base(value) { }
+        public static Result<IntVO> TryCreate(int value, string? fieldName = null) =>
+            value < 0 ? Error.Validation("Negative", fieldName ?? "field") : new IntVO(value);
+    }
+
+    // Long
+    public class LongVO : ScalarValueObject<LongVO, long>, IScalarValueObject<LongVO, long>
+    {
+        private LongVO(long value) : base(value) { }
+        public static Result<LongVO> TryCreate(long value, string? fieldName = null) =>
+            value < 0 ? Error.Validation("Negative", fieldName ?? "field") : new LongVO(value);
+    }
+
+    // Double
+    public class DoubleVO : ScalarValueObject<DoubleVO, double>, IScalarValueObject<DoubleVO, double>
+    {
+        private DoubleVO(double value) : base(value) { }
+        public static Result<DoubleVO> TryCreate(double value, string? fieldName = null) =>
+            double.IsNaN(value) ? Error.Validation("NaN", fieldName ?? "field") : new DoubleVO(value);
+    }
+
+    // Float
+    public class FloatVO : ScalarValueObject<FloatVO, float>, IScalarValueObject<FloatVO, float>
+    {
+        private FloatVO(float value) : base(value) { }
+        public static Result<FloatVO> TryCreate(float value, string? fieldName = null) =>
+            float.IsNaN(value) ? Error.Validation("NaN", fieldName ?? "field") : new FloatVO(value);
+    }
+
+    // Decimal
+    public class DecimalVO : ScalarValueObject<DecimalVO, decimal>, IScalarValueObject<DecimalVO, decimal>
+    {
+        private DecimalVO(decimal value) : base(value) { }
+        public static Result<DecimalVO> TryCreate(decimal value, string? fieldName = null) =>
+            value < 0 ? Error.Validation("Negative", fieldName ?? "field") : new DecimalVO(value);
+    }
+
+    // Bool
+    public class BoolVO : ScalarValueObject<BoolVO, bool>, IScalarValueObject<BoolVO, bool>
+    {
+        private BoolVO(bool value) : base(value) { }
+        public static Result<BoolVO> TryCreate(bool value, string? fieldName = null) =>
+            new BoolVO(value);
+    }
+
+    // DateTime
+    public class DateTimeVO : ScalarValueObject<DateTimeVO, DateTime>, IScalarValueObject<DateTimeVO, DateTime>
+    {
+        private DateTimeVO(DateTime value) : base(value) { }
+        public static Result<DateTimeVO> TryCreate(DateTime value, string? fieldName = null) =>
+            value == DateTime.MinValue ? Error.Validation("MinValue", fieldName ?? "field") : new DateTimeVO(value);
+    }
+
+    // DateTimeOffset
+    public class DateTimeOffsetVO : ScalarValueObject<DateTimeOffsetVO, DateTimeOffset>, IScalarValueObject<DateTimeOffsetVO, DateTimeOffset>
+    {
+        private DateTimeOffsetVO(DateTimeOffset value) : base(value) { }
+        public static Result<DateTimeOffsetVO> TryCreate(DateTimeOffset value, string? fieldName = null) =>
+            value == DateTimeOffset.MinValue ? Error.Validation("MinValue", fieldName ?? "field") : new DateTimeOffsetVO(value);
+    }
+
+    // DateOnly (.NET 6+)
+    public class DateOnlyVO : ScalarValueObject<DateOnlyVO, DateOnly>, IScalarValueObject<DateOnlyVO, DateOnly>
+    {
+        private DateOnlyVO(DateOnly value) : base(value) { }
+        public static Result<DateOnlyVO> TryCreate(DateOnly value, string? fieldName = null) =>
+            value == DateOnly.MinValue ? Error.Validation("MinValue", fieldName ?? "field") : new DateOnlyVO(value);
+    }
+
+    // TimeOnly (.NET 6+)
+    public class TimeOnlyVO : ScalarValueObject<TimeOnlyVO, TimeOnly>, IScalarValueObject<TimeOnlyVO, TimeOnly>
+    {
+        private TimeOnlyVO(TimeOnly value) : base(value) { }
+        public static Result<TimeOnlyVO> TryCreate(TimeOnly value, string? fieldName = null) =>
+            value == TimeOnly.MinValue ? Error.Validation("MinValue", fieldName ?? "field") : new TimeOnlyVO(value);
+    }
+
+    #endregion
+
+    #region String Tests
+
+    [Fact]
+    public void Write_String_WritesCorrectly()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<StringVO, string>();
+        var vo = StringVO.TryCreate("Hello World", null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        // Act
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        // Assert
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("\"Hello World\"");
+    }
+
+    [Fact]
+    public void RoundTrip_String_PreservesValue()
+    {
+        var vo = StringVO.TryCreate("Test", null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<StringVO, string>());
+        roundTripped!.Value.Should().Be("Test");
+    }
+
+    #endregion
+
+    #region Guid Tests
+
+    [Fact]
+    public void Write_Guid_WritesCorrectly()
+    {
+        // Arrange
+        var guid = Guid.Parse("12345678-1234-1234-1234-123456789012");
+        var converter = new ValidatingJsonConverter<GuidVO, Guid>();
+        var vo = GuidVO.TryCreate(guid, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        // Act
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        // Assert
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be($"\"{guid}\"");
+    }
+
+    [Fact]
+    public void RoundTrip_Guid_PreservesValue()
+    {
+        var guid = Guid.NewGuid();
+        var vo = GuidVO.TryCreate(guid, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<GuidVO, Guid>());
+        roundTripped!.Value.Should().Be(guid);
+    }
+
+    #endregion
+
+    #region Int Tests
+
+    [Fact]
+    public void Write_Int_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<IntVO, int>();
+        var vo = IntVO.TryCreate(42, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("42");
+    }
+
+    [Fact]
+    public void RoundTrip_Int_PreservesValue()
+    {
+        var vo = IntVO.TryCreate(999, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<IntVO, int>());
+        roundTripped!.Value.Should().Be(999);
+    }
+
+    [Fact]
+    public void Write_Int_Zero()
+    {
+        var converter = new ValidatingJsonConverter<IntVO, int>();
+        var vo = IntVO.TryCreate(0, null).Value;
+        var json = Serialize(vo, converter);
+        json.Should().Be("0");
+    }
+
+    [Fact]
+    public void Write_Int_MaxValue()
+    {
+        var converter = new ValidatingJsonConverter<IntVO, int>();
+        var vo = IntVO.TryCreate(int.MaxValue, null).Value;
+        var json = Serialize(vo, converter);
+        json.Should().Be(int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    #endregion
+
+    #region Long Tests
+
+    [Fact]
+    public void Write_Long_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<LongVO, long>();
+        var vo = LongVO.TryCreate(9223372036854775807L, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("9223372036854775807");
+    }
+
+    [Fact]
+    public void RoundTrip_Long_PreservesValue()
+    {
+        var vo = LongVO.TryCreate(123456789012345L, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<LongVO, long>());
+        roundTripped!.Value.Should().Be(123456789012345L);
+    }
+
+    #endregion
+
+    #region Double Tests
+
+    [Fact]
+    public void Write_Double_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<DoubleVO, double>();
+        var vo = DoubleVO.TryCreate(3.14159, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("3.14159");
+    }
+
+    [Fact]
+    public void RoundTrip_Double_PreservesValue()
+    {
+        var vo = DoubleVO.TryCreate(2.71828, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<DoubleVO, double>());
+        roundTripped!.Value.Should().BeApproximately(2.71828, 0.00001);
+    }
+
+    // Note: JSON doesn't support Infinity/NaN by default
+    // Value objects should validate against such values in TryCreate
+
+    #endregion
+
+    #region Float Tests
+
+    [Fact]
+    public void Write_Float_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<FloatVO, float>();
+        var vo = FloatVO.TryCreate(1.23f, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("1.23");
+    }
+
+    [Fact]
+    public void RoundTrip_Float_PreservesValue()
+    {
+        var vo = FloatVO.TryCreate(9.99f, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<FloatVO, float>());
+        roundTripped!.Value.Should().BeApproximately(9.99f, 0.01f);
+    }
+
+    #endregion
+
+    #region Decimal Tests
+
+    [Fact]
+    public void Write_Decimal_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<DecimalVO, decimal>();
+        var vo = DecimalVO.TryCreate(99.99m, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("99.99");
+    }
+
+    [Fact]
+    public void RoundTrip_Decimal_PreservesValue()
+    {
+        var vo = DecimalVO.TryCreate(123.456m, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<DecimalVO, decimal>());
+        roundTripped!.Value.Should().Be(123.456m);
+    }
+
+    [Fact]
+    public void Write_Decimal_HighPrecision()
+    {
+        var converter = new ValidatingJsonConverter<DecimalVO, decimal>();
+        var vo = DecimalVO.TryCreate(0.123456789012345678901234567890m, null).Value;
+        var json = Serialize(vo, converter);
+        // JSON serialization preserves significant digits but may round the last few digits
+        json.Should().StartWith("0.123456789012345678901234");
+    }
+
+    #endregion
+
+    #region Bool Tests
+
+    [Fact]
+    public void Write_Bool_True()
+    {
+        var converter = new ValidatingJsonConverter<BoolVO, bool>();
+        var vo = BoolVO.TryCreate(true, null).Value;
+        var json = Serialize(vo, converter);
+        json.Should().Be("true");
+    }
+
+    [Fact]
+    public void Write_Bool_False()
+    {
+        var converter = new ValidatingJsonConverter<BoolVO, bool>();
+        var vo = BoolVO.TryCreate(false, null).Value;
+        var json = Serialize(vo, converter);
+        json.Should().Be("false");
+    }
+
+    [Fact]
+    public void RoundTrip_Bool_PreservesValue()
+    {
+        var vo = BoolVO.TryCreate(true, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<BoolVO, bool>());
+        roundTripped!.Value.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region DateTime Tests
+
+    [Fact]
+    public void Write_DateTime_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<DateTimeVO, DateTime>();
+        var dt = new DateTime(2024, 1, 15, 10, 30, 45, DateTimeKind.Utc);
+        var vo = DateTimeVO.TryCreate(dt, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Contain("2024-01-15");
+    }
+
+    [Fact]
+    public void RoundTrip_DateTime_PreservesValue()
+    {
+        var dt = new DateTime(2024, 6, 15, 14, 30, 0, DateTimeKind.Utc);
+        var vo = DateTimeVO.TryCreate(dt, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<DateTimeVO, DateTime>());
+        // Note: DateTime round-trip may lose some precision, so we check for closeness
+        roundTripped!.Value.Should().BeCloseTo(dt, TimeSpan.FromSeconds(1));
+    }
+
+    #endregion
+
+    #region DateTimeOffset Tests
+
+    [Fact]
+    public void Write_DateTimeOffset_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<DateTimeOffsetVO, DateTimeOffset>();
+        var dto = new DateTimeOffset(2024, 1, 15, 10, 30, 45, TimeSpan.FromHours(-5));
+        var vo = DateTimeOffsetVO.TryCreate(dto, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Contain("2024-01-15");
+        json.Should().Contain("05:00"); // Offset
+    }
+
+    [Fact]
+    public void RoundTrip_DateTimeOffset_PreservesValue()
+    {
+        var dto = new DateTimeOffset(2024, 12, 25, 18, 0, 0, TimeSpan.FromHours(2));
+        var vo = DateTimeOffsetVO.TryCreate(dto, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<DateTimeOffsetVO, DateTimeOffset>());
+        roundTripped!.Value.Should().Be(dto);
+    }
+
+    #endregion
+
+    #region DateOnly Tests
+
+    [Fact]
+    public void Write_DateOnly_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<DateOnlyVO, DateOnly>();
+        var date = new DateOnly(2024, 3, 15);
+        var vo = DateOnlyVO.TryCreate(date, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("\"2024-03-15\"");
+    }
+
+    [Fact]
+    public void RoundTrip_DateOnly_PreservesValue()
+    {
+        var date = new DateOnly(2024, 7, 4);
+        var vo = DateOnlyVO.TryCreate(date, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<DateOnlyVO, DateOnly>());
+        roundTripped!.Value.Should().Be(date);
+    }
+
+    #endregion
+
+    #region TimeOnly Tests
+
+    [Fact]
+    public void Write_TimeOnly_WritesCorrectly()
+    {
+        var converter = new ValidatingJsonConverter<TimeOnlyVO, TimeOnly>();
+        var time = new TimeOnly(14, 30, 45);
+        var vo = TimeOnlyVO.TryCreate(time, null).Value;
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("\"14:30:45.0000000\"");
+    }
+
+    [Fact]
+    public void RoundTrip_TimeOnly_PreservesValue()
+    {
+        var time = new TimeOnly(9, 15, 30);
+        var vo = TimeOnlyVO.TryCreate(time, null).Value;
+        var roundTripped = RoundTrip(vo, new ValidatingJsonConverter<TimeOnlyVO, TimeOnly>());
+        roundTripped!.Value.Should().Be(time);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static string Serialize<TValueObject, TPrimitive>(TValueObject? vo, ValidatingJsonConverter<TValueObject, TPrimitive> converter)
+        where TValueObject : class, IScalarValueObject<TValueObject, TPrimitive>
+        where TPrimitive : IComparable
+    {
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+        converter.Write(writer, vo, new JsonSerializerOptions());
+        writer.Flush();
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    private static TValueObject? RoundTrip<TValueObject, TPrimitive>(TValueObject vo, ValidatingJsonConverter<TValueObject, TPrimitive> converter)
+        where TValueObject : class, IScalarValueObject<TValueObject, TPrimitive>
+        where TPrimitive : IComparable
+    {
+        var json = Serialize(vo, converter);
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            return converter.Read(ref reader, typeof(TValueObject), new JsonSerializerOptions());
+        }
+    }
+
+    #endregion
+}

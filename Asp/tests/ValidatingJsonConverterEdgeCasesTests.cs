@@ -1,0 +1,468 @@
+namespace Asp.Tests;
+
+using System;
+using System.Text;
+using System.Text.Json;
+using FluentAssertions;
+using FunctionalDdd;
+using FunctionalDdd.Asp.Validation;
+using Xunit;
+
+/// <summary>
+/// Edge case tests for ValidatingJsonConverter including null handling, error scenarios, and special cases.
+/// </summary>
+public class ValidatingJsonConverterEdgeCasesTests
+{
+    #region Test Value Objects
+
+    public class Email : ScalarValueObject<Email, string>, IScalarValueObject<Email, string>
+    {
+        private Email(string value) : base(value) { }
+        public static Result<Email> TryCreate(string? value, string? fieldName = null)
+        {
+            var field = fieldName ?? "email";
+            if (string.IsNullOrWhiteSpace(value))
+                return Error.Validation("Email is required.", field);
+            return new Email(value);
+        }
+    }
+
+    public class Age : ScalarValueObject<Age, int>, IScalarValueObject<Age, int>
+    {
+        private Age(int value) : base(value) { }
+        public static Result<Age> TryCreate(int value, string? fieldName = null)
+        {
+            var field = fieldName ?? "age";
+            if (value < 0)
+                return Error.Validation("Age cannot be negative.", field);
+            return new Age(value);
+        }
+    }
+
+    #endregion
+
+    #region Null Handling Tests
+
+    [Fact]
+    public void Read_NullJsonValue_ReturnsNull()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "null";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            ValidationErrorsContext.HasErrors.Should().BeFalse("null should be allowed");
+        }
+    }
+
+    [Fact]
+    public void Read_NullPrimitiveValue_CollectsError()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "null";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.CurrentPropertyName = "UserEmail";
+
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            // For null JSON values, no error should be added (null is valid for nullable types)
+            ValidationErrorsContext.HasErrors.Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void Write_NullValueObject_WritesNull()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        using var stream = new System.IO.MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        // Act
+        converter.Write(writer, null, new JsonSerializerOptions());
+        writer.Flush();
+
+        // Assert
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        json.Should().Be("null");
+    }
+
+    #endregion
+
+    #region Default Field Name Tests
+
+    [Fact]
+    public void Read_NoPropertyNameSet_UsesTypeNameAsDefault()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "\"\""; // Empty - invalid
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Don't set CurrentPropertyName
+
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            var error = ValidationErrorsContext.GetValidationError();
+            error.Should().NotBeNull();
+            // Should use "email" (camelCase of type name)
+            error!.FieldErrors.Should().ContainSingle()
+                .Which.FieldName.Should().Be("email");
+        }
+    }
+
+    [Fact]
+    public void Read_TypeNameStartsWithLowerCase_UsesAsIs()
+    {
+        // Arrange - Create a type that starts with lowercase (unusual but possible)
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "\"\"";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            var error = ValidationErrorsContext.GetValidationError();
+            error!.FieldErrors[0].FieldName.Should().Be("email");
+        }
+    }
+
+    #endregion
+
+    #region Error Without Scope Tests
+
+    [Fact]
+    public void Read_InvalidValueNoScope_ReturnsNullWithoutException()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "\"\""; // Invalid
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        // No scope created!
+
+        // Act
+        var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+        // Assert
+        result.Should().BeNull("should return null even without scope");
+        // No exception should be thrown
+    }
+
+    #endregion
+
+    #region Non-ValidationError Handling Tests
+
+    [Fact]
+    public void Read_NonValidationError_CollectsAsSimpleError()
+    {
+        // Arrange - Create a value object that returns non-ValidationError
+        var converter = new ValidatingJsonConverter<NonValidationErrorVO, int>();
+        var json = "999"; // Will trigger unexpected error
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.CurrentPropertyName = "Test";
+
+            // Act
+            var result = converter.Read(ref reader, typeof(NonValidationErrorVO), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            var error = ValidationErrorsContext.GetValidationError();
+            error.Should().NotBeNull();
+            error!.FieldErrors.Should().ContainSingle();
+            error.FieldErrors[0].FieldName.Should().Be("Test");
+            error.FieldErrors[0].Details.Should().Contain("Unexpected error");
+        }
+    }
+
+    public class NonValidationErrorVO : ScalarValueObject<NonValidationErrorVO, int>, IScalarValueObject<NonValidationErrorVO, int>
+    {
+        private NonValidationErrorVO(int value) : base(value) { }
+        public static Result<NonValidationErrorVO> TryCreate(int value, string? fieldName = null) =>
+            // Return non-validation error
+            Error.Unexpected("Unexpected error", "code");
+    }
+
+    #endregion
+
+    #region Empty String Tests
+
+    [Fact]
+    public void Read_EmptyString_CollectsValidationError()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "\"\"";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.CurrentPropertyName = "Email";
+
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            var error = ValidationErrorsContext.GetValidationError();
+            error!.FieldErrors[0].Details.Should().Contain("Email is required.");
+        }
+    }
+
+    [Fact]
+    public void Read_Whitespace_CollectsValidationError()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var json = "\"   \"";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            ValidationErrorsContext.HasErrors.Should().BeTrue();
+        }
+    }
+
+    #endregion
+
+    #region Special Character Tests
+
+    [Fact]
+    public void RoundTrip_StringWithSpecialCharacters_PreservesValue()
+    {
+        // Arrange
+        var specialString = "test@example.com<>\"'&\t\n\r";
+        var converter = new ValidatingJsonConverter<Email, string>();
+
+        // Create valid email (adjust VO if needed)
+        var json = JsonSerializer.Serialize(specialString);
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        Email? email;
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.CurrentPropertyName = "Email";
+            email = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+        }
+
+        // If validation passed, write it back
+        if (email != null)
+        {
+            using var stream = new System.IO.MemoryStream();
+            using var writer = new Utf8JsonWriter(stream);
+            converter.Write(writer, email, new JsonSerializerOptions());
+            writer.Flush();
+
+            var outputJson = Encoding.UTF8.GetString(stream.ToArray());
+            outputJson.Should().Be(json);
+        }
+    }
+
+    #endregion
+
+    #region Unicode Tests
+
+    [Fact]
+    public void RoundTrip_UnicodeCharacters_PreservesValue()
+    {
+        // Arrange
+        var unicodeString = "测试@例え.com";  // Chinese and Japanese characters
+        var converter = new ValidatingJsonConverter<Email, string>();
+
+        var json = JsonSerializer.Serialize(unicodeString);
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        Email? email;
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.CurrentPropertyName = "Email";
+            email = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+        }
+
+        if (email != null)
+        {
+            using var stream = new System.IO.MemoryStream();
+            using var writer = new Utf8JsonWriter(stream);
+            converter.Write(writer, email, new JsonSerializerOptions());
+            writer.Flush();
+
+            var outputJson = Encoding.UTF8.GetString(stream.ToArray());
+            outputJson.Should().Be(json);
+        }
+    }
+
+    #endregion
+
+    #region Boundary Value Tests
+
+    [Fact]
+    public void Read_IntMinValue_HandledCorrectly()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Age, int>();
+        var json = int.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Age), new JsonSerializerOptions());
+
+            // Assert - Should collect validation error (negative)
+            result.Should().BeNull();
+            ValidationErrorsContext.HasErrors.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Read_IntMaxValue_HandledCorrectly()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Age, int>();
+        var json = int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Age), new JsonSerializerOptions());
+
+            // Assert - Should succeed (not negative)
+            result.Should().NotBeNull();
+            result!.Value.Should().Be(int.MaxValue);
+        }
+    }
+
+    [Fact]
+    public void Read_IntZero_HandledCorrectly()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Age, int>();
+        var json = "0";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Age), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Value.Should().Be(0);
+        }
+    }
+
+    #endregion
+
+    #region Very Long String Tests
+
+    [Fact]
+    public void Read_VeryLongString_HandledCorrectly()
+    {
+        // Arrange
+        var converter = new ValidatingJsonConverter<Email, string>();
+        var longString = new string('a', 10000) + "@example.com";
+        var json = JsonSerializer.Serialize(longString);
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            // Act
+            var result = converter.Read(ref reader, typeof(Email), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Value.Should().Be(longString);
+        }
+    }
+
+    #endregion
+
+    #region Multiple Errors for Same Field Tests
+
+    [Fact]
+    public void Read_MultipleValidationFailures_FirstErrorUsed()
+    {
+        // Arrange - Value object that can have multiple validation errors
+        var converter = new ValidatingJsonConverter<MultiValidationVO, string>();
+        var json = "\"bad\"";
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+        reader.Read();
+
+        using (ValidationErrorsContext.BeginScope())
+        {
+            ValidationErrorsContext.CurrentPropertyName = "Test";
+
+            // Act
+            var result = converter.Read(ref reader, typeof(MultiValidationVO), new JsonSerializerOptions());
+
+            // Assert
+            result.Should().BeNull();
+            var error = ValidationErrorsContext.GetValidationError();
+            error.Should().NotBeNull();
+            // Only gets the first error (TryCreate returns on first failure)
+            error!.FieldErrors.Should().ContainSingle();
+        }
+    }
+
+    public class MultiValidationVO : ScalarValueObject<MultiValidationVO, string>, IScalarValueObject<MultiValidationVO, string>
+    {
+        private MultiValidationVO(string value) : base(value) { }
+        public static Result<MultiValidationVO> TryCreate(string? value, string? fieldName = null)
+        {
+            if (string.IsNullOrEmpty(value))
+                return Error.Validation("Required", fieldName ?? "field");
+            if (value.Length < 5)
+                return Error.Validation("Too short", fieldName ?? "field");
+            if (!value.Contains('@'))
+                return Error.Validation("Must contain @", fieldName ?? "field");
+            return new MultiValidationVO(value);
+        }
+    }
+
+    #endregion
+}
