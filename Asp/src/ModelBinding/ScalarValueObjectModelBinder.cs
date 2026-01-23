@@ -44,16 +44,16 @@ public class ScalarValueObjectModelBinder<TValueObject, TPrimitive> : IModelBind
         bindingContext.ModelState.SetModelValue(modelName, valueProviderResult);
 
         var rawValue = valueProviderResult.FirstValue;
-        var primitiveValue = ConvertToPrimitive(rawValue);
+        var parseResult = ConvertToPrimitive(rawValue);
 
-        if (primitiveValue is null)
+        if (parseResult.IsFailure)
         {
-            bindingContext.ModelState.AddModelError(
-                modelName,
-                $"The value '{rawValue}' is not valid for {typeof(TPrimitive).Name}.");
+            bindingContext.ModelState.AddModelError(modelName, parseResult.Error.Detail);
             bindingContext.Result = ModelBindingResult.Failed();
             return Task.CompletedTask;
         }
+
+        var primitiveValue = parseResult.Value;
 
         // Call TryCreate directly - no reflection needed due to static abstract interface
         // Pass the model name so validation errors have the correct field name
@@ -72,13 +72,14 @@ public class ScalarValueObjectModelBinder<TValueObject, TPrimitive> : IModelBind
         return Task.CompletedTask;
     }
 
-    private static TPrimitive? ConvertToPrimitive(string? value)
+    private static Result<TPrimitive> ConvertToPrimitive(string? value)
     {
         if (string.IsNullOrEmpty(value))
-            return default;
+            return Error.Validation("Value is required.");
 
         var targetType = typeof(TPrimitive);
         var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        var typeName = underlyingType.Name;
 
         try
         {
@@ -86,50 +87,76 @@ public class ScalarValueObjectModelBinder<TValueObject, TPrimitive> : IModelBind
                 return (TPrimitive)(object)value;
 
             if (underlyingType == typeof(Guid))
-                return Guid.TryParse(value, out var guid) ? (TPrimitive)(object)guid : default;
+                return Guid.TryParse(value, out var guid)
+                    ? (TPrimitive)(object)guid
+                    : Error.Validation($"'{value}' is not a valid GUID.");
 
             if (underlyingType == typeof(int))
-                return int.TryParse(value, out var i) ? (TPrimitive)(object)i : default;
+                return int.TryParse(value, out var i)
+                    ? (TPrimitive)(object)i
+                    : Error.Validation($"'{value}' is not a valid integer.");
 
             if (underlyingType == typeof(long))
-                return long.TryParse(value, out var l) ? (TPrimitive)(object)l : default;
+                return long.TryParse(value, out var l)
+                    ? (TPrimitive)(object)l
+                    : Error.Validation($"'{value}' is not a valid integer.");
 
             if (underlyingType == typeof(decimal))
-                return decimal.TryParse(value, out var d) ? (TPrimitive)(object)d : default;
+                return decimal.TryParse(value, out var d)
+                    ? (TPrimitive)(object)d
+                    : Error.Validation($"'{value}' is not a valid decimal.");
 
             if (underlyingType == typeof(double))
-                return double.TryParse(value, out var dbl) ? (TPrimitive)(object)dbl : default;
+                return double.TryParse(value, out var dbl)
+                    ? (TPrimitive)(object)dbl
+                    : Error.Validation($"'{value}' is not a valid number.");
 
             if (underlyingType == typeof(bool))
-                return bool.TryParse(value, out var b) ? (TPrimitive)(object)b : default;
+                return bool.TryParse(value, out var b)
+                    ? (TPrimitive)(object)b
+                    : Error.Validation($"'{value}' is not a valid boolean. Use 'true' or 'false'.");
 
             if (underlyingType == typeof(DateTime))
-                return DateTime.TryParse(value, out var dt) ? (TPrimitive)(object)dt : default;
+                return DateTime.TryParse(value, out var dt)
+                    ? (TPrimitive)(object)dt
+                    : Error.Validation($"'{value}' is not a valid date/time.");
 
             if (underlyingType == typeof(DateOnly))
-                return DateOnly.TryParse(value, out var d) ? (TPrimitive)(object)d : default;
+                return DateOnly.TryParse(value, out var dateOnly)
+                    ? (TPrimitive)(object)dateOnly
+                    : Error.Validation($"'{value}' is not a valid date.");
 
             if (underlyingType == typeof(TimeOnly))
-                return TimeOnly.TryParse(value, out var t) ? (TPrimitive)(object)t : default;
+                return TimeOnly.TryParse(value, out var t)
+                    ? (TPrimitive)(object)t
+                    : Error.Validation($"'{value}' is not a valid time.");
 
             if (underlyingType == typeof(DateTimeOffset))
-                return DateTimeOffset.TryParse(value, out var dto) ? (TPrimitive)(object)dto : default;
+                return DateTimeOffset.TryParse(value, out var dto)
+                    ? (TPrimitive)(object)dto
+                    : Error.Validation($"'{value}' is not a valid date/time.");
 
             if (underlyingType == typeof(short))
-                return short.TryParse(value, out var s) ? (TPrimitive)(object)s : default;
+                return short.TryParse(value, out var s)
+                    ? (TPrimitive)(object)s
+                    : Error.Validation($"'{value}' is not a valid integer.");
 
             if (underlyingType == typeof(byte))
-                return byte.TryParse(value, out var by) ? (TPrimitive)(object)by : default;
+                return byte.TryParse(value, out var by)
+                    ? (TPrimitive)(object)by
+                    : Error.Validation($"'{value}' is not a valid byte (0-255).");
 
             if (underlyingType == typeof(float))
-                return float.TryParse(value, out var f) ? (TPrimitive)(object)f : default;
+                return float.TryParse(value, out var f)
+                    ? (TPrimitive)(object)f
+                    : Error.Validation($"'{value}' is not a valid number.");
 
             // Use Convert for other types
             return (TPrimitive)Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
         }
         catch
         {
-            return default;
+            return Error.Validation($"'{value}' is not a valid {typeName}.");
         }
     }
 

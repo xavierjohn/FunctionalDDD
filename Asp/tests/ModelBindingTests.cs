@@ -162,7 +162,7 @@ public class ModelBindingTests
         context.Result.IsModelSet.Should().BeFalse();
         context.ModelState.IsValid.Should().BeFalse();
         context.ModelState["productCode"]!.Errors.Should().ContainSingle()
-            .Which.ErrorMessage.Should().Be("The value '' is not valid for String.");
+            .Which.ErrorMessage.Should().Be("Value is required.");
     }
 
     [Fact]
@@ -218,7 +218,7 @@ public class ModelBindingTests
     }
 
     [Fact]
-    public async Task ModelBinder_InvalidInt_ConvertsToDefaultAndValidates()
+    public async Task ModelBinder_InvalidInt_ReturnsParseError()
     {
         // Arrange
         var binder = new ScalarValueObjectModelBinder<Quantity, int>();
@@ -227,11 +227,11 @@ public class ModelBindingTests
         // Act
         await binder.BindModelAsync(context);
 
-        // Assert - invalid strings convert to default (0) which then fails validation
+        // Assert - invalid strings return a parsing error before TryCreate is called
         context.Result.IsModelSet.Should().BeFalse();
         context.ModelState.IsValid.Should().BeFalse();
         context.ModelState["quantity"]!.Errors.Should().ContainSingle()
-            .Which.ErrorMessage.Should().Be("Quantity must be greater than zero.");
+            .Which.ErrorMessage.Should().Contain("is not a valid integer");
     }
 
     [Fact]
@@ -285,7 +285,7 @@ public class ModelBindingTests
     }
 
     [Fact]
-    public async Task ModelBinder_InvalidGuid_ConvertsToDefaultAndValidates()
+    public async Task ModelBinder_InvalidGuid_ReturnsParseError()
     {
         // Arrange
         var binder = new ScalarValueObjectModelBinder<UserId, Guid>();
@@ -294,11 +294,11 @@ public class ModelBindingTests
         // Act
         await binder.BindModelAsync(context);
 
-        // Assert - invalid strings convert to default (Empty) which then fails validation
+        // Assert - invalid strings return a parsing error before TryCreate is called
         context.Result.IsModelSet.Should().BeFalse();
         context.ModelState.IsValid.Should().BeFalse();
         context.ModelState["userId"]!.Errors.Should().ContainSingle()
-            .Which.ErrorMessage.Should().Be("UserId cannot be empty.");
+            .Which.ErrorMessage.Should().Contain("is not a valid GUID");
     }
 
     [Fact]
