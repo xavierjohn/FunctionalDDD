@@ -126,6 +126,107 @@ if (EmailAddress.TryParse("user@example.com", null, out var email))
 }
 ```
 
+### Additional Value Objects
+
+#### Url
+```csharp
+var result = Url.TryCreate("https://example.com/path");
+// Access URL components
+if (result.IsSuccess)
+{
+    var url = result.Value;
+    Console.WriteLine(url.Scheme);  // "https"
+    Console.WriteLine(url.Host);    // "example.com"
+    Console.WriteLine(url.Path);    // "/path"
+    Console.WriteLine(url.IsSecure); // true
+}
+
+// Invalid URLs
+var invalid = Url.TryCreate("not-a-url");
+// Returns: Error.Validation("URL must be a valid absolute HTTP or HTTPS URL.", "url")
+```
+
+#### PhoneNumber
+```csharp
+var result = PhoneNumber.TryCreate("+14155551234");
+if (result.IsSuccess)
+{
+    var phone = result.Value;
+    Console.WriteLine(phone.GetCountryCode()); // "1"
+}
+
+// Normalizes input (removes spaces, dashes, parentheses)
+var normalized = PhoneNumber.TryCreate("+1 (415) 555-1234");
+// Stores as: "+14155551234"
+```
+
+#### Percentage
+```csharp
+var discount = Percentage.TryCreate(15.5m);
+var fromFraction = Percentage.FromFraction(0.155m); // Also 15.5%
+
+if (discount.IsSuccess)
+{
+    var pct = discount.Value;
+    Console.WriteLine(pct.AsFraction());      // 0.155
+    Console.WriteLine(pct.Of(100m));          // 15.5
+    Console.WriteLine(pct.ToString());        // "15.5%"
+}
+
+// Parse with % suffix
+var parsed = Percentage.Parse("20%", null); // Valid
+```
+
+#### Currency
+```csharp
+var result = Currency.TryCreate("USD");
+// Stores as uppercase: "USD"
+
+var invalid = Currency.TryCreate("US"); 
+// Error: Must be 3-letter code
+```
+
+#### CountryCode and LanguageCode
+```csharp
+var country = CountryCode.TryCreate("US");  // Uppercase
+var language = LanguageCode.TryCreate("en"); // Lowercase
+
+// ISO standard codes only
+var invalid = CountryCode.TryCreate("USA"); // Error: Must be 2 letters
+```
+
+#### IpAddress
+```csharp
+var ipv4 = IpAddress.TryCreate("192.168.1.1");
+var ipv6 = IpAddress.TryCreate("::1");
+
+if (ipv4.IsSuccess)
+{
+    var ip = ipv4.Value.ToIPAddress(); // Access System.Net.IPAddress
+}
+```
+
+#### Hostname and Slug
+```csharp
+var hostname = Hostname.TryCreate("example.com");
+// RFC 1123 validation
+
+var slug = Slug.TryCreate("my-blog-post");
+// Lowercase letters, digits, and hyphens only
+// No leading/trailing hyphens, no consecutive hyphens
+
+var invalid = Slug.TryCreate("My Blog Post!"); // Error
+```
+
+#### Age
+```csharp
+var age = Age.TryCreate(42);
+// Range: 0-150
+
+var tooOld = Age.TryCreate(200);
+// Error: "Age is unrealistically high."
+```
+
 ### ASP.NET Core Integration
 
 Value objects implementing `IScalarValueObject` work seamlessly with ASP.NET Core for automatic validation:
@@ -181,11 +282,32 @@ public class UsersController : ControllerBase
 
 ## Core Concepts
 
+### Available Value Objects
+
+This library provides both **base classes** for creating custom value objects and **ready-to-use** value objects for common scenarios:
+
+#### Base Classes (with Source Generation)
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
 | **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
 | **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValueObject, NewUnique(), ASP.NET validation |
-| **EmailAddress** | Domain primitive | Email validation | RFC 5322 compliant, IScalarValueObject, IParsable, ASP.NET validation |
+| **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
+| **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
+
+#### Ready-to-Use Value Objects
+| Value Object | Purpose | Validation Rules | Example |
+|-------------|----------|-----------------|---------|
+| **EmailAddress** | Email validation | RFC 5322 compliant, trimmed | `user@example.com` |
+| **Url** | Web URLs | Absolute HTTP/HTTPS URIs | `https://example.com/path` |
+| **PhoneNumber** | Phone numbers | E.164 format | `+14155551234` |
+| **Percentage** | Percentage values | 0-100 range, supports % suffix | `15.5` or `15.5%` |
+| **Currency** | Currency codes | ISO 4217 3-letter codes | `USD`, `EUR`, `GBP` |
+| **IpAddress** | IP addresses | IPv4 and IPv6 | `192.168.1.1` or `::1` |
+| **Hostname** | Hostnames | RFC 1123 compliant | `example.com` |
+| **Slug** | URL slugs | Lowercase, digits, hyphens | `my-blog-post` |
+| **CountryCode** | Country codes | ISO 3166-1 alpha-2 | `US`, `GB`, `FR` |
+| **LanguageCode** | Language codes | ISO 639-1 alpha-2 | `en`, `es`, `fr` |
+| **Age** | Age values | 0-150 range | `42` |
 
 **What are Primitive Value Objects?**
 

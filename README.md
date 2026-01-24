@@ -221,6 +221,8 @@ Robust, Maintainable Software
 ## What's New
 
 **Recent enhancements:**
+- ✨ **ASP.NET Core Auto-Validation** - Value objects automatically validate in requests (route params, query strings, JSON bodies) via `AddScalarValueObjectValidation()`
+- 🎯 **11 New Value Objects** - Ready-to-use: `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, plus `RequiredInt`/`RequiredDecimal`
 - ✨ **Discriminated Error Matching** - Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
 - ✨ **Tuple Destructuring** - Automatically destructure tuples in Match/Switch for cleaner code
 - 📚 **Enhanced Documentation** - [Complete documentation site](https://xavierjohn.github.io/FunctionalDDD/) with tutorials, examples, and API reference
@@ -239,7 +241,7 @@ Robust, Maintainable Software
 | **[Asp](https://www.nuget.org/packages/FunctionalDDD.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp) | Convert Result → HTTP responses (MVC & Minimal API) | [📖 Docs](Asp/README.md) |
 | **[Http](https://www.nuget.org/packages/FunctionalDDD.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Http.svg)](https://www.nuget.org/packages/FunctionalDDD.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Http/README.md) |
 | **[FluentValidation](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
-| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects) | RequiredString, RequiredGuid, EmailAddress | [📖 Docs](PrimitiveValueObjects/README.md) |
+| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects) | Base classes + 11 ready-to-use VOs: EmailAddress, Url, PhoneNumber, Percentage, Currency, IpAddress, Hostname, Slug, CountryCode, LanguageCode, Age | [📖 Docs](PrimitiveValueObjects/README.md) |
 | **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
 | **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/FunctionalDDD.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Testing.svg)](https://www.nuget.org/packages/FunctionalDDD.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
