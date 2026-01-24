@@ -103,6 +103,38 @@ public class CurrencyCodeTests
     }
 
     [Fact]
+    public void Create_returns_CurrencyCode_for_valid_input()
+    {
+        // Act
+        var code = CurrencyCode.Create("EUR");
+
+        // Assert
+        code.Value.Should().Be("EUR");
+    }
+
+    [Fact]
+    public void Create_throws_for_invalid_code()
+    {
+        // Act
+        Action act = () => CurrencyCode.Create("INVALID");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create CurrencyCode:*");
+    }
+
+    [Fact]
+    public void Create_throws_for_empty_code()
+    {
+        // Act
+        Action act = () => CurrencyCode.Create("");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create CurrencyCode: Currency code is required.");
+    }
+
+    [Fact]
     public void Cannot_parse_invalid_CurrencyCode()
     {
         // Act

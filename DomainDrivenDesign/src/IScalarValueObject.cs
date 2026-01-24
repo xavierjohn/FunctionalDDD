@@ -61,6 +61,50 @@ public interface IScalarValueObject<TSelf, TPrimitive>
     static abstract Result<TSelf> TryCreate(TPrimitive value, string? fieldName = null);
 
     /// <summary>
+    /// Creates a validated value object from a primitive value.
+    /// Throws an exception if validation fails.
+    /// </summary>
+    /// <param name="value">The raw primitive value</param>
+    /// <returns>The validated value object</returns>
+    /// <exception cref="InvalidOperationException">Thrown when validation fails</exception>
+    /// <remarks>
+    /// <para>
+    /// Use this method when you know the value is valid (e.g., in tests, with constants,
+    /// or when building from other validated value objects). This provides cleaner code
+    /// than calling <c>TryCreate().Value</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ Don't use this method with user input or uncertain data - use <see cref="TryCreate"/>
+    /// instead to handle validation errors gracefully.
+    /// </para>
+    /// <para>
+    /// The default implementation calls <see cref="TryCreate"/> and throws if validation fails.
+    /// You can override this if you need custom error handling behavior.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Use in tests or with known-valid values:
+    /// <code><![CDATA[
+    /// // ✅ Good - Test data
+    /// var email = EmailAddress.Create("test@example.com");
+    /// 
+    /// // ✅ Good - Building from validated data
+    /// var total = Money.Create(item1.Amount + item2.Amount, "USD");
+    /// 
+    /// // ❌ Bad - User input (use TryCreate instead)
+    /// var email = EmailAddress.Create(userInput); 
+    /// ]]></code>
+    /// </example>
+    static virtual TSelf Create(TPrimitive value)
+    {
+        var result = TSelf.TryCreate(value);
+        if (result.IsFailure)
+            throw new InvalidOperationException($"Failed to create {typeof(TSelf).Name}: {result.Error.Detail}");
+        
+        return result.Value;
+    }
+
+    /// <summary>
     /// Gets the underlying primitive value for serialization.
     /// </summary>
     /// <value>The primitive value wrapped by this value object.</value>

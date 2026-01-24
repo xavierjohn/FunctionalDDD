@@ -1,4 +1,4 @@
-﻿namespace EcommerceExample.Aggregates;
+namespace EcommerceExample.Aggregates;
 
 using EcommerceExample.Entities;
 using EcommerceExample.Events;
@@ -38,7 +38,7 @@ public class Order : Aggregate<OrderId>
     private Order(CustomerId customerId) : base(OrderId.NewUnique())
     {
         CustomerId = customerId;
-        Total = Money.TryCreate(0).Value;
+        Total = Money.Create(0, "USD");
         Status = OrderStatus.Draft;
         CreatedAt = DateTime.UtcNow;
 
@@ -261,7 +261,7 @@ public class Order : Aggregate<OrderId>
 
     private Result<Unit> RecalculateTotal()
     {
-        var total = Money.TryCreate(0).Value;
+        var total = Money.Create(0, "USD");
 
         foreach (var line in _lines)
         {

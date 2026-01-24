@@ -7,6 +7,106 @@ This is a functional programming library for .NET that implements Railway Orient
 **Target Frameworks:**
 - .NET 10
 
+## Value Object Creation Patterns
+
+All value objects provide two factory methods for creation:
+
+### `TryCreate` - Returns `Result<T>`
+
+Use when failure is expected and should be handled gracefully:
+
+```csharp
+// ✅ Use in API endpoints, user input validation
+var result = Money.TryCreate(amount, currencyCode);
+if (result.IsFailure)
+    return result.Error; // Handle the error
+
+var money = result.Value;
+```
+
+### `Create` - Throws Exception
+
+Use when values are known to be valid (failure is exceptional):
+
+```csharp
+// ✅ Use in tests
+var testMoney = Money.Create(100.00m, "USD");
+
+// ✅ Use with constants or configuration
+var defaultCurrency = CurrencyCode.Create("USD");
+
+// ✅ Use when building from other validated value objects
+var total = Money.Create(item1.Amount + item2.Amount, "USD");
+```
+
+**⚠️ Don't use `.Value` on TryCreate in production code:**
+```csharp
+// ❌ Bad - Can throw NullReferenceException with unclear message
+var money = Money.TryCreate(amount, currency).Value;
+
+// ✅ Good - Clear intent, better error message
+var money = Money.Create(amount, currency);
+
+// ✅ Or handle the error
+var result = Money.TryCreate(amount, currency);
+if (result.IsFailure) 
+    return result.ToHttpResult();
+```
+
+### Implementation Details
+
+**The `Create` method is automatically provided:**
+- ✅ All scalar value objects inherit it from `ScalarValueObject<TSelf, T>` base class
+- ✅ No need to implement it manually - it's already there
+- ✅ Default implementation calls `TryCreate` and throws `InvalidOperationException` on failure
+- ✅ Can be overridden if custom behavior is needed (e.g., multi-parameter signatures like `Money.Create(amount, currency)`)
+
+**For source-generated value objects (`RequiredGuid`, `RequiredString`):**
+- The generator doesn't emit a `Create` method
+- They automatically inherit it from the base class
+- Works out of the box with no additional code
+
+**Custom value objects:**
+```csharp
+// ✅ Inherits Create automatically
+public class Temperature : ScalarValueObject<Temperature, decimal>, 
+    IScalarValueObject<Temperature, decimal>
+{
+    private Temperature(decimal value) : base(value) { }
+    
+    public static Result<Temperature> TryCreate(decimal value, string? fieldName = null) =>
+        value.ToResult()
+            .Ensure(v => v >= -273.15m, Error.Validation("Below absolute zero", fieldName ?? "temperature"))
+            .Map(v => new Temperature(v));
+    
+    // Create is inherited from base class - no need to implement!
+}
+
+// Usage
+var temp = Temperature.Create(98.6m); // ✅ Works automatically
+```
+
+**Multi-parameter Create methods:**
+```csharp
+// For value objects with complex creation (like Money with amount + currency)
+public class Money : ValueObject
+{
+    // TryCreate with multiple parameters
+    public static Result<Money> TryCreate(decimal amount, string currencyCode, string? fieldName = null)
+    { /* ... */ }
+    
+    // Explicit Create for multi-parameter signature
+    public static Money Create(decimal amount, string currencyCode)
+    {
+        var result = TryCreate(amount, currencyCode);
+        if (result.IsFailure)
+            throw new InvalidOperationException($"Failed to create Money: {result.Error.Detail}");
+        
+        return result.Value;
+    }
+}
+```
+
 ## Test File Organization Rules
 
 ### Async Extension Test Organization

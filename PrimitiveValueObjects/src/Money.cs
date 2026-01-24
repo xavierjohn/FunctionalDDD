@@ -52,6 +52,27 @@ public class Money : ValueObject
     }
 
     /// <summary>
+    /// Creates a Money instance with the specified amount and currency code.
+    /// Throws an exception if the amount or currency is invalid.
+    /// </summary>
+    /// <param name="amount">The monetary amount.</param>
+    /// <param name="currencyCode">ISO 4217 currency code (e.g., "USD", "EUR").</param>
+    /// <returns>The Money instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when amount is negative or currency is invalid.</exception>
+    /// <remarks>
+    /// Use this method when you know the values are valid (e.g., in tests or with constants).
+    /// For user input, use <see cref="TryCreate"/> instead.
+    /// </remarks>
+    public static Money Create(decimal amount, string currencyCode)
+    {
+        var result = TryCreate(amount, currencyCode);
+        if (result.IsFailure)
+            throw new InvalidOperationException($"Failed to create Money: {result.Error.Detail}");
+        
+        return result.Value;
+    }
+
+    /// <summary>
     /// Adds two Money amounts if they have the same currency.
     /// </summary>
     public Result<Money> Add(Money other)

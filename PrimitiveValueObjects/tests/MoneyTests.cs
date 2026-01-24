@@ -43,6 +43,39 @@ public class MoneyTests
         result.IsFailure.Should().BeTrue();
     }
 
+    [Fact]
+    public void Create_returns_Money_for_valid_input()
+    {
+        // Act
+        var money = Money.Create(99.99m, "USD");
+
+        // Assert
+        money.Amount.Should().Be(99.99m);
+        money.Currency.Value.Should().Be("USD");
+    }
+
+    [Fact]
+    public void Create_throws_for_negative_amount()
+    {
+        // Act
+        Action act = () => Money.Create(-50.00m, "USD");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create Money: Amount cannot be negative");
+    }
+
+    [Fact]
+    public void Create_throws_for_invalid_currency()
+    {
+        // Act
+        Action act = () => Money.Create(100.00m, "INVALID");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create Money:*");
+    }
+
     [Theory]
     [InlineData(19.995, "USD", 20.00)]  // USD rounds to 2 decimals
     [InlineData(10000.5, "JPY", 10001)] // JPY rounds to 0 decimals

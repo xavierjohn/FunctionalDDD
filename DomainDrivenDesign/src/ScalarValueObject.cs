@@ -193,6 +193,51 @@ public abstract class ScalarValueObject<TSelf, T> : ValueObject, IConvertible
     /// </example>
     public static implicit operator T(ScalarValueObject<TSelf, T> valueObject) => valueObject.Value;
 
+    /// <summary>
+    /// Creates a validated value object from a primitive value.
+    /// Throws an exception if validation fails.
+    /// </summary>
+    /// <param name="value">The raw primitive value</param>
+    /// <returns>The validated value object</returns>
+    /// <exception cref="InvalidOperationException">Thrown when validation fails</exception>
+    /// <remarks>
+    /// <para>
+    /// Use this method when you know the value is valid (e.g., in tests, with constants,
+    /// or when building from other validated value objects). This provides cleaner code
+    /// than calling <c>TryCreate().Value</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ Don't use this method with user input or uncertain data - use <c>TryCreate</c>
+    /// instead to handle validation errors gracefully.
+    /// </para>
+    /// <para>
+    /// This is a default implementation that can be overridden if custom behavior is needed.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Use in tests or with known-valid values:
+    /// <code><![CDATA[
+    /// // ✅ Good - Test data
+    /// var email = EmailAddress.Create("test@example.com");
+    /// 
+    /// // ✅ Good - Building from validated data
+    /// var temp = Temperature.Create(98.6m);
+    /// 
+    /// // ❌ Bad - User input (use TryCreate instead)
+    /// var email = EmailAddress.Create(userInput); 
+    /// ]]></code>
+    /// </example>
+#pragma warning disable CA1000 // Do not declare static members on generic types - Required by CRTP pattern
+    public static TSelf Create(T value)
+#pragma warning restore CA1000
+    {
+        var result = TSelf.TryCreate(value);
+        if (result.IsFailure)
+            throw new InvalidOperationException($"Failed to create {typeof(TSelf).Name}: {result.Error.Detail}");
+        
+        return result.Value;
+    }
+
     // IConvertible implementation - delegates to Convert class for the wrapped value
 
     /// <summary>

@@ -122,7 +122,7 @@ public class BankingWorkflow
             .Bind(acc =>
             {
                 var interestAmount = acc.Balance.Amount * (interestRate / 365m); // Daily interest
-                return Money.TryCreate(interestAmount);
+                return Money.TryCreate(interestAmount, "USD");
             }))
             .BindAsync(async interest =>
             {

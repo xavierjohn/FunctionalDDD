@@ -10,54 +10,54 @@ public class MoneyController : ControllerBase
     // Money Creation
     [HttpPost("[action]")]
     public ActionResult<Money> Create([FromBody] CreateMoneyRequest request) =>
-        Money.TryCreate(request.Amount, request.Currency)
+        Money.TryCreate(request.Amount, request.Currency.Value)
             .ToActionResult(this);
 
     // Arithmetic Operations
     [HttpPost("[action]")]
     public ActionResult<Money> Add([FromBody] MoneyOperationRequest request) =>
-        Money.TryCreate(request.Left.Amount, request.Left.Currency)
-            .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency))
+        Money.TryCreate(request.Left.Amount, request.Left.Currency.Value)
+            .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency.Value))
             .Bind((left, right) => left.Add(right))
             .ToActionResult(this);
 
     [HttpPost("[action]")]
     public ActionResult<Money> Subtract([FromBody] MoneyOperationRequest request) =>
-        Money.TryCreate(request.Left.Amount, request.Left.Currency)
-            .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency))
+        Money.TryCreate(request.Left.Amount, request.Left.Currency.Value)
+            .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency.Value))
             .Bind((left, right) => left.Subtract(right))
             .ToActionResult(this);
 
     [HttpPost("[action]")]
     public ActionResult<Money> Multiply([FromBody] MultiplyMoneyRequest request) =>
-        Money.TryCreate(request.Money.Amount, request.Money.Currency)
+        Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
             .Bind(money => money.Multiply(request.Multiplier))
             .ToActionResult(this);
 
     [HttpPost("[action]")]
     public ActionResult<Money> MultiplyByQuantity([FromBody] MultiplyByQuantityRequest request) =>
-        Money.TryCreate(request.Money.Amount, request.Money.Currency)
+        Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
             .Bind(money => money.Multiply(request.Quantity))
             .ToActionResult(this);
 
     [HttpPost("[action]")]
     public ActionResult<Money> Divide([FromBody] DivideMoneyRequest request) =>
-        Money.TryCreate(request.Money.Amount, request.Money.Currency)
+        Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
             .Bind(money => money.Divide(request.Divisor))
             .ToActionResult(this);
 
     // Allocation
     [HttpPost("[action]")]
     public ActionResult<Money[]> Allocate([FromBody] AllocateMoneyRequest request) =>
-        Money.TryCreate(request.Money.Amount, request.Money.Currency)
+        Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
             .Bind(money => money.Allocate(request.Ratios))
             .ToActionResult(this);
 
     // Comparison
     [HttpPost("[action]")]
     public ActionResult<bool> Compare([FromBody] CompareMoneyRequest request) =>
-        Money.TryCreate(request.Left.Amount, request.Left.Currency)
-            .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency))
+        Money.TryCreate(request.Left.Amount, request.Left.Currency.Value)
+            .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency.Value))
             .Map<(Money, Money), bool>(tuple => request.Operation.ToLowerInvariant() switch
             {
                 "greaterthan" => tuple.Item1.IsGreaterThan(tuple.Item2),
@@ -75,14 +75,14 @@ public class MoneyController : ControllerBase
         if (request.Items.Length == 0)
             return Result.Failure<Money>(Error.Validation("Cart cannot be empty")).ToActionResult(this);
 
-        var firstItem = Money.TryCreate(request.Items[0].Amount, request.Items[0].Currency);
+        var firstItem = Money.TryCreate(request.Items[0].Amount, request.Items[0].Currency.Value);
         if (firstItem.IsFailure)
             return firstItem.ToActionResult(this);
 
         var total = firstItem.Value;
         for (int i = 1; i < request.Items.Length; i++)
         {
-            var itemResult = Money.TryCreate(request.Items[i].Amount, request.Items[i].Currency)
+            var itemResult = Money.TryCreate(request.Items[i].Amount, request.Items[i].Currency.Value)
                 .Bind(item => total.Add(item));
             
             if (itemResult.IsFailure)
@@ -96,7 +96,7 @@ public class MoneyController : ControllerBase
 
     [HttpPost("[action]")]
     public ActionResult<Money> ApplyDiscount([FromBody] ApplyDiscountRequest request) =>
-        Money.TryCreate(request.OriginalPrice.Amount, request.OriginalPrice.Currency)
+        Money.TryCreate(request.OriginalPrice.Amount, request.OriginalPrice.Currency.Value)
             .Ensure(price => request.DiscountPercent is >= 0 and <= 100,
                 Error.Validation("Discount percent must be between 0 and 100"))
             .Bind(price =>
@@ -108,7 +108,7 @@ public class MoneyController : ControllerBase
 
     [HttpPost("[action]")]
     public ActionResult<Money> SplitBill([FromBody] SplitBillRequest request) =>
-        Money.TryCreate(request.Total.Amount, request.Total.Currency)
+        Money.TryCreate(request.Total.Amount, request.Total.Currency.Value)
             .Ensure(_ => request.People > 0, Error.Validation("Number of people must be positive"))
             .Bind(total => total.Divide(request.People))
             .ToActionResult(this);
@@ -121,7 +121,7 @@ public class MoneyController : ControllerBase
             return Result.Failure<RevenueShareResponse>(
                 Error.Validation($"Percentages must sum to 100, got {totalPercent}")).ToActionResult(this);
 
-        return Money.TryCreate(request.Revenue.Amount, request.Revenue.Currency)
+        return Money.TryCreate(request.Revenue.Amount, request.Revenue.Currency.Value)
             .Bind(revenue => revenue.Allocate(
                 (int)request.PlatformPercent,
                 (int)request.CreatorPercent,
@@ -131,8 +131,8 @@ public class MoneyController : ControllerBase
     }
 }
 
-public record MoneyDto(decimal Amount, string Currency);
-public record CreateMoneyRequest(decimal Amount, string Currency);
+public record MoneyDto(decimal Amount, CurrencyCode Currency);
+public record CreateMoneyRequest(decimal Amount, CurrencyCode Currency);
 public record MoneyOperationRequest(MoneyDto Left, MoneyDto Right);
 public record MultiplyMoneyRequest(MoneyDto Money, decimal Multiplier);
 public record MultiplyByQuantityRequest(MoneyDto Money, int Quantity);

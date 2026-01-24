@@ -228,11 +228,11 @@ public class BankAccount : Aggregate<AccountId>
             .Where(t => t.Type == TransactionType.Withdrawal && t.Timestamp.Date == today)
             .Sum(t => t.Amount.Amount);
 
-        return Money.TryCreate(todayWithdrawals).Value;
+        return Money.Create(todayWithdrawals, "USD");
     }
 
     public Money GetAvailableBalance()
     {
-        return Money.TryCreate(Balance.Amount + OverdraftLimit.Amount).Value;
+        return Money.Create(Balance.Amount + OverdraftLimit.Amount, "USD");
     }
 }
