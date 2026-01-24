@@ -79,13 +79,16 @@ public class Url : ScalarValueObject<Url, string>, IScalarValueObject<Url, strin
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<Url>(Error.Validation("URL is required.", field));
 
-        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        // Normalize input to avoid issues with accidental whitespace
+        var trimmed = value.Trim();
+
+        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
             return Result.Failure<Url>(Error.Validation("URL must be a valid absolute HTTP or HTTPS URL.", field));
 
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
             return Result.Failure<Url>(Error.Validation("URL must use HTTP or HTTPS scheme.", field));
 
-        return new Url(value, uri);
+        return new Url(trimmed, uri);
     }
 
     /// <summary>

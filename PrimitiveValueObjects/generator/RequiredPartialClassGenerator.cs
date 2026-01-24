@@ -200,8 +200,25 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                     "RequiredString" => "string",
                     "RequiredInt" => "int",
                     "RequiredDecimal" => "decimal",
-                    _ => "unknown"
+                    _ => null
                 };
+
+                // Skip unsupported base types and emit a diagnostic to inform the user
+                if (classType is null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        new DiagnosticDescriptor(
+                            id: "FDDD001",
+                            title: "Unsupported base type for RequiredPartialClassGenerator",
+                            messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal.",
+                            category: "SourceGenerator",
+                            DiagnosticSeverity.Warning,
+                            isEnabledByDefault: true),
+                        location: null,
+                        g.ClassName,
+                        g.ClassBase));
+                    continue;
+                }
 
                 // Build up the source code
                 // Note: The base class is already declared in the user's partial class.
