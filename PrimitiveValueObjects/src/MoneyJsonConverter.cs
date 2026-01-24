@@ -62,7 +62,7 @@ public class MoneyJsonConverter : JsonConverter<Money>
     {
         writer.WriteStartObject();
         writer.WriteNumber("amount", value.Amount);
-        writer.WriteString("currency", value.Currency.Value);
+        writer.WriteString("currency", value.Currency);
         writer.WriteEndObject();
     }
 }

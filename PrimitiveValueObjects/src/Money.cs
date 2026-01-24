@@ -81,7 +81,7 @@ public class Money : ValueObject
             return Result.Failure<Money>(
                 Error.Validation($"Cannot add {other.Currency} to {Currency}", "currency"));
 
-        return TryCreate(Amount + other.Amount, Currency.Value);
+        return TryCreate(Amount + other.Amount, Currency);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public class Money : ValueObject
             return Result.Failure<Money>(
                 Error.Validation($"Cannot subtract {other.Currency} from {Currency}", "currency"));
 
-        return TryCreate(Amount - other.Amount, Currency.Value);
+        return TryCreate(Amount - other.Amount, Currency);
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ public class Money : ValueObject
             return Result.Failure<Money>(
                 Error.Validation("Multiplier cannot be negative", nameof(multiplier)));
 
-        return TryCreate(Amount * multiplier, Currency.Value);
+        return TryCreate(Amount * multiplier, Currency);
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public class Money : ValueObject
             return Result.Failure<Money>(
                 Error.Validation("Quantity cannot be negative", nameof(quantity)));
 
-        return TryCreate(Amount * quantity, Currency.Value);
+        return TryCreate(Amount * quantity, Currency);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public class Money : ValueObject
             return Result.Failure<Money>(
                 Error.Validation("Divisor must be positive", nameof(divisor)));
 
-        return TryCreate(Amount / divisor, Currency.Value);
+        return TryCreate(Amount / divisor, Currency);
     }
 
     /// <summary>
@@ -141,7 +141,7 @@ public class Money : ValueObject
             return Result.Failure<Money>(
                 Error.Validation("Divisor must be positive", nameof(divisor)));
 
-        return TryCreate(Amount / divisor, Currency.Value);
+        return TryCreate(Amount / divisor, Currency);
     }
 
     /// <summary>
@@ -218,7 +218,7 @@ public class Money : ValueObject
     protected override IEnumerable<IComparable> GetEqualityComponents()
     {
         yield return Math.Round(Amount, GetDecimalPlaces(Currency));
-        yield return Currency.Value;
+        yield return (string)Currency;
     }
 
     /// <summary>

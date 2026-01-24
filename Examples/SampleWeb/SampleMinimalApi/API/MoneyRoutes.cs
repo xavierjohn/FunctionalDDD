@@ -15,42 +15,42 @@ public static class MoneyRoutes
 
         // Arithmetic Operations
         moneyApi.MapPost("/add", (MoneyOperationRequest request) =>
-            Money.TryCreate(request.Left.Amount, request.Left.Currency.Value)
-                .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency.Value))
+            Money.TryCreate(request.Left.Amount, request.Left.Currency)
+                .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency))
                 .Bind((left, right) => left.Add(right))
                 .ToHttpResult());
 
         moneyApi.MapPost("/subtract", (MoneyOperationRequest request) =>
-            Money.TryCreate(request.Left.Amount, request.Left.Currency.Value)
-                .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency.Value))
+            Money.TryCreate(request.Left.Amount, request.Left.Currency)
+                .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency))
                 .Bind((left, right) => left.Subtract(right))
                 .ToHttpResult());
 
         moneyApi.MapPost("/multiply", (MultiplyMoneyRequest request) =>
-            Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
+            Money.TryCreate(request.Money.Amount, request.Money.Currency)
                 .Bind(money => money.Multiply(request.Multiplier))
                 .ToHttpResult());
 
         moneyApi.MapPost("/multiplyByQuantity", (MultiplyByQuantityRequest request) =>
-            Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
+            Money.TryCreate(request.Money.Amount, request.Money.Currency)
                 .Bind(money => money.Multiply(request.Quantity))
                 .ToHttpResult());
 
         moneyApi.MapPost("/divide", (DivideMoneyRequest request) =>
-            Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
+            Money.TryCreate(request.Money.Amount, request.Money.Currency)
                 .Bind(money => money.Divide(request.Divisor))
                 .ToHttpResult());
 
         // Allocation
         moneyApi.MapPost("/allocate", (AllocateMoneyRequest request) =>
-            Money.TryCreate(request.Money.Amount, request.Money.Currency.Value)
+            Money.TryCreate(request.Money.Amount, request.Money.Currency)
                 .Bind(money => money.Allocate(request.Ratios))
                 .ToHttpResult());
 
         // Comparison
         moneyApi.MapPost("/compare", (CompareMoneyRequest request) =>
-            Money.TryCreate(request.Left.Amount, request.Left.Currency.Value)
-                .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency.Value))
+            Money.TryCreate(request.Left.Amount, request.Left.Currency)
+                .Combine(Money.TryCreate(request.Right.Amount, request.Right.Currency))
                 .Map<(Money, Money), bool>(tuple => request.Operation.ToLowerInvariant() switch
                 {
                     "greaterthan" => tuple.Item1.IsGreaterThan(tuple.Item2),
@@ -67,14 +67,14 @@ public static class MoneyRoutes
             if (request.Items.Length == 0)
                 return Result.Failure<Money>(Error.Validation("Cart cannot be empty")).ToHttpResult();
 
-            var firstItem = Money.TryCreate(request.Items[0].Amount, request.Items[0].Currency.Value);
+            var firstItem = Money.TryCreate(request.Items[0].Amount, request.Items[0].Currency);
             if (firstItem.IsFailure)
                 return firstItem.ToHttpResult();
 
             var total = firstItem.Value;
             for (int i = 1; i < request.Items.Length; i++)
             {
-                var itemResult = Money.TryCreate(request.Items[i].Amount, request.Items[i].Currency.Value)
+                var itemResult = Money.TryCreate(request.Items[i].Amount, request.Items[i].Currency)
                     .Bind(item => total.Add(item));
                 
                 if (itemResult.IsFailure)
@@ -87,7 +87,7 @@ public static class MoneyRoutes
         });
 
         moneyApi.MapPost("/apply-discount", (ApplyDiscountRequest request) =>
-            Money.TryCreate(request.OriginalPrice.Amount, request.OriginalPrice.Currency.Value)
+            Money.TryCreate(request.OriginalPrice.Amount, request.OriginalPrice.Currency)
                 .Ensure(price => request.DiscountPercent is >= 0 and <= 100,
                     Error.Validation("Discount percent must be between 0 and 100"))
                 .Bind(price =>
@@ -98,7 +98,7 @@ public static class MoneyRoutes
                 .ToHttpResult());
 
         moneyApi.MapPost("/split-bill", (SplitBillRequest request) =>
-            Money.TryCreate(request.Total.Amount, request.Total.Currency.Value)
+            Money.TryCreate(request.Total.Amount, request.Total.Currency)
                 .Ensure(_ => request.People > 0, Error.Validation("Number of people must be positive"))
                 .Bind(total => total.Divide(request.People))
                 .ToHttpResult());
@@ -110,7 +110,7 @@ public static class MoneyRoutes
                 return Result.Failure<RevenueShareResponse>(
                     Error.Validation($"Percentages must sum to 100, got {totalPercent}")).ToHttpResult();
 
-            return Money.TryCreate(request.Revenue.Amount, request.Revenue.Currency.Value)
+            return Money.TryCreate(request.Revenue.Amount, request.Revenue.Currency)
                 .Bind(revenue => revenue.Allocate(
                     (int)request.PlatformPercent,
                     (int)request.CreatorPercent,
