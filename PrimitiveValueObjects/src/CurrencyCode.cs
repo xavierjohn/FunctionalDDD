@@ -7,43 +7,43 @@ using System.Text.Json.Serialization;
 /// Represents an ISO 4217 currency code as a value object.
 /// </summary>
 /// <remarks>
-/// Valid codes are three alphabetic characters. The stored value is uppercase.
+/// Valid codes are three alphabetic characters (e.g., USD, EUR, GBP). The stored value is uppercase.
 /// </remarks>
-[JsonConverter(typeof(ParsableJsonConverter<Currency>))]
-public class Currency : ScalarValueObject<Currency, string>, IScalarValueObject<Currency, string>, IParsable<Currency>
+[JsonConverter(typeof(ParsableJsonConverter<CurrencyCode>))]
+public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValueObject<CurrencyCode, string>, IParsable<CurrencyCode>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="Currency"/> class.
+    /// Initializes a new instance of the <see cref="CurrencyCode"/> class.
     /// </summary>
     /// <param name="value">ISO 4217 currency code.</param>
-    private Currency(string value) : base(value) { }
+    private CurrencyCode(string value) : base(value) { }
 
     /// <summary>
-    /// Attempts to create a currency from a 3-letter ISO 4217 code.
+    /// Attempts to create a currency code from a 3-letter ISO 4217 code.
     /// </summary>
-    public static Result<Currency> TryCreate(string? value, string? fieldName = null)
+    public static Result<CurrencyCode> TryCreate(string? value, string? fieldName = null)
     {
-        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Currency) + '.' + nameof(TryCreate));
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(CurrencyCode) + '.' + nameof(TryCreate));
 
         var field = !string.IsNullOrEmpty(fieldName)
             ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "currency";
+            : "currencyCode";
 
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Failure<Currency>(Error.Validation("Currency is required.", field));
+            return Result.Failure<CurrencyCode>(Error.Validation("Currency code is required.", field));
 
         var code = value.Trim();
         if (code.Length != 3 || !code.All(char.IsLetter))
-            return Result.Failure<Currency>(Error.Validation("Currency must be a 3-letter ISO 4217 code.", field));
+            return Result.Failure<CurrencyCode>(Error.Validation("Currency code must be a 3-letter ISO 4217 code.", field));
 
         var upper = code.ToUpperInvariant();
-        return new Currency(upper);
+        return new CurrencyCode(upper);
     }
 
     /// <summary>
     /// Parses a currency code.
     /// </summary>
-    public static Currency Parse(string? s, IFormatProvider? provider)
+    public static CurrencyCode Parse(string? s, IFormatProvider? provider)
     {
         var r = TryCreate(s);
         if (r.IsFailure)
@@ -58,7 +58,7 @@ public class Currency : ScalarValueObject<Currency, string>, IScalarValueObject<
     /// <summary>
     /// Tries to parse a currency code.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Currency result)
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out CurrencyCode result)
     {
         var r = TryCreate(s);
         if (r.IsFailure)

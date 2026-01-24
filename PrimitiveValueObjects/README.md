@@ -28,7 +28,7 @@ dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
+- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
 - `FunctionalDDD.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `Required*` base class derivatives
 
 ## Quick Start
@@ -197,12 +197,12 @@ if (discount.IsSuccess)
 var parsed = Percentage.Parse("20%", null); // Valid
 ```
 
-#### Currency
+#### CurrencyCode
 ```csharp
-var result = Currency.TryCreate("USD");
+var result = CurrencyCode.TryCreate("USD");
 // Stores as uppercase: "USD"
 
-var invalid = Currency.TryCreate("US"); 
+var invalid = CurrencyCode.TryCreate("US"); 
 // Error: Must be 3-letter code
 ```
 
@@ -332,7 +332,7 @@ This library provides both **base classes** for creating custom value objects an
 | **Url** | Web URLs | Absolute HTTP/HTTPS URIs | `https://example.com/path` |
 | **PhoneNumber** | Phone numbers | E.164 format | `+14155551234` |
 | **Percentage** | Percentage values | 0-100 range, supports % suffix | `15.5` or `15.5%` |
-| **Currency** | Currency codes | ISO 4217 3-letter codes | `USD`, `EUR`, `GBP` |
+| **CurrencyCode** | Currency codes | ISO 4217 3-letter codes | `USD`, `EUR`, `GBP` |
 | **IpAddress** | IP addresses | IPv4 and IPv6 | `192.168.1.1` or `::1` |
 | **Hostname** | Hostnames | RFC 1123 compliant | `example.com` |
 | **Slug** | URL slugs | Lowercase, digits, hyphens | `my-blog-post` |
