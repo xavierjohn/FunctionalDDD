@@ -153,17 +153,18 @@ using System.Text.RegularExpressions;
 /// // Deserializes from JSON string to EmailAddress value object
 /// </code>
 /// </example>
-/// <seealso cref="ScalarValueObject{T}"/>
-/// <seealso cref="RequiredString"/>
+/// <seealso cref="ScalarValueObject{TSelf, T}"/>
+/// <seealso cref="RequiredString{TSelf}"/>
 /// <seealso cref="IParsable{TSelf}"/>
-/// <seealso cref="ITryCreatable{T}"/>
 [JsonConverter(typeof(ParsableJsonConverter<EmailAddress>))]
-public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAddress>, ITryCreatable<EmailAddress>
+public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>, IParsable<EmailAddress>
 {
     private EmailAddress(string value) : base(value) { }
 
     /// <summary>
     /// Attempts to create an <see cref="EmailAddress"/> from the specified string.
+    /// This overload is required by the <see cref="IScalarValueObject{TSelf, TPrimitive}"/> interface
+    /// for automatic model binding and JSON deserialization.
     /// </summary>
     /// <param name="value">The email address string to validate.</param>
     /// <param name="fieldName">
@@ -231,11 +232,11 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     /// </exception>
     /// <remarks>
     /// This method implements the <see cref="IParsable{TSelf}"/> interface, providing standard
-    /// .NET parsing behavior. For safer parsing without exceptions, use <see cref="TryParse"/> or <see cref="TryCreate"/>.
+    /// .NET parsing behavior. For safer parsing without exceptions, use <see cref="TryParse"/> or <see cref="TryCreate(string?, string?)"/>.
     /// </remarks>
     public static EmailAddress Parse(string? s, IFormatProvider? provider)
     {
-        var r = TryCreate(s);
+        var r = TryCreate(s, null);
         if (r.IsFailure)
         {
             var val = (ValidationError)r.Error;
@@ -263,7 +264,7 @@ public partial class EmailAddress : ScalarValueObject<string>, IParsable<EmailAd
     /// </remarks>
     public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out EmailAddress result)
     {
-        var r = TryCreate(s);
+        var r = TryCreate(s, null);
         if (r.IsFailure)
         {
             result = default;

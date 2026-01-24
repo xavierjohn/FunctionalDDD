@@ -13,6 +13,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Asp\src\Asp.csproj" />
     <ProjectReference Include="..\SampleUserLibrary\SampleUserLibrary.csproj" />
+    <!-- Source generator for AOT-compatible value object JSON converters -->
+    <ProjectReference Include="..\..\Asp\generator\AspSourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

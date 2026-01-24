@@ -189,7 +189,7 @@ public class ParsableJsonConverter<T> :
     /// <see cref="object.ToString"/> and writes it as a JSON string value.
     /// </para>
     /// <para>
-    /// For value objects inheriting from <see cref="ScalarValueObject{T}"/>, this typically
+    /// For value objects inheriting from <see cref="ScalarValueObject{TSelf, T}"/>, this typically
     /// returns the wrapped primitive value (e.g., the email string, GUID string, etc.).
     /// </para>
     /// </remarks>

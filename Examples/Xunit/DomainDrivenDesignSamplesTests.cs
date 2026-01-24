@@ -1,4 +1,4 @@
-namespace Example.Tests;
+﻿namespace Example.Tests;
 
 using FunctionalDdd;
 using Xunit;
@@ -12,11 +12,16 @@ public class DomainDrivenDesignSamplesTests
     #region Test Data and Mock Domain Objects
 
     // Entity IDs
-    public class CustomerId : ScalarValueObject<Guid>
+    public class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValueObject<CustomerId, Guid>
     {
         private CustomerId(Guid value) : base(value) { }
 
         public static CustomerId NewUnique() => new(Guid.NewGuid());
+
+        public static Result<CustomerId> TryCreate(Guid value, string? fieldName = null) =>
+            value == Guid.Empty
+                ? Error.Validation("Customer ID cannot be empty", fieldName ?? "customerId")
+                : Result.Success(new CustomerId(value));
 
         public static Result<CustomerId> TryCreate(Guid? value) =>
             value.ToResult(Error.Validation("Customer ID cannot be empty"))
@@ -24,11 +29,16 @@ public class DomainDrivenDesignSamplesTests
                 .Map(v => new CustomerId(v));
     }
 
-    public class OrderId : ScalarValueObject<Guid>
+    public class OrderId : ScalarValueObject<OrderId, Guid>, IScalarValueObject<OrderId, Guid>
     {
         private OrderId(Guid value) : base(value) { }
 
         public static OrderId NewUnique() => new(Guid.NewGuid());
+
+        public static Result<OrderId> TryCreate(Guid value, string? fieldName = null) =>
+            value == Guid.Empty
+                ? Error.Validation("Order ID cannot be empty", fieldName ?? "orderId")
+                : Result.Success(new OrderId(value));
 
         public static Result<OrderId> TryCreate(Guid? value) =>
             value.ToResult(Error.Validation("Order ID cannot be empty"))
@@ -36,25 +46,25 @@ public class DomainDrivenDesignSamplesTests
                 .Map(v => new OrderId(v));
     }
 
-    public class ProductId : ScalarValueObject<string>
+    public class ProductId : ScalarValueObject<ProductId, string>, IScalarValueObject<ProductId, string>
     {
         private ProductId(string value) : base(value) { }
 
-        public static Result<ProductId> TryCreate(string? value) =>
-            value.ToResult(Error.Validation("Product ID cannot be empty"))
-                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Product ID cannot be empty"))
+        public static Result<ProductId> TryCreate(string? value, string? fieldName = null) =>
+            value.ToResult(Error.Validation("Product ID cannot be empty", fieldName ?? "productId"))
+                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Product ID cannot be empty", fieldName ?? "productId"))
                 .Map(v => new ProductId(v));
     }
 
     // Simple value object for testing
-    public class EmailAddress : ScalarValueObject<string>
+    public class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>
     {
         private EmailAddress(string value) : base(value) { }
 
-        public static Result<EmailAddress> TryCreate(string? value) =>
-            value.ToResult(Error.Validation("Email cannot be empty"))
-                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Email cannot be empty"))
-                .Ensure(v => v.Contains('@'), Error.Validation("Email must contain @"))
+        public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null) =>
+            value.ToResult(Error.Validation("Email cannot be empty", fieldName ?? "email"))
+                .Ensure(v => !string.IsNullOrWhiteSpace(v), Error.Validation("Email cannot be empty", fieldName ?? "email"))
+                .Ensure(v => v.Contains('@'), Error.Validation("Email must contain @", fieldName ?? "email"))
                 .Map(v => new EmailAddress(v));
     }
 
@@ -303,17 +313,20 @@ public class DomainDrivenDesignSamplesTests
     }
 
     // Temperature (Scalar)
-    public class Temperature : ScalarValueObject<decimal>
+    public class Temperature : ScalarValueObject<Temperature, decimal>, IScalarValueObject<Temperature, decimal>
     {
         private Temperature(decimal value) : base(value) { }
 
-        public static Result<Temperature> TryCreate(decimal value) =>
-            value.ToResult()
+        public static Result<Temperature> TryCreate(decimal value, string? fieldName = null)
+        {
+            var field = fieldName ?? "temperature";
+            return value.ToResult()
                 .Ensure(v => v >= -273.15m,
-                       Error.Validation("Temperature cannot be below absolute zero"))
+                       Error.Validation("Temperature cannot be below absolute zero", field))
                 .Ensure(v => v <= 1_000_000m,
-                       Error.Validation("Temperature exceeds physical limits"))
+                       Error.Validation("Temperature exceeds physical limits", field))
                 .Map(v => new Temperature(v));
+        }
 
         public static Temperature FromCelsius(decimal celsius) => new(celsius);
         public static Temperature FromFahrenheit(decimal fahrenheit) => new((fahrenheit - 32) * 5 / 9);

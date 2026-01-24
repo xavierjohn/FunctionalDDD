@@ -60,8 +60,8 @@ public class ValidationExample
         string? lastName = "John";
 
         var actual = EmailAddress.TryCreate(email)
-            .Combine(Maybe.Optional(firstName, f => FirstName.TryCreate(f)))
-            .Combine(Maybe.Optional(lastName, l => LastName.TryCreate(l)))
+            .Combine(Maybe.Optional(firstName, s => FirstName.TryCreate(s)))
+            .Combine(Maybe.Optional(lastName, s => LastName.TryCreate(s)))
             .Bind(Add);
 
         actual.Value.Should().Be("xavier@somewhere.com  John");
@@ -78,8 +78,8 @@ public class ValidationExample
         string? lastName = "John";
 
         var actual = EmailAddress.TryCreate(email)
-            .Combine(Maybe.Optional(firstName, f => FirstName.TryCreate(f)))
-            .Combine(Maybe.Optional(lastName, l => LastName.TryCreate(l)))
+            .Combine(Maybe.Optional(firstName, s => FirstName.TryCreate(s)))
+            .Combine(Maybe.Optional(lastName, s => LastName.TryCreate(s)))
             .Bind(Add);
 
         actual.IsFailure.Should().BeTrue();

@@ -2,6 +2,6 @@
 
 using FunctionalDdd;
 
-internal partial class FirstName : RequiredString
+internal partial class FirstName : RequiredString<FirstName>
 {
 }

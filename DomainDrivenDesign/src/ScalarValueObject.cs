@@ -4,6 +4,7 @@
 /// Base class for value objects that wrap a single scalar value.
 /// Provides a strongly-typed wrapper around primitive types with domain semantics.
 /// </summary>
+/// <typeparam name="TSelf">The derived value object type itself (CRTP pattern).</typeparam>
 /// <typeparam name="T">The type of the wrapped scalar value. Must implement <see cref="IComparable"/>.</typeparam>
 /// <remarks>
 /// <para>
@@ -33,14 +34,14 @@
 /// <example>
 /// Simple scalar value object for a strongly-typed ID:
 /// <code><![CDATA[
-/// public class CustomerId : ScalarValueObject<Guid>
+/// public class CustomerId : ScalarValueObject<CustomerId, Guid>
 /// {
 ///     private CustomerId(Guid value) : base(value) { }
 ///     
 ///     public static CustomerId NewUnique() => new(Guid.NewGuid());
 ///     
-///     public static Result<CustomerId> TryCreate(Guid? value) =>
-///         value.ToResult(Error.Validation("Customer ID cannot be empty"))
+///     public static Result<CustomerId> TryCreate(Guid value) =>
+///         value.ToResult()
 ///             .Ensure(v => v != Guid.Empty, Error.Validation("Customer ID cannot be empty"))
 ///             .Map(v => new CustomerId(v));
 ///     
@@ -60,7 +61,7 @@
 /// <example>
 /// Scalar value object with custom equality and validation:
 /// <code><![CDATA[
-/// public class Temperature : ScalarValueObject<decimal>
+/// public class Temperature : ScalarValueObject<Temperature, decimal>
 /// {
 ///     private Temperature(decimal value) : base(value) { }
 ///     
@@ -98,11 +99,11 @@
 /// <example>
 /// Scalar value object for email addresses:
 /// <code><![CDATA[
-/// public class EmailAddress : ScalarValueObject<string>
+/// public class EmailAddress : ScalarValueObject<EmailAddress, string>
 /// {
 ///     private EmailAddress(string value) : base(value) { }
 ///     
-///     public static Result<EmailAddress> TryCreate(string? email) =>
+///     public static Result<EmailAddress> TryCreate(string email) =>
 ///         email.ToResult(Error.Validation("Email is required", "email"))
 ///             .Ensure(e => !string.IsNullOrWhiteSpace(e),
 ///                    Error.Validation("Email cannot be empty", "email"))
@@ -117,7 +118,8 @@
 /// }
 /// ]]></code>
 /// </example>
-public abstract class ScalarValueObject<T> : ValueObject, IConvertible
+public abstract class ScalarValueObject<TSelf, T> : ValueObject, IConvertible
+    where TSelf : ScalarValueObject<TSelf, T>, IScalarValueObject<TSelf, T>
     where T : IComparable
 {
     /// <summary>
@@ -131,7 +133,7 @@ public abstract class ScalarValueObject<T> : ValueObject, IConvertible
     public T Value { get; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ScalarValueObject{T}"/> class with the specified value.
+    /// Initializes a new instance of the <see cref="ScalarValueObject{TSelf, T}"/> class with the specified value.
     /// </summary>
     /// <param name="value">The value to wrap.</param>
     /// <remarks>
@@ -189,7 +191,7 @@ public abstract class ScalarValueObject<T> : ValueObject, IConvertible
     /// decimal value = temperature; // Implicit conversion
     /// </code>
     /// </example>
-    public static implicit operator T(ScalarValueObject<T> valueObject) => valueObject.Value;
+    public static implicit operator T(ScalarValueObject<TSelf, T> valueObject) => valueObject.Value;
 
     // IConvertible implementation - delegates to Convert class for the wrapped value
 

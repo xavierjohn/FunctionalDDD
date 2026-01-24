@@ -39,7 +39,7 @@ using static FunctionalDdd.EnsureExtensions;
 /// | IfStyleSad    |  73.71 ns | 1.151 ns | 0.961 ns | 0.0331 |     208 B |
 /// </summary>
 
-public partial class FirstName : RequiredString
+public partial class FirstName : RequiredString<FirstName>
 {
 }
 

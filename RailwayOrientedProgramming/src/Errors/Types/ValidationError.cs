@@ -269,4 +269,31 @@ public sealed class ValidationError : Error, IEquatable<ValidationError>
     /// <returns>A formatted string containing the base error information and all field-specific error details.</returns>
     public override string ToString()
         => base.ToString() + "\r\n" + string.Join("\r\n", FieldErrors.Select(e => $"{e.FieldName}: {string.Join(", ", e.Details)}"));
+
+    /// <summary>
+    /// Converts the validation errors to a dictionary suitable for ASP.NET Core validation problem responses.
+    /// </summary>
+    /// <returns>A dictionary mapping field names to arrays of error messages.</returns>
+    /// <remarks>
+    /// This method is useful for creating <c>ValidationProblemDetails</c> or calling
+    /// <c>Results.ValidationProblem()</c> in Minimal APIs.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var error = ValidationError.For("email", "Invalid format")
+    ///     .And("password", "Too short");
+    /// var dict = error.ToDictionary();
+    /// return Results.ValidationProblem(dict);
+    /// </code>
+    /// </example>
+    public IDictionary<string, string[]> ToDictionary()
+    {
+        var result = new Dictionary<string, string[]>(StringComparer.Ordinal);
+        foreach (var fieldError in FieldErrors)
+        {
+            result[fieldError.FieldName] = [.. fieldError.Details];
+        }
+
+        return result;
+    }
 }

@@ -21,8 +21,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// <para>
 /// For each partial class inheriting from <c>RequiredGuid</c>, generates:
 /// <list type="bullet">
+/// <item><c>IScalarValueObject&lt;TSelf, Guid&gt;</c> - Interface for ASP.NET Core automatic validation</item>
 /// <item><c>NewUnique()</c> - Creates a new instance with a unique GUID</item>
-/// <item><c>TryCreate(Guid?)</c> - Creates from GUID with empty validation</item>
+/// <item><c>TryCreate(Guid)</c> - Creates from non-nullable GUID (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(Guid?)</c> - Creates from nullable GUID with empty validation</item>
 /// <item><c>TryCreate(string?)</c> - Parses from string with format and empty validation</item>
 /// <item><c>Parse(string, IFormatProvider?)</c> - IParsable implementation</item>
 /// <item><c>TryParse(...)</c> - IParsable try-parse pattern</item>
@@ -35,7 +37,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// <para>
 /// For each partial class inheriting from <c>RequiredString</c>, generates:
 /// <list type="bullet">
-/// <item><c>TryCreate(string?)</c> - Creates from string with null/empty/whitespace validation</item>
+/// <item><c>IScalarValueObject&lt;TSelf, string&gt;</c> - Interface for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(string)</c> - Creates from non-nullable string (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(string?)</c> - Creates from nullable string with null/empty/whitespace validation</item>
 /// <item><c>Parse(string, IFormatProvider?)</c> - IParsable implementation</item>
 /// <item><c>TryParse(...)</c> - IParsable try-parse pattern</item>
 /// <item>Private constructor calling base class</item>
@@ -81,34 +85,38 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// using FunctionalDdd;
 /// using System.Diagnostics.CodeAnalysis;
 /// using System.Text.Json.Serialization;
-/// 
+///
 /// [JsonConverter(typeof(ParsableJsonConverter&lt;CustomerId&gt;)]
-/// public partial class CustomerId : RequiredGuid, IParsable&lt;CustomerId&gt;
+/// public partial class CustomerId : IScalarValueObject&lt;CustomerId, Guid&gt;, IParsable&lt;CustomerId&gt;
 /// {
-///     protected static readonly Error CannotBeEmptyError = 
-///         Error.Validation("Customer Id cannot be empty.", "customerId");
-///     
 ///     private CustomerId(Guid value) : base(value) { }
-///     
-///     public static explicit operator CustomerId(Guid customerId) 
+///
+///     public static explicit operator CustomerId(Guid customerId)
 ///         =&gt; TryCreate(customerId).Value;
-///     
+///
 ///     public static CustomerId NewUnique() =&gt; new(Guid.NewGuid());
-///     
-///     public static Result&lt;CustomerId&gt; TryCreate(Guid? requiredGuidOrNothing)
+///
+///     // Required by IScalarValueObject - enables automatic ASP.NET Core validation
+///     public static Result&lt;CustomerId&gt; TryCreate(Guid value)
+///         =&gt; TryCreate((Guid?)value, null);
+///
+///     public static Result&lt;CustomerId&gt; TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
 ///     {
-///         using var activity = CommonValueObjectTrace.ActivitySource.StartActivity("CustomerId.TryCreate");
+///         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("CustomerId.TryCreate");
+///         var field = !string.IsNullOrEmpty(fieldName)
+///             ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+///             : "customerId";
 ///         return requiredGuidOrNothing
-///             .ToResult(CannotBeEmptyError)
-///             .Ensure(x =&gt; x != Guid.Empty, CannotBeEmptyError)
+///             .ToResult(Error.Validation("Customer Id cannot be empty.", field))
+///             .Ensure(x =&gt; x != Guid.Empty, Error.Validation("Customer Id cannot be empty.", field))
 ///             .Map(guid =&gt; new CustomerId(guid));
 ///     }
-///     
-///     public static Result&lt;CustomerId&gt; TryCreate(string? stringOrNull)
+///
+///     public static Result&lt;CustomerId&gt; TryCreate(string? stringOrNull, string? fieldName = null)
 ///     {
 ///         // Parsing logic with validation...
 ///     }
-///     
+///
 ///     public static CustomerId Parse(string s, IFormatProvider? provider) { /* ... */ }
 ///     public static bool TryParse(...) { /* ... */ }
 /// }
@@ -177,128 +185,144 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
     /// </para>
     /// </remarks>
     private static void Execute(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> classes, SourceProductionContext context)
-    {
-        //#if DEBUG
-        //            if (!Debugger.IsAttached)
-        //            {
-        //                Debugger.Launch();
-        //            }
-        //#endif
-
-        // I'm not sure if this is actually necessary, but `[LoggerMessage]` does it, so seems like a good idea!
-        IEnumerable<ClassDeclarationSyntax> distinctClasses = classes.Distinct();
-
-        List<RequiredPartialClassInfo> classesToGenerate = GetTypesToGenerate(compilation, distinctClasses, context.CancellationToken);
-
-        foreach (var g in classesToGenerate)
         {
-            var camelArg = g.ClassName.ToCamelCase();
-            var classType = g.ClassBase switch
+            // I'm not sure if this is actually necessary, but `[LoggerMessage]` does it, so seems like a good idea!
+            IEnumerable<ClassDeclarationSyntax> distinctClasses = classes.Distinct();
+
+            List<RequiredPartialClassInfo> classesToGenerate = GetTypesToGenerate(compilation, distinctClasses, context.CancellationToken);
+
+            foreach (var g in classesToGenerate)
             {
-                "RequiredGuid" => "Guid",
-                "RequiredString" => "string",
-                _ => "unknown"
-            };
+                var camelArg = g.ClassName.ToCamelCase();
+                var classType = g.ClassBase switch
+                {
+                    "RequiredGuid" => "Guid",
+                    "RequiredString" => "string",
+                    _ => "unknown"
+                };
 
-            // Build up the source code
-            var source = $$"""
-// <auto-generated/>
-namespace {{g.NameSpace}};
-using FunctionalDdd;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+                // Build up the source code
+                // Note: The base class is already declared in the user's partial class.
+                // We only generate the additional members and interfaces.
+                var source = $@"// <auto-generated/>
+    namespace {g.NameSpace};
+    using FunctionalDdd;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Text.Json.Serialization;
 
-#nullable enable
-[JsonConverter(typeof(ParsableJsonConverter<{{g.ClassName}}>))]
-{{g.Accessibility.ToCamelCase()}} partial class {{g.ClassName}} : {{g.ClassBase}}, IParsable<{{g.ClassName}}>, ITryCreatable<{{g.ClassName}}>
-{
-    private {{g.ClassName}}({{classType}} value) : base(value)
-    {
-    }
+    #nullable enable
+    [JsonConverter(typeof(ParsableJsonConverter<{g.ClassName}>))]
+    {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : IScalarValueObject<{g.ClassName}, {classType}>, IParsable<{g.ClassName}>
+    {{
+        private {g.ClassName}({classType} value) : base(value)
+        {{
+        }}
 
-    public static explicit operator {{g.ClassName}}({{classType}} {{camelArg}}) => TryCreate({{camelArg}}).Value;
+        public static explicit operator {g.ClassName}({classType} {camelArg}) => TryCreate({camelArg}).Value;
 
-    public static {{g.ClassName}} Parse(string s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-        return r.Value;
-    }
+        public static {g.ClassName} Parse(string s, IFormatProvider? provider)
+        {{
+            var r = TryCreate(s, null);
+            if (r.IsFailure)
+            {{
+                var val = (ValidationError)r.Error;
+                throw new FormatException(val.FieldErrors[0].Details[0]);
+            }}
+            return r.Value;
+        }}
 
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out {{g.ClassName}} result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
+        public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out {g.ClassName} result)
+        {{
+            var r = TryCreate(s, null);
+            if (r.IsFailure)
+            {{
+                result = default;
+                return false;
+            }}
 
-        result = r.Value;
-        return true;
-    }
-""";
+            result = r.Value;
+            return true;
+        }}";
 
-            if (g.ClassBase == "RequiredGuid")
-            {
-                source += $$"""
+                if (g.ClassBase == "RequiredGuid")
+                {
+                    source += $@"
 
-    public static {{g.ClassName}} NewUnique() => new(Guid.NewGuid());
+        public static {g.ClassName} NewUnique() => new(Guid.NewGuid());
 
-    public static Result<{{g.ClassName}}> TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
-    {
-        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "{{g.ClassName.ToCamelCase()}}";
-        return requiredGuidOrNothing
-            .ToResult(Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
-            .Ensure(x => x != Guid.Empty, Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
-            .Map(guid => new {{g.ClassName}}(guid));
-     }
+        /// <summary>
+        /// Creates a validated instance from a Guid.
+        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// </summary>
+        /// <param name=""value"">The Guid value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(Guid value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            if (value == Guid.Empty)
+                return Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field);
+            return new {g.ClassName}(value);
+        }}
 
-    public static Result<{{g.ClassName}}> TryCreate(string? stringOrNull, string? fieldName = null)
-    {
-        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "{{g.ClassName.ToCamelCase()}}";
-        Guid parsedGuid = Guid.Empty;
-        return stringOrNull
-            .ToResult(Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
-            .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)", field))
-            .Ensure(_ => parsedGuid != Guid.Empty, Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
-            .Map(guid => new {{g.ClassName}}(parsedGuid));
-    }
-}
-""";
+        public static Result<{g.ClassName}> TryCreate(Guid? requiredGuidOrNothing, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            return requiredGuidOrNothing
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => x != Guid.Empty, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Map(guid => new {g.ClassName}(guid));
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(string? stringOrNull, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            Guid parsedGuid = Guid.Empty;
+            return stringOrNull
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation(""Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"", field))
+                .Ensure(_ => parsedGuid != Guid.Empty, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Map(guid => new {g.ClassName}(parsedGuid));
+        }}
+    }}";
+                }
+
+                if (g.ClassBase == "RequiredString")
+                {
+                    source += $@"
+
+        /// <summary>
+        /// Creates a validated instance from a string.
+        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// </summary>
+        /// <param name=""value"">The string value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(string? value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            return value
+                .EnsureNotNullOrWhiteSpace(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Map(str => new {g.ClassName}(str));
+        }}
+    }}";
+                }
+
+                context.AddSource($"{g.ClassName}.g.cs", source);
             }
-
-            if (g.ClassBase == "RequiredString")
-            {
-                source += $$"""
-
-    public static Result<{{g.ClassName}}> TryCreate(string? requiredStringOrNothing, string? fieldName = null)
-    {
-        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("{{g.ClassName}}.TryCreate");
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "{{g.ClassName.ToCamelCase()}}";
-        return requiredStringOrNothing
-            .EnsureNotNullOrWhiteSpace(Error.Validation("{{g.ClassName.SplitPascalCase()}} cannot be empty.", field))
-            .Map(str => new {{g.ClassName}}(str));
-    }
-}
-""";
-            }
-
-            context.AddSource($"{g.ClassName}.g.cs", source);
         }
-    }
 
     /// <summary>
     /// Extracts metadata from class declarations to determine which classes need code generation.
@@ -340,6 +364,7 @@ using System.Text.Json.Serialization;
 
             string className = classSymbol.Name;
             string @namespace = classSymbol.ContainingNamespace.ToDisplayString();
+            // Extract just the base class name without type parameters (e.g., "RequiredGuid" from "RequiredGuid<EmployeeId>")
             string @base = classSymbol.BaseType?.Name ?? "unknown";
             string accessibility = classSymbol.DeclaredAccessibility.ToString();
             classToGenerate.Add(new RequiredPartialClassInfo(@namespace, className, @base, accessibility));
@@ -374,18 +399,20 @@ using System.Text.Json.Serialization;
     /// </para>
     /// </remarks>
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
-    {
-        if (node is ClassDeclarationSyntax c && c.BaseList != null)
         {
-            var baseType = c.BaseList.Types.FirstOrDefault();
-            var nameOfFirstBaseType = baseType?.Type.ToString();
+            if (node is ClassDeclarationSyntax c && c.BaseList != null)
+            {
+                var baseType = c.BaseList.Types.FirstOrDefault();
+                var nameOfFirstBaseType = baseType?.Type.ToString();
+            
+                // Support both old names and new generic names
+                // RequiredString<ClassName> or RequiredString (for backwards compat during migration)
+                if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredString", StringComparison.Ordinal))
+                    return true;
+                if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredGuid", StringComparison.Ordinal))
+                    return true;
+            }
 
-            if (nameOfFirstBaseType == "RequiredString")
-                return true;
-            if (nameOfFirstBaseType == "RequiredGuid")
-                return true;
+            return false;
         }
-
-        return false;
     }
-}

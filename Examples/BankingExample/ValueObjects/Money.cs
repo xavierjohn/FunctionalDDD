@@ -1,18 +1,19 @@
-namespace BankingExample.ValueObjects;
+﻿namespace BankingExample.ValueObjects;
 
 using FunctionalDdd;
 
 /// <summary>
 /// Represents a monetary amount in the banking system.
 /// </summary>
-public class Money : ScalarValueObject<decimal>
+public class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money, decimal>
 {
     private Money(decimal value) : base(value) { }
 
-    public static Result<Money> TryCreate(decimal amount)
+    public static Result<Money> TryCreate(decimal amount, string? fieldName = null)
     {
+        var field = fieldName ?? "amount";
         if (amount < 0)
-            return Error.Validation("Amount cannot be negative", nameof(amount));
+            return Error.Validation("Amount cannot be negative", field);
 
         return new Money(Math.Round(amount, 2));
     }

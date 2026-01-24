@@ -2,13 +2,13 @@
 
 using FluentValidation;
 
-public class ZipCode : ScalarValueObject<string>
+public class ZipCode : ScalarValueObject<ZipCode, string>, IScalarValueObject<ZipCode, string>
 {
     private ZipCode(string value) : base(value)
     {
     }
 
-    public static Result<ZipCode> TryCreate(string? zipCode) =>
+    public static Result<ZipCode> TryCreate(string? zipCode, string? fieldName = null) =>
         s_validationRules.ValidateToResult(zipCode)
             .Map(v => new ZipCode(v!));
 

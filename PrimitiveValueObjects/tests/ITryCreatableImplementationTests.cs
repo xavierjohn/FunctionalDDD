@@ -4,69 +4,25 @@ using FunctionalDdd;
 using Xunit;
 
 // Test value objects at namespace level (required for source generator)
-public partial class TestStringValue : RequiredString { }
-public partial class TestGuidValue : RequiredGuid { }
+public partial class TestStringValue : RequiredString<TestStringValue> { }
+public partial class TestGuidValue : RequiredGuid<TestGuidValue> { }
 
 /// <summary>
-/// Tests to verify that all primitive value objects correctly implement the ITryCreatable interface.
-/// This ensures consistency across all value objects and enables generic programming patterns like model binders.
+/// Tests to verify that primitive value objects correctly implement TryCreate factory methods
+/// and support generic programming patterns like model binders.
 /// </summary>
-public class ITryCreatableImplementationTests
+public class TryCreateImplementationTests
 {
-
-    #region Interface Implementation Tests
-
-    [Fact]
-    public void EmailAddress_ImplementsITryCreatable()
-    {
-        // Arrange & Act
-        var isImplemented = typeof(EmailAddress).GetInterfaces()
-            .Any(i => i.IsGenericType && 
-                     i.GetGenericTypeDefinition() == typeof(ITryCreatable<>) &&
-                     i.GetGenericArguments()[0] == typeof(EmailAddress));
-
-        // Assert
-        isImplemented.Should().BeTrue("EmailAddress should implement ITryCreatable<EmailAddress>");
-    }
+    #region TryCreate Method Tests
 
     [Fact]
-    public void RequiredStringDerived_ImplementsITryCreatable()
-    {
-        // Arrange & Act
-        var isImplemented = typeof(TestStringValue).GetInterfaces()
-            .Any(i => i.IsGenericType && 
-                     i.GetGenericTypeDefinition() == typeof(ITryCreatable<>) &&
-                     i.GetGenericArguments()[0] == typeof(TestStringValue));
-
-        // Assert
-        isImplemented.Should().BeTrue("Generated RequiredString derivatives should implement ITryCreatable<T>");
-    }
-
-    [Fact]
-    public void RequiredGuidDerived_ImplementsITryCreatable()
-    {
-        // Arrange & Act
-        var isImplemented = typeof(TestGuidValue).GetInterfaces()
-            .Any(i => i.IsGenericType && 
-                     i.GetGenericTypeDefinition() == typeof(ITryCreatable<>) &&
-                     i.GetGenericArguments()[0] == typeof(TestGuidValue));
-
-        // Assert
-        isImplemented.Should().BeTrue("Generated RequiredGuid derivatives should implement ITryCreatable<T>");
-    }
-
-    #endregion
-
-    #region Generic Constraint Tests
-
-    [Fact]
-    public void GenericMethod_CanUseITryCreatableConstraint_WithEmailAddress()
+    public void EmailAddress_TryCreate_WithValidInput_ReturnsSuccess()
     {
         // Arrange
         var input = "test@example.com";
 
         // Act
-        var result = CreateUsingInterface<EmailAddress>(input);
+        var result = EmailAddress.TryCreate(input);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -74,13 +30,13 @@ public class ITryCreatableImplementationTests
     }
 
     [Fact]
-    public void GenericMethod_CanUseITryCreatableConstraint_WithRequiredString()
+    public void RequiredString_TryCreate_WithValidInput_ReturnsSuccess()
     {
         // Arrange
         var input = "TestValue";
 
         // Act
-        var result = CreateUsingInterface<TestStringValue>(input);
+        var result = TestStringValue.TryCreate(input);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -88,22 +44,18 @@ public class ITryCreatableImplementationTests
     }
 
     [Fact]
-    public void GenericMethod_CanUseITryCreatableConstraint_WithRequiredGuid()
+    public void RequiredGuid_TryCreate_WithValidInput_ReturnsSuccess()
     {
         // Arrange
-        var input = Guid.NewGuid().ToString();
+        var input = Guid.NewGuid();
 
         // Act
-        var result = CreateUsingInterface<TestGuidValue>(input);
+        var result = TestGuidValue.TryCreate(input);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().Be(input);
     }
-
-    // Generic method that can work with any ITryCreatable type
-    private static Result<T> CreateUsingInterface<T>(string? input, string? fieldName = null) 
-        where T : ITryCreatable<T> =>
-        T.TryCreate(input, fieldName);
 
     #endregion
 
@@ -206,7 +158,7 @@ public class ITryCreatableImplementationTests
     public void EmailAddress_TryCreate_WithoutFieldName_UsesDefaultFieldName()
     {
         // Act
-        var result = EmailAddress.TryCreate(null);
+        var result = EmailAddress.TryCreate(null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -218,7 +170,7 @@ public class ITryCreatableImplementationTests
     public void RequiredString_TryCreate_WithoutFieldName_UsesTypeBasedDefaultFieldName()
     {
         // Act
-        var result = TestStringValue.TryCreate(null);
+        var result = TestStringValue.TryCreate(null, null);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -259,50 +211,10 @@ public class ITryCreatableImplementationTests
 
     #endregion
 
-    #region Model Binder Simulation Test
-
-    [Fact]
-    public void ModelBinderPattern_CanBindAnyITryCreatableType()
-    {
-        // Arrange
-        var emailInput = "user@example.com";
-        var stringInput = "TestValue";
-        var guidInput = Guid.NewGuid().ToString();
-
-        // Act - Simulate model binding using ITryCreatable interface
-        var emailResult = BindModel<EmailAddress>(emailInput, "email");
-        var stringResult = BindModel<TestStringValue>(stringInput, "testField");
-        var guidResult = BindModel<TestGuidValue>(guidInput, "idField");
-
-        // Assert
-        emailResult.IsSuccess.Should().BeTrue();
-        stringResult.IsSuccess.Should().BeTrue();
-        guidResult.IsSuccess.Should().BeTrue();
-    }
-
-    [Fact]
-    public void ModelBinderPattern_HandlesInvalidInput()
-    {
-        // Act - Simulate model binding with invalid input
-        var result = BindModel<EmailAddress>("not-an-email", "emailField");
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        var error = (ValidationError)result.Error;
-        error.FieldErrors[0].FieldName.Should().Be("emailField");
-    }
-
-    // Simulates a generic model binder that would work with any ITryCreatable type
-    private static Result<T> BindModel<T>(string? input, string fieldName) 
-        where T : ITryCreatable<T> =>
-        T.TryCreate(input, fieldName);
-
-    #endregion
-
     #region Integration with Combine Tests
 
     [Fact]
-    public void ITryCreatable_WorksWithCombine()
+    public void TryCreate_WorksWithCombine()
     {
         // Arrange
         var email = "test@example.com";
@@ -317,7 +229,7 @@ public class ITryCreatableImplementationTests
     }
 
     [Fact]
-    public void ITryCreatable_CollectsAllFieldErrors_WhenMultipleFail()
+    public void TryCreate_CollectsAllFieldErrors_WhenMultipleFail()
     {
         // Act
         var result = EmailAddress.TryCreate("invalid", "email")

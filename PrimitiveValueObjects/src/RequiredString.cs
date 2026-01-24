@@ -6,11 +6,13 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="ScalarValueObject{T}"/> to provide a specialized base for string-based value objects
+/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for string-based value objects
 /// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item>Static factory method (<c>TryCreate</c>) with null/empty/whitespace validation</item>
+/// <item><c>IScalarValueObject&lt;TSelf, string&gt;</c> implementation for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(string)</c> - Factory method for non-nullable strings (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(string?, string?)</c> - Factory method with null/empty/whitespace validation and custom field name</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
 /// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
 /// <item>Explicit cast operator from string</item>
@@ -42,11 +44,13 @@
 /// Creating a strongly-typed name value object:
 /// <code>
 /// // Define the value object (partial keyword enables source generation)
-/// public partial class FirstName : RequiredString
+/// public partial class FirstName : RequiredString&lt;FirstName&gt;
 /// {
 /// }
 /// 
 /// // The source generator automatically creates:
+/// // - IScalarValueObject&lt;FirstName, string&gt; interface implementation
+/// // - public static Result&lt;FirstName&gt; TryCreate(string value)
 /// // - public static Result&lt;FirstName&gt; TryCreate(string? value, string? fieldName = null)
 /// // - public static FirstName Parse(string s, IFormatProvider? provider)
 /// // - public static bool TryParse(string? s, IFormatProvider? provider, out FirstName result)
@@ -93,7 +97,51 @@
 /// </code>
 /// </example>
 /// <example>
-/// Using in API validation:
+/// ASP.NET Core automatic validation (no manual Result.Combine needed):
+/// <code>
+/// // 1. Register automatic validation in Program.cs
+/// builder.Services
+///     .AddControllers()
+///     .AddScalarValueObjectValidation(); // Enables automatic validation!
+///
+/// // 2. Define your DTO with value objects
+/// public record RegisterUserDto
+/// {
+///     public FirstName FirstName { get; init; } = null!;
+///     public LastName LastName { get; init; } = null!;
+///     public EmailAddress Email { get; init; } = null!;
+/// }
+///
+/// // 3. Use in controllers - automatic validation!
+/// [ApiController]
+/// [Route("api/users")]
+/// public class UsersController : ControllerBase
+/// {
+///     [HttpPost]
+///     public IActionResult Register(RegisterUserDto dto)
+///     {
+///         // If we reach here, dto is FULLY validated!
+///         // No Result.Combine() needed - validation happens automatically during model binding
+///         var user = new User(dto.FirstName, dto.LastName, dto.Email);
+///         return Ok(user);
+///     }
+/// }
+///
+/// // Invalid request automatically returns 400 Bad Request:
+/// // POST /api/users with { "firstName": "", "lastName": "Doe", "email": "test@example.com" }
+/// // Response: 400 Bad Request
+/// // {
+/// //   "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+/// //   "title": "One or more validation errors occurred.",
+/// //   "status": 400,
+/// //   "errors": {
+/// //     "firstName": ["First Name cannot be empty."]
+/// //   }
+/// // }
+/// </code>
+/// </example>
+/// <example>
+/// Using in API validation (manual approach):
 /// <code>
 /// // Request DTO
 /// public record CreateUserRequest(string FirstName, string LastName, string Email);
@@ -121,11 +169,11 @@
 /// <example>
 /// Multiple string-based value objects:
 /// <code>
-/// public partial class FirstName : RequiredString { }
-/// public partial class LastName : RequiredString { }
-/// public partial class CompanyName : RequiredString { }
-/// public partial class ProductName : RequiredString { }
-/// public partial class Description : RequiredString { }
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+/// public partial class LastName : RequiredString&lt;LastName&gt; { }
+/// public partial class CompanyName : RequiredString&lt;CompanyName&gt; { }
+/// public partial class ProductName : RequiredString&lt;ProductName&gt; { }
+/// public partial class Description : RequiredString&lt;Description&gt; { }
 /// 
 /// public class Product : Entity&lt;ProductId&gt;
 /// {
@@ -147,7 +195,7 @@
 /// Advanced: Adding custom validation to derived types:
 /// <code>
 /// // While RequiredString handles null/empty, you can add domain-specific rules
-/// public partial class ProductSKU : RequiredString
+/// public partial class ProductSKU : RequiredString&lt;ProductSKU&gt;
 /// {
 ///     // Additional validation can be done in factory methods
 ///     public static Result&lt;ProductSKU&gt; TryCreateWithValidation(string? value) =>
@@ -166,13 +214,14 @@
 /// // Failure: "SKU can only contain letters, digits, and hyphens"
 /// </code>
 /// </example>
-/// <seealso cref="ScalarValueObject{T}"/>
-/// <seealso cref="RequiredGuid"/>
+/// <seealso cref="ScalarValueObject{TSelf, T}"/>
+/// <seealso cref="RequiredGuid{TSelf}"/>
 /// <seealso cref="EmailAddress"/>
-public abstract class RequiredString : ScalarValueObject<string>
+public abstract class RequiredString<TSelf> : ScalarValueObject<TSelf, string>
+    where TSelf : RequiredString<TSelf>, IScalarValueObject<TSelf, string>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="RequiredString"/> class with the specified string value.
+    /// Initializes a new instance of the <see cref="RequiredString{TSelf}"/> class with the specified string value.
     /// </summary>
     /// <param name="value">The string value. Must not be null or empty.</param>
     /// <remarks>
