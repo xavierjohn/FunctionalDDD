@@ -1,4 +1,4 @@
-namespace EcommerceExample.Aggregates;
+﻿namespace EcommerceExample.Aggregates;
 
 using EcommerceExample.Entities;
 using EcommerceExample.Events;
@@ -119,7 +119,7 @@ public class Order : Aggregate<OrderId>
                 Error.Conflict($"Cannot submit order in {Status} status"))
             .Ensure(_ => _lines.Count > 0, 
                 Error.Domain("Cannot submit empty order"))
-            .Ensure(_ => Total.Value > 0, 
+            .Ensure(_ => Total.Amount > 0, 
                 Error.Domain("Order total must be greater than zero"))
             .Tap(_ =>
             {

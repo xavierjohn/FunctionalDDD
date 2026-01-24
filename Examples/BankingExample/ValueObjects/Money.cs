@@ -3,41 +3,61 @@
 using FunctionalDdd;
 
 /// <summary>
-/// Represents a monetary amount in the banking system.
+/// Represents a monetary amount in the banking system with a currency.
 /// </summary>
-public class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money, decimal>
+public class Money : ValueObject
 {
-    private Money(decimal value) : base(value) { }
+    public decimal Amount { get; }
+    public CurrencyCode Currency { get; }
 
-    public static Result<Money> TryCreate(decimal amount, string? fieldName = null)
+    private Money(decimal amount, CurrencyCode currency)
+    {
+        Amount = amount;
+        Currency = currency;
+    }
+
+    public static Result<Money> TryCreate(decimal amount, string? fieldName = null) => 
+        TryCreate(amount, "USD", fieldName);
+
+    public static Result<Money> TryCreate(decimal amount, string currencyCode, string? fieldName = null)
     {
         var field = fieldName ?? "amount";
         if (amount < 0)
             return Error.Validation("Amount cannot be negative", field);
 
-        return new Money(Math.Round(amount, 2));
+        return CurrencyCode.TryCreate(currencyCode)
+            .Map(currency => new Money(Math.Round(amount, 2), currency));
     }
 
     public Result<Money> Add(Money other)
     {
-        return TryCreate(Value + other.Value);
+        if (!Currency.Equals(other.Currency))
+            return Error.Validation($"Cannot add amounts with different currencies: {Currency} and {other.Currency}");
+
+        return TryCreate(Amount + other.Amount, Currency.Value);
     }
 
     public Result<Money> Subtract(Money other)
     {
-        return TryCreate(Value - other.Value);
+        if (!Currency.Equals(other.Currency))
+            return Error.Validation($"Cannot subtract amounts with different currencies: {Currency} and {other.Currency}");
+
+        return TryCreate(Amount - other.Amount, Currency.Value);
     }
 
-    public bool IsGreaterThan(Money other) => Value > other.Value;
+    public bool IsGreaterThan(Money other) => 
+        Currency.Equals(other.Currency) && Amount > other.Amount;
 
-    public bool IsGreaterThanOrEqual(Money other) => Value >= other.Value;
+    public bool IsGreaterThanOrEqual(Money other) => 
+        Currency.Equals(other.Currency) && Amount >= other.Amount;
 
     protected override IEnumerable<IComparable> GetEqualityComponents()
     {
-        yield return Math.Round(Value, 2);
+        yield return Math.Round(Amount, 2);
+        yield return Currency.Value;
     }
 
-    public override string ToString() => $"${Value:F2}";
+    public override string ToString() => $"{Amount:F2} {Currency}";
 
-    public static Money Zero => new(0);
+    public static Result<Money> Zero(string currencyCode = "USD") => TryCreate(0, currencyCode);
 }

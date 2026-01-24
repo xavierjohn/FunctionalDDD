@@ -1,4 +1,4 @@
-namespace EcommerceExample.Services;
+﻿namespace EcommerceExample.Services;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;
@@ -13,7 +13,7 @@ public class PaymentService
     {
         return await Task.FromResult(ValidateCardNumber(cardNumber)
             .Combine(ValidateCVV(cvv))
-            .Ensure(_ => order.Total.Value >= 0.01m, Error.Validation("Payment amount must be at least 0.01")))
+            .Ensure(_ => order.Total.Amount >= 0.01m, Error.Validation("Payment amount must be at least 0.01")))
             .BindAsync(async _ => await ChargeCardAsync(order.Total, cardNumber, cancellationToken))
             .TapAsync(async transactionId => await LogPaymentSuccessAsync(order.Id, transactionId, cancellationToken))
             .TapOnFailureAsync(async error => await LogPaymentFailureAsync(order.Id, error, cancellationToken));
