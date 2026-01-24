@@ -124,7 +124,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspSourceGenerator", "Asp\g
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleWeb", "SampleWeb", "{7BC0D0C1-55EC-6714-CEAA-4A9CDB62D817}"
 	ProjectSection(SolutionItems) = preProject
-		Examples\SampleWeb\SampleApi.http = Examples\SampleWeb\SampleApi.http
+		Examples\SampleWeb\ErrorResponse.http = Examples\SampleWeb\ErrorResponse.http
+		Examples\SampleWeb\MoneyApi.http = Examples\SampleWeb\MoneyApi.http
+		Examples\SampleWeb\UserApi.http = Examples\SampleWeb\UserApi.http
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleMinimalApi", "Examples\SampleWeb\SampleMinimalApi\SampleMinimalApi.csproj", "{DC18A08F-D56D-4A11-ACE7-9C584ECA066E}"

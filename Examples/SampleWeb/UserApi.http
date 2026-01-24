@@ -84,30 +84,6 @@ Accept: application/json
 ###
 
 ###############################################################################
-# Error Response Examples
-###############################################################################
-
-### Not Found Error (404)
-GET {{host}}/users/notfound/213
-Accept: application/json
-
-### Conflict Error (409)
-GET {{host}}/users/conflict/213
-Accept: application/json
-
-### Forbidden Error (403)
-GET {{host}}/users/forbidden/213
-Accept: application/json
-
-### Unauthorized Error (401)
-GET {{host}}/users/unauthorized/213
-Accept: application/json
-
-### Unexpected/Internal Server Error (500)
-GET {{host}}/users/unexpected/213
-Accept: application/json
-
-###############################################################################
 # Automatic Value Object Validation
 # No manual Result.Combine() - validation happens during model binding!
 ###############################################################################

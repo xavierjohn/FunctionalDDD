@@ -48,6 +48,7 @@ app.MapGet("/", () => Results.Ok(new WelcomeResponse(
 ))).WithName("Welcome");
 
 app.UseUserRoute();
+app.UseMoneyRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
@@ -66,6 +67,21 @@ public record UserEndpoints(string Register, string RegisterCreated, string Regi
 [JsonSerializable(typeof(RegisterWithNameDto))]
 [JsonSerializable(typeof(SharedNameTypeResponse))]
 [JsonSerializable(typeof(User))]
+[JsonSerializable(typeof(Money))]
+[JsonSerializable(typeof(Money[]))]
+[JsonSerializable(typeof(SampleMinimalApi.API.MoneyDto))]
+[JsonSerializable(typeof(SampleMinimalApi.API.CreateMoneyRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.MoneyOperationRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.MultiplyMoneyRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.MultiplyByQuantityRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.DivideMoneyRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.AllocateMoneyRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.CompareMoneyRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.CartTotalRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.ApplyDiscountRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.SplitBillRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.RevenueShareRequest))]
+[JsonSerializable(typeof(SampleMinimalApi.API.RevenueShareResponse))]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Http.HttpResults.ValidationProblem))]

@@ -15,4 +15,7 @@
     <ProjectReference Include="..\..\DomainDrivenDesign\src\DomainDrivenDesign.csproj" />
     <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Ulid" />
+  </ItemGroup>
 </Project>

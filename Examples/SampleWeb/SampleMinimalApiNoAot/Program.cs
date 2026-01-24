@@ -54,6 +54,7 @@ app.MapGet("/", () => Results.Ok(new
 #pragma warning restore CA1861
 
 app.UseUserRoute();
+app.UseMoneyRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
