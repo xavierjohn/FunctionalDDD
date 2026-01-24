@@ -207,10 +207,16 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' +  nameof(TryCreate));
         if (value is not null)
         {
-            var isEmail = EmailRegEx().IsMatch(value);
-            if (isEmail)
+            // Normalize input: trim whitespace
+            var trimmed = value.Trim();
+
+            if (trimmed.Length > 0)
             {
-                return new EmailAddress(value);
+                var isEmail = EmailRegEx().IsMatch(trimmed);
+                if (isEmail)
+                {
+                    return new EmailAddress(trimmed);
+                }
             }
         }
 
