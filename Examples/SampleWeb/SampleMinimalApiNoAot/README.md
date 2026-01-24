@@ -1,4 +1,4 @@
-# SampleMinimalApiNoAot - Reflection Fallback Example
+﻿# SampleMinimalApiNoAot - Reflection Fallback Example
 
 This example demonstrates that **FunctionalDDD.Asp works perfectly without source generation**, using automatic reflection fallback for standard .NET applications.
 
@@ -30,8 +30,7 @@ This example demonstrates that **FunctionalDDD.Asp works perfectly without sourc
 SampleMinimalApiNoAot/
 ├── Program.cs              # Simple setup without JsonSerializerContext
 ├── API/
-│   ├── UserRoutes.cs       # User registration and validation endpoints
-│   └── ToDoRoutes.cs       # Simple TODO endpoints
+│   └── UserRoutes.cs       # User registration, validation, and error demo endpoints
 └── SampleMinimalApiNoAot.csproj  # No PublishAot, no generator reference
 ```
 
@@ -69,7 +68,7 @@ cd Examples/SampleMinimalApiNoAot
 dotnet run
 ```
 
-Visit http://localhost:5000/users to test the endpoints.
+Visit http://localhost:5002 to see the API welcome page with all available endpoints.
 
 ## Test Endpoints
 

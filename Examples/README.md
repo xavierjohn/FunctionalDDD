@@ -170,23 +170,26 @@ ASP.NET Core MVC examples showing how to integrate ROP with web APIs.
 ### 6. ⚡ [Minimal API Examples](../SampleMinimalApi/)
 **Complexity**: ⭐⭐⭐
 
-ASP.NET Core Minimal API examples with ROP integration.
+ASP.NET Core Minimal API examples with ROP integration and AOT support.
 
 **Key Features**:
 - Minimal API endpoints with Result
 - User registration and retrieval
-- Todo list management
+- Error demonstration endpoints (404, 409, 403, 401, 500)
 - HTTP result mapping
+- Source generation for AOT compatibility
+- Welcome endpoint with API documentation
 
 **Learn About**:
 - `ToHttpResult()` extension
 - Minimal API with functional patterns
 - Route organization
 - Results vs ActionResult
+- AOT-compatible JSON serialization
 
 **Files**:
 - `API/UserRoutes.cs` - User endpoints
-- `API/ToDoRoutes.cs` - Todo endpoints
+- `Program.cs` - Application setup with source generation
 
 ---
 
