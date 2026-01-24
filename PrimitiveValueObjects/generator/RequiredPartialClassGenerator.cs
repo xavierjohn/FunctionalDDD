@@ -198,6 +198,8 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 {
                     "RequiredGuid" => "Guid",
                     "RequiredString" => "string",
+                    "RequiredInt" => "int",
+                    "RequiredDecimal" => "decimal",
                     _ => "unknown"
                 };
 
@@ -320,6 +322,106 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
     }}";
                 }
 
+                if (g.ClassBase == "RequiredInt")
+                {
+                    source += $@"
+
+        /// <summary>
+        /// Creates a validated instance from an integer.
+        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// </summary>
+        /// <param name=""value"">The integer value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(int value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            if (value == 0)
+                return Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be zero."", field);
+            return new {g.ClassName}(value);
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(int? valueOrNothing, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            return valueOrNothing
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => x != 0, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be zero."", field))
+                .Map(val => new {g.ClassName}(val));
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(string? stringOrNull, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            int parsedInt = 0;
+            return stringOrNull
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => int.TryParse(x, out parsedInt), Error.Validation(""Value must be a valid integer."", field))
+                .Ensure(_ => parsedInt != 0, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be zero."", field))
+                .Map(_ => new {g.ClassName}(parsedInt));
+        }}
+    }}";
+                }
+
+                if (g.ClassBase == "RequiredDecimal")
+                {
+                    source += $@"
+
+        /// <summary>
+        /// Creates a validated instance from a decimal.
+        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// </summary>
+        /// <param name=""value"">The decimal value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(decimal value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            if (value == 0m)
+                return Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be zero."", field);
+            return new {g.ClassName}(value);
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(decimal? valueOrNothing, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            return valueOrNothing
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => x != 0m, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be zero."", field))
+                .Map(val => new {g.ClassName}(val));
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(string? stringOrNull, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            decimal parsedDecimal = 0m;
+            return stringOrNull
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => decimal.TryParse(x, out parsedDecimal), Error.Validation(""Value must be a valid decimal."", field))
+                .Ensure(_ => parsedDecimal != 0m, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be zero."", field))
+                .Map(_ => new {g.ClassName}(parsedDecimal));
+        }}
+    }}";
+                }
+
                 context.AddSource($"{g.ClassName}.g.cs", source);
             }
         }
@@ -410,6 +512,10 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredString", StringComparison.Ordinal))
                     return true;
                 if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredGuid", StringComparison.Ordinal))
+                    return true;
+                if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredInt", StringComparison.Ordinal))
+                    return true;
+                if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredDecimal", StringComparison.Ordinal))
                     return true;
             }
 
