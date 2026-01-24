@@ -24,17 +24,14 @@ builder.Services.AddOpenTelemetry()
 var app = builder.Build();
 
 app.UseValueObjectValidation();
-app.UseToDoRoute();
 app.UseUserRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
 public record SharedNameTypeResponse(string FirstName, string LastName, string Email, string Message);
 #pragma warning restore CA1050 // Declare types in namespaces
 
 [GenerateValueObjectConverters]
-[JsonSerializable(typeof(Todo[]))]
 [JsonSerializable(typeof(RegisterUserRequest))]
 [JsonSerializable(typeof(RegisterUserDto))]
 [JsonSerializable(typeof(RegisterWithNameDto))]

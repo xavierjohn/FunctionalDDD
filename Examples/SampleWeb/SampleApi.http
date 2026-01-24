@@ -15,18 +15,6 @@
 # @host = http://localhost:5003   # SampleWebApplication (MVC Controllers)
 
 ###############################################################################
-# Basic Endpoints
-###############################################################################
-
-### Get all todos
-GET {{host}}/todos/
-Accept: application/json
-
-### Get single todo
-GET {{host}}/todos/1
-Accept: application/json
-
-###############################################################################
 # User Registration - Manual Validation (Result.Combine)
 ###############################################################################
 
