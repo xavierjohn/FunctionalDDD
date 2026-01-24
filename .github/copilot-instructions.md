@@ -6,7 +6,6 @@ This is a functional programming library for .NET that implements Railway Orient
 
 **Target Frameworks:**
 - .NET 10
-- .NET Standard 2.0
 
 ## Test File Organization Rules
 
@@ -781,6 +780,4 @@ public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, 
 **Key Insight:**
 - In `TryCreate` methods, the `using var activity` **IS** `Activity.Current` (no parent activity exists when called)
 - In ROP methods, `using var activity` creates a **child** of `Activity.Current` (parent activity exists from calling code)
-- Result constructor only sets `Activity.Current`, so child activities need explicit status setting via `result.LogActivityStatus()` or `activity?.SetStatus(...)`
-
-**IMPORTANT:** All ROP extension methods (Bind, Map, Tap, Ensure, etc.) **MUST** call `result.LogActivityStatus()` or manually set the activity status. Failure to do so means the child activity will have no status set, which breaks observability.
+- Result constructor only sets `Activity.Current`, so child activities need explicit status setting via `result.LogActivityStatus()` or manually set the activity status.
