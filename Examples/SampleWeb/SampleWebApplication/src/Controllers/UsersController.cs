@@ -3,6 +3,7 @@
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc;
 using SampleUserLibrary;
+using System.Globalization;
 
 [ApiController]
 [Route("[controller]")]
@@ -50,6 +51,31 @@ public class UsersController : ControllerBase
 
     [HttpGet("{name}")]
     public ActionResult<string> Get(string name) => Ok($"Hello {name}!");
+
+    [HttpGet("notfound/{id}")]
+    public ActionResult<Unit> NotFound(int id) =>
+        Result.Failure<Unit>(Error.NotFound("User not found", id.ToString(CultureInfo.InvariantCulture)))
+            .ToActionResult(this);
+
+    [HttpGet("conflict/{id}")]
+    public ActionResult<Unit> Conflict(int id) =>
+        Result.Failure<Unit>(Error.Conflict("Record has changed.", id.ToString(CultureInfo.InvariantCulture)))
+            .ToActionResult(this);
+
+    [HttpGet("forbidden/{id}")]
+    public ActionResult<Unit> Forbidden(int id) =>
+        Result.Failure<Unit>(Error.Forbidden("You do not have access.", id.ToString(CultureInfo.InvariantCulture)))
+            .ToActionResult(this);
+
+    [HttpGet("unauthorized/{id}")]
+    public ActionResult<Unit> Unauthorized(int id) =>
+        Result.Failure<Unit>(Error.Unauthorized("Please log in."))
+            .ToActionResult(this);
+
+    [HttpGet("unexpected/{id}")]
+    public ActionResult<Unit> Unexpected(int id) =>
+        Result.Failure<Unit>(Error.Unexpected("Something went wrong."))
+            .ToActionResult(this);
 
     [HttpDelete("{id}")]
     public ActionResult<Unit> Delete(string id) =>
