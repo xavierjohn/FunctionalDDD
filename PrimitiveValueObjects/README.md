@@ -10,7 +10,10 @@ This library provides infrastructure and ready-to-use implementations for primit
 - [Quick Start](#quick-start)
   - [RequiredString](#requiredstring)
   - [RequiredGuid](#requiredguid)
+  - [RequiredInt and RequiredDecimal](#requiredint-and-requireddecimal)
   - [EmailAddress](#emailaddress)
+  - [Additional Value Objects](#additional-value-objects)
+- [ASP.NET Core Integration](#aspnet-core-integration)
 - [Core Concepts](#core-concepts)
 - [Best Practices](#best-practices)
 - [Resources](#resources)
@@ -25,8 +28,8 @@ dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`) and ready-to-use `EmailAddress` value object
-- `FunctionalDDD.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `RequiredString` and `RequiredGuid` derived classes
+- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
+- `FunctionalDDD.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `Required*` base class derivatives
 
 ## Quick Start
 
@@ -96,6 +99,23 @@ var parsed = EmployeeId.Parse("550e8400-e29b-41d4-a716-446655440000", null);
 
 // Explicit cast operator (throws on failure)
 var employeeId = (EmployeeId)Guid.NewGuid();
+```
+
+### RequiredInt and RequiredDecimal
+
+Create strongly-typed numeric value objects:
+
+```csharp
+public partial class Quantity : RequiredInt<Quantity> { }
+public partial class Price : RequiredDecimal<Price> { }
+
+// Same features as RequiredGuid/RequiredString:
+var qty = Quantity.TryCreate(10);
+var price = Price.TryCreate(99.99m);
+
+// Validates non-zero values
+var invalid = Quantity.TryCreate(0);
+// Returns: Error.Validation("Quantity cannot be empty.", "quantity")
 ```
 
 ### EmailAddress
@@ -241,11 +261,15 @@ builder.Services
 public partial class FirstName : RequiredString<FirstName> { }
 public partial class CustomerId : RequiredGuid<CustomerId> { }
 
-// 3. Use in DTOs
+// 3. Use in DTOs with both custom and built-in value objects
 public record CreateUserDto
 {
     public FirstName FirstName { get; init; } = null!;
     public EmailAddress Email { get; init; } = null!;
+    public PhoneNumber Phone { get; init; } = null!;
+    public Age Age { get; init; } = null!;
+    public CountryCode Country { get; init; } = null!;
+    public Url? Website { get; init; } // Optional
 }
 
 // 4. Controllers get automatic validation - no manual Result.Combine needed!
@@ -257,8 +281,15 @@ public class UsersController : ControllerBase
     public IActionResult Create(CreateUserDto dto)
     {
         // If we reach here, dto is FULLY validated!
-        // Model binding validated all value objects automatically
-        var user = new User(dto.FirstName, dto.Email);
+        // All 6 value objects were automatically validated:
+        // - FirstName: non-empty string
+        // - Email: RFC 5322 format
+        // - Phone: E.164 format
+        // - Age: 0-150 range
+        // - Country: ISO 3166-1 alpha-2 code
+        // - Website: valid HTTP/HTTPS URL (optional)
+        
+        var user = new User(dto.FirstName, dto.Email, dto.Phone, dto.Age, dto.Country);
         return Ok(user);
     }
 

@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Asp\src\Asp.csproj" />
+    <ProjectReference Include="..\..\..\..\Asp\src\Asp.csproj" />
     <ProjectReference Include="..\..\SampleUserLibrary\SampleUserLibrary.csproj" />
   </ItemGroup>
 

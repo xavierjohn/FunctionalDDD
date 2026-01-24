@@ -13,7 +13,11 @@ public class UsersController : ControllerBase
         FirstName.TryCreate(request.firstName)
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
+        .Combine(PhoneNumber.TryCreate(request.phone))
+        .Combine(Age.TryCreate(request.age))
+        .Combine(CountryCode.TryCreate(request.country))
+        .Bind((firstName, lastName, email, phone, age, country) => 
+            SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
         .ToActionResult(this);
 
     [HttpPost("[action]")]
@@ -21,7 +25,11 @@ public class UsersController : ControllerBase
         FirstName.TryCreate(request.firstName)
         .Combine(LastName.TryCreate(request.lastName))
         .Combine(EmailAddress.TryCreate(request.email))
-        .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
+        .Combine(PhoneNumber.TryCreate(request.phone))
+        .Combine(Age.TryCreate(request.age))
+        .Combine(CountryCode.TryCreate(request.country))
+        .Bind((firstName, lastName, email, phone, age, country) => 
+            SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
         .Match(
             onSuccess: ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
             onFailure: err => err.ToActionResult<User>(this));
@@ -31,7 +39,11 @@ public class UsersController : ControllerBase
         FirstName.TryCreate(request.firstName)
             .Combine(LastName.TryCreate(request.lastName))
             .Combine(EmailAddress.TryCreate(request.email))
-            .Bind((firstName, lastName, email) => SampleUserLibrary.User.TryCreate(firstName, lastName, email, request.password))
+            .Combine(PhoneNumber.TryCreate(request.phone))
+            .Combine(Age.TryCreate(request.age))
+            .Combine(CountryCode.TryCreate(request.country))
+            .Bind((firstName, lastName, email, phone, age, country) => 
+                SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
             .Match(
                 onSuccess: ok => AcceptedAtAction("Get", new { name = ok.FirstName }, ok),
                 onFailure: err => err.ToActionResult<User>(this));
@@ -57,7 +69,7 @@ public class UsersController : ControllerBase
     /// </returns>
     /// <remarks>
     /// This endpoint demonstrates the new automatic validation feature:
-    /// - Value objects (FirstName, LastName, EmailAddress) are validated during model binding
+    /// - 7 value objects (FirstName, LastName, EmailAddress, PhoneNumber, Age, CountryCode, Url) are validated during model binding
     /// - Invalid requests automatically return 400 with structured error messages
     /// - No manual Result.Combine() calls needed in the controller
     /// - Validation errors include field names and details
@@ -72,7 +84,11 @@ public class UsersController : ControllerBase
             dto.FirstName,
             dto.LastName,
             dto.Email,
-            dto.Password);
+            dto.Phone,
+            dto.Age,
+            dto.Country,
+            dto.Password,
+            dto.Website);
 
         return userResult.ToActionResult(this);
     }

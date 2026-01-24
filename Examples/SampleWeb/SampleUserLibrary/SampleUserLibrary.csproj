@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SampleUserLibrary</RootNamespace>
+    <PublishAot>true</PublishAot>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\PrimitiveValueObjects\generator\PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\..\Asp\generator\AspSourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\..\PrimitiveValueObjects\src\PrimitiveValueObjects.csproj" />
+    <ProjectReference Include="..\..\..\FluentValidation\src\FluentValidation.csproj" />
+  </ItemGroup>
+  
+</Project>

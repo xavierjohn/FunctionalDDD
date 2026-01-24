@@ -16,10 +16,10 @@ Banking system with fraud detection, daily limits, overdraft protection, and int
 
 **Key Concepts**: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail
 
-### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWebApplication)
+### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWeb/SampleWebApplication)
 ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.
 
-**Key Concepts**: ToActionResult, ToHttpResult, API integration, HTTP status codes
+**Key Concepts**: ToActionResult, ToHttpResult, API integration, HTTP status codes, automatic value object validation
 
 See the [Examples README](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/README.md) for a complete guide including complexity ratings, learning paths, and common patterns.
 

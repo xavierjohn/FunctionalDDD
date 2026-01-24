@@ -1,4 +1,4 @@
-namespace SampleMinimalApiNoAot.API;
+﻿namespace SampleMinimalApi.API;
 
 using FunctionalDdd;
 using SampleUserLibrary;
@@ -10,7 +10,7 @@ public static class UserRoutes
     {
         RouteGroupBuilder userApi = app.MapGroup("/users");
 
-        userApi.MapGet("/", () => "Hello Users - Reflection Fallback Version!");
+        userApi.MapGet("/", () => "Hello Users");
 
         userApi.MapGet("/{name}", (string name) => $"Hello {name}").WithName("GetUserById");
 
@@ -18,14 +18,22 @@ public static class UserRoutes
             FirstName.TryCreate(request.firstName)
             .Combine(LastName.TryCreate(request.lastName))
             .Combine(EmailAddress.TryCreate(request.email))
-            .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
+            .Combine(PhoneNumber.TryCreate(request.phone))
+            .Combine(Age.TryCreate(request.age))
+            .Combine(CountryCode.TryCreate(request.country))
+            .Bind((firstName, lastName, email, phone, age, country) => 
+                User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
             .ToHttpResult());
 
         userApi.MapPost("/registerCreated", (RegisterUserRequest request) =>
             FirstName.TryCreate(request.firstName)
             .Combine(LastName.TryCreate(request.lastName))
             .Combine(EmailAddress.TryCreate(request.email))
-            .Bind((firstName, lastName, email) => User.TryCreate(firstName, lastName, email, request.password))
+            .Combine(PhoneNumber.TryCreate(request.phone))
+            .Combine(Age.TryCreate(request.age))
+            .Combine(CountryCode.TryCreate(request.country))
+            .Bind((firstName, lastName, email, phone, age, country) => 
+                User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
             .Match(
                     onSuccess: ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
                     onFailure: err => err.ToHttpResult()));
@@ -51,21 +59,29 @@ public static class UserRoutes
             .ToHttpResult());
 
         // Auto-validating routes using value object DTOs
-        // Works perfectly with reflection fallback - no source generator needed!
+        // No manual Result.Combine() needed - validation happens during model binding!
+        // Demonstrates 7 different value objects being auto-validated
         userApi.MapPost("/registerWithAutoValidation", (RegisterUserDto dto) =>
-            User.TryCreate(dto.FirstName, dto.LastName, dto.Email, dto.Password)
-                .ToHttpResult())
+            User.TryCreate(
+                dto.FirstName, 
+                dto.LastName, 
+                dto.Email, 
+                dto.Phone,
+                dto.Age,
+                dto.Country,
+                dto.Password,
+                dto.Website)
+            .ToHttpResult())
             .WithValueObjectValidation();
 
         // Test that same value object type (Name) used for multiple properties
         // correctly reports validation errors with the property name, not the type name.
-        // Reflection fallback handles this perfectly!
         userApi.MapPost("/registerWithSharedNameType", (RegisterWithNameDto dto) =>
             Results.Ok(new SharedNameTypeResponse(
                 dto.FirstName.Value,
                 dto.LastName.Value,
                 dto.Email.Value,
-                "Validation passed with reflection fallback - field names correctly attributed!")))
+                "Validation passed - field names correctly attributed!")))
             .WithValueObjectValidation();
     }
 

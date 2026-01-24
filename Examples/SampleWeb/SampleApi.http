@@ -1,0 +1,338 @@
+﻿###############################################################################
+# FunctionalDDD Sample API Tests
+# 
+# This file tests all three sample implementations to demonstrate they work identically:
+# 1. SampleMinimalApi (Port 5001) - Minimal API with AOT and source generation
+# 2. SampleMinimalApiNoAot (Port 5002) - Minimal API with reflection fallback
+# 3. SampleWebApplication (Port 5003) - MVC Controllers
+#
+# To switch between implementations, uncomment the desired @host variable below
+###############################################################################
+
+# Choose which sample API to test (uncomment one):
+@host = http://localhost:5001   # SampleMinimalApi (AOT + Source Generator)
+# @host = http://localhost:5002   # SampleMinimalApiNoAot (Reflection Fallback)
+# @host = http://localhost:5003   # SampleWebApplication (MVC Controllers)
+
+###############################################################################
+# Basic Endpoints
+###############################################################################
+
+### Get all todos
+GET {{host}}/todos/
+Accept: application/json
+
+### Get single todo
+GET {{host}}/todos/1
+Accept: application/json
+
+###############################################################################
+# User Registration - Manual Validation (Result.Combine)
+###############################################################################
+
+### Register User - Success (200 OK)
+# Uses manual validation with Result.Combine for all 6 value objects
+POST {{host}}/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "phone": "+14155551234",
+  "age": 25,
+  "country": "US",
+  "password": "Keep8Simple!"
+}
+
+### Register User Created - Success (201 Created)
+# Same as above but returns CreatedAtRoute
+POST {{host}}/users/registerCreated
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "phone": "+14155551234",
+  "age": 30,
+  "country": "GB",
+  "password": "KeepItSimple1@"
+}
+
+### Register User - Multiple Validation Errors (400 Bad Request)
+# Tests all value object validations fail correctly
+POST {{host}}/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "",
+  "lastName": "",
+  "email": "not-an-email",
+  "phone": "555-1234",
+  "age": 200,
+  "country": "USA",
+  "password": "weak"
+}
+
+### Register User - FluentValidation Error (400 Bad Request)
+# Password validation via FluentValidation (must be 8+ chars with uppercase, lowercase, number, special char)
+POST {{host}}/users/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "firstName": "Xavier",
+  "lastName": "John",
+  "email": "xa@somewhere.com",
+  "phone": "+14155551234",
+  "age": 25,
+  "country": "US",
+  "password": "KeepItSimple"
+}
+###
+
+###############################################################################
+# Error Response Examples
+###############################################################################
+
+### Not Found Error (404)
+GET {{host}}/users/notfound/213
+Accept: application/json
+
+### Conflict Error (409)
+GET {{host}}/users/conflict/213
+Accept: application/json
+
+### Forbidden Error (403)
+GET {{host}}/users/forbidden/213
+Accept: application/json
+
+### Unauthorized Error (401)
+GET {{host}}/users/unauthorized/213
+Accept: application/json
+
+### Unexpected/Internal Server Error (500)
+GET {{host}}/users/unexpected/213
+Accept: application/json
+
+###############################################################################
+# Automatic Value Object Validation
+# No manual Result.Combine() - validation happens during model binding!
+###############################################################################
+
+### Auto-Validation - Success (200 OK)
+# All 7 value objects are automatically validated during model binding
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "website": "https://xavier.com",
+    "password": "Secure!Pass123"
+}
+
+### Auto-Validation - Invalid Email (400 Bad Request)
+# EmailAddress validation fails automatically
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "not-an-email",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Missing FirstName (400 Bad Request)
+# RequiredString validation fails automatically
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Empty LastName (400 Bad Request)
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Invalid Phone (400 Bad Request)
+# Phone must be E.164 format
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "555-1234",
+    "age": 28,
+    "country": "US",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Invalid Age (400 Bad Request)
+# Age must be 0-150
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 200,
+    "country": "US",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Invalid Country Code (400 Bad Request)
+# Country must be ISO 3166-1 alpha-2 (2 letters)
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "USA",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Invalid Website (400 Bad Request)
+# URL must be valid HTTP/HTTPS
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "website": "not-a-url",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Multiple Errors (400 Bad Request)
+# All validation errors are collected and returned together
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "lastName": "John",
+    "email": "invalid-email",
+    "phone": "555-1234",
+    "age": 200,
+    "country": "USA",
+    "website": "not-a-url",
+    "password": "SecurePass123!"
+}
+
+### Auto-Validation - Business Rule Violation (400 Bad Request)
+# Age must be >= 18 (FluentValidation business rule)
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 15,
+    "country": "US",
+    "password": "SecurePass123!"
+}
+
+###############################################################################
+# Shared Value Object Type Test
+# This endpoint uses the same "Name" value object for both FirstName and LastName
+# The key test: validation errors should show "FirstName" and "LastName" as field names,
+# NOT "Name" (the type name)
+###############################################################################
+
+### Shared Name Type - Success
+# Both FirstName and LastName use "Name" type - returns 200 OK
+POST {{host}}/users/registerWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - Both Names Empty
+# KEY TEST: Both use "Name" type but errors should show "FirstName" and "LastName"
+# Expected response: {"errors":{"FirstName":["Name cannot be empty."],"LastName":["Name cannot be empty."]}}
+POST {{host}}/users/registerWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - Only FirstName Empty
+# Error should show "FirstName" not "Name"
+POST {{host}}/users/registerWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "Doe",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - Only LastName Empty
+# Error should show "LastName" not "Name"
+POST {{host}}/users/registerWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "",
+    "email": "john@example.com"
+}
+
+### Shared Name Type - All Invalid
+# All three fields invalid - errors should show correct field names
+POST {{host}}/users/registerWithSharedNameType
+Content-Type: application/json
+
+{
+    "firstName": "",
+    "lastName": "",
+    "email": "not-valid"
+}

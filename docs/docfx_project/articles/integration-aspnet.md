@@ -82,15 +82,19 @@ Value objects implementing `IScalarValueObject` are automatically validated duri
 ```csharp
 using FunctionalDdd;
 
-// Define value objects (source generator adds IScalarValueObject automatically)
+// Define custom value objects (source generator adds IScalarValueObject automatically)
 public partial class FirstName : RequiredString<FirstName> { }
 public partial class CustomerId : RequiredGuid<CustomerId> { }
 
-// Use in DTOs - NO manual validation needed!
+// Use in DTOs with both custom and built-in value objects
 public record CreateUserDto
 {
     public FirstName FirstName { get; init; } = null!;
     public EmailAddress Email { get; init; } = null!;
+    public PhoneNumber Phone { get; init; } = null!;
+    public Url? Website { get; init; }
+    public Age Age { get; init; } = null!;
+    public CountryCode Country { get; init; } = null!;
 }
 
 [ApiController]
@@ -101,8 +105,15 @@ public class UsersController : ControllerBase
     public IActionResult Create(CreateUserDto dto)
     {
         // If we reach here, dto is FULLY validated!
-        // All value objects were automatically validated during binding
-        var user = new User(dto.FirstName, dto.Email);
+        // All 6 value objects were automatically validated:
+        // - FirstName: non-empty string
+        // - Email: RFC 5322 format
+        // - Phone: E.164 format
+        // - Website: valid HTTP/HTTPS URL (optional)
+        // - Age: 0-150 range
+        // - Country: ISO 3166-1 alpha-2 code
+        
+        var user = new User(dto.FirstName, dto.Email, dto.Phone, dto.Age, dto.Country);
         return Ok(user);
     }
 
@@ -122,8 +133,8 @@ Auto-validation works with all ASP.NET Core binding sources:
 | Source | Example | Notes |
 |--------|---------|-------|
 | **Route Parameters** | `/users/{id}` | `CustomerId id` |
-| **Query Strings** | `?email=user@example.com` | `EmailAddress email` |
-| **JSON Bodies** | `{ "firstName": "John" }` | `FirstName firstName` in DTO |
+| **Query Strings** | `?country=US` | `CountryCode country` |
+| **JSON Bodies** | `{ "email": "user@example.com" }` | `EmailAddress email` in DTO |
 | **Form Data** | Form POST | Value objects in model |
 
 ### Error Responses
@@ -136,8 +147,12 @@ POST /api/users HTTP/1.1
 Content-Type: application/json
 
 {
-  "firstName": "",
-  "email": "not-an-email"
+  "firstName": "John",
+  "email": "not-an-email",
+  "phone": "555-1234",
+  "website": "not-a-url",
+  "age": 200,
+  "country": "USA"
 }
 ```
 
@@ -151,8 +166,11 @@ Content-Type: application/problem+json
   "title": "One or more validation errors occurred.",
   "status": 400,
   "errors": {
-    "firstName": ["First Name is required."],
-    "email": ["Email address is not valid."]
+    "email": ["Email address is not valid."],
+    "phone": ["Phone number must be in E.164 format (e.g., +14155551234)."],
+    "website": ["URL must be a valid absolute HTTP or HTTPS URL."],
+    "age": ["Age is unrealistically high."],
+    "country": ["Country code must be an ISO 3166-1 alpha-2 code."]
   }
 }
 ```
@@ -170,21 +188,30 @@ Content-Type: application/problem+json
 Auto-validation for value objects works alongside FluentValidation for complex scenarios:
 
 ```csharp
-public record CreateOrderRequest
+public record CreateProductRequest
 {
-    public CustomerId CustomerId { get; init; } = null!; // Auto-validated
-    public List<OrderLineDto> Lines { get; init; } = new();
+    public ProductName Name { get; init; } = null!;           // Auto-validated
+    public Percentage DiscountRate { get; init; } = null!;     // Auto-validated (0-100)
+    public Url? ProductUrl { get; init; }                       // Auto-validated (optional)
+    public List<string> Tags { get; init; } = new();
 }
 
-// FluentValidation for business rules
-public class CreateOrderRequestValidator : AbstractValidator<CreateOrderRequest>
+// FluentValidation for business rules that span multiple fields
+public class CreateProductRequestValidator : AbstractValidator<CreateProductRequest>
 {
-    public CreateOrderRequestValidator()
+    public CreateProductRequestValidator()
     {
-        // CustomerId already validated by auto-validation
-        RuleFor(x => x.Lines)
-            .NotEmpty()
-            .WithMessage("Order must have at least one line item");
+        // Value objects already validated by auto-validation
+        
+        // Add business rules
+        RuleFor(x => x.Tags)
+            .Must(tags => tags.Count <= 10)
+            .WithMessage("Product cannot have more than 10 tags");
+            
+        RuleFor(x => x.DiscountRate)
+            .Must(discount => discount.Value <= 50)
+            .When(x => x.ProductUrl == null)
+            .WithMessage("Discount cannot exceed 50% for products without a URL");
     }
 }
 ```

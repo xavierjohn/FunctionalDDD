@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <PublishAot>true</PublishAot>
-    <RootNamespace>SampleMinimalApi</RootNamespace>
+    <RootNamespace>SampleMinimalApiNoAot</RootNamespace>
+    <!-- NO PublishAot - this sample uses reflection fallback -->
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,10 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Asp\src\Asp.csproj" />
+    <ProjectReference Include="..\..\..\Asp\src\Asp.csproj" />
     <ProjectReference Include="..\SampleUserLibrary\SampleUserLibrary.csproj" />
-    <!-- Source generator for AOT-compatible value object JSON converters -->
-    <ProjectReference Include="..\..\Asp\generator\AspSourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <!-- NO AspSourceGenerator reference - this sample uses reflection fallback -->
   </ItemGroup>
 
 </Project>
