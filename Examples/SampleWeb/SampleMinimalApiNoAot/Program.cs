@@ -24,6 +24,35 @@ builder.Services.AddOpenTelemetry()
 var app = builder.Build();
 
 app.UseValueObjectValidation();
+
+// Welcome endpoint with API information
+#pragma warning disable CA1861 // Prefer 'static readonly' fields - one-time startup configuration
+app.MapGet("/", () => Results.Ok(new
+{
+    name = "FunctionalDDD Sample Minimal API (No AOT)",
+    version = "1.0.0",
+    description = "Demonstrates FunctionalDDD Railway Oriented Programming with Minimal APIs and reflection fallback (no source generation)",
+    endpoints = new
+    {
+        users = new
+        {
+            register = "POST /users/register - Register user with manual validation (Result.Combine)",
+            registerCreated = "POST /users/registerCreated - Register user returning 201 Created",
+            registerAutoValidation = "POST /users/RegisterWithAutoValidation - Register with automatic value object validation",
+            errors = new string[]
+            {
+                "GET /users/notfound/{id} - Returns 404 Not Found",
+                "GET /users/conflict/{id} - Returns 409 Conflict",
+                "GET /users/forbidden/{id} - Returns 403 Forbidden",
+                "GET /users/unauthorized/{id} - Returns 401 Unauthorized",
+                "GET /users/unexpected/{id} - Returns 500 Internal Server Error"
+            }
+        }
+    },
+    documentation = "See SampleApi.http for complete API examples"
+})).WithName("Welcome");
+#pragma warning restore CA1861
+
 app.UseUserRoute();
 app.Run();
 

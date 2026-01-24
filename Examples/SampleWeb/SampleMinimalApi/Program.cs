@@ -24,14 +24,43 @@ builder.Services.AddOpenTelemetry()
 var app = builder.Build();
 
 app.UseValueObjectValidation();
+
+// Welcome endpoint with API information
+app.MapGet("/", () => Results.Ok(new WelcomeResponse(
+    Name: "FunctionalDDD Sample Minimal API",
+    Version: "1.0.0",
+    Description: "Demonstrates FunctionalDDD Railway Oriented Programming with Minimal APIs, AOT, and source generation",
+    Endpoints: new EndpointsInfo(
+        Users: new UserEndpoints(
+            Register: "POST /users/register - Register user with manual validation (Result.Combine)",
+            RegisterCreated: "POST /users/registerCreated - Register user returning 201 Created",
+            RegisterAutoValidation: "POST /users/RegisterWithAutoValidation - Register with automatic value object validation",
+            Errors: [
+                "GET /users/notfound/{id} - Returns 404 Not Found",
+                "GET /users/conflict/{id} - Returns 409 Conflict",
+                "GET /users/forbidden/{id} - Returns 403 Forbidden",
+                "GET /users/unauthorized/{id} - Returns 401 Unauthorized",
+                "GET /users/unexpected/{id} - Returns 500 Internal Server Error"
+            ]
+        )
+    ),
+    Documentation: "See SampleApi.http for complete API examples"
+))).WithName("Welcome");
+
 app.UseUserRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
 public record SharedNameTypeResponse(string FirstName, string LastName, string Email, string Message);
+public record WelcomeResponse(string Name, string Version, string Description, EndpointsInfo Endpoints, string Documentation);
+public record EndpointsInfo(UserEndpoints Users);
+public record UserEndpoints(string Register, string RegisterCreated, string RegisterAutoValidation, string[] Errors);
 #pragma warning restore CA1050 // Declare types in namespaces
 
 [GenerateValueObjectConverters]
+[JsonSerializable(typeof(WelcomeResponse))]
+[JsonSerializable(typeof(EndpointsInfo))]
+[JsonSerializable(typeof(UserEndpoints))]
 [JsonSerializable(typeof(RegisterUserRequest))]
 [JsonSerializable(typeof(RegisterUserDto))]
 [JsonSerializable(typeof(RegisterWithNameDto))]

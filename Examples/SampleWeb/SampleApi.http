@@ -6,13 +6,13 @@
 # 2. SampleMinimalApiNoAot (Port 5002) - Minimal API with reflection fallback
 # 3. SampleWebApplication (Port 5003) - MVC Controllers
 #
-# To switch between implementations, uncomment the desired @host variable below
+# To switch between implementations, use the environment selector in Visual Studio
+# or your IDE. Available environments: MinimalApi, MinimalApiNoAot, WebApplication
 ###############################################################################
 
-# Choose which sample API to test (uncomment one):
-@host = http://localhost:5001   # SampleMinimalApi (AOT + Source Generator)
-# @host = http://localhost:5002   # SampleMinimalApiNoAot (Reflection Fallback)
-# @host = http://localhost:5003   # SampleWebApplication (MVC Controllers)
+### Welcome - API Information
+GET {{host}}/
+Accept: application/json
 
 ###############################################################################
 # User Registration - Manual Validation (Result.Combine)
