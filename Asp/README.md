@@ -1,10 +1,10 @@
-﻿# FunctionalDDD.Asp - ASP.NET Core Extensions
+# FunctionalDDD.Asp - ASP.NET Core Extensions
 
 [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
 
 Comprehensive ASP.NET Core integration for functional domain-driven design, providing:
 
-1. **Automatic Scalar Value Validation** - Property-aware error messages with comprehensive error collection
+1. **Automatic Value Object Validation** - Property-aware error messages with comprehensive error collection
 2. **Result-to-HTTP Conversion** - Seamless `Result<T>` to HTTP response mapping
 3. **Model Binding** - Automatic binding from route/query/form/headers
 4. **Native AOT Support** - Optional source generator for zero-reflection overhead
@@ -12,12 +12,12 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
 ## Table of Contents
 
 - [Installation](#installation)
-- [Scalar Value Validation](#scalar-value-validation)
-- [Quick Start](#quick-start)
-- [MVC Controllers](#mvc-controllers)
-- [Minimal APIs](#minimal-apis)
-- [Model Binding](#model-binding)
-- [Native AOT](#native-aot-support)
+- [Value Object Validation](#value-object-validation)
+  - [Quick Start](#quick-start)
+  - [MVC Controllers](#mvc-controllers)
+  - [Minimal APIs](#minimal-apis)
+  - [Model Binding](#model-binding)
+  - [Native AOT](#native-aot-support)
 - [Result Conversion](#result-conversion)
   - [MVC Controllers](#result-conversion-mvc)
   - [Minimal APIs](#result-conversion-minimal-api)
@@ -30,11 +30,9 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
 dotnet add package FunctionalDDD.Asp
 ```
 
-## Scalar Value Validation
+## Value Object Validation
 
-Automatically validate types implementing `IScalarValue<TSelf, TPrimitive>` during JSON deserialization and model binding with property-aware error messages.
-
-> **Note:** This includes DDD value objects (like `ScalarValueObject<T>`) as well as any custom implementations of `IScalarValue`.
+Automatically validate value objects during JSON deserialization and model binding with property-aware error messages.
 
 ### Quick Start
 
@@ -42,7 +40,7 @@ Automatically validate types implementing `IScalarValue<TSelf, TPrimitive>` duri
 
 ```csharp
 public class EmailAddress : ScalarValueObject<EmailAddress, string>,
-IScalarValue<EmailAddress, string>
+                            IScalarValueObject<EmailAddress, string>
 {
     private EmailAddress(string value) : base(value) { }
 
@@ -77,13 +75,16 @@ var builder = WebApplication.CreateBuilder(args);
 // For MVC Controllers
 builder.Services
     .AddControllers()
-    .AddScalarValueValidation();
+    .AddScalarValueObjectValidation();
 
 // For Minimal APIs
-builder.Services.AddScalarValueValidationForMinimalApi();
+builder.Services.AddScalarValueObjectValidationForMinimalApi();
+
+// Or use unified method (works for both)
+builder.Services.AddValueObjectValidation();
 
 var app = builder.Build();
-app.UseScalarValueValidation();  // Required middleware
+app.UseValueObjectValidation();  // Required middleware
 app.Run();
 ```
 
@@ -126,10 +127,10 @@ Full integration with MVC model binding and validation:
 ```csharp
 builder.Services
     .AddControllers()
-    .AddScalarValueValidation();  // Adds JSON validation + model binding
+    .AddScalarValueObjectValidation();  // Adds JSON validation + model binding
 
 var app = builder.Build();
-app.UseScalarValueValidation();  // Middleware
+app.UseValueObjectValidation();  // Middleware
 app.MapControllers();
 app.Run();
 ```
@@ -137,7 +138,7 @@ app.Run();
 **Features:**
 - ✅ JSON deserialization with validation
 - ✅ Model binding from route/query/form/headers
-- ✅ Automatic 400 responses via `ScalarValueValidationFilter`
+- ✅ Automatic 400 responses via `ValueObjectValidationFilter`
 - ✅ Integrates with `[ApiController]` attribute
 
 ### Minimal APIs
@@ -145,13 +146,13 @@ app.Run();
 Endpoint-specific validation with filters:
 
 ```csharp
-builder.Services.AddScalarValueValidationForMinimalApi();
+builder.Services.AddScalarValueObjectValidationForMinimalApi();
 
 var app = builder.Build();
-app.UseScalarValueValidation();
+app.UseValueObjectValidation();
 
 app.MapPost("/users", (RegisterUserDto dto) => ...)
-   .WithScalarValueValidation();  // Add filter to each endpoint
+   .WithValueObjectValidation();  // Add filter to each endpoint
 
 app.Run();
 ```
@@ -200,7 +201,7 @@ For Native AOT applications, add the source generator:
 **2. Mark Your JsonSerializerContext**
 
 ```csharp
-[GenerateScalarValueConverters]  // ← Add this
+[GenerateValueObjectConverters]  // ← Add this
 [JsonSerializable(typeof(RegisterUserDto))]
 [JsonSerializable(typeof(User))]
 public partial class AppJsonSerializerContext : JsonSerializerContext { }
@@ -214,7 +215,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 ```
 
 The generator automatically:
-- Detects all types implementing `IScalarValue`
+- Detects all value object types
 - Generates AOT-compatible converters
 - Adds `[JsonSerializable]` attributes
 - Enables Native AOT with `<PublishAot>true</PublishAot>`
@@ -385,11 +386,11 @@ See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for comprehensive
 
 ## Best Practices
 
-### Scalar Value Validation
+### Value Object Validation
 
 1. **Always use `fieldName` parameter** - Enables property-aware errors
 2. **Call validation setup in `Program.cs`** - Required for automatic validation
-3. **Add `UseScalarValueValidation()` middleware** - Creates validation scope
+3. **Add `UseValueObjectValidation()` middleware** - Creates validation scope
 4. **Use `[ApiController]` in MVC** - Enables automatic validation responses
 
 ### Result Conversion

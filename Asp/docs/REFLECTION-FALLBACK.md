@@ -1,6 +1,6 @@
-﻿# Reflection Fallback for Scalar Value Validation
+# Reflection Fallback for Value Object Validation
 
-The FunctionalDDD.Asp library provides **automatic fallback to reflection** when the source generator is not available. This means you can use scalar value validation without any source generator reference in standard .NET applications.
+The FunctionalDDD.Asp library provides **automatic fallback to reflection** when the source generator is not available. This means you can use value object validation without any source generator reference in standard .NET applications.
 
 ## Two Validation Paths
 
@@ -22,7 +22,7 @@ The FunctionalDDD.Asp library provides **automatic fallback to reflection** when
 ```
 
 ```csharp
-[GenerateScalarValueConverters]
+[GenerateValueObjectConverters]
 [JsonSerializable(typeof(MyDto))]
 public partial class AppJsonSerializerContext : JsonSerializerContext
 {
@@ -48,17 +48,20 @@ public partial class AppJsonSerializerContext : JsonSerializerContext
 // For MVC Controllers
 builder.Services
     .AddControllers()
-    .AddScalarValueValidation();
+    .AddScalarValueObjectValidation();
 
 // For Minimal APIs
-builder.Services.AddScalarValueValidationForMinimalApi();
+builder.Services.AddScalarValueObjectValidationForMinimalApi();
+
+// Or use unified method (works for both)
+builder.Services.AddValueObjectValidation();
 
 // That's it! No source generator needed.
 ```
 
 **How it works:**
 - `ValidatingJsonConverterFactory` uses reflection at runtime
-- Detects types implementing `IScalarValue<TSelf, TPrimitive>`
+- Detects types implementing `IScalarValueObject<TSelf, TPrimitive>`
 - Creates converters dynamically using `Activator.CreateInstance`
 - Transparent - your application code is identical
 
@@ -78,11 +81,11 @@ builder.Services.AddScalarValueValidationForMinimalApi();
 
 For most applications, the reflection overhead is **negligible**:
 
-- **Startup**: The reflection scan happens once per type, typically <1ms for 100 scalar value types
+- **Startup**: The reflection scan happens once per type, typically <1ms for 100 value object types
 - **Runtime**: After converters are created, performance is identical to source-generated converters
 - **Memory**: Minimal - reflection metadata is shared across all instances
 
-**Example**: An API with 50 scalar value types:
+**Example**: An API with 50 value object types:
 - Reflection overhead: ~0.5ms at startup
 - Memory overhead: ~50KB
 - Runtime performance: **Identical** to source generator
@@ -91,7 +94,7 @@ For most applications, the reflection overhead is **negligible**:
 
 The library **automatically uses reflection** when:
 
-1. **No `[GenerateScalarValueConverters]` attribute** is found on any `JsonSerializerContext`
+1. **No `[GenerateValueObjectConverters]` attribute** is found on any `JsonSerializerContext`
 2. **Source generator not referenced** in the project
 3. **Running on standard .NET runtime** (not Native AOT)
 
@@ -104,8 +107,8 @@ using FunctionalDdd;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-.AddControllers()
-.AddScalarValueValidation();  // ← Uses reflection automatically
+    .AddControllers()
+    .AddScalarValueObjectValidation();  // ← Uses reflection automatically
 
 var app = builder.Build();
 app.MapControllers();
@@ -115,7 +118,7 @@ app.Run();
 ```csharp
 // Value object - works with reflection!
 public class EmailAddress : ScalarValueObject<EmailAddress, string>,
-                            IScalarValue<EmailAddress, string>
+                            IScalarValueObject<EmailAddress, string>
 {
     private EmailAddress(string value) : base(value) { }
 
@@ -196,13 +199,13 @@ When ready for **production** or **Native AOT**:
    ```
 
 2. Add attribute to your `JsonSerializerContext`:
-```csharp
-[GenerateScalarValueConverters]  // ← Add this line
-[JsonSerializable(typeof(MyDto))]
-public partial class AppJsonSerializerContext : JsonSerializerContext
-{
-}
-```
+   ```csharp
+   [GenerateValueObjectConverters]  // ← Add this line
+   [JsonSerializable(typeof(MyDto))]
+   public partial class AppJsonSerializerContext : JsonSerializerContext
+   {
+   }
+   ```
 
 3. That's it! The source generator takes over automatically.
 
@@ -215,8 +218,8 @@ You can check at runtime which path is being used:
 ```csharp
 var options = app.Services.GetRequiredService<IOptions<JsonOptions>>().Value;
 var hasGeneratedContext = options.SerializerOptions.TypeInfoResolver
-is JsonSerializerContext context
-&& context.GetType().GetCustomAttributes(typeof(GenerateScalarValueConvertersAttribute), false).Any();
+    is JsonSerializerContext context
+    && context.GetType().GetCustomAttributes(typeof(GenerateValueObjectConvertersAttribute), false).Any();
 
 if (hasGeneratedContext)
     Console.WriteLine("Using source-generated converters (AOT-compatible)");
@@ -229,8 +232,8 @@ else
 ### "My value objects aren't being validated!"
 
 **Check:**
-1. Is `AddScalarValueValidation()` called?
-2. Does your value object implement `IScalarValue<TSelf, TPrimitive>`?
+1. Is `AddScalarValueObjectValidation()` or `AddValueObjectValidation()` called?
+2. Does your value object implement `IScalarValueObject<TSelf, TPrimitive>`?
 3. Is the `TryCreate` method signature correct?
 
 ### "Getting trimming warnings (IL2026, IL2067, IL2070)"
@@ -247,7 +250,7 @@ else
 
 **Check:**
 1. Is generator referenced with `OutputItemType="Analyzer"`?
-2. Does any `JsonSerializerContext` have `[GenerateScalarValueConverters]`?
+2. Does any `JsonSerializerContext` have `[GenerateValueObjectConverters]`?
 3. Try `dotnet clean` and rebuild
 
 ## Summary
