@@ -65,7 +65,11 @@ public class UrlTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("URL must be a valid absolute HTTP or HTTPS URL.");
+        // Note: On some platforms, Uri.TryCreate treats "/path" as absolute with "file" scheme
+        // So we check for either error message depending on platform behavior
+        validation.FieldErrors[0].Details[0].Should().Match(e => 
+            e == "URL must be a valid absolute HTTP or HTTPS URL." || 
+            e == "URL must use HTTP or HTTPS scheme.");
     }
 
     [Fact]
