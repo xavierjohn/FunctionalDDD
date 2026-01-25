@@ -1,0 +1,210 @@
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
+
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+
+/// <summary>
+/// Represents a percentage value object (value between 0 and 100 inclusive).
+/// Ensures that percentage values are within the valid range for percentage calculations.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Percentage is a domain primitive that encapsulates percentage validation and provides:
+/// <list type="bullet">
+/// <item>Validation ensuring value is between 0 and 100 inclusive</item>
+/// <item>Type safety preventing mixing of percentages with other decimals</item>
+/// <item>Immutability ensuring values cannot be changed after creation</item>
+/// <item>IParsable implementation for .NET parsing conventions</item>
+/// <item>JSON serialization support for APIs and persistence</item>
+/// <item>Activity tracing for monitoring and diagnostics</item>
+/// <item>Helper methods for percentage calculations</item>
+/// </list>
+/// </para>
+/// <para>
+/// Common use cases:
+/// <list type="bullet">
+/// <item>Discount percentages</item>
+/// <item>Tax rates</item>
+/// <item>Commission rates</item>
+/// <item>Progress indicators</item>
+/// <item>Interest rates</item>
+/// <item>Any value representing a percentage</item>
+/// </list>
+/// </para>
+/// </remarks>
+/// <example>
+/// Basic usage:
+/// <code>
+/// var discount = Percentage.TryCreate(15.5m);
+/// // Returns: Success(Percentage(15.5))
+/// 
+/// var full = Percentage.TryCreate(100m);
+/// // Returns: Success(Percentage(100))
+/// 
+/// var zero = Percentage.TryCreate(0m);
+/// // Returns: Success(Percentage(0))
+/// 
+/// var invalidHigh = Percentage.TryCreate(150m);
+/// // Returns: Failure(ValidationError("Percentage must be between 0 and 100."))
+/// 
+/// var invalidNegative = Percentage.TryCreate(-5m);
+/// // Returns: Failure(ValidationError("Percentage must be between 0 and 100."))
+/// </code>
+/// </example>
+/// <example>
+/// Using helper methods:
+/// <code>
+/// var percentage = Percentage.TryCreate(20m).Value;
+/// var amount = 100m;
+/// 
+/// // Convert to fraction (0.2)
+/// var fraction = percentage.AsFraction();
+/// 
+/// // Calculate percentage of a value
+/// var result = percentage.Of(amount); // Returns 20m
+/// </code>
+/// </example>
+[JsonConverter(typeof(ParsableJsonConverter<Percentage>))]
+public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValueObject<Percentage, decimal>, IParsable<Percentage>
+{
+    private Percentage(decimal value) : base(value) { }
+
+    /// <summary>
+    /// Gets a <see cref="Percentage"/> representing 0%.
+    /// </summary>
+    public static Percentage Zero => new(0m);
+
+    /// <summary>
+    /// Gets a <see cref="Percentage"/> representing 100%.
+    /// </summary>
+    public static Percentage Full => new(100m);
+
+    /// <summary>
+    /// Attempts to create a <see cref="Percentage"/> from the specified decimal.
+    /// </summary>
+    /// <param name="value">The decimal value to validate (0-100).</param>
+    /// <param name="fieldName">Optional field name to use in validation error messages.</param>
+    /// <returns>
+    /// Success with the Percentage if the value is between 0 and 100; otherwise Failure with a ValidationError.
+    /// </returns>
+    public static Result<Percentage> TryCreate(decimal value, string? fieldName = null)
+    {
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Percentage) + '.' + nameof(TryCreate));
+
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "percentage";
+
+        if (value is < 0m or > 100m)
+            return Result.Failure<Percentage>(Error.Validation("Percentage must be between 0 and 100.", field));
+
+        return new Percentage(value);
+    }
+
+    /// <summary>
+    /// Attempts to create a <see cref="Percentage"/> from the specified nullable decimal.
+    /// </summary>
+    /// <param name="value">The nullable decimal value to validate (0-100).</param>
+    /// <param name="fieldName">Optional field name to use in validation error messages.</param>
+    /// <returns>
+    /// Success with the Percentage if the value is between 0 and 100; otherwise Failure with a ValidationError.
+    /// </returns>
+    public static Result<Percentage> TryCreate(decimal? value, string? fieldName = null)
+    {
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Percentage) + '.' + nameof(TryCreate));
+
+        var field = !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "percentage";
+
+        if (value is null)
+            return Result.Failure<Percentage>(Error.Validation("Percentage is required.", field));
+
+        if (value.Value is < 0m or > 100m)
+            return Result.Failure<Percentage>(Error.Validation("Percentage must be between 0 and 100.", field));
+
+        return new Percentage(value.Value);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Percentage"/> from a fraction (0.0 to 1.0).
+    /// </summary>
+    /// <param name="fraction">The fraction value (0.0 to 1.0).</param>
+    /// <param name="fieldName">Optional field name to use in validation error messages.</param>
+    /// <returns>
+    /// Success with the Percentage; otherwise Failure with a ValidationError.
+    /// </returns>
+    public static Result<Percentage> FromFraction(decimal fraction, string? fieldName = null)
+        => TryCreate(fraction * 100m, fieldName);
+
+    /// <summary>
+    /// Returns the percentage as a fraction (0.0 to 1.0).
+    /// </summary>
+    /// <returns>The percentage value divided by 100.</returns>
+    public decimal AsFraction() => Value / 100m;
+
+    /// <summary>
+    /// Calculates this percentage of the specified amount.
+    /// </summary>
+    /// <param name="amount">The amount to calculate the percentage of.</param>
+    /// <returns>The percentage of the amount.</returns>
+    public decimal Of(decimal amount) => amount * AsFraction();
+
+    /// <summary>
+    /// Parses the string representation of a decimal to its <see cref="Percentage"/> equivalent.
+    /// </summary>
+    public static Percentage Parse(string? s, IFormatProvider? provider)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+            throw new FormatException("Value must be a valid decimal.");
+
+        // Handle % suffix
+        var trimmed = s.TrimEnd('%', ' ');
+
+        if (!decimal.TryParse(trimmed, provider, out var value))
+            throw new FormatException("Value must be a valid decimal.");
+
+        var r = TryCreate(value);
+        if (r.IsFailure)
+        {
+            var val = (ValidationError)r.Error;
+            throw new FormatException(val.FieldErrors[0].Details[0]);
+        }
+
+        return r.Value;
+    }
+
+    /// <summary>
+    /// Tries to parse a string into a <see cref="Percentage"/>.
+    /// </summary>
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Percentage result)
+    {
+        result = default;
+
+        if (string.IsNullOrWhiteSpace(s))
+            return false;
+
+        // Handle % suffix
+        var trimmed = s.TrimEnd('%', ' ');
+
+        if (!decimal.TryParse(trimmed, provider, out var value))
+            return false;
+
+        var r = TryCreate(value);
+        if (r.IsFailure)
+            return false;
+
+        result = r.Value;
+        return true;
+    }
+
+    /// <summary>
+    /// Explicitly converts a decimal to a <see cref="Percentage"/>.
+    /// </summary>
+    public static explicit operator Percentage(decimal value) => TryCreate(value).Value;
+
+    /// <summary>
+    /// Returns a string representation of the percentage with a % suffix.
+    /// </summary>
+    public override string ToString() => $"{Value}%";
+}

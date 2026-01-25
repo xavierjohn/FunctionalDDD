@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -204,13 +204,19 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
     /// </example>
     public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null)
     {
-        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' +  nameof(TryCreate));
+        using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(EmailAddress) + '.' + nameof(TryCreate));
         if (value is not null)
         {
-            var isEmail = EmailRegEx().IsMatch(value);
-            if (isEmail)
+            // Normalize input: trim whitespace
+            var trimmed = value.Trim();
+
+            if (trimmed.Length > 0)
             {
-                return new EmailAddress(value);
+                var isEmail = EmailRegEx().IsMatch(trimmed);
+                if (isEmail)
+                {
+                    return new EmailAddress(trimmed);
+                }
             }
         }
 

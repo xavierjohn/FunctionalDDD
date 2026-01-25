@@ -1,11 +1,11 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
-using System;
-using System.Text;
-using System.Text.Json;
 using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Asp.Validation;
+using System;
+using System.Text;
+using System.Text.Json;
 using Xunit;
 
 /// <summary>

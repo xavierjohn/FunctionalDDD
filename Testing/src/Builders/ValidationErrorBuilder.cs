@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Builders;
+﻿namespace FunctionalDdd.Testing.Builders;
 
 /// <summary>
 /// Fluent builder for creating complex ValidationError instances in tests.

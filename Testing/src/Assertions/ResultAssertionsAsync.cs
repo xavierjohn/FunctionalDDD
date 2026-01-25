@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing;
+﻿namespace FunctionalDdd.Testing;
 
 using FluentAssertions;
 

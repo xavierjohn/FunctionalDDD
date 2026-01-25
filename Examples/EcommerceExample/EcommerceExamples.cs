@@ -3,6 +3,7 @@ using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 namespace EcommerceExample;
 
@@ -48,7 +49,7 @@ public static class EcommerceExamples
 
         var result = Order.TryCreate(customerId)
             .Tap(order => Console.WriteLine($"Order created with {order.UncommittedEvents().Count} uncommitted event(s)"))
-            .Bind(order => Money.TryCreate(29.99m)
+            .Bind(order => Money.TryCreate(29.99m, "USD")
                 .Bind(price => order.AddLine(productId, "Wireless Mouse", price, 2)))
             .Tap(order => Console.WriteLine($"After adding line: {order.UncommittedEvents().Count} uncommitted event(s)"))
             .Bind(order => order.Submit())
@@ -92,8 +93,8 @@ public static class EcommerceExamples
 
         var items = new List<OrderLineRequest>
         {
-            new(product1, "Laptop", Money.TryCreate(999.99m).Value, 1),
-            new(product2, "Mouse", Money.TryCreate(29.99m).Value, 2)
+            new(product1, "Laptop", Money.Create(999.99m, "USD"), 1),
+            new(product2, "Mouse", Money.Create(29.99m, "USD"), 2)
         };
 
         var paymentInfo = new PaymentInfo("4111111111111111", "123", "John Doe");
@@ -128,7 +129,7 @@ public static class EcommerceExamples
 
         var items = new List<OrderLineRequest>
         {
-            new(product1, "Gaming Console", Money.TryCreate(499.99m).Value, 1)
+            new(product1, "Gaming Console", Money.Create(499.99m, "USD"), 1)
         };
 
         // Card ending in 0000 will be declined
@@ -165,7 +166,7 @@ public static class EcommerceExamples
         // Try to order more than available
         var items = new List<OrderLineRequest>
         {
-            new(product1, "Popular Item", Money.TryCreate(99.99m).Value, 1000)
+            new(product1, "Popular Item", Money.Create(99.99m, "USD"), 1000)
         };
 
         var paymentInfo = new PaymentInfo("4111111111111111", "123", "Bob Smith");
@@ -210,8 +211,8 @@ public static class EcommerceExamples
         PrintEvents(order);
 
         // Add lines - raises OrderLineAddedEvent for each
-        var price1 = Money.TryCreate(99.99m).Value;
-        var price2 = Money.TryCreate(149.99m).Value;
+        var price1 = Money.Create(99.99m, "USD");
+        var price2 = Money.Create(149.99m, "USD");
 
         order.AddLine(productId1, "Keyboard", price1, 1);
         order.AddLine(productId2, "Monitor", price2, 2);

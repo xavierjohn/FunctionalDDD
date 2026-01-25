@@ -1,10 +1,10 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
-using System;
-using System.Threading.Tasks;
 using FluentAssertions;
 using FunctionalDdd;
 using Microsoft.AspNetCore.Http;
+using System;
+using System.Threading.Tasks;
 using Xunit;
 
 /// <summary>

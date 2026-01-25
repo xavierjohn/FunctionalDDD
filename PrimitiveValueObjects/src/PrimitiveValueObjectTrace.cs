@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics;
 using System.Reflection;
@@ -75,7 +75,7 @@ public static class PrimitiveValueObjectTrace
     /// Used for versioning and metadata in traces.
     /// </summary>
     internal static readonly AssemblyName AssemblyName = typeof(PrimitiveValueObjectTrace).Assembly.GetName();
-    
+
     /// <summary>
     /// Gets the name of the activity source used for PrimitiveValueObjects tracing.
     /// Value: "Functional DDD PVO"
@@ -85,7 +85,7 @@ public static class PrimitiveValueObjectTrace
     /// Register this name when configuring OpenTelemetry tracing.
     /// </remarks>
     internal static readonly string ActivitySourceName = "Functional DDD PVO";
-    
+
     /// <summary>
     /// Gets the version of the PrimitiveValueObjects library.
     /// </summary>
@@ -95,10 +95,10 @@ public static class PrimitiveValueObjectTrace
     internal static readonly Version Version = AssemblyName.Version!;
 
     private static readonly ActivitySource _defaultActivitySource = new(ActivitySourceName, Version.ToString());
-    
+
     // Use AsyncLocal for test isolation - works across async boundaries and is thread-safe
     private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
-    
+
     /// <summary>
     /// Gets the <see cref="ActivitySource"/> for tracing PrimitiveValueObjects operations.
     /// </summary>

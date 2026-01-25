@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 // Suppress style warnings for benchmark methods
 // Benchmark method names use underscores for readability (e.g., Bind_SingleChain_Success)

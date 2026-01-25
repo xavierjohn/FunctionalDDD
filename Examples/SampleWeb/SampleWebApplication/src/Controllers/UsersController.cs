@@ -1,0 +1,144 @@
+﻿namespace SampleWebApplication.Controllers;
+
+using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
+using Microsoft.AspNetCore.Mvc;
+using SampleUserLibrary;
+using System.Globalization;
+
+[ApiController]
+[Route("[controller]")]
+public class UsersController : ControllerBase
+{
+    [HttpPost("[action]")]
+    public ActionResult<User> Register([FromBody] RegisterUserRequest request) =>
+        FirstName.TryCreate(request.firstName)
+        .Combine(LastName.TryCreate(request.lastName))
+        .Combine(EmailAddress.TryCreate(request.email))
+        .Combine(PhoneNumber.TryCreate(request.phone))
+        .Combine(Age.TryCreate(request.age))
+        .Combine(CountryCode.TryCreate(request.country))
+        .Bind((firstName, lastName, email, phone, age, country) =>
+            SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
+        .ToActionResult(this);
+
+    [HttpPost("[action]")]
+    public ActionResult<User> RegisterCreated([FromBody] RegisterUserRequest request) =>
+        FirstName.TryCreate(request.firstName)
+        .Combine(LastName.TryCreate(request.lastName))
+        .Combine(EmailAddress.TryCreate(request.email))
+        .Combine(PhoneNumber.TryCreate(request.phone))
+        .Combine(Age.TryCreate(request.age))
+        .Combine(CountryCode.TryCreate(request.country))
+        .Bind((firstName, lastName, email, phone, age, country) =>
+            SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
+        .Match(
+            onSuccess: ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
+            onFailure: err => err.ToActionResult<User>(this));
+
+    [HttpPost("[action]")]
+    public ActionResult<User> RegisterAccepted([FromBody] RegisterUserRequest request) =>
+        FirstName.TryCreate(request.firstName)
+            .Combine(LastName.TryCreate(request.lastName))
+            .Combine(EmailAddress.TryCreate(request.email))
+            .Combine(PhoneNumber.TryCreate(request.phone))
+            .Combine(Age.TryCreate(request.age))
+            .Combine(CountryCode.TryCreate(request.country))
+            .Bind((firstName, lastName, email, phone, age, country) =>
+                SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
+            .Match(
+                onSuccess: ok => AcceptedAtAction("Get", new { name = ok.FirstName }, ok),
+                onFailure: err => err.ToActionResult<User>(this));
+
+    [HttpGet("{name}")]
+    public ActionResult<string> Get(string name) => Ok($"Hello {name}!");
+
+    [HttpGet("notfound/{id}")]
+    public ActionResult<Unit> NotFound(int id) =>
+        Result.Failure<Unit>(Error.NotFound("User not found", id.ToString(CultureInfo.InvariantCulture)))
+            .ToActionResult(this);
+
+    [HttpGet("conflict/{id}")]
+    public ActionResult<Unit> Conflict(int id) =>
+        Result.Failure<Unit>(Error.Conflict("Record has changed.", id.ToString(CultureInfo.InvariantCulture)))
+            .ToActionResult(this);
+
+    [HttpGet("forbidden/{id}")]
+    public ActionResult<Unit> Forbidden(int id) =>
+        Result.Failure<Unit>(Error.Forbidden("You do not have access.", id.ToString(CultureInfo.InvariantCulture)))
+            .ToActionResult(this);
+
+    [HttpGet("unauthorized/{id}")]
+    public ActionResult<Unit> Unauthorized(int id) =>
+        Result.Failure<Unit>(Error.Unauthorized("Please log in."))
+            .ToActionResult(this);
+
+    [HttpGet("unexpected/{id}")]
+    public ActionResult<Unit> Unexpected(int id) =>
+        Result.Failure<Unit>(Error.Unexpected("Something went wrong."))
+            .ToActionResult(this);
+
+    [HttpDelete("{id}")]
+    public ActionResult<Unit> Delete(string id) =>
+        UserId.TryCreate(id).Match(
+            onSuccess: ok => NoContent(),
+            onFailure: err => err.ToActionResult<Unit>(this));
+
+    /// <summary>
+    /// Registers a new user with automatic value object validation.
+    /// No manual validation or Result.Combine() needed - the framework
+    /// handles it automatically via AddScalarValueObjectValidation().
+    /// </summary>
+    /// <param name="dto">Registration data with value objects.</param>
+    /// <returns>
+    /// 200 OK with the created user if all validations pass.
+    /// 400 Bad Request with validation errors if any value object is invalid.
+    /// </returns>
+    /// <remarks>
+    /// This endpoint demonstrates the new automatic validation feature:
+    /// - 7 value objects (FirstName, LastName, EmailAddress, PhoneNumber, Age, CountryCode, Url) are validated during model binding
+    /// - Invalid requests automatically return 400 with structured error messages
+    /// - No manual Result.Combine() calls needed in the controller
+    /// - Validation errors include field names and details
+    /// </remarks>
+    [HttpPost("[action]")]
+    public ActionResult<User> RegisterWithAutoValidation([FromBody] RegisterUserDto dto)
+    {
+        // If we reach here, all value objects in dto are already validated!
+        // The [ApiController] attribute automatically returns 400 if validation fails.
+
+        Result<User> userResult = SampleUserLibrary.User.TryCreate(
+            dto.FirstName,
+            dto.LastName,
+            dto.Email,
+            dto.Phone,
+            dto.Age,
+            dto.Country,
+            dto.Password,
+            dto.Website);
+
+        return userResult.ToActionResult(this);
+    }
+
+    /// <summary>
+    /// Tests that the same value object type (Name) used for multiple properties
+    /// correctly reports validation errors with the property name, not the type name.
+    /// </summary>
+    /// <param name="dto">Registration data using Name for both FirstName and LastName.</param>
+    /// <returns>
+    /// 200 OK with success message if all validations pass.
+    /// 400 Bad Request with validation errors showing "FirstName" and "LastName" field names.
+    /// </returns>
+    [HttpPost("[action]")]
+    public ActionResult<object> RegisterWithSharedNameType([FromBody] RegisterWithNameDto dto) =>
+        // If we reach here, all value objects are validated.
+        // The key test: both FirstName and LastName use the "Name" type,
+        // but errors should show "FirstName" and "LastName" as field names.
+        Ok(new
+        {
+            FirstName = dto.FirstName.Value,
+            LastName = dto.LastName.Value,
+            Email = dto.Email.Value,
+            Message = "Validation passed - field names correctly attributed!"
+        });
+}

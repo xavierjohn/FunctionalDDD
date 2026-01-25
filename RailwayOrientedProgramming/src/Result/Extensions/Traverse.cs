@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using System.Diagnostics;
 
@@ -45,7 +45,7 @@ public static class TraverseExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
-        
+
         foreach (var item in source)
         {
             var result = selector(item);
@@ -57,7 +57,7 @@ public static class TraverseExtensions
 
             results.Add(result.Value);
         }
-        
+
         return Result.Success<IEnumerable<TOut>>(results);
     }
 
@@ -80,7 +80,7 @@ public static class TraverseExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
-        
+
         foreach (var item in source)
         {
             var result = await selector(item).ConfigureAwait(false);
@@ -92,7 +92,7 @@ public static class TraverseExtensions
 
             results.Add(result.Value);
         }
-        
+
         return Result.Success<IEnumerable<TOut>>(results);
     }
 
@@ -117,7 +117,7 @@ public static class TraverseExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
-        
+
         foreach (var item in source)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -130,7 +130,7 @@ public static class TraverseExtensions
 
             results.Add(result.Value);
         }
-        
+
         return Result.Success<IEnumerable<TOut>>(results);
     }
 
@@ -153,7 +153,7 @@ public static class TraverseExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
-        
+
         foreach (var item in source)
         {
             var result = await selector(item).ConfigureAwait(false);
@@ -165,7 +165,7 @@ public static class TraverseExtensions
 
             results.Add(result.Value);
         }
-        
+
         return Result.Success<IEnumerable<TOut>>(results);
     }
 
@@ -190,7 +190,7 @@ public static class TraverseExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         var results = new List<TOut>();
-        
+
         foreach (var item in source)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -203,7 +203,7 @@ public static class TraverseExtensions
 
             results.Add(result.Value);
         }
-        
+
         return Result.Success<IEnumerable<TOut>>(results);
     }
 }

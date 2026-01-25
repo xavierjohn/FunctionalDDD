@@ -1,11 +1,11 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
-using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
+using PrimitiveValueObjects.Tests.Helpers;
 using System.Diagnostics;
 using Xunit;
-using PrimitiveValueObjects.Tests.Helpers;
 
 /// <summary>
 /// Tests for PvoTracingExtensions to verify OpenTelemetry integration.
@@ -42,7 +42,7 @@ public class PvoTracingExtensionsTests : IDisposable
         // Assert
         _activityHelper.WaitForActivityCount(1).Should().BeTrue("activity should be captured");
         emailResult.IsSuccess.Should().BeTrue();
-        
+
         var activities = _activityHelper.CapturedActivities;
         activities.Should().ContainSingle();
         var activity = activities[0];
@@ -86,7 +86,7 @@ public class PvoTracingExtensionsTests : IDisposable
         var activity = _activityHelper.WaitForActivity("EmailAddress.TryCreate");
         activity.Should().NotBeNull("activity should be captured");
         activity!.OperationName.Should().Be("EmailAddress.TryCreate");
-        
+
         var activities = _activityHelper.CapturedActivities;
         activity.Source.Name.Should().Be(activities[0].Source.Name);
     }
@@ -100,7 +100,7 @@ public class PvoTracingExtensionsTests : IDisposable
         // Assert
         _activityHelper.WaitForActivityCount(1).Should().BeTrue("activity should be captured");
         emailResult.IsSuccess.Should().BeTrue();
-        
+
         var activities = _activityHelper.CapturedActivities;
         activities.Should().ContainSingle();
         var activity = activities[0];
@@ -118,7 +118,7 @@ public class PvoTracingExtensionsTests : IDisposable
         var waited = _activityHelper.WaitForActivityCount(1);
         waited.Should().BeTrue($"activity should be captured. Activity count: {_activityHelper.ActivityCount}");
         emailResult.IsFailure.Should().BeTrue();
-        
+
         var activities = _activityHelper.CapturedActivities;
         activities.Should().ContainSingle($"Expected 1 activity, but got {activities.Count}");
         var activity = activities[0];
@@ -136,11 +136,11 @@ public class PvoTracingExtensionsTests : IDisposable
 
         // Assert
         _activityHelper.WaitForActivityCount(3).Should().BeTrue("all activities should be captured");
-        
+
         var activities = _activityHelper.CapturedActivities;
         activities.Should().HaveCount(3);
         activities.Should().AllSatisfy(a => a.DisplayName.Should().Be("EmailAddress.TryCreate"));
-        
+
         // Verify statuses
         activities[0].Status.Should().Be(ActivityStatusCode.Ok);  // valid
         activities[1].Status.Should().Be(ActivityStatusCode.Error); // invalid

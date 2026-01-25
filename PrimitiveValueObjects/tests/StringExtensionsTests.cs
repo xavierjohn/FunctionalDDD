@@ -1,7 +1,7 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
 using FluentAssertions;
-using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using Xunit;
 
 public class StringExtensionsTests

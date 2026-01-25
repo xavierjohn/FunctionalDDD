@@ -1,4 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
+
 using System;
 
 public class NullableExtensionTests

@@ -1,8 +1,8 @@
 ﻿namespace FunctionalDdd;
 
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 
 /// <summary>
 /// Represents an <see cref="ObjectResult"/> that returns HTTP 206 Partial Content with a Content-Range header.

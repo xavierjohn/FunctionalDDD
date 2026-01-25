@@ -1,9 +1,10 @@
-namespace BankingExample.Services;
+﻿namespace BankingExample.Services;
 
-using System.Globalization;
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
+using System.Globalization;
 
 /// <summary>
 /// Detects fraudulent transactions based on patterns.
@@ -41,7 +42,7 @@ public class FraudDetectionService
     /// </summary>
     private static Result<Unit> CheckSuspiciousAmount(Money amount)
     {
-        if (amount.Value > SuspiciousAmountThreshold)
+        if (amount.Amount > SuspiciousAmountThreshold)
         {
             Console.WriteLine($"?? Large transaction detected: {amount}");
             return Error.Domain(
@@ -76,9 +77,9 @@ public class FraudDetectionService
             .ToList();
 
         var roundNumberCount = recentTransactions
-            .Count(t => t.Amount.Value % 1000 == 0);
+            .Count(t => t.Amount.Amount % 1000 == 0);
 
-        return roundNumberCount >= 3 && amount.Value % 1000 == 0;
+        return roundNumberCount >= 3 && amount.Amount % 1000 == 0;
     }
 
     /// <summary>

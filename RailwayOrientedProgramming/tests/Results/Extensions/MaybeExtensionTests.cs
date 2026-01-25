@@ -1,4 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests;
+
 using System;
 
 public class MaybeExtensionTests
@@ -465,4 +466,3 @@ public class MaybeExtensionTests
 
     #endregion
 }
-

@@ -67,26 +67,58 @@ A banking system with accounts, transfers, fraud detection, and security feature
 
 ---
 
-### 3. 👤 [User Management](../SampleUserLibrary/)
+### 3. 👤 [User Management](./SampleWeb/SampleUserLibrary/)
 **Complexity**: ⭐⭐
 
-Basic user registration and validation with FluentValidation integration.
+User registration system with automatic value object validation and FluentValidation integration.
 
 **Key Features**:
-- User aggregate with validation
-- Email, FirstName, LastName value objects
-- Password complexity requirements
-- FluentValidation integration
+- User aggregate with 7 value objects (FirstName, LastName, EmailAddress, PhoneNumber, Age, CountryCode, Url)
+- Automatic value object validation via `AddScalarValueObjectValidation()`
+- Password complexity requirements via FluentValidation
+- Business rules (e.g., minimum age 18)
+- Demonstrates both manual (`Result.Combine`) and automatic validation
 
 **Learn About**:
-- Basic aggregates and value objects
-- FluentValidation with Result pattern
-- Simple validation workflows
+- Automatic value object validation in ASP.NET Core
+- Mix of custom and built-in value objects
+- Optional value object properties
+- FluentValidation for complex business rules
 - Type safety vs primitive obsession
 
+**Sample Endpoints**:
+```csharp
+// Manual validation using Result.Combine
+POST /users/register
+{
+  "firstName": "John",
+  "lastName": "Doe", 
+  "email": "john@example.com",
+  "phone": "+14155551234",
+  "age": 25,
+  "country": "US",
+  "password": "SecurePass123!"
+}
+
+// Automatic validation - value objects validated during model binding
+POST /users/registerWithAutoValidation
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "phone": "+14155551234",
+  "age": 25,
+  "country": "US",
+  "website": "https://johndoe.com",
+  "password": "SecurePass123!"
+}
+```
+
 **Files**:
-- `Aggregate/User.cs` - User aggregate with validator
-- `ValueObject/*.cs` - Value objects for user properties
+- `SampleWeb/SampleUserLibrary/Aggregate/User.cs` - User aggregate with 7 value objects and FluentValidation
+- `SampleWeb/SampleUserLibrary/Model/RegisterUserDto.cs` - DTO with automatic value object validation
+- `SampleWeb/SampleUserLibrary/Model/RegisterUserRequest.cs` - Request with raw strings (manual validation)
+- `SampleWeb/SampleUserLibrary/ValueObject/*.cs` - Custom value objects (FirstName, LastName, UserId)
 
 ---
 
@@ -138,23 +170,26 @@ ASP.NET Core MVC examples showing how to integrate ROP with web APIs.
 ### 6. ⚡ [Minimal API Examples](../SampleMinimalApi/)
 **Complexity**: ⭐⭐⭐
 
-ASP.NET Core Minimal API examples with ROP integration.
+ASP.NET Core Minimal API examples with ROP integration and AOT support.
 
 **Key Features**:
 - Minimal API endpoints with Result
 - User registration and retrieval
-- Todo list management
+- Error demonstration endpoints (404, 409, 403, 401, 500)
 - HTTP result mapping
+- Source generation for AOT compatibility
+- Welcome endpoint with API documentation
 
 **Learn About**:
 - `ToHttpResult()` extension
 - Minimal API with functional patterns
 - Route organization
 - Results vs ActionResult
+- AOT-compatible JSON serialization
 
 **Files**:
 - `API/UserRoutes.cs` - User endpoints
-- `API/ToDoRoutes.cs` - Todo endpoints
+- `Program.cs` - Application setup with source generation
 
 ---
 

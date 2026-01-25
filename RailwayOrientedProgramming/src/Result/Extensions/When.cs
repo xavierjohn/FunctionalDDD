@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using System.Diagnostics;
 
@@ -46,14 +46,14 @@ public static class WhenExtensions
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (predicate(result.Value))
         {
             var operationResult = operation(result.Value);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -77,14 +77,14 @@ public static class WhenExtensions
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (condition)
         {
             var operationResult = operation(result.Value);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -108,14 +108,14 @@ public static class WhenExtensions
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (!predicate(result.Value))
         {
             var operationResult = operation(result.Value);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -139,14 +139,14 @@ public static class WhenExtensions
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (!condition)
         {
             var operationResult = operation(result.Value);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -179,14 +179,14 @@ public static class WhenExtensionsAsync
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (predicate(result.Value))
         {
             var operationResult = await operation(result.Value).ConfigureAwait(false);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -210,14 +210,14 @@ public static class WhenExtensionsAsync
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (condition)
         {
             var operationResult = await operation(result.Value).ConfigureAwait(false);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -275,14 +275,14 @@ public static class WhenExtensionsAsync
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (!predicate(result.Value))
         {
             var operationResult = await operation(result.Value).ConfigureAwait(false);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -306,14 +306,14 @@ public static class WhenExtensionsAsync
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (!condition)
         {
             var operationResult = await operation(result.Value).ConfigureAwait(false);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -353,7 +353,7 @@ public static class WhenExtensionsAsync
     }
 
     // ValueTask overloads for zero-allocation scenarios
-    
+
     /// <summary>
     /// Conditionally executes an async operation if the predicate returns true.
     /// </summary>
@@ -374,14 +374,14 @@ public static class WhenExtensionsAsync
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (predicate(result.Value))
         {
             var operationResult = await operation(result.Value).ConfigureAwait(false);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }
@@ -406,14 +406,14 @@ public static class WhenExtensionsAsync
             result.LogActivityStatus();
             return result;
         }
-        
+
         if (!predicate(result.Value))
         {
             var operationResult = await operation(result.Value).ConfigureAwait(false);
             operationResult.LogActivityStatus();
             return operationResult;
         }
-        
+
         result.LogActivityStatus();
         return result;
     }

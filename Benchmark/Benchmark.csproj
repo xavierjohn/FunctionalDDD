@@ -19,6 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\PrimitiveValueObjects\generator\PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\PrimitiveValueObjects\src\PrimitiveValueObjects.csproj" />
-    <ProjectReference Include="..\Examples\SampleUserLibrary\SampleUserLibrary.csproj" />
+    <ProjectReference Include="..\Examples\SampleWeb\SampleUserLibrary\SampleUserLibrary.csproj" />
   </ItemGroup>
 </Project>

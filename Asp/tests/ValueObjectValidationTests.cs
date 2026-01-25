@@ -1,10 +1,10 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
-using System.Text.Json;
 using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 using Xunit;
 
 /// <summary>

@@ -1,11 +1,11 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
+using FluentAssertions;
+using FunctionalDdd;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
-using FunctionalDdd;
 using Xunit;
 
 /// <summary>

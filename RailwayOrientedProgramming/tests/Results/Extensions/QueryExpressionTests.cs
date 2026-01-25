@@ -1,6 +1,6 @@
-using FluentAssertions;
-using Xunit;
+﻿using FluentAssertions;
 using FunctionalDdd;
+using Xunit;
 
 namespace RailwayOrientedProgramming.Tests.Results.Extensions.Linq;
 

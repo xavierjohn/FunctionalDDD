@@ -1,6 +1,8 @@
 ﻿namespace FluentValidationExt.Tests;
 
 using FluentValidation;
+using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using FunctionalDdd.Testing;
 using Xunit;
 

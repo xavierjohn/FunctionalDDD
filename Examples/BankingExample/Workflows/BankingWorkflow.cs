@@ -5,6 +5,7 @@ using BankingExample.Events;
 using BankingExample.Services;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Orchestrates banking operations with fraud detection, validation, and domain event publishing.
@@ -36,7 +37,7 @@ public class BankingWorkflow
                 return fraudResult.Error;
 
             // Require MFA for large withdrawals
-            if (amount.Value > 1000)
+            if (amount.Amount > 1000)
             {
                 var mfaResult = await _fraudDetection.VerifyCustomerIdentityAsync(
                     acc.CustomerId,
@@ -117,12 +118,12 @@ public class BankingWorkflow
                 Error.Domain("Interest is only paid on savings accounts"))
             .Ensure(acc => acc.Status == AccountStatus.Active,
                 Error.Domain($"Cannot process interest for {account.Status} account"))
-            .Ensure(acc => acc.Balance.Value > 0,
+            .Ensure(acc => acc.Balance.Amount > 0,
                 Error.Domain("No interest on accounts with zero or negative balance"))
             .Bind(acc =>
             {
-                var interestAmount = acc.Balance.Value * (interestRate / 365m); // Daily interest
-                return Money.TryCreate(interestAmount);
+                var interestAmount = acc.Balance.Amount * (interestRate / 365m); // Daily interest
+                return Money.TryCreate(interestAmount, "USD");
             }))
             .BindAsync(async interest =>
             {

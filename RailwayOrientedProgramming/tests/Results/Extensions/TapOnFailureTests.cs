@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.TapOnFailure;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.TapOnFailure;
 
 using FunctionalDdd.Testing;
 

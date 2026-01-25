@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -59,7 +59,7 @@ public static class MatchErrorExtensions
         Func<Error, TOut>? onError = null)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        
+
         if (result.IsSuccess)
         {
             activity?.SetStatus(ActivityStatusCode.Ok);
@@ -67,9 +67,9 @@ public static class MatchErrorExtensions
         }
 
         activity?.SetStatus(ActivityStatusCode.Error);
-        
+
         var error = result.Error;
-        
+
         return error switch
         {
             ValidationError ve when onValidation != null => onValidation(ve),
@@ -126,7 +126,7 @@ public static class MatchErrorExtensions
         Action<Error>? onError = null)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        
+
         if (result.IsSuccess)
         {
             activity?.SetStatus(ActivityStatusCode.Ok);
@@ -135,9 +135,9 @@ public static class MatchErrorExtensions
         }
 
         activity?.SetStatus(ActivityStatusCode.Error);
-        
+
         var error = result.Error;
-        
+
         switch (error)
         {
             case ValidationError ve when onValidation != null:
@@ -274,7 +274,7 @@ public static class MatchErrorExtensionsAsync
         CancellationToken cancellationToken = default)
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
-        
+
         if (result.IsSuccess)
         {
             activity?.SetStatus(ActivityStatusCode.Ok);
@@ -282,9 +282,9 @@ public static class MatchErrorExtensionsAsync
         }
 
         activity?.SetStatus(ActivityStatusCode.Error);
-        
+
         var error = result.Error;
-        
+
         return error switch
         {
             ValidationError ve when onValidation != null => await onValidation(ve, cancellationToken).ConfigureAwait(false),
@@ -394,7 +394,7 @@ public static class MatchErrorExtensionsAsync
     {
         using var activity = RopTrace.ActivitySource.StartActivity();
         var result = await resultTask.ConfigureAwait(false);
-        
+
         if (result.IsSuccess)
         {
             activity?.SetStatus(ActivityStatusCode.Ok);
@@ -403,9 +403,9 @@ public static class MatchErrorExtensionsAsync
         }
 
         activity?.SetStatus(ActivityStatusCode.Error);
-        
+
         var error = result.Error;
-        
+
         switch (error)
         {
             case ValidationError ve when onValidation != null:

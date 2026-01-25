@@ -15,7 +15,7 @@ public class TraceFixture : IDisposable
     internal static readonly Version Version = AssemblyName.Version!;
     internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
-    public TracerProvider Provider { get;}
+    public TracerProvider Provider { get; }
 
     public TraceFixture()
     {

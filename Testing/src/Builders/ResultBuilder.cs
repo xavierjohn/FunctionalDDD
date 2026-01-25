@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Builders;
+﻿namespace FunctionalDdd.Testing.Builders;
 
 /// <summary>
 /// Fluent builder for creating Result instances in tests.

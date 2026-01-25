@@ -1,4 +1,4 @@
-# FunctionalDDD Examples Guide
+﻿# FunctionalDDD Examples Guide
 
 This directory contains working examples demonstrating different aspects of the FunctionalDDD library.
 
@@ -6,7 +6,7 @@ This directory contains working examples demonstrating different aspects of the 
 
 ### 🎯 New to FunctionalDDD? **Start here!**
 
-**[SampleMinimalApiNoAot](SampleMinimalApiNoAot/)** - Simplest setup with reflection fallback
+**[SampleMinimalApiNoAot](SampleWeb/SampleMinimalApiNoAot/)** - Simplest setup with reflection fallback
 - ✅ No source generator required
 - ✅ No JsonSerializerContext needed
 - ✅ Works out of the box
@@ -15,7 +15,7 @@ This directory contains working examples demonstrating different aspects of the 
 
 ### Native AOT Deployment?
 
-**[SampleMinimalApi](SampleMinimalApi/)** - AOT-optimized with source generator
+**[SampleMinimalApi](SampleWeb/SampleMinimalApi/)** - AOT-optimized with source generator
 - ✅ Native AOT compatible
 - ✅ Zero reflection overhead
 - ✅ Trimming-safe code
@@ -24,7 +24,7 @@ This directory contains working examples demonstrating different aspects of the 
 
 ### Using MVC Controllers?
 
-**[SampleWebApplication](SampleWebApplication/)** - MVC with controllers
+**[SampleWebApplication](SampleWeb/SampleWebApplication/)** - MVC with controllers
 - ✅ Full MVC integration
 - ✅ Model binding from route/query/form
 - ✅ Action filters for validation
@@ -32,7 +32,7 @@ This directory contains working examples demonstrating different aspects of the 
 
 ## Detailed Comparison
 
-| Feature | [SampleMinimalApiNoAot](SampleMinimalApiNoAot/) | [SampleMinimalApi](SampleMinimalApi/) | [SampleWebApplication](SampleWebApplication/) |
+| Feature | [SampleMinimalApiNoAot](SampleWeb/SampleMinimalApiNoAot/) | [SampleMinimalApi](SampleWeb/SampleMinimalApi/) | [SampleWebApplication](SampleWeb/SampleWebApplication/) |
 |---------|----------------------------------|--------------------------|------------------------------|
 | **Type** | Minimal API | Minimal API | MVC Controllers |
 | **Source Generator** | ❌ Not needed | ✅ Required | ❌ Optional |
@@ -48,7 +48,7 @@ This directory contains working examples demonstrating different aspects of the 
 
 ### Core Examples
 
-#### [SampleMinimalApiNoAot](SampleMinimalApiNoAot/) **← Start here!**
+#### [SampleMinimalApiNoAot](SampleWeb/SampleMinimalApiNoAot/) **← Start here!**
 **Perfect for: Learning, prototyping, most production APIs**
 
 Demonstrates that the library works perfectly without source generation using automatic reflection fallback.
@@ -67,7 +67,7 @@ Demonstrates that the library works perfectly without source generation using au
 - ✅ Most production APIs (reflection overhead is negligible)
 - ✅ When you want zero friction setup
 
-#### [SampleMinimalApi](SampleMinimalApi/)
+#### [SampleMinimalApi](SampleWeb/SampleMinimalApi/)
 **Perfect for: Native AOT deployment, maximum performance**
 
 Shows how to use the source generator for Native AOT compilation and zero reflection overhead.
@@ -86,7 +86,7 @@ Shows how to use the source generator for Native AOT compilation and zero reflec
 - ✅ Container images (smaller size)
 - ✅ Cloud-native deployments
 
-#### [SampleWebApplication](SampleWebApplication/)
+#### [SampleWebApplication](SampleWeb/SampleWebApplication/)
 **Perfect for: MVC applications with controllers**
 
 Demonstrates full MVC integration with controllers and action filters.

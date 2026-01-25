@@ -1,9 +1,9 @@
 ﻿namespace FunctionalDdd;
 
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Net.Http.Headers;
 
 /// <summary>
 /// Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.
@@ -114,10 +114,10 @@ public static class ActionResultExtensions
             // If TValue is Unit, return 204 No Content
             if (typeof(TValue) == typeof(Unit))
                 return (ActionResult<TValue>)controllerBase.NoContent();
-            
+
             return (ActionResult<TValue>)controllerBase.Ok(result.Value);
         }
-        
+
         return result.Error.ToActionResult<TValue>(controllerBase);
     }
 

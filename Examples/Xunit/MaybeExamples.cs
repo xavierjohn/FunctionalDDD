@@ -141,4 +141,3 @@ public class MaybeExamples
         unknownFruitValue.Should().Be("banana");
     }
 }
-

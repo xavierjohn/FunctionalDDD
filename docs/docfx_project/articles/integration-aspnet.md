@@ -1,6 +1,6 @@
-# ASP.NET Core Integration
+﻿# ASP.NET Core Integration
 
-**Level:** Intermediate ?? | **Time:** 20-30 min | **Prerequisites:** [Basics](basics.md)
+**Level:** Intermediate | **Time:** 20-30 min | **Prerequisites:** [Basics](basics.md)
 
 Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalDDD.Asp** package. This package provides extension methods to convert `Result<T>` to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.
 
@@ -10,6 +10,7 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalD
 
 - [Installation](#installation)
 - [What the Package Provides](#what-the-package-provides)
+- [Value Object Auto-Validation](#value-object-auto-validation)
 - [MVC Controllers](#mvc-controllers)
 - [Minimal API](#minimal-api)
 - [Automatic Error Mapping](#automatic-error-mapping)
@@ -50,9 +51,172 @@ Task<IResult> ToHttpResultAsync<T>(this Task<Result<T>> resultTask);
 ```
 
 **What happens:**
-- ? **Success**: Returns appropriate HTTP status (200 OK, 201 Created, 204 No Content)
-- ? **Failure**: Converts error types to HTTP status codes with Problem Details format
-- ?? **Pagination**: Returns 206 Partial Content with Content-Range headers
+- ✅ **Success**: Returns appropriate HTTP status (200 OK, 201 Created, 204 No Content)
+- ❌ **Failure**: Converts error types to HTTP status codes with Problem Details format
+- 📄 **Pagination**: Returns 206 Partial Content with Content-Range headers
+
+## Value Object Auto-Validation
+
+The **FunctionalDDD.Asp** package provides automatic validation for value objects that implement `IScalarValueObject<TSelf, TPrimitive>`. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
+
+### Setup
+
+Enable auto-validation by calling `AddScalarValueObjectValidation()` in your `Program.cs`:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddControllers()
+    .AddScalarValueObjectValidation(); // Enable automatic validation!
+
+var app = builder.Build();
+app.MapControllers();
+app.Run();
+```
+
+### How It Works
+
+Value objects implementing `IScalarValueObject` are automatically validated during model binding:
+
+```csharp
+using FunctionalDdd;
+
+// Define custom value objects (source generator adds IScalarValueObject automatically)
+public partial class FirstName : RequiredString<FirstName> { }
+public partial class CustomerId : RequiredGuid<CustomerId> { }
+
+// Use in DTOs with both custom and built-in value objects
+public record CreateUserDto
+{
+    public FirstName FirstName { get; init; } = null!;
+    public EmailAddress Email { get; init; } = null!;
+    public PhoneNumber Phone { get; init; } = null!;
+    public Url? Website { get; init; }
+    public Age Age { get; init; } = null!;
+    public CountryCode Country { get; init; } = null!;
+}
+
+[ApiController]
+[Route("api/users")]
+public class UsersController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Create(CreateUserDto dto)
+    {
+        // If we reach here, dto is FULLY validated!
+        // All 6 value objects were automatically validated:
+        // - FirstName: non-empty string
+        // - Email: RFC 5322 format
+        // - Phone: E.164 format
+        // - Website: valid HTTP/HTTPS URL (optional)
+        // - Age: 0-150 range
+        // - Country: ISO 3166-1 alpha-2 code
+        
+        var user = new User(dto.FirstName, dto.Email, dto.Phone, dto.Age, dto.Country);
+        return Ok(user);
+    }
+
+    [HttpGet("{id}")]
+    public IActionResult Get(CustomerId id) // Route parameter validated automatically!
+    {
+        var user = _repository.GetById(id);
+        return Ok(user);
+    }
+}
+```
+
+### Validation Sources
+
+Auto-validation works with all ASP.NET Core binding sources:
+
+| Source | Example | Notes |
+|--------|---------|-------|
+| **Route Parameters** | `/users/{id}` | `CustomerId id` |
+| **Query Strings** | `?country=US` | `CountryCode country` |
+| **JSON Bodies** | `{ "email": "user@example.com" }` | `EmailAddress email` in DTO |
+| **Form Data** | Form POST | Value objects in model |
+
+### Error Responses
+
+Invalid value objects automatically return 400 Bad Request with standard Problem Details:
+
+**Request:**
+```http
+POST /api/users HTTP/1.1
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "email": "not-an-email",
+  "phone": "555-1234",
+  "website": "not-a-url",
+  "age": 200,
+  "country": "USA"
+}
+```
+
+**Response:**
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "email": ["Email address is not valid."],
+    "phone": ["Phone number must be in E.164 format (e.g., +14155551234)."],
+    "website": ["URL must be a valid absolute HTTP or HTTPS URL."],
+    "age": ["Age is unrealistically high."],
+    "country": ["Country code must be an ISO 3166-1 alpha-2 code."]
+  }
+}
+```
+
+### Benefits
+
+- ✅ **No manual Result.Combine()** in controllers
+- ✅ **Works with route parameters, query strings, form data, and JSON bodies**
+- ✅ **Validation errors flow into ModelState automatically**
+- ✅ **Standard ASP.NET Core validation infrastructure**
+- ✅ **Compatible with [ApiController] attribute for automatic 400 responses**
+
+### Combining with FluentValidation
+
+Auto-validation for value objects works alongside FluentValidation for complex scenarios:
+
+```csharp
+public record CreateProductRequest
+{
+    public ProductName Name { get; init; } = null!;           // Auto-validated
+    public Percentage DiscountRate { get; init; } = null!;     // Auto-validated (0-100)
+    public Url? ProductUrl { get; init; }                       // Auto-validated (optional)
+    public List<string> Tags { get; init; } = new();
+}
+
+// FluentValidation for business rules that span multiple fields
+public class CreateProductRequestValidator : AbstractValidator<CreateProductRequest>
+{
+    public CreateProductRequestValidator()
+    {
+        // Value objects already validated by auto-validation
+        
+        // Add business rules
+        RuleFor(x => x.Tags)
+            .Must(tags => tags.Count <= 10)
+            .WithMessage("Product cannot have more than 10 tags");
+            
+        RuleFor(x => x.DiscountRate)
+            .Must(discount => discount.Value <= 50)
+            .When(x => x.ProductUrl == null)
+            .WithMessage("Discount cannot exceed 50% for products without a URL");
+    }
+}
+```
+
+See [FluentValidation Integration](integration-fluentvalidation.md) for more details.
 
 ## MVC Controllers
 
@@ -81,7 +245,7 @@ public class UsersController : ControllerBase
         CancellationToken ct)
         => await _userService.CreateUserAsync(request, ct)
             .MapAsync(user => new UserDto(user))
-            .ToActionResultAsync(this);  // Converts Result<UserDto> ? ActionResult<UserDto>
+            .ToActionResultAsync(this);  // Converts Result<UserDto> → ActionResult<UserDto>
 
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDto>> GetUser(
@@ -112,7 +276,7 @@ public class UsersController : ControllerBase
 **Key Points:**
 - Controller accepts requests and calls service layer
 - Service returns `Result<T>` (success or failure)
-- `ToActionResultAsync` converts `Result<T>` ? `ActionResult<T>` at the API boundary
+- `ToActionResultAsync` converts `Result<T>` → `ActionResult<T>` at the API boundary
 - Automatic error-to-HTTP status mapping (see [Automatic Error Mapping](#automatic-error-mapping))
 
 > **Note:** The service layer (`IUserService`) can use any architecture you prefer. See [Examples](examples.md) for complete application examples with different architectural patterns.
@@ -142,7 +306,7 @@ userApi.MapPost("/", async (
     CancellationToken ct) =>
     await userService.CreateUserAsync(request, ct)
         .MapAsync(user => new UserDto(user))
-        .ToHttpResultAsync())  // Converts Result<UserDto> ? IResult
+        .ToHttpResultAsync())  // Converts Result<UserDto> → IResult
     .WithName("CreateUser")
     .Produces<UserDto>(StatusCodes.Status200OK)
     .ProducesValidationProblem()

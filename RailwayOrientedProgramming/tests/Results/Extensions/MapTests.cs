@@ -1,4 +1,5 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Map;
+
 using System.Globalization;
 using Xunit;
 

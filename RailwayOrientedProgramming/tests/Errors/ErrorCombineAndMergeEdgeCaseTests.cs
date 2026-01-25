@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Errors;
+﻿namespace RailwayOrientedProgramming.Tests.Errors;
 
 using Xunit;
 using static FunctionalDdd.ValidationError;
@@ -312,10 +312,13 @@ public class ErrorCombineAndMergeEdgeCaseTests
     public void ValidationError_WithEmptyFieldErrors_ShouldThrow()
     {
         // Act
-        Action act = () => { var _ = new ValidationError(
+        Action act = () =>
+        {
+            var _ = new ValidationError(
             Array.Empty<FieldError>(),
             "code",
-            "detail"); };
+            "detail");
+        };
 
         // Assert
         act.Should().Throw<ArgumentException>()
@@ -326,10 +329,13 @@ public class ErrorCombineAndMergeEdgeCaseTests
     public void ValidationError_WithNullFieldErrors_ShouldThrow()
     {
         // Act
-        Action act = () => { var _ = new ValidationError(
+        Action act = () =>
+        {
+            var _ = new ValidationError(
             (IEnumerable<FieldError>)null!,
             "code",
-            "detail"); };
+            "detail");
+        };
 
         // Assert
         act.Should().Throw<ArgumentException>()

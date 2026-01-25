@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Provides extension methods for recovering from failed results by executing fallback operations.
@@ -198,7 +198,7 @@ public static class RecoverOnFailureExtensionsAsync
     public static async Task<Result<T>> RecoverOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Error, Task<Result<T>>> funcAsync)
     {
         Result<T> result = await resultTask.ConfigureAwait(false);
-        
+
         return await result.RecoverOnFailureAsync(funcAsync).ConfigureAwait(false);
     }
 

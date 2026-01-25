@@ -1,4 +1,5 @@
 ﻿namespace FunctionalDdd;
+
 using System.Collections.Generic;
 using System.ComponentModel;
 

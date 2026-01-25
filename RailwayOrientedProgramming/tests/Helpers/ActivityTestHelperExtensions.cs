@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Helpers;
+﻿namespace RailwayOrientedProgramming.Tests.Helpers;
 
 using FluentAssertions;
 using System.Diagnostics;
@@ -42,10 +42,10 @@ public static class ActivityTestHelperExtensions
         TimeSpan? timeout = null)
     {
         var actualTimeout = timeout ?? TimeSpan.FromSeconds(2);
-        
+
         // First wait for at least one activity to ensure async completion
         helper.WaitForActivityCount(1, actualTimeout);
-        
+
         // Then wait for the specific activity
         var activity = helper.WaitForActivity(displayName, actualTimeout);
         activity.Should().NotBeNull($"expected activity '{displayName}' to be captured within {actualTimeout.TotalSeconds}s");

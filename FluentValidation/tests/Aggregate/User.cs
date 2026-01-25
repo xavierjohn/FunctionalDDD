@@ -1,5 +1,8 @@
 ﻿namespace FluentValidationExt.Tests;
+
 using FluentValidation;
+using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 internal class User : Aggregate<UserId>
 {

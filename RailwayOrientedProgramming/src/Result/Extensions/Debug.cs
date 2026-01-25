@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using System;
 using System.Diagnostics;
@@ -50,11 +50,11 @@ public static class ResultDebugExtensions
 #if DEBUG
         var activityName = string.IsNullOrEmpty(message) ? "Debug" : $"Debug: {message}";
         using var activity = RopTrace.ActivitySource.StartActivity(activityName, ActivityKind.Internal);
-        
+
         if (activity != null)
         {
             activity.SetTag("debug.result.status", result.IsSuccess ? "Success" : "Failure");
-            
+
             if (result.IsSuccess)
             {
                 activity.SetTag("debug.result.value", result.Value?.ToString() ?? "<null>");
@@ -68,7 +68,7 @@ public static class ResultDebugExtensions
             }
         }
 #endif
-        
+
         return result;
     }
 
@@ -92,11 +92,11 @@ public static class ResultDebugExtensions
 #if DEBUG
         var activityName = string.IsNullOrEmpty(message) ? "Debug (Detailed)" : $"Debug: {message} (Detailed)";
         using var activity = RopTrace.ActivitySource.StartActivity(activityName, ActivityKind.Internal);
-        
+
         if (activity != null)
         {
             activity.SetTag("debug.result.status", result.IsSuccess ? "Success" : "Failure");
-            
+
             if (result.IsSuccess)
             {
                 activity.SetTag("debug.result.type", typeof(TValue).Name);
@@ -110,7 +110,7 @@ public static class ResultDebugExtensions
                 activity.SetTag("debug.error.code", error.Code);
                 activity.SetTag("debug.error.detail", error.Detail);
                 activity.SetTag("debug.error.instance", error.Instance ?? "(none)");
-                
+
                 if (error is ValidationError validationError)
                 {
                     activity.SetTag("debug.error.validation.field_count", validationError.FieldErrors.Length);
@@ -131,12 +131,12 @@ public static class ResultDebugExtensions
                         activity.SetTag($"debug.error.aggregate[{i}].detail", err.Detail);
                     }
                 }
-                
+
                 activity.SetStatus(ActivityStatusCode.Error, error.Detail);
             }
         }
 #endif
-        
+
         return result;
     }
 
@@ -156,11 +156,11 @@ public static class ResultDebugExtensions
 #if DEBUG
         var activityName = string.IsNullOrEmpty(message) ? "Debug (with stack)" : $"Debug: {message} (with stack)";
         using var activity = RopTrace.ActivitySource.StartActivity(activityName, ActivityKind.Internal);
-        
+
         if (activity != null)
         {
             activity.SetTag("debug.result.status", result.IsSuccess ? "Success" : "Failure");
-            
+
             if (result.IsSuccess)
             {
                 activity.SetTag("debug.result.value", result.Value?.ToString() ?? "<null>");
@@ -172,12 +172,12 @@ public static class ResultDebugExtensions
                 activity.SetTag("debug.error.detail", result.Error.Detail);
                 activity.SetStatus(ActivityStatusCode.Error, result.Error.Detail);
             }
-            
+
             if (includeStackTrace)
             {
                 var stackTrace = new StackTrace(true);
                 var frames = stackTrace.GetFrames();
-                
+
                 // Capture up to 10 stack frames
                 for (int i = 0; i < Math.Min(frames.Length, 10); i++)
                 {
@@ -197,7 +197,7 @@ public static class ResultDebugExtensions
             }
         }
 #endif
-        
+
         return result;
     }
 
@@ -403,4 +403,3 @@ public static class ResultDebugExtensionsAsync
         return result;
     }
 }
-

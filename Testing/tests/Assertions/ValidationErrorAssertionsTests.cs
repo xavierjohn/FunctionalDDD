@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Tests.Assertions;
+﻿namespace FunctionalDdd.Testing.Tests.Assertions;
 
 public class ValidationErrorAssertionsTests
 {
@@ -20,7 +20,7 @@ public class ValidationErrorAssertionsTests
 
         // Act & Assert
         var act = () => error.Should().HaveFieldError("password");
-        
+
         act.Should().Throw<Exception>()
             .WithMessage("*to contain field*password*");
     }
@@ -43,7 +43,7 @@ public class ValidationErrorAssertionsTests
 
         // Act & Assert
         var act = () => error.Should().HaveFieldErrorWithDetail("email", "Invalid format");
-        
+
         act.Should().Throw<Exception>()
             .WithMessage("*to have detail*Invalid format*");
     }
@@ -68,7 +68,7 @@ public class ValidationErrorAssertionsTests
 
         // Act & Assert
         var act = () => error.Should().HaveFieldCount(3);
-        
+
         act.Should().Throw<Exception>();
     }
 

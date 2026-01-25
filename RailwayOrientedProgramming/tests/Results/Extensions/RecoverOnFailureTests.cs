@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 public class RecoverOnFailureTests
 {
@@ -62,7 +62,7 @@ public class RecoverOnFailureTests
     public void RecoverOnFailure_function_gets_executed_with_ErrorParam_for_failed_result_and_returns_success()
     {
         Result<string> input = Result.Failure<string>(Error.Unexpected("Error"));
-        Result<string> output = input.RecoverOnFailure(e => 
+        Result<string> output = input.RecoverOnFailure(e =>
         {
             e.Should().Be(Error.Unexpected("Error"));
             return GetSuccessResult();

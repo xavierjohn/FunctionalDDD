@@ -376,4 +376,3 @@ public class Error : IEquatable<Error>
     public static ServiceUnavailableError ServiceUnavailable(string detail, string code, string? instance) =>
         new(detail, code, instance);
 }
-

@@ -1,12 +1,12 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
-using System;
-using System.Text.Json.Serialization;
 using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Asp.ModelBinding;
 using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System;
+using System.Text.Json.Serialization;
 using Xunit;
 
 /// <summary>

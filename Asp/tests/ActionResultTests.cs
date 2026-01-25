@@ -3,8 +3,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Xunit;
 using System.Net.Http.Headers;
+using Xunit;
 
 public class ActionResultTests
 {

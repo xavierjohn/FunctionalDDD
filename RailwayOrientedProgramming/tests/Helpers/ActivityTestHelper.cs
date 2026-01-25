@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Helpers;
+﻿namespace RailwayOrientedProgramming.Tests.Helpers;
 
 using FunctionalDdd;
 using System.Diagnostics;
@@ -19,7 +19,7 @@ public sealed class ActivityTestHelper : IDisposable
     {
         // Create a unique ActivitySource for this test
         _testActivitySource = new ActivitySource($"Test-ROP-{Guid.NewGuid():N}");
-        
+
         // Configure the listener to capture activities from our test source
         _listener = new ActivityListener
         {
@@ -34,9 +34,9 @@ public sealed class ActivityTestHelper : IDisposable
                 }
             }
         };
-        
+
         ActivitySource.AddActivityListener(_listener);
-        
+
         // Inject our test source into RopTrace (works in both DEBUG and RELEASE)
         RopTrace.SetTestActivitySource(_testActivitySource);
     }
@@ -131,14 +131,14 @@ public sealed class ActivityTestHelper : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         // Reset RopTrace to use the default ActivitySource
         RopTrace.ResetTestActivitySource();
-        
+
         // Dispose resources
         _listener.Dispose();
         _testActivitySource.Dispose();
-        
+
         _disposed = true;
     }
 }

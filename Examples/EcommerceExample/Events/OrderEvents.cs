@@ -1,8 +1,9 @@
-namespace EcommerceExample.Events;
+﻿namespace EcommerceExample.Events;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Raised when a new order is created.

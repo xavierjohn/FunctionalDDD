@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 using RailwayOrientedProgramming.Tests.Helpers;
 using System.Diagnostics;
@@ -348,7 +348,7 @@ public class DebugTests : TestBase
     public void Debug_creates_activity_with_correct_name_and_tags_for_success()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var result = Result.Success("Test value");
         result.Debug("Test message");
 
@@ -363,7 +363,7 @@ public class DebugTests : TestBase
     public void Debug_creates_activity_with_correct_name_and_tags_for_failure()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var error = Error.NotFound("User not found");
         var result = Result.Failure<string>(error);
         result.Debug("Error test");
@@ -380,7 +380,7 @@ public class DebugTests : TestBase
     public void DebugDetailed_includes_type_information_for_success()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var result = Result.Success(42);
         result.DebugDetailed("Detailed test");
 
@@ -393,7 +393,7 @@ public class DebugTests : TestBase
     public void DebugDetailed_includes_validation_error_field_details()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var validationError = Error.Validation("Email is required", "email")
             .And("password", "Password too short");
         var result = Result.Failure<string>(validationError);
@@ -409,7 +409,7 @@ public class DebugTests : TestBase
     public void DebugDetailed_includes_aggregate_error_details()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var error1 = Error.NotFound("User not found");
         var error2 = Error.Unauthorized("Not authorized");
         var aggregateError = new AggregateError([error1, error2]);
@@ -426,7 +426,7 @@ public class DebugTests : TestBase
     public void DebugWithStack_includes_stack_trace_information()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var result = Result.Success("Test");
         result.DebugWithStack("Stack test");
 
@@ -435,11 +435,11 @@ public class DebugTests : TestBase
         activity.Tags.Should().Contain(t => t.Key == "debug.stack[0].method");
     }
 
-    [Fact] 
+    [Fact]
     public void DebugWithStack_excludes_stack_trace_when_disabled()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var result = Result.Success("Test");
         result.DebugWithStack("No stack test", includeStackTrace: false);
 
@@ -451,7 +451,7 @@ public class DebugTests : TestBase
     public void DebugOnSuccess_creates_activity_with_correct_status()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var result = Result.Success("Test value");
         result.DebugOnSuccess(_ => { });
 
@@ -462,7 +462,7 @@ public class DebugTests : TestBase
     public void DebugOnFailure_creates_activity_with_error_status_and_tags()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var error = Error.BadRequest("Invalid request");
         var result = Result.Failure<string>(error);
         result.DebugOnFailure(_ => { });
@@ -475,7 +475,7 @@ public class DebugTests : TestBase
     public void Debug_without_message_creates_activity_with_default_name()
     {
         using var activityTest = new ActivityTestHelper();
-        
+
         var result = Result.Success("Test");
         result.Debug();
 

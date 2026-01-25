@@ -1,10 +1,11 @@
-namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
-using System.Net.Http.Json;
-using System.Net;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Text;
+﻿namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+
 using FunctionalDdd;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 public class ReadResultFromJsonTests
 {
@@ -261,7 +262,7 @@ public class ReadResultFromJsonTests
         // Arrange
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        
+
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new camelcasePerson() { firstName = "Xavier", age = 50 }, SourceGenerationContext.Default.camelcasePerson)
@@ -269,7 +270,7 @@ public class ReadResultFromJsonTests
 
         // Act
         Func<Task> act = async () => await httpResponseMessage.ReadResultFromJsonAsync(
-            SourceGenerationContext.Default.camelcasePerson, 
+            SourceGenerationContext.Default.camelcasePerson,
             cts.Token);
 
         // Assert
@@ -282,7 +283,7 @@ public class ReadResultFromJsonTests
         // Arrange
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        
+
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.BadRequest);
 
         async Task<Error> Callback(HttpResponseMessage response, string context, CancellationToken ct)
@@ -293,8 +294,8 @@ public class ReadResultFromJsonTests
 
         // Act
         Func<Task> act = async () => await httpResponseMessage.HandleFailureAsync(
-            Callback, 
-            "context", 
+            Callback,
+            "context",
             cts.Token);
 
         // Assert
@@ -398,12 +399,12 @@ public class ReadResultFromJsonTests
     public async Task Should_handle_large_json_payload()
     {
         // Arrange
-        var largePerson = new camelcasePerson 
-        { 
-            firstName = new string('X', 10000), 
-            age = 50 
+        var largePerson = new camelcasePerson
+        {
+            firstName = new string('X', 10000),
+            age = 50
         };
-        
+
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(largePerson, SourceGenerationContext.Default.camelcasePerson)
@@ -448,8 +449,8 @@ public class ReadResultFromJsonTests
         using HttpResponseMessage httpResponseMessage = new(HttpStatusCode.OK)
         {
             Content = new StringContent(
-                """{"firstName":"Xavier","age":50}""", 
-                Encoding.UTF8, 
+                """{"firstName":"Xavier","age":50}""",
+                Encoding.UTF8,
                 "text/plain")
         };
 

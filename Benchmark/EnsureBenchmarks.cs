@@ -1,4 +1,4 @@
-namespace Benchmark;
+﻿namespace Benchmark;
 
 using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
@@ -63,7 +63,7 @@ public class EnsureBenchmarks
     public Result<int> Ensure_ComplexPredicate_Pass()
     {
         return _successResult
-            .Ensure(x => x > 0 && x < 100 && x % 2 == 0, 
+            .Ensure(x => x > 0 && x < 100 && x % 2 == 0,
                    Error.Validation("Complex validation failed"));
     }
 
@@ -71,7 +71,7 @@ public class EnsureBenchmarks
     public Result<int> Ensure_ComplexPredicate_Fail()
     {
         return _successResult
-            .Ensure(x => x > 100 && x < 200 && x % 3 == 0, 
+            .Ensure(x => x > 100 && x < 200 && x % 3 == 0,
                    Error.Validation("Complex validation failed"));
     }
 
@@ -79,7 +79,7 @@ public class EnsureBenchmarks
     public Result<int> Ensure_WithExpensiveValidation_Pass()
     {
         return _successResult
-            .Ensure(x => IsExpensiveValidationPassed(x), 
+            .Ensure(x => IsExpensiveValidationPassed(x),
                    Error.Validation("Expensive validation failed"));
     }
 
@@ -87,7 +87,7 @@ public class EnsureBenchmarks
     public Result<int> Ensure_WithExpensiveValidation_Fail()
     {
         return _successResult
-            .Ensure(x => IsExpensiveValidationFailed(x), 
+            .Ensure(x => IsExpensiveValidationFailed(x),
                    Error.Validation("Expensive validation failed"));
     }
 

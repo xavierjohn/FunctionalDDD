@@ -1,7 +1,8 @@
-namespace BankingExample.Entities;
+﻿namespace BankingExample.Entities;
 
 using BankingExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 public enum TransactionType
 {

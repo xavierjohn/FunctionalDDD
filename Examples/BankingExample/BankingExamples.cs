@@ -3,6 +3,7 @@ using BankingExample.Services;
 using BankingExample.ValueObjects;
 using BankingExample.Workflows;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 namespace BankingExample;
 
@@ -46,16 +47,16 @@ public static class BankingExamples
         var result = BankAccount.TryCreate(
                 customerId,
                 AccountType.Checking,
-                Money.TryCreate(1000m).Value,
-                Money.TryCreate(500m).Value,
-                Money.TryCreate(100m).Value)
+                Money.Create(1000m, "USD"),
+                Money.Create(500m, "USD"),
+                Money.Create(100m, "USD"))
             .Tap(account =>
             {
                 // Show that account creation raised an event
                 Console.WriteLine($"Account created with {account.UncommittedEvents().Count} uncommitted event(s)");
             })
-            .Bind(account => account.Deposit(Money.TryCreate(500m).Value, "Salary deposit"))
-            .Bind(account => account.Withdraw(Money.TryCreate(200m).Value, "Grocery shopping"))
+            .Bind(account => account.Deposit(Money.Create(500m, "USD"), "Salary deposit"))
+            .Bind(account => account.Withdraw(Money.Create(200m, "USD"), "Grocery shopping"))
             .Tap(account =>
             {
                 // Show accumulated events before accepting changes
@@ -68,8 +69,8 @@ public static class BankingExamples
                 Console.WriteLine($"IsChanged: {account.IsChanged}");
             })
             .Match(
-                onSuccess: ok => $"✅ Account balance: {ok.Balance}. Transactions: {ok.Transactions.Count}",
-                onFailure: err => $"❌ Operation failed: {err.Detail}"
+                onSuccess: ok => $"? Account balance: {ok.Balance}. Transactions: {ok.Transactions.Count}",
+                onFailure: err => $"? Operation failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -92,17 +93,17 @@ public static class BankingExamples
         var account1 = BankAccount.TryCreate(
             customer1,
             AccountType.Checking,
-            Money.TryCreate(1000m).Value,
-            Money.TryCreate(500m).Value,
-            Money.TryCreate(0m).Value
+            Money.Create(1000m, "USD"),
+            Money.Create(500m, "USD"),
+            Money.Create(0m, "USD")
         ).Value;
 
         var account2 = BankAccount.TryCreate(
             customer2,
             AccountType.Savings,
-            Money.TryCreate(500m).Value,
-            Money.TryCreate(500m).Value,
-            Money.TryCreate(0m).Value
+            Money.Create(500m, "USD"),
+            Money.Create(500m, "USD"),
+            Money.Create(0m, "USD")
         ).Value;
 
         // Clear initial creation events for cleaner demo output
@@ -115,13 +116,13 @@ public static class BankingExamples
         var result = await workflow.ProcessTransferAsync(
             account1,
             account2,
-            Money.TryCreate(300m).Value,
+            Money.Create(300m, "USD"),
             "Rent payment"
         );
 
         var message = result.Match(
-            onSuccess: ok => $"✅ Transfer successful!\n   From account balance: {ok.From.Balance}\n   To account balance: {ok.To.Balance}",
-            onFailure: err => $"❌ Transfer failed: {err.Detail}"
+            onSuccess: ok => $"? Transfer successful!\n   From account balance: {ok.From.Balance}\n   To account balance: {ok.To.Balance}",
+            onFailure: err => $"? Transfer failed: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -141,9 +142,9 @@ public static class BankingExamples
         var account = BankAccount.TryCreate(
             customerId,
             AccountType.Checking,
-            Money.TryCreate(10000m).Value,
-            Money.TryCreate(10000m).Value,
-            Money.TryCreate(0m).Value
+            Money.Create(10000m, "USD"),
+            Money.Create(10000m, "USD"),
+            Money.Create(0m, "USD")
         ).Value;
 
         account.AcceptChanges(); // Clear creation event
@@ -154,13 +155,13 @@ public static class BankingExamples
         // Try to withdraw a suspicious amount (>$5000)
         var result = await workflow.ProcessSecureWithdrawalAsync(
             account,
-            Money.TryCreate(6000m).Value,
+            Money.Create(6000m, "USD"),
             "123456" // MFA code
         );
 
         var message = result.Match(
-            onSuccess: ok => $"✅ Withdrawal successful. New balance: {ok.Balance}",
-            onFailure: err => $"⚠️ Expected fraud detection:\n   Code: {err.Code}\n   Detail: {err.Detail}"
+            onSuccess: ok => $"? Withdrawal successful. New balance: {ok.Balance}",
+            onFailure: err => $"?? Expected fraud detection:\n   Code: {err.Code}\n   Detail: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -177,30 +178,30 @@ public static class BankingExamples
         Console.WriteLine("--------------------------------------------------");
 
         var customerId = CustomerId.NewUnique();
-        var dailyLimit = Money.TryCreate(500m).Value;
+        var dailyLimit = Money.Create(500m, "USD");
 
         var account = BankAccount.TryCreate(
             customerId,
             AccountType.Checking,
-            Money.TryCreate(2000m).Value,
+            Money.Create(2000m, "USD"),
             dailyLimit,
-            Money.TryCreate(0m).Value
+            Money.Create(0m, "USD")
         ).Value;
 
         account.AcceptChanges(); // Clear creation event
 
         // Make multiple withdrawals
-        var result1 = account.Withdraw(Money.TryCreate(200m).Value, "ATM withdrawal");
-        Console.WriteLine(result1.IsSuccess ? "✅ First withdrawal: $200" : $"❌ {result1.Error.Detail}");
+        var result1 = account.Withdraw(Money.Create(200m, "USD"), "ATM withdrawal");
+        Console.WriteLine(result1.IsSuccess ? "? First withdrawal: $200" : $"? {result1.Error.Detail}");
 
-        var result2 = account.Withdraw(Money.TryCreate(200m).Value, "ATM withdrawal");
-        Console.WriteLine(result2.IsSuccess ? "✅ Second withdrawal: $200" : $"❌ {result2.Error.Detail}");
+        var result2 = account.Withdraw(Money.Create(200m, "USD"), "ATM withdrawal");
+        Console.WriteLine(result2.IsSuccess ? "? Second withdrawal: $200" : $"? {result2.Error.Detail}");
 
         // This should exceed daily limit - demonstrates Error.Domain
-        var result3 = account.Withdraw(Money.TryCreate(200m).Value, "ATM withdrawal");
+        var result3 = account.Withdraw(Money.Create(200m, "USD"), "ATM withdrawal");
         if (result3.IsFailure)
         {
-            Console.WriteLine($"⚠️ Third withdrawal blocked:");
+            Console.WriteLine($"?? Third withdrawal blocked:");
             Console.WriteLine($"   Error Type: {result3.Error.GetType().Name}");
             Console.WriteLine($"   Code: {result3.Error.Code}");
             Console.WriteLine($"   Detail: {result3.Error.Detail}");
@@ -225,9 +226,9 @@ public static class BankingExamples
         var account = BankAccount.TryCreate(
             customerId,
             AccountType.Savings,
-            Money.TryCreate(10000m).Value,
-            Money.TryCreate(100m).Value,
-            Money.TryCreate(0m).Value
+            Money.Create(10000m, "USD"),
+            Money.Create(100m, "USD"),
+            Money.Create(0m, "USD")
         ).Value;
 
         account.AcceptChanges(); // Clear creation event
@@ -243,12 +244,12 @@ public static class BankingExamples
             onSuccess: ok =>
             {
                 var interestTransaction = ok.Transactions.Last();
-                return $"✅ Interest payment processed\n" +
+                return $"? Interest payment processed\n" +
                        $"   Amount: {interestTransaction.Amount}\n" +
                        $"   New balance: {ok.Balance}\n" +
                        $"   Annual rate: {annualRate:P2}";
             },
-            onFailure: err => $"❌ Interest payment failed: {err.Detail}"
+            onFailure: err => $"? Interest payment failed: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -270,14 +271,14 @@ public static class BankingExamples
         var accountResult = BankAccount.TryCreate(
             customerId,
             AccountType.Checking,
-            Money.TryCreate(1000m).Value,
-            Money.TryCreate(1000m).Value,
-            Money.TryCreate(100m).Value
+            Money.Create(1000m, "USD"),
+            Money.Create(1000m, "USD"),
+            Money.Create(100m, "USD")
         );
 
         if (accountResult.IsFailure)
         {
-            Console.WriteLine($"❌ Account creation failed: {accountResult.Error.Detail}");
+            Console.WriteLine($"? Account creation failed: {accountResult.Error.Detail}");
             return;
         }
 
@@ -289,9 +290,9 @@ public static class BankingExamples
         PrintEvents(account);
 
         // Perform operations
-        account.Deposit(Money.TryCreate(500m).Value, "Deposit 1");
-        account.Deposit(Money.TryCreate(300m).Value, "Deposit 2");
-        account.Withdraw(Money.TryCreate(100m).Value, "Withdrawal 1");
+        account.Deposit(Money.Create(500m, "USD"), "Deposit 1");
+        account.Deposit(Money.Create(300m, "USD"), "Deposit 2");
+        account.Withdraw(Money.Create(100m, "USD"), "Withdrawal 1");
 
         Console.WriteLine("\nAfter multiple operations:");
         Console.WriteLine($"  IsChanged: {account.IsChanged}");
@@ -307,7 +308,7 @@ public static class BankingExamples
         Console.WriteLine($"  Uncommitted events: {account.UncommittedEvents().Count}");
 
         // New operation after save
-        account.Deposit(Money.TryCreate(50m).Value, "New deposit after save");
+        account.Deposit(Money.Create(50m, "USD"), "New deposit after save");
 
         Console.WriteLine("\nAfter new operation:");
         Console.WriteLine($"  IsChanged: {account.IsChanged}");

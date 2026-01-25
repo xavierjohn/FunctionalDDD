@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results;
+﻿namespace RailwayOrientedProgramming.Tests.Results;
 
 public class MatchTests
 {

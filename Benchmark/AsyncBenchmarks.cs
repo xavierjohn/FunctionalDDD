@@ -1,4 +1,4 @@
-namespace Benchmark;
+﻿namespace Benchmark;
 
 using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
@@ -90,7 +90,7 @@ public class AsyncBenchmarks
     public async Task<Result<int>> EnsureAsync_SinglePredicate_Pass()
     {
         return await _successResult
-            .EnsureAsync(x => Task.FromResult(x > 0), 
+            .EnsureAsync(x => Task.FromResult(x > 0),
                         Error.Validation("Must be positive"));
     }
 
