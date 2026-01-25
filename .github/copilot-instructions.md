@@ -70,7 +70,7 @@ if (result.IsFailure)
 ```csharp
 // ✅ Inherits Create automatically
 public class Temperature : ScalarValueObject<Temperature, decimal>, 
-    IScalarValueObject<Temperature, decimal>
+    IScalarValue<Temperature, decimal>
 {
     private Temperature(decimal value) : base(value) { }
     

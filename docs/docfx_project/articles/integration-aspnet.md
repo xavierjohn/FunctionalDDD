@@ -10,7 +10,7 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalD
 
 - [Installation](#installation)
 - [What the Package Provides](#what-the-package-provides)
-- [Value Object Auto-Validation](#value-object-auto-validation)
+- [Scalar Value Auto-Validation](#scalar-value-auto-validation)
 - [MVC Controllers](#mvc-controllers)
 - [Minimal API](#minimal-api)
 - [Automatic Error Mapping](#automatic-error-mapping)
@@ -55,20 +55,20 @@ Task<IResult> ToHttpResultAsync<T>(this Task<Result<T>> resultTask);
 - ❌ **Failure**: Converts error types to HTTP status codes with Problem Details format
 - 📄 **Pagination**: Returns 206 Partial Content with Content-Range headers
 
-## Value Object Auto-Validation
+## Scalar Value Auto-Validation
 
-The **FunctionalDDD.Asp** package provides automatic validation for value objects that implement `IScalarValueObject<TSelf, TPrimitive>`. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
+The **FunctionalDDD.Asp** package provides automatic validation for any type implementing `IScalarValue<TSelf, TPrimitive>`. This includes DDD value objects (like `ScalarValueObject<T>`) as well as custom implementations. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
 
 ### Setup
 
-Enable auto-validation by calling `AddScalarValueObjectValidation()` in your `Program.cs`:
+Enable auto-validation by calling `AddScalarValueValidation()` in your `Program.cs`:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation(); // Enable automatic validation!
+    .AddScalarValueValidation(); // Enable automatic validation!
 
 var app = builder.Build();
 app.MapControllers();
@@ -77,12 +77,12 @@ app.Run();
 
 ### How It Works
 
-Value objects implementing `IScalarValueObject` are automatically validated during model binding:
+Types implementing `IScalarValue` are automatically validated during model binding:
 
 ```csharp
 using FunctionalDdd;
 
-// Define custom value objects (source generator adds IScalarValueObject automatically)
+// Define custom value objects (source generator adds IScalarValue automatically)
 public partial class FirstName : RequiredString<FirstName> { }
 public partial class CustomerId : RequiredGuid<CustomerId> { }
 

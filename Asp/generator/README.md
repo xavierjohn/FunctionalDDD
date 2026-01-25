@@ -1,6 +1,6 @@
-# FunctionalDDD.Asp Source Generator
+﻿# FunctionalDDD.Asp Source Generator
 
-A Roslyn source generator that automatically creates AOT-compatible JSON converters and serializer context entries for `IScalarValueObject<TSelf, TPrimitive>` types.
+A Roslyn source generator that automatically creates AOT-compatible JSON converters and serializer context entries for types implementing `IScalarValue<TSelf, TPrimitive>`.
 
 ## Features
 
@@ -8,19 +8,19 @@ A Roslyn source generator that automatically creates AOT-compatible JSON convert
 - **No Reflection**: All type information is resolved at compile time
 - **Faster Startup**: No runtime type scanning or assembly reflection
 - **Trimming Safe**: Code won't be trimmed away since it's explicitly generated
-- **Automatic Discovery**: Finds all value object types in your assembly
+- **Automatic Discovery**: Finds all types implementing `IScalarValue` in your assembly
 
 ## Usage
 
 1. Add a reference to the source generator package in your project.
 
-2. Create a partial `JsonSerializerContext` and mark it with `[GenerateValueObjectConverters]`:
+2. Create a partial `JsonSerializerContext` and mark it with `[GenerateScalarValueConverters]`:
 
 ```csharp
 using System.Text.Json.Serialization;
 using FunctionalDdd;
 
-[GenerateValueObjectConverters]
+[GenerateScalarValueConverters]
 [JsonSerializable(typeof(MyDto))]
 public partial class AppJsonSerializerContext : JsonSerializerContext
 {
@@ -28,16 +28,16 @@ public partial class AppJsonSerializerContext : JsonSerializerContext
 ```
 
 3. The generator will automatically:
-   - Create AOT-compatible JSON converters for all `IScalarValueObject<TSelf, TPrimitive>` types
-   - Add `[JsonSerializable]` attributes for all value object types to your context
-   - Generate a `GeneratedValueObjectConverterFactory` you can use directly
+   - Create AOT-compatible JSON converters for all `IScalarValue<TSelf, TPrimitive>` types
+   - Add `[JsonSerializable]` attributes for all scalar value types to your context
+   - Generate a `GeneratedScalarValueConverterFactory` you can use directly
 
 ## Generated Code
 
-For each value object type like:
+For each type implementing `IScalarValue` like:
 
 ```csharp
-public class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValueObject<CustomerId, Guid>
+public class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValue<CustomerId, Guid>
 {
     // ...
 }
@@ -47,7 +47,7 @@ The generator creates:
 
 1. A strongly-typed `CustomerIdJsonConverter` class
 2. A `[JsonSerializable(typeof(CustomerId))]` attribute on your context
-3. Entry in `GeneratedValueObjectConverterFactory` for automatic converter resolution
+3. Entry in `GeneratedScalarValueConverterFactory` for automatic converter resolution
 
 ## Using the Generated Factory
 
@@ -58,7 +58,7 @@ var options = new JsonSerializerOptions
 {
     TypeInfoResolver = AppJsonSerializerContext.Default
 };
-options.Converters.Add(new FunctionalDdd.Generated.GeneratedValueObjectConverterFactory());
+options.Converters.Add(new FunctionalDdd.Generated.GeneratedScalarValueConverterFactory());
 ```
 
 ## Benefits Over Runtime Reflection
