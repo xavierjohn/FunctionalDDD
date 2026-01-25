@@ -3,6 +3,7 @@
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Simulates a payment gateway service.

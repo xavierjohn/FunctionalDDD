@@ -1,6 +1,7 @@
 ﻿namespace SampleUserLibrary;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// User registration DTO with automatic validation via value objects.

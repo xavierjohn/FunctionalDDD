@@ -1,5 +1,6 @@
 ﻿using SampleUserLibrary;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApiNoAot.API;

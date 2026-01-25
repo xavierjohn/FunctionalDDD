@@ -4,6 +4,7 @@ using System.Globalization;
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Detects fraudulent transactions based on patterns.

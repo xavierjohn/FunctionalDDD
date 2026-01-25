@@ -1,8 +1,9 @@
-using BankingExample.Aggregates;
+﻿using BankingExample.Aggregates;
 using BankingExample.Services;
 using BankingExample.ValueObjects;
 using BankingExample.Workflows;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 namespace BankingExample;
 

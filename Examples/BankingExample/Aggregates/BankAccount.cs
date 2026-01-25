@@ -4,6 +4,7 @@ using BankingExample.Entities;
 using BankingExample.Events;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 public enum AccountStatus
 {

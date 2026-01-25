@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -7,7 +7,14 @@ using System.Text.Json.Serialization;
 /// Represents an ISO 4217 currency code as a value object.
 /// </summary>
 /// <remarks>
+/// <b>Validation Rules (Opinionated):</b>
+/// <para>
 /// Valid codes are three alphabetic characters (e.g., USD, EUR, GBP). The stored value is uppercase.
+/// </para>
+/// <para>
+/// <b>If these rules don't fit your domain</b> (e.g., cryptocurrency codes like BTC, ETH),
+/// create your own CurrencyCode value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
+/// </para>
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<CurrencyCode>))]
 public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValueObject<CurrencyCode, string>, IParsable<CurrencyCode>

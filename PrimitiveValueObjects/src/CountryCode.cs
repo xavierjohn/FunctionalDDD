@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -6,6 +6,17 @@ using System.Text.Json.Serialization;
 /// <summary>
 /// ISO 3166-1 alpha-2 country code value object.
 /// </summary>
+/// <remarks>
+/// <b>Validation Rules (Opinionated):</b>
+/// <list type="bullet">
+/// <item>Exactly 2 letters (ISO 3166-1 alpha-2 format)</item>
+/// <item>Normalized to uppercase</item>
+/// </list>
+/// <para>
+/// <b>If these rules don't fit your domain</b> (e.g., you need alpha-3 or numeric codes),
+/// create your own CountryCode value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
+/// </para>
+/// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<CountryCode>))]
 public class CountryCode : ScalarValueObject<CountryCode, string>, IScalarValueObject<CountryCode, string>, IParsable<CountryCode>
 {

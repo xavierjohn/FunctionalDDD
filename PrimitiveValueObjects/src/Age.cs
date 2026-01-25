@@ -1,11 +1,22 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Age value object (0 to 150 inclusive).
+/// Age value object with validation for ages 0-150.
 /// </summary>
+/// <remarks>
+/// <b>Validation Rules (Opinionated):</b>
+/// <list type="bullet">
+/// <item>Must be non-negative (>= 0)</item>
+/// <item>Must be realistic (&lt;= 150)</item>
+/// </list>
+/// <para>
+/// <b>If these rules don't fit your domain</b>, create your own Age value object
+/// using the <see cref="ScalarValueObject{TSelf, T}"/> base class from the DomainDrivenDesign package.
+/// </para>
+/// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<Age>))]
 public class Age : ScalarValueObject<Age, int>, IScalarValueObject<Age, int>, IParsable<Age>
 {

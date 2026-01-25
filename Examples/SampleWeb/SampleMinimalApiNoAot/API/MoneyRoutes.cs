@@ -1,6 +1,7 @@
 ﻿namespace SampleMinimalApiNoAot.API;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 public static class MoneyRoutes
 {

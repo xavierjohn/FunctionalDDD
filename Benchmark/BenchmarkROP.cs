@@ -1,6 +1,8 @@
 ﻿namespace Benchmark;
+
 using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using SampleUserLibrary;
 using static FunctionalDdd.EnsureExtensions;
 

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

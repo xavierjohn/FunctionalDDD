@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics;
 using System.Reflection;

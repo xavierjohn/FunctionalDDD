@@ -3,6 +3,7 @@ using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 namespace EcommerceExample;
 

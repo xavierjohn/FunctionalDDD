@@ -1,6 +1,7 @@
 ﻿namespace Example;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using System.Collections.Immutable;
 using static EnsureExtensions;
 using static FunctionalDdd.ValidationError;

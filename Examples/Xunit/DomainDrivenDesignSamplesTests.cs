@@ -1,6 +1,7 @@
 ﻿namespace Example.Tests;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using Xunit;
 
 /// <summary>

@@ -1,6 +1,7 @@
 ﻿namespace SampleMinimalApiNoAot.API;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using SampleUserLibrary;
 using System.Globalization;
 

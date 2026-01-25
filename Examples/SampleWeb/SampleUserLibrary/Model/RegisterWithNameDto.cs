@@ -1,6 +1,7 @@
-namespace SampleUserLibrary;
+﻿namespace SampleUserLibrary;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Registration DTO using the same Name value object for both first and last name.

@@ -1,6 +1,7 @@
 ﻿namespace SampleUserLibrary;
 using FluentValidation;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 public class User : Aggregate<UserId>
 {

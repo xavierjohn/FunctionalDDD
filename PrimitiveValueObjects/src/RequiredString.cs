@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Base class for creating strongly-typed string value objects that cannot be null or empty.

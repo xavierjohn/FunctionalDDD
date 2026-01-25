@@ -1,6 +1,7 @@
 ﻿namespace PrimitiveValueObjects.Tests.Helpers;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using System.Diagnostics;
 
 /// <summary>

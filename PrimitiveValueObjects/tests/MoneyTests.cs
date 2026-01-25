@@ -1,5 +1,6 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
+using FunctionalDdd.PrimitiveValueObjects;
 using System.Text.Json;
 
 public class MoneyTests

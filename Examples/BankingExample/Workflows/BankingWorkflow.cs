@@ -5,6 +5,7 @@ using BankingExample.Events;
 using BankingExample.Services;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Orchestrates banking operations with fraud detection, validation, and domain event publishing.

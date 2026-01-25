@@ -1,6 +1,6 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
-using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using System.Diagnostics;

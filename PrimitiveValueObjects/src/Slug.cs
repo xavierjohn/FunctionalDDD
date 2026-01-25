@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -7,6 +7,18 @@ using System.Text.RegularExpressions;
 /// <summary>
 /// URL-safe slug value object (lowercase letters, digits, single hyphens).
 /// </summary>
+/// <remarks>
+/// <b>Validation Rules (Opinionated):</b>
+/// <list type="bullet">
+/// <item>Lowercase letters only (no uppercase)</item>
+/// <item>Digits allowed</item>
+/// <item>Hyphens allowed but not consecutive, leading, or trailing</item>
+/// </list>
+/// <para>
+/// <b>If these rules don't fit your domain</b> (e.g., you allow uppercase in slugs),
+/// create your own Slug value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
+/// </para>
+/// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<Slug>))]
 public partial class Slug : ScalarValueObject<Slug, string>, IScalarValueObject<Slug, string>, IParsable<Slug>
 {

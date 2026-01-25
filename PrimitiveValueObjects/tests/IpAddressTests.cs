@@ -1,5 +1,6 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
+using FunctionalDdd.PrimitiveValueObjects;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -38,6 +38,11 @@ using System.Text.RegularExpressions;
 /// <item>Two-factor authentication</item>
 /// <item>Customer support systems</item>
 /// </list>
+/// </para>
+/// <para>
+/// <b>Note: Opinionated Implementation</b> - If you need different phone number formats
+/// (e.g., with extensions like +1-415-555-1234 ext. 123), create your own PhoneNumber
+/// value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
 /// </para>
 /// </remarks>
 /// <example>

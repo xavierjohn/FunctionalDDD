@@ -1,6 +1,7 @@
 ﻿namespace SampleWebApplication.Controllers;
 
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using SampleUserLibrary;
 using System.Globalization;
