@@ -143,6 +143,22 @@ public class MoneyTests
     }
 
     [Fact]
+    public void Subtract_resulting_in_negative_amount_fails()
+    {
+        // Arrange
+        var left = Money.TryCreate(40.00m, "USD").Value;
+        var right = Money.TryCreate(100.00m, "USD").Value;
+
+        // Act
+        var result = left.Subtract(right);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var validation = (ValidationError)result.Error;
+        validation.FieldErrors[0].Details[0].Should().Be("Amount cannot be negative");
+    }
+
+    [Fact]
     public void Cannot_subtract_Money_with_different_currency()
     {
         // Arrange
@@ -194,12 +210,17 @@ public class MoneyTests
         var money = Money.TryCreate(50.00m, "USD").Value;
 
         // Act
-        var result = money.Multiply(-2m);
+        var resultDecimal = money.Multiply(-2m);
+        var resultInt = money.Multiply(-3);
 
         // Assert
-        result.IsFailure.Should().BeTrue();
-        var validation = (ValidationError)result.Error;
+        resultDecimal.IsFailure.Should().BeTrue();
+        var validation = (ValidationError)resultDecimal.Error;
         validation.FieldErrors[0].Details[0].Should().Be("Multiplier cannot be negative");
+        
+        resultInt.IsFailure.Should().BeTrue();
+        var validationInt = (ValidationError)resultInt.Error;
+        validationInt.FieldErrors[0].Details[0].Should().Be("Quantity cannot be negative");
     }
 
     [Fact]
@@ -217,6 +238,20 @@ public class MoneyTests
     }
 
     [Fact]
+    public void Can_divide_Money_by_integer()
+    {
+        // Arrange
+        var money = Money.TryCreate(100.00m, "USD").Value;
+
+        // Act
+        var result = money.Divide(4);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Amount.Should().Be(25.00m);
+    }
+
+    [Fact]
     public void Cannot_divide_Money_by_zero()
     {
         // Arrange
@@ -224,6 +259,21 @@ public class MoneyTests
 
         // Act
         var result = money.Divide(0m);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var validation = (ValidationError)result.Error;
+        validation.FieldErrors[0].Details[0].Should().Be("Divisor must be positive");
+    }
+
+    [Fact]
+    public void Cannot_divide_Money_by_negative_integer()
+    {
+        // Arrange
+        var money = Money.TryCreate(100.00m, "USD").Value;
+
+        // Act
+        var result = money.Divide(-2);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -329,6 +379,34 @@ public class MoneyTests
     }
 
     [Fact]
+    public void Can_compare_Money_IsGreaterThanOrEqual()
+    {
+        // Arrange
+        var left = Money.TryCreate(100.00m, "USD").Value;
+        var right = Money.TryCreate(50.00m, "USD").Value;
+        var equal = Money.TryCreate(100.00m, "USD").Value;
+
+        // Act & Assert
+        left.IsGreaterThanOrEqual(right).Should().BeTrue();
+        left.IsGreaterThanOrEqual(equal).Should().BeTrue();
+        right.IsGreaterThanOrEqual(left).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Can_compare_Money_IsLessThanOrEqual()
+    {
+        // Arrange
+        var left = Money.TryCreate(25.00m, "USD").Value;
+        var right = Money.TryCreate(50.00m, "USD").Value;
+        var equal = Money.TryCreate(25.00m, "USD").Value;
+
+        // Act & Assert
+        left.IsLessThanOrEqual(right).Should().BeTrue();
+        left.IsLessThanOrEqual(equal).Should().BeTrue();
+        right.IsLessThanOrEqual(left).Should().BeFalse();
+    }
+
+    [Fact]
     public void Cannot_compare_Money_with_different_currency()
     {
         // Arrange
@@ -338,6 +416,8 @@ public class MoneyTests
         // Act & Assert
         left.IsGreaterThan(right).Should().BeFalse();
         left.IsLessThan(right).Should().BeFalse();
+        left.IsGreaterThanOrEqual(right).Should().BeFalse();
+        left.IsLessThanOrEqual(right).Should().BeFalse();
     }
 
     #endregion

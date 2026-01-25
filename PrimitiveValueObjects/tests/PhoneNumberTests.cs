@@ -80,6 +80,26 @@ public class PhoneNumberTests
         validation.FieldErrors[0].Details[0].Should().Be("Phone number must be in E.164 format (e.g., +14155551234).");
     }
 
+    [Fact]
+    public void Create_returns_PhoneNumber_for_valid_input()
+    {
+        // Act
+        var phone = PhoneNumber.Create("+14155551234");
+
+        // Assert
+        phone.Value.Should().Be("+14155551234");
+    }
+
+    [Fact]
+    public void Create_throws_for_invalid_input()
+    {
+        // Act
+        Action act = () => PhoneNumber.Create("555-1234");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
     [Theory]
     [InlineData("+14155551234", "1")]
     [InlineData("+442071234567", "44")]

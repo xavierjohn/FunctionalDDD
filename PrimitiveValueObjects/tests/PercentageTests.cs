@@ -52,6 +52,28 @@ public class PercentageTests
     }
 
     [Fact]
+    public void Create_returns_Percentage_for_valid_value()
+    {
+        // Act
+        var percentage = Percentage.Create(50m);
+
+        // Assert
+        percentage.Value.Should().Be(50m);
+    }
+
+    [Fact]
+    public void Create_throws_for_out_of_range_value()
+    {
+        // Act
+        Action actHigh = () => Percentage.Create(150m);
+        Action actLow = () => Percentage.Create(-10m);
+
+        // Assert
+        actHigh.Should().Throw<InvalidOperationException>();
+        actLow.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
     public void Zero_property_returns_zero()
     {
         // Act
