@@ -18,7 +18,7 @@ public class UsersController : ControllerBase
         .Combine(PhoneNumber.TryCreate(request.phone))
         .Combine(Age.TryCreate(request.age))
         .Combine(CountryCode.TryCreate(request.country))
-        .Bind((firstName, lastName, email, phone, age, country) => 
+        .Bind((firstName, lastName, email, phone, age, country) =>
             SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
         .ToActionResult(this);
 
@@ -30,7 +30,7 @@ public class UsersController : ControllerBase
         .Combine(PhoneNumber.TryCreate(request.phone))
         .Combine(Age.TryCreate(request.age))
         .Combine(CountryCode.TryCreate(request.country))
-        .Bind((firstName, lastName, email, phone, age, country) => 
+        .Bind((firstName, lastName, email, phone, age, country) =>
             SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
         .Match(
             onSuccess: ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
@@ -44,7 +44,7 @@ public class UsersController : ControllerBase
             .Combine(PhoneNumber.TryCreate(request.phone))
             .Combine(Age.TryCreate(request.age))
             .Combine(CountryCode.TryCreate(request.country))
-            .Bind((firstName, lastName, email, phone, age, country) => 
+            .Bind((firstName, lastName, email, phone, age, country) =>
                 SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
             .Match(
                 onSuccess: ok => AcceptedAtAction("Get", new { name = ok.FirstName }, ok),

@@ -194,4 +194,3 @@ public abstract class Entity<TId>
     /// </remarks>
     public override int GetHashCode() => HashCode.Combine(GetType(), Id);
 }
-

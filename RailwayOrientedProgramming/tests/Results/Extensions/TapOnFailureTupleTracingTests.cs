@@ -267,10 +267,10 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Should have 1 Combine + 1 TapOnFailure activity
         activityTest.AssertActivityCaptured(2);
-        
+
         // Verify TapOnFailure activity has Error status
         activityTest.AssertActivityCapturedWithStatus("TapOnFailure", ActivityStatusCode.Error);
     }
@@ -292,7 +292,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         result.Should().Be("Error");
-        
+
         // Should have Combine + TapOnFailure + Match activities
         activityTest.AssertActivityCaptured(3);
     }
@@ -310,7 +310,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Should have Combine + TapOnFailure activities
         activityTest.ActivityCount.Should().BeGreaterThan(0);
         // TapOnFailure should have Error status
@@ -331,7 +331,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Bind should be short-circuited (no Bind activity)
         // Should only have Combine + TapOnFailure
         activityTest.AssertActivityCapturedWithStatus("TapOnFailure", ActivityStatusCode.Error);

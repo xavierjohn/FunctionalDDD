@@ -1,4 +1,4 @@
-namespace Benchmark;
+﻿namespace Benchmark;
 
 using BenchmarkDotNet.Attributes;
 using FunctionalDdd;
@@ -106,8 +106,8 @@ public class BindBenchmarks
 
     private static Result<int> ValidateResult(int value)
     {
-        return value > 0 
-            ? Result.Success(value) 
+        return value > 0
+            ? Result.Success(value)
             : Result.Failure<int>(Error.Validation("Value must be positive"));
     }
 

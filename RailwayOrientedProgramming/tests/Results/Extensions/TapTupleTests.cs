@@ -406,7 +406,7 @@ public class TapTupleTests : TestBase
         var result = Result.Success("user@example.com")
             .Combine(Result.Success("John"))
             .Combine(Result.Success("Doe"))
-            .Tap((email, first, last) => 
+            .Tap((email, first, last) =>
                 loggedValues.Add($"{first} {last} <{email}>"));
 
         // Assert
@@ -444,15 +444,15 @@ public class TapTupleTests : TestBase
 
         // Act
         var result = Result.Success(("CREATE", "User"))
-            .Tap((action, entity) => 
+            .Tap((action, entity) =>
                 metrics[$"{action}_{entity}"] = metrics.GetValueOrDefault($"{action}_{entity}") + 1);
 
         Result.Success(("CREATE", "User"))
-            .Tap((action, entity) => 
+            .Tap((action, entity) =>
                 metrics[$"{action}_{entity}"] = metrics.GetValueOrDefault($"{action}_{entity}") + 1);
 
         Result.Success(("UPDATE", "User"))
-            .Tap((action, entity) => 
+            .Tap((action, entity) =>
                 metrics[$"{action}_{entity}"] = metrics.GetValueOrDefault($"{action}_{entity}") + 1);
 
         // Assert

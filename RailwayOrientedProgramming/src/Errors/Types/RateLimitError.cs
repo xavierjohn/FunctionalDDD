@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Represents a rate limiting error when too many requests have been made.

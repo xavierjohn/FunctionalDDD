@@ -81,11 +81,11 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Deposit(Money amount, string description = "Deposit")
     {
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Active, 
+            .Ensure(_ => Status == AccountStatus.Active,
                 Error.Domain($"Cannot deposit to {Status} account"))
-            .Ensure(_ => amount.Amount > 0, 
+            .Ensure(_ => amount.Amount > 0,
                 Error.Validation("Deposit amount must be positive", nameof(amount)))
-            .Ensure(_ => amount.Amount <= 10000, 
+            .Ensure(_ => amount.Amount <= 10000,
                 Error.Domain("Single deposit cannot exceed $10,000"))
             .Bind(_ => Balance.Add(amount))
             .Tap(newBalance =>
@@ -112,9 +112,9 @@ public class BankAccount : Aggregate<AccountId>
         var todayTotal = GetTodayWithdrawals();
 
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Active, 
+            .Ensure(_ => Status == AccountStatus.Active,
                 Error.Domain($"Cannot withdraw from {Status} account"))
-            .Ensure(_ => amount.Amount > 0, 
+            .Ensure(_ => amount.Amount > 0,
                 Error.Validation("Withdrawal amount must be positive", nameof(amount)))
             .Bind(_ => todayTotal.Add(amount))
             .Ensure(totalWithToday => totalWithToday.IsGreaterThanOrEqual(DailyWithdrawalLimit) == false,
@@ -170,9 +170,9 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Freeze(string reason)
     {
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Active, 
+            .Ensure(_ => Status == AccountStatus.Active,
                 Error.Conflict($"Cannot freeze {Status} account"))
-            .Ensure(_ => !string.IsNullOrWhiteSpace(reason), 
+            .Ensure(_ => !string.IsNullOrWhiteSpace(reason),
                 Error.Validation("Freeze reason is required", nameof(reason)))
             .Tap(_ =>
             {
@@ -190,7 +190,7 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Unfreeze()
     {
         return this.ToResult()
-            .Ensure(_ => Status == AccountStatus.Frozen, 
+            .Ensure(_ => Status == AccountStatus.Frozen,
                 Error.Conflict("Only frozen accounts can be unfrozen"))
             .Tap(_ =>
             {
@@ -208,9 +208,9 @@ public class BankAccount : Aggregate<AccountId>
     public Result<BankAccount> Close()
     {
         return this.ToResult()
-            .Ensure(_ => Status != AccountStatus.Closed, 
+            .Ensure(_ => Status != AccountStatus.Closed,
                 Error.Conflict("Account is already closed"))
-            .Ensure(_ => Balance.Amount == 0, 
+            .Ensure(_ => Balance.Amount == 0,
                 Error.Domain("Account balance must be zero to close"))
             .Tap(_ =>
             {

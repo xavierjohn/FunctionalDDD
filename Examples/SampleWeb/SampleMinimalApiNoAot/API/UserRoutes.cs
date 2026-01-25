@@ -22,7 +22,7 @@ public static class UserRoutes
             .Combine(PhoneNumber.TryCreate(request.phone))
             .Combine(Age.TryCreate(request.age))
             .Combine(CountryCode.TryCreate(request.country))
-            .Bind((firstName, lastName, email, phone, age, country) => 
+            .Bind((firstName, lastName, email, phone, age, country) =>
                 User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
             .ToHttpResult());
 
@@ -33,7 +33,7 @@ public static class UserRoutes
             .Combine(PhoneNumber.TryCreate(request.phone))
             .Combine(Age.TryCreate(request.age))
             .Combine(CountryCode.TryCreate(request.country))
-            .Bind((firstName, lastName, email, phone, age, country) => 
+            .Bind((firstName, lastName, email, phone, age, country) =>
                 User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
             .Match(
                     onSuccess: ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
@@ -65,9 +65,9 @@ public static class UserRoutes
         // FirstName, LastName, EmailAddress, PhoneNumber, Age, CountryCode, Url (optional)
         userApi.MapPost("/registerWithAutoValidation", (RegisterUserDto dto) =>
             User.TryCreate(
-                dto.FirstName, 
-                dto.LastName, 
-                dto.Email, 
+                dto.FirstName,
+                dto.LastName,
+                dto.Email,
                 dto.Phone,
                 dto.Age,
                 dto.Country,

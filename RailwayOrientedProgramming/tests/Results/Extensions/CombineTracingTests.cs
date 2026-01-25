@@ -44,9 +44,9 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
-        
+
         // Verify error is also tracked in activity tags
         var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
         errorTag.Should().NotBeNull();
@@ -80,9 +80,9 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
-        
+
         // Verify error is tracked in activity tags
         var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
         errorTag.Should().NotBeNull();
@@ -115,7 +115,7 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
         var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
         errorTag.Should().NotBeNull();
@@ -138,7 +138,7 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Should have 2 Combine activities (one for 2-tuple, one for 3-tuple)
         var activities = activityTest.AssertActivityCaptured("Combine", 2);
         activities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
@@ -157,7 +157,7 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Should have 2 Combine activities - both should have Error status
         // because the failure propagates through the chain
         var activities = activityTest.AssertActivityCaptured("Combine", 2);
@@ -177,13 +177,13 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Should have 2 Combine activities
         var activities = activityTest.AssertActivityCaptured("Combine", 2).ToArray();
-        
+
         // First Combine (2-tuple) should succeed
         activities[0].Status.Should().Be(ActivityStatusCode.Ok);
-        
+
         // Second Combine (3-tuple) should fail
         activities[1].Status.Should().Be(ActivityStatusCode.Error);
     }
@@ -202,7 +202,7 @@ public class CombineTracingTests : TestBase
         // Assert
         result.Should().BeSuccess();
         result.Value.Should().Be(("First", "Second"));
-        
+
         // Should have 2 Combine activities, both with Ok status
         var activities = activityTest.AssertActivityCaptured("Combine", 2);
         activities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
@@ -243,9 +243,9 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
-        
+
         // Verify error is also tracked in tags
         var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
         errorTag.Should().NotBeNull();
@@ -265,7 +265,7 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
         var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
         errorTag.Should().NotBeNull();
@@ -289,7 +289,7 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Should have 3 Combine activities (2→3, 3→4), all with Ok status
         var activities = activityTest.AssertActivityCaptured("Combine", 3);
         activities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
@@ -309,11 +309,11 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Verify Combine operations were traced with Ok status
         var combineActivities = activityTest.AssertActivityCaptured("Combine", 2);
         combineActivities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
-        
+
         // Verify Bind operation was traced with Ok status
         activityTest.AssertActivityCapturedWithStatus("Bind", ActivityStatusCode.Ok);
     }
@@ -334,11 +334,11 @@ public class CombineTracingTests : TestBase
         // Assert
         result.Should().BeFailure();
         tapExecuted.Should().BeTrue();
-        
+
         // Verify Combine operations were traced with Error status
         var combineActivities = activityTest.AssertActivityCaptured("Combine", 2);
         combineActivities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Error);
-        
+
         // Verify TapOnFailure was traced with Error status
         activityTest.AssertActivityCapturedWithStatus("TapOnFailure", ActivityStatusCode.Error);
     }
@@ -359,10 +359,10 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Wait a bit for async activity to be captured
         await Task.Delay(50);
-        
+
         // Should have captured the Combine activity
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
@@ -379,10 +379,10 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Wait a bit for async activity to be captured
         await Task.Delay(50);
-        
+
         // Should have captured the Combine activity
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
@@ -400,10 +400,10 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Wait a bit for async activities to be captured
         await Task.Delay(50);
-        
+
         // Should have captured both Combine and Bind activities
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
@@ -422,17 +422,17 @@ public class CombineTracingTests : TestBase
         var result = Result.Success("user@example.com")
             .Combine(Result.Success("John"))
             .Combine(Result.Success("Doe"))
-            .Bind((email, firstName, lastName) => 
+            .Bind((email, firstName, lastName) =>
                 Result.Success($"{firstName} {lastName} <{email}>"));
 
         // Assert
         result.Should().BeSuccess()
             .Which.Should().Be("John Doe <user@example.com>");
-        
+
         // Verify complete trace: 2 Combines + 1 Bind, all with Ok status
         var combineActivities = activityTest.AssertActivityCaptured("Combine", 2);
         combineActivities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);
-        
+
         activityTest.AssertActivityCapturedWithStatus("Bind", ActivityStatusCode.Ok);
     }
 
@@ -452,14 +452,14 @@ public class CombineTracingTests : TestBase
         // Assert
         result.Should().BeFailureOfType<ValidationError>();
         errorLogged.Should().BeTrue();
-        
+
         // Verify Combine operations were traced with Error status
         var combineActivities = activityTest.AssertActivityCaptured("Combine", 2);
         combineActivities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Error);
-        
+
         // Verify error tags are also present
         combineActivities.Should().OnlyContain(a => a.TagObjects.Any(t => t.Key == "result.error.code"));
-        
+
         // Verify TapOnFailure was traced with Error status
         activityTest.AssertActivityCapturedWithStatus("TapOnFailure", ActivityStatusCode.Error);
     }
@@ -477,11 +477,11 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeFailureOfType<AggregateError>();
-        
+
         // Verify Combine operations were traced with Error status
         var activities = activityTest.AssertActivityCaptured("Combine", 2);
         activities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Error);
-        
+
         // Verify error tags
         activities.Should().OnlyContain(a => a.TagObjects.Any(t => t.Key == "result.error.code"));
     }
@@ -502,7 +502,7 @@ public class CombineTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Should have 5 Combine activities (2→3→4→5→6), all with Ok status
         var activities = activityTest.AssertActivityCaptured("Combine", 5);
         activities.Should().OnlyContain(a => a.Status == ActivityStatusCode.Ok);

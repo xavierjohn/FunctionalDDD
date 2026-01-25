@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Tests.Assertions;
+﻿namespace FunctionalDdd.Testing.Tests.Assertions;
 
 public class ResultAssertionsTests
 {
@@ -20,7 +20,7 @@ public class ResultAssertionsTests
 
         // Act & Assert
         var act = () => result.Should().BeSuccess();
-        
+
         act.Should().Throw<Exception>()
             .WithMessage("*to be success*failed with error*");
     }
@@ -55,7 +55,7 @@ public class ResultAssertionsTests
 
         // Act & Assert
         var act = () => result.Should().BeFailure();
-        
+
         act.Should().Throw<Exception>()
             .WithMessage("*to be failure*succeeded with value*");
     }
@@ -91,7 +91,7 @@ public class ResultAssertionsTests
 
         // Act & Assert
         var act = () => result.Should().BeFailureOfType<NotFoundError>();
-        
+
         act.Should().Throw<Exception>()
             .WithMessage("*to be of type*NotFoundError*found*ValidationError*");
     }
@@ -126,7 +126,7 @@ public class ResultAssertionsTests
 
         // Act & Assert
         var act = () => result.Should().HaveValue(99);
-        
+
         act.Should().Throw<Exception>();
     }
 
@@ -148,7 +148,7 @@ public class ResultAssertionsTests
 
         // Act & Assert
         var act = () => result.Should().HaveValueMatching(x => x > 50);
-        
+
         act.Should().Throw<Exception>()
             .WithMessage("*value to match predicate*");
     }

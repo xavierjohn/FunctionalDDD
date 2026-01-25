@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Tests.Assertions;
+﻿namespace FunctionalDdd.Testing.Tests.Assertions;
 
 public class ResultAssertionsAsyncTests
 {

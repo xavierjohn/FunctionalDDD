@@ -1,4 +1,5 @@
 ﻿namespace PrimitiveValueObjects.Tests;
+
 using FunctionalDdd.PrimitiveValueObjects;
 using System;
 using System.Globalization;

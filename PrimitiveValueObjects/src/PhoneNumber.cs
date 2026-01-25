@@ -129,7 +129,7 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
         // E.164 country codes are 1-3 digits
         // This is a simplified extraction; real-world would need a lookup table
         var digits = Value[1..]; // Skip the '+'
-        
+
         // Try to match known patterns (simplified)
         if (digits.StartsWith('1'))
             return "1"; // NANP (US, Canada, etc.)
@@ -137,7 +137,7 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
             return digits[..2];
         if (digits.Length >= 3)
             return digits[..3];
-        
+
         return digits[..1];
     }
 

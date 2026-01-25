@@ -1,9 +1,9 @@
-﻿using SampleUserLibrary;
-using FunctionalDdd;
+﻿using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApiNoAot.API;
+using SampleUserLibrary;
 
 var builder = WebApplication.CreateBuilder(args);
 

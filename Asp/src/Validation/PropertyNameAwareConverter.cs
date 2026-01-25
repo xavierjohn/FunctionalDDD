@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Asp.Validation;
+﻿namespace FunctionalDdd.Asp.Validation;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

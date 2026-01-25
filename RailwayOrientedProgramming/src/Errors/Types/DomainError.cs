@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Represents a domain or business rule violation.

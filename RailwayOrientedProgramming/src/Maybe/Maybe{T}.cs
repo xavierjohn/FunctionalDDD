@@ -1,4 +1,5 @@
 ﻿namespace FunctionalDdd;
+
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>

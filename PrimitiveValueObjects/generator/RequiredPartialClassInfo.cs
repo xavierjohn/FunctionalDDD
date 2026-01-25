@@ -29,7 +29,7 @@ internal class RequiredPartialClassInfo
     /// The fully-qualified namespace (e.g., "MyApp.Domain.ValueObjects").
     /// </value>
     public readonly string NameSpace;
-    
+
     /// <summary>
     /// Gets the name of the partial class.
     /// </summary>
@@ -37,7 +37,7 @@ internal class RequiredPartialClassInfo
     /// The simple class name without namespace (e.g., "CustomerId", "EmailAddress").
     /// </value>
     public readonly string ClassName;
-    
+
     /// <summary>
     /// Gets the base class that the partial class inherits from.
     /// </summary>
@@ -51,7 +51,7 @@ internal class RequiredPartialClassInfo
     /// </list>
     /// </remarks>
     public readonly string ClassBase;
-    
+
     /// <summary>
     /// Gets the accessibility level of the partial class.
     /// </summary>

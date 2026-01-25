@@ -1,7 +1,8 @@
 ﻿namespace Asp.Tests;
-using System.Text;
+
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 public class TestHttpResponseStreamWriterFactory : IHttpResponseStreamWriterFactory
 {

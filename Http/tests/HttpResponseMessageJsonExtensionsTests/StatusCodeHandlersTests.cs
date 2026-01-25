@@ -1,7 +1,8 @@
-namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+﻿namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+
+using FunctionalDdd;
 using System.Net;
 using System.Threading.Tasks;
-using FunctionalDdd;
 
 /// <summary>
 /// Tests for specific status code handlers and range handlers.

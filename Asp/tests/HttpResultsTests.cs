@@ -1,9 +1,9 @@
 ﻿namespace Asp.Tests;
 
+using FunctionalDdd;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
-using FunctionalDdd;
 
 public class HttpResultsTests
 {

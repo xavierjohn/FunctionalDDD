@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Fakes;
+﻿namespace FunctionalDdd.Testing.Fakes;
 
 using FunctionalDdd;  // Add explicit using for DomainEvent
 

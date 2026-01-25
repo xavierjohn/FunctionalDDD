@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
-using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// A JSON converter for value objects that implement <see cref="IParsable{TSelf}"/>.

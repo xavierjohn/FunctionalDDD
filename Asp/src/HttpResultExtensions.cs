@@ -1,4 +1,5 @@
 ﻿namespace FunctionalDdd;
+
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
@@ -122,10 +123,10 @@ public static class HttpResultExtensions
             // If TValue is Unit, return 204 No Content
             if (typeof(TValue) == typeof(Unit))
                 return Results.NoContent();
-            
+
             return Results.Ok(result.Value);
         }
-        
+
         return result.Error.ToHttpResult();
     }
 

@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Tests.Fakes;
+﻿namespace FunctionalDdd.Testing.Tests.Fakes;
 
 using FunctionalDdd.Testing.Fakes;
 

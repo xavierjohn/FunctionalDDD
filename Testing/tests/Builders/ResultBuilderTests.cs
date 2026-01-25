@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Testing.Tests.Builders;
+﻿namespace FunctionalDdd.Testing.Tests.Builders;
 
 using FunctionalDdd.Testing.Builders;
 

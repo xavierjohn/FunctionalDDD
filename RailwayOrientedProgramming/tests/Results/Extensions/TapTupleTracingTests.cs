@@ -61,10 +61,10 @@ public class TapTupleTracingTests : TestBase
         // Assert
         actual.Should().BeSuccess();
         activityTest.AssertActivityCaptured(3); // Should have 3 separate activities
-        
+
         // All activities should have Ok status (verified by individual checks)
         var activities = activityTest.CapturedActivities;
-        activities.Should().OnlyContain(a => 
+        activities.Should().OnlyContain(a =>
             a.DisplayName == "Tap" && a.Status == ActivityStatusCode.Ok);
     }
 
@@ -242,10 +242,10 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Should have 1 Combine + 1 Tap activity
         activityTest.AssertActivityCaptured(2);
-        
+
         // Verify Tap activity has Ok status
         activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
     }
@@ -264,7 +264,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Should have Combine + Tap + Bind activities
         activityTest.AssertActivityCaptured(3);
         activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Ok);
@@ -285,14 +285,14 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Should have 2 Combines + 1 Tap
         activityTest.ActivityCount.Should().BeGreaterThan(0);
-        
+
         // Verify Tap has Ok status
         var activities = activityTest.CapturedActivities;
-        activities.Should().Contain(a => 
-            a.DisplayName == "Tap" && 
+        activities.Should().Contain(a =>
+            a.DisplayName == "Tap" &&
             a.Status == ActivityStatusCode.Ok);
     }
 
@@ -313,7 +313,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         result.Should().Be("John Doe");
-        
+
         // Should have Combine + Tap + Match activities
         activityTest.AssertActivityCaptured(3);
     }
@@ -331,7 +331,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeFailure();
-        
+
         // Tap should create activity with Error status (not executed)
         activityTest.AssertActivityCapturedWithStatus("Tap", ActivityStatusCode.Error);
     }
@@ -351,10 +351,10 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Wait for async activities
         await Task.Delay(100);
-        
+
         // Should have activities for all operations
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }

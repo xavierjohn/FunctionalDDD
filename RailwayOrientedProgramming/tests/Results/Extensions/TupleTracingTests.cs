@@ -140,7 +140,7 @@ public class TupleTracingTests : TestBase
         // Assert
         result.Should().BeSuccess();
         actionCalled.Should().BeFalse();
-        
+
         // TapOnFailure creates an activity and logs the result status (Ok for success)
         var activities = activityTest.CapturedActivities;
         var tapActivity = activities.FirstOrDefault(a => a.DisplayName == "TapOnFailure");
@@ -432,10 +432,10 @@ public class TupleTracingTests : TestBase
         // Verify error path tracing
         var activities = activityTest.CapturedActivities;
         var combineActivities = activities.Where(a => a.DisplayName == "Combine").ToList();
-        
+
         // Last Combine should fail
         combineActivities.Last().Status.Should().Be(ActivityStatusCode.Error);
-        
+
         // Bind and TapOnFailure should be on error track
         activityTest.AssertActivityCapturedWithStatus("Bind", ActivityStatusCode.Error);
         activityTest.AssertActivityCapturedWithStatus("TapOnFailure", ActivityStatusCode.Error);

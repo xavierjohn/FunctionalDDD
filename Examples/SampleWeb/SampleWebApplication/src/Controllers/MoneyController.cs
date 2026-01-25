@@ -85,10 +85,10 @@ public class MoneyController : ControllerBase
         {
             var itemResult = Money.TryCreate(request.Items[i].Amount, request.Items[i].Currency)
                 .Bind(item => total.Add(item));
-            
+
             if (itemResult.IsFailure)
                 return itemResult.ToActionResult(this);
-            
+
             total = itemResult.Value;
         }
 

@@ -171,7 +171,7 @@ public static partial class TapExtensionsAsync
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
             await func().ConfigureAwait(false);
-        
+
         result.LogActivityStatus();
         return result;
     }

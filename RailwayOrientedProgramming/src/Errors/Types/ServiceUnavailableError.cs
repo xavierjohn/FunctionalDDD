@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Represents a temporary service unavailability error.

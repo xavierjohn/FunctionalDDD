@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Tests.Errors;
+﻿namespace FunctionalDdd.Tests.Errors;
 
 public class ValidationErrorTests
 {

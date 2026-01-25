@@ -78,7 +78,8 @@ public static class EnsureExtensions
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(Ensure));
-        if (result.IsFailure) {
+        if (result.IsFailure)
+        {
             result.LogActivityStatus();
             return result;
         }

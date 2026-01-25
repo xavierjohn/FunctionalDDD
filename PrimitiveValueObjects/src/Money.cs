@@ -68,7 +68,7 @@ public class Money : ValueObject
         var result = TryCreate(amount, currencyCode);
         if (result.IsFailure)
             throw new InvalidOperationException($"Failed to create Money: {result.Error.Detail}");
-        
+
         return result.Value;
     }
 

@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 using FunctionalDdd.Testing;
 using RailwayOrientedProgramming.Tests.Helpers;
@@ -120,7 +120,7 @@ public class ResultTracingIntegrationTests
         // Verify the complete trace
         var ensureActivities = activityTest.AssertActivityCaptured("Ensure", 2);
         var bindActivities = activityTest.AssertActivityCaptured("Bind", 2);
-        
+
         // All operations should have created activities
         activityTest.AssertActivityCaptured("Tap", 1);
     }

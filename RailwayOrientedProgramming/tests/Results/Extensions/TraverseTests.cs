@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.Traverse;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Traverse;
 
 using FunctionalDdd.Testing;
 using System.Globalization;

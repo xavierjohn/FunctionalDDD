@@ -281,7 +281,7 @@ public class MatchTupleTracingTests : TestBase
 
         // Assert
         output.Should().Be("42-hello");
-        
+
         // Wait for async activity capture
         await Task.Delay(50);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
@@ -310,7 +310,7 @@ public class MatchTupleTracingTests : TestBase
 
         // Assert
         output.Should().Be("42-hello");
-        
+
         // Wait for async activity capture
         await Task.Delay(50);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
@@ -339,7 +339,7 @@ public class MatchTupleTracingTests : TestBase
 
         // Assert
         output.Should().Be("Not found");
-        
+
         // Wait for async activity capture
         await Task.Delay(50);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
@@ -369,7 +369,7 @@ public class MatchTupleTracingTests : TestBase
 
         // Assert
         executed.Should().BeTrue();
-        
+
         // Wait for async activity capture
         await Task.Delay(50);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
@@ -395,7 +395,7 @@ public class MatchTupleTracingTests : TestBase
 
         // Assert
         errorLogged.Should().BeTrue();
-        
+
         // Wait for async activity capture
         await Task.Delay(50);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
@@ -457,7 +457,7 @@ public class MatchTupleTracingTests : TestBase
 
         // Assert
         result.Should().Be("First Second");
-        
+
         // Should have 1 Combine + 1 Match activity
         activityTest.AssertActivityCaptured(2);
         activityTest.AssertActivityCapturedWithStatus("Match", ActivityStatusCode.Ok);

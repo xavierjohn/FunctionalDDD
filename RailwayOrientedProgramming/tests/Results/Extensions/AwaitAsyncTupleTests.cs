@@ -1,7 +1,7 @@
-using FluentAssertions;
-using Xunit;
+﻿using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Testing;
+using Xunit;
 
 namespace RailwayOrientedProgramming.Tests.Results.Extensions.Await;
 

@@ -1,11 +1,11 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using FluentAssertions;
 using FunctionalDdd;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 /// <summary>

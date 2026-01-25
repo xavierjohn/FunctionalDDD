@@ -1,4 +1,5 @@
 ﻿namespace EcommerceExample.ValueObjects;
+
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 

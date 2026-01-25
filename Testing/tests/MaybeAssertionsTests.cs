@@ -1,4 +1,4 @@
-namespace Testing.Tests;
+﻿namespace Testing.Tests;
 
 using FunctionalDdd;
 using FunctionalDdd.Testing;

@@ -20,7 +20,7 @@ public sealed class PvoActivityTestHelper : IDisposable
     {
         // Create a unique ActivitySource for this test
         _testActivitySource = new ActivitySource($"Test-PVO-{Guid.NewGuid():N}");
-        
+
         // Configure the listener to capture activities from our test source
         _listener = new ActivityListener
         {
@@ -35,9 +35,9 @@ public sealed class PvoActivityTestHelper : IDisposable
                 }
             }
         };
-        
+
         ActivitySource.AddActivityListener(_listener);
-        
+
         // Inject our test source into PrimitiveValueObjectTrace (works in both DEBUG and RELEASE)
         PrimitiveValueObjectTrace.SetTestActivitySource(_testActivitySource);
     }
@@ -132,14 +132,14 @@ public sealed class PvoActivityTestHelper : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         // Reset PrimitiveValueObjectTrace to use the default ActivitySource
         PrimitiveValueObjectTrace.ResetTestActivitySource();
-        
+
         // Dispose resources
         _listener.Dispose();
         _testActivitySource.Dispose();
-        
+
         _disposed = true;
     }
 }

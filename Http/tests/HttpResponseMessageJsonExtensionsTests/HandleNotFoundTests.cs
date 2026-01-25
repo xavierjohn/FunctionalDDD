@@ -1,9 +1,9 @@
-namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+﻿namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
 
-using System.Net;
-using System.Threading.Tasks;
 using FunctionalDdd;
 using FunctionalDdd.Testing;
+using System.Net;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Tests for HandleNotFound and HandleNotFoundAsync extension methods.

@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Provides LINQ query expression support for Result types, enabling C# query syntax for functional operations.

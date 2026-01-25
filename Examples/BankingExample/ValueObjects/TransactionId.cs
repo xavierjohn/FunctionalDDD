@@ -1,4 +1,5 @@
 ﻿namespace BankingExample.ValueObjects;
+
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 

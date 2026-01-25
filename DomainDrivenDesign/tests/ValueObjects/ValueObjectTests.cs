@@ -84,10 +84,10 @@ public class ValueObjectTests
     public void ValueObject_GetHashCode_is_cached()
     {
         var money = new Money(100m);
-        
+
         var hash1 = money.GetHashCode();
         var hash2 = money.GetHashCode();
-        
+
         hash1.Should().Be(hash2);
     }
 

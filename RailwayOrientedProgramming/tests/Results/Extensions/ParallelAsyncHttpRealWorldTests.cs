@@ -158,7 +158,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     {
         // Arrange - simulate service that fails once then succeeds (transient 503 error)
         var attemptCount = 0;
-        
+
         async Task<Result<InventoryResponse>> CheckInventoryWithRetry(string productId)
         {
             attemptCount++;
@@ -168,7 +168,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
                 await Task.Delay(10); // Simulate network delay
                 return Error.ServiceUnavailable("Inventory service temporarily unavailable");
             }
-            
+
             // Retry succeeds
             await Task.Delay(10);
             return Result.Success(new InventoryResponse(productId, 100, true));
@@ -201,7 +201,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     {
         // Arrange - service fails twice then succeeds
         var attemptCount = 0;
-        
+
         async Task<Result<PaymentResponse>> ValidatePaymentWithRetries(string paymentId)
         {
             attemptCount++;
@@ -211,7 +211,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
                 await Task.Delay(10);
                 return Error.ServiceUnavailable("Payment service timeout");
             }
-            
+
             // Third attempt succeeds
             await Task.Delay(10);
             return Result.Success(new PaymentResponse(paymentId, true));
@@ -244,7 +244,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     {
         // Arrange - service always returns transient error
         var attemptCount = 0;
-        
+
         async Task<Result<ShippingResponse>> CalculateShippingAlwaysFails(string address)
         {
             attemptCount++;
@@ -300,7 +300,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         // Assert - parallel execution should take ~50ms (not 200ms sequential)
         result.Should().BeSuccess();
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(120); // Allow margin for CI/slow machines
-        
+
         // If sequential, would take 4 * 50ms = 200ms+
         // Parallel should be ~50ms (longest single operation)
     }
@@ -315,7 +315,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         // Scenario: E-commerce checkout with 2 stages:
         // Stage 1: Fetch user, inventory, payment in parallel
         // Stage 2: Use results to run fraud detection + shipping calculation in parallel
-        
+
         // Arrange
         var request = new CheckoutRequest("user-123", "prod-456", "pm-789", "123 Main St");
 
@@ -326,7 +326,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => ValidatePaymentAsync(request.PaymentMethodId)
         )
         .AwaitAsync()  // ✅ Wait for Stage 1 to complete
-        
+
         // Stage 2: Now we have (user, inventory, payment) - run fraud & shipping in parallel
         .BindAsync((user, inventory, payment) =>
             Result.ParallelAsync(
@@ -359,7 +359,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     public async Task ParallelAsync_MultiStage_Stage1Failure_SkipsStage2()
     {
         // Scenario: If Stage 1 fails, Stage 2 should not execute (short-circuit)
-        
+
         // Arrange - user doesn't exist (Stage 1 will fail)
         var request = new CheckoutRequest("nonexistent-user", "prod-456", "pm-789", "123 Main St");
         var stage2Executed = false;
@@ -371,7 +371,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => ValidatePaymentAsync(request.PaymentMethodId)
         )
         .AwaitAsync()
-        
+
         // Stage 2 should NOT execute because Stage 1 failed
         .BindAsync((user, inventory, payment) =>
         {
@@ -392,7 +392,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     public async Task ParallelAsync_MultiStage_Stage2Failure_ReturnsStage2Error()
     {
         // Scenario: Stage 1 succeeds, but Stage 2 fails (e.g., fraud detected)
-        
+
         // Arrange - high-risk transaction triggers fraud detection
         var request = new CheckoutRequest("user-high-risk", "prod-expensive", "pm-789", "123 Main St");
 
@@ -403,7 +403,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => ValidatePaymentAsync(request.PaymentMethodId)
         )
         .AwaitAsync()
-        
+
         // Stage 2: Fraud detection will fail
         .BindAsync((user, inventory, payment) =>
             Result.ParallelAsync(
@@ -426,7 +426,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         // Stage 1: Fetch user + inventory (2 parallel)
         // Stage 2: Validate payment + check fraud (2 parallel, needs user from Stage 1)
         // Stage 3: Calculate shipping + reserve inventory (2 parallel, needs results from Stage 2)
-        
+
         // Arrange
         var userId = "user-123";
         var productId = "prod-456";
@@ -439,21 +439,21 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync(productId)
         )
         .AwaitAsync()  // Stage 1 complete
-        
+
         .BindAsync((user, inventory) =>
             Result.ParallelAsync(
                 () => ValidatePaymentAsync(paymentId),
                 () => RunFraudDetectionAsync(user, new PaymentResponse(paymentId, true), inventory)
             )
             .AwaitAsync()  // Stage 2 complete
-            
+
             .BindAsync((payment, fraudCheck) =>
                 Result.ParallelAsync(
                     () => CalculateShippingWithWeightAsync(address, inventory),
                     () => ReserveInventoryAsync(inventory)
                 )
                 .AwaitAsync()  // Stage 3 complete
-                
+
                 .BindAsync((shipping, reservation) =>
                     Result.Success(new
                     {
@@ -478,7 +478,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     public async Task ParallelAsync_MultiStage_Performance_ComparedToSequential()
     {
         // Demonstrate performance benefit of multi-stage parallel vs sequential
-        
+
         var stopwatch = Stopwatch.StartNew();
 
         // Act - Multi-stage parallel execution
@@ -488,7 +488,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => ValidatePaymentAsync("pm-789")       // 50ms
         )
         .AwaitAsync()  // Stage 1: ~50ms (parallel)
-        
+
         .BindAsync((user, inventory, payment) =>
             Result.ParallelAsync(
                 () => RunFraudDetectionAsync(user, payment, inventory),  // 30ms
@@ -501,7 +501,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
 
         // Assert
         result.Should().BeSuccess();
-        
+
         // Sequential would be: 50 + 50 + 50 + 30 + 40 = 220ms
         // Parallel is: max(50,50,50) + max(30,40) = 50 + 40 = 90ms
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(150); // ~2.4x faster!

@@ -10,7 +10,7 @@ public static class Maybe
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns><see cref="Maybe{T}"/> object with no value.</returns>
-    public static Maybe<T> None<T>()=> new();
+    public static Maybe<T> None<T>() => new();
 
     /// <summary>
     /// Creates a new <see cref="Maybe{T}"/> with a value.

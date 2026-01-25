@@ -177,7 +177,7 @@ public class CombineBenchmarks
         var result = await Task.FromResult(_successInt1)
             .CombineAsync(_successInt2)
             .CombineAsync(Result.Success(200));
-        
+
         return result.Map(tuple => tuple.Item1.Item1 + tuple.Item1.Item2 + tuple.Item2);
     }
 
@@ -189,8 +189,8 @@ public class CombineBenchmarks
             .Combine(EmailAddress.TryCreate("john@example.com"))
             .Combine(Result.Success(30))
             .Bind((first, last, email, age) => Result.Success(new Person(
-                $"{first} {last}", 
-                email.ToString(), 
+                $"{first} {last}",
+                email.ToString(),
                 age)));
     }
 
@@ -202,8 +202,8 @@ public class CombineBenchmarks
             .Combine(EmailAddress.TryCreate("john@example.com"))
             .Combine(Result.Success(30))
             .Bind((first, last, email, age) => Result.Success(new Person(
-                $"{first} {last}", 
-                email.ToString(), 
+                $"{first} {last}",
+                email.ToString(),
                 age)))
             .Ensure(p => p.Age >= 18, Error.Validation("Must be adult"));
     }

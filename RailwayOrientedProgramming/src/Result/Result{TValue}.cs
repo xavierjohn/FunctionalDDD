@@ -222,7 +222,7 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <param name="right">The second result to compare.</param>
     /// <returns>True if the results are equal; otherwise false.</returns>
     public static bool operator ==(Result<TValue> left, Result<TValue> right) => left.Equals(right);
-    
+
     /// <summary>
     /// Determines whether two results are not equal.
     /// </summary>

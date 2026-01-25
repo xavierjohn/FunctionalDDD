@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using System.Diagnostics;
 using System.Threading.Tasks;

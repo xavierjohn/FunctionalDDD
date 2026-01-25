@@ -1,11 +1,12 @@
-namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
-using System.Net.Http.Json;
-using System.Net;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Text;
-using System.Text.Json.Serialization;
+﻿namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+
 using FunctionalDdd;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 public class ReadResultMaybeFromJsonTests
 {

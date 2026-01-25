@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 /// <summary>
 /// Indicates which railway track an operation executes on.

@@ -234,7 +234,7 @@ public abstract class ScalarValueObject<TSelf, T> : ValueObject, IConvertible
         var result = TSelf.TryCreate(value);
         if (result.IsFailure)
             throw new InvalidOperationException($"Failed to create {typeof(TSelf).Name}: {result.Error.Detail}");
-        
+
         return result.Value;
     }
 
