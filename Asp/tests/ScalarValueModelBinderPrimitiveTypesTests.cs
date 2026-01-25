@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+namespace Asp.Tests;
 
 using FluentAssertions;
 using FunctionalDdd;
@@ -10,14 +10,14 @@ using Microsoft.AspNetCore.Routing;
 using Xunit;
 
 /// <summary>
-/// Tests for ScalarValueObjectModelBinder covering all primitive type conversions.
+/// Tests for ScalarValueModelBinder covering all primitive type conversions.
 /// These tests ensure ConvertToPrimitive handles all supported types correctly.
 /// </summary>
-public class ScalarValueObjectModelBinderPrimitiveTypesTests
+public class ScalarValueModelBinderPrimitiveTypesTests
 {
     #region Value Object Types for Each Primitive
 
-    public sealed class StringVO : ScalarValueObject<StringVO, string>, IScalarValueObject<StringVO, string>
+    public sealed class StringVO : ScalarValueObject<StringVO, string>, IScalarValue<StringVO, string>
     {
         private StringVO(string value) : base(value) { }
         public static Result<StringVO> TryCreate(string? value, string? fieldName = null) =>
@@ -26,7 +26,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new StringVO(value);
     }
 
-    public sealed class GuidVO : ScalarValueObject<GuidVO, Guid>, IScalarValueObject<GuidVO, Guid>
+    public sealed class GuidVO : ScalarValueObject<GuidVO, Guid>, IScalarValue<GuidVO, Guid>
     {
         private GuidVO(Guid value) : base(value) { }
         public static Result<GuidVO> TryCreate(Guid value, string? fieldName = null) =>
@@ -35,7 +35,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new GuidVO(value);
     }
 
-    public sealed class NonNegativeIntVO : ScalarValueObject<NonNegativeIntVO, int>, IScalarValueObject<NonNegativeIntVO, int>
+    public sealed class NonNegativeIntVO : ScalarValueObject<NonNegativeIntVO, int>, IScalarValue<NonNegativeIntVO, int>
     {
         private NonNegativeIntVO(int value) : base(value) { }
         public static Result<NonNegativeIntVO> TryCreate(int value, string? fieldName = null) =>
@@ -44,7 +44,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new NonNegativeIntVO(value);
     }
 
-    public sealed class LongVO : ScalarValueObject<LongVO, long>, IScalarValueObject<LongVO, long>
+    public sealed class LongVO : ScalarValueObject<LongVO, long>, IScalarValue<LongVO, long>
     {
         private LongVO(long value) : base(value) { }
         public static Result<LongVO> TryCreate(long value, string? fieldName = null) =>
@@ -53,7 +53,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new LongVO(value);
     }
 
-    public sealed class DecimalVO : ScalarValueObject<DecimalVO, decimal>, IScalarValueObject<DecimalVO, decimal>
+    public sealed class DecimalVO : ScalarValueObject<DecimalVO, decimal>, IScalarValue<DecimalVO, decimal>
     {
         private DecimalVO(decimal value) : base(value) { }
         public static Result<DecimalVO> TryCreate(decimal value, string? fieldName = null) =>
@@ -62,7 +62,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new DecimalVO(value);
     }
 
-    public sealed class DoubleVO : ScalarValueObject<DoubleVO, double>, IScalarValueObject<DoubleVO, double>
+    public sealed class DoubleVO : ScalarValueObject<DoubleVO, double>, IScalarValue<DoubleVO, double>
     {
         private DoubleVO(double value) : base(value) { }
         public static Result<DoubleVO> TryCreate(double value, string? fieldName = null) =>
@@ -71,14 +71,14 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new DoubleVO(value);
     }
 
-    public sealed class BoolVO : ScalarValueObject<BoolVO, bool>, IScalarValueObject<BoolVO, bool>
+    public sealed class BoolVO : ScalarValueObject<BoolVO, bool>, IScalarValue<BoolVO, bool>
     {
         private BoolVO(bool value) : base(value) { }
         public static Result<BoolVO> TryCreate(bool value, string? fieldName = null) =>
             new BoolVO(value);
     }
 
-    public sealed class DateTimeVO : ScalarValueObject<DateTimeVO, DateTime>, IScalarValueObject<DateTimeVO, DateTime>
+    public sealed class DateTimeVO : ScalarValueObject<DateTimeVO, DateTime>, IScalarValue<DateTimeVO, DateTime>
     {
         private DateTimeVO(DateTime value) : base(value) { }
         public static Result<DateTimeVO> TryCreate(DateTime value, string? fieldName = null) =>
@@ -87,7 +87,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new DateTimeVO(value);
     }
 
-    public sealed class DateOnlyVO : ScalarValueObject<DateOnlyVO, DateOnly>, IScalarValueObject<DateOnlyVO, DateOnly>
+    public sealed class DateOnlyVO : ScalarValueObject<DateOnlyVO, DateOnly>, IScalarValue<DateOnlyVO, DateOnly>
     {
         private DateOnlyVO(DateOnly value) : base(value) { }
         public static Result<DateOnlyVO> TryCreate(DateOnly value, string? fieldName = null) =>
@@ -96,14 +96,14 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new DateOnlyVO(value);
     }
 
-    public sealed class TimeOnlyVO : ScalarValueObject<TimeOnlyVO, TimeOnly>, IScalarValueObject<TimeOnlyVO, TimeOnly>
+    public sealed class TimeOnlyVO : ScalarValueObject<TimeOnlyVO, TimeOnly>, IScalarValue<TimeOnlyVO, TimeOnly>
     {
         private TimeOnlyVO(TimeOnly value) : base(value) { }
         public static Result<TimeOnlyVO> TryCreate(TimeOnly value, string? fieldName = null) =>
             new TimeOnlyVO(value);
     }
 
-    public sealed class DateTimeOffsetVO : ScalarValueObject<DateTimeOffsetVO, DateTimeOffset>, IScalarValueObject<DateTimeOffsetVO, DateTimeOffset>
+    public sealed class DateTimeOffsetVO : ScalarValueObject<DateTimeOffsetVO, DateTimeOffset>, IScalarValue<DateTimeOffsetVO, DateTimeOffset>
     {
         private DateTimeOffsetVO(DateTimeOffset value) : base(value) { }
         public static Result<DateTimeOffsetVO> TryCreate(DateTimeOffset value, string? fieldName = null) =>
@@ -112,7 +112,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new DateTimeOffsetVO(value);
     }
 
-    public sealed class ShortVO : ScalarValueObject<ShortVO, short>, IScalarValueObject<ShortVO, short>
+    public sealed class ShortVO : ScalarValueObject<ShortVO, short>, IScalarValue<ShortVO, short>
     {
         private ShortVO(short value) : base(value) { }
         public static Result<ShortVO> TryCreate(short value, string? fieldName = null) =>
@@ -121,14 +121,14 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
                 : new ShortVO(value);
     }
 
-    public sealed class ByteVO : ScalarValueObject<ByteVO, byte>, IScalarValueObject<ByteVO, byte>
+    public sealed class ByteVO : ScalarValueObject<ByteVO, byte>, IScalarValue<ByteVO, byte>
     {
         private ByteVO(byte value) : base(value) { }
         public static Result<ByteVO> TryCreate(byte value, string? fieldName = null) =>
             new ByteVO(value);
     }
 
-    public sealed class FloatVO : ScalarValueObject<FloatVO, float>, IScalarValueObject<FloatVO, float>
+    public sealed class FloatVO : ScalarValueObject<FloatVO, float>, IScalarValue<FloatVO, float>
     {
         private FloatVO(float value) : base(value) { }
         public static Result<FloatVO> TryCreate(float value, string? fieldName = null) =>
@@ -144,7 +144,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_String_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<StringVO, string>();
+        var binder = new ScalarValueModelBinder<StringVO, string>();
         var context = CreateBindingContext<StringVO>("test", "hello world");
 
         await binder.BindModelAsync(context);
@@ -157,7 +157,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_String_EmptyValue_ReturnsValidationError()
     {
-        var binder = new ScalarValueObjectModelBinder<StringVO, string>();
+        var binder = new ScalarValueModelBinder<StringVO, string>();
         var context = CreateBindingContext<StringVO>("test", "");
 
         await binder.BindModelAsync(context);
@@ -173,7 +173,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Guid_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<GuidVO, Guid>();
+        var binder = new ScalarValueModelBinder<GuidVO, Guid>();
         var guid = Guid.NewGuid();
         var context = CreateBindingContext<GuidVO>("id", guid.ToString());
 
@@ -186,7 +186,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Guid_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<GuidVO, Guid>();
+        var binder = new ScalarValueModelBinder<GuidVO, Guid>();
         var context = CreateBindingContext<GuidVO>("id", "not-a-guid");
 
         await binder.BindModelAsync(context);
@@ -200,7 +200,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Guid_EmptyGuid_ReturnsValidationError()
     {
-        var binder = new ScalarValueObjectModelBinder<GuidVO, Guid>();
+        var binder = new ScalarValueModelBinder<GuidVO, Guid>();
         var context = CreateBindingContext<GuidVO>("id", Guid.Empty.ToString());
 
         await binder.BindModelAsync(context);
@@ -216,7 +216,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Int_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<NonNegativeIntVO, int>();
+        var binder = new ScalarValueModelBinder<NonNegativeIntVO, int>();
         var context = CreateBindingContext<NonNegativeIntVO>("count", "42");
 
         await binder.BindModelAsync(context);
@@ -228,7 +228,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Int_NegativeValue_ReturnsValidationError()
     {
-        var binder = new ScalarValueObjectModelBinder<NonNegativeIntVO, int>();
+        var binder = new ScalarValueModelBinder<NonNegativeIntVO, int>();
         var context = CreateBindingContext<NonNegativeIntVO>("count", "-5");
 
         await binder.BindModelAsync(context);
@@ -240,7 +240,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Int_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<NonNegativeIntVO, int>();
+        var binder = new ScalarValueModelBinder<NonNegativeIntVO, int>();
         var context = CreateBindingContext<NonNegativeIntVO>("count", "abc");
 
         await binder.BindModelAsync(context);
@@ -253,7 +253,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Int_MaxValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<NonNegativeIntVO, int>();
+        var binder = new ScalarValueModelBinder<NonNegativeIntVO, int>();
         var context = CreateBindingContext<NonNegativeIntVO>("count", int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         await binder.BindModelAsync(context);
@@ -269,7 +269,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Long_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<LongVO, long>();
+        var binder = new ScalarValueModelBinder<LongVO, long>();
         var context = CreateBindingContext<LongVO>("id", "9223372036854775807");
 
         await binder.BindModelAsync(context);
@@ -281,7 +281,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Long_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<LongVO, long>();
+        var binder = new ScalarValueModelBinder<LongVO, long>();
         var context = CreateBindingContext<LongVO>("id", "not-a-number");
 
         await binder.BindModelAsync(context);
@@ -297,7 +297,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Decimal_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<DecimalVO, decimal>();
+        var binder = new ScalarValueModelBinder<DecimalVO, decimal>();
         var context = CreateBindingContext<DecimalVO>("price", "123.45");
 
         await binder.BindModelAsync(context);
@@ -309,7 +309,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Decimal_NegativeValue_ReturnsValidationError()
     {
-        var binder = new ScalarValueObjectModelBinder<DecimalVO, decimal>();
+        var binder = new ScalarValueModelBinder<DecimalVO, decimal>();
         var context = CreateBindingContext<DecimalVO>("price", "-99.99");
 
         await binder.BindModelAsync(context);
@@ -325,7 +325,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Double_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<DoubleVO, double>();
+        var binder = new ScalarValueModelBinder<DoubleVO, double>();
         var context = CreateBindingContext<DoubleVO>("rate", "3.14159");
 
         await binder.BindModelAsync(context);
@@ -337,7 +337,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Double_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<DoubleVO, double>();
+        var binder = new ScalarValueModelBinder<DoubleVO, double>();
         var context = CreateBindingContext<DoubleVO>("rate", "not-a-double");
 
         await binder.BindModelAsync(context);
@@ -359,7 +359,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [InlineData("FALSE", false)]
     public async Task BindModelAsync_Bool_ValidValues_BindsSuccessfully(string input, bool expected)
     {
-        var binder = new ScalarValueObjectModelBinder<BoolVO, bool>();
+        var binder = new ScalarValueModelBinder<BoolVO, bool>();
         var context = CreateBindingContext<BoolVO>("flag", input);
 
         await binder.BindModelAsync(context);
@@ -371,7 +371,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Bool_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<BoolVO, bool>();
+        var binder = new ScalarValueModelBinder<BoolVO, bool>();
         var context = CreateBindingContext<BoolVO>("flag", "yes");
 
         await binder.BindModelAsync(context);
@@ -387,7 +387,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_DateTime_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<DateTimeVO, DateTime>();
+        var binder = new ScalarValueModelBinder<DateTimeVO, DateTime>();
         var context = CreateBindingContext<DateTimeVO>("date", "2024-06-15T10:30:00");
 
         await binder.BindModelAsync(context);
@@ -402,7 +402,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_DateTime_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<DateTimeVO, DateTime>();
+        var binder = new ScalarValueModelBinder<DateTimeVO, DateTime>();
         var context = CreateBindingContext<DateTimeVO>("date", "not-a-date");
 
         await binder.BindModelAsync(context);
@@ -418,7 +418,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_DateOnly_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<DateOnlyVO, DateOnly>();
+        var binder = new ScalarValueModelBinder<DateOnlyVO, DateOnly>();
         var context = CreateBindingContext<DateOnlyVO>("birthDate", "2024-06-15");
 
         await binder.BindModelAsync(context);
@@ -431,7 +431,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_DateOnly_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<DateOnlyVO, DateOnly>();
+        var binder = new ScalarValueModelBinder<DateOnlyVO, DateOnly>();
         var context = CreateBindingContext<DateOnlyVO>("birthDate", "invalid");
 
         await binder.BindModelAsync(context);
@@ -447,7 +447,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_TimeOnly_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<TimeOnlyVO, TimeOnly>();
+        var binder = new ScalarValueModelBinder<TimeOnlyVO, TimeOnly>();
         var context = CreateBindingContext<TimeOnlyVO>("startTime", "14:30:00");
 
         await binder.BindModelAsync(context);
@@ -460,7 +460,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_TimeOnly_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<TimeOnlyVO, TimeOnly>();
+        var binder = new ScalarValueModelBinder<TimeOnlyVO, TimeOnly>();
         var context = CreateBindingContext<TimeOnlyVO>("startTime", "25:00:00");
 
         await binder.BindModelAsync(context);
@@ -476,7 +476,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_DateTimeOffset_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<DateTimeOffsetVO, DateTimeOffset>();
+        var binder = new ScalarValueModelBinder<DateTimeOffsetVO, DateTimeOffset>();
         var context = CreateBindingContext<DateTimeOffsetVO>("timestamp", "2024-06-15T10:30:00+02:00");
 
         await binder.BindModelAsync(context);
@@ -490,7 +490,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_DateTimeOffset_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<DateTimeOffsetVO, DateTimeOffset>();
+        var binder = new ScalarValueModelBinder<DateTimeOffsetVO, DateTimeOffset>();
         var context = CreateBindingContext<DateTimeOffsetVO>("timestamp", "invalid");
 
         await binder.BindModelAsync(context);
@@ -506,7 +506,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Short_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<ShortVO, short>();
+        var binder = new ScalarValueModelBinder<ShortVO, short>();
         var context = CreateBindingContext<ShortVO>("code", "32767");
 
         await binder.BindModelAsync(context);
@@ -518,7 +518,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Short_Overflow_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<ShortVO, short>();
+        var binder = new ScalarValueModelBinder<ShortVO, short>();
         var context = CreateBindingContext<ShortVO>("code", "99999");
 
         await binder.BindModelAsync(context);
@@ -534,7 +534,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Byte_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<ByteVO, byte>();
+        var binder = new ScalarValueModelBinder<ByteVO, byte>();
         var context = CreateBindingContext<ByteVO>("level", "255");
 
         await binder.BindModelAsync(context);
@@ -546,7 +546,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Byte_Overflow_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<ByteVO, byte>();
+        var binder = new ScalarValueModelBinder<ByteVO, byte>();
         var context = CreateBindingContext<ByteVO>("level", "256");
 
         await binder.BindModelAsync(context);
@@ -562,7 +562,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Float_ValidValue_BindsSuccessfully()
     {
-        var binder = new ScalarValueObjectModelBinder<FloatVO, float>();
+        var binder = new ScalarValueModelBinder<FloatVO, float>();
         var context = CreateBindingContext<FloatVO>("ratio", "0.5");
 
         await binder.BindModelAsync(context);
@@ -574,7 +574,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_Float_InvalidFormat_ReturnsError()
     {
-        var binder = new ScalarValueObjectModelBinder<FloatVO, float>();
+        var binder = new ScalarValueModelBinder<FloatVO, float>();
         var context = CreateBindingContext<FloatVO>("ratio", "not-a-float");
 
         await binder.BindModelAsync(context);
@@ -590,7 +590,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_MissingValue_DoesNotSetModel()
     {
-        var binder = new ScalarValueObjectModelBinder<StringVO, string>();
+        var binder = new ScalarValueModelBinder<StringVO, string>();
         var context = CreateBindingContextWithNoValue<StringVO>("test");
 
         await binder.BindModelAsync(context);
@@ -602,7 +602,7 @@ public class ScalarValueObjectModelBinderPrimitiveTypesTests
     [Fact]
     public async Task BindModelAsync_NullContext_ThrowsArgumentNullException()
     {
-        var binder = new ScalarValueObjectModelBinder<StringVO, string>();
+        var binder = new ScalarValueModelBinder<StringVO, string>();
 
         var act = () => binder.BindModelAsync(null!);
 

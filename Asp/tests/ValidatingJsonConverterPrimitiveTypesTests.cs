@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+namespace Asp.Tests;
 
 using FluentAssertions;
 using FunctionalDdd;
@@ -17,7 +17,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     #region Test Value Objects for Each Primitive Type
 
     // String
-    public class StringVO : ScalarValueObject<StringVO, string>, IScalarValueObject<StringVO, string>
+    public class StringVO : ScalarValueObject<StringVO, string>, IScalarValue<StringVO, string>
     {
         private StringVO(string value) : base(value) { }
         public static Result<StringVO> TryCreate(string? value, string? fieldName = null) =>
@@ -25,7 +25,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Guid
-    public class GuidVO : ScalarValueObject<GuidVO, Guid>, IScalarValueObject<GuidVO, Guid>
+    public class GuidVO : ScalarValueObject<GuidVO, Guid>, IScalarValue<GuidVO, Guid>
     {
         private GuidVO(Guid value) : base(value) { }
         public static Result<GuidVO> TryCreate(Guid value, string? fieldName = null) =>
@@ -33,7 +33,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Int
-    public class IntVO : ScalarValueObject<IntVO, int>, IScalarValueObject<IntVO, int>
+    public class IntVO : ScalarValueObject<IntVO, int>, IScalarValue<IntVO, int>
     {
         private IntVO(int value) : base(value) { }
         public static Result<IntVO> TryCreate(int value, string? fieldName = null) =>
@@ -41,7 +41,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Long
-    public class LongVO : ScalarValueObject<LongVO, long>, IScalarValueObject<LongVO, long>
+    public class LongVO : ScalarValueObject<LongVO, long>, IScalarValue<LongVO, long>
     {
         private LongVO(long value) : base(value) { }
         public static Result<LongVO> TryCreate(long value, string? fieldName = null) =>
@@ -49,7 +49,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Double
-    public class DoubleVO : ScalarValueObject<DoubleVO, double>, IScalarValueObject<DoubleVO, double>
+    public class DoubleVO : ScalarValueObject<DoubleVO, double>, IScalarValue<DoubleVO, double>
     {
         private DoubleVO(double value) : base(value) { }
         public static Result<DoubleVO> TryCreate(double value, string? fieldName = null) =>
@@ -57,7 +57,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Float
-    public class FloatVO : ScalarValueObject<FloatVO, float>, IScalarValueObject<FloatVO, float>
+    public class FloatVO : ScalarValueObject<FloatVO, float>, IScalarValue<FloatVO, float>
     {
         private FloatVO(float value) : base(value) { }
         public static Result<FloatVO> TryCreate(float value, string? fieldName = null) =>
@@ -65,7 +65,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Decimal
-    public class DecimalVO : ScalarValueObject<DecimalVO, decimal>, IScalarValueObject<DecimalVO, decimal>
+    public class DecimalVO : ScalarValueObject<DecimalVO, decimal>, IScalarValue<DecimalVO, decimal>
     {
         private DecimalVO(decimal value) : base(value) { }
         public static Result<DecimalVO> TryCreate(decimal value, string? fieldName = null) =>
@@ -73,7 +73,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // Bool
-    public class BoolVO : ScalarValueObject<BoolVO, bool>, IScalarValueObject<BoolVO, bool>
+    public class BoolVO : ScalarValueObject<BoolVO, bool>, IScalarValue<BoolVO, bool>
     {
         private BoolVO(bool value) : base(value) { }
         public static Result<BoolVO> TryCreate(bool value, string? fieldName = null) =>
@@ -81,7 +81,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // DateTime
-    public class DateTimeVO : ScalarValueObject<DateTimeVO, DateTime>, IScalarValueObject<DateTimeVO, DateTime>
+    public class DateTimeVO : ScalarValueObject<DateTimeVO, DateTime>, IScalarValue<DateTimeVO, DateTime>
     {
         private DateTimeVO(DateTime value) : base(value) { }
         public static Result<DateTimeVO> TryCreate(DateTime value, string? fieldName = null) =>
@@ -89,7 +89,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // DateTimeOffset
-    public class DateTimeOffsetVO : ScalarValueObject<DateTimeOffsetVO, DateTimeOffset>, IScalarValueObject<DateTimeOffsetVO, DateTimeOffset>
+    public class DateTimeOffsetVO : ScalarValueObject<DateTimeOffsetVO, DateTimeOffset>, IScalarValue<DateTimeOffsetVO, DateTimeOffset>
     {
         private DateTimeOffsetVO(DateTimeOffset value) : base(value) { }
         public static Result<DateTimeOffsetVO> TryCreate(DateTimeOffset value, string? fieldName = null) =>
@@ -97,7 +97,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // DateOnly (.NET 6+)
-    public class DateOnlyVO : ScalarValueObject<DateOnlyVO, DateOnly>, IScalarValueObject<DateOnlyVO, DateOnly>
+    public class DateOnlyVO : ScalarValueObject<DateOnlyVO, DateOnly>, IScalarValue<DateOnlyVO, DateOnly>
     {
         private DateOnlyVO(DateOnly value) : base(value) { }
         public static Result<DateOnlyVO> TryCreate(DateOnly value, string? fieldName = null) =>
@@ -105,7 +105,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     // TimeOnly (.NET 6+)
-    public class TimeOnlyVO : ScalarValueObject<TimeOnlyVO, TimeOnly>, IScalarValueObject<TimeOnlyVO, TimeOnly>
+    public class TimeOnlyVO : ScalarValueObject<TimeOnlyVO, TimeOnly>, IScalarValue<TimeOnlyVO, TimeOnly>
     {
         private TimeOnlyVO(TimeOnly value) : base(value) { }
         public static Result<TimeOnlyVO> TryCreate(TimeOnly value, string? fieldName = null) =>
@@ -493,7 +493,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     #region Helper Methods
 
     private static string Serialize<TValueObject, TPrimitive>(TValueObject? vo, ValidatingJsonConverter<TValueObject, TPrimitive> converter)
-        where TValueObject : class, IScalarValueObject<TValueObject, TPrimitive>
+        where TValueObject : class, IScalarValue<TValueObject, TPrimitive>
         where TPrimitive : IComparable
     {
         using var stream = new System.IO.MemoryStream();
@@ -504,7 +504,7 @@ public class ValidatingJsonConverterPrimitiveTypesTests
     }
 
     private static TValueObject? RoundTrip<TValueObject, TPrimitive>(TValueObject vo, ValidatingJsonConverter<TValueObject, TPrimitive> converter)
-        where TValueObject : class, IScalarValueObject<TValueObject, TPrimitive>
+        where TValueObject : class, IScalarValue<TValueObject, TPrimitive>
         where TPrimitive : IComparable
     {
         var json = Serialize(vo, converter);

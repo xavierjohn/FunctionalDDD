@@ -1,4 +1,4 @@
-﻿namespace EcommerceExample.Services;
+namespace EcommerceExample.Services;
 
 using EcommerceExample.ValueObjects;
 using FunctionalDdd;

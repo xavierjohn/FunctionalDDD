@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Base class for creating strongly-typed GUID value objects that cannot have the default (empty) GUID value.
@@ -10,9 +10,9 @@
 /// with automatic validation that prevents empty/default GUIDs. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item><c>IScalarValueObject&lt;TSelf, Guid&gt;</c> implementation for ASP.NET Core automatic validation</item>
+/// <item><c>IScalarValue&lt;TSelf, Guid&gt;</c> implementation for ASP.NET Core automatic validation</item>
 /// <item><c>NewUnique()</c> - Factory method for generating new unique identifiers</item>
-/// <item><c>TryCreate(Guid)</c> - Factory method for non-nullable GUIDs (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(Guid)</c> - Factory method for non-nullable GUIDs (required by IScalarValue)</item>
 /// <item><c>TryCreate(Guid?, string?)</c> - Factory method with empty GUID validation and custom field name</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method for parsing strings with validation</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
@@ -50,7 +50,7 @@
 /// }
 /// 
 /// // The source generator automatically creates:
-/// // - IScalarValueObject&lt;CustomerId, Guid&gt; interface implementation
+/// // - IScalarValue&lt;CustomerId, Guid&gt; interface implementation
 /// // - public static CustomerId NewUnique() => new(Guid.NewGuid());
 /// // - public static Result&lt;CustomerId&gt; TryCreate(Guid value)
 /// // - public static Result&lt;CustomerId&gt; TryCreate(Guid? value, string? fieldName = null)
@@ -184,7 +184,7 @@
 /// <seealso cref="ScalarValueObject{TSelf, T}"/>
 /// <seealso cref="RequiredString{TSelf}"/>
 public abstract class RequiredGuid<TSelf> : ScalarValueObject<TSelf, Guid>
-    where TSelf : RequiredGuid<TSelf>, IScalarValueObject<TSelf, Guid>
+    where TSelf : RequiredGuid<TSelf>, IScalarValue<TSelf, Guid>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredGuid{TSelf}"/> class with the specified GUID value.

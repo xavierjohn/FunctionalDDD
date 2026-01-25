@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -20,7 +20,7 @@ using System.Text.RegularExpressions;
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<Slug>))]
-public partial class Slug : ScalarValueObject<Slug, string>, IScalarValueObject<Slug, string>, IParsable<Slug>
+public partial class Slug : ScalarValueObject<Slug, string>, IScalarValue<Slug, string>, IParsable<Slug>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Slug"/> class.

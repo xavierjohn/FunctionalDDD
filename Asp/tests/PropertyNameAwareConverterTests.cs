@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+namespace Asp.Tests;
 
 using FluentAssertions;
 using FunctionalDdd;
@@ -16,7 +16,7 @@ public class PropertyNameAwareConverterTests
 {
     #region Test Value Objects
 
-    public class Email : ScalarValueObject<Email, string>, IScalarValueObject<Email, string>
+    public class Email : ScalarValueObject<Email, string>, IScalarValue<Email, string>
     {
         private Email(string value) : base(value) { }
 

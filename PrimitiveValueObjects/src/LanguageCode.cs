@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 /// ISO 639-1 language code value object.
 /// </summary>
 [JsonConverter(typeof(ParsableJsonConverter<LanguageCode>))]
-public class LanguageCode : ScalarValueObject<LanguageCode, string>, IScalarValueObject<LanguageCode, string>, IParsable<LanguageCode>
+public class LanguageCode : ScalarValueObject<LanguageCode, string>, IScalarValue<LanguageCode, string>, IParsable<LanguageCode>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="LanguageCode"/> class.

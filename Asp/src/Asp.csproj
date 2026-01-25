@@ -13,6 +13,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
-    <ProjectReference Include="..\..\DomainDrivenDesign\src\DomainDrivenDesign.csproj" />
   </ItemGroup>
 </Project>

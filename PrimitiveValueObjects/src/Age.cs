@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -18,7 +18,7 @@ using System.Text.Json.Serialization;
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<Age>))]
-public class Age : ScalarValueObject<Age, int>, IScalarValueObject<Age, int>, IParsable<Age>
+public class Age : ScalarValueObject<Age, int>, IScalarValue<Age, int>, IParsable<Age>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Age"/> class.

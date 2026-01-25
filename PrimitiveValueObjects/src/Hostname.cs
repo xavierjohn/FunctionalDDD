@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 /// RFC 1123 compliant hostname value object.
 /// </summary>
 [JsonConverter(typeof(ParsableJsonConverter<Hostname>))]
-public partial class Hostname : ScalarValueObject<Hostname, string>, IScalarValueObject<Hostname, string>, IParsable<Hostname>
+public partial class Hostname : ScalarValueObject<Hostname, string>, IScalarValue<Hostname, string>, IParsable<Hostname>
 {
     private Hostname(string value) : base(value) { }
 

@@ -1,15 +1,15 @@
-﻿namespace FunctionalDdd.Asp.Validation;
+namespace FunctionalDdd.Asp.Validation;
 
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
-/// Helper class for detecting and working with <see cref="IScalarValueObject{TSelf, TPrimitive}"/> types.
+/// Helper class for detecting and working with <see cref="IScalarValue{TSelf, TPrimitive}"/> types.
 /// Centralizes reflection logic to avoid duplication across converters, model binders, and configuration.
 /// </summary>
-internal static class ScalarValueObjectTypeHelper
+internal static class ScalarValueTypeHelper
 {
     /// <summary>
-    /// Checks if the given type implements <see cref="IScalarValueObject{TSelf, TPrimitive}"/>
+    /// Checks if the given type implements <see cref="IScalarValue{TSelf, TPrimitive}"/>
     /// where TSelf is the type itself (CRTP pattern).
     /// </summary>
     /// <param name="type">The type to check.</param>
@@ -21,7 +21,7 @@ internal static class ScalarValueObjectTypeHelper
     }
 
     /// <summary>
-    /// Gets the <see cref="IScalarValueObject{TSelf, TPrimitive}"/> interface implemented by the type,
+    /// Gets the <see cref="IScalarValue{TSelf, TPrimitive}"/> interface implemented by the type,
     /// or null if the type doesn't implement it correctly.
     /// </summary>
     /// <param name="type">The type to check.</param>
@@ -35,7 +35,7 @@ internal static class ScalarValueObjectTypeHelper
         ArgumentNullException.ThrowIfNull(type);
         return type.GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType &&
-                                i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
+                                i.GetGenericTypeDefinition() == typeof(IScalarValue<,>) &&
                                 i.GetGenericArguments()[0] == type);
     }
 

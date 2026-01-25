@@ -1,4 +1,4 @@
-﻿namespace SampleWebApplication.Controllers;
+namespace SampleWebApplication.Controllers;
 
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
@@ -87,7 +87,7 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Registers a new user with automatic value object validation.
     /// No manual validation or Result.Combine() needed - the framework
-    /// handles it automatically via AddScalarValueObjectValidation().
+    /// handles it automatically via AddScalarValueValidation().
     /// </summary>
     /// <param name="dto">Registration data with value objects.</param>
     /// <returns>

@@ -1,4 +1,4 @@
-﻿namespace SampleWebApplication;
+namespace SampleWebApplication;
 
 public class WeatherForecast
 {

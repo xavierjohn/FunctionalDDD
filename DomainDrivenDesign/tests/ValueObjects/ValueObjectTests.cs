@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+namespace DomainDrivenDesign.Tests.ValueObjects;
 
 using FluentAssertions;
 using Xunit;

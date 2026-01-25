@@ -1,6 +1,6 @@
-﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+namespace DomainDrivenDesign.Tests.ValueObjects;
 
-internal class Money : ScalarValueObject<Money, decimal>, IScalarValueObject<Money, decimal>
+internal class Money : ScalarValueObject<Money, decimal>, IScalarValue<Money, decimal>
 {
     public Money(decimal value) : base(value)
     {

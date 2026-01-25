@@ -8,11 +8,11 @@ using System.Text.Json;
 using Xunit;
 
 /// <summary>
-/// Tests for value object validation during JSON deserialization.
+/// Tests for scalar value validation during JSON deserialization.
 /// Verifies that validation errors are correctly attributed to property names,
-/// not type names, especially when the same value object type is used for multiple properties.
+/// not type names, especially when the same scalar value type is used for multiple properties.
 /// </summary>
-public class ValueObjectValidationTests
+public class ScalarValueValidationTests
 {
     #region Test Value Objects
 
@@ -20,7 +20,7 @@ public class ValueObjectValidationTests
     /// A generic name value object used for testing.
     /// Can be used for multiple properties (FirstName, LastName) to verify field name attribution.
     /// </summary>
-    public class Name : ScalarValueObject<Name, string>, IScalarValueObject<Name, string>
+    public class Name : ScalarValueObject<Name, string>, IScalarValue<Name, string>
     {
         private Name(string value) : base(value) { }
 
@@ -36,7 +36,7 @@ public class ValueObjectValidationTests
     /// <summary>
     /// Test email value object.
     /// </summary>
-    public class TestEmail : ScalarValueObject<TestEmail, string>, IScalarValueObject<TestEmail, string>
+    public class TestEmail : ScalarValueObject<TestEmail, string>, IScalarValue<TestEmail, string>
     {
         private TestEmail(string value) : base(value) { }
 
@@ -131,7 +131,7 @@ public class ValueObjectValidationTests
     #region JSON Converter Factory Tests
 
     [Fact]
-    public void ValidatingJsonConverterFactory_CanConvert_IScalarValueObject()
+    public void ValidatingJsonConverterFactory_CanConvert_IScalarValue()
     {
         // Arrange
         var factory = new ValidatingJsonConverterFactory();
@@ -321,39 +321,39 @@ public class ValueObjectValidationTests
 
     #endregion
 
-    #region ScalarValueObjectTypeHelper Tests
+    #region ScalarValueTypeHelper Tests
 
     [Fact]
-    public void ScalarValueObjectTypeHelper_IsScalarValueObject_ReturnsTrueForValueObjects()
+    public void ScalarValueTypeHelper_IsScalarValueObject_ReturnsTrueForValueObjects()
     {
         // Act & Assert
-        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(Name)).Should().BeTrue();
-        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(TestEmail)).Should().BeTrue();
+        ScalarValueTypeHelper.IsScalarValueObject(typeof(Name)).Should().BeTrue();
+        ScalarValueTypeHelper.IsScalarValueObject(typeof(TestEmail)).Should().BeTrue();
     }
 
     [Fact]
-    public void ScalarValueObjectTypeHelper_IsScalarValueObject_ReturnsFalseForNonValueObjects()
+    public void ScalarValueTypeHelper_IsScalarValueObject_ReturnsFalseForNonValueObjects()
     {
         // Act & Assert
-        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(string)).Should().BeFalse();
-        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(int)).Should().BeFalse();
-        ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(PersonDto)).Should().BeFalse();
+        ScalarValueTypeHelper.IsScalarValueObject(typeof(string)).Should().BeFalse();
+        ScalarValueTypeHelper.IsScalarValueObject(typeof(int)).Should().BeFalse();
+        ScalarValueTypeHelper.IsScalarValueObject(typeof(PersonDto)).Should().BeFalse();
     }
 
     [Fact]
-    public void ScalarValueObjectTypeHelper_GetPrimitiveType_ReturnsCorrectPrimitiveType()
+    public void ScalarValueTypeHelper_GetPrimitiveType_ReturnsCorrectPrimitiveType()
     {
         // Act & Assert
-        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(Name)).Should().Be<string>();
-        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(TestEmail)).Should().Be<string>();
+        ScalarValueTypeHelper.GetPrimitiveType(typeof(Name)).Should().Be<string>();
+        ScalarValueTypeHelper.GetPrimitiveType(typeof(TestEmail)).Should().Be<string>();
     }
 
     [Fact]
-    public void ScalarValueObjectTypeHelper_GetPrimitiveType_ReturnsNullForNonValueObjects()
+    public void ScalarValueTypeHelper_GetPrimitiveType_ReturnsNullForNonValueObjects()
     {
         // Act & Assert
-        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(string)).Should().BeNull();
-        ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(PersonDto)).Should().BeNull();
+        ScalarValueTypeHelper.GetPrimitiveType(typeof(string)).Should().BeNull();
+        ScalarValueTypeHelper.GetPrimitiveType(typeof(PersonDto)).Should().BeNull();
     }
 
     #endregion
@@ -394,13 +394,13 @@ public class ValueObjectValidationTests
 
     #endregion
 
-    #region ValueObjectValidationEndpointFilter Tests
+    #region ScalarValueValidationEndpointFilter Tests
 
     [Fact]
     public async Task EndpointFilter_WithValidationErrors_ReturnsValidationProblem()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         var nextCalled = false;
 
         EndpointFilterDelegate next = _ =>
@@ -430,7 +430,7 @@ public class ValueObjectValidationTests
     public async Task EndpointFilter_WithoutValidationErrors_CallsNext()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         var nextCalled = false;
 
         EndpointFilterDelegate next = _ =>
@@ -454,7 +454,7 @@ public class ValueObjectValidationTests
 
     #endregion
 
-    #region ValueObjectValidationMiddleware Tests
+    #region ScalarValueValidationMiddleware Tests
 
     [Fact]
     public async Task Middleware_CreatesScopeForRequest()
@@ -470,7 +470,7 @@ public class ValueObjectValidationTests
             return Task.CompletedTask;
         };
 
-        var middleware = new ValueObjectValidationMiddleware(next);
+        var middleware = new ScalarValueValidationMiddleware(next);
         var context = new Microsoft.AspNetCore.Http.DefaultHttpContext();
 
         // Act
@@ -493,7 +493,7 @@ public class ValueObjectValidationTests
             throw new InvalidOperationException("Test exception");
         };
 
-        var middleware = new ValueObjectValidationMiddleware(next);
+        var middleware = new ScalarValueValidationMiddleware(next);
         var context = new Microsoft.AspNetCore.Http.DefaultHttpContext();
 
         // Act

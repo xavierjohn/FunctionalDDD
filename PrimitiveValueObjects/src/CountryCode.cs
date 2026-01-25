@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -18,7 +18,7 @@ using System.Text.Json.Serialization;
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<CountryCode>))]
-public class CountryCode : ScalarValueObject<CountryCode, string>, IScalarValueObject<CountryCode, string>, IParsable<CountryCode>
+public class CountryCode : ScalarValueObject<CountryCode, string>, IScalarValue<CountryCode, string>, IParsable<CountryCode>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CountryCode"/> class.

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -53,7 +53,7 @@ using System.Text.Json.Serialization;
 /// </code>
 /// </example>
 [JsonConverter(typeof(ParsableJsonConverter<Url>))]
-public class Url : ScalarValueObject<Url, string>, IScalarValueObject<Url, string>, IParsable<Url>
+public class Url : ScalarValueObject<Url, string>, IScalarValue<Url, string>, IParsable<Url>
 {
     private readonly Uri _uri;
 

@@ -1,4 +1,4 @@
-﻿namespace EcommerceExample.Events;
+namespace EcommerceExample.Events;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;

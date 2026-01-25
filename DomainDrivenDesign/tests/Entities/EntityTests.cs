@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.Entities;
+namespace DomainDrivenDesign.Tests.Entities;
 
 using FunctionalDdd;
 

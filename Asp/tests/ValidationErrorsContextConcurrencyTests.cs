@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+namespace Asp.Tests;
 
 using FluentAssertions;
 using FunctionalDdd;

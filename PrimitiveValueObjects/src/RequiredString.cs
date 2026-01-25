@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Base class for creating strongly-typed string value objects that cannot be null or empty.
@@ -10,8 +10,8 @@
 /// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item><c>IScalarValueObject&lt;TSelf, string&gt;</c> implementation for ASP.NET Core automatic validation</item>
-/// <item><c>TryCreate(string)</c> - Factory method for non-nullable strings (required by IScalarValueObject)</item>
+/// <item><c>IScalarValue&lt;TSelf, string&gt;</c> implementation for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(string)</c> - Factory method for non-nullable strings (required by IScalarValue)</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method with null/empty/whitespace validation and custom field name</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
 /// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
@@ -49,7 +49,7 @@
 /// }
 /// 
 /// // The source generator automatically creates:
-/// // - IScalarValueObject&lt;FirstName, string&gt; interface implementation
+/// // - IScalarValue&lt;FirstName, string&gt; interface implementation
 /// // - public static Result&lt;FirstName&gt; TryCreate(string value)
 /// // - public static Result&lt;FirstName&gt; TryCreate(string? value, string? fieldName = null)
 /// // - public static FirstName Parse(string s, IFormatProvider? provider)
@@ -218,7 +218,7 @@
 /// <seealso cref="RequiredGuid{TSelf}"/>
 /// <seealso cref="EmailAddress"/>
 public abstract class RequiredString<TSelf> : ScalarValueObject<TSelf, string>
-    where TSelf : RequiredString<TSelf>, IScalarValueObject<TSelf, string>
+    where TSelf : RequiredString<TSelf>, IScalarValue<TSelf, string>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredString{TSelf}"/> class with the specified string value.

@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd;
+namespace FunctionalDdd;
 
 using Microsoft.AspNetCore.Http;
 

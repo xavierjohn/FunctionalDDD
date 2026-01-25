@@ -1,4 +1,4 @@
-﻿using EcommerceExample;
+using EcommerceExample;
 
 // Run all e-commerce examples
 await EcommerceExamples.RunExamplesAsync();

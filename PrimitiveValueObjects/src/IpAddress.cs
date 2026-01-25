@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -12,7 +12,7 @@ using System.Text.Json.Serialization;
 /// Provides parsing and JSON serialization support.
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<IpAddress>))]
-public class IpAddress : ScalarValueObject<IpAddress, string>, IScalarValueObject<IpAddress, string>, IParsable<IpAddress>
+public class IpAddress : ScalarValueObject<IpAddress, string>, IScalarValue<IpAddress, string>, IParsable<IpAddress>
 {
     private readonly IPAddress _ip;
 

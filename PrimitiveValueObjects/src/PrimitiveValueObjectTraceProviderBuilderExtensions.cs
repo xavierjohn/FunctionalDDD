@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using OpenTelemetry.Trace;
 
@@ -94,13 +94,13 @@ public static class PrimitiveValueObjectTraceProviderBuilderExtensions
     /// 
     /// // Resulting trace hierarchy:
     /// // POST /users (200ms)
-    /// //   ├─ EmailAddress.TryCreate (1ms) [Status: Ok]
-    /// //   ├─ FirstName.TryCreate (0.5ms) [Status: Ok]
-    /// //   ├─ LastName.TryCreate (0.5ms) [Status: Ok]
-    /// //   └─ UserService.CreateUser (195ms)
-    /// //      ├─ Repository.Add (180ms)
-    /// //      │  └─ SQL INSERT (175ms)
-    /// //      └─ EventBus.Publish (15ms)
+    /// //   +- EmailAddress.TryCreate (1ms) [Status: Ok]
+    /// //   +- FirstName.TryCreate (0.5ms) [Status: Ok]
+    /// //   +- LastName.TryCreate (0.5ms) [Status: Ok]
+    /// //   +- UserService.CreateUser (195ms)
+    /// //      +- Repository.Add (180ms)
+    /// //      �  +- SQL INSERT (175ms)
+    /// //      +- EventBus.Publish (15ms)
     /// </code>
     /// </example>
     /// <example>
@@ -108,7 +108,7 @@ public static class PrimitiveValueObjectTraceProviderBuilderExtensions
     /// <code>
     /// // When validation fails, traces show error status:
     /// // EmailAddress.TryCreate (1ms) [Status: Error]
-    /// //   └─ Error: "Email address is not valid."
+    /// //   +- Error: "Email address is not valid."
     /// 
     /// // Query Application Insights for failed validations:
     /// // requests

@@ -1,11 +1,11 @@
-﻿namespace FunctionalDdd.Asp.Validation;
+namespace FunctionalDdd.Asp.Validation;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// A JSON converter for value objects that implement <see cref="IScalarValueObject{TSelf, TPrimitive}"/>.
+/// A JSON converter for value objects that implement <see cref="IScalarValue{TSelf, TPrimitive}"/>.
 /// This converter collects validation errors instead of throwing exceptions,
 /// enabling comprehensive validation error responses.
 /// </summary>
@@ -26,12 +26,12 @@ using System.Text.Json.Serialization;
 /// </list>
 /// </para>
 /// <para>
-/// After deserialization, use <see cref="ValueObjectValidationFilter"/> to check for errors
+/// After deserialization, use <see cref="ScalarValueValidationFilter"/> to check for errors
 /// and return appropriate 400 Bad Request responses.
 /// </para>
 /// </remarks>
 public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConverter<TValueObject?>
-    where TValueObject : class, IScalarValueObject<TValueObject, TPrimitive>
+    where TValueObject : class, IScalarValue<TValueObject, TPrimitive>
     where TPrimitive : IComparable
 {
     /// <inheritdoc />
@@ -76,7 +76,7 @@ public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConv
         }
 
         // Return null to allow deserialization to continue
-        // The ValueObjectValidationFilter will check ValidationErrorsContext for errors
+        // The ScalarValueValidationFilter will check ValidationErrorsContext for errors
         return null;
     }
 

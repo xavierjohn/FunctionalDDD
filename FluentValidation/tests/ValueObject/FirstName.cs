@@ -1,4 +1,4 @@
-﻿namespace FluentValidationExt.Tests;
+namespace FluentValidationExt.Tests;
 
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;

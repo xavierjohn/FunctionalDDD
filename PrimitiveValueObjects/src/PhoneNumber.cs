@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -56,7 +56,7 @@ using System.Text.RegularExpressions;
 /// </code>
 /// </example>
 [JsonConverter(typeof(ParsableJsonConverter<PhoneNumber>))]
-public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScalarValueObject<PhoneNumber, string>, IParsable<PhoneNumber>
+public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScalarValue<PhoneNumber, string>, IParsable<PhoneNumber>
 {
     private PhoneNumber(string value) : base(value) { }
 

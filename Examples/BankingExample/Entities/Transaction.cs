@@ -1,4 +1,4 @@
-﻿namespace BankingExample.Entities;
+namespace BankingExample.Entities;
 
 using BankingExample.ValueObjects;
 using FunctionalDdd;

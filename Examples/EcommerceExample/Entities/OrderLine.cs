@@ -1,4 +1,4 @@
-﻿namespace EcommerceExample.Entities;
+namespace EcommerceExample.Entities;
 
 using EcommerceExample.ValueObjects;
 using FunctionalDdd;

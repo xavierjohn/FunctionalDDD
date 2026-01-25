@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+namespace DomainDrivenDesign.Tests.ValueObjects;
 
 using System.Collections.Generic;
 
@@ -6,7 +6,7 @@ public class ScalarValueObjectTests
 {
     #region Test Value Objects
 
-    internal class PasswordSimple : ScalarValueObject<PasswordSimple, string>, IScalarValueObject<PasswordSimple, string>
+    internal class PasswordSimple : ScalarValueObject<PasswordSimple, string>, IScalarValue<PasswordSimple, string>
     {
         public PasswordSimple(string value) : base(value) { }
 
@@ -22,7 +22,7 @@ public class ScalarValueObjectTests
             Result.Success(new DerivedPasswordSimple(value));
     }
 
-    internal class MoneySimple : ScalarValueObject<MoneySimple, decimal>, IScalarValueObject<MoneySimple, decimal>
+    internal class MoneySimple : ScalarValueObject<MoneySimple, decimal>, IScalarValue<MoneySimple, decimal>
     {
         public MoneySimple(decimal value) : base(value) { }
 
@@ -35,7 +35,7 @@ public class ScalarValueObjectTests
         }
     }
 
-    internal class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValueObject<CustomerId, Guid>
+    internal class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValue<CustomerId, Guid>
     {
         public CustomerId(Guid value) : base(value) { }
 
@@ -43,7 +43,7 @@ public class ScalarValueObjectTests
             Result.Success(new CustomerId(value));
     }
 
-    internal class Quantity : ScalarValueObject<Quantity, int>, IScalarValueObject<Quantity, int>
+    internal class Quantity : ScalarValueObject<Quantity, int>, IScalarValue<Quantity, int>
     {
         public Quantity(int value) : base(value) { }
 
@@ -51,7 +51,7 @@ public class ScalarValueObjectTests
             Result.Success(new Quantity(value));
     }
 
-    internal class CharWrapper : ScalarValueObject<CharWrapper, char>, IScalarValueObject<CharWrapper, char>
+    internal class CharWrapper : ScalarValueObject<CharWrapper, char>, IScalarValue<CharWrapper, char>
     {
         public CharWrapper(char value) : base(value) { }
 
@@ -59,7 +59,7 @@ public class ScalarValueObjectTests
             Result.Success(new CharWrapper(value));
     }
 
-    internal class DateTimeWrapper : ScalarValueObject<DateTimeWrapper, DateTime>, IScalarValueObject<DateTimeWrapper, DateTime>
+    internal class DateTimeWrapper : ScalarValueObject<DateTimeWrapper, DateTime>, IScalarValue<DateTimeWrapper, DateTime>
     {
         public DateTimeWrapper(DateTime value) : base(value) { }
 

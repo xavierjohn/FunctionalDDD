@@ -1,4 +1,4 @@
-﻿namespace SampleMinimalApiNoAot.API;
+namespace SampleMinimalApiNoAot.API;
 
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;

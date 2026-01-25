@@ -1,4 +1,4 @@
-﻿namespace SampleWebApplication.Controllers;
+namespace SampleWebApplication.Controllers;
 
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc;

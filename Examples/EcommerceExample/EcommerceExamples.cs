@@ -1,4 +1,4 @@
-﻿using EcommerceExample.Aggregates;
+using EcommerceExample.Aggregates;
 using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;
@@ -63,8 +63,8 @@ public static class EcommerceExamples
                 Console.WriteLine($"After AcceptChanges: {order.UncommittedEvents().Count} uncommitted event(s)");
             })
             .Match(
-                onSuccess: ok => $"✅ Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
-                onFailure: err => $"❌ Order creation failed: {err.Detail}"
+                onSuccess: ok => $"? Order created successfully with {ok.Lines.Count} items. Total: {ok.Total}",
+                onFailure: err => $"? Order creation failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -101,8 +101,8 @@ public static class EcommerceExamples
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
-                onSuccess: ok => $"✅ Order {ok.Id} processed successfully! Status: {ok.Status}, Total: {ok.Total}",
-                onFailure: err => $"❌ Order processing failed: {err.Detail}"
+                onSuccess: ok => $"? Order {ok.Id} processed successfully! Status: {ok.Status}, Total: {ok.Total}",
+                onFailure: err => $"? Order processing failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -137,8 +137,8 @@ public static class EcommerceExamples
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
-                onSuccess: ok => $"✅ Order processed: {ok.Status}",
-                onFailure: err => $"⚠️ Expected failure - Payment declined: {err.Detail}"
+                onSuccess: ok => $"? Order processed: {ok.Status}",
+                onFailure: err => $"?? Expected failure - Payment declined: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -173,8 +173,8 @@ public static class EcommerceExamples
 
         var result = await workflow.ProcessOrderAsync(customerId, items, paymentInfo)
             .MatchAsync(
-                onSuccess: ok => $"✅ Order processed: {ok.Status}",
-                onFailure: err => $"⚠️ Expected failure - Insufficient inventory: {err.Detail}"
+                onSuccess: ok => $"? Order processed: {ok.Status}",
+                onFailure: err => $"?? Expected failure - Insufficient inventory: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -199,7 +199,7 @@ public static class EcommerceExamples
 
         if (orderResult.IsFailure)
         {
-            Console.WriteLine($"❌ Order creation failed: {orderResult.Error.Detail}");
+            Console.WriteLine($"? Order creation failed: {orderResult.Error.Detail}");
             return;
         }
 

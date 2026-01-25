@@ -34,22 +34,22 @@
 /// }
 /// ]]></code>
 /// </example>
-public interface IScalarValueObject<TSelf, TPrimitive>
-    where TSelf : IScalarValueObject<TSelf, TPrimitive>
+public interface IScalarValue<TSelf, TPrimitive>
+    where TSelf : IScalarValue<TSelf, TPrimitive>
     where TPrimitive : IComparable
 {
     /// <summary>
-    /// Attempts to create a validated value object from a primitive value.
+    /// Attempts to create a validated scalar value from a primitive value.
     /// </summary>
     /// <param name="value">The raw primitive value</param>
     /// <param name="fieldName">
     /// Optional field name for validation error messages. If null, implementations should use
     /// a default field name based on the type name (e.g., "emailAddress" for EmailAddress type).
     /// </param>
-    /// <returns>Success with the value object, or Failure with validation errors</returns>
+    /// <returns>Success with the scalar value, or Failure with validation errors</returns>
     /// <remarks>
     /// <para>
-    /// This method is called by model binders and JSON converters to create value objects
+    /// This method is called by model binders and JSON converters to create scalar values
     /// with validation. The validation errors are collected and returned through the
     /// standard ASP.NET Core validation infrastructure.
     /// </para>
@@ -61,16 +61,16 @@ public interface IScalarValueObject<TSelf, TPrimitive>
     static abstract Result<TSelf> TryCreate(TPrimitive value, string? fieldName = null);
 
     /// <summary>
-    /// Creates a validated value object from a primitive value.
+    /// Creates a validated scalar value from a primitive value.
     /// Throws an exception if validation fails.
     /// </summary>
     /// <param name="value">The raw primitive value</param>
-    /// <returns>The validated value object</returns>
+    /// <returns>The validated scalar value</returns>
     /// <exception cref="InvalidOperationException">Thrown when validation fails</exception>
     /// <remarks>
     /// <para>
     /// Use this method when you know the value is valid (e.g., in tests, with constants,
-    /// or when building from other validated value objects). This provides cleaner code
+    /// or when building from other validated values). This provides cleaner code
     /// than calling <c>TryCreate().Value</c>.
     /// </para>
     /// <para>
@@ -107,6 +107,6 @@ public interface IScalarValueObject<TSelf, TPrimitive>
     /// <summary>
     /// Gets the underlying primitive value for serialization.
     /// </summary>
-    /// <value>The primitive value wrapped by this value object.</value>
+    /// <value>The primitive value wrapped by this scalar value.</value>
     TPrimitive Value { get; }
 }

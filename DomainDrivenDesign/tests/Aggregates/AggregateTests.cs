@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.Aggregates;
+namespace DomainDrivenDesign.Tests.Aggregates;
 
 using FunctionalDdd;
 

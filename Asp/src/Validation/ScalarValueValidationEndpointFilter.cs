@@ -1,9 +1,9 @@
-﻿namespace FunctionalDdd;
+namespace FunctionalDdd;
 
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
-/// An endpoint filter that checks for value object validation errors collected during JSON deserialization.
+/// An endpoint filter that checks for scalar value validation errors collected during JSON deserialization.
 /// For Minimal APIs, this filter returns validation problem results when validation errors are detected.
 /// </summary>
 /// <remarks>
@@ -12,17 +12,17 @@ using Microsoft.AspNetCore.Http;
 /// <see cref="ValidationErrorsContext"/> to provide comprehensive validation error handling.
 /// </para>
 /// <para>
-/// Unlike the MVC <see cref="ValueObjectValidationFilter"/>, this filter is designed for Minimal APIs
+/// Unlike the MVC <see cref="ScalarValueValidationFilter"/>, this filter is designed for Minimal APIs
 /// and returns <see cref="IResult"/> instead of manipulating ModelStateDictionary.
 /// </para>
 /// </remarks>
 /// <example>
 /// <code>
 /// app.MapPost("/users", (RegisterUserDto dto) => ...)
-///    .AddEndpointFilter&lt;ValueObjectValidationEndpointFilter&gt;();
+///    .AddEndpointFilter&lt;ScalarValueValidationEndpointFilter&gt;();
 /// </code>
 /// </example>
-public sealed class ValueObjectValidationEndpointFilter : IEndpointFilter
+public sealed class ScalarValueValidationEndpointFilter : IEndpointFilter
 {
     /// <summary>
     /// Invokes the filter, checking for validation errors collected during JSON deserialization.

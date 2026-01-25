@@ -1,4 +1,4 @@
-﻿using BankingExample;
+using BankingExample;
 
 // Run all banking examples
 await BankingExamples.RunExamplesAsync();

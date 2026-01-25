@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -157,13 +157,13 @@ using System.Text.RegularExpressions;
 /// <seealso cref="RequiredString{TSelf}"/>
 /// <seealso cref="IParsable{TSelf}"/>
 [JsonConverter(typeof(ParsableJsonConverter<EmailAddress>))]
-public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>, IParsable<EmailAddress>
+public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValue<EmailAddress, string>, IParsable<EmailAddress>
 {
     private EmailAddress(string value) : base(value) { }
 
     /// <summary>
     /// Attempts to create an <see cref="EmailAddress"/> from the specified string.
-    /// This overload is required by the <see cref="IScalarValueObject{TSelf, TPrimitive}"/> interface
+    /// This overload is required by the <see cref="IScalarValue{TSelf, TPrimitive}"/> interface
     /// for automatic model binding and JSON deserialization.
     /// </summary>
     /// <param name="value">The email address string to validate.</param>

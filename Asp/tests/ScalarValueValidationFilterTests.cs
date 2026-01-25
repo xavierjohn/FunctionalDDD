@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+namespace Asp.Tests;
 
 using FluentAssertions;
 using FunctionalDdd;
@@ -12,9 +12,9 @@ using System.Collections.Generic;
 using Xunit;
 
 /// <summary>
-/// Tests for the ValueObjectValidationFilter MVC action filter.
+/// Tests for the ScalarValueValidationFilter MVC action filter.
 /// </summary>
-public class ValueObjectValidationFilterTests
+public class ScalarValueValidationFilterTests
 {
     private static readonly string[] ExpectedEmailErrors =
     [
@@ -27,7 +27,7 @@ public class ValueObjectValidationFilterTests
     public void Filter_HasCorrectOrder()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
 
         // Assert
         filter.Order.Should().Be(-2000); // Should run early
@@ -37,7 +37,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_NoValidationErrors_DoesNotShortCircuit()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         using (ValidationErrorsContext.BeginScope())
@@ -57,7 +57,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_WithValidationErrors_ShortCircuitsWithBadRequest()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         using (ValidationErrorsContext.BeginScope())
@@ -89,7 +89,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_SingleValidationError_AddsToModelState()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         using (ValidationErrorsContext.BeginScope())
@@ -110,7 +110,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_MultipleErrorsForSameField_AddsAllErrors()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         using (ValidationErrorsContext.BeginScope())
@@ -133,7 +133,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_ClearsExistingModelStateForValidationErrorFields()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         // Add pre-existing ModelState error (e.g., from ASP.NET Core's "field is required")
@@ -159,7 +159,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_HandlesCaseInsensitiveFieldNames()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         // Add pre-existing error with different casing
@@ -187,7 +187,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_HandlesNestedPropertyNames()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         // Add pre-existing error with DTO prefix
@@ -212,7 +212,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuted_DoesNothing()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutedContext();
 
         // Act
@@ -226,7 +226,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_EmptyValidationErrorsContext_DoesNotShortCircuit()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         using (ValidationErrorsContext.BeginScope())
@@ -246,7 +246,7 @@ public class ValueObjectValidationFilterTests
     public void OnActionExecuting_ValidationProblemDetails_HasCorrectFormat()
     {
         // Arrange
-        var filter = new ValueObjectValidationFilter();
+        var filter = new ScalarValueValidationFilter();
         var context = CreateActionExecutingContext();
 
         using (ValidationErrorsContext.BeginScope())

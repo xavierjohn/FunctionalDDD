@@ -1,4 +1,4 @@
-﻿namespace FunctionalDdd.PrimitiveValueObjects;
+namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics;
 using System.Reflection;
@@ -54,11 +54,11 @@ using System.Reflection;
 /// <code>
 /// // Trace hierarchy example:
 /// // POST /users
-/// //   └─ EmailAddress.TryCreate
-/// //      ├─ Status: Ok (if valid)
-/// //      └─ Status: Error (if invalid)
-/// //   └─ UserService.CreateUser
-/// //      └─ Database operation
+/// //   +- EmailAddress.TryCreate
+/// //      +- Status: Ok (if valid)
+/// //      +- Status: Error (if invalid)
+/// //   +- UserService.CreateUser
+/// //      +- Database operation
 /// 
 /// // Each activity includes:
 /// // - Operation name: "EmailAddress.TryCreate"

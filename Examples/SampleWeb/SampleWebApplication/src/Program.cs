@@ -1,4 +1,4 @@
-﻿using FunctionalDdd;
+using FunctionalDdd;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation(); // ← Enables automatic value object validation
+    .AddScalarValueValidation(); // ? Enables automatic value object validation
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -21,7 +21,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseValueObjectValidation(); // ← Must be before routing for validation error collection
+app.UseScalarValueValidation(); // ? Must be before routing for validation error collection
 
 app.UseHttpsRedirection();
 

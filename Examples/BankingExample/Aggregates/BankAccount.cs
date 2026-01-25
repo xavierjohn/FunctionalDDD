@@ -1,4 +1,4 @@
-﻿namespace BankingExample.Aggregates;
+namespace BankingExample.Aggregates;
 
 using BankingExample.Entities;
 using BankingExample.Events;
