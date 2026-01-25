@@ -1,4 +1,4 @@
-namespace EcommerceExample.Workflows;
+﻿namespace EcommerceExample.Workflows;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.Entities;

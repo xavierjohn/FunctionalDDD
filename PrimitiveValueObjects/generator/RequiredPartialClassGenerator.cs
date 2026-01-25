@@ -1,4 +1,4 @@
-namespace SourceGenerator;
+﻿namespace SourceGenerator;
 
 using FunctionalDdd.PrimitiveValueObjectGenerator;
 using Microsoft.CodeAnalysis;

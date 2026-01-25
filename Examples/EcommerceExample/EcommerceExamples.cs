@@ -1,4 +1,4 @@
-using EcommerceExample.Aggregates;
+﻿using EcommerceExample.Aggregates;
 using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;

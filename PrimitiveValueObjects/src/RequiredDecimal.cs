@@ -1,4 +1,4 @@
-namespace FunctionalDdd.PrimitiveValueObjects;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Base class for creating strongly-typed decimal value objects that cannot have the default (zero) value.

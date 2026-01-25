@@ -1,4 +1,4 @@
-namespace FunctionalDdd.PrimitiveValueObjects;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Provides internal string manipulation extension methods for the PrimitiveValueObjects library.

@@ -1,4 +1,4 @@
-namespace Example.Tests;
+﻿namespace Example.Tests;
 
 using OpenTelemetry;
 using OpenTelemetry.Resources;

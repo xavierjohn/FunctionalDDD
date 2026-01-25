@@ -1,4 +1,4 @@
-namespace FunctionalDdd.AspSourceGenerator;
+﻿namespace FunctionalDdd.AspSourceGenerator;
 
 /// <summary>
 /// Represents metadata about a scalar value type discovered during source generation.

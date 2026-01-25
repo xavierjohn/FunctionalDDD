@@ -1,4 +1,4 @@
-namespace FunctionalDdd.PrimitiveValueObjects;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using OpenTelemetry.Trace;
 
@@ -99,7 +99,7 @@ public static class PrimitiveValueObjectTraceProviderBuilderExtensions
     /// //   +- LastName.TryCreate (0.5ms) [Status: Ok]
     /// //   +- UserService.CreateUser (195ms)
     /// //      +- Repository.Add (180ms)
-    /// //      �  +- SQL INSERT (175ms)
+    /// //      ¦  +- SQL INSERT (175ms)
     /// //      +- EventBus.Publish (15ms)
     /// </code>
     /// </example>

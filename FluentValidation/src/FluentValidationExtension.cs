@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using FluentValidation;
 using FluentValidation.Results;

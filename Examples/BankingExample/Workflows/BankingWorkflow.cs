@@ -1,4 +1,4 @@
-namespace BankingExample.Workflows;
+﻿namespace BankingExample.Workflows;
 
 using BankingExample.Aggregates;
 using BankingExample.Events;

@@ -1,4 +1,4 @@
-namespace SampleUserLibrary;
+﻿namespace SampleUserLibrary;
 
 /// <summary>
 /// User registration request with raw string values.

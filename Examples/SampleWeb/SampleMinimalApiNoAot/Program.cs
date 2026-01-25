@@ -1,4 +1,4 @@
-using FunctionalDdd;
+﻿using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;

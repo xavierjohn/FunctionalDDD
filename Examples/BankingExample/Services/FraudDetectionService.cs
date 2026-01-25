@@ -1,4 +1,4 @@
-namespace BankingExample.Services;
+﻿namespace BankingExample.Services;
 
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;

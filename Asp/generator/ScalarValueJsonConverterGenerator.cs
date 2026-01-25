@@ -1,4 +1,4 @@
-namespace FunctionalDdd.AspSourceGenerator;
+﻿namespace FunctionalDdd.AspSourceGenerator;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

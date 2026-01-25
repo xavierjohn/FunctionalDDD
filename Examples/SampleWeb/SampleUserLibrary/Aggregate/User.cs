@@ -1,4 +1,4 @@
-namespace SampleUserLibrary;
+﻿namespace SampleUserLibrary;
 
 using FluentValidation;
 using FunctionalDdd;

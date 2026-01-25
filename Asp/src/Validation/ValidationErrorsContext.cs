@@ -1,4 +1,4 @@
-namespace FunctionalDdd;
+﻿namespace FunctionalDdd;
 
 using System.Collections.Immutable;
 using static FunctionalDdd.ValidationError;

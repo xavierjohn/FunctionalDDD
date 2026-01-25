@@ -1,4 +1,4 @@
-namespace FunctionalDdd.PrimitiveValueObjectGenerator;
+﻿namespace FunctionalDdd.PrimitiveValueObjectGenerator;
 
 /// <summary>
 /// Represents metadata about a partial class that requires source generation for value object functionality.
