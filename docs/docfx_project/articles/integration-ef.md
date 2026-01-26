@@ -10,6 +10,7 @@ Integrate Railway-Oriented Programming with Entity Framework Core for type-safe 
 - [Result vs Maybe Pattern](#result-vs-maybe-pattern)
 - [Extension Methods for Nullable Conversion](#extension-methods-for-nullable-conversion)
 - [Handling Database Exceptions](#handling-database-exceptions)
+- [Value Object Configuration](#value-object-configuration)
 
 ## Repository Return Types
 
@@ -812,3 +813,151 @@ flowchart TB
     style DOMAIN fill:#FFD700
     style PROPAGATE fill:#FF6B6B
 ```
+
+## Value Object Configuration
+
+Configure strongly-typed value objects (`RequiredGuid`, `RequiredUlid`, `RequiredString`, `EmailAddress`) with EF Core using value converters.
+
+### Value Converter Examples
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+using FunctionalDdd.PrimitiveValueObjects;
+
+public class AppDbContext : DbContext
+{
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Product> Products => Set<Product>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ConfigureCustomer(modelBuilder);
+        ConfigureOrder(modelBuilder);
+        ConfigureProduct(modelBuilder);
+    }
+
+    private static void ConfigureCustomer(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<Customer>(builder =>
+        {
+            builder.HasKey(c => c.Id);
+
+            // RequiredUlid<CustomerId> -> string (26-char Crockford Base32)
+            builder.Property(c => c.Id)
+                .HasConversion(
+                    id => id.Value.ToString(),
+                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+
+            // RequiredString<CustomerName> -> string
+            builder.Property(c => c.Name)
+                .HasConversion(
+                    name => name.Value,
+                    str => CustomerName.Create(str))
+                .HasMaxLength(100)
+                .IsRequired();
+
+            // EmailAddress -> string
+            builder.Property(c => c.Email)
+                .HasConversion(
+                    email => email.Value,
+                    str => EmailAddress.Create(str))
+                .HasMaxLength(254)
+                .IsRequired();
+        });
+
+    private static void ConfigureOrder(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<Order>(builder =>
+        {
+            builder.HasKey(o => o.Id);
+
+            // RequiredUlid<OrderId> -> string
+            // ULIDs provide natural chronological ordering for queries!
+            builder.Property(o => o.Id)
+                .HasConversion(
+                    id => id.Value.ToString(),
+                    str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+
+            // Foreign key using ULID
+            builder.Property(o => o.CustomerId)
+                .HasConversion(
+                    id => id.Value.ToString(),
+                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+        });
+
+    private static void ConfigureProduct(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<Product>(builder =>
+        {
+            builder.HasKey(p => p.Id);
+
+            // RequiredGuid<ProductId> -> Guid
+            builder.Property(p => p.Id)
+                .HasConversion(
+                    id => id.Value,
+                    guid => ProductId.Create(guid))
+                .IsRequired();
+
+            // RequiredString<ProductName> -> string
+            builder.Property(p => p.Name)
+                .HasConversion(
+                    name => name.Value,
+                    str => ProductName.Create(str))
+                .HasMaxLength(200)
+                .IsRequired();
+        });
+}
+```
+
+### Value Object Types Quick Reference
+
+| Value Object | EF Core Storage | Converter |
+|--------------|-----------------|-----------|
+| `RequiredGuid<T>` | `Guid` | `id => id.Value` ↔ `guid => T.Create(guid)` |
+| `RequiredUlid<T>` | `string(26)` | `id => id.Value.ToString()` ↔ `str => T.Create(Ulid.Parse(str))` |
+| `RequiredString<T>` | `string` | `val => val.Value` ↔ `str => T.Create(str)` |
+| `RequiredInt<T>` | `int` | `val => val.Value` ↔ `num => T.Create(num)` |
+| `RequiredDecimal<T>` | `decimal` | `val => val.Value` ↔ `num => T.Create(num)` |
+| `EmailAddress` | `string(254)` | `email => email.Value` ↔ `str => EmailAddress.Create(str)` |
+
+### Why Use ULID for Entity IDs?
+
+ULIDs provide several advantages over GUIDs for entity identifiers:
+
+```csharp
+// Define ULID-based identifiers
+public partial class OrderId : RequiredUlid<OrderId> { }
+public partial class CustomerId : RequiredUlid<CustomerId> { }
+
+// ULIDs sort chronologically - great for database indexes!
+var orders = await context.Orders
+    .OrderBy(o => o.Id)  // Natural creation-time ordering
+    .Take(10)
+    .ToListAsync();
+
+// ULID format: 01ARZ3NDEKTSV4RRFFQ69G5FAV (26 chars, URL-safe)
+// - First 10 chars: millisecond timestamp
+// - Last 16 chars: random component
+```
+
+| Feature | ULID | GUID |
+|---------|------|------|
+| **Database Index Performance** | ✅ Sequential (better) | ❌ Random (fragmentation) |
+| **Natural Ordering** | ✅ By creation time | ❌ Random |
+| **Format** | 26 chars (URL-safe) | 36 chars (with dashes) |
+| **Use Case** | Orders, Events, Logs | Legacy systems |
+
+### Complete Example
+
+See the [EF Core Example](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
+
+- `RequiredUlid<T>` for time-ordered identifiers (`OrderId`, `CustomerId`)
+- `RequiredGuid<T>` for traditional identifiers (`ProductId`)
+- `RequiredString<T>` for validated strings (`ProductName`, `CustomerName`)
+- `EmailAddress` for RFC 5322 email validation
+- Complete EF Core configuration with value converters
+- Railway-Oriented Programming for entity creation and validation
