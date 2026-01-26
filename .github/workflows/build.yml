@@ -1,4 +1,4 @@
-name: Build
+﻿name: Build
 
 on:
   workflow_dispatch:
@@ -43,7 +43,7 @@ jobs:
       run: dotnet build --no-restore -c Release
 
     - name: Test with Coverage
-      run: dotnet test --no-build -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=normal" --results-directory ./TestResults
+      run: dotnet test --no-build -c Release --collect:"XPlat Code Coverage" --logger "trx" --logger "console;verbosity=normal" --results-directory ./TestResults
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
