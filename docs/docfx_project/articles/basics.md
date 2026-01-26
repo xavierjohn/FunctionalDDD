@@ -342,6 +342,26 @@ var result = EmailAddress.TryCreate("user@example.com")
 // Use Bind instead!
 ```
 
+**Map with Combine (Tuple Destructuring):**
+
+Just like `Bind`, `Map` supports tuple destructuring after `Combine`:
+
+```csharp
+// ✅ Use Map when constructor cannot fail
+var result = FirstName.TryCreate("John")
+    .Combine(LastName.TryCreate("Doe"))
+    .Map((firstName, lastName) => new PersonDto(firstName, lastName));
+
+// ✅ Use Bind when constructor returns Result<T>
+var result = FirstName.TryCreate("John")
+    .Combine(LastName.TryCreate("Doe"))
+    .Bind((firstName, lastName) => Person.TryCreate(firstName, lastName));
+```
+
+**Rule of thumb:**
+- Use `.Map((a, b) => ...)` when creating objects that **cannot fail**
+- Use `.Bind((a, b) => ...)` when calling methods that return `Result<T>`
+
 ### Tap - Execute Side Effects
 
 **Use when:** You want to do something with the value (like logging) without changing it.

@@ -8,11 +8,12 @@ This library provides infrastructure and ready-to-use implementations for primit
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-  - [RequiredString](#requiredstring)
-  - [RequiredGuid](#requiredguid)
-  - [RequiredInt and RequiredDecimal](#requiredint-and-requireddecimal)
-  - [EmailAddress](#emailaddress)
-  - [Additional Value Objects](#additional-value-objects)
+- [RequiredString](#requiredstring)
+- [RequiredGuid](#requiredguid)
+- [RequiredUlid](#requiredulid)
+- [RequiredInt and RequiredDecimal](#requiredint-and-requireddecimal)
+- [EmailAddress](#emailaddress)
+- [Additional Value Objects](#additional-value-objects)
 - [ASP.NET Core Integration](#aspnet-core-integration)
 - [Core Concepts](#core-concepts)
 - [Best Practices](#best-practices)
@@ -28,7 +29,7 @@ dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
+- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
 - `FunctionalDDD.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `Required*` base class derivatives
 
 ## Quick Start
@@ -100,6 +101,49 @@ var parsed = EmployeeId.Parse("550e8400-e29b-41d4-a716-446655440000", null);
 // Explicit cast operator (throws on failure)
 var employeeId = (EmployeeId)Guid.NewGuid();
 ```
+
+### RequiredUlid
+
+Create strongly-typed ULID value objects for time-ordered, lexicographically sortable identifiers:
+
+```csharp
+public partial class OrderId : RequiredUlid<OrderId>
+{
+}
+
+// The source generator automatically creates:
+// - IScalarValue<OrderId, Ulid> interface implementation
+// - NewUnique() -> OrderId (generates new time-ordered ULID)
+// - TryCreate(Ulid) -> Result<OrderId> (required by IScalarValue)
+// - TryCreate(Ulid?, string? fieldName = null) -> Result<OrderId>
+// - TryCreate(string?, string? fieldName = null) -> Result<OrderId>
+// - Parse(string, IFormatProvider?) -> OrderId
+// - TryParse(string?, IFormatProvider?, out OrderId) -> bool
+// - explicit operator OrderId(Ulid)
+
+var orderId = OrderId.NewUnique(); // Create new time-ordered ULID
+var result = OrderId.TryCreate(ulid);
+var result2 = OrderId.TryCreate("01ARZ3NDEKTSV4RRFFQ69G5FAV");
+
+// With custom field name for validation errors
+var result3 = OrderId.TryCreate(input, "order.id");
+
+// Supports IParsable<T>
+var parsed = OrderId.Parse("01ARZ3NDEKTSV4RRFFQ69G5FAV", null);
+
+// Explicit cast operator (throws on failure)
+var orderId = (OrderId)Ulid.NewUlid();
+```
+
+**Why use ULID over GUID?**
+
+| Feature | ULID | GUID |
+|---------|------|------|
+| **Sortable** | ✅ Lexicographically sortable by creation time | ❌ Random order |
+| **Time-based** | ✅ First 48 bits encode millisecond timestamp | ❌ No time component |
+| **Format** | 26-char Crockford Base32 (URL-safe) | 36-char with dashes |
+| **Database Performance** | ✅ Better index performance (sequential) | ❌ Random distribution |
+| **Use Case** | Event sourcing, distributed systems, logs | Legacy systems, existing APIs |
 
 ### RequiredInt and RequiredDecimal
 

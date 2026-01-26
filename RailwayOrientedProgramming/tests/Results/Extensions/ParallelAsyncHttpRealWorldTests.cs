@@ -283,26 +283,43 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
     [Fact]
     public async Task ParallelAsync_HttpCalls_ExecutesInParallel_NotSequentially()
     {
-        // Arrange
+        // Arrange - track when each task starts to prove parallel execution
+        var startTimes = new List<long>();
         var stopwatch = Stopwatch.StartNew();
-        var request = new CheckoutRequest("user-123", "prod-456", "pm-789", "123 Main St");
 
-        // Act - each service takes ~50ms, run in parallel
+        async Task<Result<string>> TrackedTask(string name)
+        {
+            lock (startTimes)
+            {
+                startTimes.Add(stopwatch.ElapsedMilliseconds);
+            }
+
+            await Task.Delay(50);
+            return Result.Success(name);
+        }
+
+        // Act - 4 tasks should all start at approximately the same time
         var result = await Result.ParallelAsync(
-            () => FetchUserAsync(request.UserId),            // ~50ms
-            () => CheckInventoryAsync(request.ProductId),     // ~50ms
-            () => ValidatePaymentAsync(request.PaymentMethodId), // ~50ms
-            () => CalculateShippingAsync(request.ShippingAddress) // ~50ms
+            () => TrackedTask("user"),
+            () => TrackedTask("inventory"),
+            () => TrackedTask("payment"),
+            () => TrackedTask("shipping")
         ).AwaitAsync();
 
-        stopwatch.Stop();
-
-        // Assert - parallel execution should take ~50ms (not 200ms sequential)
+        // Assert - verify tasks started concurrently, not sequentially
         result.Should().BeSuccess();
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(120); // Allow margin for CI/slow machines
+        startTimes.Should().HaveCount(4);
 
-        // If sequential, would take 4 * 50ms = 200ms+
-        // Parallel should be ~50ms (longest single operation)
+        // If sequential: start times would be ~0, ~50, ~100, ~150
+        // If parallel: all start times should be close together (within 30ms of each other)
+        var maxStartTime = startTimes.Max();
+        var minStartTime = startTimes.Min();
+        var startTimeSpread = maxStartTime - minStartTime;
+
+        // All tasks should start within 30ms of each other (parallel)
+        // Sequential would have ~50ms gaps between starts
+        startTimeSpread.Should().BeLessThan(30,
+            "all tasks should start concurrently in parallel execution");
     }
 
     #endregion

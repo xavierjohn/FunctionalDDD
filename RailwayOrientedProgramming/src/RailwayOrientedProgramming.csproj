@@ -45,6 +45,12 @@
 
     <Compile Update="Result\Extensions\Ensure.Task.cs" DependentUpon="Ensure.cs" />
 
+    <Compile Update="Result\Extensions\MapTs.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MapTs.g.tt</DependentUpon>
+    </Compile>
+
     <Compile Update="Result\Extensions\ParallelAsyncs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -78,6 +84,10 @@
     <None Update="Result\Extensions\AwaitTs.g.tt">
       <LastGenOutput>AwaitTs.g.cs</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="Result\Extensions\MapTs.g.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MapTs.g.cs</LastGenOutput>
     </None>
     <None Update="Result\Extensions\MatchTupleTs.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
