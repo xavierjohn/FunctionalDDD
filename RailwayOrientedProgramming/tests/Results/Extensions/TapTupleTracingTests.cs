@@ -99,7 +99,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -115,7 +115,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -131,7 +131,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -147,7 +147,7 @@ public class TapTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -353,7 +353,7 @@ public class TapTupleTracingTests : TestBase
         result.Should().BeSuccess();
 
         // Wait for async activities
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Should have activities for all operations
         activityTest.ActivityCount.Should().BeGreaterThan(0);

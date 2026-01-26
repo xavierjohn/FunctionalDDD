@@ -32,7 +32,7 @@ public class ValidationErrorsContextConcurrencyTests
                             $"Field{threadId}",
                             $"Error {i} from thread {threadId}");
                     }
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             await Task.WhenAll(tasks);
@@ -70,7 +70,7 @@ public class ValidationErrorsContextConcurrencyTests
                     {
                         ValidationErrorsContext.AddError(fieldName, errorMessage);
                     }
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             await Task.WhenAll(tasks);
@@ -100,7 +100,7 @@ public class ValidationErrorsContextConcurrencyTests
                 {
                     var validationError = Error.Validation($"Error from task {taskId}", $"Field{taskId}");
                     ValidationErrorsContext.AddError((ValidationError)validationError);
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             await Task.WhenAll(tasks);
@@ -127,7 +127,7 @@ public class ValidationErrorsContextConcurrencyTests
                 {
                     ValidationErrorsContext.AddError($"Field{i}", $"Error {i}");
                 }
-            });
+            }, TestContext.Current.CancellationToken);
 
             var readTasks = Enumerable.Range(0, 10)
                 .Select(_ => Task.Run(() =>
@@ -138,7 +138,7 @@ public class ValidationErrorsContextConcurrencyTests
                         var hasErrors = ValidationErrorsContext.HasErrors;
                         // Just reading, verify no exception
                     }
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             // Assert - Should complete without deadlock
@@ -167,7 +167,7 @@ public class ValidationErrorsContextConcurrencyTests
                     ValidationErrorsContext.AddError($"Field{i}", $"Error {i}");
                     await Task.Delay(1);
                 }
-            });
+            }, TestContext.Current.CancellationToken);
 
             var readTasks = Enumerable.Range(0, 10)
                 .Select(_ => Task.Run(async () =>
@@ -177,7 +177,7 @@ public class ValidationErrorsContextConcurrencyTests
                         readResults.Add(ValidationErrorsContext.HasErrors);
                         await Task.Delay(1);
                     }
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             await Task.WhenAll(addTask);
@@ -242,7 +242,7 @@ public class ValidationErrorsContextConcurrencyTests
 
                 // Clear it
                 ValidationErrorsContext.CurrentPropertyName = null;
-            }))
+            }, TestContext.Current.CancellationToken))
             .ToArray();
 
         await Task.WhenAll(tasks);
@@ -270,7 +270,7 @@ public class ValidationErrorsContextConcurrencyTests
 
                     ValidationErrorsContext.AddError((ValidationError)error1);
                     ValidationErrorsContext.AddError((ValidationError)error2);
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             await Task.WhenAll(tasks);
@@ -302,7 +302,7 @@ public class ValidationErrorsContextConcurrencyTests
                             $"Field{fieldId}",
                             $"Unique error {errorId}");
                     }
-                }))
+                }, TestContext.Current.CancellationToken))
                 .ToArray();
 
             await Task.WhenAll(tasks);
@@ -361,7 +361,7 @@ public class ValidationErrorsContextConcurrencyTests
                     }
                     // Scope should be disposed
                 }
-            }))
+            }, TestContext.Current.CancellationToken))
             .ToArray();
 
         await Task.WhenAll(tasks);

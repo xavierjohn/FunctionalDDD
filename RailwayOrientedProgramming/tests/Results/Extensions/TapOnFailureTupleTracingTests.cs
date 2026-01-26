@@ -138,7 +138,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -154,7 +154,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -170,7 +170,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -186,7 +186,7 @@ public class TapOnFailureTupleTracingTests : TestBase
 
         // Assert
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 

@@ -149,7 +149,7 @@ public class FluentTests
         };
 
         // Act
-        var result = await validator.ValidateToResultAsync("valid");
+        var result = await validator.ValidateToResultAsync("valid", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeSuccess()
@@ -166,7 +166,7 @@ public class FluentTests
         };
 
         // Act
-        var result = await validator.ValidateToResultAsync("ab");
+        var result = await validator.ValidateToResultAsync("ab", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeFailureOfType<ValidationError>();
@@ -183,7 +183,7 @@ public class FluentTests
         };
 
         // Act
-        var result = await validator.ValidateToResultAsync(value);
+        var result = await validator.ValidateToResultAsync(value, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeFailureOfType<ValidationError>()
@@ -202,7 +202,7 @@ public class FluentTests
         };
 
         // Act
-        var result = await validator.ValidateToResultAsync(myValue, "CustomParam", "Custom error message");
+        var result = await validator.ValidateToResultAsync(myValue, "CustomParam", "Custom error message", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeFailureOfType<ValidationError>()
