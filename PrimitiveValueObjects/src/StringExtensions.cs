@@ -22,11 +22,11 @@ internal static class StringExtensions
     /// <para>
     /// Examples:
     /// <list type="bullet">
-    /// <item>"Email" ? "email"</item>
-    /// <item>"FirstName" ? "firstName"</item>
-    /// <item>"A" ? "a"</item>
-    /// <item>"" ? ""</item>
-    /// <item>&lt;c&gt;(string)null&lt;/c&gt; ? ""</item>
+    /// <item>"Email" → "email"</item>
+    /// <item>"FirstName" → "firstName"</item>
+    /// <item>"A" → "a"</item>
+    /// <item>"" → ""</item>
+    /// <item>&lt;c&gt;(string)null&lt;/c&gt; → ""</item>
     /// </list>
     /// </para>
     /// </remarks>
