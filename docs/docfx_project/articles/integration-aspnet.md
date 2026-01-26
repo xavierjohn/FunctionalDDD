@@ -614,7 +614,7 @@ public async Task<ActionResult<Unit>> DeleteUser(
     CancellationToken ct) =>
     await _userService.DeleteUserAsync(id, ct)
         .ToActionResultAsync(this);
-// ← Automatically returns 204 No Content on success
+// ✅ Automatically returns 204 No Content on success
 ```
 
 ### 4. Use Consistent Error Messages
