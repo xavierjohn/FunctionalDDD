@@ -197,6 +197,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var classType = g.ClassBase switch
             {
                 "RequiredGuid" => "Guid",
+                "RequiredUlid" => "Ulid",
                 "RequiredString" => "string",
                 "RequiredInt" => "int",
                 "RequiredDecimal" => "decimal",
@@ -210,7 +211,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                     new DiagnosticDescriptor(
                         id: "FDDD001",
                         title: "Unsupported base type for RequiredPartialClassGenerator",
-                        messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal.",
+                        messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredUlid, RequiredString, RequiredInt, RequiredDecimal.",
                         category: "SourceGenerator",
                         DiagnosticSeverity.Warning,
                         isEnabledByDefault: true),
@@ -312,6 +313,58 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 .Ensure(x => Guid.TryParse(x, out parsedGuid), Error.Validation(""Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"", field))
                 .Ensure(_ => parsedGuid != Guid.Empty, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
                 .Map(guid => new {g.ClassName}(parsedGuid));
+        }}
+    }}";
+            }
+
+            if (g.ClassBase == "RequiredUlid")
+            {
+                source += $@"
+
+        public static {g.ClassName} NewUnique() => new(Ulid.NewUlid());
+
+        /// <summary>
+        /// Creates a validated instance from a Ulid.
+        /// Required by IScalarValue interface for model binding and JSON deserialization.
+        /// </summary>
+        /// <param name=""value"">The Ulid value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(Ulid value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            if (value == default)
+                return Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field);
+            return new {g.ClassName}(value);
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(Ulid? requiredUlidOrNothing, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            return requiredUlidOrNothing
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => x != default, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Map(ulid => new {g.ClassName}(ulid));
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(string? stringOrNull, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = !string.IsNullOrEmpty(fieldName)
+                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+                : ""{g.ClassName.ToCamelCase()}"";
+            Ulid parsedUlid = default;
+            return stringOrNull
+                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Ensure(x => Ulid.TryParse(x, out parsedUlid), Error.Validation(""Ulid should be a 26-character Crockford Base32 string."", field))
+                .Ensure(_ => parsedUlid != default, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .Map(ulid => new {g.ClassName}(parsedUlid));
         }}
     }}";
             }
@@ -498,7 +551,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
     /// </summary>
     /// <param name="node">The syntax node to examine.</param>
     /// <returns>
-    /// <c>true</c> if the node is a partial class inheriting from RequiredGuid or RequiredString;
+    /// <c>true</c> if the node is a partial class inheriting from RequiredGuid, RequiredUlid, or RequiredString;
     /// otherwise, <c>false</c>.
     /// </returns>
     /// <remarks>
@@ -511,7 +564,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
     /// <list type="number">
     /// <item>Is it a class declaration?</item>
     /// <item>Does it have a base type list?</item>
-    /// <item>Is the first base type named "RequiredGuid" or "RequiredString"?</item>
+    /// <item>Is the first base type named "RequiredGuid", "RequiredUlid", or "RequiredString"?</item>
     /// </list>
     /// </para>
     /// <para>
@@ -530,6 +583,8 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredString", StringComparison.Ordinal))
                 return true;
             if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredGuid", StringComparison.Ordinal))
+                return true;
+            if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredUlid", StringComparison.Ordinal))
                 return true;
             if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredInt", StringComparison.Ordinal))
                 return true;
