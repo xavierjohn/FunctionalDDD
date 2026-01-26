@@ -305,7 +305,7 @@ public class ValidatingJsonConverterEdgeCasesTests
     public void RoundTrip_UnicodeCharacters_PreservesValue()
     {
         // Arrange
-        var unicodeString = "??@??.com";  // Chinese and Japanese characters
+        var unicodeString = "测试@例え.com";  // Chinese and Japanese characters
         var converter = new ValidatingJsonConverter<Email, string>();
 
         var json = JsonSerializer.Serialize(unicodeString);
