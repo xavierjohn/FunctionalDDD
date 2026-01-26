@@ -225,7 +225,7 @@ public static class ServiceCollectionExtensions
     /// <code>
     /// builder.Services
     ///     .AddControllers()
-    ///     .AddScalarValueValidation(); // ? Better for MVC-only apps
+    ///     .AddScalarValueValidation(); // ← Better for MVC-only apps
     /// </code>
     /// </example>
     public static IServiceCollection AddScalarValueValidation(this IServiceCollection services)
@@ -262,7 +262,7 @@ public static class ServiceCollectionExtensions
     /// <code>
     /// var app = builder.Build();
     ///
-    /// app.UseScalarValueValidation(); // ? Add this before routing
+    /// app.UseScalarValueValidation(); // ← Add this before routing
     /// app.UseRouting();
     /// app.UseAuthentication();
     /// app.UseAuthorization();

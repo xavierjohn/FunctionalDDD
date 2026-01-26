@@ -368,11 +368,11 @@ The package automatically maps error types to HTTP status codes:
 | `AggregateError` | Varies | Multiple errors (uses first error's status) |
 
 **Key Features:**
-- ? **Automatic Status Codes** - No manual mapping required
-- ? **Problem Details (RFC 7807)** - Standard error response format
-- ? **Validation Error Formatting** - Field-level errors
-- ? **Unit Type Support** - `Result<Unit>` returns 204 No Content
-- ? **Async Support** - Full async/await with `CancellationToken`
+- ✅ **Automatic Status Codes** - No manual mapping required
+- ✅ **Problem Details (RFC 7807)** - Standard error response format
+- ✅ **Validation Error Formatting** - Field-level errors
+- ✅ **Unit Type Support** - `Result<Unit>` returns 204 No Content
+- ✅ **Async Support** - Full async/await with `CancellationToken`
 
 ### Example: Validation Error Response
 
@@ -564,7 +564,7 @@ public ActionResult<IEnumerable<UserDto>> GetUsers(
 Keep `Result<T>` types internal to your application. Convert to HTTP responses only at the controller/endpoint level.
 
 ```csharp
-// ? Good - Result stays in application/domain layer
+// ✅ Good - Result stays in application/domain layer
 public class UserService
 {
     public async Task<Result<User>> CreateUserAsync(
@@ -584,9 +584,9 @@ public async Task<ActionResult<UserDto>> CreateUser(
     CancellationToken ct) =>
     await _userService.CreateUserAsync(request, ct)
         .MapAsync(user => new UserDto(user))
-        .ToActionResultAsync(this);  // ? Convert at boundary
+        .ToActionResultAsync(this);  // ← Convert at boundary
 
-// ? Bad - exposing Result in controller return type
+// ❌ Bad - exposing Result in controller return type
 public async Task<Result<User>> CreateUser(...)
 ```
 
@@ -598,7 +598,7 @@ Support graceful cancellation in async operations:
 [HttpPost]
 public async Task<ActionResult<Order>> ProcessOrder(
     CreateOrderRequest request,
-    CancellationToken ct)  // ? Accept CancellationToken
+    CancellationToken ct)  // ← Accept CancellationToken
     => await _orderService.ProcessOrderAsync(request, ct)
         .ToActionResultAsync(this);
 ```
@@ -614,7 +614,7 @@ public async Task<ActionResult<Unit>> DeleteUser(
     CancellationToken ct) =>
     await _userService.DeleteUserAsync(id, ct)
         .ToActionResultAsync(this);
-// ? Automatically returns 204 No Content on success
+// ← Automatically returns 204 No Content on success
 ```
 
 ### 4. Use Consistent Error Messages
@@ -622,12 +622,12 @@ public async Task<ActionResult<Unit>> DeleteUser(
 Structure error messages with context for better Problem Details responses:
 
 ```csharp
-// ? Good - includes context
+// ✅ Good - includes context
 Error.NotFound($"User {userId} not found", userId.ToString())
 Error.Validation("Email format is invalid", "email")
 Error.Conflict("Email already in use", $"email:{email}")
 
-// ? Bad - generic, no context
+// ❌ Bad - generic, no context
 Error.NotFound("Not found")
 Error.Validation("Invalid")
 ```
@@ -637,13 +637,13 @@ Error.Validation("Invalid")
 Use `ToActionResult`/`ToHttpResult` for consistent error responses. Only use `MatchError` when you need custom logic:
 
 ```csharp
-// ? Good - consistent Problem Details across API
+// ✅ Good - consistent Problem Details across API
 [HttpPost]
 public async Task<ActionResult<User>> CreateUser(CreateUserRequest request, CancellationToken ct)
     => await _userService.CreateUserAsync(request, ct)
         .ToActionResultAsync(this);
 
-// ?? Use only when necessary - custom error handling
+// ⚠️ Use only when necessary - custom error handling
 app.MapPost("/special-endpoint", async (request, service, ct) =>
     await service.ProcessAsync(request, ct)
         .MatchErrorAsync(
