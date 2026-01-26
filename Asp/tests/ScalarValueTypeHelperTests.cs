@@ -70,10 +70,10 @@ public class ScalarValueTypeHelperTests
 
     #endregion
 
-    #region IsScalarValueObject Tests
+    #region IsScalarValue Tests
 
     [Fact]
-    public void IsScalarValueObject_ValidValueObject_ReturnsTrue()
+    public void IsScalarValue_ValidValueObject_ReturnsTrue()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(ValidVO));
@@ -83,7 +83,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_NotAValueObject_ReturnsFalse()
+    public void IsScalarValue_NotAValueObject_ReturnsFalse()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(NotAValueObject));
@@ -93,7 +93,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_String_ReturnsFalse()
+    public void IsScalarValue_String_ReturnsFalse()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(string));
@@ -103,7 +103,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_Int_ReturnsFalse()
+    public void IsScalarValue_Int_ReturnsFalse()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(int));
@@ -113,7 +113,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_InterfaceOnlyImplementation_ReturnsTrue()
+    public void IsScalarValue_InterfaceOnlyImplementation_ReturnsTrue()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(InterfaceOnly));
@@ -123,7 +123,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_GenericValueObject_ReturnsTrue()
+    public void IsScalarValue_GenericValueObject_ReturnsTrue()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(GenericVO<string>));
@@ -133,7 +133,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_MultiInterfaceValueObject_ReturnsTrue()
+    public void IsScalarValue_MultiInterfaceValueObject_ReturnsTrue()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(MultiInterfaceVO));
@@ -143,7 +143,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_InvalidCRTP_ReturnsFalse()
+    public void IsScalarValue_InvalidCRTP_ReturnsFalse()
     {
         // Act - CRTP violation: TSelf != declaring type
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(InvalidCRTP));
@@ -154,10 +154,10 @@ public class ScalarValueTypeHelperTests
 
     #endregion
 
-    #region GetScalarValueObjectInterface Tests
+    #region GetScalarValueInterface Tests
 
     [Fact]
-    public void GetScalarValueObjectInterface_ValidValueObject_ReturnsInterface()
+    public void GetScalarValueInterface_ValidValueObject_ReturnsInterface()
     {
         // Act
         var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(ValidVO));
@@ -171,7 +171,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_NotAValueObject_ReturnsNull()
+    public void GetScalarValueInterface_NotAValueObject_ReturnsNull()
     {
         // Act
         var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(NotAValueObject));
@@ -181,7 +181,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_InvalidCRTP_ReturnsNull()
+    public void GetScalarValueInterface_InvalidCRTP_ReturnsNull()
     {
         // Act
         var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(InvalidCRTP));
@@ -191,7 +191,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_GenericVO_ReturnsCorrectInterface()
+    public void GetScalarValueInterface_GenericVO_ReturnsCorrectInterface()
     {
         // Act
         var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(GenericVO<int>));
@@ -310,7 +310,7 @@ public class ScalarValueTypeHelperTests
     #region Edge Cases
 
     [Fact]
-    public void IsScalarValueObject_Null_ThrowsArgumentNullException()
+    public void IsScalarValue_Null_ThrowsArgumentNullException()
     {
         // Act
         var act = () => ScalarValueTypeHelper.IsScalarValue(null!);
@@ -320,7 +320,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_Null_ThrowsArgumentNullException()
+    public void GetScalarValueInterface_Null_ThrowsArgumentNullException()
     {
         // Act
         var act = () => ScalarValueTypeHelper.GetScalarValueInterface(null!);
@@ -340,7 +340,7 @@ public class ScalarValueTypeHelperTests
     }
 
     [Fact]
-    public void IsScalarValueObject_AbstractClass_ReturnsFalse()
+    public void IsScalarValue_AbstractClass_ReturnsFalse()
     {
         // Act
         var result = ScalarValueTypeHelper.IsScalarValue(typeof(ScalarValueObject<,>));

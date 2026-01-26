@@ -289,14 +289,14 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
     private static void Execute(
         Compilation compilation,
         ImmutableArray<ClassDeclarationSyntax> contextClasses,
-        ImmutableArray<ScalarValueInfo> valueObjects,
+        ImmutableArray<ScalarValueInfo> scalarValues,
         SourceProductionContext context)
     {
-        if (valueObjects.IsDefaultOrEmpty)
+        if (scalarValues.IsDefaultOrEmpty)
             return;
 
         // Deduplicate value objects by full type name
-        var distinctValueObjects = valueObjects
+        var distinctValueObjects = scalarValues
             .GroupBy(vo => vo.FullTypeName)
             .Select(g => g.First())
             .ToList();
