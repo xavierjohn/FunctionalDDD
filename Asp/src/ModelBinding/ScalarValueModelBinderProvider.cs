@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 /// <remarks>
 /// <para>
 /// This provider checks if a model type implements <see cref="IScalarValue{TSelf, TPrimitive}"/>
-/// and creates an appropriate <see cref="ScalarValueModelBinder{TValueObject, TPrimitive}"/> for it.
+/// and creates an appropriate <see cref="ScalarValueModelBinder{TValue, TPrimitive}"/> for it.
 /// </para>
 /// <para>
 /// Register this provider using <c>AddScalarValueValidation()</c> extension method

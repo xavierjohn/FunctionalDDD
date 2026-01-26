@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 /// This converter collects validation errors instead of throwing exceptions,
 /// enabling comprehensive validation error responses.
 /// </summary>
-/// <typeparam name="TValueObject">The type of the value object to convert.</typeparam>
+/// <typeparam name="TValue">The type of the value object to convert.</typeparam>
 /// <typeparam name="TPrimitive">The underlying primitive type.</typeparam>
 /// <remarks>
 /// <para>
@@ -30,14 +30,14 @@ using System.Text.Json.Serialization;
 /// and return appropriate 400 Bad Request responses.
 /// </para>
 /// </remarks>
-public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConverter<TValueObject?>
-    where TValueObject : class, IScalarValue<TValueObject, TPrimitive>
+public sealed class ValidatingJsonConverter<TValue, TPrimitive> : JsonConverter<TValue?>
+    where TValue : class, IScalarValue<TValue, TPrimitive>
     where TPrimitive : IComparable
 {
     /// <inheritdoc />
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "TPrimitive type parameter is preserved by JSON serialization infrastructure")]
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JSON deserialization of primitive types is compatible with AOT")]
-    public override TValueObject? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override TValue? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // Handle null JSON values
         if (reader.TokenType == JsonTokenType.Null)
@@ -50,7 +50,7 @@ public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConv
         {
             // Collect error for null primitive
             var fieldName = ValidationErrorsContext.CurrentPropertyName ?? GetDefaultFieldName(typeToConvert);
-            ValidationErrorsContext.AddError(fieldName, $"Cannot deserialize null to {typeof(TValueObject).Name}");
+            ValidationErrorsContext.AddError(fieldName, $"Cannot deserialize null to {typeof(TValue).Name}");
             return null;
         }
 
@@ -60,7 +60,7 @@ public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConv
 
         // Use TryCreate to validate - direct call via static abstract interface member
         // Pass the property name so validation errors have the correct field name
-        var result = TValueObject.TryCreate(primitiveValue, propertyName);
+        var result = TValue.TryCreate(primitiveValue, propertyName);
 
         if (result.IsSuccess)
             return result.Value;
@@ -83,7 +83,7 @@ public sealed class ValidatingJsonConverter<TValueObject, TPrimitive> : JsonConv
     /// <inheritdoc />
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "TPrimitive type parameter is preserved by JSON serialization infrastructure")]
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JSON serialization of primitive types is compatible with AOT")]
-    public override void Write(Utf8JsonWriter writer, TValueObject? value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, TValue? value, JsonSerializerOptions options)
     {
         if (value is null)
         {

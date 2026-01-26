@@ -76,7 +76,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_ValidValueObject_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(ValidVO));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(ValidVO));
 
         // Assert
         result.Should().BeTrue();
@@ -86,7 +86,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_NotAValueObject_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(NotAValueObject));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(NotAValueObject));
 
         // Assert
         result.Should().BeFalse();
@@ -96,7 +96,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_String_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(string));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(string));
 
         // Assert
         result.Should().BeFalse();
@@ -106,7 +106,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_Int_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(int));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(int));
 
         // Assert
         result.Should().BeFalse();
@@ -116,7 +116,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_InterfaceOnlyImplementation_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(InterfaceOnly));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(InterfaceOnly));
 
         // Assert
         result.Should().BeTrue("interface implementation should be detected");
@@ -126,7 +126,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_GenericValueObject_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(GenericVO<string>));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(GenericVO<string>));
 
         // Assert
         result.Should().BeTrue();
@@ -136,7 +136,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_MultiInterfaceValueObject_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(MultiInterfaceVO));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(MultiInterfaceVO));
 
         // Assert
         result.Should().BeTrue();
@@ -146,7 +146,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_InvalidCRTP_ReturnsFalse()
     {
         // Act - CRTP violation: TSelf != declaring type
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(InvalidCRTP));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(InvalidCRTP));
 
         // Assert
         result.Should().BeFalse("CRTP pattern should be validated");
@@ -160,7 +160,7 @@ public class ScalarValueTypeHelperTests
     public void GetScalarValueObjectInterface_ValidValueObject_ReturnsInterface()
     {
         // Act
-        var interfaceType = ScalarValueTypeHelper.GetScalarValueObjectInterface(typeof(ValidVO));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(ValidVO));
 
         // Assert
         interfaceType.Should().NotBeNull();
@@ -174,7 +174,7 @@ public class ScalarValueTypeHelperTests
     public void GetScalarValueObjectInterface_NotAValueObject_ReturnsNull()
     {
         // Act
-        var interfaceType = ScalarValueTypeHelper.GetScalarValueObjectInterface(typeof(NotAValueObject));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(NotAValueObject));
 
         // Assert
         interfaceType.Should().BeNull();
@@ -184,7 +184,7 @@ public class ScalarValueTypeHelperTests
     public void GetScalarValueObjectInterface_InvalidCRTP_ReturnsNull()
     {
         // Act
-        var interfaceType = ScalarValueTypeHelper.GetScalarValueObjectInterface(typeof(InvalidCRTP));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(InvalidCRTP));
 
         // Assert
         interfaceType.Should().BeNull("CRTP validation should fail");
@@ -194,7 +194,7 @@ public class ScalarValueTypeHelperTests
     public void GetScalarValueObjectInterface_GenericVO_ReturnsCorrectInterface()
     {
         // Act
-        var interfaceType = ScalarValueTypeHelper.GetScalarValueObjectInterface(typeof(GenericVO<int>));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(GenericVO<int>));
 
         // Assert
         interfaceType.Should().NotBeNull();
@@ -313,7 +313,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_Null_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueTypeHelper.IsScalarValueObject(null!);
+        var act = () => ScalarValueTypeHelper.IsScalarValue(null!);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -323,7 +323,7 @@ public class ScalarValueTypeHelperTests
     public void GetScalarValueObjectInterface_Null_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueTypeHelper.GetScalarValueObjectInterface(null!);
+        var act = () => ScalarValueTypeHelper.GetScalarValueInterface(null!);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -343,7 +343,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_AbstractClass_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(ScalarValueObject<,>));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(ScalarValueObject<,>));
 
         // Assert
         result.Should().BeFalse("abstract generic type definition shouldn't be detected");
@@ -353,7 +353,7 @@ public class ScalarValueTypeHelperTests
     public void IsScalarValueObject_Interface_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueTypeHelper.IsScalarValueObject(typeof(IScalarValue<,>));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(IScalarValue<,>));
 
         // Assert
         result.Should().BeFalse("interface itself shouldn't be detected");
@@ -410,10 +410,10 @@ public class ScalarValueTypeHelperTests
 
         // Act & Assert - Full workflow
         // 1. Check if it's a value object
-        ScalarValueTypeHelper.IsScalarValueObject(type).Should().BeTrue();
+        ScalarValueTypeHelper.IsScalarValue(type).Should().BeTrue();
 
         // 2. Get the interface
-        var interfaceType = ScalarValueTypeHelper.GetScalarValueObjectInterface(type);
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(type);
         interfaceType.Should().NotBeNull();
 
         // 3. Get primitive type
@@ -437,8 +437,8 @@ public class ScalarValueTypeHelperTests
         var type = typeof(NotAValueObject);
 
         // Act & Assert
-        ScalarValueTypeHelper.IsScalarValueObject(type).Should().BeFalse();
-        ScalarValueTypeHelper.GetScalarValueObjectInterface(type).Should().BeNull();
+        ScalarValueTypeHelper.IsScalarValue(type).Should().BeFalse();
+        ScalarValueTypeHelper.GetScalarValueInterface(type).Should().BeNull();
         ScalarValueTypeHelper.GetPrimitiveType(type).Should().BeNull();
     }
 

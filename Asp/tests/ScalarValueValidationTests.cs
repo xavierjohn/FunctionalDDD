@@ -327,17 +327,17 @@ public class ScalarValueValidationTests
     public void ScalarValueTypeHelper_IsScalarValueObject_ReturnsTrueForValueObjects()
     {
         // Act & Assert
-        ScalarValueTypeHelper.IsScalarValueObject(typeof(Name)).Should().BeTrue();
-        ScalarValueTypeHelper.IsScalarValueObject(typeof(TestEmail)).Should().BeTrue();
+        ScalarValueTypeHelper.IsScalarValue(typeof(Name)).Should().BeTrue();
+        ScalarValueTypeHelper.IsScalarValue(typeof(TestEmail)).Should().BeTrue();
     }
 
     [Fact]
     public void ScalarValueTypeHelper_IsScalarValueObject_ReturnsFalseForNonValueObjects()
     {
         // Act & Assert
-        ScalarValueTypeHelper.IsScalarValueObject(typeof(string)).Should().BeFalse();
-        ScalarValueTypeHelper.IsScalarValueObject(typeof(int)).Should().BeFalse();
-        ScalarValueTypeHelper.IsScalarValueObject(typeof(PersonDto)).Should().BeFalse();
+        ScalarValueTypeHelper.IsScalarValue(typeof(string)).Should().BeFalse();
+        ScalarValueTypeHelper.IsScalarValue(typeof(int)).Should().BeFalse();
+        ScalarValueTypeHelper.IsScalarValue(typeof(PersonDto)).Should().BeFalse();
     }
 
     [Fact]

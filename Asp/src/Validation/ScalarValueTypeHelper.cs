@@ -14,10 +14,10 @@ internal static class ScalarValueTypeHelper
     /// </summary>
     /// <param name="type">The type to check.</param>
     /// <returns>True if the type is a scalar value object, false otherwise.</returns>
-    public static bool IsScalarValueObject([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    public static bool IsScalarValue([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-        return GetScalarValueObjectInterface(type) is not null;
+        return GetScalarValueInterface(type) is not null;
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ internal static class ScalarValueTypeHelper
     /// This method verifies the CRTP pattern by ensuring the first generic argument
     /// of the interface matches the type itself.
     /// </remarks>
-    public static Type? GetScalarValueObjectInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    public static Type? GetScalarValueInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
         return type.GetInterfaces()
@@ -42,12 +42,12 @@ internal static class ScalarValueTypeHelper
     /// <summary>
     /// Gets the primitive type (TPrimitive) from a scalar value object type.
     /// </summary>
-    /// <param name="valueObjectType">The value object type.</param>
+    /// <param name="valueType">The value object type.</param>
     /// <returns>The primitive type, or null if the type is not a scalar value object.</returns>
-    public static Type? GetPrimitiveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueObjectType)
+    public static Type? GetPrimitiveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueType)
     {
-        ArgumentNullException.ThrowIfNull(valueObjectType);
-        var interfaceType = GetScalarValueObjectInterface(valueObjectType);
+        ArgumentNullException.ThrowIfNull(valueType);
+        var interfaceType = GetScalarValueInterface(valueType);
         return interfaceType?.GetGenericArguments()[1];
     }
 

@@ -8,7 +8,7 @@ using System.Globalization;
 /// Model binder for scalar value types.
 /// Validates scalar values during model binding by calling TryCreate.
 /// </summary>
-/// <typeparam name="TValueObject">The scalar value type.</typeparam>
+/// <typeparam name="TValue">The scalar value type.</typeparam>
 /// <typeparam name="TPrimitive">The underlying primitive type.</typeparam>
 /// <remarks>
 /// <para>
@@ -22,8 +22,8 @@ using System.Globalization;
 /// <c>[ApiController]</c>, invalid requests automatically return 400 Bad Request.
 /// </para>
 /// </remarks>
-public class ScalarValueModelBinder<TValueObject, TPrimitive> : IModelBinder
-    where TValueObject : IScalarValue<TValueObject, TPrimitive>
+public class ScalarValueModelBinder<TValue, TPrimitive> : IModelBinder
+    where TValue : IScalarValue<TValue, TPrimitive>
     where TPrimitive : IComparable
 {
     /// <summary>
@@ -57,7 +57,7 @@ public class ScalarValueModelBinder<TValueObject, TPrimitive> : IModelBinder
 
         // Call TryCreate directly - no reflection needed due to static abstract interface
         // Pass the model name so validation errors have the correct field name
-        var result = TValueObject.TryCreate(primitiveValue, modelName);
+        var result = TValue.TryCreate(primitiveValue, modelName);
 
         if (result.IsSuccess)
         {

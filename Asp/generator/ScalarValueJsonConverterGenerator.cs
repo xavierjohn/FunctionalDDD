@@ -495,7 +495,7 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
     /// <summary>
     /// Generates a converter factory that returns converters for all known value object types.
     /// </summary>
-    private static void GenerateConverterFactory(StringBuilder sb, List<ScalarValueInfo> valueObjects)
+    private static void GenerateConverterFactory(StringBuilder sb, List<ScalarValueInfo> scalarValueInfo)
     {
         sb.AppendLine("/// <summary>");
         sb.AppendLine("/// Factory for creating AOT-compatible JSON converters for all generated value object types.");
@@ -509,7 +509,7 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
         sb.AppendLine("    private static readonly System.Collections.Generic.Dictionary<Type, JsonConverter> _converters = new()");
         sb.AppendLine("    {");
 
-        foreach (var vo in valueObjects)
+        foreach (var vo in scalarValueInfo)
         {
             sb.AppendLine($"        {{ typeof({vo.FullTypeName}), new {vo.TypeName}JsonConverter() }},");
         }
@@ -532,7 +532,7 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
     /// </summary>
     private static void GenerateSerializerContextExtension(
         INamedTypeSymbol contextSymbol,
-        List<ScalarValueInfo> valueObjects,
+        List<ScalarValueInfo> scalarValueInfo,
         SourceProductionContext context)
     {
         var contextNamespace = contextSymbol.ContainingNamespace.ToDisplayString();
@@ -549,7 +549,7 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
         sb.AppendLine();
 
         // Add [JsonSerializable] attributes for all value object types
-        foreach (var vo in valueObjects)
+        foreach (var vo in scalarValueInfo)
         {
             sb.AppendLine($"[JsonSerializable(typeof({vo.FullTypeName}))]");
         }

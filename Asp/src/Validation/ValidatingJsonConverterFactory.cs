@@ -10,7 +10,7 @@ using System.Text.Json.Serialization;
 /// <remarks>
 /// <para>
 /// This factory is registered with <see cref="JsonSerializerOptions"/> and automatically
-/// creates <see cref="ValidatingJsonConverter{TValueObject, TPrimitive}"/> instances
+/// creates <see cref="ValidatingJsonConverter{TValue, TPrimitive}"/> instances
 /// for any type implementing <see cref="IScalarValue{TSelf, TPrimitive}"/>.
 /// </para>
 /// <para>
@@ -27,7 +27,7 @@ public sealed class ValidatingJsonConverterFactory : JsonConverterFactory
     /// <returns><c>true</c> if the type implements <see cref="IScalarValue{TSelf, TPrimitive}"/>.</returns>
     [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Value object types are preserved by JSON serialization infrastructure")]
     public override bool CanConvert(Type typeToConvert) =>
-        ScalarValueTypeHelper.IsScalarValueObject(typeToConvert);
+        ScalarValueTypeHelper.IsScalarValue(typeToConvert);
 
     /// <summary>
     /// Creates a validating converter for the specified value object type.

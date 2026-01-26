@@ -5,7 +5,6 @@ using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -135,7 +134,7 @@ public static class ServiceCollectionExtensions
         foreach (var property in typeInfo.Properties)
         {
             // Check if it's a value object (IScalarValue<TSelf, T>)
-            if (!IsScalarValueObjectProperty(property))
+            if (!IsScalarValueProperty(property))
                 continue;
 
             var propertyType = property.PropertyType;
@@ -156,17 +155,17 @@ public static class ServiceCollectionExtensions
 
     [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
-    private static bool IsScalarValueObjectProperty(JsonPropertyInfo property) =>
-        ScalarValueTypeHelper.IsScalarValueObject(property.PropertyType);
+    private static bool IsScalarValueProperty(JsonPropertyInfo property) =>
+        ScalarValueTypeHelper.IsScalarValue(property.PropertyType);
 
-    private static JsonConverter? CreateValidatingConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueObjectType)
+    private static JsonConverter? CreateValidatingConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueType)
     {
-        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(valueObjectType);
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(valueType);
         return primitiveType is null
             ? null
             : ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
                 typeof(ValidatingJsonConverter<,>),
-                valueObjectType,
+                valueType,
                 primitiveType);
     }
 
@@ -251,7 +250,7 @@ public static class ServiceCollectionExtensions
     /// <remarks>
     /// <para>
     /// This middleware creates a <see cref="ValidationErrorsContext"/> scope for each request,
-    /// allowing <see cref="ValidatingJsonConverter{TValueObject,TPrimitive}"/> to collect
+    /// allowing <see cref="ValidatingJsonConverter{TValue,TPrimitive}"/> to collect
     /// validation errors during JSON deserialization.
     /// </para>
     /// <para>
