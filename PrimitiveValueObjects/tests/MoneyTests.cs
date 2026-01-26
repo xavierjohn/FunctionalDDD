@@ -217,7 +217,7 @@ public class MoneyTests
         resultDecimal.IsFailure.Should().BeTrue();
         var validation = (ValidationError)resultDecimal.Error;
         validation.FieldErrors[0].Details[0].Should().Be("Multiplier cannot be negative");
-        
+
         resultInt.IsFailure.Should().BeTrue();
         var validationInt = (ValidationError)resultInt.Error;
         validationInt.FieldErrors[0].Details[0].Should().Be("Quantity cannot be negative");

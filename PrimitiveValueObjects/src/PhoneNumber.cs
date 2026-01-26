@@ -56,7 +56,7 @@ using System.Text.RegularExpressions;
 /// </code>
 /// </example>
 [JsonConverter(typeof(ParsableJsonConverter<PhoneNumber>))]
-public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScalarValueObject<PhoneNumber, string>, IParsable<PhoneNumber>
+public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScalarValue<PhoneNumber, string>, IParsable<PhoneNumber>
 {
     private PhoneNumber(string value) : base(value) { }
 

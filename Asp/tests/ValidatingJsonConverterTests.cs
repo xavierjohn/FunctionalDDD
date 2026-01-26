@@ -15,7 +15,7 @@ public class ValidatingJsonConverterTests
 {
     #region Test Value Objects
 
-    public class Email : ScalarValueObject<Email, string>, IScalarValueObject<Email, string>
+    public class Email : ScalarValueObject<Email, string>, IScalarValue<Email, string>
     {
         private Email(string value) : base(value) { }
 
@@ -30,7 +30,7 @@ public class ValidatingJsonConverterTests
         }
     }
 
-    public class Age : ScalarValueObject<Age, int>, IScalarValueObject<Age, int>
+    public class Age : ScalarValueObject<Age, int>, IScalarValue<Age, int>
     {
         private Age(int value) : base(value) { }
 
@@ -45,7 +45,7 @@ public class ValidatingJsonConverterTests
         }
     }
 
-    public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValueObject<Percentage, decimal>
+    public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<Percentage, decimal>
     {
         private Percentage(decimal value) : base(value) { }
 
@@ -60,7 +60,7 @@ public class ValidatingJsonConverterTests
         }
     }
 
-    public class ItemId : ScalarValueObject<ItemId, Guid>, IScalarValueObject<ItemId, Guid>
+    public class ItemId : ScalarValueObject<ItemId, Guid>, IScalarValue<ItemId, Guid>
     {
         private ItemId(Guid value) : base(value) { }
 

@@ -10,8 +10,8 @@
 /// with automatic validation that prevents zero/default integers. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item><c>IScalarValueObject&lt;TSelf, int&gt;</c> implementation for ASP.NET Core automatic validation</item>
-/// <item><c>TryCreate(int)</c> - Factory method for integers (required by IScalarValueObject)</item>
+/// <item><c>IScalarValue&lt;TSelf, int&gt;</c> implementation for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(int)</c> - Factory method for integers (required by IScalarValue)</item>
 /// <item><c>TryCreate(int?, string?)</c> - Factory method with zero validation and custom field name</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method for parsing strings with validation</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
@@ -48,7 +48,7 @@
 /// }
 /// 
 /// // The source generator automatically creates:
-/// // - IScalarValueObject&lt;TicketNumber, int&gt; interface implementation
+/// // - IScalarValue&lt;TicketNumber, int&gt; interface implementation
 /// // - public static Result&lt;TicketNumber&gt; TryCreate(int value, string? fieldName = null)
 /// // - public static Result&lt;TicketNumber&gt; TryCreate(int? value, string? fieldName = null)
 /// // - public static Result&lt;TicketNumber&gt; TryCreate(string? value, string? fieldName = null)
@@ -94,7 +94,7 @@
 /// <seealso cref="RequiredGuid{TSelf}"/>
 /// <seealso cref="RequiredString{TSelf}"/>
 public abstract class RequiredInt<TSelf> : ScalarValueObject<TSelf, int>
-    where TSelf : RequiredInt<TSelf>, IScalarValueObject<TSelf, int>
+    where TSelf : RequiredInt<TSelf>, IScalarValue<TSelf, int>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredInt{TSelf}"/> class with the specified integer value.

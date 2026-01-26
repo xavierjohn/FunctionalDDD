@@ -24,20 +24,20 @@ using Microsoft.AspNetCore.Http;
 /// <example>
 /// Registering the middleware in Program.cs:
 /// <code>
-/// app.UseValueObjectValidation();
+/// app.UseScalarValueValidation();
 /// // ... other middleware
 /// app.MapControllers();
 /// </code>
 /// </example>
-public sealed class ValueObjectValidationMiddleware
+public sealed class ScalarValueValidationMiddleware
 {
     private readonly RequestDelegate _next;
 
     /// <summary>
-    /// Creates a new instance of <see cref="ValueObjectValidationMiddleware"/>.
+    /// Creates a new instance of <see cref="ScalarValueValidationMiddleware"/>.
     /// </summary>
     /// <param name="next">The next middleware in the pipeline.</param>
-    public ValueObjectValidationMiddleware(RequestDelegate next) =>
+    public ScalarValueValidationMiddleware(RequestDelegate next) =>
         _next = next;
 
     /// <summary>

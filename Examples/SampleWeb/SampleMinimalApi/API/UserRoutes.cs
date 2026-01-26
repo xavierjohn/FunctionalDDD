@@ -73,7 +73,7 @@ public static class UserRoutes
                 dto.Password,
                 dto.Website)
             .ToHttpResult())
-            .WithValueObjectValidation();
+            .WithScalarValueValidation();
 
         // Test that same value object type (Name) used for multiple properties
         // correctly reports validation errors with the property name, not the type name.
@@ -83,7 +83,7 @@ public static class UserRoutes
                 dto.LastName.Value,
                 dto.Email.Value,
                 "Validation passed - field names correctly attributed!")))
-            .WithValueObjectValidation();
+            .WithScalarValueValidation();
     }
 
 }

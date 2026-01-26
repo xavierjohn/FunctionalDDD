@@ -17,7 +17,7 @@ public class ModelBindingTests
 {
     #region Test Value Objects
 
-    public class UserId : ScalarValueObject<UserId, Guid>, IScalarValueObject<UserId, Guid>
+    public class UserId : ScalarValueObject<UserId, Guid>, IScalarValue<UserId, Guid>
     {
         private UserId(Guid value) : base(value) { }
 
@@ -30,7 +30,7 @@ public class ModelBindingTests
         }
     }
 
-    public class ProductCode : ScalarValueObject<ProductCode, string>, IScalarValueObject<ProductCode, string>
+    public class ProductCode : ScalarValueObject<ProductCode, string>, IScalarValue<ProductCode, string>
     {
         private ProductCode(string value) : base(value) { }
 
@@ -45,7 +45,7 @@ public class ModelBindingTests
         }
     }
 
-    public class Quantity : ScalarValueObject<Quantity, int>, IScalarValueObject<Quantity, int>
+    public class Quantity : ScalarValueObject<Quantity, int>, IScalarValue<Quantity, int>
     {
         private Quantity(int value) : base(value) { }
 
@@ -60,7 +60,7 @@ public class ModelBindingTests
         }
     }
 
-    public class Price : ScalarValueObject<Price, decimal>, IScalarValueObject<Price, decimal>
+    public class Price : ScalarValueObject<Price, decimal>, IScalarValue<Price, decimal>
     {
         private Price(decimal value) : base(value) { }
 
@@ -75,14 +75,14 @@ public class ModelBindingTests
 
     #endregion
 
-    #region ScalarValueObjectModelBinder Tests
+    #region ScalarValueModelBinder Tests
 
     [Fact]
     public async Task ModelBinder_ValidGuid_BindsSuccessfully()
     {
         // Arrange
         var guid = Guid.NewGuid();
-        var binder = new ScalarValueObjectModelBinder<UserId, Guid>();
+        var binder = new ScalarValueModelBinder<UserId, Guid>();
         var context = CreateBindingContext("userId", guid.ToString());
 
         // Act
@@ -100,7 +100,7 @@ public class ModelBindingTests
     public async Task ModelBinder_EmptyGuid_AddsValidationError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<UserId, Guid>();
+        var binder = new ScalarValueModelBinder<UserId, Guid>();
         var context = CreateBindingContext("userId", Guid.Empty.ToString());
 
         // Act
@@ -117,7 +117,7 @@ public class ModelBindingTests
     public async Task ModelBinder_ValidString_BindsSuccessfully()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<ProductCode, string>();
+        var binder = new ScalarValueModelBinder<ProductCode, string>();
         var context = CreateBindingContext("productCode", "ABC123");
 
         // Act
@@ -135,7 +135,7 @@ public class ModelBindingTests
     public async Task ModelBinder_StringTooShort_AddsValidationError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<ProductCode, string>();
+        var binder = new ScalarValueModelBinder<ProductCode, string>();
         var context = CreateBindingContext("productCode", "AB");
 
         // Act
@@ -152,7 +152,7 @@ public class ModelBindingTests
     public async Task ModelBinder_EmptyString_AddsConversionError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<ProductCode, string>();
+        var binder = new ScalarValueModelBinder<ProductCode, string>();
         var context = CreateBindingContext("productCode", "");
 
         // Act
@@ -169,7 +169,7 @@ public class ModelBindingTests
     public async Task ModelBinder_ValidInt_BindsSuccessfully()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Quantity, int>();
+        var binder = new ScalarValueModelBinder<Quantity, int>();
         var context = CreateBindingContext("quantity", "42");
 
         // Act
@@ -187,7 +187,7 @@ public class ModelBindingTests
     public async Task ModelBinder_IntBelowMinimum_AddsValidationError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Quantity, int>();
+        var binder = new ScalarValueModelBinder<Quantity, int>();
         var context = CreateBindingContext("quantity", "0");
 
         // Act
@@ -204,7 +204,7 @@ public class ModelBindingTests
     public async Task ModelBinder_IntAboveMaximum_AddsValidationError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Quantity, int>();
+        var binder = new ScalarValueModelBinder<Quantity, int>();
         var context = CreateBindingContext("quantity", "1001");
 
         // Act
@@ -221,7 +221,7 @@ public class ModelBindingTests
     public async Task ModelBinder_InvalidInt_ReturnsParseError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Quantity, int>();
+        var binder = new ScalarValueModelBinder<Quantity, int>();
         var context = CreateBindingContext("quantity", "not-a-number");
 
         // Act
@@ -238,7 +238,7 @@ public class ModelBindingTests
     public async Task ModelBinder_ValidDecimal_BindsSuccessfully()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Price, decimal>();
+        var binder = new ScalarValueModelBinder<Price, decimal>();
         var context = CreateBindingContext("price", "99.99");
 
         // Act
@@ -256,7 +256,7 @@ public class ModelBindingTests
     public async Task ModelBinder_NegativeDecimal_AddsValidationError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Price, decimal>();
+        var binder = new ScalarValueModelBinder<Price, decimal>();
         var context = CreateBindingContext("price", "-10.00");
 
         // Act
@@ -273,7 +273,7 @@ public class ModelBindingTests
     public async Task ModelBinder_NoValue_DoesNotBind()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<ProductCode, string>();
+        var binder = new ScalarValueModelBinder<ProductCode, string>();
         var context = CreateBindingContext("productCode", null);
 
         // Act
@@ -288,7 +288,7 @@ public class ModelBindingTests
     public async Task ModelBinder_InvalidGuid_ReturnsParseError()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<UserId, Guid>();
+        var binder = new ScalarValueModelBinder<UserId, Guid>();
         var context = CreateBindingContext("userId", "not-a-guid");
 
         // Act
@@ -305,7 +305,7 @@ public class ModelBindingTests
     public async Task ModelBinder_UsesFieldNameInValidationErrors()
     {
         // Arrange
-        var binder = new ScalarValueObjectModelBinder<Quantity, int>();
+        var binder = new ScalarValueModelBinder<Quantity, int>();
         var context = CreateBindingContext("orderQuantity", "0"); // Using custom field name
 
         // Act
@@ -321,13 +321,13 @@ public class ModelBindingTests
 
     #endregion
 
-    #region ScalarValueObjectModelBinderProvider Tests
+    #region ScalarValueModelBinderProvider Tests
 
     [Fact]
     public void ModelBinderProvider_ScalarValueObjectType_ReturnsBinder()
     {
         // Arrange
-        var provider = new ScalarValueObjectModelBinderProvider();
+        var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(UserId));
 
         // Act
@@ -335,14 +335,14 @@ public class ModelBindingTests
 
         // Assert
         binder.Should().NotBeNull();
-        binder.Should().BeOfType<ScalarValueObjectModelBinder<UserId, Guid>>();
+        binder.Should().BeOfType<ScalarValueModelBinder<UserId, Guid>>();
     }
 
     [Fact]
     public void ModelBinderProvider_NonValueObjectType_ReturnsNull()
     {
         // Arrange
-        var provider = new ScalarValueObjectModelBinderProvider();
+        var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(string));
 
         // Act
@@ -356,7 +356,7 @@ public class ModelBindingTests
     public void ModelBinderProvider_StringValueObject_ReturnsBinder()
     {
         // Arrange
-        var provider = new ScalarValueObjectModelBinderProvider();
+        var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(ProductCode));
 
         // Act
@@ -364,14 +364,14 @@ public class ModelBindingTests
 
         // Assert
         binder.Should().NotBeNull();
-        binder.Should().BeOfType<ScalarValueObjectModelBinder<ProductCode, string>>();
+        binder.Should().BeOfType<ScalarValueModelBinder<ProductCode, string>>();
     }
 
     [Fact]
     public void ModelBinderProvider_IntValueObject_ReturnsBinder()
     {
         // Arrange
-        var provider = new ScalarValueObjectModelBinderProvider();
+        var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(Quantity));
 
         // Act
@@ -379,14 +379,14 @@ public class ModelBindingTests
 
         // Assert
         binder.Should().NotBeNull();
-        binder.Should().BeOfType<ScalarValueObjectModelBinder<Quantity, int>>();
+        binder.Should().BeOfType<ScalarValueModelBinder<Quantity, int>>();
     }
 
     [Fact]
     public void ModelBinderProvider_DecimalValueObject_ReturnsBinder()
     {
         // Arrange
-        var provider = new ScalarValueObjectModelBinderProvider();
+        var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(Price));
 
         // Act
@@ -394,14 +394,14 @@ public class ModelBindingTests
 
         // Assert
         binder.Should().NotBeNull();
-        binder.Should().BeOfType<ScalarValueObjectModelBinder<Price, decimal>>();
+        binder.Should().BeOfType<ScalarValueModelBinder<Price, decimal>>();
     }
 
     [Fact]
     public void ModelBinderProvider_NullContext_ThrowsArgumentNullException()
     {
         // Arrange
-        var provider = new ScalarValueObjectModelBinderProvider();
+        var provider = new ScalarValueModelBinderProvider();
 
         // Act
         var act = () => provider.GetBinder(null!);

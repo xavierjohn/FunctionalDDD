@@ -9,15 +9,15 @@ using System.Threading.Tasks;
 using Xunit;
 
 /// <summary>
-/// Tests for ValueObjectValidationEndpointFilter for Minimal APIs.
+/// Tests for ScalarValueValidationEndpointFilter for Minimal APIs.
 /// </summary>
-public class ValueObjectValidationEndpointFilterTests
+public class ScalarValueValidationEndpointFilterTests
 {
     [Fact]
     public async Task InvokeAsync_NoErrors_CallsNext()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         var nextCalled = false;
         var expectedResult = Results.Ok("success");
 
@@ -46,7 +46,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_WithErrors_ReturnsValidationProblem()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         var nextCalled = false;
 
         EndpointFilterDelegate next = _ =>
@@ -78,7 +78,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_SingleError_ReturnsValidationProblemWithError()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         EndpointFilterDelegate next = _ => ValueTask.FromResult<object?>(Results.Ok());
         var context = CreateEndpointFilterContext();
 
@@ -100,7 +100,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_MultipleErrorsForSameField_AllIncluded()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         EndpointFilterDelegate next = _ => ValueTask.FromResult<object?>(Results.Ok());
         var context = CreateEndpointFilterContext();
 
@@ -124,7 +124,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_EmptyScope_CallsNext()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         var nextCalled = false;
 
         EndpointFilterDelegate next = _ =>
@@ -151,7 +151,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_NextReturnsNull_ReturnsNull()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         EndpointFilterDelegate next = _ => ValueTask.FromResult<object?>(null);
         var context = CreateEndpointFilterContext();
 
@@ -169,7 +169,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_NextThrowsException_ExceptionPropagates()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         EndpointFilterDelegate next = _ => throw new System.InvalidOperationException("Test exception");
         var context = CreateEndpointFilterContext();
 
@@ -188,7 +188,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_ValidationErrorWithComplexStructure_PreservesStructure()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         EndpointFilterDelegate next = _ => ValueTask.FromResult<object?>(Results.Ok());
         var context = CreateEndpointFilterContext();
 
@@ -213,7 +213,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_NextReturnsNonOkResult_PassesThrough()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
         var notFoundResult = Results.NotFound();
         EndpointFilterDelegate next = _ => ValueTask.FromResult<object?>(notFoundResult);
         var context = CreateEndpointFilterContext();
@@ -232,7 +232,7 @@ public class ValueObjectValidationEndpointFilterTests
     public async Task InvokeAsync_ConcurrentRequests_IsolatedScopes()
     {
         // Arrange
-        var filter = new ValueObjectValidationEndpointFilter();
+        var filter = new ScalarValueValidationEndpointFilter();
 
         // Act - Process multiple concurrent requests with different errors
         var tasks = new Task<object?>[]
@@ -264,7 +264,7 @@ public class ValueObjectValidationEndpointFilterTests
     }
 
     private static async Task<object?> ProcessRequestWithError(
-        ValueObjectValidationEndpointFilter filter,
+        ScalarValueValidationEndpointFilter filter,
         string fieldName,
         string errorMessage)
     {

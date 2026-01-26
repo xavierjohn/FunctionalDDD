@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 /// <remarks>
 /// <para>
 /// This filter works in conjunction with ValidatingJsonConverterFactory to provide
-/// automatic validation of value objects in request DTOs. The converter collects validation errors
+/// automatic validation of scalar values in request DTOs. The converter collects validation errors
 /// during deserialization, and this filter checks for errors before the action executes.
 /// </para>
 /// <para>
@@ -28,11 +28,11 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 /// <code>
 /// builder.Services.AddControllers(options =>
 /// {
-///     options.Filters.Add&lt;ValueObjectValidationFilter&gt;();
+///     options.Filters.Add&lt;ScalarValueValidationFilter&gt;();
 /// });
 /// </code>
 /// </example>
-public sealed class ValueObjectValidationFilter : IActionFilter, IOrderedFilter
+public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
 {
     /// <summary>
     /// Gets the order value for filter execution. This filter runs early to catch validation errors

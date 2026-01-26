@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 using Xunit;
 
 /// <summary>
-/// Tests for ValueObjectValidationMiddleware to ensure proper scope management.
+/// Tests for ScalarValueValidationMiddleware to ensure proper scope management.
 /// </summary>
-public class ValueObjectValidationMiddlewareTests
+public class ScalarValueValidationMiddlewareTests
 {
     [Fact]
     public async Task InvokeAsync_CreatesValidationScope()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             // Inside the middleware scope
             ValidationErrorsContext.Current.Should().NotBeNull("scope should be active");
@@ -37,7 +37,7 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_ScopeContainsNoErrorsInitially()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             // Verify scope is clean
             ValidationErrorsContext.HasErrors.Should().BeFalse();
@@ -55,7 +55,7 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_ErrorsAddedInScopeAreAccessible()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             // Add an error
             ValidationErrorsContext.AddError("TestField", "Test error message");
@@ -80,7 +80,7 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_ScopeDisposedAfterException()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(_ =>
+        var middleware = new ScalarValueValidationMiddleware(_ =>
             throw new InvalidOperationException("Test exception"));
 
         var context = new DefaultHttpContext();
@@ -100,7 +100,7 @@ public class ValueObjectValidationMiddlewareTests
     {
         // Arrange
         var requestCount = 0;
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             requestCount++;
             ValidationErrorsContext.AddError($"Field{requestCount}", $"Error {requestCount}");
@@ -126,7 +126,7 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_ConcurrentRequests_IsolatedScopes()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             // Add a unique error based on thread
             var threadId = Environment.CurrentManagedThreadId;
@@ -157,13 +157,13 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_NestedMiddleware_ScopesNested()
     {
         // Arrange
-        var outerMiddleware = new ValueObjectValidationMiddleware(async httpContext =>
+        var outerMiddleware = new ScalarValueValidationMiddleware(async httpContext =>
         {
             ValidationErrorsContext.Current.Should().NotBeNull("outer scope active");
             ValidationErrorsContext.AddError("OuterField", "Outer error");
 
             // Call inner middleware
-            var innerMiddleware = new ValueObjectValidationMiddleware(async _ =>
+            var innerMiddleware = new ScalarValueValidationMiddleware(async _ =>
             {
                 ValidationErrorsContext.Current.Should().NotBeNull("inner scope active");
 
@@ -198,7 +198,7 @@ public class ValueObjectValidationMiddlewareTests
     {
         // Arrange
         HttpContext? capturedContext = null;
-        var middleware = new ValueObjectValidationMiddleware(ctx =>
+        var middleware = new ScalarValueValidationMiddleware(ctx =>
         {
             capturedContext = ctx;
             return Task.CompletedTask;
@@ -217,7 +217,7 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_PropertyNameContextPreserved()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             // Set a property name
             ValidationErrorsContext.CurrentPropertyName = "TestProperty";
@@ -241,7 +241,7 @@ public class ValueObjectValidationMiddlewareTests
     public async Task InvokeAsync_MultipleErrors_AllCollected()
     {
         // Arrange
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             // Add multiple errors
             ValidationErrorsContext.AddError("Field1", "Error 1");
@@ -271,7 +271,7 @@ public class ValueObjectValidationMiddlewareTests
     {
         // Arrange
         var cts = new System.Threading.CancellationTokenSource();
-        var middleware = new ValueObjectValidationMiddleware(async _ =>
+        var middleware = new ScalarValueValidationMiddleware(async _ =>
         {
             cts.Cancel();
             cts.Token.ThrowIfCancellationRequested();

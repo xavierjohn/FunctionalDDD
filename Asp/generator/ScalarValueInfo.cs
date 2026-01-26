@@ -1,7 +1,7 @@
 ﻿namespace FunctionalDdd.AspSourceGenerator;
 
 /// <summary>
-/// Represents metadata about a scalar value object type discovered during source generation.
+/// Represents metadata about a scalar value type discovered during source generation.
 /// Used to generate AOT-compatible JSON converters and serializer context entries.
 /// </summary>
 /// <remarks>
@@ -14,18 +14,18 @@
 /// </list>
 /// </para>
 /// </remarks>
-internal class ScalarValueObjectInfo
+internal class ScalarValueInfo
 {
     /// <summary>
-    /// Gets the namespace of the value object type.
+    /// Gets the namespace of the scalar value type.
     /// </summary>
     /// <value>
-    /// The fully-qualified namespace (e.g., "MyApp.Domain.ValueObjects").
+    /// The fully-qualified namespace (e.g., "MyApp.Domain.Values").
     /// </value>
     public readonly string Namespace;
 
     /// <summary>
-    /// Gets the name of the value object type.
+    /// Gets the name of the scalar value type.
     /// </summary>
     /// <value>
     /// The simple class name without namespace (e.g., "CustomerId", "EmailAddress").
@@ -33,7 +33,7 @@ internal class ScalarValueObjectInfo
     public readonly string TypeName;
 
     /// <summary>
-    /// Gets the primitive type that the value object wraps.
+    /// Gets the primitive type that the scalar value wraps.
     /// </summary>
     /// <value>
     /// The primitive type name (e.g., "string", "Guid", "int").
@@ -49,12 +49,12 @@ internal class ScalarValueObjectInfo
     public string FullTypeName => string.IsNullOrEmpty(Namespace) ? TypeName : $"{Namespace}.{TypeName}";
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ScalarValueObjectInfo"/> class.
+    /// Initializes a new instance of the <see cref="ScalarValueInfo"/> class.
     /// </summary>
     /// <param name="namespace">The namespace of the value object type.</param>
     /// <param name="typeName">The name of the value object type.</param>
     /// <param name="primitiveType">The primitive type that the value object wraps.</param>
-    public ScalarValueObjectInfo(string @namespace, string typeName, string primitiveType)
+    public ScalarValueInfo(string @namespace, string typeName, string primitiveType)
     {
         Namespace = @namespace;
         TypeName = typeName;
@@ -64,5 +64,5 @@ internal class ScalarValueObjectInfo
     /// <summary>
     /// Returns a string representation for debugging purposes.
     /// </summary>
-    public override string ToString() => $"{FullTypeName} : IScalarValueObject<{TypeName}, {PrimitiveType}>";
+    public override string ToString() => $"{FullTypeName} : IScalarValue<{TypeName}, {PrimitiveType}>";
 }

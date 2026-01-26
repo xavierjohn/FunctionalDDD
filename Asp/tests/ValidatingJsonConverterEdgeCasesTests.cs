@@ -15,7 +15,7 @@ public class ValidatingJsonConverterEdgeCasesTests
 {
     #region Test Value Objects
 
-    public class Email : ScalarValueObject<Email, string>, IScalarValueObject<Email, string>
+    public class Email : ScalarValueObject<Email, string>, IScalarValue<Email, string>
     {
         private Email(string value) : base(value) { }
         public static Result<Email> TryCreate(string? value, string? fieldName = null)
@@ -27,7 +27,7 @@ public class ValidatingJsonConverterEdgeCasesTests
         }
     }
 
-    public class Age : ScalarValueObject<Age, int>, IScalarValueObject<Age, int>
+    public class Age : ScalarValueObject<Age, int>, IScalarValue<Age, int>
     {
         private Age(int value) : base(value) { }
         public static Result<Age> TryCreate(int value, string? fieldName = null)
@@ -206,7 +206,7 @@ public class ValidatingJsonConverterEdgeCasesTests
         }
     }
 
-    public class NonValidationErrorVO : ScalarValueObject<NonValidationErrorVO, int>, IScalarValueObject<NonValidationErrorVO, int>
+    public class NonValidationErrorVO : ScalarValueObject<NonValidationErrorVO, int>, IScalarValue<NonValidationErrorVO, int>
     {
         private NonValidationErrorVO(int value) : base(value) { }
         public static Result<NonValidationErrorVO> TryCreate(int value, string? fieldName = null) =>
@@ -449,7 +449,7 @@ public class ValidatingJsonConverterEdgeCasesTests
         }
     }
 
-    public class MultiValidationVO : ScalarValueObject<MultiValidationVO, string>, IScalarValueObject<MultiValidationVO, string>
+    public class MultiValidationVO : ScalarValueObject<MultiValidationVO, string>, IScalarValue<MultiValidationVO, string>
     {
         private MultiValidationVO(string value) : base(value) { }
         public static Result<MultiValidationVO> TryCreate(string? value, string? fieldName = null)

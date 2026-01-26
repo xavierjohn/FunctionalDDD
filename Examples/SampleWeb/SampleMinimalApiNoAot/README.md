@@ -5,7 +5,7 @@ This example demonstrates that **FunctionalDDD.Asp works perfectly without sourc
 ## What This Example Proves
 
 ✅ **No source generator required** - The library works out of the box with reflection
-✅ **No `[GenerateValueObjectConverters]` attribute needed**
+✅ **No `[GenerateScalarValueConverters]` attribute needed**
 ✅ **No `JsonSerializerContext` required**
 ✅ **No Native AOT constraints**
 ✅ **Same functionality as AOT version** - All features work identically
@@ -18,7 +18,7 @@ This example demonstrates that **FunctionalDDD.Asp works perfectly without sourc
 | **PublishAot** | ✅ true | ❌ false (standard .NET) |
 | **Source Generator** | ✅ Referenced | ❌ Not referenced |
 | **JsonSerializerContext** | ✅ Required | ❌ Not needed |
-| **[GenerateValueObjectConverters]** | ✅ Required | ❌ Not needed |
+| **[GenerateScalarValueConverters]** | ✅ Required | ❌ Not needed |
 | **Startup Performance** | Fastest (pre-generated) | ~50μs slower (one-time reflection cost) |
 | **Runtime Performance** | Identical | Identical |
 | **Trimming Support** | Full | Reflection may be trimmed |
@@ -46,10 +46,10 @@ dotnet add package FunctionalDDD.Asp
 var builder = WebApplication.CreateBuilder(args);
 
 // That's it! No JsonSerializerContext needed
-builder.Services.AddScalarValueObjectValidationForMinimalApi();
+builder.Services.AddScalarValueValidationForMinimalApi();
 
 var app = builder.Build();
-app.UseValueObjectValidation();
+app.UseScalarValueValidation();
 ```
 
 ### 3. Use Value Objects
@@ -132,8 +132,8 @@ Content-Type: application/json
 
 When you don't use the source generator, the library automatically:
 
-1. **Detects value object types** at runtime using reflection
-2. **Creates JSON converters dynamically** for `IScalarValueObject<TSelf, TPrimitive>` types
+1. **Detects scalar value types** at runtime using reflection
+2. **Creates JSON converters dynamically** for `IScalarValue<TSelf, TPrimitive>` types
 3. **Validates during deserialization** by calling `TryCreate()` via static abstract interface members
 4. **Collects all errors** before returning HTTP 400 Bad Request
 5. **Caches reflection results** to minimize performance impact
@@ -213,11 +213,11 @@ Start with reflection (this example) → Add generator when needed:
    ```
 
 3. **Add JsonSerializerContext** (only for AOT)
-   ```csharp
-   [GenerateValueObjectConverters]
-   [JsonSerializable(typeof(RegisterUserDto))]
-   internal partial class AppJsonSerializerContext : JsonSerializerContext { }
-   ```
+```csharp
+[GenerateScalarValueConverters]
+[JsonSerializable(typeof(RegisterUserDto))]
+internal partial class AppJsonSerializerContext : JsonSerializerContext { }
+```
 
 Your endpoint code **stays the same** - no changes required!
 

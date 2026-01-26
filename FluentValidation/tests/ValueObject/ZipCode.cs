@@ -2,7 +2,7 @@
 
 using FluentValidation;
 
-public class ZipCode : ScalarValueObject<ZipCode, string>, IScalarValueObject<ZipCode, string>
+public class ZipCode : ScalarValueObject<ZipCode, string>, IScalarValue<ZipCode, string>
 {
     private ZipCode(string value) : base(value)
     {

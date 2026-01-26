@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default));
-builder.Services.AddScalarValueObjectValidationForMinimalApi();
+builder.Services.AddScalarValueValidationForMinimalApi();
 
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: "SampleMinimalApi",
@@ -24,7 +24,7 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-app.UseValueObjectValidation();
+app.UseScalarValueValidation();
 
 // Welcome endpoint with API information
 app.MapGet("/", () => Results.Ok(new WelcomeResponse(
@@ -59,7 +59,7 @@ public record EndpointsInfo(UserEndpoints Users);
 public record UserEndpoints(string Register, string RegisterCreated, string RegisterAutoValidation, string[] Errors);
 #pragma warning restore CA1050 // Declare types in namespaces
 
-[GenerateValueObjectConverters]
+[GenerateScalarValueConverters]
 [JsonSerializable(typeof(WelcomeResponse))]
 [JsonSerializable(typeof(EndpointsInfo))]
 [JsonSerializable(typeof(UserEndpoints))]

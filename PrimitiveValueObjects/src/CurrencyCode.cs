@@ -17,7 +17,7 @@ using System.Text.Json.Serialization;
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<CurrencyCode>))]
-public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValueObject<CurrencyCode, string>, IParsable<CurrencyCode>
+public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValue<CurrencyCode, string>, IParsable<CurrencyCode>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CurrencyCode"/> class.

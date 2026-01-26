@@ -65,7 +65,7 @@ using System.Text.Json.Serialization;
 /// </code>
 /// </example>
 [JsonConverter(typeof(ParsableJsonConverter<Percentage>))]
-public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValueObject<Percentage, decimal>, IParsable<Percentage>
+public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<Percentage, decimal>, IParsable<Percentage>
 {
     private Percentage(decimal value) : base(value) { }
 

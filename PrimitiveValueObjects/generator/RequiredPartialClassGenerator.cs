@@ -21,9 +21,9 @@ using System.Threading;
 /// <para>
 /// For each partial class inheriting from <c>RequiredGuid</c>, generates:
 /// <list type="bullet">
-/// <item><c>IScalarValueObject&lt;TSelf, Guid&gt;</c> - Interface for ASP.NET Core automatic validation</item>
+/// <item><c>IScalarValue&lt;TSelf, Guid&gt;</c> - Interface for ASP.NET Core automatic validation</item>
 /// <item><c>NewUnique()</c> - Creates a new instance with a unique GUID</item>
-/// <item><c>TryCreate(Guid)</c> - Creates from non-nullable GUID (required by IScalarValueObject)</item>
+/// <item><c>TryCreate(Guid)</c> - Creates from non-nullable GUID (required by IScalarValue)</item>
 /// <item><c>TryCreate(Guid?)</c> - Creates from nullable GUID with empty validation</item>
 /// <item><c>TryCreate(string?)</c> - Parses from string with format and empty validation</item>
 /// <item><c>Parse(string, IFormatProvider?)</c> - IParsable implementation</item>
@@ -37,8 +37,8 @@ using System.Threading;
 /// <para>
 /// For each partial class inheriting from <c>RequiredString</c>, generates:
 /// <list type="bullet">
-/// <item><c>IScalarValueObject&lt;TSelf, string&gt;</c> - Interface for ASP.NET Core automatic validation</item>
-/// <item><c>TryCreate(string)</c> - Creates from non-nullable string (required by IScalarValueObject)</item>
+/// <item><c>IScalarValue&lt;TSelf, string&gt;</c> - Interface for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(string)</c> - Creates from non-nullable string (required by IScalarValue)</item>
 /// <item><c>TryCreate(string?)</c> - Creates from nullable string with null/empty/whitespace validation</item>
 /// <item><c>Parse(string, IFormatProvider?)</c> - IParsable implementation</item>
 /// <item><c>TryParse(...)</c> - IParsable try-parse pattern</item>
@@ -87,7 +87,7 @@ using System.Threading;
 /// using System.Text.Json.Serialization;
 ///
 /// [JsonConverter(typeof(ParsableJsonConverter&lt;CustomerId&gt;)]
-/// public partial class CustomerId : IScalarValueObject&lt;CustomerId, Guid&gt;, IParsable&lt;CustomerId&gt;
+/// public partial class CustomerId : IScalarValue&lt;CustomerId, Guid&gt;, IParsable&lt;CustomerId&gt;
 /// {
 ///     private CustomerId(Guid value) : base(value) { }
 ///
@@ -96,7 +96,7 @@ using System.Threading;
 ///
 ///     public static CustomerId NewUnique() =&gt; new(Guid.NewGuid());
 ///
-///     // Required by IScalarValueObject - enables automatic ASP.NET Core validation
+///     // Required by IScalarValue - enables automatic ASP.NET Core validation
 ///     public static Result&lt;CustomerId&gt; TryCreate(Guid value)
 ///         =&gt; TryCreate((Guid?)value, null);
 ///
@@ -232,7 +232,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
     #nullable enable
     [JsonConverter(typeof(ParsableJsonConverter<{g.ClassName}>))]
-    {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : IScalarValueObject<{g.ClassName}, {classType}>, IParsable<{g.ClassName}>
+    {g.Accessibility.ToCamelCase()} partial class {g.ClassName} : IScalarValue<{g.ClassName}, {classType}>, IParsable<{g.ClassName}>
     {{
         private {g.ClassName}({classType} value) : base(value)
         {{
@@ -272,7 +272,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a Guid.
-        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// Required by IScalarValue interface for model binding and JSON deserialization.
         /// </summary>
         /// <param name=""value"">The Guid value to validate.</param>
         /// <param name=""fieldName"">Optional field name for validation error messages.</param>
@@ -322,7 +322,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a string.
-        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// Required by IScalarValue interface for model binding and JSON deserialization.
         /// </summary>
         /// <param name=""value"">The string value to validate.</param>
         /// <param name=""fieldName"">Optional field name for validation error messages.</param>
@@ -346,7 +346,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from an integer.
-        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// Required by IScalarValue interface for model binding and JSON deserialization.
         /// </summary>
         /// <param name=""value"">The integer value to validate.</param>
         /// <param name=""fieldName"">Optional field name for validation error messages.</param>
@@ -396,7 +396,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a decimal.
-        /// Required by IScalarValueObject interface for model binding and JSON deserialization.
+        /// Required by IScalarValue interface for model binding and JSON deserialization.
         /// </summary>
         /// <param name=""value"">The decimal value to validate.</param>
         /// <param name=""fieldName"">Optional field name for validation error messages.</param>

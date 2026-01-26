@@ -3,25 +3,25 @@
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
-/// Helper class for detecting and working with <see cref="IScalarValueObject{TSelf, TPrimitive}"/> types.
+/// Helper class for detecting and working with <see cref="IScalarValue{TSelf, TPrimitive}"/> types.
 /// Centralizes reflection logic to avoid duplication across converters, model binders, and configuration.
 /// </summary>
-internal static class ScalarValueObjectTypeHelper
+internal static class ScalarValueTypeHelper
 {
     /// <summary>
-    /// Checks if the given type implements <see cref="IScalarValueObject{TSelf, TPrimitive}"/>
+    /// Checks if the given type implements <see cref="IScalarValue{TSelf, TPrimitive}"/>
     /// where TSelf is the type itself (CRTP pattern).
     /// </summary>
     /// <param name="type">The type to check.</param>
     /// <returns>True if the type is a scalar value object, false otherwise.</returns>
-    public static bool IsScalarValueObject([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    public static bool IsScalarValue([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-        return GetScalarValueObjectInterface(type) is not null;
+        return GetScalarValueInterface(type) is not null;
     }
 
     /// <summary>
-    /// Gets the <see cref="IScalarValueObject{TSelf, TPrimitive}"/> interface implemented by the type,
+    /// Gets the <see cref="IScalarValue{TSelf, TPrimitive}"/> interface implemented by the type,
     /// or null if the type doesn't implement it correctly.
     /// </summary>
     /// <param name="type">The type to check.</param>
@@ -30,24 +30,24 @@ internal static class ScalarValueObjectTypeHelper
     /// This method verifies the CRTP pattern by ensuring the first generic argument
     /// of the interface matches the type itself.
     /// </remarks>
-    public static Type? GetScalarValueObjectInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    public static Type? GetScalarValueInterface([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
         return type.GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType &&
-                                i.GetGenericTypeDefinition() == typeof(IScalarValueObject<,>) &&
+                                i.GetGenericTypeDefinition() == typeof(IScalarValue<,>) &&
                                 i.GetGenericArguments()[0] == type);
     }
 
     /// <summary>
     /// Gets the primitive type (TPrimitive) from a scalar value object type.
     /// </summary>
-    /// <param name="valueObjectType">The value object type.</param>
+    /// <param name="valueType">The value object type.</param>
     /// <returns>The primitive type, or null if the type is not a scalar value object.</returns>
-    public static Type? GetPrimitiveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueObjectType)
+    public static Type? GetPrimitiveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueType)
     {
-        ArgumentNullException.ThrowIfNull(valueObjectType);
-        var interfaceType = GetScalarValueObjectInterface(valueObjectType);
+        ArgumentNullException.ThrowIfNull(valueType);
+        var interfaceType = GetScalarValueInterface(valueType);
         return interfaceType?.GetGenericArguments()[1];
     }
 

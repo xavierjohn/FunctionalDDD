@@ -10,14 +10,14 @@ using System.Text.Json.Serialization;
 using Xunit;
 
 /// <summary>
-/// Tests for ScalarValueObjectTypeHelper to ensure correct type detection and generic instantiation.
+/// Tests for ScalarValueTypeHelper to ensure correct type detection and generic instantiation.
 /// </summary>
-public class ScalarValueObjectTypeHelperTests
+public class ScalarValueTypeHelperTests
 {
     #region Test Value Objects
 
     // Valid value object
-    public class ValidVO : ScalarValueObject<ValidVO, string>, IScalarValueObject<ValidVO, string>
+    public class ValidVO : ScalarValueObject<ValidVO, string>, IScalarValue<ValidVO, string>
     {
         private ValidVO(string value) : base(value) { }
         public static Result<ValidVO> TryCreate(string? value, string? fieldName = null) =>
@@ -25,7 +25,7 @@ public class ScalarValueObjectTypeHelperTests
     }
 
     // CRTP violation - TSelf doesn't match the class
-    public class InvalidCRTP : ScalarValueObject<ValidVO, string>, IScalarValueObject<ValidVO, string>
+    public class InvalidCRTP : ScalarValueObject<ValidVO, string>, IScalarValue<ValidVO, string>
     {
         private InvalidCRTP(string value) : base(value) { }
         public static Result<ValidVO> TryCreate(string? value, string? fieldName = null) =>
@@ -39,7 +39,7 @@ public class ScalarValueObjectTypeHelperTests
     }
 
     // Implements interface but not ScalarValueObject base class
-    public class InterfaceOnly : IScalarValueObject<InterfaceOnly, int>
+    public class InterfaceOnly : IScalarValue<InterfaceOnly, int>
     {
         public int Value { get; }
         public InterfaceOnly(int value) => Value = value;
@@ -48,18 +48,18 @@ public class ScalarValueObjectTypeHelperTests
     }
 
     // Generic value object
-    public class GenericVO<T> : ScalarValueObject<GenericVO<T>, T>, IScalarValueObject<GenericVO<T>, T>
+    public class GenericVO<T> : ScalarValueObject<GenericVO<T>, T>, IScalarValue<GenericVO<T>, T>
         where T : IComparable
     {
         private GenericVO(T value) : base(value) { }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "Required by IScalarValueObject interface pattern")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "Required by IScalarValue interface pattern")]
         public static Result<GenericVO<T>> TryCreate(T? value, string? fieldName = null) =>
             value is null ? Error.Validation("Required", fieldName ?? "field") : new GenericVO<T>(value);
     }
 
     // Multiple interface implementations (edge case)
     public class MultiInterfaceVO : ScalarValueObject<MultiInterfaceVO, string>,
-        IScalarValueObject<MultiInterfaceVO, string>,
+        IScalarValue<MultiInterfaceVO, string>,
         IComparable<MultiInterfaceVO>
     {
         private MultiInterfaceVO(string value) : base(value) { }
@@ -70,83 +70,83 @@ public class ScalarValueObjectTypeHelperTests
 
     #endregion
 
-    #region IsScalarValueObject Tests
+    #region IsScalarValue Tests
 
     [Fact]
-    public void IsScalarValueObject_ValidValueObject_ReturnsTrue()
+    public void IsScalarValue_ValidValueObject_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(ValidVO));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(ValidVO));
 
         // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
-    public void IsScalarValueObject_NotAValueObject_ReturnsFalse()
+    public void IsScalarValue_NotAValueObject_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(NotAValueObject));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(NotAValueObject));
 
         // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
-    public void IsScalarValueObject_String_ReturnsFalse()
+    public void IsScalarValue_String_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(string));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(string));
 
         // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
-    public void IsScalarValueObject_Int_ReturnsFalse()
+    public void IsScalarValue_Int_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(int));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(int));
 
         // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
-    public void IsScalarValueObject_InterfaceOnlyImplementation_ReturnsTrue()
+    public void IsScalarValue_InterfaceOnlyImplementation_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(InterfaceOnly));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(InterfaceOnly));
 
         // Assert
         result.Should().BeTrue("interface implementation should be detected");
     }
 
     [Fact]
-    public void IsScalarValueObject_GenericValueObject_ReturnsTrue()
+    public void IsScalarValue_GenericValueObject_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(GenericVO<string>));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(GenericVO<string>));
 
         // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
-    public void IsScalarValueObject_MultiInterfaceValueObject_ReturnsTrue()
+    public void IsScalarValue_MultiInterfaceValueObject_ReturnsTrue()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(MultiInterfaceVO));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(MultiInterfaceVO));
 
         // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
-    public void IsScalarValueObject_InvalidCRTP_ReturnsFalse()
+    public void IsScalarValue_InvalidCRTP_ReturnsFalse()
     {
         // Act - CRTP violation: TSelf != declaring type
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(InvalidCRTP));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(InvalidCRTP));
 
         // Assert
         result.Should().BeFalse("CRTP pattern should be validated");
@@ -154,47 +154,47 @@ public class ScalarValueObjectTypeHelperTests
 
     #endregion
 
-    #region GetScalarValueObjectInterface Tests
+    #region GetScalarValueInterface Tests
 
     [Fact]
-    public void GetScalarValueObjectInterface_ValidValueObject_ReturnsInterface()
+    public void GetScalarValueInterface_ValidValueObject_ReturnsInterface()
     {
         // Act
-        var interfaceType = ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(typeof(ValidVO));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(ValidVO));
 
         // Assert
         interfaceType.Should().NotBeNull();
         interfaceType!.IsGenericType.Should().BeTrue();
-        interfaceType.GetGenericTypeDefinition().Should().Be(typeof(IScalarValueObject<,>));
+        interfaceType.GetGenericTypeDefinition().Should().Be(typeof(IScalarValue<,>));
         interfaceType.GetGenericArguments()[0].Should().Be<ValidVO>();
         interfaceType.GetGenericArguments()[1].Should().Be<string>();
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_NotAValueObject_ReturnsNull()
+    public void GetScalarValueInterface_NotAValueObject_ReturnsNull()
     {
         // Act
-        var interfaceType = ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(typeof(NotAValueObject));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(NotAValueObject));
 
         // Assert
         interfaceType.Should().BeNull();
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_InvalidCRTP_ReturnsNull()
+    public void GetScalarValueInterface_InvalidCRTP_ReturnsNull()
     {
         // Act
-        var interfaceType = ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(typeof(InvalidCRTP));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(InvalidCRTP));
 
         // Assert
         interfaceType.Should().BeNull("CRTP validation should fail");
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_GenericVO_ReturnsCorrectInterface()
+    public void GetScalarValueInterface_GenericVO_ReturnsCorrectInterface()
     {
         // Act
-        var interfaceType = ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(typeof(GenericVO<int>));
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(typeof(GenericVO<int>));
 
         // Assert
         interfaceType.Should().NotBeNull();
@@ -210,7 +210,7 @@ public class ScalarValueObjectTypeHelperTests
     public void GetPrimitiveType_ValidValueObject_ReturnsPrimitiveType()
     {
         // Act
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(ValidVO));
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(typeof(ValidVO));
 
         // Assert
         primitiveType.Should().Be<string>();
@@ -220,7 +220,7 @@ public class ScalarValueObjectTypeHelperTests
     public void GetPrimitiveType_NotAValueObject_ReturnsNull()
     {
         // Act
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(NotAValueObject));
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(typeof(NotAValueObject));
 
         // Assert
         primitiveType.Should().BeNull();
@@ -230,7 +230,7 @@ public class ScalarValueObjectTypeHelperTests
     public void GetPrimitiveType_GenericVO_ReturnsCorrectPrimitiveType()
     {
         // Act
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(GenericVO<decimal>));
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(typeof(GenericVO<decimal>));
 
         // Assert
         primitiveType.Should().Be<decimal>();
@@ -240,7 +240,7 @@ public class ScalarValueObjectTypeHelperTests
     public void GetPrimitiveType_InterfaceOnly_ReturnsInt()
     {
         // Act
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(typeof(InterfaceOnly));
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(typeof(InterfaceOnly));
 
         // Assert
         primitiveType.Should().Be<int>();
@@ -254,7 +254,7 @@ public class ScalarValueObjectTypeHelperTests
     public void CreateGenericInstance_JsonConverter_CreatesInstance()
     {
         // Act
-        var converter = ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var converter = ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             typeof(ValidatingJsonConverter<,>),
             typeof(ValidVO),
             typeof(string));
@@ -268,21 +268,21 @@ public class ScalarValueObjectTypeHelperTests
     public void CreateGenericInstance_ModelBinder_CreatesInstance()
     {
         // Act
-        var binder = ScalarValueObjectTypeHelper.CreateGenericInstance<IModelBinder>(
-            typeof(ScalarValueObjectModelBinder<,>),
+        var binder = ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+            typeof(ScalarValueModelBinder<,>),
             typeof(ValidVO),
             typeof(string));
 
         // Assert
         binder.Should().NotBeNull();
-        binder.Should().BeOfType<ScalarValueObjectModelBinder<ValidVO, string>>();
+        binder.Should().BeOfType<ScalarValueModelBinder<ValidVO, string>>();
     }
 
     [Fact]
     public void CreateGenericInstance_WithGenericVO_CreatesInstance()
     {
         // Act
-        var converter = ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var converter = ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             typeof(ValidatingJsonConverter<,>),
             typeof(GenericVO<int>),
             typeof(int));
@@ -296,7 +296,7 @@ public class ScalarValueObjectTypeHelperTests
     public void CreateGenericInstance_WrongPrimitiveType_ReturnsNull()
     {
         // Act - ValidVO uses string, but we're passing int
-        var converter = ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var converter = ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             typeof(ValidatingJsonConverter<,>),
             typeof(ValidVO),
             typeof(int)); // Wrong primitive type
@@ -310,20 +310,20 @@ public class ScalarValueObjectTypeHelperTests
     #region Edge Cases
 
     [Fact]
-    public void IsScalarValueObject_Null_ThrowsArgumentNullException()
+    public void IsScalarValue_Null_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueObjectTypeHelper.IsScalarValueObject(null!);
+        var act = () => ScalarValueTypeHelper.IsScalarValue(null!);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void GetScalarValueObjectInterface_Null_ThrowsArgumentNullException()
+    public void GetScalarValueInterface_Null_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(null!);
+        var act = () => ScalarValueTypeHelper.GetScalarValueInterface(null!);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
@@ -333,17 +333,17 @@ public class ScalarValueObjectTypeHelperTests
     public void GetPrimitiveType_Null_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueObjectTypeHelper.GetPrimitiveType(null!);
+        var act = () => ScalarValueTypeHelper.GetPrimitiveType(null!);
 
         // Assert
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void IsScalarValueObject_AbstractClass_ReturnsFalse()
+    public void IsScalarValue_AbstractClass_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(ScalarValueObject<,>));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(ScalarValueObject<,>));
 
         // Assert
         result.Should().BeFalse("abstract generic type definition shouldn't be detected");
@@ -353,7 +353,7 @@ public class ScalarValueObjectTypeHelperTests
     public void IsScalarValueObject_Interface_ReturnsFalse()
     {
         // Act
-        var result = ScalarValueObjectTypeHelper.IsScalarValueObject(typeof(IScalarValueObject<,>));
+        var result = ScalarValueTypeHelper.IsScalarValue(typeof(IScalarValue<,>));
 
         // Assert
         result.Should().BeFalse("interface itself shouldn't be detected");
@@ -363,7 +363,7 @@ public class ScalarValueObjectTypeHelperTests
     public void CreateGenericInstance_NullGenericTypeDefinition_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var act = () => ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             null!,
             typeof(ValidVO),
             typeof(string));
@@ -376,7 +376,7 @@ public class ScalarValueObjectTypeHelperTests
     public void CreateGenericInstance_NullValueObjectType_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var act = () => ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             typeof(ValidatingJsonConverter<,>),
             null!,
             typeof(string));
@@ -389,7 +389,7 @@ public class ScalarValueObjectTypeHelperTests
     public void CreateGenericInstance_NullPrimitiveType_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var act = () => ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             typeof(ValidatingJsonConverter<,>),
             typeof(ValidVO),
             null!);
@@ -410,18 +410,18 @@ public class ScalarValueObjectTypeHelperTests
 
         // Act & Assert - Full workflow
         // 1. Check if it's a value object
-        ScalarValueObjectTypeHelper.IsScalarValueObject(type).Should().BeTrue();
+        ScalarValueTypeHelper.IsScalarValue(type).Should().BeTrue();
 
         // 2. Get the interface
-        var interfaceType = ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(type);
+        var interfaceType = ScalarValueTypeHelper.GetScalarValueInterface(type);
         interfaceType.Should().NotBeNull();
 
         // 3. Get primitive type
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(type);
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(type);
         primitiveType.Should().Be<string>();
 
         // 4. Create converter
-        var converter = ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+        var converter = ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
             typeof(ValidatingJsonConverter<,>),
             type,
             primitiveType!);
@@ -437,9 +437,9 @@ public class ScalarValueObjectTypeHelperTests
         var type = typeof(NotAValueObject);
 
         // Act & Assert
-        ScalarValueObjectTypeHelper.IsScalarValueObject(type).Should().BeFalse();
-        ScalarValueObjectTypeHelper.GetScalarValueObjectInterface(type).Should().BeNull();
-        ScalarValueObjectTypeHelper.GetPrimitiveType(type).Should().BeNull();
+        ScalarValueTypeHelper.IsScalarValue(type).Should().BeFalse();
+        ScalarValueTypeHelper.GetScalarValueInterface(type).Should().BeNull();
+        ScalarValueTypeHelper.GetPrimitiveType(type).Should().BeNull();
     }
 
     #endregion

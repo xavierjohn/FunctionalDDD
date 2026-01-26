@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // NO JsonSerializerContext - uses standard JSON serialization with reflection fallback
 // This demonstrates that the library works perfectly without source generation!
-builder.Services.AddScalarValueObjectValidationForMinimalApi();
+builder.Services.AddScalarValueValidationForMinimalApi();
 
 Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName: "SampleMinimalApiNoAot",
@@ -24,7 +24,7 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-app.UseValueObjectValidation();
+app.UseScalarValueValidation();
 
 // Welcome endpoint with API information
 #pragma warning disable CA1861 // Prefer 'static readonly' fields - one-time startup configuration
@@ -62,6 +62,6 @@ app.Run();
 public record SharedNameTypeResponse(string FirstName, string LastName, string Email, string Message);
 #pragma warning restore CA1050 // Declare types in namespaces
 
-// NO [GenerateValueObjectConverters] attribute
+// NO [GenerateScalarValueConverters] attribute
 // NO JsonSerializerContext
 // Uses standard reflection-based JSON serialization - works perfectly!

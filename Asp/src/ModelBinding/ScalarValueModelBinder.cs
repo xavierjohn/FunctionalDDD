@@ -5,16 +5,16 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Globalization;
 
 /// <summary>
-/// Model binder for ScalarValueObject-derived types.
-/// Validates value objects during model binding by calling TryCreate.
+/// Model binder for scalar value types.
+/// Validates scalar values during model binding by calling TryCreate.
 /// </summary>
-/// <typeparam name="TValueObject">The value object type.</typeparam>
+/// <typeparam name="TValue">The scalar value type.</typeparam>
 /// <typeparam name="TPrimitive">The underlying primitive type.</typeparam>
 /// <remarks>
 /// <para>
 /// This binder is automatically used for any type that implements 
-/// <see cref="IScalarValueObject{TSelf, TPrimitive}"/>. It intercepts model binding
-/// and calls the static <c>TryCreate</c> method to create validated value objects.
+/// <see cref="IScalarValue{TSelf, TPrimitive}"/>. It intercepts model binding
+/// and calls the static <c>TryCreate</c> method to create validated scalar values.
 /// </para>
 /// <para>
 /// Validation errors are added to <see cref="ModelStateDictionary"/>, which integrates
@@ -22,8 +22,8 @@ using System.Globalization;
 /// <c>[ApiController]</c>, invalid requests automatically return 400 Bad Request.
 /// </para>
 /// </remarks>
-public class ScalarValueObjectModelBinder<TValueObject, TPrimitive> : IModelBinder
-    where TValueObject : IScalarValueObject<TValueObject, TPrimitive>
+public class ScalarValueModelBinder<TValue, TPrimitive> : IModelBinder
+    where TValue : IScalarValue<TValue, TPrimitive>
     where TPrimitive : IComparable
 {
     /// <summary>
@@ -57,7 +57,7 @@ public class ScalarValueObjectModelBinder<TValueObject, TPrimitive> : IModelBind
 
         // Call TryCreate directly - no reflection needed due to static abstract interface
         // Pass the model name so validation errors have the correct field name
-        var result = TValueObject.TryCreate(primitiveValue, modelName);
+        var result = TValue.TryCreate(primitiveValue, modelName);
 
         if (result.IsSuccess)
         {

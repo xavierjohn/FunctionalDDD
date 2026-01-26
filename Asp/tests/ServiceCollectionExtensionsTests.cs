@@ -21,7 +21,7 @@ public class ServiceCollectionExtensionsTests
 {
     #region Test Value Objects
 
-    public sealed class TestName : ScalarValueObject<TestName, string>, IScalarValueObject<TestName, string>
+    public sealed class TestName : ScalarValueObject<TestName, string>, IScalarValue<TestName, string>
     {
         private TestName(string value) : base(value) { }
 
@@ -34,7 +34,7 @@ public class ServiceCollectionExtensionsTests
         }
     }
 
-    public sealed class TestEmail : ScalarValueObject<TestEmail, string>, IScalarValueObject<TestEmail, string>
+    public sealed class TestEmail : ScalarValueObject<TestEmail, string>, IScalarValue<TestEmail, string>
     {
         private TestEmail(string value) : base(value) { }
 
@@ -49,7 +49,7 @@ public class ServiceCollectionExtensionsTests
         }
     }
 
-    public sealed class TestAge : ScalarValueObject<TestAge, int>, IScalarValueObject<TestAge, int>
+    public sealed class TestAge : ScalarValueObject<TestAge, int>, IScalarValue<TestAge, int>
     {
         private TestAge(int value) : base(value) { }
 
@@ -77,15 +77,15 @@ public class ServiceCollectionExtensionsTests
 
     #endregion
 
-    #region AddScalarValueObjectValidation Tests
+    #region AddScalarValueValidation Tests
 
     [Fact]
-    public void AddScalarValueObjectValidation_RegistersMvcJsonOptions()
+    public void AddScalarValueValidation_RegistersMvcJsonOptions()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers()
-            .AddScalarValueObjectValidation();
+            .AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -98,12 +98,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddScalarValueObjectValidation_RegistersModelBinderProvider()
+    public void AddScalarValueValidation_RegistersModelBinderProvider()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers()
-            .AddScalarValueObjectValidation();
+            .AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -111,21 +111,21 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var hasProvider = mvcOptions.Value.ModelBinderProviders
-            .Any(p => p.GetType() == typeof(ScalarValueObjectModelBinderProvider));
+            .Any(p => p.GetType() == typeof(ScalarValueModelBinderProvider));
         hasProvider.Should().BeTrue();
 
         // Should be at the start (highest priority)
         mvcOptions.Value.ModelBinderProviders.FirstOrDefault()
-            .Should().BeOfType<ScalarValueObjectModelBinderProvider>();
+            .Should().BeOfType<ScalarValueModelBinderProvider>();
     }
 
     [Fact]
-    public void AddScalarValueObjectValidation_RegistersValidationFilter()
+    public void AddScalarValueValidation_RegistersValidationFilter()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers()
-            .AddScalarValueObjectValidation();
+            .AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -133,17 +133,17 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var hasFilter = mvcOptions.Value.Filters.Any(f =>
-            f is TypeFilterAttribute tfa && tfa.ImplementationType == typeof(ValueObjectValidationFilter));
+            f is TypeFilterAttribute tfa && tfa.ImplementationType == typeof(ScalarValueValidationFilter));
         hasFilter.Should().BeTrue();
     }
 
     [Fact]
-    public void AddScalarValueObjectValidation_SuppressesModelStateInvalidFilter()
+    public void AddScalarValueValidation_SuppressesModelStateInvalidFilter()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers()
-            .AddScalarValueObjectValidation();
+            .AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -154,12 +154,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddScalarValueObjectValidation_ConfiguresTypeInfoResolver()
+    public void AddScalarValueValidation_ConfiguresTypeInfoResolver()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers()
-            .AddScalarValueObjectValidation();
+            .AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -171,15 +171,15 @@ public class ServiceCollectionExtensionsTests
 
     #endregion
 
-    #region AddValueObjectValidation Tests
+    #region AddScalarValueValidation Tests
 
     [Fact]
-    public void AddValueObjectValidation_ConfiguresMvcJsonOptions()
+    public void AddScalarValueValidation_ConfiguresMvcJsonOptions()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -192,11 +192,11 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddValueObjectValidation_ConfiguresHttpJsonOptions()
+    public void AddScalarValueValidation_ConfiguresHttpJsonOptions()
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -209,12 +209,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddValueObjectValidation_ConfiguresBothMvcAndMinimalApi()
+    public void AddScalarValueValidation_ConfiguresBothMvcAndMinimalApi()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -237,12 +237,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddValueObjectValidation_DoesNotAddModelBindingOrFilters()
+    public void AddScalarValueValidation_DoesNotAddModelBindingOrFilters()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -251,24 +251,24 @@ public class ServiceCollectionExtensionsTests
         // Assert
         // Unified method doesn't add MVC-specific features
         var hasProvider = mvcOptions.Value.ModelBinderProviders
-            .Any(p => p.GetType() == typeof(ScalarValueObjectModelBinderProvider));
+            .Any(p => p.GetType() == typeof(ScalarValueModelBinderProvider));
         hasProvider.Should().BeFalse();
 
         var hasFilter = mvcOptions.Value.Filters.Any(f =>
-            f is TypeFilterAttribute tfa && tfa.ImplementationType == typeof(ValueObjectValidationFilter));
+            f is TypeFilterAttribute tfa && tfa.ImplementationType == typeof(ScalarValueValidationFilter));
         hasFilter.Should().BeFalse();
     }
 
     #endregion
 
-    #region AddScalarValueObjectValidationForMinimalApi Tests
+    #region AddScalarValueValidationForMinimalApi Tests
 
     [Fact]
-    public void AddScalarValueObjectValidationForMinimalApi_ConfiguresHttpJsonOptions()
+    public void AddScalarValueValidationForMinimalApi_ConfiguresHttpJsonOptions()
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddScalarValueObjectValidationForMinimalApi();
+        services.AddScalarValueValidationForMinimalApi();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -282,12 +282,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddScalarValueObjectValidationForMinimalApi_DoesNotAffectMvcOptions()
+    public void AddScalarValueValidationForMinimalApi_DoesNotAffectMvcOptions()
     {
         // Arrange
         var services = new ServiceCollection();
         services.AddControllers();
-        services.AddScalarValueObjectValidationForMinimalApi();
+        services.AddScalarValueValidationForMinimalApi();
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -302,10 +302,10 @@ public class ServiceCollectionExtensionsTests
 
     #endregion
 
-    #region UseValueObjectValidation Tests
+    #region UseScalarValueValidation Tests
 
     [Fact]
-    public void UseValueObjectValidation_AddsMiddleware()
+    public void UseScalarValueValidation_AddsMiddleware()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -313,7 +313,7 @@ public class ServiceCollectionExtensionsTests
         var app = new ApplicationBuilder(serviceProvider);
 
         // Act
-        var result = app.UseValueObjectValidation();
+        var result = app.UseScalarValueValidation();
 
         // Assert
         result.Should().NotBeNull();
@@ -329,7 +329,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -354,7 +354,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -381,7 +381,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -406,7 +406,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -432,7 +432,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -457,7 +457,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -482,7 +482,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -508,7 +508,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -532,7 +532,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 
@@ -558,7 +558,7 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddValueObjectValidation();
+        services.AddScalarValueValidation();
         var serviceProvider = services.BuildServiceProvider();
         var httpOptions = serviceProvider.GetRequiredService<IOptions<HttpJsonOptions>>();
 

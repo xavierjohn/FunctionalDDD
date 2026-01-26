@@ -6,15 +6,15 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
-/// Detects ScalarValueObject-derived types and provides model binders for them.
+/// Detects scalar value types and provides model binders for them.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This provider checks if a model type implements <see cref="IScalarValueObject{TSelf, TPrimitive}"/>
-/// and creates an appropriate <see cref="ScalarValueObjectModelBinder{TValueObject, TPrimitive}"/> for it.
+/// This provider checks if a model type implements <see cref="IScalarValue{TSelf, TPrimitive}"/>
+/// and creates an appropriate <see cref="ScalarValueModelBinder{TValue, TPrimitive}"/> for it.
 /// </para>
 /// <para>
-/// Register this provider using <c>AddScalarValueObjectValidation()</c> extension method
+/// Register this provider using <c>AddScalarValueValidation()</c> extension method
 /// on <c>IMvcBuilder</c>.
 /// </para>
 /// </remarks>
@@ -23,13 +23,13 @@ using System.Diagnostics.CodeAnalysis;
 /// <code>
 /// builder.Services
 ///     .AddControllers()
-///     .AddScalarValueObjectValidation();
+///     .AddScalarValueValidation();
 /// </code>
 /// </example>
-public class ScalarValueObjectModelBinderProvider : IModelBinderProvider
+public class ScalarValueModelBinderProvider : IModelBinderProvider
 {
     /// <summary>
-    /// Returns a model binder for ScalarValueObject types, or null for other types.
+    /// Returns a model binder for scalar value types, or null for other types.
     /// </summary>
     /// <param name="context">The model binder provider context.</param>
     /// <returns>A model binder for the type, or null if not applicable.</returns>
@@ -46,12 +46,12 @@ public class ScalarValueObjectModelBinderProvider : IModelBinderProvider
         ArgumentNullException.ThrowIfNull(context);
 
         var modelType = context.Metadata.ModelType;
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(modelType);
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(modelType);
 
         return primitiveType is null
             ? null
-            : ScalarValueObjectTypeHelper.CreateGenericInstance<IModelBinder>(
-                typeof(ScalarValueObjectModelBinder<,>),
+            : ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+                typeof(ScalarValueModelBinder<,>),
                 modelType,
                 primitiveType);
     }

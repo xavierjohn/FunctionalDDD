@@ -5,7 +5,6 @@ using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -19,15 +18,15 @@ using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds automatic validation for ScalarValueObject-derived types during
+    /// Adds automatic validation for scalar value types during
     /// model binding and JSON deserialization.
     /// </summary>
     /// <param name="builder">The <see cref="IMvcBuilder"/>.</param>
     /// <returns>The <see cref="IMvcBuilder"/> for chaining.</returns>
     /// <remarks>
     /// <para>
-    /// This method configures ASP.NET Core to automatically validate value objects that implement
-    /// <see cref="IScalarValueObject{TSelf, TPrimitive}"/> during:
+    /// This method configures ASP.NET Core to automatically validate scalar values that implement
+    /// <see cref="IScalarValue{TSelf, TPrimitive}"/> during:
     /// <list type="bullet">
     /// <item><strong>Model binding:</strong> Values from route, query, form, or headers</item>
     /// <item><strong>JSON deserialization:</strong> Values from request body (with error collection)</item>
@@ -52,7 +51,7 @@ public static class ServiceCollectionExtensions
     ///
     /// builder.Services
     ///     .AddControllers()
-    ///     .AddScalarValueObjectValidation();
+    ///     .AddScalarValueValidation();
     ///
     /// var app = builder.Build();
     /// app.MapControllers();
@@ -76,7 +75,7 @@ public static class ServiceCollectionExtensions
     ///     public IActionResult Register(RegisterUserDto dto)
     ///     {
     ///         // If we reach here, dto is fully validated!
-    ///         // All value objects passed validation
+    ///         // All scalar values passed validation
     ///
     ///         var user = User.TryCreate(dto.Email, dto.FirstName);
     ///         return user.ToActionResult(this);
@@ -84,19 +83,19 @@ public static class ServiceCollectionExtensions
     /// }
     /// </code>
     /// </example>
-    public static IMvcBuilder AddScalarValueObjectValidation(this IMvcBuilder builder)
+    public static IMvcBuilder AddScalarValueValidation(this IMvcBuilder builder)
     {
         builder.Services.Configure<MvcJsonOptions>(options =>
             ConfigureJsonOptions(options.JsonSerializerOptions));
 
         builder.Services.Configure<MvcOptions>(options =>
-            options.Filters.Add<ValueObjectValidationFilter>());
+            options.Filters.Add<ScalarValueValidationFilter>());
 
         builder.AddMvcOptions(options =>
-            options.ModelBinderProviders.Insert(0, new ScalarValueObjectModelBinderProvider()));
+            options.ModelBinderProviders.Insert(0, new ScalarValueModelBinderProvider()));
 
         // Configure [ApiController] to not automatically return 400 for invalid ModelState
-        // This allows our ValueObjectValidationFilter to handle validation errors properly
+        // This allows our ScalarValueValidationFilter to handle validation errors properly
         builder.Services.Configure<ApiBehaviorOptions>(options =>
             options.SuppressModelStateInvalidFilter = true);
 
@@ -134,8 +133,8 @@ public static class ServiceCollectionExtensions
 
         foreach (var property in typeInfo.Properties)
         {
-            // Check if it's a value object (IScalarValueObject<TSelf, T>)
-            if (!IsScalarValueObjectProperty(property))
+            // Check if it's a value object (IScalarValue<TSelf, T>)
+            if (!IsScalarValueProperty(property))
                 continue;
 
             var propertyType = property.PropertyType;
@@ -156,17 +155,17 @@ public static class ServiceCollectionExtensions
 
     [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
     [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "PropertyType comes from JSON serialization infrastructure which preserves type information")]
-    private static bool IsScalarValueObjectProperty(JsonPropertyInfo property) =>
-        ScalarValueObjectTypeHelper.IsScalarValueObject(property.PropertyType);
+    private static bool IsScalarValueProperty(JsonPropertyInfo property) =>
+        ScalarValueTypeHelper.IsScalarValue(property.PropertyType);
 
-    private static JsonConverter? CreateValidatingConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueObjectType)
+    private static JsonConverter? CreateValidatingConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type valueType)
     {
-        var primitiveType = ScalarValueObjectTypeHelper.GetPrimitiveType(valueObjectType);
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(valueType);
         return primitiveType is null
             ? null
-            : ScalarValueObjectTypeHelper.CreateGenericInstance<JsonConverter>(
+            : ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
                 typeof(ValidatingJsonConverter<,>),
-                valueObjectType,
+                valueType,
                 primitiveType);
     }
 
@@ -188,8 +187,8 @@ public static class ServiceCollectionExtensions
     /// <para>
     /// This method is equivalent to calling both:
     /// <list type="bullet">
-    /// <item><see cref="AddScalarValueObjectValidation"/> for MVC JSON options</item>
-    /// <item><see cref="AddScalarValueObjectValidationForMinimalApi"/> for Minimal API JSON options</item>
+    /// <item><see cref="AddScalarValueValidation(IMvcBuilder)"/> for MVC JSON options</item>
+    /// <item><see cref="AddScalarValueValidationForMinimalApi"/> for Minimal API JSON options</item>
     /// </list>
     /// </para>
     /// <para>
@@ -200,7 +199,7 @@ public static class ServiceCollectionExtensions
     /// <para>
     /// <strong>Note:</strong> This method does NOT configure MVC-specific features like model binding
     /// or the validation filter. If you're using MVC controllers with the <c>[ApiController]</c> attribute,
-    /// use <c>AddControllers().AddScalarValueObjectValidation()</c> instead for full functionality.
+    /// use <c>AddControllers().AddScalarValueValidation()</c> instead for full functionality.
     /// </para>
     /// </remarks>
     /// <example>
@@ -210,13 +209,13 @@ public static class ServiceCollectionExtensions
     ///
     /// // Unified setup - works for both MVC and Minimal APIs
     /// builder.Services.AddControllers();
-    /// builder.Services.AddValueObjectValidation();
+    /// builder.Services.AddScalarValueValidation();
     ///
     /// var app = builder.Build();
     ///
-    /// app.UseValueObjectValidation();
+    /// app.UseScalarValueValidation();
     /// app.MapControllers();
-    /// app.MapPost("/api/users", (RegisterDto dto) => ...).WithValueObjectValidation();
+    /// app.MapPost("/api/users", (RegisterDto dto) => ...).WithScalarValueValidation();
     ///
     /// app.Run();
     /// </code>
@@ -226,10 +225,10 @@ public static class ServiceCollectionExtensions
     /// <code>
     /// builder.Services
     ///     .AddControllers()
-    ///     .AddScalarValueObjectValidation(); // ← Better for MVC-only apps
+    ///     .AddScalarValueValidation(); // ← Better for MVC-only apps
     /// </code>
     /// </example>
-    public static IServiceCollection AddValueObjectValidation(this IServiceCollection services)
+    public static IServiceCollection AddScalarValueValidation(this IServiceCollection services)
     {
         // Configure MVC JSON options (for controllers)
         services.Configure<MvcJsonOptions>(options =>
@@ -251,7 +250,7 @@ public static class ServiceCollectionExtensions
     /// <remarks>
     /// <para>
     /// This middleware creates a <see cref="ValidationErrorsContext"/> scope for each request,
-    /// allowing <see cref="ValidatingJsonConverter{TValueObject,TPrimitive}"/> to collect
+    /// allowing <see cref="ValidatingJsonConverter{TValue,TPrimitive}"/> to collect
     /// validation errors during JSON deserialization.
     /// </para>
     /// <para>
@@ -263,7 +262,7 @@ public static class ServiceCollectionExtensions
     /// <code>
     /// var app = builder.Build();
     ///
-    /// app.UseValueObjectValidation(); // ← Add this before routing
+    /// app.UseScalarValueValidation(); // ← Add this before routing
     /// app.UseRouting();
     /// app.UseAuthentication();
     /// app.UseAuthorization();
@@ -272,8 +271,8 @@ public static class ServiceCollectionExtensions
     /// app.Run();
     /// </code>
     /// </example>
-    public static IApplicationBuilder UseValueObjectValidation(this IApplicationBuilder app) =>
-        app.UseMiddleware<ValueObjectValidationMiddleware>();
+    public static IApplicationBuilder UseScalarValueValidation(this IApplicationBuilder app) =>
+        app.UseMiddleware<ScalarValueValidationMiddleware>();
 
     /// <summary>
     /// Configures HTTP JSON options to use property-aware value object validation for Minimal APIs.
@@ -283,26 +282,26 @@ public static class ServiceCollectionExtensions
     /// <remarks>
     /// <para>
     /// This method configures Minimal API JSON serialization to automatically validate value objects
-    /// that implement <see cref="IScalarValueObject{TSelf, TPrimitive}"/> during JSON deserialization.
+    /// that implement <see cref="IScalarValue{TSelf, TPrimitive}"/> during JSON deserialization.
     /// </para>
     /// <para>
-    /// For Minimal APIs, also use <see cref="UseValueObjectValidation"/> middleware and
-    /// <see cref="WithValueObjectValidation"/> on your route handlers.
+    /// For Minimal APIs, also use <see cref="UseScalarValueValidation"/> middleware and
+    /// <see cref="WithScalarValueValidation"/> on your route handlers.
     /// </para>
     /// </remarks>
     /// <example>
     /// <code>
     /// var builder = WebApplication.CreateBuilder(args);
-    /// builder.Services.AddScalarValueObjectValidationForMinimalApi();
+    /// builder.Services.AddScalarValueValidationForMinimalApi();
     ///
     /// var app = builder.Build();
-    /// app.UseValueObjectValidation();
+    /// app.UseScalarValueValidation();
     ///
     /// app.MapPost("/users", (RegisterUserDto dto) => ...)
-    ///    .WithValueObjectValidation();
+    ///    .WithScalarValueValidation();
     /// </code>
     /// </example>
-    public static IServiceCollection AddScalarValueObjectValidationForMinimalApi(this IServiceCollection services)
+    public static IServiceCollection AddScalarValueValidationForMinimalApi(this IServiceCollection services)
     {
         services.ConfigureHttpJsonOptions(options =>
             ConfigureJsonOptions(options.SerializerOptions));
@@ -316,12 +315,12 @@ public static class ServiceCollectionExtensions
     /// <returns>The route handler builder for chaining.</returns>
     /// <remarks>
     /// <para>
-    /// This extension adds <see cref="ValueObjectValidationEndpointFilter"/> to check for
+    /// This extension adds <see cref="ScalarValueValidationEndpointFilter"/> to check for
     /// validation errors collected during JSON deserialization.
     /// </para>
     /// <para>
-    /// Ensure <see cref="UseValueObjectValidation"/> middleware is registered and
-    /// <see cref="AddScalarValueObjectValidationForMinimalApi"/> is called for full functionality.
+    /// Ensure <see cref="UseScalarValueValidation"/> middleware is registered and
+    /// <see cref="AddScalarValueValidationForMinimalApi"/> is called for full functionality.
     /// </para>
     /// </remarks>
     /// <example>
@@ -330,9 +329,9 @@ public static class ServiceCollectionExtensions
     /// {
     ///     // dto is already validated
     ///     return Results.Ok(dto);
-    /// }).WithValueObjectValidation();
+    /// }).WithScalarValueValidation();
     /// </code>
     /// </example>
-    public static RouteHandlerBuilder WithValueObjectValidation(this RouteHandlerBuilder builder) =>
-        builder.AddEndpointFilter<ValueObjectValidationEndpointFilter>();
+    public static RouteHandlerBuilder WithScalarValueValidation(this RouteHandlerBuilder builder) =>
+        builder.AddEndpointFilter<ScalarValueValidationEndpointFilter>();
 }

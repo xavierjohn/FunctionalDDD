@@ -10,8 +10,8 @@
 /// with automatic validation that prevents zero/default decimals. When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
-/// <item><c>IScalarValueObject&lt;TSelf, decimal&gt;</c> implementation for ASP.NET Core automatic validation</item>
-/// <item><c>TryCreate(decimal)</c> - Factory method for decimals (required by IScalarValueObject)</item>
+/// <item><c>IScalarValue&lt;TSelf, decimal&gt;</c> implementation for ASP.NET Core automatic validation</item>
+/// <item><c>TryCreate(decimal)</c> - Factory method for decimals (required by IScalarValue)</item>
 /// <item><c>TryCreate(decimal?, string?)</c> - Factory method with zero validation and custom field name</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method for parsing strings with validation</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
@@ -48,7 +48,7 @@
 /// }
 /// 
 /// // The source generator automatically creates:
-/// // - IScalarValueObject&lt;UnitPrice, decimal&gt; interface implementation
+/// // - IScalarValue&lt;UnitPrice, decimal&gt; interface implementation
 /// // - public static Result&lt;UnitPrice&gt; TryCreate(decimal value, string? fieldName = null)
 /// // - public static Result&lt;UnitPrice&gt; TryCreate(decimal? value, string? fieldName = null)
 /// // - public static Result&lt;UnitPrice&gt; TryCreate(string? value, string? fieldName = null)
@@ -96,7 +96,7 @@
 /// <seealso cref="RequiredString{TSelf}"/>
 /// <seealso cref="RequiredInt{TSelf}"/>
 public abstract class RequiredDecimal<TSelf> : ScalarValueObject<TSelf, decimal>
-    where TSelf : RequiredDecimal<TSelf>, IScalarValueObject<TSelf, decimal>
+    where TSelf : RequiredDecimal<TSelf>, IScalarValue<TSelf, decimal>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredDecimal{TSelf}"/> class with the specified decimal value.

@@ -13,7 +13,7 @@ public class DomainDrivenDesignSamplesTests
     #region Test Data and Mock Domain Objects
 
     // Entity IDs
-    public class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValueObject<CustomerId, Guid>
+    public class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValue<CustomerId, Guid>
     {
         private CustomerId(Guid value) : base(value) { }
 
@@ -30,7 +30,7 @@ public class DomainDrivenDesignSamplesTests
                 .Map(v => new CustomerId(v));
     }
 
-    public class OrderId : ScalarValueObject<OrderId, Guid>, IScalarValueObject<OrderId, Guid>
+    public class OrderId : ScalarValueObject<OrderId, Guid>, IScalarValue<OrderId, Guid>
     {
         private OrderId(Guid value) : base(value) { }
 
@@ -47,7 +47,7 @@ public class DomainDrivenDesignSamplesTests
                 .Map(v => new OrderId(v));
     }
 
-    public class ProductId : ScalarValueObject<ProductId, string>, IScalarValueObject<ProductId, string>
+    public class ProductId : ScalarValueObject<ProductId, string>, IScalarValue<ProductId, string>
     {
         private ProductId(string value) : base(value) { }
 
@@ -58,7 +58,7 @@ public class DomainDrivenDesignSamplesTests
     }
 
     // Simple value object for testing
-    public class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>
+    public class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValue<EmailAddress, string>
     {
         private EmailAddress(string value) : base(value) { }
 
@@ -314,7 +314,7 @@ public class DomainDrivenDesignSamplesTests
     }
 
     // Temperature (Scalar)
-    public class Temperature : ScalarValueObject<Temperature, decimal>, IScalarValueObject<Temperature, decimal>
+    public class Temperature : ScalarValueObject<Temperature, decimal>, IScalarValue<Temperature, decimal>
     {
         private Temperature(decimal value) : base(value) { }
 

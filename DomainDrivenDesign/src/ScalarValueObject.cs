@@ -119,8 +119,8 @@
 /// ]]></code>
 /// </example>
 public abstract class ScalarValueObject<TSelf, T> : ValueObject, IConvertible
-    where TSelf : ScalarValueObject<TSelf, T>, IScalarValueObject<TSelf, T>
-    where T : IComparable
+where TSelf : ScalarValueObject<TSelf, T>, IScalarValue<TSelf, T>
+where T : IComparable
 {
     /// <summary>
     /// Gets the wrapped scalar value.

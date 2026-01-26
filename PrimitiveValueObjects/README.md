@@ -43,8 +43,8 @@ public partial class TrackingId : RequiredString<TrackingId>
 }
 
 // The source generator automatically creates:
-// - IScalarValueObject<TrackingId, string> interface implementation
-// - TryCreate(string) -> Result<TrackingId> (required by IScalarValueObject)
+// - IScalarValue<TrackingId, string> interface implementation
+// - TryCreate(string) -> Result<TrackingId> (required by IScalarValue)
 // - TryCreate(string?, string? fieldName = null) -> Result<TrackingId>
 // - Parse(string, IFormatProvider?) -> TrackingId
 // - TryParse(string?, IFormatProvider?, out TrackingId) -> bool
@@ -78,9 +78,9 @@ public partial class EmployeeId : RequiredGuid<EmployeeId>
 }
 
 // The source generator automatically creates:
-// - IScalarValueObject<EmployeeId, Guid> interface implementation
+// - IScalarValue<EmployeeId, Guid> interface implementation
 // - NewUnique() -> EmployeeId
-// - TryCreate(Guid) -> Result<EmployeeId> (required by IScalarValueObject)
+// - TryCreate(Guid) -> Result<EmployeeId> (required by IScalarValue)
 // - TryCreate(Guid?, string? fieldName = null) -> Result<EmployeeId>
 // - TryCreate(string?, string? fieldName = null) -> Result<EmployeeId>
 // - Parse(string, IFormatProvider?) -> EmployeeId
@@ -249,15 +249,15 @@ var tooOld = Age.TryCreate(200);
 
 ### ASP.NET Core Integration
 
-Value objects implementing `IScalarValueObject` work seamlessly with ASP.NET Core for automatic validation:
+Value objects implementing `IScalarValue` work seamlessly with ASP.NET Core for automatic validation:
 
 ```csharp
 // 1. Register in Program.cs
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation(); // Enable automatic validation!
+    .AddScalarValueValidation(); // Enable automatic scalar value validation!
 
-// 2. Define your value objects (source generator adds IScalarValueObject automatically)
+// 2. Define your value objects (source generator adds IScalarValue automatically)
 public partial class FirstName : RequiredString<FirstName> { }
 public partial class CustomerId : RequiredGuid<CustomerId> { }
 
@@ -320,10 +320,10 @@ This library provides both **base classes** for creating custom value objects an
 #### Base Classes (with Source Generation)
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
-| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
-| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValueObject, NewUnique(), ASP.NET validation |
-| **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
-| **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValueObject, IParsable, ASP.NET validation |
+| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValue, IParsable, ASP.NET validation |
+| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValue, NewUnique(), ASP.NET validation |
+| **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValue, IParsable, ASP.NET validation |
+| **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValue, IParsable, ASP.NET validation |
 
 #### Ready-to-Use Value Objects
 | Value Object | Purpose | Validation Rules | Example |
