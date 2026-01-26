@@ -299,13 +299,18 @@ public class RequiredUlidTests
     [Fact]
     public void NewUnique_ulids_are_lexicographically_sortable()
     {
-        // Arrange - create ULIDs with a small delay to ensure different timestamps
-        var orderId1 = OrderUlidId.NewUnique();
-        var orderId2 = OrderUlidId.NewUnique();
+        // Arrange - create multiple ULIDs
+        var orderIds = Enumerable.Range(0, 10)
+            .Select(_ => OrderUlidId.NewUnique())
+            .ToList();
 
-        // Assert - ULIDs created later should sort after earlier ones
-        // Note: Within the same millisecond, they're still sortable by random component
-        orderId1.Value.CompareTo(orderId2.Value).Should().BeLessThanOrEqualTo(0);
+        // Act - sort by their string representation (lexicographic)
+        var sortedByString = orderIds.OrderBy(id => id.ToString(CultureInfo.InvariantCulture)).ToList();
+        var sortedByValue = orderIds.OrderBy(id => id.Value).ToList();
+
+        // Assert - Both sorting methods should produce the same order
+        // This verifies ULIDs are lexicographically sortable
+        sortedByString.Should().Equal(sortedByValue);
     }
 
     [Fact]
