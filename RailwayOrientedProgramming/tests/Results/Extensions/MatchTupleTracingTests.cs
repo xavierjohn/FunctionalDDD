@@ -283,7 +283,7 @@ public class MatchTupleTracingTests : TestBase
         output.Should().Be("42-hello");
 
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -312,7 +312,7 @@ public class MatchTupleTracingTests : TestBase
         output.Should().Be("42-hello");
 
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -341,7 +341,7 @@ public class MatchTupleTracingTests : TestBase
         output.Should().Be("Not found");
 
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -371,7 +371,7 @@ public class MatchTupleTracingTests : TestBase
         executed.Should().BeTrue();
 
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 
@@ -397,7 +397,7 @@ public class MatchTupleTracingTests : TestBase
         errorLogged.Should().BeTrue();
 
         // Wait for async activity capture
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         activityTest.ActivityCount.Should().BeGreaterThan(0);
     }
 

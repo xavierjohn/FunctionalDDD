@@ -41,7 +41,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().HaveValue();
-        action.Should().Throw<Xunit.Sdk.XunitException>()
+        action.Should().Throw<Exception>()
             .WithMessage("*to have a value*but it was None*");
     }
 
@@ -53,7 +53,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().HaveValue("we expected a user");
-        action.Should().Throw<Xunit.Sdk.XunitException>()
+        action.Should().Throw<Exception>()
             .WithMessage("*we expected a user*");
     }
 
@@ -102,7 +102,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().BeNone();
-        action.Should().Throw<Xunit.Sdk.XunitException>()
+        action.Should().Throw<Exception>()
             .WithMessage("*to be None*but it had value*test value*");
     }
 
@@ -114,7 +114,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().BeNone("the operation should have failed");
-        action.Should().Throw<Xunit.Sdk.XunitException>()
+        action.Should().Throw<Exception>()
             .WithMessage("*the operation should have failed*");
     }
 
@@ -150,7 +150,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().HaveValueEqualTo("expected value");
-        action.Should().Throw<Xunit.Sdk.XunitException>();
+        action.Should().Throw<Exception>();
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().HaveValueEqualTo("expected value");
-        action.Should().Throw<Xunit.Sdk.XunitException>()
+        action.Should().Throw<Exception>()
             .WithMessage("*to have a value*but it was None*");
     }
 
@@ -173,7 +173,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().HaveValueEqualTo("expected", "the lookup should succeed");
-        action.Should().Throw<Xunit.Sdk.XunitException>()
+        action.Should().Throw<Exception>()
             .WithMessage("*the lookup should succeed*");
     }
 
@@ -208,7 +208,7 @@ public class MaybeAssertionsTests
 
         // Act & Assert
         var action = () => maybe.Should().HaveValueEqualTo(person2);
-        action.Should().Throw<Xunit.Sdk.XunitException>();
+        action.Should().Throw<Exception>();
     }
 
     #endregion

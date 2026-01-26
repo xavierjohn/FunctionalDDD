@@ -43,7 +43,7 @@ public class FakeRepositoryTests
         var aggregate = TestAggregate.Create("1", "Test");
 
         // Act
-        var result = await repository.SaveAsync(aggregate);
+        var result = await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeSuccess();
@@ -59,7 +59,7 @@ public class FakeRepositoryTests
         var aggregate = TestAggregate.Create("1", "Test");
 
         // Act
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Assert
         repository.PublishedEvents.Should().HaveCount(1);
@@ -72,13 +72,13 @@ public class FakeRepositoryTests
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
         var aggregate = TestAggregate.Create("1", "Original");
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
         var eventsAfterFirstSave = repository.PublishedEvents.Count;
 
         aggregate.UpdateName("Updated");
 
         // Act
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Assert
         repository.Count.Should().Be(1);
@@ -96,10 +96,10 @@ public class FakeRepositoryTests
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
         var aggregate = TestAggregate.Create("1", "Test");
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await repository.GetByIdAsync("1");
+        var result = await repository.GetByIdAsync("1", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeSuccess();
@@ -113,7 +113,7 @@ public class FakeRepositoryTests
         var repository = new FakeRepository<TestAggregate, string>();
 
         // Act
-        var result = await repository.GetByIdAsync("nonexistent");
+        var result = await repository.GetByIdAsync("nonexistent", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeFailureOfType<NotFoundError>();
@@ -129,10 +129,10 @@ public class FakeRepositoryTests
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
         var aggregate = TestAggregate.Create("1", "Test");
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await repository.FindByIdAsync("1");
+        var result = await repository.FindByIdAsync("1", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeSuccess();
@@ -147,7 +147,7 @@ public class FakeRepositoryTests
         var repository = new FakeRepository<TestAggregate, string>();
 
         // Act
-        var result = await repository.FindByIdAsync("nonexistent");
+        var result = await repository.FindByIdAsync("nonexistent", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeSuccess();
@@ -164,10 +164,10 @@ public class FakeRepositoryTests
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
         var aggregate = TestAggregate.Create("1", "Test");
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await repository.DeleteAsync("1");
+        var result = await repository.DeleteAsync("1", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeSuccess();
@@ -182,7 +182,7 @@ public class FakeRepositoryTests
         var repository = new FakeRepository<TestAggregate, string>();
 
         // Act
-        var result = await repository.DeleteAsync("nonexistent");
+        var result = await repository.DeleteAsync("nonexistent", TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeFailureOfType<NotFoundError>();
@@ -197,8 +197,8 @@ public class FakeRepositoryTests
     {
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
-        await repository.SaveAsync(TestAggregate.Create("1", "Test1"));
-        await repository.SaveAsync(TestAggregate.Create("2", "Test2"));
+        await repository.SaveAsync(TestAggregate.Create("1", "Test1"), TestContext.Current.CancellationToken);
+        await repository.SaveAsync(TestAggregate.Create("2", "Test2"), TestContext.Current.CancellationToken);
 
         // Act
         repository.Clear();
@@ -218,7 +218,7 @@ public class FakeRepositoryTests
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
         var aggregate = TestAggregate.Create("1", "Test");
-        await repository.SaveAsync(aggregate);
+        await repository.SaveAsync(aggregate, TestContext.Current.CancellationToken);
 
         // Act
         var result = repository.Get("1");
@@ -246,9 +246,9 @@ public class FakeRepositoryTests
     {
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
-        await repository.SaveAsync(TestAggregate.Create("1", "Test1"));
-        await repository.SaveAsync(TestAggregate.Create("2", "Test2"));
-        await repository.SaveAsync(TestAggregate.Create("3", "Test3"));
+        await repository.SaveAsync(TestAggregate.Create("1", "Test1"), TestContext.Current.CancellationToken);
+        await repository.SaveAsync(TestAggregate.Create("2", "Test2"), TestContext.Current.CancellationToken);
+        await repository.SaveAsync(TestAggregate.Create("3", "Test3"), TestContext.Current.CancellationToken);
 
         // Act
         var all = repository.GetAll().ToList();
@@ -267,7 +267,7 @@ public class FakeRepositoryTests
     {
         // Arrange
         var repository = new FakeRepository<TestAggregate, string>();
-        await repository.SaveAsync(TestAggregate.Create("1", "Test"));
+        await repository.SaveAsync(TestAggregate.Create("1", "Test"), TestContext.Current.CancellationToken);
 
         // Act & Assert
         repository.Exists("1").Should().BeTrue();

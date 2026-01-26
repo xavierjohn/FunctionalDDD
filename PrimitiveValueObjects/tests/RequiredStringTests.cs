@@ -227,7 +227,7 @@ public class RequiredStringTests
     public static TheoryData<string?> GetBadString() =>
       new TheoryData<string?>
       {
-              null,
+              default(string),
               string.Empty
       };
 }

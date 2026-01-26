@@ -137,7 +137,7 @@ For async extension methods (Ensure, Bind, Map, Tap, etc.), tests are organized 
 
 #### 1. **Both Async** (e.g., `EnsureTests.ValueTask.cs`)
 - **Input:** `ValueTask<Result<TOk>>`
-- **Predicates:** `ValueTask<bool>`, `Func<ValueTask<Result<>>>`, etc.
+- **Predicates:** `ValueTask<bool>`, `Func<ValueTask<Result>>`, etc.
 - **Source file:** `Ensure.ValueTask.cs`
 - **When to use:** When the extension extends an async input with async predicates
 
@@ -856,7 +856,6 @@ public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, 
 
     var newResult = func(result.Value);
     newResult.LogActivityStatus();  // ✅ Set status for the new result too
-    return newResult;
 }
 ```
 

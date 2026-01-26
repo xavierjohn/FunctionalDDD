@@ -488,7 +488,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -517,7 +518,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -546,7 +548,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -575,7 +578,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -604,7 +608,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -633,7 +638,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -662,7 +668,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -691,7 +698,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -720,7 +728,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 return $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -774,7 +783,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -804,7 +814,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -834,7 +845,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -864,7 +876,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -894,7 +907,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -924,7 +938,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -954,7 +969,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -984,7 +1000,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
@@ -1014,7 +1031,8 @@ public class MatchErrorTests
             {
                 await Task.Delay(1, ct);
                 output = $"Error: {err.Detail}";
-            }
+            },
+            cancellationToken: TestContext.Current.CancellationToken
         );
 
         // Assert
