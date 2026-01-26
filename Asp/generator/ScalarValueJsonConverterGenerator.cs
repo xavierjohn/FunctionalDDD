@@ -93,7 +93,7 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
 }
 "));
 
-        // Find all types implementing IScalarValueObject<TSelf, TPrimitive>
+        // Find all types implementing IScalarValue<TSelf, TPrimitive>
         IncrementalValuesProvider<ScalarValueInfo> valueObjectTypes = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (n, _) => IsPotentialValueObject(n),
@@ -126,14 +126,11 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
         // Look for class declarations with base types that might be value objects
         if (node is ClassDeclarationSyntax c && c.BaseList is not null)
         {
-            // Check if any base type contains "ScalarValueObject" or implements IScalarValueObject
+            // Check if any base type contains "ScalarValueObject" or implements IScalarValue
             foreach (var baseType in c.BaseList.Types)
             {
                 var typeName = baseType.Type.ToString();
-                if (typeName.Contains("ScalarValueObject") ||
-                    typeName.Contains("RequiredString") ||
-                    typeName.Contains("RequiredGuid") ||
-                    typeName.Contains(ScalarValueInterfaceName))
+                if (typeName.Contains(ScalarValueInterfaceName))
                 {
                     return true;
                 }

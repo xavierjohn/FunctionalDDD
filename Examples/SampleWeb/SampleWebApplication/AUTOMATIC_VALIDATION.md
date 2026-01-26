@@ -1,4 +1,4 @@
-# Automatic Value Object Validation
+﻿# Automatic Value Object Validation
 
 This example demonstrates the new automatic validation feature for scalar value objects in ASP.NET Core.
 
@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation(); // ← Add this line
+    .AddScalarValueValidation(); // ← Add this line
 ```
 
 ## Before vs After
@@ -162,17 +162,17 @@ Content-Type: application/json
 
 - **Zero Reflection for TryCreate**: The CRTP pattern enables direct interface calls
 - **Reflection Only for Discovery**: Used only to detect which types need validation
-- **Opt-In**: Only works when you add `.AddScalarValueObjectValidation()`
+- **Opt-In**: Only works when you add `.AddScalarValueValidation()`
 - **Works with Any Value Object**: Supports `ScalarValueObject<TSelf, T>`, `RequiredString<TSelf>`, `RequiredGuid<TSelf>`, etc.
 - **Compatible with Existing Code**: Old manual approach still works fine
 
 ## Technical Details
 
 The automatic validation uses:
-1. **IScalarValueObject<TSelf, T>** interface with static abstract `TryCreate(T)` method
-2. **ScalarValueObjectModelBinder** that calls `TryCreate()` during model binding
-3. **ScalarValueObjectModelBinderProvider** that detects value object types
-4. **ScalarValueObjectJsonConverter** for JSON serialization/deserialization
+1. **IScalarValue<TSelf, T>** interface with static abstract `TryCreate(T)` method
+2. **ScalarValueModelBinder** that calls `TryCreate()` during model binding
+3. **ScalarValueModelBinderProvider** that detects scalar value types
+4. **ValidatingJsonConverter** for JSON serialization/deserialization
 5. **CRTP (Curiously Recurring Template Pattern)** for compile-time type safety
 
 See the [implementation plan](../../IMPLEMENTATION_PLAN.md) for full technical details.

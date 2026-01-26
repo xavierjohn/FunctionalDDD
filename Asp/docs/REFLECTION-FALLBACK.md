@@ -1,4 +1,4 @@
-# Reflection Fallback for Value Object Validation
+﻿# Reflection Fallback for Value Object Validation
 
 The FunctionalDDD.Asp library provides **automatic fallback to reflection** when the source generator is not available. This means you can use value object validation without any source generator reference in standard .NET applications.
 
@@ -22,7 +22,7 @@ The FunctionalDDD.Asp library provides **automatic fallback to reflection** when
 ```
 
 ```csharp
-[GenerateValueObjectConverters]
+[GenerateScalarValueConverters]
 [JsonSerializable(typeof(MyDto))]
 public partial class AppJsonSerializerContext : JsonSerializerContext
 {
@@ -48,20 +48,17 @@ public partial class AppJsonSerializerContext : JsonSerializerContext
 // For MVC Controllers
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation();
+    .AddScalarValueValidation();
 
 // For Minimal APIs
-builder.Services.AddScalarValueObjectValidationForMinimalApi();
-
-// Or use unified method (works for both)
-builder.Services.AddValueObjectValidation();
+builder.Services.AddScalarValueValidationForMinimalApi();
 
 // That's it! No source generator needed.
 ```
 
 **How it works:**
 - `ValidatingJsonConverterFactory` uses reflection at runtime
-- Detects types implementing `IScalarValueObject<TSelf, TPrimitive>`
+- Detects types implementing `IScalarValue<TSelf, TPrimitive>`
 - Creates converters dynamically using `Activator.CreateInstance`
 - Transparent - your application code is identical
 
@@ -118,7 +115,7 @@ app.Run();
 ```csharp
 // Value object - works with reflection!
 public class EmailAddress : ScalarValueObject<EmailAddress, string>,
-                            IScalarValueObject<EmailAddress, string>
+                            IScalarValue<EmailAddress, string>
 {
     private EmailAddress(string value) : base(value) { }
 
@@ -233,7 +230,7 @@ else
 
 **Check:**
 1. Is `AddScalarValueObjectValidation()` or `AddValueObjectValidation()` called?
-2. Does your value object implement `IScalarValueObject<TSelf, TPrimitive>`?
+2. Does your value object implement `IScalarValue<TSelf, TPrimitive>`?
 3. Is the `TryCreate` method signature correct?
 
 ### "Getting trimming warnings (IL2026, IL2067, IL2070)"
