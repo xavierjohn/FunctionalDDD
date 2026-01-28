@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <ProjectReference Include="src\Specifications.csproj" />
+    <ProjectReference Include="tests\Specifications.Tests.csproj" />
+  </ItemGroup>
+</Project>
