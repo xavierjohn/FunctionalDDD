@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ArdalisSpecification\src\ArdalisSpecification.csproj" />
+    <ProjectReference Include="..\..\PrimitiveValueObjects\generator\PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\PrimitiveValueObjects\src\PrimitiveValueObjects.csproj" />
   </ItemGroup>
 

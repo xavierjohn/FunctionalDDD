@@ -1,24 +1,25 @@
 namespace SpecificationExample.Specifications;
 
 using Ardalis.Specification;
+using FunctionalDdd.PrimitiveValueObjects;
 using SpecificationExample.Domain;
 
 /// <summary>
-/// Specification to find a product by its unique SKU.
+/// Specification to find a product by its unique SKU value object.
 /// Uses SingleResultSpecification since SKU should be unique.
 /// </summary>
 public sealed class ProductBySkuSpec : SingleResultSpecification<Product>
 {
-    public ProductBySkuSpec(string sku) =>
+    public ProductBySkuSpec(Sku sku) =>
         Query.Where(p => p.Sku == sku);
 }
 
 /// <summary>
-/// Specification to find a product by its ID.
+/// Specification to find a product by its ID value object.
 /// </summary>
 public sealed class ProductByIdSpec : SingleResultSpecification<Product>
 {
-    public ProductByIdSpec(Guid id) =>
+    public ProductByIdSpec(ProductId id) =>
         Query.Where(p => p.Id == id);
 }
 
@@ -27,11 +28,11 @@ public sealed class ProductByIdSpec : SingleResultSpecification<Product>
 /// </summary>
 public sealed class ActiveProductsByCategorySpec : Specification<Product>
 {
-    public ActiveProductsByCategorySpec(string category) =>
+    public ActiveProductsByCategorySpec(CategoryName category) =>
         Query
             .Where(p => p.IsActive)
             .Where(p => p.Category == category)
-            .OrderBy(p => p.Name);
+            .OrderBy(p => p.Name.Value);
 }
 
 /// <summary>
@@ -51,9 +52,9 @@ public sealed class LowStockProductsSpec : Specification<Product>
 /// </summary>
 public sealed class ProductsByPriceRangeSpec : Specification<Product>
 {
-    public ProductsByPriceRangeSpec(decimal minPrice, decimal maxPrice) =>
+    public ProductsByPriceRangeSpec(Money minPrice, Money maxPrice) =>
         Query
             .Where(p => p.IsActive)
-            .Where(p => p.Price >= minPrice && p.Price <= maxPrice)
-            .OrderBy(p => p.Price);
+            .Where(p => p.Price.Amount >= minPrice.Amount && p.Price.Amount <= maxPrice.Amount)
+            .OrderBy(p => p.Price.Amount);
 }
