@@ -32,30 +32,31 @@ public static class SpecificationEvaluator
             .Aggregate(query, (current, include) => current.Include(include));
 
         // Apply ordering
+        IOrderedQueryable<T>? orderedQuery = null;
+
         if (specification.OrderBy.Count > 0)
         {
-            var orderedQuery = query.OrderBy(specification.OrderBy[0]);
+            orderedQuery = query.OrderBy(specification.OrderBy[0]);
             for (var i = 1; i < specification.OrderBy.Count; i++)
             {
                 orderedQuery = orderedQuery.ThenBy(specification.OrderBy[i]);
             }
-
-            query = orderedQuery;
         }
 
         if (specification.OrderByDescending.Count > 0)
         {
-            var orderedQuery = query is IOrderedQueryable<T> oq
-                ? oq.ThenByDescending(specification.OrderByDescending[0])
+            orderedQuery = orderedQuery is not null
+                ? orderedQuery.ThenByDescending(specification.OrderByDescending[0])
                 : query.OrderByDescending(specification.OrderByDescending[0]);
 
             for (var i = 1; i < specification.OrderByDescending.Count; i++)
             {
                 orderedQuery = orderedQuery.ThenByDescending(specification.OrderByDescending[i]);
             }
-
-            query = orderedQuery;
         }
+
+        if (orderedQuery is not null)
+            query = orderedQuery;
 
         // Apply paging
         if (specification.Skip.HasValue)
