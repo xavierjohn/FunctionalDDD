@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FunctionalDdd</RootNamespace>
+    <Description>Result pattern integration for Ardalis.Specification - adds Result-returning extensions for seamless Railway Oriented Programming with the specification pattern.</Description>
+    <PackageTags>ardalis;specification;specification-pattern;result;railway-oriented-programming;ddd;domain-driven-design</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ardalis.Specification" />
+    <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>

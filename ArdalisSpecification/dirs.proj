@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.Build.Traversal">
+  <ItemGroup Label="source">
+    <ProjectReference Include="src\ArdalisSpecification.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="test">
+    <ProjectReference Include="tests\ArdalisSpecification.Tests.csproj" />
+  </ItemGroup>
+</Project>
