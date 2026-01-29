@@ -1,6 +1,8 @@
 ﻿<Project>
   <!-- Runtime -->
   <ItemGroup>
+    <PackageVersion Include="Ardalis.Specification" Version="9.3.1" />
+    <PackageVersion Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="DotNet.ReproducibleBuilds" Version="2.0.1" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
