@@ -44,6 +44,12 @@
   items:
   - name: Clean Architecture Example
     href: clean-architecture.md
+- name: Design Patterns
+  items:
+  - name: Aggregate Factory Pattern
+    href: aggregate-factory-pattern.md
+  - name: Specification Pattern Alternative
+    href: specification-pattern.md
 - name: Advanced
   items:
   - name: Advanced Features
