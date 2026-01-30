@@ -240,6 +240,55 @@ Result<User> userResult = maybeUser.ToResult(Error.NotFound("User not found"));
 2. Declaring variables, properties, or return types with `Maybe<Maybe<T>>`
 3. Consider converting to `Result` with `ToResult()` for operations that need error handling
 
+## FDDD011: Use specific error type instead of base Error class
+
+This analyzer detects when you instantiate the base `Error` class directly instead of using specific error types like `ValidationError`, `NotFoundError`, etc.
+
+```csharp
+// Info: Use specific error type
+var error = new Error("Something went wrong");
+
+// OK: Use factory methods
+var validation = Error.Validation("Invalid input");
+var notFound = Error.NotFound("User not found");
+
+// OK: Use specific error types directly
+var validationError = new ValidationError("Invalid email");
+var notFoundError = new NotFoundError("Order not found");
+```
+
+**Why use specific error types:**
+- Enables type-safe error handling with `MatchError`
+- Makes error categories explicit and searchable
+- Supports better logging and monitoring
+- Allows middleware to map errors to appropriate HTTP status codes
+
+## FDDD014: Consider using GetValueOrDefault or Match
+
+This analyzer detects the ternary pattern `result.IsSuccess ? result.Value : defaultValue` and suggests using functional methods instead.
+
+```csharp
+// Info: Consider functional approach
+var user = userResult.IsSuccess ? userResult.Value : null;
+var count = countResult.IsSuccess ? countResult.Value : 0;
+
+// OK: Use GetValueOrDefault
+var user = userResult.GetValueOrDefault(null);
+var count = countResult.GetValueOrDefault(0);
+
+// OK: Use Match for different logic
+var userName = userResult.Match(
+    onSuccess: u => u.Name,
+    onFailure: _ => "Unknown");
+```
+
+**Benefits of functional methods:**
+- More idiomatic Railway Oriented Programming style
+- Clearer intent (GetValueOrDefault vs manual ternary)
+- Safer - no risk of accessing `.Value` on failure
+- Better for chaining with other ROP methods
+- Match allows different transformations for success/failure
+
 ## Suppressing Diagnostics
 
 If you need to suppress a diagnostic for a specific case, you can use:

@@ -115,12 +115,12 @@ public static class AnalyzerTestHelper
                 }
             }
 
-            // Error stub
-            public abstract class Error
+            // Error stub (NOT abstract - can be instantiated directly)
+            public class Error
             {
                 public string Message { get; }
                 public string Detail => Message;
-                protected Error(string message) { Message = message; }
+                public Error(string message) { Message = message; }
                 public static ValidationError Validation(string message) => new ValidationError(message);
                 public static NotFoundError NotFound(string message) => new NotFoundError(message);
             }
