@@ -153,6 +153,12 @@ public static class AnalyzerTestHelper
 
                 public static Maybe<T> None => default;
                 public static Maybe<T> From(T value) => new Maybe<T>(value);
+                
+                public static implicit operator Maybe<T>(T value) => new Maybe<T>(value);
+                
+                // ToResult stub methods
+                public Result<T> ToResult() => default;
+                public Result<T> ToResult(Error error) => default;
 
                 public bool TryGetValue(out T value)
                 {

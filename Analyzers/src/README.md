@@ -25,6 +25,9 @@ Or add to your project file:
 | FDDD005 | Info | Consider using MatchError for error type discrimination |
 | FDDD006 | Warning | Unsafe access to Maybe.Value |
 | FDDD007 | Info | Use Create instead of TryCreate().Value |
+| FDDD008 | Warning | Result is double-wrapped |
+| FDDD010 | Warning | Incorrect async Result usage |
+| FDDD012 | Warning | Maybe is double-wrapped |
 
 ## FDDD001: Result return value is not handled
 
@@ -169,6 +172,73 @@ result.Bind(x => ValidateUser(x)); // Returns Result<User>, not Result<Result<Us
 1. Using `Map` instead of `Bind` when the lambda returns a `Result` (also caught by FDDD002)
 2. Calling `Result.Success()` or `Result.Failure()` on a value that's already a `Result`
 3. Declaring variables, properties, or return types with `Result<Result<T>>`
+
+## FDDD009: Maybe.ToResult called without error parameter
+
+This analyzer detects when you convert a `Maybe<T>` to `Result<T>` without providing an error for the None case. Without an error parameter, it's unclear what error should be returned when the Maybe has no value.
+
+```csharp
+// Warning: What error for None case?
+Maybe<User> maybeUser = GetUser();
+var result = maybeUser.ToResult(); // Missing error parameter
+
+// OK: Error provided for None case
+var result = maybeUser.ToResult(Error.NotFound("User not found"));
+
+// OK: Handle None case explicitly
+if (maybeUser.HasNoValue)
+    return Error.NotFound("User not found");
+var user = maybeUser.Value;
+```
+
+**Why provide an error:**
+- Makes None handling explicit and intentional
+- Provides meaningful error messages to callers
+- Prevents silent failures
+- Documents what "None" means in your domain
+
+## FDDD010: Incorrect async Result usage
+
+This analyzer detects when you block on `Task<Result<T>>` or `ValueTask<Result<T>>` using `.Result` or `.Wait()` instead of properly awaiting. Blocking can cause deadlocks and prevents proper async execution.
+
+```csharp
+// Warning: Blocking on async Result
+Task<Result<User>> userTask = GetUserAsync();
+var result = userTask.Result; // Deadlock risk!
+userTask.Wait(); // Also blocks
+
+// OK: Await properly
+var result = await GetUserAsync();
+```
+
+**Why this is dangerous:**
+- Can cause deadlocks in UI apps and some server contexts
+- Blocks threads unnecessarily
+- Defeats the purpose of async/await
+- May hide exceptions differently than await
+
+## FDDD012: Maybe is double-wrapped
+
+This analyzer detects when a `Maybe` is wrapped inside another `Maybe`, creating `Maybe<Maybe<T>>`. This is almost always unintended.
+
+```csharp
+// Warning: Double wrapping
+Maybe<Maybe<User>> user;
+public Maybe<Maybe<Order>> GetOrder() { }
+
+// OK: Single wrapping
+Maybe<User> user;
+public Maybe<Order> GetOrder() { }
+
+// OK: Convert to Result for better composability
+Maybe<User> maybeUser = GetUser();
+Result<User> userResult = maybeUser.ToResult(Error.NotFound("User not found"));
+```
+
+**Common causes:**
+1. Using `Map` when the transformation function returns a `Maybe`
+2. Declaring variables, properties, or return types with `Maybe<Maybe<T>>`
+3. Consider converting to `Result` with `ToResult()` for operations that need error handling
 
 ## Suppressing Diagnostics
 
