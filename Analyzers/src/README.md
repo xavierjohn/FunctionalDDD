@@ -289,6 +289,33 @@ var userName = userResult.Match(
 - Better for chaining with other ROP methods
 - Match allows different transformations for success/failure
 
+## FDDD013: Consider using Result.Combine
+
+This analyzer detects manual combination of multiple `Result.IsSuccess` checks and suggests using `Result.Combine()` for cleaner code.
+
+```csharp
+// Info: Manual combination
+Result<int> result1 = GetFirst();
+Result<int> result2 = GetSecond();
+Result<int> result3 = GetThird();
+
+if (result1.IsSuccess && result2.IsSuccess && result3.IsSuccess)
+{
+    var combined = (result1.Value, result2.Value, result3.Value);
+}
+
+// OK: Use Result.Combine
+var combined = Result.Combine(result1, result2, result3);
+combined.Bind(tuple => ProcessValues(tuple.Item1, tuple.Item2, tuple.Item3));
+```
+
+**Benefits of Result.Combine:**
+- **Cleaner code**: No manual `IsSuccess` checks
+- **Safer**: No risk of accessing `.Value` on failed results
+- **Automatic error handling**: Returns the first error encountered
+- **Better composability**: Result of Combine is itself a Result, ready for Bind/Map
+- **Scales better**: Works with 2-9 Results without becoming unwieldy
+
 ## Suppressing Diagnostics
 
 If you need to suppress a diagnostic for a specific case, you can use:

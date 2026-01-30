@@ -98,15 +98,24 @@ public static class AnalyzerTestHelper
 
                 private Result(T value) { IsSuccess = true; }
                 private Result(Error error) { IsSuccess = false; }
-
+                
                 public static implicit operator Result<T>(T value) => new Result<T>(value);
                 public static implicit operator Result<T>(Error error) => new Result<T>(error);
+                
+                // MatchError stub
+                public void MatchError(
+                    Action<T> onSuccess,
+                    Action<ValidationError> onValidation,
+                    Action<NotFoundError> onNotFound,
+                    Action<Error> onOther) { }
 
                 public bool TryGetValue(out T value)
                 {
                     value = default!;
                     return IsSuccess;
                 }
+
+                public T GetValueOrDefault(T defaultValue) => IsSuccess ? Value : defaultValue;
 
                 public bool TryGetError(out Error error)
                 {
@@ -140,6 +149,10 @@ public static class AnalyzerTestHelper
             {
                 public static Result<T> Success<T>(T value) => value;
                 public static Result<T> Failure<T>(Error error) => error;
+                
+                // Combine stub
+                public static Result<(T1, T2)> Combine<T1, T2>(Result<T1> result1, Result<T2> result2) => default;
+                public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(Result<T1> result1, Result<T2> result2, Result<T3> result3) => default;
             }
 
             // Maybe<T> stub
