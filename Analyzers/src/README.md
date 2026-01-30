@@ -1,17 +1,76 @@
 ﻿# FunctionalDDD.Analyzers
 
-Roslyn analyzers for the FunctionalDDD library. These analyzers help enforce proper Result and Maybe handling patterns at compile time.
+Roslyn analyzers for the FunctionalDDD library. These analyzers help enforce Railway Oriented Programming best practices and prevent common mistakes with `Result<T>` and `Maybe<T>` types at compile time.
+
+## Why Use Analyzers?
+
+Writing Railway Oriented Programming code correctly requires discipline. It's easy to:
+- Forget to handle a `Result<T>` return value
+- Access `.Value` without checking `IsSuccess` 
+- Use `Map` instead of `Bind` when the lambda returns a `Result`
+- Block on `Task<Result<T>>` instead of awaiting
+
+**FunctionalDDD.Analyzers** catches these mistakes at compile time with **14 diagnostic rules** that guide you toward best practices.
 
 ## Installation
 
-```
+### NuGet Package Manager
+
+```bash
 dotnet add package FunctionalDdd.Analyzers
 ```
 
-Or add to your project file:
+### Package Reference
+
+Add to your `.csproj` file:
 
 ```xml
-<PackageReference Include="FunctionalDdd.Analyzers" Version="x.x.x" PrivateAssets="all" />
+<PackageReference Include="FunctionalDdd.Analyzers" Version="*" PrivateAssets="all" />
+```
+
+**Important:** The `PrivateAssets="all"` attribute ensures the analyzer is only used during compilation and not included in your application's output or referenced by consuming projects.
+
+### Visual Studio
+
+1. Right-click on your project in Solution Explorer
+2. Select **Manage NuGet Packages**
+3. Search for **FunctionalDdd.Analyzers**
+4. Click **Install**
+
+### Verify Installation
+
+After installation, you should see the analyzers in Visual Studio:
+
+**Solution Explorer** → Your Project → **Dependencies** → **Analyzers** → **FunctionalDdd.Analyzers**
+
+## Configuration
+
+### Enable/Disable Specific Rules
+
+You can configure analyzer severity in your `.editorconfig` file:
+
+```ini
+# Disable a specific rule
+dotnet_diagnostic.FDDD001.severity = none
+
+# Change severity level
+dotnet_diagnostic.FDDD002.severity = warning  # Default: info
+dotnet_diagnostic.FDDD014.severity = none     # Turn off ternary suggestions
+
+# Enable all rules as warnings
+dotnet_diagnostic.FDDD001.severity = warning
+dotnet_diagnostic.FDDD002.severity = warning
+# ... etc
+```
+
+### Global Suppression
+
+To suppress all FunctionalDDD analyzer warnings in a file:
+
+```csharp
+#pragma warning disable FDDD001, FDDD002, FDDD003, FDDD004, FDDD005, FDDD006, FDDD007, FDDD008, FDDD009, FDDD010, FDDD011, FDDD012, FDDD013, FDDD014
+// Your code here
+#pragma warning restore FDDD001, FDDD002, FDDD003, FDDD004, FDDD005, FDDD006, FDDD007, FDDD008, FDDD009, FDDD010, FDDD011, FDDD012, FDDD013, FDDD014
 ```
 
 ## Diagnostic Rules
@@ -28,6 +87,8 @@ Or add to your project file:
 | FDDD008 | Warning | Result is double-wrapped |
 | FDDD010 | Warning | Incorrect async Result usage |
 | FDDD012 | Warning | Maybe is double-wrapped |
+
+---
 
 ## FDDD001: Result return value is not handled
 
@@ -318,20 +379,181 @@ combined.Bind(tuple => ProcessValues(tuple.Item1, tuple.Item2, tuple.Item3));
 
 ## Suppressing Diagnostics
 
-If you need to suppress a diagnostic for a specific case, you can use:
+### Per-Instance Suppression
+
+If you need to suppress a diagnostic for a specific case:
 
 ```csharp
 #pragma warning disable FDDD001
-SomeMethodReturningResult();
+SomeMethodReturningResult();  // Intentionally ignored
 #pragma warning restore FDDD001
 ```
 
-Or use the `[SuppressMessage]` attribute:
+### Method-Level Suppression
+
+Use the `[SuppressMessage]` attribute:
 
 ```csharp
-[SuppressMessage("FunctionalDDD", "FDDD001", Justification = "Result is intentionally ignored")]
+using System.Diagnostics.CodeAnalysis;
+
+[SuppressMessage("FunctionalDDD", "FDDD001", 
+    Justification = "Fire-and-forget operation")]
 public void MyMethod()
 {
-    // ...
+    ProcessAsync();  // Result intentionally not awaited
 }
 ```
+
+### File-Level Suppression
+
+At the top of a file:
+
+```csharp
+#pragma warning disable FDDD003, FDDD004
+// Entire file ignores unsafe Value/Error access warnings
+```
+
+### Project-Level Configuration
+
+In your `.editorconfig`:
+
+```ini
+# Turn off info-level suggestions in test projects
+[*Tests.cs]
+dotnet_diagnostic.FDDD002.severity = none
+dotnet_diagnostic.FDDD005.severity = none
+dotnet_diagnostic.FDDD013.severity = none
+dotnet_diagnostic.FDDD014.severity = none
+
+# Make safety warnings errors in production code
+[src/**.cs]
+dotnet_diagnostic.FDDD001.severity = error
+dotnet_diagnostic.FDDD003.severity = error
+dotnet_diagnostic.FDDD006.severity = error
+dotnet_diagnostic.FDDD010.severity = error
+```
+
+---
+
+## IDE Integration
+
+### Visual Studio
+
+Analyzers appear in the **Error List** window and provide:
+- ✅ Inline squiggly underlines
+- ✅ Quick info tooltips on hover
+- ✅ Error list filtering by severity
+
+**Tip:** Press `Ctrl+.` on a diagnostic to see available actions.
+
+### Visual Studio Code
+
+Requires the **C# Dev Kit** extension:
+
+1. Install [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
+2. Analyzers work automatically after package installation
+3. View diagnostics in the **Problems** panel (`Ctrl+Shift+M`)
+
+### JetBrains Rider
+
+Analyzers are automatically detected:
+
+1. After package installation, rebuild the project
+2. Diagnostics appear in the **Solution-Wide Analysis** window
+3. Configure severity in **Settings** → **Editor** → **Inspection Severity**
+
+---
+
+## FAQ
+
+### Q: Do I need the FunctionalDDD.RailwayOrientedProgramming package?
+
+**A:** Yes! The analyzers detect patterns related to `Result<T>`, `Maybe<T>`, and `Error` types from the core ROP package.
+
+```bash
+# Install both packages
+dotnet add package FunctionalDDD.RailwayOrientedProgramming
+dotnet add package FunctionalDDD.Analyzers
+```
+
+### Q: Can I use these analyzers in my library/package?
+
+**A:** Absolutely! The analyzers help maintain high code quality. Make sure to set `PrivateAssets="all"` so consumers don't inherit the analyzer:
+
+```xml
+<PackageReference Include="FunctionalDdd.Analyzers" Version="*" PrivateAssets="all" />
+```
+
+### Q: The analyzers are too strict! Can I relax them?
+
+**A:** Yes! You can:
+1. Configure severity levels in `.editorconfig` (see [Configuration](#configuration))
+2. Suppress specific instances with `#pragma` directives
+3. Turn off info-level rules (FDDD002, FDDD005, FDDD007, FDDD011, FDDD013, FDDD014)
+
+We recommend keeping warning-level rules enabled for safety.
+
+### Q: Do the analyzers impact build performance?
+
+**A:** Minimal impact. Analyzers run during compilation, typically adding <1 second to build time.
+
+### Q: Can I contribute new analyzer rules?
+
+**A:** Yes! See the [Contributing](../../CONTRIBUTING.md) guide. We welcome suggestions for new rules that enforce ROP best practices.
+
+---
+
+## Troubleshooting
+
+### Analyzers Not Appearing
+
+1. **Verify installation:**
+   - Check **Solution Explorer** → **Dependencies** → **Analyzers**
+   - Look for **FunctionalDdd.Analyzers**
+
+2. **Restart Visual Studio/Rider:**
+   - Analyzers may require an IDE restart after installation
+
+3. **Clean and rebuild:**
+   ```bash
+   dotnet clean
+   dotnet build
+   ```
+
+4. **Check .NET SDK version:**
+   - Requires .NET SDK 6.0 or later
+   - Run `dotnet --version` to verify
+
+### False Positives
+
+If you encounter a false positive diagnostic:
+
+1. Check if your code pattern is actually unsafe
+2. Review the diagnostic documentation (above)
+3. If it's a genuine false positive, [file an issue](https://github.com/xavierjohn/FunctionalDDD/issues)
+
+### Performance Issues
+
+If builds become slow:
+
+1. Check if you have many analyzer violations (fix them!)
+2. Configure `.editorconfig` to disable info-level rules in large files
+3. Use `<NoWarn>` for generated code:
+   ```xml
+   <NoWarn>FDDD001;FDDD002;FDDD003</NoWarn>
+   ```
+
+---
+
+## Learn More
+
+- 📖 [FunctionalDDD Documentation](https://xavierjohn.github.io/FunctionalDDD/)
+- 🎓 [Railway Oriented Programming Introduction](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)
+- 💡 [Common ROP Patterns](https://xavierjohn.github.io/FunctionalDDD/articles/patterns.html)
+- 🐛 [Report Issues](https://github.com/xavierjohn/FunctionalDDD/issues)
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
