@@ -108,4 +108,18 @@ public static class DiagnosticDescriptors
                      "Use Create() for clearer intent when you expect success, or properly handle the Result returned by TryCreate(). " +
                      "Both throw the same exception on invalid input, but Create() provides clearer intent.",
         helpLinkUri: HelpLinkBase + "FDDD007");
+
+    /// <summary>
+    /// FDDD008: Result is double-wrapped as Result&lt;Result&lt;T&gt;&gt;.
+    /// </summary>
+    public static readonly DiagnosticDescriptor ResultDoubleWrapping = new(
+        id: "FDDD008",
+        title: "Result is double-wrapped",
+        messageFormat: "Result<Result<{0}>> detected. Use Bind instead of Map, or avoid wrapping an existing Result.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Result should not be wrapped inside another Result. This creates Result<Result<T>> which is almost always unintended. " +
+                     "If combining Results, use Bind instead of Map. If wrapping a value, ensure it's not already a Result.",
+        helpLinkUri: HelpLinkBase + "FDDD008");
 }

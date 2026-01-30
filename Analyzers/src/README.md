@@ -143,6 +143,33 @@ var email = result.Value;
 
 **Note:** This analyzer only applies to scalar value objects that implement `IScalarValue<TSelf, TPrimitive>`, which guarantees both `TryCreate` and `Create` methods exist with the documented behavior.
 
+## FDDD008: Result is double-wrapped
+
+This analyzer detects when a `Result` is wrapped inside another `Result`, creating `Result<Result<T>>`. This is almost always unintended and indicates misuse of `Map` instead of `Bind`, or unnecessary wrapping of an existing Result.
+
+```csharp
+// Warning: Double wrapping in type declaration
+Result<Result<User>> user;
+public Result<Result<Order>> GetOrder() { }
+
+// Warning: Wrapping an existing Result
+Result<int> existingResult = GetValue();
+var wrapped = Result.Success(existingResult); // Creates Result<Result<int>>
+
+// OK: Single wrapping
+Result<User> user;
+public Result<Order> GetOrder() { }
+var result = Result.Success(42); // Result<int>
+
+// OK: Use Bind for Result-returning functions (see FDDD002)
+result.Bind(x => ValidateUser(x)); // Returns Result<User>, not Result<Result<User>>
+```
+
+**Common causes:**
+1. Using `Map` instead of `Bind` when the lambda returns a `Result` (also caught by FDDD002)
+2. Calling `Result.Success()` or `Result.Failure()` on a value that's already a `Result`
+3. Declaring variables, properties, or return types with `Result<Result<T>>`
+
 ## Suppressing Diagnostics
 
 If you need to suppress a diagnostic for a specific case, you can use:
