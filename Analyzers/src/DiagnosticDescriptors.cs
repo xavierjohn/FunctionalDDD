@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Analyzers;
+﻿namespace FunctionalDdd.Analyzers;
 
 using Microsoft.CodeAnalysis;
 
@@ -93,4 +93,19 @@ public static class DiagnosticDescriptors
         description: "Maybe.Value throws an InvalidOperationException if the Maybe has no value. " +
                      "Check HasValue first, use TryGetValue, GetValueOrDefault, or convert to Result with ToResult.",
         helpLinkUri: HelpLinkBase + "FDDD006");
+
+    /// <summary>
+    /// FDDD007: Using .Value on TryCreate result instead of Create method.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UseCreateInsteadOfTryCreateValue = new(
+        id: "FDDD007",
+        title: "Use Create instead of TryCreate().Value",
+        messageFormat: "Using TryCreate().Value is unclear. Use '{0}.Create(...)' when you expect the value to be valid, or handle the Result properly.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: "For scalar value objects implementing IScalarValue, TryCreate().Value is unnecessary. " +
+                     "Use Create() for clearer intent when you expect success, or properly handle the Result returned by TryCreate(). " +
+                     "Both throw the same exception on invalid input, but Create() provides clearer intent.",
+        helpLinkUri: HelpLinkBase + "FDDD007");
 }

@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Analyzers.Tests;
+﻿namespace FunctionalDdd.Analyzers.Tests;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
@@ -78,6 +78,16 @@ public static class AnalyzerTestHelper
             using System;
             using System.Threading.Tasks;
 
+            // IScalarValue interface stub
+            public interface IScalarValue<TSelf, TPrimitive>
+                where TSelf : IScalarValue<TSelf, TPrimitive>
+                where TPrimitive : IComparable
+            {
+                static abstract Result<TSelf> TryCreate(TPrimitive value, string? fieldName = null);
+                static virtual TSelf Create(TPrimitive value) => default!;
+                TPrimitive Value { get; }
+            }
+
             // Result<T> stub
             public readonly struct Result<T>
             {
@@ -109,6 +119,7 @@ public static class AnalyzerTestHelper
             public abstract class Error
             {
                 public string Message { get; }
+                public string Detail => Message;
                 protected Error(string message) { Message = message; }
                 public static ValidationError Validation(string message) => new ValidationError(message);
                 public static NotFoundError NotFound(string message) => new NotFoundError(message);

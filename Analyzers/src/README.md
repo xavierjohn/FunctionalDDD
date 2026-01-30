@@ -1,4 +1,4 @@
-# FunctionalDDD.Analyzers
+﻿# FunctionalDDD.Analyzers
 
 Roslyn analyzers for the FunctionalDDD library. These analyzers help enforce proper Result and Maybe handling patterns at compile time.
 
@@ -24,6 +24,7 @@ Or add to your project file:
 | FDDD004 | Warning | Unsafe access to Result.Error |
 | FDDD005 | Info | Consider using MatchError for error type discrimination |
 | FDDD006 | Warning | Unsafe access to Maybe.Value |
+| FDDD007 | Info | Use Create instead of TryCreate().Value |
 
 ## FDDD001: Result return value is not handled
 
@@ -121,6 +122,26 @@ if (maybe.TryGetValue(out var value))
 maybe.ToResult(Error.NotFound("Not found"))
     .Bind(value => ProcessValue(value));
 ```
+
+## FDDD007: Use Create instead of TryCreate().Value
+
+This analyzer detects when `.Value` is accessed directly on a `TryCreate()` result for scalar value objects implementing `IScalarValue<TSelf, TPrimitive>`. This pattern is unclear and defeats the purpose of using `TryCreate`. Both `TryCreate().Value` and `Create()` throw the same exception on invalid input, but `Create()` shows clearer intent.
+
+```csharp
+// Info: Unclear usage (for types implementing IScalarValue)
+var email = EmailAddress.TryCreate("test@example.com").Value;
+
+// OK: Use Create when you expect the value to be valid
+var email = EmailAddress.Create("test@example.com");
+
+// OK: Or properly handle the Result
+var result = EmailAddress.TryCreate(userInput);
+if (result.IsFailure)
+    return result.ToHttpResult();
+var email = result.Value;
+```
+
+**Note:** This analyzer only applies to scalar value objects that implement `IScalarValue<TSelf, TPrimitive>`, which guarantees both `TryCreate` and `Create` methods exist with the documented behavior.
 
 ## Suppressing Diagnostics
 
