@@ -1,0 +1,189 @@
+namespace FunctionalDdd.Analyzers.Tests;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Testing;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Testing;
+
+/// <summary>
+/// Helper for creating analyzer tests with FunctionalDDD references.
+/// </summary>
+public static class AnalyzerTestHelper
+{
+    /// <summary>
+    /// Creates a test that verifies no diagnostics are produced.
+    /// </summary>
+    public static CSharpAnalyzerTest<TAnalyzer, DefaultVerifier> CreateNoDiagnosticTest<TAnalyzer>(string source)
+        where TAnalyzer : DiagnosticAnalyzer, new()
+    {
+        var test = new CSharpAnalyzerTest<TAnalyzer, DefaultVerifier>
+        {
+            TestCode = WrapInNamespace(source),
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+        };
+
+        AddFunctionalDddStubSource(test);
+        return test;
+    }
+
+    /// <summary>
+    /// Creates a test that verifies a specific diagnostic is produced.
+    /// </summary>
+    public static CSharpAnalyzerTest<TAnalyzer, DefaultVerifier> CreateDiagnosticTest<TAnalyzer>(
+        string source,
+        params DiagnosticResult[] expectedDiagnostics)
+        where TAnalyzer : DiagnosticAnalyzer, new()
+    {
+        var test = new CSharpAnalyzerTest<TAnalyzer, DefaultVerifier>
+        {
+            TestCode = WrapInNamespace(source),
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+        };
+
+        AddFunctionalDddStubSource(test);
+        test.ExpectedDiagnostics.AddRange(expectedDiagnostics);
+        return test;
+    }
+
+    private static void AddFunctionalDddStubSource<TAnalyzer>(CSharpAnalyzerTest<TAnalyzer, DefaultVerifier> test)
+        where TAnalyzer : DiagnosticAnalyzer, new() =>
+        // Add stub source code for FunctionalDdd types instead of referencing the actual assembly
+        // This avoids framework version conflicts and makes tests self-contained
+        test.TestState.Sources.Add(("FunctionalDddStubs.cs", FunctionalDddStubSource));
+
+    private static string WrapInNamespace(string source) =>
+        $$"""
+            using FunctionalDdd;
+            using System;
+            using System.Threading.Tasks;
+
+            namespace TestNamespace
+            {
+                {{source}}
+            }
+            """;
+
+    /// <summary>
+    /// Creates a diagnostic result for the specified descriptor at a location.
+    /// </summary>
+    public static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) =>
+        new DiagnosticResult(descriptor);
+
+    /// <summary>
+    /// Stub source code for FunctionalDdd types used in analyzer tests.
+    /// </summary>
+    private const string FunctionalDddStubSource = """
+        namespace FunctionalDdd
+        {
+            using System;
+            using System.Threading.Tasks;
+
+            // Result<T> stub
+            public readonly struct Result<T>
+            {
+                public bool IsSuccess { get; }
+                public bool IsFailure => !IsSuccess;
+                public T Value => IsSuccess ? default! : throw new InvalidOperationException();
+                public Error Error => IsFailure ? default! : throw new InvalidOperationException();
+
+                private Result(T value) { IsSuccess = true; }
+                private Result(Error error) { IsSuccess = false; }
+
+                public static implicit operator Result<T>(T value) => new Result<T>(value);
+                public static implicit operator Result<T>(Error error) => new Result<T>(error);
+
+                public bool TryGetValue(out T value)
+                {
+                    value = default!;
+                    return IsSuccess;
+                }
+
+                public bool TryGetError(out Error error)
+                {
+                    error = default!;
+                    return IsFailure;
+                }
+            }
+
+            // Error stub
+            public abstract class Error
+            {
+                public string Message { get; }
+                protected Error(string message) { Message = message; }
+                public static ValidationError Validation(string message) => new ValidationError(message);
+                public static NotFoundError NotFound(string message) => new NotFoundError(message);
+            }
+
+            public sealed class ValidationError : Error
+            {
+                public ValidationError(string message) : base(message) { }
+            }
+
+            public sealed class NotFoundError : Error
+            {
+                public NotFoundError(string message) : base(message) { }
+            }
+
+            // Static Result factory class
+            public static class Result
+            {
+                public static Result<T> Success<T>(T value) => value;
+                public static Result<T> Failure<T>(Error error) => error;
+            }
+
+            // Maybe<T> stub
+            public readonly struct Maybe<T>
+            {
+                public bool HasValue { get; }
+                public bool HasNoValue => !HasValue;
+                public T Value => HasValue ? default! : throw new InvalidOperationException();
+
+                private Maybe(T value) { HasValue = true; }
+
+                public static Maybe<T> None => default;
+                public static Maybe<T> From(T value) => new Maybe<T>(value);
+
+                public bool TryGetValue(out T value)
+                {
+                    value = default!;
+                    return HasValue;
+                }
+            }
+
+            // Extension methods stub
+            public static class ResultExtensions
+            {
+                public static Result<TResult> Map<T, TResult>(this Result<T> result, Func<T, TResult> func) => default;
+                public static Task<Result<TResult>> MapAsync<T, TResult>(this Result<T> result, Func<T, Task<TResult>> func) => Task.FromResult<Result<TResult>>(default);
+                public static Result<TResult> Bind<T, TResult>(this Result<T> result, Func<T, Result<TResult>> func) => default;
+                public static Task<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, Task<Result<TResult>>> func) => Task.FromResult<Result<TResult>>(default);
+                public static Result<T> Tap<T>(this Result<T> result, Action<T> action) => result;
+                public static Task<Result<T>> TapAsync<T>(this Result<T> result, Func<T, Task> func) => Task.FromResult(result);
+                public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> predicate, Error error) => result;
+                public static Task<Result<T>> EnsureAsync<T>(this Result<T> result, Func<T, Task<bool>> predicate, Error error) => Task.FromResult(result);
+                public static TResult Match<T, TResult>(this Result<T> result, Func<T, TResult> onSuccess, Func<Error, TResult> onFailure) => default!;
+                public static Task<TResult> MatchAsync<T, TResult>(this Result<T> result, Func<T, Task<TResult>> onSuccess, Func<Error, Task<TResult>> onFailure) => Task.FromResult<TResult>(default!);
+                public static void Switch<T>(this Result<T> result, Action<T> onSuccess, Action<Error> onFailure) { }
+                public static Task SwitchAsync<T>(this Result<T> result, Func<T, Task> onSuccess, Func<Error, Task> onFailure) => Task.CompletedTask;
+                public static TResult MatchError<T, TResult>(this Result<T> result, Func<T, TResult> onSuccess, Func<ValidationError, TResult> onValidation, Func<Error, TResult> onOther) => default!;
+                public static void SwitchError<T>(this Result<T> result, Action<T> onSuccess, Action<ValidationError> onValidation, Action<Error> onOther) { }
+            }
+
+            public static class TaskResultExtensions
+            {
+                public static Task<Result<TResult>> Map<T, TResult>(this Task<Result<T>> resultTask, Func<T, TResult> func) => Task.FromResult<Result<TResult>>(default);
+                public static Task<Result<TResult>> MapAsync<T, TResult>(this Task<Result<T>> resultTask, Func<T, Task<TResult>> func) => Task.FromResult<Result<TResult>>(default);
+                public static Task<Result<TResult>> Bind<T, TResult>(this Task<Result<T>> resultTask, Func<T, Result<TResult>> func) => Task.FromResult<Result<TResult>>(default);
+                public static Task<Result<TResult>> BindAsync<T, TResult>(this Task<Result<T>> resultTask, Func<T, Task<Result<TResult>>> func) => Task.FromResult<Result<TResult>>(default);
+            }
+
+            public static class MaybeExtensions
+            {
+                public static Maybe<TResult> Map<T, TResult>(this Maybe<T> maybe, Func<T, TResult> func) => default;
+                public static Maybe<TResult> Bind<T, TResult>(this Maybe<T> maybe, Func<T, Maybe<TResult>> func) => default;
+                public static TResult Match<T, TResult>(this Maybe<T> maybe, Func<T, TResult> onSome, Func<TResult> onNone) => default!;
+                public static void Switch<T>(this Maybe<T> maybe, Action<T> onSome, Action onNone) { }
+            }
+        }
+        """;
+}
