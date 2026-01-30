@@ -104,9 +104,10 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "For scalar value objects implementing IScalarValue, TryCreate().Value is unnecessary. " +
-                     "Use Create() for clearer intent when you expect success, or properly handle the Result returned by TryCreate(). " +
-                     "Both throw the same exception on invalid input, but Create() provides clearer intent.",
+        description: "For scalar value objects implementing IScalarValue, TryCreate().Value provides poor error messages. " +
+                     "Use Create() when you expect success - it throws InvalidOperationException with the validation error details included. " +
+                     "TryCreate().Value throws the same exception type but with a generic message, losing the validation error information. " +
+                     "Or properly handle the Result returned by TryCreate() to avoid exceptions entirely.",
         helpLinkUri: HelpLinkBase + "FDDD007");
 
     /// <summary>
