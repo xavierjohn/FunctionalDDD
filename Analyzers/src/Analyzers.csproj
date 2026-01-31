@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Roslyn analyzers for FunctionalDDD library. Enforces proper Result and Maybe handling patterns at compile time.</Description>
-    <PackageTags>roslyn;analyzers;functional;ddd;result;maybe;railway-oriented-programming</PackageTags>
-  </PropertyGroup>
+<PropertyGroup>
+  <PackageReadmeFile>README.md</PackageReadmeFile>
+  <Description>Roslyn analyzers for FunctionalDDD library. Enforces proper Result and Maybe handling patterns at compile time.</Description>
+  <PackageTags>roslyn;analyzers;functional;ddd;result;maybe;railway-oriented-programming</PackageTags>
+</PropertyGroup>
 
   <PropertyGroup>
     <!-- Analyzers must target netstandard 2.0 -->
@@ -28,7 +29,7 @@
   <!-- This ensures the library will be packaged as an analyzer when we use `dotnet pack` -->
   <ItemGroup>
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
