@@ -21,12 +21,12 @@ Integrate FluentValidation with Railway-Oriented Programming using the **Functio
 
 ```bash
 dotnet add package FluentValidation
-dotnet add package FunctionalDDD.FluentValidation
+dotnet add package FunctionalDdd.FluentValidation
 ```
 
 ## What the Adapter Provides
 
-The **FunctionalDDD.FluentValidation** adapter provides extension methods to convert FluentValidation results to `Result<T>`:
+The **FunctionalDdd.FluentValidation** adapter provides extension methods to convert FluentValidation results to `Result<T>`:
 
 ### Core Extension Methods
 

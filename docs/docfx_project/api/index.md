@@ -1,6 +1,6 @@
 ﻿# API Documentation for FunctionalDdd Library
 
-Welcome to the FunctionalDDD API reference. This library brings Railway-Oriented Programming (ROP) and Domain-Driven Design (DDD) patterns to C#, enabling you to write robust, maintainable code with explicit error handling.
+Welcome to the FunctionalDdd API reference. This library brings Railway-Oriented Programming (ROP) and Domain-Driven Design (DDD) patterns to C#, enabling you to write robust, maintainable code with explicit error handling.
 
 ## Core Packages
 
@@ -322,9 +322,9 @@ Built-in distributed tracing support for Railway-Oriented Programming operations
 
 | Package | Description | NuGet |
 |---------|-------------|-------|
-| FunctionalDDD.RailwayOrientedProgramming | Core Result/Maybe types | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming) |
-| FunctionalDDD.Asp | ASP.NET Core integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp) |
-| FunctionalDDD.Http | HTTP client extensions | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Http.svg)](https://www.nuget.org/packages/FunctionalDDD.Http) |
-| FunctionalDDD.FluentValidation | FluentValidation integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation) |
-| FunctionalDDD.PrimitiveValueObjects | Reusable value objects | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects) |
-| FunctionalDDD.DomainDrivenDesign | DDD building blocks | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign) |
+| FunctionalDdd.RailwayOrientedProgramming | Core Result/Maybe types | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) |
+| FunctionalDdd.Asp | ASP.NET Core integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp) |
+| FunctionalDdd.Http | HTTP client extensions | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http) |
+| FunctionalDdd.FluentValidation | FluentValidation integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation) |
+| FunctionalDdd.PrimitiveValueObjects | Reusable value objects | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) |
+| FunctionalDdd.DomainDrivenDesign | DDD building blocks | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) |

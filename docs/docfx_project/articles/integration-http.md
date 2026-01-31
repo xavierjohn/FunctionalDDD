@@ -18,7 +18,7 @@ The `FunctionalDDD.Http` package provides extension methods for `HttpResponseMes
 ## Installation
 
 ```bash
-dotnet add package FunctionalDDD.Http
+dotnet add package FunctionalDdd.Http
 ```
 
 ## Quick Start
@@ -550,5 +550,5 @@ public async Task<Result<User>> GetUserAsync(string userId, CancellationToken ct
 ## API Reference
 
 For complete API documentation, see:
-- [Package README](https://www.nuget.org/packages/FunctionalDDD.Http)
+- [Package README](https://www.nuget.org/packages/FunctionalDdd.Http)
 - Browse the API reference in the documentation site
