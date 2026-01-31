@@ -15,7 +15,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class ResultDoubleWrappingAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.ResultDoubleWrapping);
+        [DiagnosticDescriptors.ResultDoubleWrapping];
 
     public override void Initialize(AnalysisContext context)
     {

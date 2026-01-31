@@ -15,7 +15,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class UseMatchErrorAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.UseMatchErrorForDiscrimination);
+        [DiagnosticDescriptors.UseMatchErrorForDiscrimination];
 
     public override void Initialize(AnalysisContext context)
     {

@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class ErrorBaseClassAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.UseSpecificErrorType);
+        [DiagnosticDescriptors.UseSpecificErrorType];
 
     public override void Initialize(AnalysisContext context)
     {

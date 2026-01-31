@@ -13,9 +13,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly ImmutableHashSet<string> MapMethodNames = ImmutableHashSet.Create(
-        "Map",
-        "MapAsync");
+    private static readonly ImmutableHashSet<string> MapMethodNames = ["Map", "MapAsync"];
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
         ImmutableArray.Create(DiagnosticDescriptors.UseBindInsteadOfMap);

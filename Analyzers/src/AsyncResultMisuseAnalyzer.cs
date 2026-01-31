@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class AsyncResultMisuseAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.AsyncResultMisuse);
+        [DiagnosticDescriptors.AsyncResultMisuse];
 
     public override void Initialize(AnalysisContext context)
     {

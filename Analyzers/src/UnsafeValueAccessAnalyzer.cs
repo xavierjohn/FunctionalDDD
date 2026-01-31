@@ -14,10 +14,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(
+        [
             DiagnosticDescriptors.UnsafeResultValueAccess,
             DiagnosticDescriptors.UnsafeResultErrorAccess,
-            DiagnosticDescriptors.UnsafeMaybeValueAccess);
+            DiagnosticDescriptors.UnsafeMaybeValueAccess,
+        ];
 
     public override void Initialize(AnalysisContext context)
     {

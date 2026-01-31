@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class MaybeToResultAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.MaybeToResultWithoutError);
+        [DiagnosticDescriptors.MaybeToResultWithoutError];
 
     public override void Initialize(AnalysisContext context)
     {

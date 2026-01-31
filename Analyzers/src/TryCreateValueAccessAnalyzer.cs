@@ -15,7 +15,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue);
+        [DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue];
 
     public override void Initialize(AnalysisContext context)
     {

@@ -1,10 +1,7 @@
 ﻿namespace FunctionalDdd.Analyzers;
 
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -16,7 +13,7 @@ using Microsoft.CodeAnalysis.Operations;
 public sealed class UseResultCombineAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.UseResultCombine);
+        [DiagnosticDescriptors.UseResultCombine];
 
     public override void Initialize(AnalysisContext context)
     {

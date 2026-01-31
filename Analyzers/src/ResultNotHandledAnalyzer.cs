@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class ResultNotHandledAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.ResultNotHandled);
+        [DiagnosticDescriptors.ResultNotHandled];
 
     public override void Initialize(AnalysisContext context)
     {

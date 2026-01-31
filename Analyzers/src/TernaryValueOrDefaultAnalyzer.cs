@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 public sealed class TernaryValueOrDefaultAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.UseFunctionalValueOrDefault);
+        [DiagnosticDescriptors.UseFunctionalValueOrDefault];
 
     public override void Initialize(AnalysisContext context)
     {
