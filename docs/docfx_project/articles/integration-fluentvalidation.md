@@ -2,9 +2,9 @@
 
 **Level:** Intermediate 📚 | **Time:** 30-40 min | **Prerequisites:** [Basics](basics.md)
 
-Integrate FluentValidation with Railway-Oriented Programming using the **FunctionalDDD.FluentValidation** adapter. This package provides seamless conversion from FluentValidation results to `Result<T>`, enabling you to use FluentValidation's powerful validation framework within your ROP workflows.
+Integrate FluentValidation with Railway-Oriented Programming using the **FunctionalDdd.FluentValidation** adapter. This package provides seamless conversion from FluentValidation results to `Result<T>`, enabling you to use FluentValidation's powerful validation framework within your ROP workflows.
 
-> **Note:** FunctionalDDD.FluentValidation is an **adapter library** that bridges FluentValidation and Railway-Oriented Programming. It does not replace or extend FluentValidation—it simply converts FluentValidation's validation results to `Result<T>`. For comprehensive FluentValidation documentation, see the [official FluentValidation docs](https://docs.fluentvalidation.net/).
+> **Note:** FunctionalDdd.FluentValidation is an **adapter library** that bridges FluentValidation and Railway-Oriented Programming. It does not replace or extend FluentValidation—it simply converts FluentValidation's validation results to `Result<T>`. For comprehensive FluentValidation documentation, see the [official FluentValidation docs](https://docs.fluentvalidation.net/).
 
 ## Table of Contents
 

@@ -6,7 +6,7 @@ Learn how to use HttpClient with Railway-Oriented Programming for functional HTT
 
 ## Overview
 
-The `FunctionalDDD.Http` package provides extension methods for `HttpResponseMessage` that integrate seamlessly with Railway-Oriented Programming patterns. Instead of dealing with exceptions and manual status code checks, you get clean, composable operations that return `Result<T>`.
+The `FunctionalDdd.Http` package provides extension methods for `HttpResponseMessage` that integrate seamlessly with Railway-Oriented Programming patterns. Instead of dealing with exceptions and manual status code checks, you get clean, composable operations that return `Result<T>`.
 
 **What you'll learn:**
 - ✅ Handle specific HTTP status codes (401, 403, 404, 409) functionally

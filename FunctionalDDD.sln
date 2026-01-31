@@ -79,7 +79,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "articles", "articles", "{0587004C-A025-4364-B7C5-204C1C40ECF5}"
 	ProjectSection(SolutionItems) = preProject
 		docs\docfx_project\articles\advanced-features.md = docs\docfx_project\articles\advanced-features.md
-		docs\docfx_project\articles\async-cancellation.md = docs\docfx_project\articles\async-cancellation.md
 		docs\docfx_project\articles\basics.md = docs\docfx_project\articles\basics.md
 		docs\docfx_project\articles\BENCHMARKS.md = docs\docfx_project\articles\BENCHMARKS.md
 		docs\docfx_project\articles\clean-architecture.md = docs\docfx_project\articles\clean-architecture.md
