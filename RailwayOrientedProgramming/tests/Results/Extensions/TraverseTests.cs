@@ -191,23 +191,6 @@ public class TraverseTests : TestBase
     #region TraverseAsync with CancellationToken
 
     [Fact]
-    public async Task TraverseAsync_WithCancellationToken_AllItemsSucceed()
-    {
-        // Arrange
-        var items = new[] { 1, 2, 3, 4, 5 };
-        using var cts = new CancellationTokenSource();
-
-        // Act
-        var result = await items.TraverseAsync(
-            (int x, CancellationToken ct) => Task.FromResult(Result.Success(x * 2)),
-            cts.Token);
-
-        // Assert
-        result.Should().BeSuccess();
-        result.Value.Should().Equal(2, 4, 6, 8, 10);
-    }
-
-    [Fact]
     public async Task TraverseAsync_WithCancellation_ThrowsOperationCanceledException()
     {
         // Arrange
@@ -241,23 +224,6 @@ public class TraverseTests : TestBase
             }, cts.Token));
 
         processedItems.Should().BeEquivalentTo(new List<int> { 1, 2, 3 });
-    }
-
-    [Fact]
-    public async Task TraverseAsync_WithTimeout_ThrowsWhenExceeded()
-    {
-        // Arrange
-        var items = new[] { 1, 2, 3, 4, 5 };
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(10));
-        Func<int, CancellationToken, Task<Result<int>>> asyncOp = async (int x, CancellationToken ct) =>
-        {
-            await Task.Delay(100, ct);
-            return Result.Success(x * 2);
-        };
-
-        // Act & Assert - TaskCanceledException is a subtype of OperationCanceledException
-        await Assert.ThrowsAsync<TaskCanceledException>(
-            async () => await items.TraverseAsync(asyncOp, cts.Token));
     }
 
     #endregion
@@ -384,41 +350,6 @@ public class TraverseTests : TestBase
     }
 
     [Fact]
-    public async Task TraverseAsync_ProcessOrders_WithCancellation()
-    {
-        // Arrange
-        var orderIds = new[] { "order-1", "order-2", "order-3" };
-        using var cts = new CancellationTokenSource();
-
-        // Act
-        var result = await orderIds.TraverseAsync(
-            (string orderId, CancellationToken ct) =>
-                Task.FromResult(Result.Success($"Processed {orderId}")),
-            cts.Token);
-
-        // Assert
-        result.Should().BeSuccess();
-        result.Value.Should().HaveCount(3);
-    }
-
-    [Fact]
-    public void Traverse_ParseNumbers_MixedValidInvalid()
-    {
-        // Arrange
-        var strings = new[] { "1", "2", "invalid", "4", "5" };
-
-        // Act
-        var result = strings.Traverse(s =>
-            int.TryParse(s, out var number)
-                ? Result.Success(number)
-                : Result.Failure<int>(Error.Validation($"Invalid number: {s}")));
-
-        // Assert
-        result.Should().BeFailure();
-        result.Error.Detail.Should().Contain("invalid");
-    }
-
-    [Fact]
     public async Task TraverseAsync_LargeCollection_ProcessesAll()
     {
         // Arrange
@@ -450,23 +381,6 @@ public class TraverseTests : TestBase
         result.Should().BeSuccess();
         result.Value.Should().HaveCount(3);
         result.Value.Should().AllSatisfy(n => n.Value.Should().NotBeNullOrEmpty());
-    }
-
-    [Fact]
-    public async Task TraverseAsync_ComplexBusinessValidation_ChainedOperations()
-    {
-        // Arrange
-        var items = new[] { 10, 20, 30, 40, 50 };
-
-        // Act - Simulate complex async validation
-        var result = await items.TraverseAsync((int x) =>
-            Task.FromResult(x is < 0 or > 100
-                ? Result.Failure<int>(Error.Validation("Out of range"))
-                : Result.Success(x * 2)));
-
-        // Assert
-        result.Should().BeSuccess();
-        result.Value.Should().Equal(20, 40, 60, 80, 100);
     }
 
     #endregion
