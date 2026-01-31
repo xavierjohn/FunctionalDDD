@@ -1,10 +1,10 @@
 ﻿namespace BankingExample.Services;
 
+using System.Globalization;
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
-using System.Globalization;
 
 /// <summary>
 /// Detects fraudulent transactions based on patterns.

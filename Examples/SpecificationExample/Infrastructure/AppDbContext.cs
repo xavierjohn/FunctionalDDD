@@ -1,4 +1,4 @@
-namespace SpecificationExample.Infrastructure;
+﻿namespace SpecificationExample.Infrastructure;
 
 using Ardalis.Specification;
 using Ardalis.Specification.EntityFrameworkCore;

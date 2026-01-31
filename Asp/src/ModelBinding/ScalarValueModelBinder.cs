@@ -1,8 +1,8 @@
 ﻿namespace FunctionalDdd.Asp.ModelBinding;
 
+using System.Globalization;
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Globalization;
 
 /// <summary>
 /// Model binder for scalar value types.

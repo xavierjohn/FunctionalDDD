@@ -1,9 +1,9 @@
 ﻿namespace SampleWebApplication.Controllers;
 
-using FunctionalDdd;
-using Microsoft.AspNetCore.Mvc;
 using System.Collections.Immutable;
 using System.Net.Http.Headers;
+using FunctionalDdd;
+using Microsoft.AspNetCore.Mvc;
 using static FunctionalDdd.ValidationError;
 
 [ApiController]

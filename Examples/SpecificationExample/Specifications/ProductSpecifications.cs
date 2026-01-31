@@ -1,4 +1,4 @@
-namespace SpecificationExample.Specifications;
+﻿namespace SpecificationExample.Specifications;
 
 using Ardalis.Specification;
 using FunctionalDdd.PrimitiveValueObjects;

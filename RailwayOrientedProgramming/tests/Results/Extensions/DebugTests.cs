@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using RailwayOrientedProgramming.Tests.Helpers;
 using System.Diagnostics;
+using RailwayOrientedProgramming.Tests.Helpers;
 
 public class DebugTests : TestBase
 {

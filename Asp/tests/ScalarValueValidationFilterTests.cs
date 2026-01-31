@@ -1,5 +1,6 @@
 ﻿namespace Asp.Tests;
 
+using System.Collections.Generic;
 using FluentAssertions;
 using FunctionalDdd;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
-using System.Collections.Generic;
 using Xunit;
 
 /// <summary>

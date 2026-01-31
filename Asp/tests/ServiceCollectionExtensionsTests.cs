@@ -1,5 +1,7 @@
 ﻿namespace Asp.Tests;
 
+using System.Linq;
+using System.Text.Json;
 using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Asp.ModelBinding;
@@ -8,8 +10,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System.Linq;
-using System.Text.Json;
 using Xunit;
 using HttpJsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;

@@ -1,8 +1,8 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
+using System.Threading.Tasks;
 using FluentAssertions;
 using FunctionalDdd;
-using System.Threading.Tasks;
 using Xunit;
 
 public class EnsureValueTaskTests

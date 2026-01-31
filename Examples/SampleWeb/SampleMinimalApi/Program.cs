@@ -1,10 +1,10 @@
-﻿using FunctionalDdd;
+﻿using System.Text.Json.Serialization;
+using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApi.API;
 using SampleUserLibrary;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 

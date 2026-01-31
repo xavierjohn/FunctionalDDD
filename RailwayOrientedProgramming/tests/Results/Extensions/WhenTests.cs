@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.WhenTests;
 
-using FunctionalDdd.Testing;
 using System.Threading.Tasks;
+using FunctionalDdd.Testing;
 
 public class WhenTests : TestBase
 {

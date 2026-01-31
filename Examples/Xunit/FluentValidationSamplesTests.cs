@@ -1,9 +1,9 @@
 ﻿namespace Example.Tests;
 
+using System.Collections.Immutable;
 using FluentValidation;
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
-using System.Collections.Immutable;
 using Xunit;
 using static FunctionalDdd.ValidationError;
 

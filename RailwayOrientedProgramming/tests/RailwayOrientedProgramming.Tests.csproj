@@ -1,53 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-	  <None Include="Results\Extensions\TapTests.g.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>TapTests.g.tt</DependentUpon>
-	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\src\RailwayOrientedProgramming.csproj" />
-	  <ProjectReference Include="..\..\Testing\src\Testing.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="Results\Extensions\ParallelTests.g.tt">
-	    <LastGenOutput>ParallelTests.g.cs</LastGenOutput>
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	  </None>
-	  <None Update="Results\Extensions\BindTests.g.tt">
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	    <LastGenOutput>BindTests.g.cs</LastGenOutput>
-	  </None>
-	  <None Update="Results\Extensions\TapTests.g.tt">
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	    <LastGenOutput>TapTests.g.cs</LastGenOutput>
-	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Update="Results\Extensions\BindTests.g.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>BindTests.g.tt</DependentUpon>
-		</Compile>		
-	  <Compile Update="Results\Extensions\ParallelTests.g.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>ParallelTests.g.tt</DependentUpon>
-	  </Compile>		
-	  <Compile Update="Results\Extensions\TapTests.g.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>TapTests.g.tt</DependentUpon>
-	  </Compile>
+		<ProjectReference Include="..\src\RailwayOrientedProgramming.csproj" />
+		<ProjectReference Include="..\..\Testing\src\Testing.csproj" />
 	</ItemGroup>
 
 </Project>
+

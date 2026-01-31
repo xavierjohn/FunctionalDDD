@@ -140,8 +140,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleWebApplication", "Exa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfCoreExample", "Examples\EfCoreExample\EfCoreExample.csproj", "{EADD3558-00F6-4292-9D1B-DA20E34F9AF7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5E0B0D2A-7F4F-4F1A-9B76-9A046F1F2B34}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{356E9BEA-3AEE-8DE9-06DB-428879174E77}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PrimitiveValueObjects", "PrimitiveValueObjects", "{92B0566D-70C5-5117-3C59-DFE3A01A537D}"
@@ -171,6 +169,21 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D445CE80-8319-7C31-478D-62DF196D1262}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.Tests", "Analyzers\tests\Analyzers.Tests.csproj", "{E170C23B-9FD3-4A08-87FC-47D66B2DBB56}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{C22AE04A-77EE-45D0-B9D5-C1B5856835CF}"
+	ProjectSection(SolutionItems) = preProject
+		.github\codecov.yml = .github\codecov.yml
+		.github\copilot-instructions.md = .github\copilot-instructions.md
+		.github\dependabot.yml = .github\dependabot.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{C55AADEB-D663-41DD-B193-517A0AC1FF3C}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build.yml = .github\workflows\build.yml
+		.github\workflows\codeql.yml = .github\workflows\codeql.yml
+		.github\workflows\documentation.yml = .github\workflows\documentation.yml
+		.github\workflows\publish.yml = .github\workflows\publish.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -592,6 +605,7 @@ Global
 		{C9E7775E-D9B2-4A2C-89D6-238AB58ED300} = {7188C2C0-F586-2E1C-E0B5-5DFC1FABF135}
 		{D445CE80-8319-7C31-478D-62DF196D1262} = {F883AD26-E2D9-0064-49F2-B333EF800629}
 		{E170C23B-9FD3-4A08-87FC-47D66B2DBB56} = {D445CE80-8319-7C31-478D-62DF196D1262}
+		{C55AADEB-D663-41DD-B193-517A0AC1FF3C} = {C22AE04A-77EE-45D0-B9D5-C1B5856835CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B687416C-3313-4018-820C-DD90FD4367E9}

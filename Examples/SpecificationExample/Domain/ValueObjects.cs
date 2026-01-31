@@ -1,4 +1,4 @@
-namespace SpecificationExample.Domain;
+﻿namespace SpecificationExample.Domain;
 
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;

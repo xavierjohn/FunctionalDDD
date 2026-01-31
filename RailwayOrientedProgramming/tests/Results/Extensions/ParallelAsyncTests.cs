@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDdd.Testing;
 using System.Diagnostics;
+using FunctionalDdd.Testing;
 
 /// <summary>
 /// Functional tests for ParallelAsync operations.

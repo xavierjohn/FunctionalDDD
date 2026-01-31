@@ -1,8 +1,8 @@
 ﻿namespace PrimitiveValueObjects.Tests.Helpers;
 
+using System.Diagnostics;
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
-using System.Diagnostics;
 
 /// <summary>
 /// Helper class for testing Activity tracing for Primitive Value Objects with complete isolation between tests.

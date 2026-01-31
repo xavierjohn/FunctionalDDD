@@ -1,8 +1,8 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
+using System.Diagnostics;
 using FunctionalDdd.Testing;
 using RailwayOrientedProgramming.Tests.Helpers;
-using System.Diagnostics;
 
 /// <summary>
 /// Integration tests for Activity tracing across complex ROP pipelines.

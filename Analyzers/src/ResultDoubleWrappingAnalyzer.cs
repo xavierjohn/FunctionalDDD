@@ -22,7 +22,7 @@ public sealed class ResultDoubleWrappingAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(AnalyzeTypeDeclaration, 
+        context.RegisterSyntaxNodeAction(AnalyzeTypeDeclaration,
             SyntaxKind.VariableDeclaration,
             SyntaxKind.PropertyDeclaration,
             SyntaxKind.MethodDeclaration,

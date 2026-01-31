@@ -1,9 +1,9 @@
 ﻿namespace FunctionalDdd;
 
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Net.Http.Headers;
 
 /// <summary>
 /// Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.

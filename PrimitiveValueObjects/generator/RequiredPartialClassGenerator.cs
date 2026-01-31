@@ -1,12 +1,12 @@
 ﻿namespace SourceGenerator;
 
-using FunctionalDdd.PrimitiveValueObjectGenerator;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
+using FunctionalDdd.PrimitiveValueObjectGenerator;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /// <summary>
 /// C# source generator that automatically creates factory methods, validation logic, and parsing support

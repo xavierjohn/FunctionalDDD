@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Helpers;
 
-using FunctionalDdd;
 using System.Diagnostics;
+using FunctionalDdd;
 
 /// <summary>
 /// Helper class for testing Activity tracing with complete isolation between tests.

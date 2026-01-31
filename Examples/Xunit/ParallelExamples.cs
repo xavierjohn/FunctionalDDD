@@ -1,7 +1,7 @@
 ﻿namespace Example.Tests;
 
-using FunctionalDdd;
 using System.Diagnostics;
+using FunctionalDdd;
 using Xunit;
 
 /// <summary>
