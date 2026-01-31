@@ -53,46 +53,25 @@ public sealed class AsyncResultMisuseAnalyzer : DiagnosticAnalyzer
     {
         resultInnerType = null;
 
-        if (typeSymbol is not INamedTypeSymbol namedType)
+        if (typeSymbol is not INamedTypeSymbol { TypeArguments.Length: 1 } namedType)
             return false;
 
-        // Check if it's Task<T> or ValueTask<T>
-        var isTask = namedType.Name == "Task" &&
-                     namedType.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks";
+        // Check if it's Task<T> or ValueTask<T> from System.Threading.Tasks
+        var isTaskType = (namedType.Name is "Task" or "ValueTask") &&
+                         namedType.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks";
 
-        var isValueTask = namedType.Name == "ValueTask" &&
-                          namedType.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks";
-
-        if (!isTask && !isValueTask)
+        if (!isTaskType)
             return false;
 
-        // Check if the type argument is Result<T>
-        if (namedType.TypeArguments.Length != 1)
-            return false;
-
+        // Check if the type argument is Result<T> from FunctionalDdd
         var typeArgument = namedType.TypeArguments[0];
-        if (IsResultType(typeArgument))
+        if (typeArgument is INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } resultType &&
+            resultType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
         {
-            resultInnerType = GetResultInnerType(typeArgument) ?? "T";
+            resultInnerType = resultType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             return true;
         }
 
         return false;
-    }
-
-    // Check if type is Result<T> from FunctionalDdd
-    private static bool IsResultType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Result" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
-
-    // Get the T from Result<T>
-    private static string? GetResultInnerType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is INamedTypeSymbol namedType && namedType.TypeArguments.Length == 1)
-            return namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-
-        return null;
     }
 }

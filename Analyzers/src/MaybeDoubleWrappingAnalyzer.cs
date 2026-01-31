@@ -67,35 +67,20 @@ public sealed class MaybeDoubleWrappingAnalyzer : DiagnosticAnalyzer
     {
         innerType = null;
 
-        if (!IsMaybeType(typeSymbol))
+        // Check if outer type is Maybe<T> with exactly 1 type argument
+        if (typeSymbol is not INamedTypeSymbol { Name: "Maybe", TypeArguments.Length: 1 } outerMaybe ||
+            outerMaybe.ContainingNamespace?.ToDisplayString() != "FunctionalDdd")
             return false;
 
-        if (typeSymbol is INamedTypeSymbol namedType && namedType.TypeArguments.Length == 1)
+        // Check if inner type is also Maybe<T>
+        var innerTypeSymbol = outerMaybe.TypeArguments[0];
+        if (innerTypeSymbol is INamedTypeSymbol { Name: "Maybe", TypeArguments.Length: 1 } innerMaybe &&
+            innerMaybe.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
         {
-            var innerTypeSymbol = namedType.TypeArguments[0];
-            if (IsMaybeType(innerTypeSymbol))
-            {
-                innerType = GetMaybeInnerType(innerTypeSymbol) ?? "T";
-                return true;
-            }
+            innerType = innerMaybe.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            return true;
         }
 
         return false;
-    }
-
-    // Check if type is Maybe<T> from FunctionalDdd
-    private static bool IsMaybeType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Maybe" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
-
-    // Get the T from Maybe<T>
-    private static string? GetMaybeInnerType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is INamedTypeSymbol namedType && namedType.TypeArguments.Length == 1)
-            return namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-
-        return null;
     }
 }

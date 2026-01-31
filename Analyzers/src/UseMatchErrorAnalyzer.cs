@@ -96,10 +96,7 @@ public sealed class UseMatchErrorAnalyzer : DiagnosticAnalyzer
     private static bool IsErrorExpression(ExpressionSyntax expression, SemanticModel semanticModel)
     {
         var typeInfo = semanticModel.GetTypeInfo(expression);
-        if (typeInfo.Type == null)
-            return false;
-
-        return IsErrorOrDerivedType(typeInfo.Type);
+        return typeInfo.Type != null && IsErrorOrDerivedType(typeInfo.Type);
     }
 
     // Check if pattern matches a specific error type
@@ -109,28 +106,23 @@ public sealed class UseMatchErrorAnalyzer : DiagnosticAnalyzer
             return false;
 
         var typeInfo = semanticModel.GetTypeInfo(declarationPattern.Type);
-        if (typeInfo.Type == null)
-            return false;
-
-        return IsErrorOrDerivedType(typeInfo.Type);
+        return typeInfo.Type != null && IsErrorOrDerivedType(typeInfo.Type);
     }
 
     // Check if type is Error or a derived error type (ValidationError, NotFoundError, etc.)
     private static bool IsErrorOrDerivedType(ITypeSymbol typeSymbol)
     {
+        // Direct match
         if (typeSymbol.Name == "Error" &&
             typeSymbol.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
             return true;
 
-        // Check if it inherits from Error
-        var baseType = typeSymbol.BaseType;
-        while (baseType != null)
+        // Check base type hierarchy
+        for (var baseType = typeSymbol.BaseType; baseType != null; baseType = baseType.BaseType)
         {
             if (baseType.Name == "Error" &&
                 baseType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
                 return true;
-
-            baseType = baseType.BaseType;
         }
 
         return false;
