@@ -221,6 +221,7 @@ Robust, Maintainable Software
 ## What's New
 
 **Recent enhancements:**
+- 🔍 **NEW: Roslyn Analyzers** - 14 compile-time diagnostics to enforce ROP best practices and prevent common mistakes with Result/Maybe types
 - ✨ **ASP.NET Core Auto-Validation** - Value objects automatically validate in requests (route params, query strings, JSON bodies) via `AddScalarValueObjectValidation()`
 - 🎯 **11 New Value Objects** - Ready-to-use: `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, plus `RequiredInt`/`RequiredDecimal`
 - ✨ **Discriminated Error Matching** - Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
@@ -243,6 +244,7 @@ Robust, Maintainable Software
 | **[FluentValidation](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
 | **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](PrimitiveValueObjects/README.md) |
 | **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
+| **[Analyzers](https://www.nuget.org/packages/FunctionalDDD.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDDD.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [📖 Docs](Analyzers/src/README.md) |
 | **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/FunctionalDDD.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Testing.svg)](https://www.nuget.org/packages/FunctionalDDD.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
 
