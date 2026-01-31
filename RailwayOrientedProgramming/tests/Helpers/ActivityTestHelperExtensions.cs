@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Helpers;
 
-using FluentAssertions;
 using System.Diagnostics;
+using FluentAssertions;
 
 /// <summary>
 /// Extension methods for ActivityTestHelper to make test assertions more expressive and readable.

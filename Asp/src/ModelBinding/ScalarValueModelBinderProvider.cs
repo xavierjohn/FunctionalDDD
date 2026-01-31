@@ -1,9 +1,9 @@
 ﻿namespace FunctionalDdd.Asp.ModelBinding;
 
+using System.Diagnostics.CodeAnalysis;
 using FunctionalDdd;
 using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
 /// Detects scalar value types and provides model binders for them.

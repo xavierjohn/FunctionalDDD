@@ -1,10 +1,10 @@
 ﻿namespace Asp.Tests;
 
+using System.Collections.Immutable;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System.Collections.Immutable;
-using System.Net.Http.Headers;
 using Xunit;
 using static FunctionalDdd.ValidationError;
 

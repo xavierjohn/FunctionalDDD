@@ -1,10 +1,10 @@
 ﻿namespace EfCoreExample.Data;
 
+using System.Globalization;
 using EfCoreExample.Entities;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
 
 /// <summary>
 /// EF Core DbContext demonstrating seamless integration with FunctionalDDD value objects.

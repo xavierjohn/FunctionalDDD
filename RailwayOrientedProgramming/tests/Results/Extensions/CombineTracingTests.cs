@@ -1,8 +1,8 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
+using System.Diagnostics;
 using FunctionalDdd.Testing;
 using RailwayOrientedProgramming.Tests.Helpers;
-using System.Diagnostics;
 
 /// <summary>
 /// Tests for Activity tracing in Combine operations (both base and tuple-based from T4 templates).

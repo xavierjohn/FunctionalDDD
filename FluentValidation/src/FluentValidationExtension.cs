@@ -1,10 +1,10 @@
 ﻿namespace FunctionalDdd;
 
-using FluentValidation;
-using FluentValidation.Results;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using FluentValidation;
+using FluentValidation.Results;
 using static FunctionalDdd.ValidationError;
 
 /// <summary>

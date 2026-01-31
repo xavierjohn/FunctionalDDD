@@ -1,4 +1,4 @@
-namespace FunctionalDdd.ArdalisSpecification.Tests;
+﻿namespace FunctionalDdd.ArdalisSpecification.Tests;
 
 /// <summary>
 /// Test entity used for mocking Ardalis.Specification interfaces.

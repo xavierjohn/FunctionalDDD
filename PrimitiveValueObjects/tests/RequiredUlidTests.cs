@@ -1,9 +1,9 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
-using FunctionalDdd.PrimitiveValueObjects;
 using System;
 using System.Globalization;
 using System.Text.Json;
+using FunctionalDdd.PrimitiveValueObjects;
 using Xunit;
 
 public partial class OrderUlidId : RequiredUlid<OrderUlidId>

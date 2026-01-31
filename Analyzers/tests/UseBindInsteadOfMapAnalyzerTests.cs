@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Analyzers.Tests;
+﻿namespace FunctionalDdd.Analyzers.Tests;
 
 using Microsoft.CodeAnalysis.Testing;
 using Xunit;

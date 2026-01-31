@@ -1,11 +1,11 @@
 ﻿namespace Example.Tests;
 
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 public class TraceFixture : IDisposable
 {

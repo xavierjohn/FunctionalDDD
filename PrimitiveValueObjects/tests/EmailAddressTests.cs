@@ -1,8 +1,8 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
-using FunctionalDdd.PrimitiveValueObjects;
 using System.Globalization;
 using System.Text.Json;
+using FunctionalDdd.PrimitiveValueObjects;
 using Xunit;
 
 public class EmailAddressTests

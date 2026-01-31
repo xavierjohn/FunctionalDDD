@@ -1,10 +1,10 @@
 ﻿namespace SampleWebApplication.Controllers;
 
+using System.Globalization;
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using SampleUserLibrary;
-using System.Globalization;
 
 [ApiController]
 [Route("[controller]")]

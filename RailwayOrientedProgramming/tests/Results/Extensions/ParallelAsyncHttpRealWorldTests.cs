@@ -1,8 +1,8 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
-using FunctionalDdd.Testing;
 using System.Diagnostics;
 using System.Net;
+using FunctionalDdd.Testing;
 
 /// <summary>
 /// Real-world example demonstrating ParallelAsync with HTTP calls.

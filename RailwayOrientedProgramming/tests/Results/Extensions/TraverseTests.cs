@@ -1,7 +1,7 @@
 ﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Traverse;
 
-using FunctionalDdd.Testing;
 using System.Globalization;
+using FunctionalDdd.Testing;
 
 public class TraverseTests : TestBase
 {

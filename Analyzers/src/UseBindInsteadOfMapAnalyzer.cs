@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Analyzers;
+﻿namespace FunctionalDdd.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;

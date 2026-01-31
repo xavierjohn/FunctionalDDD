@@ -1,9 +1,9 @@
 ﻿namespace SampleMinimalApiNoAot.API;
 
+using System.Globalization;
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using SampleUserLibrary;
-using System.Globalization;
 
 public static class UserRoutes
 {

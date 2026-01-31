@@ -1,15 +1,15 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using FunctionalDdd.Asp.ModelBinding;
 using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;
 
 /// <summary>

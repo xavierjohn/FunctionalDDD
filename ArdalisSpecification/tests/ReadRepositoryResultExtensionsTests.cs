@@ -1,4 +1,4 @@
-namespace FunctionalDdd.ArdalisSpecification.Tests;
+﻿namespace FunctionalDdd.ArdalisSpecification.Tests;
 
 using Ardalis.Specification;
 using FluentAssertions;

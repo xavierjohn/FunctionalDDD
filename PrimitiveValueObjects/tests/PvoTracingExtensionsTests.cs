@@ -1,10 +1,10 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
+using System.Diagnostics;
 using FunctionalDdd.PrimitiveValueObjects;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using PrimitiveValueObjects.Tests.Helpers;
-using System.Diagnostics;
 using Xunit;
 
 /// <summary>

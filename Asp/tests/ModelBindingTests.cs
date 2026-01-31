@@ -1,13 +1,13 @@
 ﻿namespace Asp.Tests;
 
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FluentAssertions;
 using FunctionalDdd;
 using FunctionalDdd.Asp.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Xunit;
 
 /// <summary>

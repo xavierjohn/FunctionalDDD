@@ -1,8 +1,8 @@
 ﻿namespace PrimitiveValueObjects.Tests;
 
-using FunctionalDdd.PrimitiveValueObjects;
 using System.Globalization;
 using System.Text.Json;
+using FunctionalDdd.PrimitiveValueObjects;
 
 public partial class TrackingId : RequiredString<TrackingId>
 {

@@ -1,11 +1,11 @@
 ﻿namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
 
-using FunctionalDdd;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using FunctionalDdd;
 
 public class ReadResultFromJsonTests
 {
