@@ -265,21 +265,29 @@ Convert FluentValidation results to `Result<T>` for seamless integration with Ra
 
 ## Common Value Objects
 
-### [EmailAddress](xref:FunctionalDdd.EmailAddress)
+### EmailAddress
 
 A validated email address value object. Ensures email format correctness at construction.
 
-### [RequiredString](xref:FunctionalDdd.RequiredString)
+**Type:** `FunctionalDdd.EmailAddress`
+
+### RequiredString&lt;TSelf&gt;
 
 A non-null, non-empty string value object. Prevents primitive obsession for required text fields.
 
-### [RequiredGuid](xref:FunctionalDdd.RequiredGuid)
+**Type:** `FunctionalDdd.RequiredString<TSelf>`
+
+### RequiredGuid&lt;TSelf&gt;
 
 A validated GUID value object that cannot be empty (Guid.Empty).
 
-### [ScalarValueObject](xref:FunctionalDdd.ScalarValueObject`1)
+**Type:** `FunctionalDdd.RequiredGuid<TSelf>`
+
+### ScalarValueObject&lt;TSelf, T&gt;
 
 Base class for creating custom value objects that wrap a single primitive value.
+
+**Type:** `FunctionalDdd.ScalarValueObject<TSelf, T>`
 
 **Common examples:** `FirstName`, `LastName`, `OrderId`, `UserId`, `ProductCode`
 
@@ -287,9 +295,11 @@ Base class for creating custom value objects that wrap a single primitive value.
 
 ## Observability
 
-### [OpenTelemetry Tracing](xref:FunctionalDdd.RopTracerProviderBuilderExtensions)
+### OpenTelemetry Tracing
 
 Built-in distributed tracing support for Railway-Oriented Programming operations.
+
+**Type:** `FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions`
 
 **Features:**
 - Automatic span creation for `Bind`, `Map`, `Tap`, `Ensure` operations
