@@ -49,12 +49,12 @@ var products = await repository.ToListAsync(new ActiveProductsByCategorySpec(cat
 
 ## FunctionalDDD Integration
 
-FunctionalDDD provides **seamless integration** with [Ardalis.Specification](https://github.com/ardalis/Specification) through the `FunctionalDDD.ArdalisSpecification` package.
+FunctionalDDD provides **seamless integration** with [Ardalis.Specification](https://github.com/ardalis/Specification) through the `FunctionalDdd.ArdalisSpecification` package.
 
 ### Installation
 
 ```bash
-dotnet add package FunctionalDDD.ArdalisSpecification
+dotnet add package FunctionalDdd.ArdalisSpecification
 ```
 
 ### Key Features

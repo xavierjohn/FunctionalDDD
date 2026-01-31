@@ -38,7 +38,7 @@ SampleMinimalApiNoAot/
 
 ### 1. Add Package
 ```bash
-dotnet add package FunctionalDDD.Asp
+dotnet add package FunctionalDdd.Asp
 ```
 
 ### 2. Configure Services

@@ -6,7 +6,7 @@ Learn how to use HttpClient with Railway-Oriented Programming for functional HTT
 
 ## Overview
 
-The `FunctionalDDD.Http` package provides extension methods for `HttpResponseMessage` that integrate seamlessly with Railway-Oriented Programming patterns. Instead of dealing with exceptions and manual status code checks, you get clean, composable operations that return `Result<T>`.
+The `FunctionalDdd.Http` package provides extension methods for `HttpResponseMessage` that integrate seamlessly with Railway-Oriented Programming patterns. Instead of dealing with exceptions and manual status code checks, you get clean, composable operations that return `Result<T>`.
 
 **What you'll learn:**
 - ✅ Handle specific HTTP status codes (401, 403, 404, 409) functionally
@@ -18,7 +18,7 @@ The `FunctionalDDD.Http` package provides extension methods for `HttpResponseMes
 ## Installation
 
 ```bash
-dotnet add package FunctionalDDD.Http
+dotnet add package FunctionalDdd.Http
 ```
 
 ## Quick Start
@@ -550,5 +550,5 @@ public async Task<Result<User>> GetUserAsync(string userId, CancellationToken ct
 ## API Reference
 
 For complete API documentation, see:
-- [Package README](https://www.nuget.org/packages/FunctionalDDD.Http)
+- [Package README](https://www.nuget.org/packages/FunctionalDdd.Http)
 - Browse the API reference in the documentation site

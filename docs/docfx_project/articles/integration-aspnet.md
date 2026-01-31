@@ -2,7 +2,7 @@
 
 **Level:** Intermediate | **Time:** 20-30 min | **Prerequisites:** [Basics](basics.md)
 
-Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalDDD.Asp** package. This package provides extension methods to convert `Result<T>` to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.
+Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalDdd.Asp** package. This package provides extension methods to convert `Result<T>` to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.
 
 > **Note:** This guide focuses on **ASP.NET Core integration only**. For validation, see [FluentValidation Integration](integration-fluentvalidation.md). For data access, see [Entity Framework Core Integration](integration-ef.md).
 
@@ -21,12 +21,12 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalD
 ## Installation
 
 ```bash
-dotnet add package FunctionalDDD.Asp
+dotnet add package FunctionalDdd.Asp
 ```
 
 ## What the Package Provides
 
-The **FunctionalDDD.Asp** package provides extension methods to convert `Result<T>` to HTTP responses:
+The **FunctionalDdd.Asp** package provides extension methods to convert `Result<T>` to HTTP responses:
 
 ### Core Extension Methods
 
@@ -57,7 +57,7 @@ Task<IResult> ToHttpResultAsync<T>(this Task<Result<T>> resultTask);
 
 ## Scalar Value Auto-Validation
 
-The **FunctionalDDD.Asp** package provides automatic validation for any type implementing `IScalarValue<TSelf, TPrimitive>`. This includes DDD value objects (like `ScalarValueObject<T>`) as well as custom implementations. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
+The **FunctionalDdd.Asp** package provides automatic validation for any type implementing `IScalarValue<TSelf, TPrimitive>`. This includes DDD value objects (like `ScalarValueObject<T>`) as well as custom implementations. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
 
 ### Setup
 

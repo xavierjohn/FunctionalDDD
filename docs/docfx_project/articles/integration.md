@@ -122,13 +122,13 @@ Enable distributed tracing and monitoring:
 
 ```bash
 # ASP.NET Core integration
-dotnet add package FunctionalDDD.Asp
+dotnet add package FunctionalDdd.Asp
 
 # HttpClient integration
-dotnet add package FunctionalDDD.HttpClient
+dotnet add package FunctionalDdd.Http
 
 # FluentValidation integration
-dotnet add package FunctionalDDD.FluentValidation
+dotnet add package FunctionalDdd.FluentValidation
 dotnet add package FluentValidation
 
 # For OpenTelemetry tracing

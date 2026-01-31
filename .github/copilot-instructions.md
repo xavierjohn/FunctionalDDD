@@ -1,4 +1,4 @@
-﻿# GitHub Copilot Instructions for FunctionalDDD
+﻿# GitHub Copilot Instructions for FunctionalDdd
 
 ## Project Overview
 
@@ -6,6 +6,31 @@ This is a functional programming library for .NET that implements Railway Orient
 
 **Target Frameworks:**
 - .NET 10
+
+## Naming Conventions
+
+### Package and Namespace Naming
+
+**IMPORTANT:** This project uses `FunctionalDdd` (lowercase 'dd') following Microsoft's .NET naming guidelines for 3+ letter acronyms.
+
+✅ **Correct (Technical):**
+- Package names: `FunctionalDdd.RailwayOrientedProgramming`, `FunctionalDdd.Asp`, etc.
+- Namespaces: `FunctionalDdd`, `FunctionalDdd.PrimitiveValueObjects`
+- Using statements: `using FunctionalDdd;`
+- Assembly names: `FunctionalDdd.*`
+- Installation: `dotnet add package FunctionalDdd.PackageName`
+
+⚠️ **Acceptable (Branding/Marketing):**
+- Prose/documentation: "FunctionalDDD" or "Functional DDD" when discussing the library conceptually
+- GitHub repository: `FunctionalDDD` (repository URL)
+- Comments for clarity: `// FunctionalDDD handles this...`
+
+❌ **Incorrect (Code/Technical):**
+- Package names: `FunctionalDDD.RailwayOrientedProgramming` ❌
+- Namespaces: `FunctionalDDD` ❌
+- Using statements: `using FunctionalDDD;` ❌
+
+**Rationale:** Microsoft's naming guidelines specify that acronyms of 3+ characters should use PascalCase (e.g., `Xml`, `Html`, `Json`), not all uppercase. We follow this for consistency with the .NET ecosystem.
 
 ## Value Object Creation Patterns
 

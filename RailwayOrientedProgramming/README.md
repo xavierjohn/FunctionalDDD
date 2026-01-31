@@ -1,6 +1,6 @@
 ﻿# Railway Oriented Programming
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)
 
 Railway Oriented Programming (ROP) is a functional approach to error handling that treats your code like a railway track. Operations either succeed (staying on the success track) or fail (switching to the error track). This library provides the core types and extension methods to implement ROP in C#.
 
@@ -40,7 +40,7 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
 Install via NuGet:
 
 ```bash
-dotnet add package FunctionalDDD.RailwayOrientedProgramming
+dotnet add package FunctionalDdd.RailwayOrientedProgramming
 ```
 
 ## Core Concepts

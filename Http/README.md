@@ -1,4 +1,4 @@
-# FunctionalDdd.Http
+﻿# FunctionalDdd.Http
 
 HTTP client extensions for Railway Oriented Programming with Result and Maybe monads.
 

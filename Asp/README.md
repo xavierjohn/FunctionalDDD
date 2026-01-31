@@ -1,6 +1,6 @@
-﻿# FunctionalDDD.Asp - ASP.NET Core Extensions
+﻿# FunctionalDdd.Asp - ASP.NET Core Extensions
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp)
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp)
 
 Comprehensive ASP.NET Core integration for functional domain-driven design, providing:
 
@@ -27,7 +27,7 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
 ## Installation
 
 ```bash
-dotnet add package FunctionalDDD.Asp
+dotnet add package FunctionalDdd.Asp
 ```
 
 ## Scalar Value Validation
