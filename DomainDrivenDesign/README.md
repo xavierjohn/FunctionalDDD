@@ -1,13 +1,13 @@
 ﻿# Domain Driven Design
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)
 
 Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles.
 
 ## Installation
 
 ```bash
-dotnet add package FunctionalDDD.DomainDrivenDesign
+dotnet add package FunctionalDdd.DomainDrivenDesign
 ```
 
 ## Quick Start
@@ -249,8 +249,8 @@ public decimal Amount { get; set; }
 
 - **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
 - **[Main Documentation](https://github.com/xavierjohn/FunctionalDDD)** - Full repository documentation
-- **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)** - Result type and functional patterns
-- **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)** - RequiredString, RequiredGuid, EmailAddress
+- **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** - Result type and functional patterns
+- **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** - RequiredString, RequiredGuid, EmailAddress
 
 ## License
 

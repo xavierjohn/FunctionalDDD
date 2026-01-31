@@ -1,11 +1,11 @@
-﻿# FunctionalDDD.Testing
+﻿# FunctionalDdd.Testing
 
-Testing utilities and FluentAssertions extensions for **FunctionalDDD** - Write expressive, maintainable tests for Railway-Oriented Programming patterns.
+Testing utilities and FluentAssertions extensions for **FunctionalDdd** - Write expressive, maintainable tests for Railway-Oriented Programming patterns.
 
 ## Installation
 
 ```bash
-dotnet add package FunctionalDDD.Testing
+dotnet add package FunctionalDdd.Testing
 ```
 
 ## Features

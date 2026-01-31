@@ -80,13 +80,13 @@ Railway-Oriented Programming (ROP) treats your code like railway tracks—operat
 Install the core railway-oriented programming package:
 
 ```bash
-dotnet add package FunctionalDDD.RailwayOrientedProgramming
+dotnet add package FunctionalDdd.RailwayOrientedProgramming
 ```
 
 For ASP.NET Core integration:
 
 ```bash
-dotnet add package FunctionalDDD.Asp
+dotnet add package FunctionalDdd.Asp
 ```
 
 ### Basic Usage
@@ -238,15 +238,15 @@ Robust, Maintainable Software
 
 | Package | Version | Description | Documentation |
 |---------|---------|-------------|---------------|
-| **[RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming) | Core Result/Maybe types, error handling, async support | [📖 Docs](RailwayOrientedProgramming/README.md) |
-| **[Asp](https://www.nuget.org/packages/FunctionalDDD.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Asp.svg)](https://www.nuget.org/packages/FunctionalDDD.Asp) | Convert Result → HTTP responses (MVC & Minimal API) | [📖 Docs](Asp/README.md) |
-| **[Http](https://www.nuget.org/packages/FunctionalDDD.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Http.svg)](https://www.nuget.org/packages/FunctionalDDD.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Http/README.md) |
-| **[FluentValidation](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
-| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](PrimitiveValueObjects/README.md) |
-| **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
-| **[Analyzers](https://www.nuget.org/packages/FunctionalDDD.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDDD.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [📖 Docs](Analyzers/README.md) |
-| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDDD.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
-| **[Testing](https://www.nuget.org/packages/FunctionalDDD.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.Testing.svg)](https://www.nuget.org/packages/FunctionalDDD.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
+| **[RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) | Core Result/Maybe types, error handling, async support | [📖 Docs](RailwayOrientedProgramming/README.md) |
+| **[Asp](https://www.nuget.org/packages/FunctionalDdd.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp) | Convert Result → HTTP responses (MVC & Minimal API) | [📖 Docs](Asp/README.md) |
+| **[Http](https://www.nuget.org/packages/FunctionalDdd.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Http/README.md) |
+| **[FluentValidation](https://www.nuget.org/packages/FunctionalDdd.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
+| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](PrimitiveValueObjects/README.md) |
+| **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
+| **[Analyzers](https://www.nuget.org/packages/FunctionalDdd.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDdd.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [📖 Docs](Analyzers/README.md) |
+| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
+| **[Testing](https://www.nuget.org/packages/FunctionalDdd.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
 
 ---
 

@@ -1,10 +1,10 @@
-﻿# FunctionalDDD.Analyzers
+﻿# FunctionalDdd.Analyzers
 
 Roslyn analyzers that enforce proper usage of Result and Maybe patterns at compile time.
 
 ## Overview
 
-This package provides compile-time analysis to help you write safer, more maintainable code with FunctionalDDD's Railway Oriented Programming patterns.
+This package provides compile-time analysis to help you write safer, more maintainable code with FunctionalDdd's Railway Oriented Programming patterns.
 
 ## Installation
 
@@ -199,5 +199,5 @@ Found a false positive or have suggestions? [Open an issue on GitHub](https://gi
 
 ## Related Packages
 
-- [FunctionalDDD.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming) - Core Result/Maybe types
-- [FunctionalDDD.Asp](https://www.nuget.org/packages/FunctionalDDD.Asp) - ASP.NET Core integration
+- [FunctionalDdd.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) - Core Result/Maybe types
+- [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) - ASP.NET Core integration

@@ -1,8 +1,8 @@
-# Fluent Validation Extension
+﻿# Fluent Validation Extension
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDDD.FluentValidation)
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation)
 
-This library seamlessly integrates [FluentValidation](https://docs.fluentvalidation.net) with Railway Oriented Programming, converting FluentValidation errors into FunctionalDDD `ValidationError` objects.
+This library seamlessly integrates [FluentValidation](https://docs.fluentvalidation.net) with Railway Oriented Programming, converting FluentValidation errors into FunctionalDdd `ValidationError` objects.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ This library seamlessly integrates [FluentValidation](https://docs.fluentvalidat
 Install both packages via NuGet:
 
 ```bash
-dotnet add package FunctionalDDD.FluentValidation
+dotnet add package FunctionalDdd.FluentValidation
 dotnet add package FluentValidation
 ```
 

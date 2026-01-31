@@ -1,4 +1,4 @@
-﻿# FunctionalDDD.ArdalisSpecification
+﻿# FunctionalDdd.ArdalisSpecification
 
 Integration package that adds Railway Oriented Programming (ROP) extensions to [Ardalis.Specification](https://github.com/ardalis/Specification) repositories.
 

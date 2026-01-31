@@ -1,4 +1,4 @@
-﻿# FunctionalDDD.Asp Source Generator
+﻿# FunctionalDdd.Asp Source Generator
 
 A Roslyn source generator that automatically creates AOT-compatible JSON converters and serializer context entries for types implementing `IScalarValue<TSelf, TPrimitive>`.
 

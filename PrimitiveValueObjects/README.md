@@ -1,6 +1,6 @@
 ﻿# Primitive Value Objects
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjects)
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)
 
 This library provides infrastructure and ready-to-use implementations for primitive value objects with source code generation, eliminating boilerplate code and primitive obsession in domain-driven design applications.
 
@@ -24,13 +24,13 @@ This library provides infrastructure and ready-to-use implementations for primit
 Install both packages via NuGet:
 
 ```bash
-dotnet add package FunctionalDDD.PrimitiveValueObjects
-dotnet add package FunctionalDDD.PrimitiveValueObjectGenerator
+dotnet add package FunctionalDdd.PrimitiveValueObjects
+dotnet add package FunctionalDdd.PrimitiveValueObjectGenerator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDDD.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
-- `FunctionalDDD.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `Required*` base class derivatives
+- `FunctionalDdd.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
+- `FunctionalDdd.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `Required*` base class derivatives
 
 ## Quick Start
 
