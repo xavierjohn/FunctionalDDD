@@ -1,4 +1,4 @@
-﻿# FunctionalDdd.Analyzers
+﻿# FunctionalDDD.Analyzers
 
 Roslyn analyzers that enforce proper usage of Result and Maybe patterns at compile time.
 

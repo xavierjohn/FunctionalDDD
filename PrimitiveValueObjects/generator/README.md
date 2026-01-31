@@ -1,6 +1,6 @@
-# CommonValueObjectGenerator
+﻿# FunctionalDDD.PrimitiveValueObjectGenerator
 
-[![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.CommonValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.CommonValueObjectGenerator)
+[![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDDD.PrimitiveValueObjectGenerator)
 
 **Roslyn source generator** for creating strongly-typed value objects with automatic validation and IParsable support.
 
@@ -109,4 +109,4 @@ This is a **source generator** - it runs at compile-time and generates C# code. 
 
 ## License
 
-MIT � Xavier John
+MIT © Xavier John
