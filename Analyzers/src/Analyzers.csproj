@@ -29,7 +29,7 @@
   <!-- This ensures the library will be packaged as an analyzer when we use `dotnet pack` -->
   <ItemGroup>
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="C:\github\xavier\FunctionalDDD\Analyzers\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
