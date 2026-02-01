@@ -14,7 +14,8 @@
 
     <!-- https://github.com/nuget/home/issues/8583 -->
     <!-- RS2008: Disable release tracking for initial development -->
-    <NoWarn>$(NoWarn);NU5128;CS1574;RS2008</NoWarn>
+    <!-- RS1038: Analyzers and CodeFixProviders can coexist in same assembly -->
+    <NoWarn>$(NoWarn);NU5128;CS1574;RS2008;RS1038</NoWarn>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 
     <!-- .NET Standard 2.0 doesn't support AOT/Trim analyzers -->
@@ -35,6 +36,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
