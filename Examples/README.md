@@ -237,12 +237,14 @@ await GetCustomerAsync(id)
 
 ### 4. **Parallel Operations Pattern**
 ```csharp
-var result = await GetStudentInfoAsync(studentId)
-    .ParallelAsync(GetStudentGradesAsync(studentId))
-    .ParallelAsync(GetLibraryBooksAsync(studentId))
-    .AwaitAsync()
-    .BindAsync((info, grades, books) => 
-        PrepareReport(info, grades, books));
+var result = await Result.ParallelAsync(
+    () => GetStudentInfoAsync(studentId),
+    () => GetStudentGradesAsync(studentId),
+    () => GetLibraryBooksAsync(studentId)
+)
+.AwaitAsync()
+.BindAsync((info, grades, books) => 
+    PrepareReport(info, grades, books));
 ```
 
 **Used In**: EcommerceExample, BankingExample

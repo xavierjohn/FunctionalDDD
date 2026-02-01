@@ -134,12 +134,14 @@ await GetUserAsync(id)
 
 ### Pattern 4: Parallel Operations
 ```csharp
-var result = await GetStudentInfoAsync(studentId)
-    .ParallelAsync(GetStudentGradesAsync(studentId))
-    .ParallelAsync(GetLibraryBooksAsync(studentId))
-    .AwaitAsync()
-    .BindAsync((info, grades, books) => 
-        PrepareReport(info, grades, books));
+var result = await Result.ParallelAsync(
+    () => GetStudentInfoAsync(studentId),
+    () => GetStudentGradesAsync(studentId),
+    () => GetLibraryBooksAsync(studentId)
+)
+.AwaitAsync()
+.BindAsync((info, grades, books) => 
+    PrepareReport(info, grades, books));
 ```
 **Use When**: Multiple independent async operations need to run concurrently
 
