@@ -76,20 +76,13 @@ public sealed class UseFunctionalValueOrDefaultCodeFixProvider : CodeFixProvider
 
     private static bool IsSimpleDefaultValue(ExpressionSyntax expression, SemanticModel semanticModel)
     {
-        // Check if it's a literal null, default literal, or default(T)
-        if (expression is LiteralExpressionSyntax literal)
-            return literal.IsKind(SyntaxKind.NullLiteralExpression) ||
-                   literal.IsKind(SyntaxKind.DefaultLiteralExpression);
+        // Accept all literal values (null, default, numbers, strings, bools)
+        // This enables GetValueOrDefault() for both simple defaults and custom values
+        if (expression is LiteralExpressionSyntax)
+            return true;
 
         if (expression is DefaultExpressionSyntax)
             return true;
-
-        // Check if it's a numeric zero or false
-        if (expression is LiteralExpressionSyntax numericLiteral)
-        {
-            var value = numericLiteral.Token.Value;
-            return value is 0 or 0L or 0f or 0d or 0m or false;
-        }
 
         return false;
     }
@@ -186,9 +179,17 @@ public sealed class UseFunctionalValueOrDefaultCodeFixProvider : CodeFixProvider
 
     private static bool IsSimpleNullOrDefault(ExpressionSyntax expression)
     {
+        // Check if it's a literal null, default literal, or default(T)
         if (expression is LiteralExpressionSyntax literal)
-            return literal.IsKind(SyntaxKind.NullLiteralExpression) ||
-                   literal.IsKind(SyntaxKind.DefaultLiteralExpression);
+        {
+            if (literal.IsKind(SyntaxKind.NullLiteralExpression) ||
+                literal.IsKind(SyntaxKind.DefaultLiteralExpression))
+                return true;
+
+            // Check if it's a numeric zero or false
+            var value = literal.Token.Value;
+            return value is 0 or 0L or 0f or 0d or 0m or false;
+        }
 
         return expression is DefaultExpressionSyntax;
     }
