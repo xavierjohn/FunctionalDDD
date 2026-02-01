@@ -50,16 +50,15 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>MapTs.g.tt</DependentUpon>
     </Compile>
-
-    <Compile Update="Result\Extensions\ParallelAsyncs.g.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>ParallelAsyncs.g.tt</DependentUpon>
-    </Compile>
     <Compile Update="Result\Extensions\MatchTupleTs.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MatchTupleTs.g.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Result\Extensions\ParallelAsyncs.g.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ParallelAsyncs.g.tt</DependentUpon>
     </Compile>
     <Compile Update="Result\Extensions\TapOnFailureTs.g.cs">
       <DesignTime>True</DesignTime>
