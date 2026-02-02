@@ -173,7 +173,8 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             _ => null
         };
 
-    // Get consecutive statements that access the unsafe property (Value or Error) on the result
+    // Get consecutive statements that access the unsafe property (Value or Error) on the result,
+    // including statements that use variables derived from the result
     private static List<StatementSyntax> GetStatementsAccessingUnsafeProperty(
         SyntaxList<StatementSyntax> statements,
         int startIndex,
@@ -181,28 +182,49 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         string unsafeProperty)
     {
         var statementsToWrap = new List<StatementSyntax>();
+        var trackedIdentifiers = new HashSet<string> { resultIdentifier };
 
         for (int i = startIndex; i < statements.Count; i++)
         {
             var stmt = statements[i];
             
-            // Check if this statement accesses the unsafe property (e.g., result.Value or result.Error)
+            // Check if this statement accesses the unsafe property on any tracked identifier
             var accessesUnsafeProperty = stmt.DescendantNodes()
                 .OfType<MemberAccessExpressionSyntax>()
                 .Any(ma => 
                 {
                     var baseId = GetBaseIdentifier(ma.Expression);
-                    return baseId?.Identifier.Text == resultIdentifier 
+                    return baseId != null 
+                        && trackedIdentifiers.Contains(baseId.Identifier.Text)
                         && ma.Name.Identifier.Text == unsafeProperty;
                 });
 
-            if (!accessesUnsafeProperty)
+            // Also check if statement uses any tracked identifiers (for derived variables)
+            var usesTrackedIdentifier = !accessesUnsafeProperty && stmt.DescendantNodes()
+                .OfType<IdentifierNameSyntax>()
+                .Any(id => trackedIdentifiers.Contains(id.Identifier.Text));
+
+            if (!accessesUnsafeProperty && !usesTrackedIdentifier)
             {
-                // This statement doesn't access the unsafe property - stop here
+                // This statement doesn't access the unsafe property or use tracked variables - stop here
                 break;
             }
 
             statementsToWrap.Add(stmt);
+
+            // Track any new variables declared in this statement that are derived from tracked variables
+            var declaredVariables = stmt.DescendantNodes()
+                .OfType<VariableDeclaratorSyntax>()
+                .Where(v => v.Initializer != null && 
+                           v.Initializer.DescendantNodes()
+                               .OfType<IdentifierNameSyntax>()
+                               .Any(id => trackedIdentifiers.Contains(id.Identifier.Text)))
+                .Select(v => v.Identifier.Text);
+
+            foreach (var declaredVar in declaredVariables)
+            {
+                trackedIdentifiers.Add(declaredVar);
+            }
         }
 
         return statementsToWrap;
