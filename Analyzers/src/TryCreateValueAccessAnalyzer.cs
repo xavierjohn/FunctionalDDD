@@ -56,6 +56,19 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
         if (containingType == null)
             return;
 
+        // DEBUG: Report what type we found - temporarily emit a diagnostic
+        // This will help us see what type the analyzer is seeing
+        var debugDiagnostic = Diagnostic.Create(
+            new DiagnosticDescriptor(
+                "FDDD999",
+                "Debug: Type found",
+                $"Found type: {containingType.ToDisplayString()} with {containingType.AllInterfaces.Length} interfaces",
+                "Debug",
+                DiagnosticSeverity.Info,
+                true),
+            memberAccess.GetLocation());
+        context.ReportDiagnostic(debugDiagnostic);
+
         // Check if the type implements IScalarValue<TSelf, TPrimitive>
         if (!ImplementsIScalarValue(containingType))
             return;
