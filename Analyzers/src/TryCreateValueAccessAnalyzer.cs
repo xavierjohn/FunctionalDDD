@@ -66,7 +66,7 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
 
         var diagnostic = Diagnostic.Create(
             DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue,
-            memberAccess.GetLocation(),
+            memberAccess.Name.GetLocation(),  // Report on just .Value, not the whole expression
             containingType.Name);
 
         context.ReportDiagnostic(diagnostic);
