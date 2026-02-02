@@ -102,7 +102,7 @@ public static class DiagnosticDescriptors
         title: "Use Create instead of TryCreate().Value",
         messageFormat: "Using TryCreate().Value is unclear. Use '{0}.Create(...)' when you expect the value to be valid, or handle the Result properly.",
         category: Category,
-        defaultSeverity: DiagnosticSeverity.Info,
+        defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "For scalar value objects implementing IScalarValue, TryCreate().Value provides poor error messages. " +
                      "Use Create() when you expect success - it throws InvalidOperationException with the validation error details included. " +
