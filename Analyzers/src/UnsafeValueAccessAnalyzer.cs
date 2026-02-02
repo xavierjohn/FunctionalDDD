@@ -48,6 +48,10 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         {
             if (memberName == "Value" && !IsGuardedBySuccessCheck(memberAccess, context.SemanticModel))
             {
+                // Skip invocation patterns like TryCreate().Value - they're handled by FDDD007
+                if (memberAccess.Expression is InvocationExpressionSyntax)
+                    return;
+
                 var diagnostic = Diagnostic.Create(
                     DiagnosticDescriptors.UnsafeResultValueAccess,
                     memberAccess.Name.GetLocation());
