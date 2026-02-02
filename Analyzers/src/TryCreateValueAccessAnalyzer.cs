@@ -8,8 +8,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 /// <summary>
-/// Analyzer that detects when .Value is accessed on a TryCreate() result for types
-/// implementing IScalarValue, suggesting to use Create() instead for clearer intent.
+/// Analyzer that detects when .Value is accessed on a TryCreate() result,
+/// suggesting to use Create() instead for clearer intent and better error messages.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
@@ -70,29 +70,6 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
             containingType.Name);
 
         context.ReportDiagnostic(diagnostic);
-    }
-
-    // Check if the type implements IScalarValue<TSelf, TPrimitive>
-    // Note: We check for the interface name and structure, not the namespace,
-    // so this works for user-defined types in any namespace
-    private static bool ImplementsIScalarValue(INamedTypeSymbol typeSymbol)
-    {
-        // Check the type itself and all its base types
-        var currentType = typeSymbol;
-        while (currentType != null)
-        {
-            if (currentType.AllInterfaces.Any(i =>
-                i.Name == "IScalarValue" &&
-                i.TypeArguments.Length == 2 &&
-                i.ContainingNamespace?.ToDisplayString() == "FunctionalDdd"))
-            {
-                return true;
-            }
-
-            currentType = currentType.BaseType;
-        }
-
-        return false;
     }
 
     // Verify the type has a static Create method (checks the type and its base types)
