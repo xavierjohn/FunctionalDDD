@@ -95,9 +95,22 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    // Verify the type has a static Create method (guaranteed by IScalarValue but checked for robustness)
-    private static bool HasCreateMethod(INamedTypeSymbol typeSymbol) =>
-        typeSymbol.GetMembers("Create")
-            .OfType<IMethodSymbol>()
-            .Any(m => m.IsStatic);
+    // Verify the type has a static Create method (checks the type and its base types)
+    private static bool HasCreateMethod(INamedTypeSymbol typeSymbol)
+    {
+        var currentType = typeSymbol;
+        while (currentType != null)
+        {
+            if (currentType.GetMembers("Create")
+                .OfType<IMethodSymbol>()
+                .Any(m => m.IsStatic))
+            {
+                return true;
+            }
+
+            currentType = currentType.BaseType;
+        }
+
+        return false;
+    }
 }
