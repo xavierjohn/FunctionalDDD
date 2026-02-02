@@ -106,11 +106,15 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         if (resultIdentifier == null)
             return document;
 
-        // Find all consecutive statements that reference the result variable
-        var statementsToWrap = GetDependentStatements(
+        // Determine which property we're guarding (Value or Error)
+        var unsafeProperty = memberAccess.Name.Identifier.Text;
+
+        // Find all consecutive statements that access the same unsafe property
+        var statementsToWrap = GetStatementsAccessingUnsafeProperty(
             containingBlock.Statements,
             currentIndex,
-            resultIdentifier.Identifier.Text);
+            resultIdentifier.Identifier.Text,
+            unsafeProperty);
 
         // Create the guard condition: result.IsSuccess or result.IsFailure or maybe.HasValue
         var guardCondition = SyntaxFactory.MemberAccessExpression(
@@ -161,44 +165,38 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             _ => null
         };
 
-    // Get consecutive statements that reference the result variable or variables derived from it
-    private static List<StatementSyntax> GetDependentStatements(
+    // Get consecutive statements that access the unsafe property (Value or Error) on the result
+    private static List<StatementSyntax> GetStatementsAccessingUnsafeProperty(
         SyntaxList<StatementSyntax> statements,
         int startIndex,
-        string resultIdentifier)
+        string resultIdentifier,
+        string unsafeProperty)
     {
-        var dependentStatements = new List<StatementSyntax>();
-        var trackedIdentifiers = new HashSet<string> { resultIdentifier };
+        var statementsToWrap = new List<StatementSyntax>();
 
         for (int i = startIndex; i < statements.Count; i++)
         {
             var stmt = statements[i];
             
-            // Check if this statement references any tracked identifiers
-            var identifiersInStatement = new HashSet<string>(
-                stmt.DescendantNodes()
-                    .OfType<IdentifierNameSyntax>()
-                    .Select(id => id.Identifier.Text));
+            // Check if this statement accesses the unsafe property (e.g., result.Value or result.Error)
+            var accessesUnsafeProperty = stmt.DescendantNodes()
+                .OfType<MemberAccessExpressionSyntax>()
+                .Any(ma => 
+                {
+                    var baseId = GetBaseIdentifier(ma.Expression);
+                    return baseId?.Identifier.Text == resultIdentifier 
+                        && ma.Name.Identifier.Text == unsafeProperty;
+                });
 
-            if (!identifiersInStatement.Any(trackedIdentifiers.Contains))
+            if (!accessesUnsafeProperty)
             {
-                // This statement doesn't reference any tracked variables - stop here
+                // This statement doesn't access the unsafe property - stop here
                 break;
             }
 
-            dependentStatements.Add(stmt);
-
-            // Track any new variables declared in this statement
-            var declaredVariables = stmt.DescendantNodes()
-                .OfType<VariableDeclaratorSyntax>()
-                .Select(v => v.Identifier.Text);
-
-            foreach (var declaredVar in declaredVariables)
-            {
-                trackedIdentifiers.Add(declaredVar);
-            }
+            statementsToWrap.Add(stmt);
         }
 
-        return dependentStatements;
+        return statementsToWrap;
     }
 }
