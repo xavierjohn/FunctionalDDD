@@ -53,7 +53,7 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         {
             "FDDD003" => (TitleValue, "IsSuccess", true),   // Result.Value
             "FDDD004" => (TitleError, "IsFailure", true),   // Result.Error
-            "FDDD005" => (TitleMaybe, "HasValue", true),    // Maybe.Value
+            "FDDD006" => (TitleMaybe, "HasValue", true),    // Maybe.Value
             _ => (null, null, false)
         };
 

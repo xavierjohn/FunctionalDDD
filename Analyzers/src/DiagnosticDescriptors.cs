@@ -104,7 +104,7 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "For scalar value objects implementing IScalarValue, TryCreate().Value provides poor error messages. " +
+        description: "Using TryCreate().Value is unclear and provides poor error messages when validation fails. " +
                      "Use Create() when you expect success - it throws InvalidOperationException with the validation error details included. " +
                      "TryCreate().Value throws the same exception type but with a generic message, losing the validation error information. " +
                      "Or properly handle the Result returned by TryCreate() to avoid exceptions entirely.",

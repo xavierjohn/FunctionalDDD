@@ -55,9 +55,9 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
         if (containingType == null)
             return;
 
-        // Simplified check: If it's a static method named TryCreate that returns Result<T>,
+        // If it's a static method named TryCreate that returns Result<T>,
         // and there's a corresponding Create method, suggest using Create instead.
-        // This works for both IScalarValue types and any similar pattern.
+        // This pattern indicates the type follows the value object creation pattern.
         if (!methodSymbol.IsStatic)
             return;
 
