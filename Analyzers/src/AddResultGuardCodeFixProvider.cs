@@ -91,6 +91,10 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         // Get the expression being accessed (e.g., "result" from "result.Error")
         var resultExpression = memberAccess.Expression;
 
+        // Don't offer guard fix for TryCreate().Value pattern - that's handled by FDDD007
+        if (resultExpression is InvocationExpressionSyntax)
+            return document;
+
         // Find the containing block to get subsequent statements
         var containingBlock = statement.Parent as BlockSyntax;
         if (containingBlock == null)
@@ -115,6 +119,10 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             currentIndex,
             resultIdentifier.Identifier.Text,
             unsafeProperty);
+
+        // If no statements to wrap, bail out (shouldn't happen, but safety check)
+        if (statementsToWrap.Count == 0)
+            return document;
 
         // Create the guard condition: result.IsSuccess or result.IsFailure or maybe.HasValue
         var guardCondition = SyntaxFactory.MemberAccessExpression(
