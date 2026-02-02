@@ -101,9 +101,16 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         if (currentIndex == -1)
             return document;
 
-        var statementsToWrap = containingBlock.Statements
-            .Skip(currentIndex)
-            .ToList();
+        // Get the identifier being accessed (e.g., "result")
+        var resultIdentifier = GetBaseIdentifier(resultExpression);
+        if (resultIdentifier == null)
+            return document;
+
+        // Find all consecutive statements that reference the result variable
+        var statementsToWrap = GetDependentStatements(
+            containingBlock.Statements,
+            currentIndex,
+            resultIdentifier.Identifier.Text);
 
         // Create the guard condition: result.IsSuccess or result.IsFailure or maybe.HasValue
         var guardCondition = SyntaxFactory.MemberAccessExpression(
@@ -122,10 +129,13 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             .WithLeadingTrivia(statement.GetLeadingTrivia())
             .WithAdditionalAnnotations(Microsoft.CodeAnalysis.Formatting.Formatter.Annotation);
 
-        // Create new block with statements before the guard, then the if statement
-        var newStatements = containingBlock.Statements
-            .Take(currentIndex)
-            .Append(ifStatement);
+        // Create new block with statements before the guard, then the if statement, then remaining statements
+        var statementsBeforeGuard = containingBlock.Statements.Take(currentIndex);
+        var statementsAfterWrapped = containingBlock.Statements.Skip(currentIndex + statementsToWrap.Count);
+        
+        var newStatements = statementsBeforeGuard
+            .Append(ifStatement)
+            .Concat(statementsAfterWrapped);
 
         var newBlock = containingBlock.WithStatements(
             SyntaxFactory.List(newStatements));
@@ -140,5 +150,55 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             document.Project.Solution.Workspace,
             cancellationToken: cancellationToken);
         return document.WithSyntaxRoot(formattedRoot);
+    }
+
+    // Get the base identifier from an expression (e.g., "result" from "result.Error")
+    private static IdentifierNameSyntax? GetBaseIdentifier(ExpressionSyntax expression) =>
+        expression switch
+        {
+            IdentifierNameSyntax identifier => identifier,
+            MemberAccessExpressionSyntax memberAccess => GetBaseIdentifier(memberAccess.Expression),
+            _ => null
+        };
+
+    // Get consecutive statements that reference the result variable or variables derived from it
+    private static List<StatementSyntax> GetDependentStatements(
+        SyntaxList<StatementSyntax> statements,
+        int startIndex,
+        string resultIdentifier)
+    {
+        var dependentStatements = new List<StatementSyntax>();
+        var trackedIdentifiers = new HashSet<string> { resultIdentifier };
+
+        for (int i = startIndex; i < statements.Count; i++)
+        {
+            var stmt = statements[i];
+            
+            // Check if this statement references any tracked identifiers
+            var identifiersInStatement = new HashSet<string>(
+                stmt.DescendantNodes()
+                    .OfType<IdentifierNameSyntax>()
+                    .Select(id => id.Identifier.Text));
+
+            if (!identifiersInStatement.Any(trackedIdentifiers.Contains))
+            {
+                // This statement doesn't reference any tracked variables - stop here
+                break;
+            }
+
+            dependentStatements.Add(stmt);
+
+            // Track any new variables declared in this statement
+            var declaredVariables = stmt.DescendantNodes()
+                .OfType<VariableDeclaratorSyntax>()
+                .Select(v => v.Identifier.Text);
+
+            foreach (var declaredVar in declaredVariables)
+            {
+                trackedIdentifiers.Add(declaredVar);
+            }
+        }
+
+        return dependentStatements;
     }
 }
