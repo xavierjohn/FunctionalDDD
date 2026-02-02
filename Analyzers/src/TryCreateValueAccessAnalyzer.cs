@@ -45,7 +45,14 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
         if (methodSymbol.Name != "TryCreate")
             return;
 
-        var containingType = methodSymbol.ContainingType;
+        // The containing type might be the derived type (e.g., Name) or the base type (e.g., RequiredString<Name>)
+        // We need to check the return type to see what type TryCreate returns
+        var returnType = methodSymbol.ReturnType;
+        if (returnType is not INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } resultType)
+            return;
+
+        // Get the type being created (the T in Result<T>)
+        var containingType = resultType.TypeArguments[0] as INamedTypeSymbol;
         if (containingType == null)
             return;
 
@@ -66,11 +73,27 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
     }
 
     // Check if the type implements IScalarValue<TSelf, TPrimitive>
-    private static bool ImplementsIScalarValue(INamedTypeSymbol typeSymbol) =>
-        typeSymbol.AllInterfaces.Any(i =>
-            i.Name == "IScalarValue" &&
-            i.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-            i.TypeArguments.Length == 2);
+    // Note: We check for the interface name and structure, not the namespace,
+    // so this works for user-defined types in any namespace
+    private static bool ImplementsIScalarValue(INamedTypeSymbol typeSymbol)
+    {
+        // Check the type itself and all its base types
+        var currentType = typeSymbol;
+        while (currentType != null)
+        {
+            if (currentType.AllInterfaces.Any(i =>
+                i.Name == "IScalarValue" &&
+                i.TypeArguments.Length == 2 &&
+                i.ContainingNamespace?.ToDisplayString() == "FunctionalDdd"))
+            {
+                return true;
+            }
+
+            currentType = currentType.BaseType;
+        }
+
+        return false;
+    }
 
     // Verify the type has a static Create method (guaranteed by IScalarValue but checked for robustness)
     private static bool HasCreateMethod(INamedTypeSymbol typeSymbol) =>

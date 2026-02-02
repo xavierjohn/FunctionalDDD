@@ -91,22 +91,47 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         // Get the expression being accessed (e.g., "result" from "result.Error")
         var resultExpression = memberAccess.Expression;
 
+        // Find the containing block to get subsequent statements
+        var containingBlock = statement.Parent as BlockSyntax;
+        if (containingBlock == null)
+            return document;
+
+        // Find all statements from the current one to the end of the block
+        var currentIndex = containingBlock.Statements.IndexOf(statement);
+        if (currentIndex == -1)
+            return document;
+
+        var statementsToWrap = containingBlock.Statements
+            .Skip(currentIndex)
+            .ToList();
+
         // Create the guard condition: result.IsSuccess or result.IsFailure or maybe.HasValue
         var guardCondition = SyntaxFactory.MemberAccessExpression(
             SyntaxKind.SimpleMemberAccessExpression,
             resultExpression,
             SyntaxFactory.IdentifierName(guardProperty));
 
-        // Create the if statement wrapping the original statement
-        var ifStatement = SyntaxFactory.IfStatement(
-            guardCondition,
-            statement.WithoutLeadingTrivia())
-            .WithLeadingTrivia(statement.GetLeadingTrivia())
-            .WithTrailingTrivia(statement.GetTrailingTrivia())
+        // Create a block statement with all the statements to wrap
+        var blockStatement = SyntaxFactory.Block(statementsToWrap)
             .WithAdditionalAnnotations(Microsoft.CodeAnalysis.Formatting.Formatter.Annotation);
 
-        // Replace the original statement with the if statement
-        var newRoot = root.ReplaceNode(statement, ifStatement);
+        // Create the if statement wrapping all statements
+        var ifStatement = SyntaxFactory.IfStatement(
+            guardCondition,
+            blockStatement)
+            .WithLeadingTrivia(statement.GetLeadingTrivia())
+            .WithAdditionalAnnotations(Microsoft.CodeAnalysis.Formatting.Formatter.Annotation);
+
+        // Create new block with statements before the guard, then the if statement
+        var newStatements = containingBlock.Statements
+            .Take(currentIndex)
+            .Append(ifStatement);
+
+        var newBlock = containingBlock.WithStatements(
+            SyntaxFactory.List(newStatements));
+
+        // Replace the old block with the new one
+        var newRoot = root.ReplaceNode(containingBlock, newBlock);
         
         // Format the document to fix indentation
         var formattedRoot = Microsoft.CodeAnalysis.Formatting.Formatter.Format(
