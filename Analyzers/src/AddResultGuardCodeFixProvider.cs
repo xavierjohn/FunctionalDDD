@@ -165,6 +165,7 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
     }
 
     // Get the base identifier from an expression (e.g., "result" from "result.Error")
+    // Recursive, but limited by realistic code depth
     private static IdentifierNameSyntax? GetBaseIdentifier(ExpressionSyntax expression) =>
         expression switch
         {
@@ -188,8 +189,11 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         {
             var stmt = statements[i];
             
+            // Get all descendant nodes once to avoid multiple tree walks
+            var descendants = stmt.DescendantNodes().ToList();
+            
             // Check if this statement accesses the unsafe property on any tracked identifier
-            var accessesUnsafeProperty = stmt.DescendantNodes()
+            var accessesUnsafeProperty = descendants
                 .OfType<MemberAccessExpressionSyntax>()
                 .Any(ma => 
                 {
@@ -200,7 +204,7 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
                 });
 
             // Also check if statement uses any tracked identifiers (for derived variables)
-            var usesTrackedIdentifier = !accessesUnsafeProperty && stmt.DescendantNodes()
+            var usesTrackedIdentifier = !accessesUnsafeProperty && descendants
                 .OfType<IdentifierNameSyntax>()
                 .Any(id => trackedIdentifiers.Contains(id.Identifier.Text));
 
@@ -213,7 +217,7 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             statementsToWrap.Add(stmt);
 
             // Track any new variables declared in this statement that are derived from tracked variables
-            var declaredVariables = stmt.DescendantNodes()
+            var declaredVariables = descendants
                 .OfType<VariableDeclaratorSyntax>()
                 .Where(v => v.Initializer != null && 
                            v.Initializer.DescendantNodes()
