@@ -35,7 +35,7 @@ public sealed class MaybeDoubleWrappingAnalyzer : DiagnosticAnalyzer
             VariableDeclarationSyntax variable => context.SemanticModel.GetTypeInfo(variable.Type).Type,
             PropertyDeclarationSyntax property => context.SemanticModel.GetTypeInfo(property.Type).Type,
             MethodDeclarationSyntax method => context.SemanticModel.GetTypeInfo(method.ReturnType).Type,
-            ParameterSyntax parameter => context.SemanticModel.GetTypeInfo(parameter.Type!).Type,
+            ParameterSyntax parameter when parameter.Type != null => context.SemanticModel.GetTypeInfo(parameter.Type).Type,
             _ => null
         };
 
@@ -49,7 +49,7 @@ public sealed class MaybeDoubleWrappingAnalyzer : DiagnosticAnalyzer
                 VariableDeclarationSyntax v => v.Type.GetLocation(),
                 PropertyDeclarationSyntax p => p.Type.GetLocation(),
                 MethodDeclarationSyntax m => m.ReturnType.GetLocation(),
-                ParameterSyntax param => param.Type!.GetLocation(),
+                ParameterSyntax param when param.Type != null => param.Type.GetLocation(),
                 _ => context.Node.GetLocation()
             };
 
