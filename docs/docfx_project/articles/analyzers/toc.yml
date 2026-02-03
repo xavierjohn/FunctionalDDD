@@ -1,0 +1,30 @@
+﻿- name: Overview
+  href: index.md
+- name: FDDD001 - Result not handled
+  href: FDDD001.md
+- name: FDDD002 - Use Bind instead of Map
+  href: FDDD002.md
+- name: FDDD003 - Unsafe Result.Value access
+  href: FDDD003.md
+- name: FDDD004 - Unsafe Result.Error access
+  href: FDDD004.md
+- name: FDDD005 - Use MatchError
+  href: FDDD005.md
+- name: FDDD006 - Unsafe Maybe.Value access
+  href: FDDD006.md
+- name: FDDD007 - Use Create instead of TryCreate().Value
+  href: FDDD007.md
+- name: FDDD008 - Result double-wrapped
+  href: FDDD008.md
+- name: FDDD009 - Maybe.ToResult without error
+  href: FDDD009.md
+- name: FDDD010 - Incorrect async Result usage
+  href: FDDD010.md
+- name: FDDD011 - Use specific error type
+  href: FDDD011.md
+- name: FDDD012 - Maybe double-wrapped
+  href: FDDD012.md
+- name: FDDD013 - Use Result.Combine
+  href: FDDD013.md
+- name: FDDD014 - Use GetValueOrDefault or Match
+  href: FDDD014.md
