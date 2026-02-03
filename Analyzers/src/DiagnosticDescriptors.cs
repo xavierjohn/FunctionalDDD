@@ -125,18 +125,10 @@ public static class DiagnosticDescriptors
         helpLinkUri: HelpLinkBase + "FDDD008");
 
     /// <summary>
-    /// FDDD009: Converting Maybe to Result without providing an error for the None case.
+    /// FDDD009: Reserved (removed - API design already enforces error parameter at compile time).
     /// </summary>
-    public static readonly DiagnosticDescriptor MaybeToResultWithoutError = new(
-        id: "FDDD009",
-        title: "Maybe.ToResult called without error parameter",
-        messageFormat: "Converting Maybe<{0}> to Result without providing an error for the None case",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
-        description: "Maybe.ToResult() requires an error parameter to handle the None case. " +
-                     "Provide an Error to clearly indicate what went wrong when the Maybe has no value.",
-        helpLinkUri: HelpLinkBase + "FDDD009");
+    // FDDD009 was removed because Maybe.ToResult() requires an error parameter at compile time.
+    // The API design prevents this mistake, making the analyzer redundant.
 
     /// <summary>
     /// FDDD010: Blocking on async Result or accessing properties incorrectly.

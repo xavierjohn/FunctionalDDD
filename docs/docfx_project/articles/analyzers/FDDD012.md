@@ -83,4 +83,3 @@ Do not suppress this warning. If you have `Maybe<Maybe<T>>`, restructure your co
 ## Related Rules
 
 - [FDDD008](FDDD008.md) - Result is double-wrapped
-- [FDDD009](FDDD009.md) - Maybe.ToResult called without error parameter

@@ -34,7 +34,7 @@ The analyzer package is automatically included when you install any FunctionalDD
 | ID | Title | Severity | Has Code Fix |
 |----|-------|----------|--------------|
 | [FDDD008](FDDD008.md) | Result is double-wrapped | Warning | ❌ |
-| [FDDD009](FDDD009.md) | Maybe.ToResult called without error parameter | Warning | ❌ |
+| FDDD009 | ~~Maybe.ToResult without error~~ (removed - enforced at compile time) | - | - |
 | [FDDD010](FDDD010.md) | Incorrect async Result usage | Warning | ❌ |
 | [FDDD011](FDDD011.md) | Use specific error type instead of base Error class | Info | ❌ |
 | [FDDD012](FDDD012.md) | Maybe is double-wrapped | Warning | ❌ |

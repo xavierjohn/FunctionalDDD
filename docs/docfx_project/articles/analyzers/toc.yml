@@ -16,8 +16,6 @@
   href: FDDD007.md
 - name: FDDD008 - Result double-wrapped
   href: FDDD008.md
-- name: FDDD009 - Maybe.ToResult without error
-  href: FDDD009.md
 - name: FDDD010 - Incorrect async Result usage
   href: FDDD010.md
 - name: FDDD011 - Use specific error type

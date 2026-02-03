@@ -103,4 +103,3 @@ public Result<Customer> FindCustomer(Guid id)
 ## Related Rules
 
 - [FDDD003](FDDD003.md) - Unsafe access to Result.Value
-- [FDDD009](FDDD009.md) - Maybe.ToResult called without error parameter
