@@ -48,10 +48,10 @@
   items:
   - name: Aggregate Factory Pattern
     href: aggregate-factory-pattern.md
-- name: Analyzers
-  href: analyzers/toc.yml
   - name: Specification Pattern Alternative
     href: specification-pattern.md
+- name: Analyzers
+  href: analyzers/toc.yml
 - name: Advanced
   items:
   - name: Advanced Features
