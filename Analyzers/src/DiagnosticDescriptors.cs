@@ -125,16 +125,10 @@ public static class DiagnosticDescriptors
         helpLinkUri: HelpLinkBase + "FDDD008");
 
     /// <summary>
-    /// FDDD009: Reserved (removed - API design already enforces error parameter at compile time).
-    /// </summary>
-    // FDDD009 was removed because Maybe.ToResult() requires an error parameter at compile time.
-    // The API design prevents this mistake, making the analyzer redundant.
-
-    /// <summary>
-    /// FDDD010: Blocking on async Result or accessing properties incorrectly.
+    /// FDDD009: Blocking on async Result or accessing properties incorrectly.
     /// </summary>
     public static readonly DiagnosticDescriptor AsyncResultMisuse = new(
-        id: "FDDD010",
+        id: "FDDD009",
         title: "Incorrect async Result usage",
         messageFormat: "Use 'await' with Task<Result<{0}>> instead of blocking or accessing Task properties",
         category: Category,
@@ -142,13 +136,13 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Task<Result<T>> should be awaited, not blocked with .Result or .Wait(). " +
                      "Blocking can cause deadlocks and prevents proper async execution. Use await instead.",
-        helpLinkUri: HelpLinkBase + "FDDD010");
+        helpLinkUri: HelpLinkBase + "FDDD009");
 
     /// <summary>
-    /// FDDD011: Using Error base class directly instead of specific error types.
+    /// FDDD010: Using Error base class directly instead of specific error types.
     /// </summary>
     public static readonly DiagnosticDescriptor UseSpecificErrorType = new(
-        id: "FDDD011",
+        id: "FDDD010",
         title: "Use specific error type instead of base Error class",
         messageFormat: "Use Error.Validation(), Error.NotFound(), or other specific error types instead of instantiating Error directly",
         category: Category,
@@ -156,13 +150,13 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Using specific error types (ValidationError, NotFoundError, etc.) enables type-safe error handling with MatchError. " +
                      "Avoid instantiating the base Error class directly.",
-        helpLinkUri: HelpLinkBase + "FDDD011");
+        helpLinkUri: HelpLinkBase + "FDDD010");
 
     /// <summary>
-    /// FDDD012: Maybe is double-wrapped as Maybe&lt;Maybe&lt;T&gt;&gt;.
+    /// FDDD011: Maybe is double-wrapped as Maybe&lt;Maybe&lt;T&gt;&gt;.
     /// </summary>
     public static readonly DiagnosticDescriptor MaybeDoubleWrapping = new(
-        id: "FDDD012",
+        id: "FDDD011",
         title: "Maybe is double-wrapped",
         messageFormat: "Maybe<Maybe<{0}>> detected. Avoid wrapping an existing Maybe inside another Maybe.",
         category: Category,
@@ -171,13 +165,13 @@ public static class DiagnosticDescriptors
         description: "Maybe should not be wrapped inside another Maybe. This creates Maybe<Maybe<T>> which is almost always unintended. " +
                      "Avoid using Map when the transformation function returns a Maybe, as this creates double wrapping. " +
                      "Consider converting to Result with ToResult() for better composability.",
-        helpLinkUri: HelpLinkBase + "FDDD012");
+        helpLinkUri: HelpLinkBase + "FDDD011");
 
     /// <summary>
-    /// FDDD013: Consider using Result.Combine for multiple Result checks.
+    /// FDDD012: Consider using Result.Combine for multiple Result checks.
     /// </summary>
     public static readonly DiagnosticDescriptor UseResultCombine = new(
-        id: "FDDD013",
+        id: "FDDD012",
         title: "Consider using Result.Combine",
         messageFormat: "Consider using Result.Combine() for combining multiple Results instead of manual checks",
         category: Category,
@@ -185,13 +179,13 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "When combining multiple Result<T> values, Result.Combine() provides a cleaner and more maintainable approach " +
                      "than manually checking IsSuccess on each result.",
-        helpLinkUri: HelpLinkBase + "FDDD013");
+        helpLinkUri: HelpLinkBase + "FDDD012");
 
     /// <summary>
-    /// FDDD014: Consider using GetValueOrDefault or Match instead of ternary.
+    /// FDDD013: Consider using GetValueOrDefault or Match instead of ternary.
     /// </summary>
     public static readonly DiagnosticDescriptor UseFunctionalValueOrDefault = new(
-        id: "FDDD014",
+        id: "FDDD013",
         title: "Consider using GetValueOrDefault or Match",
         messageFormat: "Consider using GetValueOrDefault() or Match() instead of ternary operator for Result value extraction",
         category: Category,
@@ -199,5 +193,5 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "The pattern 'result.IsSuccess ? result.Value : default' can be replaced with GetValueOrDefault() or Match() " +
                      "for more idiomatic and safer code.",
-        helpLinkUri: HelpLinkBase + "FDDD014");
+        helpLinkUri: HelpLinkBase + "FDDD013");
 }

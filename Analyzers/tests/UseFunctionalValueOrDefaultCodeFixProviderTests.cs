@@ -3,7 +3,7 @@
 using Xunit;
 
 /// <summary>
-/// Tests for UseFunctionalValueOrDefaultCodeFixProvider (FDDD014).
+/// Tests for UseFunctionalValueOrDefaultCodeFixProvider (FDDD013).
 /// Verifies that ternary operators are correctly replaced with GetValueOrDefault() or Match().
 /// </summary>
 public class UseFunctionalValueOrDefaultCodeFixProviderTests
