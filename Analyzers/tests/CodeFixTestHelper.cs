@@ -75,6 +75,9 @@ public static class CodeFixTestHelper
     /// Stub source code for FunctionalDdd types used in code fix tests.
     /// </summary>
     private const string FunctionalDddStubSource = """
+        #pragma warning disable FDDD003 // Unsafe Result.Value access
+        #pragma warning disable FDDD004 // Unsafe Result.Error access
+        #pragma warning disable FDDD006 // Unsafe Maybe.Value access
         namespace FunctionalDdd
         {
             using System;
@@ -239,5 +242,8 @@ public static class CodeFixTestHelper
                 public void NotBeNull() { }
             }
         }
+        #pragma warning restore FDDD003
+        #pragma warning restore FDDD004
+        #pragma warning restore FDDD006
         """;
 }
