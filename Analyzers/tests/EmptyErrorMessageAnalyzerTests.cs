@@ -104,4 +104,25 @@ public class EmptyErrorMessageAnalyzerTests
         var test = AnalyzerTestHelper.CreateNoDiagnosticTest<EmptyErrorMessageAnalyzer>(source);
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task ErrorValidation_StringEmpty_ReportsDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public void TestMethod()
+                {
+                    var error = Error.Validation(string.Empty);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<EmptyErrorMessageAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.EmptyErrorMessage)
+                .WithLocation(11, 38));
+
+        await test.RunAsync();
+    }
 }
