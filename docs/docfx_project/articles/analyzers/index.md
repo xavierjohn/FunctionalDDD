@@ -38,13 +38,17 @@ The analyzer package is automatically included when you install any FunctionalDD
 | [FDDD010](FDDD010.md) | Use specific error type instead of base Error class | Info | ❌ |
 | [FDDD011](FDDD011.md) | Maybe is double-wrapped | Warning | ❌ |
 
-### Code Quality (FDDD012-FDDD014)
+### Code Quality (FDDD012-FDDD018)
 
 | ID | Title | Severity | Has Code Fix |
 |----|-------|----------|--------------|
 | [FDDD012](FDDD012.md) | Consider using Result.Combine | Info | ❌ |
 | [FDDD013](FDDD013.md) | Consider using GetValueOrDefault or Match | Info | ✅ |
 | [FDDD014](FDDD014.md) | Use async method variant for async lambda | Warning | ✅ |
+| [FDDD015](FDDD015.md) | Don't throw exceptions in Result chains | Warning | ❌ |
+| [FDDD016](FDDD016.md) | Error message should not be empty | Warning | ❌ |
+| [FDDD017](FDDD017.md) | Don't compare Result or Maybe to null | Warning | ❌ |
+| [FDDD018](FDDD018.md) | Unsafe access to Value in LINQ expression | Warning | ❌ |
 
 ## Severity Levels
 
@@ -52,6 +56,7 @@ The analyzer package is automatically included when you install any FunctionalDD
 - **Info**: Suggestions for more idiomatic or maintainable code
 
 ## Code Fixes
+
 
 Several analyzers provide automatic code fixes (✅ in the table above):
 

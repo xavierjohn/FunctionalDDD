@@ -29,11 +29,15 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 - **TryCreate().Value anti-pattern (FDDD007)** - Suggests using `.Create()` for clearer errors
 - **Manual result combination (FDDD012)** - Suggests using `Result.Combine()` for multiple validations
 - **Ternary operator patterns (FDDD013)** - Suggests using `GetValueOrDefault()` or `Match()`
+- **Throwing in Result chains (FDDD015)** - Detects `throw` statements that defeat ROP semantics
+- **Null comparisons (FDDD017)** - Detects comparing Result/Maybe to null (they're structs)
+- **Unsafe LINQ access (FDDD018)** - Detects `.Value` in LINQ without filtering by IsSuccess/HasValue
 
 ### Error Handling Best Practices
 
 - **Specific error types (FDDD010)** - Encourages using `Error.Validation()`, `Error.NotFound()` etc. instead of base `Error` class
 - **Error discrimination (FDDD005)** - Suggests using `MatchError` for type-safe error handling
+- **Empty error messages (FDDD016)** - Detects empty or missing error messages
 
 ### Maybe Pattern Enforcement
 
@@ -47,6 +51,7 @@ Similar protections for `Maybe<T>`:
 ### FDDD003: Unsafe Result.Value Access
 
 **Problem:** Accessing `.Value` without checking success state can throw exceptions.
+
 
 ```csharp
 // ❌ Warning: Accessing Value without checking IsSuccess
@@ -165,7 +170,7 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 ```xml
 <!-- In .csproj -->
 <PropertyGroup>
-  <NoWarn>$(NoWarn);FDDD001;FDDD002;FDDD003;FDDD004;FDDD005;FDDD006;FDDD007;FDDD008;FDDD009;FDDD010;FDDD011;FDDD012;FDDD013;FDDD014</NoWarn>
+  <NoWarn>$(NoWarn);FDDD001;FDDD002;FDDD003;FDDD004;FDDD005;FDDD006;FDDD007;FDDD008;FDDD009;FDDD010;FDDD011;FDDD012;FDDD013;FDDD014;FDDD015;FDDD016;FDDD017;FDDD018</NoWarn>
 </PropertyGroup>
 ```
 
@@ -187,6 +192,10 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 | FDDD012 | Consider using Result.Combine | Info |
 | FDDD013 | Consider using GetValueOrDefault or Match instead of ternary | Info |
 | FDDD014 | Use async method variant for async lambda | Warning |
+| FDDD015 | Don't throw exceptions in Result chains | Warning |
+| FDDD016 | Error message should not be empty | Warning |
+| FDDD017 | Don't compare Result or Maybe to null | Warning |
+| FDDD018 | Unsafe access to Value in LINQ expression | Warning |
 
 ## Requirements
 

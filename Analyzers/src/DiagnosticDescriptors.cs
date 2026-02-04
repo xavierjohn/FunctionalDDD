@@ -208,4 +208,60 @@ public static class DiagnosticDescriptors
         description: "When using an async lambda with Map, Bind, Tap, or Ensure, use the async variant (MapAsync, BindAsync, etc.) " +
                      "to properly handle the async operation. Using sync methods with async lambdas causes the Task to not be awaited.",
         helpLinkUri: HelpLinkBase + "FDDD014");
+
+    /// <summary>
+    /// FDDD015: Throwing exception inside Result chain instead of returning failure.
+    /// </summary>
+    public static readonly DiagnosticDescriptor ThrowInResultChain = new(
+        id: "FDDD015",
+        title: "Don't throw exceptions in Result chains",
+        messageFormat: "Don't throw exceptions inside '{0}'. Return a failure Result instead to maintain Railway Oriented Programming semantics.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Throwing exceptions inside Bind, Map, Tap, or Ensure lambdas defeats the purpose of Railway Oriented Programming. " +
+                     "Return Result.Failure<T>() to signal errors and keep the error on the failure track.",
+        helpLinkUri: HelpLinkBase + "FDDD015");
+
+    /// <summary>
+    /// FDDD016: Empty or missing error message.
+    /// </summary>
+    public static readonly DiagnosticDescriptor EmptyErrorMessage = new(
+        id: "FDDD016",
+        title: "Error message should not be empty",
+        messageFormat: "Error message should not be empty. Provide a meaningful message for debugging.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Error messages should provide context for debugging and user feedback. " +
+                     "Empty error messages make it difficult to diagnose issues.",
+        helpLinkUri: HelpLinkBase + "FDDD016");
+
+    /// <summary>
+    /// FDDD017: Comparing Result or Maybe to null.
+    /// </summary>
+    public static readonly DiagnosticDescriptor ComparingToNull = new(
+        id: "FDDD017",
+        title: "Don't compare Result or Maybe to null",
+        messageFormat: "Don't compare {0} to null. Use '{1}' instead.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Result<T> and Maybe<T> are structs and cannot be null. " +
+                     "Use IsSuccess/IsFailure for Result, or HasValue/HasNoValue for Maybe.",
+        helpLinkUri: HelpLinkBase + "FDDD017");
+
+    /// <summary>
+    /// FDDD018: Using .Value in LINQ without checking success state.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UnsafeValueInLinq = new(
+        id: "FDDD018",
+        title: "Unsafe access to Value in LINQ expression",
+        messageFormat: "Accessing '{0}' in LINQ without filtering by {1} first may throw exceptions",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "When using LINQ on collections of Result<T> or Maybe<T>, filter by IsSuccess/HasValue first, " +
+                     "or use methods like Select with Match to safely extract values.",
+        helpLinkUri: HelpLinkBase + "FDDD018");
 }

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### FunctionalDDD.Analyzers - NEW Package! 🎉
 
-A comprehensive suite of 14 Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:
+A comprehensive suite of 18 Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:
 
 **Safety Rules (Warnings):**
 - **FDDD001**: Detect unhandled Result return values
@@ -23,6 +23,10 @@ A comprehensive suite of 14 Roslyn analyzers to enforce Railway Oriented Program
 - **FDDD009**: Prevent blocking on `Task<Result<T>>` with `.Result` or `.Wait()`
 - **FDDD011**: Detect `Maybe<Maybe<T>>` double wrapping
 - **FDDD014**: Detect async lambda used with sync method (Map instead of MapAsync)
+- **FDDD015**: Don't throw exceptions in Result chains (defeats ROP purpose)
+- **FDDD016**: Empty error messages provide no debugging context
+- **FDDD017**: Don't compare Result/Maybe to null (they're structs)
+- **FDDD018**: Unsafe `.Value` access in LINQ without filtering first
 
 **Best Practice Rules (Info):**
 - **FDDD002**: Suggest `Bind` instead of `Map` when lambda returns Result
@@ -35,7 +39,7 @@ A comprehensive suite of 14 Roslyn analyzers to enforce Railway Oriented Program
 - ✅ Catch common ROP mistakes at compile time
 - ✅ Guide developers toward best practices
 - ✅ Improve code quality and maintainability
-- ✅ 124 comprehensive tests ensuring accuracy
+- ✅ 149 comprehensive tests ensuring accuracy
 
 **Installation:**
 ```bash
@@ -47,5 +51,6 @@ dotnet add package FunctionalDdd.Analyzers
 ---
 
 ## Previous Releases
+
 
 [Unreleased]: https://github.com/xavierjohn/FunctionalDDD/compare/v1.0.0...HEAD

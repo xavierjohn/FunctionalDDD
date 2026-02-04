@@ -28,3 +28,11 @@
   href: FDDD013.md
 - name: FDDD014 - Use async method variant
   href: FDDD014.md
+- name: FDDD015 - Don't throw in Result chains
+  href: FDDD015.md
+- name: FDDD016 - Empty error message
+  href: FDDD016.md
+- name: FDDD017 - Don't compare to null
+  href: FDDD017.md
+- name: FDDD018 - Unsafe Value in LINQ
+  href: FDDD018.md
