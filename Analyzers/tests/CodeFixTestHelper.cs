@@ -59,17 +59,28 @@ public static class CodeFixTestHelper
     private static void AddFunctionalDddStubSource(SolutionState state) =>
         state.Sources.Add(("FunctionalDddStubs.cs", FunctionalDddStubSource));
 
-    private static string WrapInNamespace(string source) =>
-        $$"""
+    private static readonly string[] LineSeparators = ["\r\n", "\r", "\n"];
+
+    private static string WrapInNamespace(string source)
+    {
+        // Indent all lines of the source by 4 spaces (to be inside the namespace)
+        // Use proper line splitting that preserves empty lines
+        var lines = source.Split(LineSeparators, StringSplitOptions.None);
+        var indentedSource = string.Join(
+            Environment.NewLine,
+            lines.Select(line => string.IsNullOrWhiteSpace(line) ? line : "    " + line));
+
+        return $$"""
             using FunctionalDdd;
             using System;
             using System.Threading.Tasks;
 
             namespace TestNamespace
             {
-                {{source}}
+            {{indentedSource}}
             }
             """;
+    }
 
     /// <summary>
     /// Stub source code for FunctionalDdd types used in code fix tests.

@@ -44,7 +44,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check for Result<T>.Value or Result<T>.Error
-        if (IsResultType(type))
+        if (type.IsResultType())
         {
             if (memberName == "Value" && !IsGuardedBySuccessCheck(memberAccess, context.SemanticModel))
             {
@@ -66,7 +66,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             }
         }
         // Check for Maybe<T>.Value
-        else if (IsMaybeType(type) && memberName == "Value")
+        else if (type.IsMaybeType() && memberName == "Value")
         {
             if (!IsGuardedByHasValueCheck(memberAccess, context.SemanticModel))
             {
@@ -77,18 +77,6 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             }
         }
     }
-
-    private static bool IsResultType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Result" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
-
-    private static bool IsMaybeType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Maybe" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
 
     private static bool IsGuardedBySuccessCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", true) ||

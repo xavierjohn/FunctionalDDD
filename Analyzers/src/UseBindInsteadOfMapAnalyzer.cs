@@ -16,7 +16,7 @@ public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
     private static readonly ImmutableHashSet<string> MapMethodNames = ["Map", "MapAsync"];
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DiagnosticDescriptors.UseBindInsteadOfMap);
+        [DiagnosticDescriptors.UseBindInsteadOfMap];
 
     public override void Initialize(AnalysisContext context)
     {
@@ -60,7 +60,7 @@ public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check if the return type is Result<T>
-        if (IsResultType(lambdaReturnType))
+        if (lambdaReturnType.IsResultType())
         {
             var diagnostic = Diagnostic.Create(
                 DiagnosticDescriptors.UseBindInsteadOfMap,
@@ -69,7 +69,7 @@ public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
         }
 
         // Also check for Task<Result<T>> or ValueTask<Result<T>>
-        if (IsTaskWrappingResult(lambdaReturnType))
+        if (lambdaReturnType.IsTaskWrappingResult())
         {
             var diagnostic = Diagnostic.Create(
                 DiagnosticDescriptors.UseBindInsteadOfMap,
@@ -111,36 +111,5 @@ public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
         }
 
         return null;
-    }
-
-    private static bool IsResultType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is not INamedTypeSymbol namedType)
-            return false;
-
-        return namedType.Name == "Result" &&
-               namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-               namedType.TypeArguments.Length == 1;
-    }
-
-    private static bool IsTaskWrappingResult(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is not INamedTypeSymbol namedType)
-            return false;
-
-        var fullName = namedType.ToDisplayString();
-        if (!fullName.StartsWith("System.Threading.Tasks.Task<", System.StringComparison.Ordinal) &&
-            !fullName.StartsWith("System.Threading.Tasks.ValueTask<", System.StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        // Check if the type argument is Result<T>
-        if (namedType.TypeArguments.Length == 1)
-        {
-            return IsResultType(namedType.TypeArguments[0]);
-        }
-
-        return false;
     }
 }

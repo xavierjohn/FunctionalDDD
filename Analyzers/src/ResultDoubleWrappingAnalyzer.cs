@@ -1,7 +1,6 @@
 ﻿namespace FunctionalDdd.Analyzers;
 
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -45,7 +44,7 @@ public sealed class ResultDoubleWrappingAnalyzer : DiagnosticAnalyzer
         if (typeSymbol == null)
             return;
 
-        if (IsDoubleWrappedResult(typeSymbol, out var innerType))
+        if (typeSymbol.IsDoubleWrappedResult(out var innerType))
         {
             var location = context.Node switch
             {
@@ -89,7 +88,7 @@ public sealed class ResultDoubleWrappingAnalyzer : DiagnosticAnalyzer
         var argumentType = context.SemanticModel.GetTypeInfo(argument.Expression).Type;
 
         if (argumentType is INamedTypeSymbol { TypeArguments.Length: 1 } resultType &&
-            IsResultType(argumentType))
+            argumentType.IsResultType())
         {
             var innerType = resultType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             var diagnostic = Diagnostic.Create(
@@ -100,33 +99,6 @@ public sealed class ResultDoubleWrappingAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(diagnostic);
         }
     }
-
-    // Check if type is Result<Result<T>>
-    private static bool IsDoubleWrappedResult(ITypeSymbol typeSymbol, out string? innerType)
-    {
-        innerType = null;
-
-        // Check if outer type is Result<T> with exactly 1 type argument
-        if (typeSymbol is not INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } outerResult ||
-            outerResult.ContainingNamespace?.ToDisplayString() != "FunctionalDdd")
-            return false;
-
-        // Check if inner type is also Result<T>
-        var innerTypeSymbol = outerResult.TypeArguments[0];
-        if (innerTypeSymbol is INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } innerResult &&
-            innerResult.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
-        {
-            innerType = innerResult.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            return true;
-        }
-
-        return false;
-    }
-
-    // Check if type is Result<T> from FunctionalDdd
-    private static bool IsResultType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } namedType &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd";
 
     // Check if method is Result.Success or Result.Failure
     private static bool IsResultFactoryMethod(IMethodSymbol methodSymbol)

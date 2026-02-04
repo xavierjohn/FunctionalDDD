@@ -35,7 +35,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -67,7 +67,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -99,7 +99,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -131,7 +131,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -163,7 +163,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 1,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -195,7 +195,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -227,7 +227,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -259,7 +259,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 1,  // Match is code action index 1 when GetValueOrDefault is also offered
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(11, 25));
 
         await test.RunAsync();
     }
@@ -293,7 +293,7 @@ public class UseFunctionalValueOrDefaultCodeFixProviderTests
             source,
             fixedSource,
             codeActionIndex: 0,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(12, 21));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseFunctionalValueOrDefault).WithLocation(12, 25));
 
         await test.RunAsync();
     }

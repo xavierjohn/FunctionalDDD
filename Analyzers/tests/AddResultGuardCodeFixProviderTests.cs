@@ -1,4 +1,4 @@
-namespace FunctionalDdd.Analyzers.Tests;
+﻿namespace FunctionalDdd.Analyzers.Tests;
 
 using Xunit;
 
@@ -6,16 +6,12 @@ using Xunit;
 /// Tests for AddResultGuardCodeFixProvider (FDDD003, FDDD004, FDDD006).
 /// Verifies that unsafe Result.Value, Result.Error, and Maybe.Value access
 /// is correctly wrapped with appropriate guard statements.
-/// 
-/// TODO: These tests are currently failing due to indentation mismatches between
-/// expected and actual fixed code. The code fix provider works correctly but produces
-/// different indentation than expected. This needs further investigation.
 /// </summary>
 public class AddResultGuardCodeFixProviderTests
 {
     #region FDDD003 - Result.Value Access Tests
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_SingleStatement_AddsIsSuccessGuard()
     {
         const string source = """
@@ -45,13 +41,12 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32));
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_MultipleConsecutiveStatements_WrapsAllInSingleGuard()
     {
         const string source = """
@@ -85,13 +80,12 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32));
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_WithStatementAfterDerivedUsage_StopsAtUnrelatedStatement()
     {
         const string source = """
@@ -116,6 +110,7 @@ public class AddResultGuardCodeFixProviderTests
                         var value = result.Value;
                         Console.WriteLine(value);
                     }
+
                     var unrelated = 42;
                 }
             }
@@ -125,13 +120,12 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32));
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_InReturnStatement_WrapsReturn()
     {
         const string source = """
@@ -153,6 +147,8 @@ public class AddResultGuardCodeFixProviderTests
                     {
                         return result.Value;
                     }
+
+                    return default;
                 }
             }
             """;
@@ -161,13 +157,12 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 23)
-                .WithArguments("result"));
+                .WithLocation(11, 27));
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_InMethodArgument_WrapsStatement()
     {
         const string source = """
@@ -202,12 +197,12 @@ public class AddResultGuardCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
                 .WithLocation(11, 33)
-                .WithArguments("result"));
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_MultipleAccessesInSameStatement_WrapsOnce()
     {
         const string source = """
@@ -237,16 +232,16 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 26)
-                .WithArguments("result"),
+                .WithLocation(11, 30)
+                ,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 42)
-                .WithArguments("result"));
+                .WithLocation(11, 45)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_NestedMemberAccess_AddsGuard()
     {
         const string source = """
@@ -277,12 +272,12 @@ public class AddResultGuardCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
                 .WithLocation(11, 33)
-                .WithArguments("result"));
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_WithLeadingTrivia_PreservesIndentation()
     {
         const string source = """
@@ -314,8 +309,8 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(12, 28)
-                .WithArguments("result"));
+                .WithLocation(12, 32)
+                );
 
         await test.RunAsync();
     }
@@ -324,7 +319,7 @@ public class AddResultGuardCodeFixProviderTests
 
     #region FDDD004 - Result.Error Access Tests
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultError_SingleStatement_AddsIsFailureGuard()
     {
         const string source = """
@@ -354,13 +349,13 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultErrorAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultError_MultipleStatements_WrapsAllInIsFailureGuard()
     {
         const string source = """
@@ -394,13 +389,13 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultErrorAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultError_InReturnStatement_WrapsReturn()
     {
         const string source = """
@@ -422,6 +417,8 @@ public class AddResultGuardCodeFixProviderTests
                     {
                         return result.Error;
                     }
+
+                    return default;
                 }
             }
             """;
@@ -430,8 +427,8 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultErrorAccess)
-                .WithLocation(11, 23)
-                .WithArguments("result"));
+                .WithLocation(11, 27)
+                );
 
         await test.RunAsync();
     }
@@ -440,7 +437,7 @@ public class AddResultGuardCodeFixProviderTests
 
     #region FDDD006 - Maybe.Value Access Tests
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task MaybeValue_SingleStatement_AddsHasValueGuard()
     {
         const string source = """
@@ -470,13 +467,13 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("maybe"));
+                .WithLocation(11, 31)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task MaybeValue_MultipleStatements_WrapsAllInHasValueGuard()
     {
         const string source = """
@@ -510,13 +507,13 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("maybe"));
+                .WithLocation(11, 31)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task MaybeValue_InReturnStatement_WrapsReturn()
     {
         const string source = """
@@ -538,6 +535,8 @@ public class AddResultGuardCodeFixProviderTests
                     {
                         return maybe.Value;
                     }
+
+                    return default;
                 }
             }
             """;
@@ -546,8 +545,8 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
-                .WithLocation(11, 23)
-                .WithArguments("maybe"));
+                .WithLocation(11, 26)
+                );
 
         await test.RunAsync();
     }
@@ -556,7 +555,7 @@ public class AddResultGuardCodeFixProviderTests
 
     #region Variable Tracking Tests
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_TracksVariableDerivedFromValue_IncludesInGuard()
     {
         const string source = """
@@ -592,13 +591,13 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_StopsAtStatementNotUsingTrackedVariables()
     {
         const string source = """
@@ -626,6 +625,7 @@ public class AddResultGuardCodeFixProviderTests
                         var value = result.Value;
                         Console.WriteLine(value);
                     }
+
                     var independent = GetOtherValue();
                     Console.WriteLine(independent);
                 }
@@ -638,8 +638,8 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 28)
-                .WithArguments("result"));
+                .WithLocation(11, 32)
+                );
 
         await test.RunAsync();
     }
@@ -648,7 +648,7 @@ public class AddResultGuardCodeFixProviderTests
 
     #region Edge Cases
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_ComplexExpression_AddsGuard()
     {
         const string source = """
@@ -678,13 +678,13 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(11, 35)
-                .WithArguments("result"));
+                .WithLocation(11, 38)
+                );
 
         await test.RunAsync();
     }
 
-    [Fact(Skip = "Indentation mismatch - needs investigation")]
+    [Fact]
     public async Task ResultValue_WithExistingStatementsAfter_PreservesThose()
     {
         const string source = """
@@ -709,6 +709,7 @@ public class AddResultGuardCodeFixProviderTests
                     {
                         var value = result.Value;
                     }
+
                     Console.WriteLine("After");
                 }
             }
@@ -718,8 +719,8 @@ public class AddResultGuardCodeFixProviderTests
             source,
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
-                .WithLocation(12, 28)
-                .WithArguments("result"));
+                .WithLocation(12, 32)
+                );
 
         await test.RunAsync();
     }

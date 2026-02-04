@@ -50,13 +50,13 @@ public sealed class ResultNotHandledAnalyzer : DiagnosticAnalyzer
         var returnType = methodSymbol.ReturnType;
 
         // Unwrap Task<T> or ValueTask<T>
-        if (IsTaskType(returnType) && returnType is INamedTypeSymbol namedType && namedType.TypeArguments.Length == 1)
+        if (returnType.IsTaskType() && returnType is INamedTypeSymbol namedType && namedType.TypeArguments.Length == 1)
         {
             returnType = namedType.TypeArguments[0];
         }
 
         // Check if the return type is Result<T>
-        if (!IsResultType(returnType))
+        if (!returnType.IsResultType())
             return;
 
         // Get the method name for the diagnostic message
@@ -68,27 +68,6 @@ public sealed class ResultNotHandledAnalyzer : DiagnosticAnalyzer
             methodName);
 
         context.ReportDiagnostic(diagnostic);
-    }
-
-    private static bool IsResultType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is not INamedTypeSymbol namedType)
-            return false;
-
-        // Check for Result<T> from FunctionalDdd namespace
-        return namedType.Name == "Result" &&
-               namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-               namedType.TypeArguments.Length == 1;
-    }
-
-    private static bool IsTaskType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is not INamedTypeSymbol namedType)
-            return false;
-
-        var fullName = namedType.ToDisplayString();
-        return fullName.StartsWith("System.Threading.Tasks.Task<", System.StringComparison.Ordinal) ||
-               fullName.StartsWith("System.Threading.Tasks.ValueTask<", System.StringComparison.Ordinal);
     }
 
     private static string GetMethodName(InvocationExpressionSyntax invocation, IMethodSymbol methodSymbol)

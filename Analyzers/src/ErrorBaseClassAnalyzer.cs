@@ -20,23 +20,31 @@ public sealed class ErrorBaseClassAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(AnalyzeObjectCreation, SyntaxKind.ObjectCreationExpression);
+        // Handle both explicit and implicit object creation (new Error(...) and new(...))
+        context.RegisterSyntaxNodeAction(AnalyzeObjectCreation,
+            SyntaxKind.ObjectCreationExpression,
+            SyntaxKind.ImplicitObjectCreationExpression);
     }
 
     private static void AnalyzeObjectCreation(SyntaxNodeAnalysisContext context)
     {
-        var objectCreation = (ObjectCreationExpressionSyntax)context.Node;
-
-        var typeInfo = context.SemanticModel.GetTypeInfo(objectCreation);
+        var typeInfo = context.SemanticModel.GetTypeInfo(context.Node);
         if (typeInfo.Type == null)
             return;
 
         // Check if it's creating the Error base class directly
         if (IsErrorBaseClass(typeInfo.Type))
         {
+            var location = context.Node switch
+            {
+                ObjectCreationExpressionSyntax objCreation => objCreation.Type.GetLocation(),
+                ImplicitObjectCreationExpressionSyntax implicitCreation => implicitCreation.NewKeyword.GetLocation(),
+                _ => context.Node.GetLocation()
+            };
+
             var diagnostic = Diagnostic.Create(
                 DiagnosticDescriptors.UseSpecificErrorType,
-                objectCreation.Type.GetLocation());
+                location);
 
             context.ReportDiagnostic(diagnostic);
         }

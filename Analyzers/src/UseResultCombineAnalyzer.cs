@@ -62,7 +62,7 @@ public sealed class UseResultCombineAnalyzer : DiagnosticAnalyzer
         {
             // Check if it's accessing IsSuccess on a Result
             if (propertyRef.Property.Name == "IsSuccess" &&
-                IsResultType(propertyRef.Property.ContainingType))
+                propertyRef.Property.ContainingType.IsResultType())
             {
                 count++;
             }
@@ -70,10 +70,4 @@ public sealed class UseResultCombineAnalyzer : DiagnosticAnalyzer
 
         return count;
     }
-
-    private static bool IsResultType(ITypeSymbol? typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Result" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
 }

@@ -1,7 +1,6 @@
 ﻿namespace FunctionalDdd.Analyzers;
 
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -42,7 +41,7 @@ public sealed class MaybeDoubleWrappingAnalyzer : DiagnosticAnalyzer
         if (typeSymbol == null)
             return;
 
-        if (IsDoubleWrappedMaybe(typeSymbol, out var innerType))
+        if (typeSymbol.IsDoubleWrappedMaybe(out var innerType))
         {
             var location = context.Node switch
             {
@@ -60,27 +59,5 @@ public sealed class MaybeDoubleWrappingAnalyzer : DiagnosticAnalyzer
 
             context.ReportDiagnostic(diagnostic);
         }
-    }
-
-    // Check if type is Maybe<Maybe<T>>
-    private static bool IsDoubleWrappedMaybe(ITypeSymbol typeSymbol, out string? innerType)
-    {
-        innerType = null;
-
-        // Check if outer type is Maybe<T> with exactly 1 type argument
-        if (typeSymbol is not INamedTypeSymbol { Name: "Maybe", TypeArguments.Length: 1 } outerMaybe ||
-            outerMaybe.ContainingNamespace?.ToDisplayString() != "FunctionalDdd")
-            return false;
-
-        // Check if inner type is also Maybe<T>
-        var innerTypeSymbol = outerMaybe.TypeArguments[0];
-        if (innerTypeSymbol is INamedTypeSymbol { Name: "Maybe", TypeArguments.Length: 1 } innerMaybe &&
-            innerMaybe.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
-        {
-            innerType = innerMaybe.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            return true;
-        }
-
-        return false;
     }
 }

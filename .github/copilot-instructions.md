@@ -918,17 +918,8 @@ public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, 
 - Result constructor sets `Activity.Current`, not the child activity
 - Therefore, ROP methods must explicitly set their child activity status using `result.LogActivityStatus()` or `activity?.SetStatus(...)`
 
-**Note:** `result.LogActivityStatus()` is a helper that calls `Activity.Current?.SetStatus(...)` based on the result's success/failure state.
+## PowerShell Command Usage
 
-### Summary: When to Set Activity Status
-
-| Scenario | Manual Status Needed? | Why |
-|----------|----------------------|-----|
-| **Value Object `TryCreate`** | ❌ No | Result constructor sets `Activity.Current` which equals the `activity` variable (no parent activity) |
-| **ROP Extensions (Bind, Map, Tap)** | ✅ **YES - REQUIRED** | Create child activities; Result constructor only sets `Activity.Current`, not the child activity created by the extension method |
-| **Direct Result creation** | ❌ No | Result constructor always sets `Activity.Current` |
-
-**Key Insight:**
-- In `TryCreate` methods, the `using var activity` **IS** `Activity.Current` (no parent activity exists when called)
-- In ROP methods, `using var activity` creates a **child** of `Activity.Current` (parent activity exists from calling code)
-- Result constructor only sets `Activity.Current`, so child activities need explicit status setting via `result.LogActivityStatus()` or manually set the activity status.
+When running PowerShell commands in the terminal:
+- Avoid long or complex scripts as they tend to get stuck or timeout.
+- Use smaller, targeted file edits with the `replace_string_in_file` tool instead of large PowerShell scripts for file manipulation.

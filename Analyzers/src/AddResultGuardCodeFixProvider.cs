@@ -49,12 +49,12 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             return;
 
         // Determine the guard type based on diagnostic ID
-        var (title, guardProperty, guardValue) = diagnostic.Id switch
+        var (title, guardProperty) = diagnostic.Id switch
         {
-            "FDDD003" => (TitleValue, "IsSuccess", true),   // Result.Value
-            "FDDD004" => (TitleError, "IsFailure", true),   // Result.Error
-            "FDDD006" => (TitleMaybe, "HasValue", true),    // Maybe.Value
-            _ => (null, null, false)
+            "FDDD003" => (TitleValue, "IsSuccess"),   // Result.Value
+            "FDDD004" => (TitleError, "IsFailure"),   // Result.Error
+            "FDDD006" => (TitleMaybe, "HasValue"),    // Maybe.Value
+            _ => ((string?)null, (string?)null)
         };
 
         if (title == null || guardProperty == null)
@@ -130,8 +130,13 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             resultExpression,
             SyntaxFactory.IdentifierName(guardProperty));
 
+        // Strip leading trivia from wrapped statements so the formatter can apply correct indentation
+        var strippedStatements = statementsToWrap
+            .Select(s => s.WithLeadingTrivia(SyntaxFactory.ElasticMarker))
+            .ToList();
+
         // Create a block statement with all the statements to wrap
-        var blockStatement = SyntaxFactory.Block(statementsToWrap)
+        var blockStatement = SyntaxFactory.Block(strippedStatements)
             .WithAdditionalAnnotations(Microsoft.CodeAnalysis.Formatting.Formatter.Annotation);
 
         // Create the if statement wrapping all statements
@@ -144,10 +149,25 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         // Create new block with statements before the guard, then the if statement, then remaining statements
         var statementsBeforeGuard = containingBlock.Statements.Take(currentIndex);
         var statementsAfterWrapped = containingBlock.Statements.Skip(currentIndex + statementsToWrap.Count);
-        
-        var newStatements = statementsBeforeGuard
+
+        // Check if the wrapped statements contain a return statement and there are no statements after
+        // If so, add a default return to ensure all code paths return a value
+        var needsDefaultReturn = !statementsAfterWrapped.Any() &&
+            statementsToWrap.Any(s => s is ReturnStatementSyntax);
+
+        IEnumerable<StatementSyntax> newStatements = statementsBeforeGuard
             .Append(ifStatement)
             .Concat(statementsAfterWrapped);
+
+        if (needsDefaultReturn)
+        {
+            // Add a default return statement after the if block
+            var defaultReturn = SyntaxFactory.ReturnStatement(
+                SyntaxFactory.LiteralExpression(SyntaxKind.DefaultLiteralExpression))
+                .WithLeadingTrivia(SyntaxFactory.ElasticMarker)
+                .WithAdditionalAnnotations(Microsoft.CodeAnalysis.Formatting.Formatter.Annotation);
+            newStatements = newStatements.Append(defaultReturn);
+        }
 
         var newBlock = containingBlock.WithStatements(
             SyntaxFactory.List(newStatements));
