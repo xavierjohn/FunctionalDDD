@@ -1,24 +1,24 @@
-﻿# Smart Enums
+# Enum Value Objects
 
-Smart Enums are type-safe enumerations with behavior, providing a powerful alternative to C# enums for domain modeling.
+Enum Value Objects are type-safe enumerations with behavior, providing a powerful alternative to C# enums for domain modeling.
 
-## Why Smart Enums?
+## Why Enum Value Objects?
 
 C# enums have limitations that can lead to bugs:
 
 ```csharp
-// ❌ C# enum problems
+// ? C# enum problems
 public enum OrderStatus { Draft, Confirmed, Shipped }
 
 var status = (OrderStatus)999;  // Valid! No compile or runtime error
 var invalid = Enum.Parse<OrderStatus>("Invalid");  // Throws at runtime
 ```
 
-Smart Enums solve these issues:
+Enum Value Objects solve these issues:
 
 ```csharp
-// ✅ Smart Enum benefits
-public class OrderState : SmartEnum<OrderState>
+// ? Enum Value Object benefits
+public class OrderState : EnumValueObject<OrderState>
 {
     public static readonly OrderState Draft = new(1, "Draft");
     public static readonly OrderState Confirmed = new(2, "Confirmed");
@@ -33,12 +33,12 @@ var state = OrderState.TryFromName("Invalid");  // Returns Result.Failure
 
 ## Basic Usage
 
-### Defining a Smart Enum
+### Defining a Enum Value Object
 
 ```csharp
 using FunctionalDdd;
 
-public class PaymentMethod : SmartEnum<PaymentMethod>
+public class PaymentMethod : EnumValueObject<PaymentMethod>
 {
     public static readonly PaymentMethod CreditCard = new(1, "CreditCard");
     public static readonly PaymentMethod DebitCard = new(2, "DebitCard");
@@ -71,10 +71,10 @@ foreach (var method in PaymentMethod.GetAll())
 
 ## Adding Behavior
 
-Smart Enums can have properties and methods:
+Enum Value Objects can have properties and methods:
 
 ```csharp
-public class OrderState : SmartEnum<OrderState>
+public class OrderState : EnumValueObject<OrderState>
 {
     public static readonly OrderState Draft = new(1, "Draft", 
         canModify: true, canCancel: true, isTerminal: false);
@@ -110,10 +110,10 @@ if (order.State.CanCancel)
 
 ## State Machine Pattern
 
-Smart Enums excel at modeling state machines with valid transitions:
+Enum Value Objects excel at modeling state machines with valid transitions:
 
 ```csharp
-public class OrderState : SmartEnum<OrderState>
+public class OrderState : EnumValueObject<OrderState>
 {
     // ... members defined above ...
 
@@ -165,8 +165,8 @@ public class Order : Aggregate<OrderId>
 ```csharp
 using System.Text.Json.Serialization;
 
-[JsonConverter(typeof(SmartEnumJsonConverter<OrderState>))]
-public class OrderState : SmartEnum<OrderState>
+[JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
+public class OrderState : EnumValueObject<OrderState>
 {
     // ...
 }
@@ -181,15 +181,15 @@ var state2 = JsonSerializer.Deserialize<OrderState>("2");
 
 ### Using Converter Factory
 
-Register once to handle all Smart Enums:
+Register once to handle all Enum Value Objects:
 
 ```csharp
 var options = new JsonSerializerOptions
 {
-    Converters = { new SmartEnumJsonConverterFactory() }
+    Converters = { new EnumValueObjectJsonConverterFactory() }
 };
 
-// All SmartEnum types now serialize/deserialize automatically
+// All EnumValueObject types now serialize/deserialize automatically
 var json = JsonSerializer.Serialize(order, options);
 ```
 
@@ -199,13 +199,13 @@ var json = JsonSerializer.Serialize(order, options);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new SmartEnumJsonConverterFactory());
+        options.JsonSerializerOptions.Converters.Add(new EnumValueObjectJsonConverterFactory());
     });
 ```
 
 ## Entity Framework Core
 
-Store Smart Enums as string or int:
+Store Enum Value Objects as string or int:
 
 ```csharp
 // In DbContext.OnModelCreating
@@ -233,7 +233,7 @@ modelBuilder.Entity<Order>(builder =>
 For complex behavior, use inheritance:
 
 ```csharp
-public abstract class PaymentMethod : SmartEnum<PaymentMethod>
+public abstract class PaymentMethod : EnumValueObject<PaymentMethod>
 {
     public static readonly PaymentMethod CreditCard = new CreditCardPayment();
     public static readonly PaymentMethod BankTransfer = new BankTransferPayment();
@@ -311,4 +311,4 @@ var time = PaymentMethod.BankTransfer.EstimatedProcessingTime;  // 3 days
 
 - [Domain-Driven Design](intro.md#domain-driven-design) - Overview of DDD patterns
 - [Entity Framework Core Integration](integration-ef.md) - Persistence patterns
-- [Clean Architecture](clean-architecture.md) - Using Smart Enums in layered applications
+- [Clean Architecture](clean-architecture.md) - Using Enum Value Objects in layered applications

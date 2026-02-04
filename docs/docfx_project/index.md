@@ -1,6 +1,6 @@
-﻿# Functional Programming with Domain-Driven Design
+# Functional Programming with Domain-Driven Design
 
-**Build robust, type-safe applications** with Railway-Oriented Programming and Domain-Driven Design—combining the best of functional programming with clean architecture principles.
+**Build robust, type-safe applications** with Railway-Oriented Programming and Domain-Driven Design�combining the best of functional programming with clean architecture principles.
 
 ```mermaid
 graph TB
@@ -17,9 +17,9 @@ graph TB
     end
     
     subgraph Output["What You Get"]
-        READ[📖 Readable Code<br/><i>60% less boilerplate</i>]
-        SUCC[✨ Succinct Code<br/><i>Reads like English</i>]
-        SAFE[🔒 Type-Safe Code<br/><i>Compiler-enforced</i>]
+        READ[?? Readable Code<br/><i>60% less boilerplate</i>]
+        SUCC[? Succinct Code<br/><i>Reads like English</i>]
+        SAFE[?? Type-Safe Code<br/><i>Compiler-enforced</i>]
     end
     
     FP --> ROP
@@ -49,7 +49,7 @@ graph TB
 
 Traditional error handling creates **nested if-statements** and **scattered error checks** that make code hard to read and maintain. This library provides a better way: **write less code that reads like English**.
 
-### Before: Traditional Approach ❌
+### Before: Traditional Approach ?
 
 ```csharp
 // 20 lines of repetitive error checking - easy to miss a check!
@@ -76,10 +76,10 @@ _emailService.SendWelcome(user.Email);
 return Ok(user);
 ```
 
-### After: Railway-Oriented Programming ✅
+### After: Railway-Oriented Programming ?
 
 ```csharp
-// 8 lines - reads like a story: validate → create → check → save → notify
+// 8 lines - reads like a story: validate ? create ? check ? save ? notify
 return FirstName.TryCreate(input.FirstName)
     .Combine(LastName.TryCreate(input.LastName))
     .Combine(EmailAddress.TryCreate(input.Email))
@@ -91,19 +91,19 @@ return FirstName.TryCreate(input.FirstName)
 ```
 
 **Result:** 
-- 📖 **60% less code** - 8 lines vs 20 lines
-- 🎯 **Reads like English** - "Create name, combine with email, create user, ensure unique, save, notify"
-- ✨ **Zero hidden logic** - Every step visible in the chain
-- 🔒 **Impossible to forget** - Can't skip error handling steps
-- ⚡ **Zero performance cost** - Only 11-16 nanoseconds overhead
+- ?? **60% less code** - 8 lines vs 20 lines
+- ?? **Reads like English** - "Create name, combine with email, create user, ensure unique, save, notify"
+- ? **Zero hidden logic** - Every step visible in the chain
+- ?? **Impossible to forget** - Can't skip error handling steps
+- ? **Zero performance cost** - Only 11-16 nanoseconds overhead
 
 ---
 
 ## Core Types
 
-### Result&lt;T&gt; — Success or Failure
+### Result&lt;T&gt; � Success or Failure
 
-The foundation of Railway-Oriented Programming. A `Result<T>` represents either a **successful value** or an **error**—never null, never ambiguous.
+The foundation of Railway-Oriented Programming. A `Result<T>` represents either a **successful value** or an **error**�never null, never ambiguous.
 
 ```csharp
 // Create results
@@ -121,9 +121,9 @@ var message = result.Match(
 );
 ```
 
-### Maybe&lt;T&gt; — Optional Values
+### Maybe&lt;T&gt; � Optional Values
 
-Represents a value that **may or may not exist**—eliminating null reference exceptions.
+Represents a value that **may or may not exist**�eliminating null reference exceptions.
 
 ```csharp
 Maybe<string> name = "John";           // Has value
@@ -138,7 +138,7 @@ if (name.TryGetValue(out var value))
 
 ## Domain-Driven Design Building Blocks
 
-### Value Objects — Immutable, Validated Types
+### Value Objects � Immutable, Validated Types
 
 Replace primitive strings and ints with **type-safe domain concepts**. The compiler catches mistakes that runtime never would.
 
@@ -148,11 +148,11 @@ public partial class FirstName : RequiredString { }
 public partial class LastName : RequiredString { }
 
 // Compiler prevents parameter mix-ups
-CreateUser(lastName, firstName);  // ❌ Compile error!
-CreateUser(firstName, lastName);  // ✅ Correct
+CreateUser(lastName, firstName);  // ? Compile error!
+CreateUser(firstName, lastName);  // ? Correct
 ```
 
-### Entities — Identity-Based Objects
+### Entities � Identity-Based Objects
 
 Objects with a **unique identity** that persists through state changes.
 
@@ -168,7 +168,7 @@ public class Customer : Entity<CustomerId>
 }
 ```
 
-### Aggregates — Consistency Boundaries
+### Aggregates � Consistency Boundaries
 
 **Cluster related objects** and enforce business rules. Aggregates raise **domain events** to communicate changes.
 
@@ -185,12 +185,12 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
-### Smart Enums — Type-Safe Enumerations with Behavior
+### Enum Value Objects � Type-Safe Enumerations with Behavior
 
 Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values.
 
 ```csharp
-public class OrderState : SmartEnum<OrderState>
+public class OrderState : EnumValueObject<OrderState>
 {
     public static readonly OrderState Draft = new(1, "Draft", canModify: true);
     public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false);
@@ -245,20 +245,20 @@ result.MatchError(
 
 | Operation | Track | Purpose | Example |
 |-----------|-------|---------|---------|
-| **Bind** | 🟢 Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
-| **Map** | 🟢 Success | Transform success values | `.Map(user => user.Name)` |
-| **Tap** | 🟢 Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
-| **TapOnFailure** | 🔴 Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
-| **MapOnFailure** | 🔴 Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
-| **RecoverOnFailure** | 🔴 Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
-| **Ensure** | 🟢→🔴 | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
-| **Combine** | ✅ Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
-| **Match** | ✅ Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
+| **Bind** | ?? Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
+| **Map** | ?? Success | Transform success values | `.Map(user => user.Name)` |
+| **Tap** | ?? Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
+| **TapOnFailure** | ?? Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
+| **MapOnFailure** | ?? Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
+| **RecoverOnFailure** | ?? Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
+| **Ensure** | ????? | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
+| **Combine** | ? Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
+| **Match** | ? Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
 
 **Track Legend:**
-- 🟢 **Success** - Only runs when result is successful
-- 🔴 **Failure** - Only runs when result is a failure  
-- ✅ **Both/Terminal** - Runs on both tracks or handles both
+- ?? **Success** - Only runs when result is successful
+- ?? **Failure** - Only runs when result is a failure  
+- ? **Both/Terminal** - Runs on both tracks or handles both
 
 **Naming Pattern:** Success track operations have **no suffix**. Failure track operations have **`OnFailure` suffix**.
 
@@ -268,7 +268,7 @@ All operations have **async variants** (`BindAsync`, `MapAsync`, `TapOnFailureAs
 
 ## Core Concepts
 
-### 🎯 Functional Programming
+### ?? Functional Programming
 
 **Pure functions** take inputs and produce outputs without side effects, making code:
 - **Predictable** - Same inputs always produce same outputs
@@ -277,7 +277,7 @@ All operations have **async variants** (`BindAsync`, `MapAsync`, `TapOnFailureAs
 
 **Learn more:** [Applying Functional Principles in C# (Pluralsight)](https://enterprisecraftsmanship.com/ps-func)
 
-### 🚂 Railway-Oriented Programming
+### ?? Railway-Oriented Programming
 
 **The key insight:** Your code should read like a story, not a maze of if-statements.
 
@@ -290,7 +290,7 @@ graph LR
     B -->|Failure| E[Error Track]
     C -->|Success| D{Save}
     C -->|Failure| E
-    D -->|Success| F[Success ✓]
+    D -->|Success| F[Success ?]
     D -->|Failure| E
     E --> G[Handle Error]
     
@@ -307,14 +307,14 @@ graph LR
 
 **If any step fails, the rest are skipped automatically.** No `if (error) return` after every line!
 
-### 🏗️ Domain-Driven Design
+### ??? Domain-Driven Design
 
 Model your **business domain** with rich types that enforce rules at compile time:
 
 - **Value Objects** - Immutable, validated primitives (`EmailAddress`, `Money`)
 - **Entities** - Objects with identity (`Customer`, `Order`)
 - **Aggregates** - Consistency boundaries with domain events
-- **Smart Enums** - Type-safe enumerations with behavior (`OrderState`, `PaymentMethod`)
+- **Enum Value Objects** - Type-safe enumerations with behavior (`OrderState`, `PaymentMethod`)
 
 **Learn more:** [Domain-Driven Design in Practice (Pluralsight)](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)
 
@@ -326,7 +326,7 @@ Model your **business domain** with rich types that enforce rules at compile tim
 # Core library - Railway Oriented Programming
 dotnet add package FunctionalDdd.RailwayOrientedProgramming
 
-# Domain-Driven Design - Entities, Aggregates, Value Objects, Smart Enums
+# Domain-Driven Design - Entities, Aggregates, Value Objects, Enum Value Objects
 dotnet add package FunctionalDdd.DomainDrivenDesign
 
 # ASP.NET Core integration - ToActionResult, ToHttpResult

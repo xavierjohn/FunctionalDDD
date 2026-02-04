@@ -1,4 +1,4 @@
-﻿# Domain Driven Design
+# Domain Driven Design
 
 [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)
 
@@ -73,13 +73,13 @@ public class Money : ValueObject
 }
 ```
 
-### SmartEnum
+### EnumValueObject
 
-Type-safe enumerations with behavior. Unlike C# enums, SmartEnums prevent invalid values and can encapsulate domain logic.
+Type-safe enumerations with behavior. Unlike C# enums, EnumValueObjects prevent invalid values and can encapsulate domain logic.
 
 ```csharp
-[JsonConverter(typeof(SmartEnumJsonConverter<OrderState>))]
-public class OrderState : SmartEnum<OrderState>
+[JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
+public class OrderState : EnumValueObject<OrderState>
 {
     public static readonly OrderState Draft = new(1, "Draft", canModify: true, canCancel: true);
     public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false, canCancel: true);
@@ -238,10 +238,10 @@ public Result<Order> AddLine(...) =>
 
 **5. Use domain events for side effects**
 ```csharp
-// ✅ Good - domain event
+// ? Good - domain event
 DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
 
-// ❌ Avoid - direct coupling
+// ? Avoid - direct coupling
 _emailService.SendConfirmation();
 ```
 
@@ -284,7 +284,7 @@ public decimal Amount { get; set; }
 - Type safety for primitives
 - Implicit conversion to `T`
 
-### SmartEnum<T>
+### EnumValueObject<T>
 - Type-safe enumeration with behavior
 - Prevents invalid values (unlike C# enums)
 - Supports state machine patterns
@@ -306,7 +306,7 @@ public decimal Amount { get; set; }
 - **[Main Documentation](https://github.com/xavierjohn/FunctionalDDD)** - Full repository documentation
 - **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** - Result type and functional patterns
 - **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** - RequiredString, RequiredGuid, EmailAddress
-- **[Ardalis.SmartEnum](https://github.com/ardalis/SmartEnum)** - Inspiration for SmartEnum pattern
+- **[Ardalis.EnumValueObject](https://github.com/ardalis/EnumValueObject)** - Inspiration for EnumValueObject pattern
 
 ## License
 

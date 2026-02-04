@@ -1,20 +1,20 @@
-﻿namespace DomainDrivenDesign.Tests.SmartEnums;
+namespace DomainDrivenDesign.Tests.EnumValueObjects;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Tests for <see cref="SmartEnum{TSelf}"/> base class functionality.
+/// Tests for <see cref="EnumValueObject{TSelf}"/> base class functionality.
 /// </summary>
-public class SmartEnumTests
+public class EnumValueObjectTests
 {
-    #region Test Smart Enums
+    #region Test Enum value objects
 
     /// <summary>
-    /// Basic smart enum for testing core functionality.
+    /// Basic Enum value object for testing core functionality.
     /// </summary>
-    [JsonConverter(typeof(SmartEnumJsonConverter<OrderStatus>))]
-    internal class OrderStatus : SmartEnum<OrderStatus>
+    [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderStatus>))]
+    internal class OrderStatus : EnumValueObject<OrderStatus>
     {
         public static readonly OrderStatus Pending = new(1, "Pending");
         public static readonly OrderStatus Processing = new(2, "Processing");
@@ -26,9 +26,9 @@ public class SmartEnumTests
     }
 
     /// <summary>
-    /// Smart enum with additional properties for testing behavior.
+    /// Enum value object with additional properties for testing behavior.
     /// </summary>
-    internal class PaymentStatus : SmartEnum<PaymentStatus>
+    internal class PaymentStatus : EnumValueObject<PaymentStatus>
     {
         public static readonly PaymentStatus Pending = new(1, "Pending", isTerminal: false);
         public static readonly PaymentStatus Completed = new(2, "Completed", isTerminal: true);
@@ -491,10 +491,10 @@ public class SmartEnumTests
 
     #endregion
 
-    #region Smart Enum with Behavior Tests
+    #region Enum value object with Behavior Tests
 
     [Fact]
-    public void SmartEnumWithBehavior_PropertiesAreAccessible()
+    public void EnumValueObjectWithBehavior_PropertiesAreAccessible()
     {
         // Assert
         PaymentStatus.Pending.IsTerminal.Should().BeFalse();
@@ -503,7 +503,7 @@ public class SmartEnumTests
     }
 
     [Fact]
-    public void SmartEnumWithBehavior_CanFilterByProperty()
+    public void EnumValueObjectWithBehavior_CanFilterByProperty()
     {
         // Act
         var terminalStatuses = PaymentStatus.GetAll().Where(s => s.IsTerminal).ToList();

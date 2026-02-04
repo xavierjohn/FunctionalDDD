@@ -5,15 +5,15 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// JSON converter for <see cref="SmartEnum{TSelf}"/> types.
-/// Serializes smart enums to their string name and deserializes from either name or integer value.
+/// JSON converter for <see cref="EnumValueObject{TSelf}"/> types.
+/// Serializes enum value objects to their string name and deserializes from either name or integer value.
 /// </summary>
-/// <typeparam name="TSmartEnum">The smart enum type to convert.</typeparam>
+/// <typeparam name="TEnumValueObject">The enum value object type to convert.</typeparam>
 /// <remarks>
 /// <para>
 /// Serialization behavior:
 /// <list type="bullet">
-/// <item>Smart enums are serialized as their string <see cref="SmartEnum{TSelf}.Name"/></item>
+/// <item>Enum value objects are serialized as their string <see cref="EnumValueObject{TSelf}.Name"/></item>
 /// <item>This produces human-readable JSON output</item>
 /// </list>
 /// </para>
@@ -28,10 +28,10 @@ using System.Text.Json.Serialization;
 /// </para>
 /// </remarks>
 /// <example>
-/// Apply the converter to a smart enum:
+/// Apply the converter to an enum value object:
 /// <code><![CDATA[
-/// [JsonConverter(typeof(SmartEnumJsonConverter<OrderStatus>))]
-/// public class OrderStatus : SmartEnum<OrderStatus>
+/// [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderStatus>))]
+/// public class OrderStatus : EnumValueObject<OrderStatus>
 /// {
 ///     public static readonly OrderStatus Pending = new(1, "Pending");
 ///     public static readonly OrderStatus Shipped = new(2, "Shipped");
@@ -49,21 +49,21 @@ using System.Text.Json.Serialization;
 /// var status2 = JsonSerializer.Deserialize<OrderStatus>("1");  // OrderStatus.Pending
 /// ]]></code>
 /// </example>
-public sealed class SmartEnumJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSmartEnum> : JsonConverter<TSmartEnum>
-    where TSmartEnum : SmartEnum<TSmartEnum>
+public sealed class EnumValueObjectJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnumValueObject> : JsonConverter<TEnumValueObject>
+    where TEnumValueObject : EnumValueObject<TEnumValueObject>
 {
     /// <inheritdoc />
-    public override TSmartEnum? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+    public override TEnumValueObject? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
         reader.TokenType switch
         {
             JsonTokenType.String => ReadFromString(ref reader),
             JsonTokenType.Number => ReadFromNumber(ref reader),
             JsonTokenType.Null => null,
-            _ => throw new JsonException($"Unexpected token type '{reader.TokenType}' when parsing {typeof(TSmartEnum).Name}. Expected String or Number.")
+            _ => throw new JsonException($"Unexpected token type '{reader.TokenType}' when parsing {typeof(TEnumValueObject).Name}. Expected String or Number.")
         };
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, TSmartEnum value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, TEnumValueObject value, JsonSerializerOptions options)
     {
         if (value is null)
             writer.WriteNullValue();
@@ -71,37 +71,37 @@ public sealed class SmartEnumJsonConverter<[DynamicallyAccessedMembers(Dynamical
             writer.WriteStringValue(value.Name);
     }
 
-    private static TSmartEnum ReadFromString(ref Utf8JsonReader reader)
+    private static TEnumValueObject ReadFromString(ref Utf8JsonReader reader)
     {
         var name = reader.GetString();
-        var result = SmartEnum<TSmartEnum>.TryFromName(name);
+        var result = EnumValueObject<TEnumValueObject>.TryFromName(name);
 
         if (result.IsFailure)
-            throw new JsonException($"Invalid {typeof(TSmartEnum).Name} value: '{name}'. {result.Error.Detail}");
+            throw new JsonException($"Invalid {typeof(TEnumValueObject).Name} value: '{name}'. {result.Error.Detail}");
 
         return result.Value;
     }
 
-    private static TSmartEnum ReadFromNumber(ref Utf8JsonReader reader)
+    private static TEnumValueObject ReadFromNumber(ref Utf8JsonReader reader)
     {
         var value = reader.GetInt32();
-        var result = SmartEnum<TSmartEnum>.TryFromValue(value);
+        var result = EnumValueObject<TEnumValueObject>.TryFromValue(value);
 
         if (result.IsFailure)
-            throw new JsonException($"Invalid {typeof(TSmartEnum).Name} value: {value}. {result.Error.Detail}");
+            throw new JsonException($"Invalid {typeof(TEnumValueObject).Name} value: {value}. {result.Error.Detail}");
 
         return result.Value;
     }
 }
 
 /// <summary>
-/// JSON converter factory that automatically creates <see cref="SmartEnumJsonConverter{TSmartEnum}"/>
-/// for any <see cref="SmartEnum{TSelf}"/> derived type.
+/// JSON converter factory that automatically creates <see cref="EnumValueObjectJsonConverter{TEnumValueObject}"/>
+/// for any <see cref="EnumValueObject{TSelf}"/> derived type.
 /// </summary>
 /// <remarks>
 /// <para>
 /// Register this factory with <see cref="JsonSerializerOptions"/> to automatically handle
-/// all smart enum types without explicit converter attributes on each type.
+/// all enum value object types without explicit converter attributes on each type.
 /// </para>
 /// </remarks>
 /// <example>
@@ -109,10 +109,10 @@ public sealed class SmartEnumJsonConverter<[DynamicallyAccessedMembers(Dynamical
 /// <code><![CDATA[
 /// var options = new JsonSerializerOptions
 /// {
-///     Converters = { new SmartEnumJsonConverterFactory() }
+///     Converters = { new EnumValueObjectJsonConverterFactory() }
 /// };
 /// 
-/// // Now all SmartEnum types are automatically serialized/deserialized
+/// // Now all EnumValueObject types are automatically serialized/deserialized
 /// var json = JsonSerializer.Serialize(new Order { Status = OrderStatus.Pending }, options);
 /// ]]></code>
 /// </example>
@@ -122,20 +122,20 @@ public sealed class SmartEnumJsonConverter<[DynamicallyAccessedMembers(Dynamical
 /// builder.Services.AddControllers()
 ///     .AddJsonOptions(options =>
 ///     {
-///         options.JsonSerializerOptions.Converters.Add(new SmartEnumJsonConverterFactory());
+///         options.JsonSerializerOptions.Converters.Add(new EnumValueObjectJsonConverterFactory());
 ///     });
 /// ]]></code>
 /// </example>
-public sealed class SmartEnumJsonConverterFactory : JsonConverterFactory
+public sealed class EnumValueObjectJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert)
     {
-        // Check if the type derives from SmartEnum<T> where T is the type itself
+        // Check if the type derives from EnumValueObject<T> where T is the type itself
         var baseType = typeToConvert.BaseType;
         while (baseType != null)
         {
-            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(SmartEnum<>))
+            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(EnumValueObject<>))
                 return true;
 
             baseType = baseType.BaseType;
@@ -149,8 +149,8 @@ public sealed class SmartEnumJsonConverterFactory : JsonConverterFactory
     /// <para>
     /// <strong>AOT Compatibility Note:</strong> This method uses <c>MakeGenericType</c> and <c>Activator.CreateInstance</c>,
     /// which are not compatible with Native AOT compilation. For AOT scenarios, apply 
-    /// <see cref="SmartEnumJsonConverter{TSmartEnum}"/> directly to each smart enum type using the
-    /// <c>[JsonConverter(typeof(SmartEnumJsonConverter&lt;YourSmartEnum&gt;))]</c> attribute.
+    /// <see cref="EnumValueObjectJsonConverter{TEnumValueObject}"/> directly to each enum value object type using the
+    /// <c>[JsonConverter(typeof(EnumValueObjectJsonConverter&lt;YourEnumValueObject&gt;))]</c> attribute.
     /// </para>
     /// </remarks>
 #pragma warning disable IL3050 // MakeGenericType is not AOT compatible
@@ -159,7 +159,7 @@ public sealed class SmartEnumJsonConverterFactory : JsonConverterFactory
 #pragma warning disable IL2071 // Generic argument does not satisfy DynamicallyAccessedMembers
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var converterType = typeof(SmartEnumJsonConverter<>).MakeGenericType(typeToConvert);
+        var converterType = typeof(EnumValueObjectJsonConverter<>).MakeGenericType(typeToConvert);
         return (JsonConverter?)Activator.CreateInstance(converterType);
     }
 #pragma warning restore IL2071

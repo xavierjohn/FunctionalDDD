@@ -50,8 +50,8 @@ items:
   href: aggregate-factory-pattern.md
 - name: Specification Pattern Alternative
   href: specification-pattern.md
-- name: Smart Enums
-  href: smart-enums.md
+- name: Enum Value Objects
+  href: enum-value-objects.md
 - name: Analyzers
   href: analyzers/toc.yml
 - name: Advanced

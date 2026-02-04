@@ -1,12 +1,12 @@
 ﻿namespace EfCoreExample.Entities;
 
-using EfCoreExample.SmartEnums;
+using EfCoreExample.EnumValueObjects;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd;
 
 /// <summary>
-/// Order aggregate using SmartEnum for state.
-/// Demonstrates how SmartEnum encapsulates business rules within the state itself.
+/// Order aggregate using EnumValueObject for state.
+/// Demonstrates how EnumValueObject encapsulates business rules within the state itself.
 /// </summary>
 public class SmartOrder : Aggregate<OrderId>
 {
@@ -16,7 +16,7 @@ public class SmartOrder : Aggregate<OrderId>
     public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
 
     /// <summary>
-    /// The order state as a SmartEnum with rich behavior.
+    /// The order state as an EnumValueObject with rich behavior.
     /// </summary>
     public OrderState State { get; private set; } = null!;
 

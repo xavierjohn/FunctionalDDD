@@ -2,7 +2,7 @@
 
 using System.Globalization;
 using EfCoreExample.Entities;
-using EfCoreExample.SmartEnums;
+using EfCoreExample.EnumValueObjects;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;

@@ -6,12 +6,12 @@ using System.Reflection;
 
 /// <summary>
 /// Base class for creating strongly-typed, behavior-rich enumeration value objects.
-/// Smart enums are a DDD pattern that replaces C# enums with full-featured classes that can have behavior.
+/// Enum value objects are a DDD pattern that replaces C# enums with full-featured classes that can have behavior.
 /// </summary>
-/// <typeparam name="TSelf">The derived smart enum type itself (CRTP pattern).</typeparam>
+/// <typeparam name="TSelf">The derived enum value object type itself (CRTP pattern).</typeparam>
 /// <remarks>
 /// <para>
-/// Smart enums address limitations of C# enums:
+/// Enum value objects address limitations of C# enums:
 /// <list type="bullet">
 /// <item><strong>Behavior</strong>: Each value can have associated behavior and properties</item>
 /// <item><strong>Type safety</strong>: Invalid values are impossible (no <c>(OrderStatus)999</c>)</item>
@@ -21,7 +21,7 @@ using System.Reflection;
 /// </list>
 /// </para>
 /// <para>
-/// Each smart enum member is defined as a static readonly field:
+/// Each enum value object member is defined as a static readonly field:
 /// <list type="bullet">
 /// <item>Members are discovered via reflection and cached for performance</item>
 /// <item>The <see cref="Value"/> property provides a stable integer for persistence</item>
@@ -39,9 +39,9 @@ using System.Reflection;
 /// </para>
 /// </remarks>
 /// <example>
-/// Basic smart enum definition:
+/// Basic enum value object definition:
 /// <code><![CDATA[
-/// public class OrderStatus : SmartEnum<OrderStatus>
+/// public class OrderStatus : EnumValueObject<OrderStatus>
 /// {
 ///     public static readonly OrderStatus Pending = new(1, "Pending");
 ///     public static readonly OrderStatus Processing = new(2, "Processing");
@@ -60,9 +60,9 @@ using System.Reflection;
 /// ]]></code>
 /// </example>
 /// <example>
-/// Smart enum with behavior:
+/// Enum value object with behavior:
 /// <code><![CDATA[
-/// public class OrderStatus : SmartEnum<OrderStatus>
+/// public class OrderStatus : EnumValueObject<OrderStatus>
 /// {
 ///     public static readonly OrderStatus Pending = new(1, "Pending", canCancel: true);
 ///     public static readonly OrderStatus Processing = new(2, "Processing", canCancel: true);
@@ -96,9 +96,9 @@ using System.Reflection;
 /// ]]></code>
 /// </example>
 /// <example>
-/// Smart enum with polymorphic behavior:
+/// Enum value object with polymorphic behavior:
 /// <code><![CDATA[
-/// public abstract class PaymentMethod : SmartEnum<PaymentMethod>
+/// public abstract class PaymentMethod : EnumValueObject<PaymentMethod>
 /// {
 ///     public static readonly PaymentMethod CreditCard = new CreditCardPayment();
 ///     public static readonly PaymentMethod BankTransfer = new BankTransferPayment();
@@ -132,37 +132,36 @@ using System.Reflection;
 /// }
 /// ]]></code>
 /// </example>
-#pragma warning disable CA1711 // Identifiers should not have incorrect suffix - SmartEnum is a well-known pattern name
 #pragma warning disable CA1000 // Do not declare static members on generic types - required for fluent factory pattern
-public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf> : IEquatable<SmartEnum<TSelf>>, IComparable<SmartEnum<TSelf>>
-    where TSelf : SmartEnum<TSelf>
+public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf> : IEquatable<EnumValueObject<TSelf>>, IComparable<EnumValueObject<TSelf>>
+    where TSelf : EnumValueObject<TSelf>
 {
     // Cache for discovered enum members, keyed by type
     private static readonly ConcurrentDictionary<Type, Dictionary<int, TSelf>> s_valueCache = new();
     private static readonly ConcurrentDictionary<Type, Dictionary<string, TSelf>> s_nameCache = new();
 
     /// <summary>
-    /// Gets the integer value of this smart enum member.
+    /// Gets the integer value of this enum value object member.
     /// Use this for persistence and serialization.
     /// </summary>
     /// <value>A unique integer identifying this enum member.</value>
     public int Value { get; }
 
     /// <summary>
-    /// Gets the name of this smart enum member.
+    /// Gets the name of this enum value object member.
     /// Use this for display and string serialization.
     /// </summary>
     /// <value>A unique string identifying this enum member.</value>
     public string Name { get; }
 
     /// <summary>
-    /// Initializes a new instance of the smart enum with the specified value and name.
+    /// Initializes a new instance of the enum value object with the specified value and name.
     /// </summary>
     /// <param name="value">The integer value for this enum member.</param>
     /// <param name="name">The string name for this enum member.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="name"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is empty or whitespace.</exception>
-    protected SmartEnum(int value, string name)
+    protected EnumValueObject(int value, string name)
     {
         ArgumentNullException.ThrowIfNull(name);
         if (string.IsNullOrWhiteSpace(name))
@@ -173,7 +172,7 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Gets all defined members of this smart enum type.
+    /// Gets all defined members of this enum value object type.
     /// </summary>
     /// <returns>A read-only collection of all enum members.</returns>
     /// <remarks>
@@ -189,7 +188,7 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     public static IReadOnlyCollection<TSelf> GetAll() => GetValueCache().Values;
 
     /// <summary>
-    /// Attempts to find a smart enum member by its integer value.
+    /// Attempts to find an enum value object member by its integer value.
     /// </summary>
     /// <param name="value">The integer value to search for.</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
@@ -216,7 +215,7 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Attempts to find a smart enum member by its name (case-insensitive).
+    /// Attempts to find an enum value object member by its name (case-insensitive).
     /// </summary>
     /// <param name="name">The name to search for.</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
@@ -247,11 +246,11 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Gets a smart enum member by its integer value. Throws if not found.
+    /// Gets an enum value object member by its integer value. Throws if not found.
     /// Use this when the value is known to be valid.
     /// </summary>
     /// <param name="value">The integer value to search for.</param>
-    /// <returns>The matching smart enum member.</returns>
+    /// <returns>The matching enum value object member.</returns>
     /// <exception cref="InvalidOperationException">Thrown when no member with the specified value exists.</exception>
     /// <example>
     /// <code>
@@ -268,11 +267,11 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Gets a smart enum member by its name (case-insensitive). Throws if not found.
+    /// Gets an enum value object member by its name (case-insensitive). Throws if not found.
     /// Use this when the name is known to be valid.
     /// </summary>
     /// <param name="name">The name to search for.</param>
-    /// <returns>The matching smart enum member.</returns>
+    /// <returns>The matching enum value object member.</returns>
     /// <exception cref="InvalidOperationException">Thrown when no member with the specified name exists.</exception>
     /// <example>
     /// <code>
@@ -289,7 +288,7 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Attempts to find a smart enum member by its integer value.
+    /// Attempts to find an enum value object member by its integer value.
     /// </summary>
     /// <param name="value">The integer value to search for.</param>
     /// <param name="result">When this method returns, contains the matching member if found; otherwise, null.</param>
@@ -301,7 +300,7 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Attempts to find a smart enum member by its name (case-insensitive).
+    /// Attempts to find an enum value object member by its name (case-insensitive).
     /// </summary>
     /// <param name="name">The name to search for.</param>
     /// <param name="result">When this method returns, contains the matching member if found; otherwise, null.</param>
@@ -323,10 +322,10 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     public override int GetHashCode() => Value.GetHashCode();
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is SmartEnum<TSelf> other && Equals(other);
+    public override bool Equals(object? obj) => obj is EnumValueObject<TSelf> other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(SmartEnum<TSelf>? other)
+    public bool Equals(EnumValueObject<TSelf>? other)
     {
         if (other is null)
             return false;
@@ -336,7 +335,7 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <inheritdoc />
-    public int CompareTo(SmartEnum<TSelf>? other)
+    public int CompareTo(EnumValueObject<TSelf>? other)
     {
         if (other is null)
             return 1;
@@ -344,49 +343,49 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 
     /// <summary>
-    /// Determines whether two smart enum instances are equal.
+    /// Determines whether two enum value object instances are equal.
     /// </summary>
-    public static bool operator ==(SmartEnum<TSelf>? left, SmartEnum<TSelf>? right) =>
+    public static bool operator ==(EnumValueObject<TSelf>? left, EnumValueObject<TSelf>? right) =>
         left is null ? right is null : left.Equals(right);
 
     /// <summary>
-    /// Determines whether two smart enum instances are not equal.
+    /// Determines whether two enum value object instances are not equal.
     /// </summary>
-    public static bool operator !=(SmartEnum<TSelf>? left, SmartEnum<TSelf>? right) => !(left == right);
+    public static bool operator !=(EnumValueObject<TSelf>? left, EnumValueObject<TSelf>? right) => !(left == right);
 
     /// <summary>
-    /// Determines whether the left smart enum is less than the right.
+    /// Determines whether the left enum value object is less than the right.
     /// </summary>
-    public static bool operator <(SmartEnum<TSelf>? left, SmartEnum<TSelf>? right) =>
+    public static bool operator <(EnumValueObject<TSelf>? left, EnumValueObject<TSelf>? right) =>
         left is null ? right is not null : left.CompareTo(right) < 0;
 
     /// <summary>
-    /// Determines whether the left smart enum is less than or equal to the right.
+    /// Determines whether the left enum value object is less than or equal to the right.
     /// </summary>
-    public static bool operator <=(SmartEnum<TSelf>? left, SmartEnum<TSelf>? right) =>
+    public static bool operator <=(EnumValueObject<TSelf>? left, EnumValueObject<TSelf>? right) =>
         left is null || left.CompareTo(right) <= 0;
 
     /// <summary>
-    /// Determines whether the left smart enum is greater than the right.
+    /// Determines whether the left enum value object is greater than the right.
     /// </summary>
-    public static bool operator >(SmartEnum<TSelf>? left, SmartEnum<TSelf>? right) =>
+    public static bool operator >(EnumValueObject<TSelf>? left, EnumValueObject<TSelf>? right) =>
         left is not null && left.CompareTo(right) > 0;
 
     /// <summary>
-    /// Determines whether the left smart enum is greater than or equal to the right.
+    /// Determines whether the left enum value object is greater than or equal to the right.
     /// </summary>
-    public static bool operator >=(SmartEnum<TSelf>? left, SmartEnum<TSelf>? right) =>
+    public static bool operator >=(EnumValueObject<TSelf>? left, EnumValueObject<TSelf>? right) =>
         left is null ? right is null : left.CompareTo(right) >= 0;
 
     /// <summary>
-    /// Implicitly converts a smart enum to its integer value.
+    /// Implicitly converts an enum value object to its integer value.
     /// </summary>
-    public static implicit operator int(SmartEnum<TSelf> smartEnum) => smartEnum.Value;
+    public static implicit operator int(EnumValueObject<TSelf> enumValueObject) => enumValueObject.Value;
 
     /// <summary>
-    /// Implicitly converts a smart enum to its string name.
+    /// Implicitly converts an enum value object to its string name.
     /// </summary>
-    public static implicit operator string(SmartEnum<TSelf> smartEnum) => smartEnum.Name;
+    public static implicit operator string(EnumValueObject<TSelf> enumValueObject) => enumValueObject.Name;
 
     // Gets or creates the value-to-member cache
     private static Dictionary<int, TSelf> GetValueCache() =>
@@ -425,4 +424,3 @@ public abstract class SmartEnum<[DynamicallyAccessedMembers(DynamicallyAccessedM
     }
 }
 #pragma warning restore CA1000
-#pragma warning restore CA1711

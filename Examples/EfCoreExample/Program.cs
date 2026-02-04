@@ -19,7 +19,7 @@
 
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
-using EfCoreExample.SmartEnums;
+using EfCoreExample.EnumValueObjects;
 using FunctionalDdd;
 using Microsoft.EntityFrameworkCore;
 
@@ -199,13 +199,13 @@ foreach (var o in sortedOrders)
 Console.WriteLine();
 
 // =============================================================================
-// 7. SMART ENUM DEMONSTRATION (State Machine with Behavior)
+// 7. ENUM VALUE OBJECT DEMONSTRATION (State Machine with Behavior)
 // =============================================================================
-Console.WriteLine("🎯 SmartEnum Demonstration (Order State Machine)...");
+Console.WriteLine("🎯 EnumValueObject Demonstration (Order State Machine)...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
 
-// Create an order using SmartEnum for state
-Console.WriteLine("  Creating order with SmartEnum state...");
+// Create an order using EnumValueObject for state
+Console.WriteLine("  Creating order with EnumValueObject state...");
 SmartOrder.TryCreate(customer.Id)
     .Bind(order => order.AddLine(products[0], 1))
     .Tap(order =>
@@ -290,12 +290,12 @@ Console.WriteLine("  The following would NOT compile:");
 Console.WriteLine("    // OrderId orderId = CustomerId.NewUnique();  // Error!");
 Console.WriteLine("    // ProductId productId = OrderId.NewUnique(); // Error!");
 Console.WriteLine("    // context.Customers.Find(orderId);           // Error!");
-Console.WriteLine("    // var status = (OrderState)999;              // Error! SmartEnum prevents this");
+Console.WriteLine("    // var status = (OrderState)999;              // Error! EnumValueObject prevents this");
 Console.WriteLine();
 Console.WriteLine("  This is the power of strongly-typed value objects:");
 Console.WriteLine("    - Cannot accidentally mix OrderId with CustomerId");
 Console.WriteLine("    - Cannot pass ProductId where CustomerId is expected");
-Console.WriteLine("    - SmartEnum prevents invalid enum values at compile/runtime");
+Console.WriteLine("    - EnumValueObject prevents invalid enum values at compile/runtime");
 Console.WriteLine("    - Compile-time safety prevents runtime bugs");
 Console.WriteLine();
 
@@ -309,7 +309,7 @@ Console.WriteLine("║  ✓ RequiredUlid<T>   - Time-ordered, sortable identifie
 Console.WriteLine("║  ✓ RequiredGuid<T>   - Traditional GUID identifiers              ║");
 Console.WriteLine("║  ✓ RequiredString<T> - Non-empty string validation               ║");
 Console.WriteLine("║  ✓ EmailAddress      - RFC 5322 email validation                 ║");
-Console.WriteLine("║  ✓ SmartEnum<T>      - Type-safe enums with behavior             ║");
+Console.WriteLine("║  ✓ EnumValueObject<T> - Type-safe enums with behavior            ║");
 Console.WriteLine("║  ✓ EF Core           - Seamless persistence with converters      ║");
 Console.WriteLine("║  ✓ ROP               - Railway Oriented Programming for errors   ║");
 Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");

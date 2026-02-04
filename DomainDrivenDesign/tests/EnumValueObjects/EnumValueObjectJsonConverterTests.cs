@@ -1,17 +1,17 @@
-﻿namespace DomainDrivenDesign.Tests.SmartEnums;
+namespace DomainDrivenDesign.Tests.EnumValueObjects;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Tests for <see cref="SmartEnumJsonConverter{TSmartEnum}"/> and <see cref="SmartEnumJsonConverterFactory"/>.
+/// Tests for <see cref="EnumValueObjectJsonConverter{TEnumValueObject}"/> and <see cref="EnumValueObjectJsonConverterFactory"/>.
 /// </summary>
-public class SmartEnumJsonConverterTests
+public class EnumValueObjectJsonConverterTests
 {
-    #region Test Smart Enums
+    #region Test Enum value objects
 
-    [JsonConverter(typeof(SmartEnumJsonConverter<Priority>))]
-    internal class Priority : SmartEnum<Priority>
+    [JsonConverter(typeof(EnumValueObjectJsonConverter<Priority>))]
+    internal class Priority : EnumValueObject<Priority>
     {
         public static readonly Priority Low = new(1, "Low");
         public static readonly Priority Medium = new(2, "Medium");
@@ -21,8 +21,8 @@ public class SmartEnumJsonConverterTests
         private Priority(int value, string name) : base(value, name) { }
     }
 
-    // Smart enum without JsonConverter attribute for testing factory
-    internal class Status : SmartEnum<Status>
+    // Enum value object without JsonConverter attribute for testing factory
+    internal class Status : EnumValueObject<Status>
     {
         public static readonly Status Active = new(1, "Active");
         public static readonly Status Inactive = new(2, "Inactive");
@@ -37,7 +37,7 @@ public class SmartEnumJsonConverterTests
     // Cached options for tests that need the factory
     private static readonly JsonSerializerOptions s_factoryOptions = new()
     {
-        Converters = { new SmartEnumJsonConverterFactory() }
+        Converters = { new EnumValueObjectJsonConverterFactory() }
     };
 
     #endregion
@@ -45,7 +45,7 @@ public class SmartEnumJsonConverterTests
     #region Serialization Tests
 
     [Fact]
-    public void Serialize_SmartEnum_WritesNameAsString()
+    public void Serialize_EnumValueObject_WritesNameAsString()
     {
         // Arrange
         var priority = Priority.High;
@@ -58,7 +58,7 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void Serialize_SmartEnumInObject_WritesNameAsString()
+    public void Serialize_EnumValueObjectInObject_WritesNameAsString()
     {
         // Arrange
         var dto = new TestDto(Priority.Critical, "Urgent task");
@@ -71,7 +71,7 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void Serialize_NullSmartEnum_WritesNull()
+    public void Serialize_NullEnumValueObject_WritesNull()
     {
         // Arrange
         var dto = new TestDtoWithNullable(null, "No priority");
@@ -114,7 +114,7 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void Deserialize_ObjectWithSmartEnum_ReturnsCorrectDto()
+    public void Deserialize_ObjectWithEnumValueObject_ReturnsCorrectDto()
     {
         // Arrange
         var json = """{"Priority":"High","Description":"Important task"}""";
@@ -160,7 +160,7 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void Deserialize_ObjectWithSmartEnumAsNumber_ReturnsCorrectDto()
+    public void Deserialize_ObjectWithEnumValueObjectAsNumber_ReturnsCorrectDto()
     {
         // Arrange
         var json = """{"Priority":4,"Description":"Critical issue"}""";
@@ -205,7 +205,7 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void Deserialize_ObjectWithNullSmartEnum_ReturnsNullProperty()
+    public void Deserialize_ObjectWithNullEnumValueObject_ReturnsNullProperty()
     {
         // Arrange
         var json = """{"Priority":null,"Description":"No priority set"}""";
@@ -269,10 +269,10 @@ public class SmartEnumJsonConverterTests
     #region Converter Factory Tests
 
     [Fact]
-    public void ConverterFactory_CanConvert_ReturnsTrueForSmartEnum()
+    public void ConverterFactory_CanConvert_ReturnsTrueForEnumValueObject()
     {
         // Arrange
-        var factory = new SmartEnumJsonConverterFactory();
+        var factory = new EnumValueObjectJsonConverterFactory();
 
         // Act & Assert
         factory.CanConvert(typeof(Priority)).Should().BeTrue();
@@ -280,10 +280,10 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void ConverterFactory_CanConvert_ReturnsFalseForNonSmartEnum()
+    public void ConverterFactory_CanConvert_ReturnsFalseForNonEnumValueObject()
     {
         // Arrange
-        var factory = new SmartEnumJsonConverterFactory();
+        var factory = new EnumValueObjectJsonConverterFactory();
 
         // Act & Assert
         factory.CanConvert(typeof(string)).Should().BeFalse();
@@ -319,7 +319,7 @@ public class SmartEnumJsonConverterTests
     #region Round-Trip Tests
 
     [Fact]
-    public void RoundTrip_SmartEnum_PreservesValue()
+    public void RoundTrip_EnumValueObject_PreservesValue()
     {
         // Arrange
         var original = Priority.Critical;
@@ -333,7 +333,7 @@ public class SmartEnumJsonConverterTests
     }
 
     [Fact]
-    public void RoundTrip_ObjectWithSmartEnum_PreservesValue()
+    public void RoundTrip_ObjectWithEnumValueObject_PreservesValue()
     {
         // Arrange
         var original = new TestDto(Priority.Low, "Test description");
