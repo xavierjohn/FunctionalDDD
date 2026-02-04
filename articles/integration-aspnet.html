@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>ASP.NET Core Integration </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="ASP.NET Core Integration ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration-aspnet.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="aspnet-core-integration">ASP.NET Core Integration</h1>
+
+<p><strong>Level:</strong> Intermediate | <strong>Time:</strong> 20-30 min | <strong>Prerequisites:</strong> <a href="basics.html">Basics</a></p>
+<p>Integrate Railway-Oriented Programming with ASP.NET Core using the <strong>FunctionalDdd.Asp</strong> package. This package provides extension methods to convert <code>Result&lt;T&gt;</code> to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.</p>
+<blockquote>
+<p><strong>Note:</strong> This guide focuses on <strong>ASP.NET Core integration only</strong>. For validation, see <a href="integration-fluentvalidation.html">FluentValidation Integration</a>. For data access, see <a href="integration-ef.html">Entity Framework Core Integration</a>.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#what-the-package-provides">What the Package Provides</a></li>
+<li><a href="#scalar-value-auto-validation">Scalar Value Auto-Validation</a></li>
+<li><a href="#mvc-controllers">MVC Controllers</a></li>
+<li><a href="#minimal-api">Minimal API</a></li>
+<li><a href="#automatic-error-mapping">Automatic Error Mapping</a></li>
+<li><a href="#custom-error-responses">Custom Error Responses</a></li>
+<li><a href="#pagination-support">Pagination Support</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre><code class="lang-bash">dotnet add package FunctionalDdd.Asp
+</code></pre>
+<h2 id="what-the-package-provides">What the Package Provides</h2>
+<p>The <strong>FunctionalDdd.Asp</strong> package provides extension methods to convert <code>Result&lt;T&gt;</code> to HTTP responses:</p>
+<h3 id="core-extension-methods">Core Extension Methods</h3>
+<p><strong>For MVC Controllers:</strong></p>
+<pre><code class="lang-csharp">ActionResult&lt;T&gt; ToActionResult&lt;T&gt;(this Result&lt;T&gt; result, ControllerBase controller);
+Task&lt;ActionResult&lt;T&gt;&gt; ToActionResultAsync&lt;T&gt;(this Task&lt;Result&lt;T&gt;&gt; resultTask, ControllerBase controller);
+
+// Pagination support
+ActionResult&lt;T&gt; ToActionResult&lt;T&gt;(
+    this Result&lt;T&gt; result, 
+    ControllerBase controller,
+    long from, 
+    long to, 
+    long totalCount);
+</code></pre>
+<p><strong>For Minimal API:</strong></p>
+<pre><code class="lang-csharp">IResult ToHttpResult&lt;T&gt;(this Result&lt;T&gt; result);
+Task&lt;IResult&gt; ToHttpResultAsync&lt;T&gt;(this Task&lt;Result&lt;T&gt;&gt; resultTask);
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ul>
+<li>✅ <strong>Success</strong>: Returns appropriate HTTP status (200 OK, 201 Created, 204 No Content)</li>
+<li>❌ <strong>Failure</strong>: Converts error types to HTTP status codes with Problem Details format</li>
+<li>📄 <strong>Pagination</strong>: Returns 206 Partial Content with Content-Range headers</li>
+</ul>
+<h2 id="scalar-value-auto-validation">Scalar Value Auto-Validation</h2>
+<p>The <strong>FunctionalDdd.Asp</strong> package provides automatic validation for any type implementing <code>IScalarValue&lt;TSelf, TPrimitive&gt;</code>. This includes DDD value objects (like <code>ScalarValueObject&lt;T&gt;</code>) as well as custom implementations. This eliminates the need for manual <code>Result.Combine()</code> calls in controllers and works seamlessly with ASP.NET Core's model binding.</p>
+<h3 id="setup">Setup</h3>
+<p>Enable auto-validation by calling <code>AddScalarValueValidation()</code> in your <code>Program.cs</code>:</p>
+<pre><code class="lang-csharp">var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddControllers()
+    .AddScalarValueValidation(); // Enable automatic validation!
+
+var app = builder.Build();
+app.MapControllers();
+app.Run();
+</code></pre>
+<h3 id="how-it-works">How It Works</h3>
+<p>Types implementing <code>IScalarValue</code> are automatically validated during model binding:</p>
+<pre><code class="lang-csharp">using FunctionalDdd;
+
+// Define custom value objects (source generator adds IScalarValue automatically)
+public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+public partial class CustomerId : RequiredGuid&lt;CustomerId&gt; { }
+
+// Use in DTOs with both custom and built-in value objects
+public record CreateUserDto
+{
+    public FirstName FirstName { get; init; } = null!;
+    public EmailAddress Email { get; init; } = null!;
+    public PhoneNumber Phone { get; init; } = null!;
+    public Url? Website { get; init; }
+    public Age Age { get; init; } = null!;
+    public CountryCode Country { get; init; } = null!;
+}
+
+[ApiController]
+[Route(&quot;api/users&quot;)]
+public class UsersController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Create(CreateUserDto dto)
+    {
+        // If we reach here, dto is FULLY validated!
+        // All 6 value objects were automatically validated:
+        // - FirstName: non-empty string
+        // - Email: RFC 5322 format
+        // - Phone: E.164 format
+        // - Website: valid HTTP/HTTPS URL (optional)
+        // - Age: 0-150 range
+        // - Country: ISO 3166-1 alpha-2 code
+        
+        var user = new User(dto.FirstName, dto.Email, dto.Phone, dto.Age, dto.Country);
+        return Ok(user);
+    }
+
+    [HttpGet(&quot;{id}&quot;)]
+    public IActionResult Get(CustomerId id) // Route parameter validated automatically!
+    {
+        var user = _repository.GetById(id);
+        return Ok(user);
+    }
+}
+</code></pre>
+<h3 id="validation-sources">Validation Sources</h3>
+<p>Auto-validation works with all ASP.NET Core binding sources:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Example</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Route Parameters</strong></td>
+<td><code>/users/{id}</code></td>
+<td><code>CustomerId id</code></td>
+</tr>
+<tr>
+<td><strong>Query Strings</strong></td>
+<td><code>?country=US</code></td>
+<td><code>CountryCode country</code></td>
+</tr>
+<tr>
+<td><strong>JSON Bodies</strong></td>
+<td><code>{ &quot;email&quot;: &quot;user@example.com&quot; }</code></td>
+<td><code>EmailAddress email</code> in DTO</td>
+</tr>
+<tr>
+<td><strong>Form Data</strong></td>
+<td>Form POST</td>
+<td>Value objects in model</td>
+</tr>
+</tbody>
+</table>
+<h3 id="error-responses">Error Responses</h3>
+<p>Invalid value objects automatically return 400 Bad Request with standard Problem Details:</p>
+<p><strong>Request:</strong></p>
+<pre><code class="lang-http">POST /api/users HTTP/1.1
+Content-Type: application/json
+
+{
+  &quot;firstName&quot;: &quot;John&quot;,
+  &quot;email&quot;: &quot;not-an-email&quot;,
+  &quot;phone&quot;: &quot;555-1234&quot;,
+  &quot;website&quot;: &quot;not-a-url&quot;,
+  &quot;age&quot;: 200,
+  &quot;country&quot;: &quot;USA&quot;
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="lang-http">HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.1&quot;,
+  &quot;title&quot;: &quot;One or more validation errors occurred.&quot;,
+  &quot;status&quot;: 400,
+  &quot;errors&quot;: {
+    &quot;email&quot;: [&quot;Email address is not valid.&quot;],
+    &quot;phone&quot;: [&quot;Phone number must be in E.164 format (e.g., +14155551234).&quot;],
+    &quot;website&quot;: [&quot;URL must be a valid absolute HTTP or HTTPS URL.&quot;],
+    &quot;age&quot;: [&quot;Age is unrealistically high.&quot;],
+    &quot;country&quot;: [&quot;Country code must be an ISO 3166-1 alpha-2 code.&quot;]
+  }
+}
+</code></pre>
+<h3 id="benefits">Benefits</h3>
+<ul>
+<li>✅ <strong>No manual Result.Combine()</strong> in controllers</li>
+<li>✅ <strong>Works with route parameters, query strings, form data, and JSON bodies</strong></li>
+<li>✅ <strong>Validation errors flow into ModelState automatically</strong></li>
+<li>✅ <strong>Standard ASP.NET Core validation infrastructure</strong></li>
+<li>✅ <strong>Compatible with [ApiController] attribute for automatic 400 responses</strong></li>
+</ul>
+<h3 id="combining-with-fluentvalidation">Combining with FluentValidation</h3>
+<p>Auto-validation for value objects works alongside FluentValidation for complex scenarios:</p>
+<pre><code class="lang-csharp">public record CreateProductRequest
+{
+    public ProductName Name { get; init; } = null!;           // Auto-validated
+    public Percentage DiscountRate { get; init; } = null!;     // Auto-validated (0-100)
+    public Url? ProductUrl { get; init; }                       // Auto-validated (optional)
+    public List&lt;string&gt; Tags { get; init; } = new();
+}
+
+// FluentValidation for business rules that span multiple fields
+public class CreateProductRequestValidator : AbstractValidator&lt;CreateProductRequest&gt;
+{
+    public CreateProductRequestValidator()
+    {
+        // Value objects already validated by auto-validation
+        
+        // Add business rules
+        RuleFor(x =&gt; x.Tags)
+            .Must(tags =&gt; tags.Count &lt;= 10)
+            .WithMessage(&quot;Product cannot have more than 10 tags&quot;);
+            
+        RuleFor(x =&gt; x.DiscountRate)
+            .Must(discount =&gt; discount.Value &lt;= 50)
+            .When(x =&gt; x.ProductUrl == null)
+            .WithMessage(&quot;Discount cannot exceed 50% for products without a URL&quot;);
+    }
+}
+</code></pre>
+<p>See <a href="integration-fluentvalidation.html">FluentValidation Integration</a> for more details.</p>
+<h2 id="mvc-controllers">MVC Controllers</h2>
+<p>Use <code>ToActionResult</code> to convert <code>Result&lt;T&gt;</code> to <code>ActionResult&lt;T&gt;</code>:</p>
+<h3 id="simple-example">Simple Example</h3>
+<pre><code class="lang-csharp">using FunctionalDdd;
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Route(&quot;api/[controller]&quot;)]
+public class UsersController : ControllerBase
+{
+    private readonly IUserService _userService;
+
+    public UsersController(IUserService userService)
+    {
+        _userService = userService;
+    }
+
+    [HttpPost]
+    public async Task&lt;ActionResult&lt;UserDto&gt;&gt; CreateUser(
+        [FromBody] CreateUserRequest request,
+        CancellationToken ct)
+        =&gt; await _userService.CreateUserAsync(request, ct)
+            .MapAsync(user =&gt; new UserDto(user))
+            .ToActionResultAsync(this);  // Converts Result&lt;UserDto&gt; → ActionResult&lt;UserDto&gt;
+
+    [HttpGet(&quot;{id}&quot;)]
+    public async Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUser(
+        string id,
+        CancellationToken ct)
+        =&gt; await _userService.GetUserByIdAsync(id, ct)
+            .MapAsync(user =&gt; new UserDto(user))
+            .ToActionResultAsync(this);
+
+    [HttpPut(&quot;{id}&quot;)]
+    public async Task&lt;ActionResult&lt;UserDto&gt;&gt; UpdateUser(
+        string id,
+        [FromBody] UpdateUserRequest request,
+        CancellationToken ct)
+        =&gt; await _userService.UpdateUserAsync(id, request, ct)
+            .MapAsync(user =&gt; new UserDto(user))
+            .ToActionResultAsync(this);
+
+    [HttpDelete(&quot;{id}&quot;)]
+    public async Task&lt;ActionResult&lt;Unit&gt;&gt; DeleteUser(
+        string id,
+        CancellationToken ct)
+        =&gt; await _userService.DeleteUserAsync(id, ct)
+            .ToActionResultAsync(this);  // Returns 204 No Content on success
+}
+</code></pre>
+<p><strong>Key Points:</strong></p>
+<ul>
+<li>Controller accepts requests and calls service layer</li>
+<li>Service returns <code>Result&lt;T&gt;</code> (success or failure)</li>
+<li><code>ToActionResultAsync</code> converts <code>Result&lt;T&gt;</code> → <code>ActionResult&lt;T&gt;</code> at the API boundary</li>
+<li>Automatic error-to-HTTP status mapping (see <a href="#automatic-error-mapping">Automatic Error Mapping</a>)</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> The service layer (<code>IUserService</code>) can use any architecture you prefer. See <a href="examples.html">Examples</a> for complete application examples with different architectural patterns.</p>
+</blockquote>
+<h2 id="minimal-api">Minimal API</h2>
+<p>Use <code>ToHttpResult</code> for Minimal API endpoints:</p>
+<pre><code class="lang-csharp">using FunctionalDdd;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Register services
+builder.Services.AddScoped&lt;IUserService, UserService&gt;();
+builder.Services.AddScoped&lt;IUserRepository, UserRepository&gt;();
+
+var app = builder.Build();
+
+var userApi = app.MapGroup(&quot;/api/users&quot;)
+    .WithTags(&quot;Users&quot;)
+    .WithOpenApi();
+
+userApi.MapPost(&quot;/&quot;, async (
+    CreateUserRequest request,
+    IUserService userService,
+    CancellationToken ct) =&gt;
+    await userService.CreateUserAsync(request, ct)
+        .MapAsync(user =&gt; new UserDto(user))
+        .ToHttpResultAsync())  // Converts Result&lt;UserDto&gt; → IResult
+    .WithName(&quot;CreateUser&quot;)
+    .Produces&lt;UserDto&gt;(StatusCodes.Status200OK)
+    .ProducesValidationProblem()
+    .ProducesProblem(StatusCodes.Status409Conflict);
+
+userApi.MapGet(&quot;/{id}&quot;, async (
+    string id,
+    IUserService userService,
+    CancellationToken ct) =&gt;
+    await userService.GetUserByIdAsync(id, ct)
+        .MapAsync(user =&gt; new UserDto(user))
+        .ToHttpResultAsync())
+    .WithName(&quot;GetUser&quot;)
+    .Produces&lt;UserDto&gt;()
+    .ProducesProblem(StatusCodes.Status404NotFound);
+
+userApi.MapPut(&quot;/{id}&quot;, async (
+    string id,
+    UpdateUserRequest request,
+    IUserService userService,
+    CancellationToken ct) =&gt;
+    await userService.UpdateUserAsync(id, request, ct)
+        .MapAsync(user =&gt; new UserDto(user))
+        .ToHttpResultAsync())
+    .WithName(&quot;UpdateUser&quot;)
+    .Produces&lt;UserDto&gt;()
+    .ProducesValidationProblem()
+    .ProducesProblem(StatusCodes.Status404NotFound);
+
+userApi.MapDelete(&quot;/{id}&quot;, async (
+    string id,
+    IUserService userService,
+    CancellationToken ct) =&gt;
+    await userService.DeleteUserAsync(id, ct)
+        .ToHttpResultAsync())  // Returns 204 No Content on success
+    .WithName(&quot;DeleteUser&quot;)
+    .Produces(StatusCodes.Status204NoContent)
+    .ProducesProblem(StatusCodes.Status404NotFound);
+
+app.Run();
+</code></pre>
+<h2 id="automatic-error-mapping">Automatic Error Mapping</h2>
+<p>The package automatically maps error types to HTTP status codes:</p>
+<table>
+<thead>
+<tr>
+<th>Error Type</th>
+<th>HTTP Status</th>
+<th>Example Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValidationError</code></td>
+<td>400 Bad Request</td>
+<td>Invalid email format, required field missing</td>
+</tr>
+<tr>
+<td><code>BadRequestError</code></td>
+<td>400 Bad Request</td>
+<td>Malformed request, invalid query parameters</td>
+</tr>
+<tr>
+<td><code>UnauthorizedError</code></td>
+<td>401 Unauthorized</td>
+<td>Missing authentication token</td>
+</tr>
+<tr>
+<td><code>ForbiddenError</code></td>
+<td>403 Forbidden</td>
+<td>Insufficient permissions for action</td>
+</tr>
+<tr>
+<td><code>NotFoundError</code></td>
+<td>404 Not Found</td>
+<td>User not found, resource doesn't exist</td>
+</tr>
+<tr>
+<td><code>ConflictError</code></td>
+<td>409 Conflict</td>
+<td>Duplicate email, concurrent modification</td>
+</tr>
+<tr>
+<td><code>DomainError</code></td>
+<td>422 Unprocessable Entity</td>
+<td>Business rule violation</td>
+</tr>
+<tr>
+<td><code>RateLimitError</code></td>
+<td>429 Too Many Requests</td>
+<td>API rate limit exceeded</td>
+</tr>
+<tr>
+<td><code>UnexpectedError</code></td>
+<td>500 Internal Server Error</td>
+<td>Database connection failed</td>
+</tr>
+<tr>
+<td><code>ServiceUnavailableError</code></td>
+<td>503 Service Unavailable</td>
+<td>Service under maintenance</td>
+</tr>
+<tr>
+<td><code>AggregateError</code></td>
+<td>Varies</td>
+<td>Multiple errors (uses first error's status)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>✅ <strong>Automatic Status Codes</strong> - No manual mapping required</li>
+<li>✅ <strong>Problem Details (RFC 7807)</strong> - Standard error response format</li>
+<li>✅ <strong>Validation Error Formatting</strong> - Field-level errors</li>
+<li>✅ <strong>Unit Type Support</strong> - <code>Result&lt;Unit&gt;</code> returns 204 No Content</li>
+<li>✅ <strong>Async Support</strong> - Full async/await with <code>CancellationToken</code></li>
+</ul>
+<h3 id="example-validation-error-response">Example: Validation Error Response</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="lang-http">POST /api/users HTTP/1.1
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;&quot;,
+  &quot;firstName&quot;: &quot;John&quot;,
+  &quot;lastName&quot;: &quot;&quot;,
+  &quot;age&quot;: 15
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="lang-http">HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.1&quot;,
+  &quot;title&quot;: &quot;One or more validation errors occurred.&quot;,
+  &quot;status&quot;: 400,
+  &quot;detail&quot;: &quot;User registration validation failed&quot;,
+  &quot;instance&quot;: &quot;/api/users&quot;,
+  &quot;errors&quot;: {
+    &quot;email&quot;: [&quot;Email is required&quot;],
+    &quot;lastName&quot;: [&quot;Last name is required&quot;],
+    &quot;age&quot;: [&quot;Must be 18 or older&quot;]
+  }
+}
+</code></pre>
+<h3 id="example-not-found-error-response">Example: Not Found Error Response</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="lang-http">GET /api/users/12345 HTTP/1.1
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="lang-http">HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.4&quot;,
+  &quot;title&quot;: &quot;Not Found&quot;,
+  &quot;status&quot;: 404,
+  &quot;detail&quot;: &quot;User 12345 not found&quot;,
+  &quot;instance&quot;: &quot;/api/users/12345&quot;
+}
+</code></pre>
+<h2 id="custom-error-responses">Custom Error Responses</h2>
+<p>Use <code>MatchError</code> for custom error handling when you need more control than automatic mapping provides:</p>
+<pre><code class="lang-csharp">app.MapPost(&quot;/orders&quot;, async (
+    CreateOrderRequest request,
+    IOrderService orderService,
+    CancellationToken ct) =&gt;
+{
+    return await orderService.ProcessOrderAsync(request, ct)
+        .MatchErrorAsync(
+            onValidation: err =&gt; Results.BadRequest(new 
+            { 
+                message = &quot;Validation failed&quot;,
+                errors = err.FieldErrors
+                    .ToDictionary(
+                        f =&gt; f.FieldName, 
+                        f =&gt; f.Details.ToArray())
+            }),
+            onNotFound: err =&gt; 
+                Results.NotFound(new { message = err.Detail }),
+            onConflict: err =&gt; 
+                Results.Conflict(new { message = err.Detail }),
+            onDomain: err =&gt;
+                Results.Problem(
+                    detail: err.Detail,
+                    statusCode: StatusCodes.Status422UnprocessableEntity),
+            onSuccess: order =&gt; 
+                Results.Created($&quot;/orders/{order.Id}&quot;, order),
+            cancellationToken: ct
+        );
+});
+</code></pre>
+<p><strong>Use <code>MatchError</code> when:</strong></p>
+<ul>
+<li>You need custom response payloads</li>
+<li>You want different error handling per endpoint</li>
+<li>You need to add custom headers or cookies</li>
+<li>Default Problem Details format doesn't fit your needs</li>
+</ul>
+<p><strong>Use <code>ToActionResult</code>/<code>ToHttpResult</code> when:</strong></p>
+<ul>
+<li>Standard Problem Details format is sufficient</li>
+<li>You want consistent error responses across your API</li>
+<li>You don't need custom error logic per endpoint</li>
+</ul>
+<h2 id="pagination-support">Pagination Support</h2>
+<p>The package provides built-in support for HTTP 206 Partial Content responses with Content-Range headers:</p>
+<h3 id="basic-pagination">Basic Pagination</h3>
+<pre><code class="lang-csharp">[HttpGet]
+public async Task&lt;ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt;&gt; GetUsersAsync(
+    [FromQuery] int page = 0,
+    [FromQuery] int pageSize = 25,
+    CancellationToken ct)
+{
+    var from = page * pageSize;
+    var to = from + pageSize - 1;
+    
+    var result = await _userService.GetPagedUsersAsync(from, pageSize, ct);
+    
+    // Automatically returns:
+    // - 200 OK if all items fit in one page (to &gt;= totalCount - 1)
+    // - 206 Partial Content with Content-Range header if partial results
+    return result
+        .Map(pagedData =&gt; (pagedData.Items, pagedData.TotalCount))
+        .Map(x =&gt; x.Items.Select(u =&gt; new UserDto(u)))
+        .ToActionResult(this, from, to, result.Value.TotalCount);
+}
+</code></pre>
+<p><strong>Response (partial content):</strong></p>
+<pre><code class="lang-http">HTTP/1.1 206 Partial Content
+Content-Range: items 0-24/100
+Content-Type: application/json
+
+[
+  { &quot;id&quot;: &quot;1&quot;, &quot;email&quot;: &quot;user1@example.com&quot;, ... },
+  { &quot;id&quot;: &quot;2&quot;, &quot;email&quot;: &quot;user2@example.com&quot;, ... },
+  ...
+]
+</code></pre>
+<p><strong>Response (complete):</strong></p>
+<pre><code class="lang-http">HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  { &quot;id&quot;: &quot;1&quot;, &quot;email&quot;: &quot;user1@example.com&quot;, ... },
+  ...
+]
+</code></pre>
+<h3 id="advanced-pagination-with-custom-range-extraction">Advanced Pagination with Custom Range Extraction</h3>
+<pre><code class="lang-csharp">public record PagedResult&lt;T&gt;(
+    IEnumerable&lt;T&gt; Items, 
+    long From, 
+    long To, 
+    long TotalCount);
+
+[HttpGet]
+public ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt; GetUsers(
+    [FromQuery] int page = 0,
+    [FromQuery] int pageSize = 25)
+{
+    return _userService
+        .GetPagedUsers(page, pageSize)
+        .ToActionResult(
+            this,
+            funcRange: pagedResult =&gt; new ContentRangeHeaderValue(
+                pagedResult.From,
+                pagedResult.To,
+                pagedResult.TotalCount)
+            {
+                Unit = &quot;items&quot;
+            },
+            funcValue: pagedResult =&gt; pagedResult.Items.Select(u =&gt; new UserDto(u))
+        );
+}
+</code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-convert-at-api-boundaries-only">1. Convert at API Boundaries Only</h3>
+<p>Keep <code>Result&lt;T&gt;</code> types internal to your application. Convert to HTTP responses only at the controller/endpoint level.</p>
+<pre><code class="lang-csharp">// ✅ Good - Result stays in application/domain layer
+public class UserService
+{
+    public async Task&lt;Result&lt;User&gt;&gt; CreateUserAsync(
+        CreateUserRequest request,
+        CancellationToken ct)
+    {
+        return await EmailAddress.TryCreate(request.Email)
+            .Combine(FirstName.TryCreate(request.FirstName))
+            .BindAsync(async (email, first) =&gt; 
+                await User.CreateAsync(email, first, ct), ct);
+    }
+}
+
+[HttpPost]
+public async Task&lt;ActionResult&lt;UserDto&gt;&gt; CreateUser(
+    CreateUserRequest request,
+    CancellationToken ct) =&gt;
+    await _userService.CreateUserAsync(request, ct)
+        .MapAsync(user =&gt; new UserDto(user))
+        .ToActionResultAsync(this);  // ← Convert at boundary
+
+// ❌ Bad - exposing Result in controller return type
+public async Task&lt;Result&lt;User&gt;&gt; CreateUser(...)
+</code></pre>
+<h3 id="2-always-pass-cancellationtoken">2. Always Pass CancellationToken</h3>
+<p>Support graceful cancellation in async operations:</p>
+<pre><code class="lang-csharp">[HttpPost]
+public async Task&lt;ActionResult&lt;Order&gt;&gt; ProcessOrder(
+    CreateOrderRequest request,
+    CancellationToken ct)  // ← Accept CancellationToken
+    =&gt; await _orderService.ProcessOrderAsync(request, ct)
+        .ToActionResultAsync(this);
+</code></pre>
+<h3 id="3-use-unit-for-side-effect-operations">3. Use Unit for Side-Effect Operations</h3>
+<p>Operations that don't return data should return <code>Result&lt;Unit&gt;</code>:</p>
+<pre><code class="lang-csharp">[HttpDelete(&quot;{id}&quot;)]
+public async Task&lt;ActionResult&lt;Unit&gt;&gt; DeleteUser(
+    string id,
+    CancellationToken ct) =&gt;
+    await _userService.DeleteUserAsync(id, ct)
+        .ToActionResultAsync(this);
+// ✅ Automatically returns 204 No Content on success
+</code></pre>
+<h3 id="4-use-consistent-error-messages">4. Use Consistent Error Messages</h3>
+<p>Structure error messages with context for better Problem Details responses:</p>
+<pre><code class="lang-csharp">// ✅ Good - includes context
+Error.NotFound($&quot;User {userId} not found&quot;, userId.ToString())
+Error.Validation(&quot;Email format is invalid&quot;, &quot;email&quot;)
+Error.Conflict(&quot;Email already in use&quot;, $&quot;email:{email}&quot;)
+
+// ❌ Bad - generic, no context
+Error.NotFound(&quot;Not found&quot;)
+Error.Validation(&quot;Invalid&quot;)
+</code></pre>
+<h3 id="5-prefer-automatic-mapping-over-custom-logic">5. Prefer Automatic Mapping Over Custom Logic</h3>
+<p>Use <code>ToActionResult</code>/<code>ToHttpResult</code> for consistent error responses. Only use <code>MatchError</code> when you need custom logic:</p>
+<pre><code class="lang-csharp">// ✅ Good - consistent Problem Details across API
+[HttpPost]
+public async Task&lt;ActionResult&lt;User&gt;&gt; CreateUser(CreateUserRequest request, CancellationToken ct)
+    =&gt; await _userService.CreateUserAsync(request, ct)
+        .ToActionResultAsync(this);
+
+// ⚠️ Use only when necessary - custom error handling
+app.MapPost(&quot;/special-endpoint&quot;, async (request, service, ct) =&gt;
+    await service.ProcessAsync(request, ct)
+        .MatchErrorAsync(
+            onValidation: err =&gt; CustomValidationResponse(err),
+            onSuccess: result =&gt; CustomSuccessResponse(result),
+            cancellationToken: ct));
+</code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>Learn about <a href="integration-fluentvalidation.html">FluentValidation Integration</a> for validation before HTTP conversion</li>
+<li>See <a href="integration-ef.html">Entity Framework Core Integration</a> for repository patterns that return <code>Result&lt;T&gt;</code></li>
+<li>Review <a href="integration-observability.html">Observability</a> for OpenTelemetry tracing and Problem Details correlation</li>
+<li>Check <a href="error-handling.html">Error Handling</a> for working with different error types</li>
+<li>See <a href="examples.html">Examples</a> for complete working applications</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration-aspnet.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

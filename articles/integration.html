@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Integration </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Integration ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="integration">Integration</h1>
+
+<p>Integrate FunctionalDDD with popular .NET frameworks and tools for building production-ready applications with Railway-Oriented Programming.</p>
+<h2 id="overview">Overview</h2>
+<p>This section provides comprehensive guides for integrating the FunctionalDDD library with:</p>
+<ul>
+<li><strong>ASP.NET Core</strong> - MVC Controllers and Minimal API</li>
+<li><strong>HTTP Client</strong> - HttpClient extensions for Result/Maybe patterns</li>
+<li><strong>FluentValidation</strong> - Powerful validation framework</li>
+<li><strong>Entity Framework Core</strong> - ORM and repository patterns</li>
+<li><strong>OpenTelemetry</strong> - Distributed tracing and observability</li>
+<li><strong>Problem Details</strong> - Standard error response format (RFC 7807)</li>
+</ul>
+<p>Each integration guide includes installation instructions, configuration examples, best practices, and complete working code samples.</p>
+<h2 id="integration-guides">Integration Guides</h2>
+<h3 id="-aspnet-core-integration">🌐 <a href="integration-aspnet.html">ASP.NET Core Integration</a></h3>
+<p><strong>Level:</strong> Intermediate | <strong>Time:</strong> 30-45 min</p>
+<p>Learn how to integrate Railway-Oriented Programming with ASP.NET Core:</p>
+<ul>
+<li><strong>MVC Controllers</strong> - <code>ToActionResult</code> for controllers</li>
+<li><strong>Minimal API</strong> - <code>ToHttpResult</code> for endpoints</li>
+<li><strong>Automatic Error Mapping</strong> - Error types → HTTP status codes</li>
+<li><strong>Pagination Support</strong> - HTTP 206 Partial Content responses</li>
+<li><strong>Custom Error Responses</strong> - <code>MatchError</code> for fine-grained control</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>✅ Automatic status code mapping (ValidationError → 400, NotFoundError → 404, etc.)</li>
+<li>✅ Problem Details (RFC 7807) format</li>
+<li>✅ Field-level validation errors</li>
+<li>✅ Unit type support (204 No Content)</li>
+<li>✅ Full async/await with CancellationToken</li>
+</ul>
+<hr>
+<h3 id="-http-client-integration">🌐 <a href="integration-http.html">HTTP Client Integration</a></h3>
+<p><strong>Level:</strong> Beginner | <strong>Time:</strong> 20-30 min</p>
+<p>Work with HttpClient using functional patterns:</p>
+<ul>
+<li><strong>Status Code Handlers</strong> - Handle 401, 403, 404, 409 errors functionally</li>
+<li><strong>Range Handlers</strong> - Handle all 4xx or 5xx errors at once</li>
+<li><strong>JSON Deserialization</strong> - Convert responses to <code>Result&lt;T&gt;</code> or <code>Result&lt;Maybe&lt;T&gt;&gt;</code></li>
+<li><strong>Functional Error Handling</strong> - No exceptions, just Result types</li>
+<li><strong>Railway Composition</strong> - Chain HTTP calls with other operations</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>✅ Specific status code handling (HandleUnauthorized, HandleForbidden, HandleConflict)</li>
+<li>✅ Range-based error handling (HandleClientError, HandleServerError)</li>
+<li>✅ EnsureSuccess - Functional alternative to EnsureSuccessStatusCode()</li>
+<li>✅ JSON deserialization with Result/Maybe</li>
+<li>✅ Full async/await with CancellationToken</li>
+</ul>
+<hr>
+<h3 id="-fluentvalidation-integration">✅ <a href="integration-fluentvalidation.html">FluentValidation Integration</a></h3>
+<p><strong>Level:</strong> Intermediate | <strong>Time:</strong> 30-40 min</p>
+<p>Integrate FluentValidation for powerful, composable validation:</p>
+<ul>
+<li><strong>Inline Validators</strong> - Simple validation within aggregates</li>
+<li><strong>Separate Validator Classes</strong> - Complex validation logic</li>
+<li><strong>Async Validation</strong> - Database uniqueness checks, external service calls</li>
+<li><strong>Dependency Injection</strong> - Register validators with ASP.NET Core DI</li>
+<li><strong>Advanced Patterns</strong> - Conditional validation, custom validators, cascading failures</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>✅ Converts FluentValidation results to <code>Result&lt;T&gt;</code></li>
+<li>✅ Rich validation rule set</li>
+<li>✅ Automatic ValidationError formatting</li>
+<li>✅ Async validation support</li>
+<li>✅ Seamless DI integration</li>
+</ul>
+<hr>
+<h3 id="-entity-framework-core-integration">💾 <a href="integration-ef.html">Entity Framework Core Integration</a></h3>
+<p><strong>Level:</strong> Intermediate | <strong>Time:</strong> 30-40 min</p>
+<p>Build type-safe repository patterns with EF Core:</p>
+<ul>
+<li><strong>Repository Pattern</strong> - Repositories that return <code>Result&lt;T&gt;</code></li>
+<li><strong>Extension Methods</strong> - Convert nullable to Result</li>
+<li><strong>Exception Handling</strong> - Map database exceptions to error types</li>
+<li><strong>Pagination</strong> - Paginated results with EF Core</li>
+<li><strong>Value Object Configuration</strong> - Configure value objects in EF Core</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>✅ No more repository exceptions</li>
+<li>✅ Explicit error handling</li>
+<li>✅ Database exception mapping (conflicts, concurrency, etc.)</li>
+<li>✅ Value object conversions</li>
+<li>✅ Type-safe queries</li>
+</ul>
+<hr>
+<h3 id="-observability--monitoring">📊 <a href="integration-observability.html">Observability &amp; Monitoring</a></h3>
+<p><strong>Level:</strong> Advanced | <strong>Time:</strong> 20-30 min</p>
+<p>Enable distributed tracing and monitoring:</p>
+<ul>
+<li><strong>OpenTelemetry Tracing</strong> - Automatic ROP and Value Object tracing</li>
+<li><strong>Problem Details (RFC 7807)</strong> - Standard error response format</li>
+<li><strong>Trace Correlation</strong> - Link HTTP errors to distributed traces</li>
+<li><strong>Production Monitoring</strong> - Set up observability in production</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li>✅ Automatic span creation for ROP operations</li>
+<li>✅ Detailed trace attributes (error types, timings, etc.)</li>
+<li>✅ Compatible with Jaeger, Zipkin, Application Insights</li>
+<li>✅ Problem Details with trace IDs</li>
+<li>✅ Error rate monitoring</li>
+</ul>
+<hr>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="1-install-packages">1. Install Packages</h3>
+<pre><code class="lang-bash"># ASP.NET Core integration
+dotnet add package FunctionalDdd.Asp
+
+# HttpClient integration
+dotnet add package FunctionalDdd.Http
+
+# FluentValidation integration
+dotnet add package FunctionalDdd.FluentValidation
+dotnet add package FluentValidation
+
+# For OpenTelemetry tracing
+dotnet add package OpenTelemetry
+dotnet add package OpenTelemetry.Extensions.Hosting
+dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
+</code></pre>
+<h3 id="2-configure-services-programcs">2. Configure Services (Program.cs)</h3>
+<pre><code class="lang-csharp">using FunctionalDdd;
+using FluentValidation;
+using OpenTelemetry.Trace;
+using Mediator;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add controllers or minimal API
+builder.Services.AddControllers();
+// or
+builder.Services.AddEndpointsApiExplorer();
+
+// Register Mediator (OSS alternative to MediatR)
+builder.Services.AddMediator(options =&gt;
+{
+    options.ServiceLifetime = ServiceLifetime.Scoped;
+});
+
+// Register FluentValidation validators
+builder.Services.AddValidatorsFromAssemblyContaining&lt;Program&gt;();
+
+// Register EF Core
+builder.Services.AddDbContext&lt;ApplicationDbContext&gt;(options =&gt;
+    options.UseSqlServer(builder.Configuration.GetConnectionString(&quot;DefaultConnection&quot;)));
+
+// Register repositories
+builder.Services.AddScoped&lt;IUserRepository, UserRepository&gt;();
+
+// Add OpenTelemetry tracing
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource =&gt; resource.AddService(&quot;MyApplication&quot;))
+    .WithTracing(tracerBuilder =&gt;
+    {
+        tracerBuilder
+            .AddFunctionalDddRopInstrumentation()
+            .AddFunctionalDddCvoInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter();
+    });
+
+var app = builder.Build();
+
+app.MapControllers();
+app.Run();
+</code></pre>
+<h3 id="3-use-in-controllers">3. Use in Controllers</h3>
+<pre><code class="lang-csharp">[ApiController]
+[Route(&quot;api/[controller]&quot;)]
+public class UsersController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public UsersController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    [HttpPost]
+    public async Task&lt;ActionResult&lt;UserDto&gt;&gt; Register(
+        [FromBody] RegisterUserRequest request,
+        CancellationToken ct)
+        =&gt; await FirstName.TryCreate(request.FirstName)
+            .Combine(LastName.TryCreate(request.LastName))
+            .Combine(EmailAddress.TryCreate(request.Email))
+            .Bind((firstName, lastName, email) =&gt; 
+                RegisterUserCommand.TryCreate(firstName, lastName, email))
+            .BindAsync(command =&gt; _mediator.Send(command, ct), ct)
+            .MapAsync(user =&gt; user.Adapt&lt;UserDto&gt;())
+            .ToActionResultAsync(this);
+}
+</code></pre>
+<h2 id="complete-architecture-example">Complete Architecture Example</h2>
+<p>Here's how all the integrations work together:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                      API Layer (ASP.NET Core)                │
+│  Controllers/Endpoints → ToActionResult/ToHttpResult         │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────┼────────────────────────────────────┐
+│                   Application Layer (Mediator)               │
+│  Commands/Queries → FluentValidation → Result&lt;T&gt;            │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────┼────────────────────────────────────┐
+│                      Domain Layer                            │
+│  Aggregates, Value Objects, Business Rules                   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────┼────────────────────────────────────┐
+│              Infrastructure Layer (EF Core)                  │
+│  Repositories → Result&lt;T&gt; (no exceptions)                    │
+└──────────────────────────────────────────────────────────────┘
+
+                  All layers traced with OpenTelemetry
+</code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-keep-result-internal">1. Keep Result<t> Internal</t></h3>
+<p>Convert to HTTP responses only at the API boundary:</p>
+<pre><code class="lang-csharp">// ✅ Good - Result stays in application layer
+public class UserService
+{
+    public async Task&lt;Result&lt;User&gt;&gt; CreateUserAsync(
+        CreateUserCommand command,
+        CancellationToken ct) { /* ... */ }
+}
+
+[HttpPost]
+public async Task&lt;ActionResult&lt;UserDto&gt;&gt; CreateUser(
+    CreateUserRequest request,
+    CancellationToken ct) =&gt;
+    await _userService.CreateUserAsync(request.ToCommand(), ct)
+        .ToActionResultAsync(this);  // Convert at boundary
+</code></pre>
+<h3 id="2-validate-early">2. Validate Early</h3>
+<p>Use FluentValidation at the edge of your system:</p>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Order&gt;&gt; CreateOrderAsync(
+    CreateOrderCommand command,
+    CancellationToken ct)
+{
+    // Validate first, fail fast
+    return await _validator.ValidateToResultAsync(command, ct)
+        .BindAsync((validCmd, cancellationToken) =&gt; 
+            ProcessOrderAsync(validCmd, cancellationToken), ct);
+}
+</code></pre>
+<h3 id="3-repository-returns-result">3. Repository Returns Result</h3>
+<p>No more repository exceptions:</p>
+<pre><code class="lang-csharp">// ✅ Good
+public async Task&lt;Result&lt;User&gt;&gt; GetByIdAsync(UserId id, CancellationToken ct)
+{
+    var user = await _context.Users.FindAsync(id, ct);
+    return user.ToResult(Error.NotFound($&quot;User {id} not found&quot;));
+}
+</code></pre>
+<h3 id="4-enable-tracing-in-production">4. Enable Tracing in Production</h3>
+<p>Monitor errors and performance:</p>
+<pre><code class="lang-csharp">builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerBuilder =&gt;
+    {
+        tracerBuilder
+            .AddFunctionalDddRopInstrumentation()
+            .AddOtlpExporter();
+    });
+</code></pre>
+<h3 id="5-always-pass-cancellationtoken">5. Always Pass CancellationToken</h3>
+<p>Support graceful cancellation:</p>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Order&gt;&gt; ProcessOrderAsync(
+    CreateOrderCommand command,
+    CancellationToken ct)  // ✅ Accept token
+    =&gt; await _validator.ValidateToResultAsync(command, ct)  // ✅ Pass through
+        .BindAsync((cmd, cancellationToken) =&gt; 
+            CreateOrderAsync(cmd, cancellationToken), ct);  // ✅ Pass to all async ops
+</code></pre>
+<h2 id="error-response-examples">Error Response Examples</h2>
+<h3 id="validation-error-400">Validation Error (400)</h3>
+<pre><code class="lang-http">HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.1&quot;,
+  &quot;title&quot;: &quot;One or more validation errors occurred.&quot;,
+  &quot;status&quot;: 400,
+  &quot;errors&quot;: {
+    &quot;email&quot;: [&quot;Email is required&quot;],
+    &quot;age&quot;: [&quot;Must be 18 or older&quot;]
+  }
+}
+</code></pre>
+<h3 id="not-found-error-404">Not Found Error (404)</h3>
+<pre><code class="lang-http">HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.4&quot;,
+  &quot;title&quot;: &quot;Not Found&quot;,
+  &quot;status&quot;: 404,
+  &quot;detail&quot;: &quot;User 12345 not found&quot;,
+  &quot;instance&quot;: &quot;/api/users/12345&quot;
+}
+</code></pre>
+<h3 id="conflict-error-409">Conflict Error (409)</h3>
+<pre><code class="lang-http">HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.8&quot;,
+  &quot;title&quot;: &quot;Conflict&quot;,
+  &quot;status&quot;: 409,
+  &quot;detail&quot;: &quot;Email already registered&quot;
+}
+</code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li><strong>Start with</strong> <a href="integration-aspnet.html">ASP.NET Core Integration</a> to learn the basics</li>
+<li><strong>Add validation</strong> with <a href="integration-fluentvalidation.html">FluentValidation Integration</a></li>
+<li><strong>Implement repositories</strong> using <a href="integration-ef.html">Entity Framework Core Integration</a></li>
+<li><strong>Enable monitoring</strong> with <a href="integration-observability.html">Observability &amp; Monitoring</a></li>
+</ol>
+<p>For complete working examples, see:</p>
+<ul>
+<li><a href="examples.html">Examples</a> - Real-world code samples</li>
+<li><a href="error-handling.html">Error Handling</a> - Working with different error types</li>
+<li><a href="debugging.html">Debugging</a> - Tools and techniques for debugging ROP chains</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD008: Result is double-wrapped </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD008: Result is double-wrapped ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD008.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd008-result-is-double-wrapped">FDDD008: Result is double-wrapped</h1>
+
+<h2 id="cause">Cause</h2>
+<p>A <code>Result&lt;Result&lt;T&gt;&gt;</code> type is detected, indicating that a <code>Result</code> is wrapped inside another <code>Result</code>.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p><code>Result&lt;Result&lt;T&gt;&gt;</code> is almost always unintended and indicates a logic error. This typically happens when:</p>
+<ul>
+<li>Using <code>Map</code> instead of <code>Bind</code> when the transformation returns a <code>Result</code></li>
+<li>Manually wrapping a <code>Result</code> in another <code>Result</code></li>
+</ul>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<h3 id="use-bind-instead-of-map">Use Bind instead of Map</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Creates Result&lt;Result&lt;Customer&gt;&gt;
+return emailResult.Map(email =&gt; Customer.Create(email));
+//                                      ^^^^^^^^^^^^^^^^^^^
+//                             Returns Result&lt;Customer&gt;
+
+// ✅ Good - Flattens to Result&lt;Customer&gt;
+return emailResult.Bind(email =&gt; Customer.Create(email));
+</code></pre>
+<h3 id="dont-wrap-existing-results">Don't wrap existing Results</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Double wrapping
+Result&lt;Customer&gt; customerResult = GetCustomer();
+Result&lt;Result&lt;Customer&gt;&gt; wrapped = Result.Success(customerResult); // Wrong!
+
+// ✅ Good - Return the Result directly
+Result&lt;Customer&gt; customerResult = GetCustomer();
+return customerResult;
+</code></pre>
+<h2 id="example">Example</h2>
+<pre><code class="lang-csharp">public Result&lt;Order&gt; CreateOrder(string emailStr, decimal amount)
+{
+    // ❌ Bad - Result&lt;Result&lt;Order&gt;&gt;
+    var result = Email.TryCreate(emailStr)
+        .Map(email =&gt; Order.Create(email, amount));
+    //  ^^^                ^^^^^^^^^^^^^^^^^^^
+    //  Map           Returns Result&lt;Order&gt;
+    // Result is: Result&lt;Result&lt;Order&gt;&gt;
+
+    // ✅ Good - Result&lt;Order&gt;
+    var result = Email.TryCreate(emailStr)
+        .Bind(email =&gt; Order.Create(email, amount));
+    //  ^^^^
+    //  Bind flattens the Result
+}
+</code></pre>
+<h2 id="when-to-suppress-warnings">When to Suppress Warnings</h2>
+<p>Do not suppress this warning. <code>Result&lt;Result&lt;T&gt;&gt;</code> is never the correct type.</p>
+<p>If you have a legitimate case (extremely rare), restructure your code to use <code>Bind</code> or unwrap one layer.</p>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD002.html">FDDD002</a> - Use Bind instead of Map when lambda returns Result</li>
+<li><a href="FDDD012.html">FDDD012</a> - Maybe is double-wrapped</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD008.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

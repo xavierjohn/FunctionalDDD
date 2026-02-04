@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD003: Unsafe access to Result.Value </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD003: Unsafe access to Result.Value ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD003.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd003-unsafe-access-to-resultvalue">FDDD003: Unsafe access to Result.Value</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Accessing <code>Result.Value</code> without first checking <code>IsSuccess</code> or using proper guards.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p><code>Result.Value</code> throws an <code>InvalidOperationException</code> if the <code>Result</code> is in a failure state. Accessing it without checking <code>IsSuccess</code> first can cause runtime exceptions.</p>
+<p>This diagnostic ensures that <code>Result.Value</code> is only accessed in safe contexts where the success state has been verified.</p>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<h3 id="option-1-check-issuccess-first">Option 1: Check IsSuccess First</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Unsafe access
+var customer = result.Value;
+
+// ✅ Good - Guarded access
+if (result.IsSuccess)
+{
+    var customer = result.Value;
+    // Use customer...
+}
+</code></pre>
+<h3 id="option-2-use-match">Option 2: Use Match</h3>
+<pre><code class="lang-csharp">// ✅ Good - Pattern matching
+return result.Match(
+    onSuccess: customer =&gt; customer.ToDto(),
+    onFailure: error =&gt; DefaultDto());
+</code></pre>
+<h3 id="option-3-use-trygetvalue">Option 3: Use TryGetValue</h3>
+<pre><code class="lang-csharp">// ✅ Good - Safe extraction
+if (result.TryGetValue(out var customer))
+{
+    // Use customer...
+}
+</code></pre>
+<h3 id="option-4-use-getvalueordefault">Option 4: Use GetValueOrDefault</h3>
+<pre><code class="lang-csharp">// ✅ Good - With fallback
+var customer = result.GetValueOrDefault(defaultCustomer);
+</code></pre>
+<h2 id="code-fix">Code Fix</h2>
+<p>This diagnostic offers an automatic code fix that wraps the unsafe access in an <code>if (result.IsSuccess)</code> guard. The code fix intelligently:</p>
+<ul>
+<li>Wraps all consecutive statements that use <code>result.Value</code></li>
+<li>Tracks variables derived from <code>result.Value</code></li>
+<li>Stops at unrelated statements</li>
+</ul>
+<h3 id="example-code-fix-transformation">Example Code Fix Transformation</h3>
+<p><strong>Before:</strong></p>
+<pre><code class="lang-csharp">var result = GetCustomer();
+result.IsSuccess.Should().BeTrue();
+Customer customer = result.Value;
+customer.Name.Should().Be(&quot;John&quot;);
+customer.Email.Should().Contain(&quot;@&quot;);
+SomeOtherMethod();
+</code></pre>
+<p><strong>After (automatic):</strong></p>
+<pre><code class="lang-csharp">var result = GetCustomer();
+result.IsSuccess.Should().BeTrue();
+if (result.IsSuccess)
+{
+    Customer customer = result.Value;
+    customer.Name.Should().Be(&quot;John&quot;);
+    customer.Email.Should().Contain(&quot;@&quot;);
+}
+SomeOtherMethod();
+</code></pre>
+<h2 id="when-to-suppress-warnings">When to Suppress Warnings</h2>
+<p>This warning can be suppressed in test code where you're explicitly testing success scenarios and expect the operation to succeed.</p>
+<pre><code class="lang-csharp">[Fact]
+public void Should_CreateValidCustomer()
+{
+    var result = Customer.Create(&quot;test@example.com&quot;);
+    #pragma warning disable FDDD003
+    var customer = result.Value; // Safe in test - we're verifying success
+    #pragma warning restore FDDD003
+    customer.Email.Should().Be(&quot;test@example.com&quot;);
+}
+</code></pre>
+<p>However, even in tests, using <code>Match</code> or checking <code>IsSuccess</code> is preferred.</p>
+<h2 id="special-behavior">Special Behavior</h2>
+<p><strong>Note:</strong> This diagnostic is suppressed for invocation patterns like <code>TryCreate().Value</code>. Those are handled by <a href="FDDD007.html">FDDD007</a> instead, which suggests using <code>Create()</code> for better error messages.</p>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD004.html">FDDD004</a> - Unsafe access to Result.Error</li>
+<li><a href="FDDD006.html">FDDD006</a> - Unsafe access to Maybe.Value</li>
+<li><a href="FDDD007.html">FDDD007</a> - Use Create instead of TryCreate().Value</li>
+<li><a href="FDDD014.html">FDDD014</a> - Use GetValueOrDefault or Match instead of ternary</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD003.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
