@@ -24,29 +24,34 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 - **Unhandled results (FDDD001)** - Warns when Result types are returned but not handled
 - **Double wrapping (FDDD008)** - Detects `Result<Result<T>>` patterns (usually indicates Map should be Bind)
 - **Wrong method usage (FDDD002)** - Suggests using `Bind` instead of `Map` when lambda returns Result
-- **Async misuse (FDDD010)** - Prevents blocking on `Task<Result<T>>` with `.Result` or `.Wait()`
+- **Async misuse (FDDD009)** - Prevents blocking on `Task<Result<T>>` with `.Result` or `.Wait()`
+- **Async lambda misuse (FDDD014)** - Detects async lambda used with sync method (Map instead of MapAsync)
 - **TryCreate().Value anti-pattern (FDDD007)** - Suggests using `.Create()` for clearer errors
-- **Manual result combination (FDDD013)** - Suggests using `Result.Combine()` for multiple validations
-- **Ternary operator patterns (FDDD014)** - Suggests using `GetValueOrDefault()` or `Match()`
+- **Manual result combination (FDDD012)** - Suggests using `Result.Combine()` for multiple validations
+- **Ternary operator patterns (FDDD013)** - Suggests using `GetValueOrDefault()` or `Match()`
+- **Throwing in Result chains (FDDD015)** - Detects `throw` statements that defeat ROP semantics
+- **Null comparisons (FDDD017)** - Detects comparing Result/Maybe to null (they're structs)
+- **Unsafe LINQ access (FDDD018)** - Detects `.Value` in LINQ without filtering by IsSuccess/HasValue
 
 ### Error Handling Best Practices
 
-- **Specific error types (FDDD011)** - Encourages using `Error.Validation()`, `Error.NotFound()` etc. instead of base `Error` class
+- **Specific error types (FDDD010)** - Encourages using `Error.Validation()`, `Error.NotFound()` etc. instead of base `Error` class
 - **Error discrimination (FDDD005)** - Suggests using `MatchError` for type-safe error handling
+- **Empty error messages (FDDD016)** - Detects empty or missing error messages
 
 ### Maybe Pattern Enforcement
 
 Similar protections for `Maybe<T>`:
 
 - **Unsafe access (FDDD006)** - Ensures proper checking before accessing `Maybe<T>.Value`
-- **Double wrapping (FDDD012)** - Detects `Maybe<Maybe<T>>` patterns
-- **Missing error parameter (FDDD009)** - Ensures `Maybe.ToResult()` includes an error for None case
+- **Double wrapping (FDDD011)** - Detects `Maybe<Maybe<T>>` patterns
 
 ## Example Diagnostics
 
 ### FDDD003: Unsafe Result.Value Access
 
 **Problem:** Accessing `.Value` without checking success state can throw exceptions.
+
 
 ```csharp
 // ❌ Warning: Accessing Value without checking IsSuccess
@@ -111,19 +116,19 @@ Result<Result<User>> wrapped = Result.Success(GetUser(id));  // FDDD008
 var user = someResult.Bind(id => GetUser(id));  // Result<User>
 ```
 
-### FDDD010: Blocking on Async Results
+### FDDD009: Blocking on Async Results
 
 **Problem:** Blocking on `Task<Result<T>>` can cause deadlocks.
 
 ```csharp
 // ❌ Blocking call - can deadlock
-var user = GetUserAsync(id).Result;  // FDDD010
+var user = GetUserAsync(id).Result;  // FDDD009
 
 // ✅ Use await
 var user = await GetUserAsync(id);
 ```
 
-### FDDD013: Use Result.Combine
+### FDDD012: Use Result.Combine
 
 **Problem:** Manual result checking is verbose and error-prone.
 
@@ -165,7 +170,7 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 ```xml
 <!-- In .csproj -->
 <PropertyGroup>
-  <NoWarn>$(NoWarn);FDDD001;FDDD002;FDDD003;FDDD004;FDDD005;FDDD006;FDDD007;FDDD008;FDDD009;FDDD010;FDDD011;FDDD012;FDDD013;FDDD014</NoWarn>
+  <NoWarn>$(NoWarn);FDDD001;FDDD002;FDDD003;FDDD004;FDDD005;FDDD006;FDDD007;FDDD008;FDDD009;FDDD010;FDDD011;FDDD012;FDDD013;FDDD014;FDDD015;FDDD016;FDDD017;FDDD018</NoWarn>
 </PropertyGroup>
 ```
 
@@ -179,14 +184,18 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 | FDDD004 | Unsafe access to Result.Error | Warning |
 | FDDD005 | Consider using MatchError for error type discrimination | Info |
 | FDDD006 | Unsafe access to Maybe.Value | Warning |
-| FDDD007 | Use Create instead of TryCreate().Value | Info |
+| FDDD007 | Use Create instead of TryCreate().Value | Warning |
 | FDDD008 | Result is double-wrapped (Result&lt;Result&lt;T&gt;&gt;) | Warning |
-| FDDD009 | Maybe.ToResult called without error parameter | Warning |
-| FDDD010 | Incorrect async Result usage (blocking instead of awaiting) | Warning |
-| FDDD011 | Use specific error type instead of base Error class | Info |
-| FDDD012 | Maybe is double-wrapped (Maybe&lt;Maybe&lt;T&gt;&gt;) | Warning |
-| FDDD013 | Consider using Result.Combine | Info |
-| FDDD014 | Consider using GetValueOrDefault or Match instead of ternary | Info |
+| FDDD009 | Incorrect async Result usage (blocking instead of awaiting) | Warning |
+| FDDD010 | Use specific error type instead of base Error class | Info |
+| FDDD011 | Maybe is double-wrapped (Maybe&lt;Maybe&lt;T&gt;&gt;) | Warning |
+| FDDD012 | Consider using Result.Combine | Info |
+| FDDD013 | Consider using GetValueOrDefault or Match instead of ternary | Info |
+| FDDD014 | Use async method variant for async lambda | Warning |
+| FDDD015 | Don't throw exceptions in Result chains | Warning |
+| FDDD016 | Error message should not be empty | Warning |
+| FDDD017 | Don't compare Result or Maybe to null | Warning |
+| FDDD018 | Unsafe access to Value in LINQ expression | Warning |
 
 ## Requirements
 
@@ -198,6 +207,7 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 Found a false positive or have suggestions? [Open an issue on GitHub](https://github.com/xavierjohn/FunctionalDDD/issues).
 
 ## Related Packages
+
 
 - [FunctionalDdd.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) - Core Result/Maybe types
 - [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) - ASP.NET Core integration

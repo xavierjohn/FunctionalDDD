@@ -37,7 +37,7 @@ public sealed class AsyncResultMisuseAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check if it's Task<Result<T>> or ValueTask<Result<T>>
-        if (IsAsyncResultType(expressionType, out var resultInnerType))
+        if (expressionType.IsAsyncResultType(out var resultInnerType))
         {
             var diagnostic = Diagnostic.Create(
                 DiagnosticDescriptors.AsyncResultMisuse,
@@ -46,32 +46,5 @@ public sealed class AsyncResultMisuseAnalyzer : DiagnosticAnalyzer
 
             context.ReportDiagnostic(diagnostic);
         }
-    }
-
-    // Check if type is Task<Result<T>> or ValueTask<Result<T>>
-    private static bool IsAsyncResultType(ITypeSymbol typeSymbol, out string? resultInnerType)
-    {
-        resultInnerType = null;
-
-        if (typeSymbol is not INamedTypeSymbol { TypeArguments.Length: 1 } namedType)
-            return false;
-
-        // Check if it's Task<T> or ValueTask<T> from System.Threading.Tasks
-        var isTaskType = (namedType.Name is "Task" or "ValueTask") &&
-                         namedType.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks";
-
-        if (!isTaskType)
-            return false;
-
-        // Check if the type argument is Result<T> from FunctionalDdd
-        var typeArgument = namedType.TypeArguments[0];
-        if (typeArgument is INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } resultType &&
-            resultType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd")
-        {
-            resultInnerType = resultType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-            return true;
-        }
-
-        return false;
     }
 }

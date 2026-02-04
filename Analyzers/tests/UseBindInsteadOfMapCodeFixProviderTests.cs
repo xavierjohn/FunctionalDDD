@@ -40,7 +40,7 @@ public class UseBindInsteadOfMapCodeFixProviderTests
         var test = CodeFixTestHelper.CreateCodeFixTest<UseBindInsteadOfMapAnalyzer, UseBindInsteadOfMapCodeFixProvider>(
             source,
             fixedSource,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(11, 29));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(11, 33));
 
         await test.RunAsync();
     }
@@ -77,7 +77,7 @@ public class UseBindInsteadOfMapCodeFixProviderTests
         var test = CodeFixTestHelper.CreateCodeFixTest<UseBindInsteadOfMapAnalyzer, UseBindInsteadOfMapCodeFixProvider>(
             source,
             fixedSource,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(11, 35));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(11, 39));
 
         await test.RunAsync();
     }
@@ -114,7 +114,7 @@ public class UseBindInsteadOfMapCodeFixProviderTests
         var test = CodeFixTestHelper.CreateCodeFixTest<UseBindInsteadOfMapAnalyzer, UseBindInsteadOfMapCodeFixProvider>(
             source,
             fixedSource,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(11, 29));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(11, 33));
 
         await test.RunAsync();
     }
@@ -153,7 +153,7 @@ public class UseBindInsteadOfMapCodeFixProviderTests
         var test = CodeFixTestHelper.CreateCodeFixTest<UseBindInsteadOfMapAnalyzer, UseBindInsteadOfMapCodeFixProvider>(
             source,
             fixedSource,
-            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(12, 29));
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseBindInsteadOfMap).WithLocation(12, 33));
 
         await test.RunAsync();
     }

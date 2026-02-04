@@ -102,9 +102,9 @@ public static class DiagnosticDescriptors
         title: "Use Create instead of TryCreate().Value",
         messageFormat: "Using TryCreate().Value is unclear. Use '{0}.Create(...)' when you expect the value to be valid, or handle the Result properly.",
         category: Category,
-        defaultSeverity: DiagnosticSeverity.Info,
+        defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "For scalar value objects implementing IScalarValue, TryCreate().Value provides poor error messages. " +
+        description: "Using TryCreate().Value is unclear and provides poor error messages when validation fails. " +
                      "Use Create() when you expect success - it throws InvalidOperationException with the validation error details included. " +
                      "TryCreate().Value throws the same exception type but with a generic message, losing the validation error information. " +
                      "Or properly handle the Result returned by TryCreate() to avoid exceptions entirely.",
@@ -125,24 +125,10 @@ public static class DiagnosticDescriptors
         helpLinkUri: HelpLinkBase + "FDDD008");
 
     /// <summary>
-    /// FDDD009: Converting Maybe to Result without providing an error for the None case.
-    /// </summary>
-    public static readonly DiagnosticDescriptor MaybeToResultWithoutError = new(
-        id: "FDDD009",
-        title: "Maybe.ToResult called without error parameter",
-        messageFormat: "Converting Maybe<{0}> to Result without providing an error for the None case",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
-        description: "Maybe.ToResult() requires an error parameter to handle the None case. " +
-                     "Provide an Error to clearly indicate what went wrong when the Maybe has no value.",
-        helpLinkUri: HelpLinkBase + "FDDD009");
-
-    /// <summary>
-    /// FDDD010: Blocking on async Result or accessing properties incorrectly.
+    /// FDDD009: Blocking on async Result or accessing properties incorrectly.
     /// </summary>
     public static readonly DiagnosticDescriptor AsyncResultMisuse = new(
-        id: "FDDD010",
+        id: "FDDD009",
         title: "Incorrect async Result usage",
         messageFormat: "Use 'await' with Task<Result<{0}>> instead of blocking or accessing Task properties",
         category: Category,
@@ -150,13 +136,13 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Task<Result<T>> should be awaited, not blocked with .Result or .Wait(). " +
                      "Blocking can cause deadlocks and prevents proper async execution. Use await instead.",
-        helpLinkUri: HelpLinkBase + "FDDD010");
+        helpLinkUri: HelpLinkBase + "FDDD009");
 
     /// <summary>
-    /// FDDD011: Using Error base class directly instead of specific error types.
+    /// FDDD010: Using Error base class directly instead of specific error types.
     /// </summary>
     public static readonly DiagnosticDescriptor UseSpecificErrorType = new(
-        id: "FDDD011",
+        id: "FDDD010",
         title: "Use specific error type instead of base Error class",
         messageFormat: "Use Error.Validation(), Error.NotFound(), or other specific error types instead of instantiating Error directly",
         category: Category,
@@ -164,13 +150,13 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Using specific error types (ValidationError, NotFoundError, etc.) enables type-safe error handling with MatchError. " +
                      "Avoid instantiating the base Error class directly.",
-        helpLinkUri: HelpLinkBase + "FDDD011");
+        helpLinkUri: HelpLinkBase + "FDDD010");
 
     /// <summary>
-    /// FDDD012: Maybe is double-wrapped as Maybe&lt;Maybe&lt;T&gt;&gt;.
+    /// FDDD011: Maybe is double-wrapped as Maybe&lt;Maybe&lt;T&gt;&gt;.
     /// </summary>
     public static readonly DiagnosticDescriptor MaybeDoubleWrapping = new(
-        id: "FDDD012",
+        id: "FDDD011",
         title: "Maybe is double-wrapped",
         messageFormat: "Maybe<Maybe<{0}>> detected. Avoid wrapping an existing Maybe inside another Maybe.",
         category: Category,
@@ -179,13 +165,13 @@ public static class DiagnosticDescriptors
         description: "Maybe should not be wrapped inside another Maybe. This creates Maybe<Maybe<T>> which is almost always unintended. " +
                      "Avoid using Map when the transformation function returns a Maybe, as this creates double wrapping. " +
                      "Consider converting to Result with ToResult() for better composability.",
-        helpLinkUri: HelpLinkBase + "FDDD012");
+        helpLinkUri: HelpLinkBase + "FDDD011");
 
     /// <summary>
-    /// FDDD013: Consider using Result.Combine for multiple Result checks.
+    /// FDDD012: Consider using Result.Combine for multiple Result checks.
     /// </summary>
     public static readonly DiagnosticDescriptor UseResultCombine = new(
-        id: "FDDD013",
+        id: "FDDD012",
         title: "Consider using Result.Combine",
         messageFormat: "Consider using Result.Combine() for combining multiple Results instead of manual checks",
         category: Category,
@@ -193,13 +179,13 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "When combining multiple Result<T> values, Result.Combine() provides a cleaner and more maintainable approach " +
                      "than manually checking IsSuccess on each result.",
-        helpLinkUri: HelpLinkBase + "FDDD013");
+        helpLinkUri: HelpLinkBase + "FDDD012");
 
     /// <summary>
-    /// FDDD014: Consider using GetValueOrDefault or Match instead of ternary.
+    /// FDDD013: Consider using GetValueOrDefault or Match instead of ternary.
     /// </summary>
     public static readonly DiagnosticDescriptor UseFunctionalValueOrDefault = new(
-        id: "FDDD014",
+        id: "FDDD013",
         title: "Consider using GetValueOrDefault or Match",
         messageFormat: "Consider using GetValueOrDefault() or Match() instead of ternary operator for Result value extraction",
         category: Category,
@@ -207,5 +193,75 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "The pattern 'result.IsSuccess ? result.Value : default' can be replaced with GetValueOrDefault() or Match() " +
                      "for more idiomatic and safer code.",
+        helpLinkUri: HelpLinkBase + "FDDD013");
+
+    /// <summary>
+    /// FDDD014: Using async lambda with synchronous Map/Bind instead of async variant.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UseAsyncMethodVariant = new(
+        id: "FDDD014",
+        title: "Use async method variant for async lambda",
+        messageFormat: "Use '{0}' instead of '{1}' when the lambda is async",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "When using an async lambda with Map, Bind, Tap, or Ensure, use the async variant (MapAsync, BindAsync, etc.) " +
+                     "to properly handle the async operation. Using sync methods with async lambdas causes the Task to not be awaited.",
         helpLinkUri: HelpLinkBase + "FDDD014");
+
+    /// <summary>
+    /// FDDD015: Throwing exception inside Result chain instead of returning failure.
+    /// </summary>
+    public static readonly DiagnosticDescriptor ThrowInResultChain = new(
+        id: "FDDD015",
+        title: "Don't throw exceptions in Result chains",
+        messageFormat: "Don't throw exceptions inside '{0}'. Return a failure Result instead to maintain Railway Oriented Programming semantics.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Throwing exceptions inside Bind, Map, Tap, or Ensure lambdas defeats the purpose of Railway Oriented Programming. " +
+                     "Return Result.Failure<T>() to signal errors and keep the error on the failure track.",
+        helpLinkUri: HelpLinkBase + "FDDD015");
+
+    /// <summary>
+    /// FDDD016: Empty or missing error message.
+    /// </summary>
+    public static readonly DiagnosticDescriptor EmptyErrorMessage = new(
+        id: "FDDD016",
+        title: "Error message should not be empty",
+        messageFormat: "Error message should not be empty. Provide a meaningful message for debugging.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Error messages should provide context for debugging and user feedback. " +
+                     "Empty error messages make it difficult to diagnose issues.",
+        helpLinkUri: HelpLinkBase + "FDDD016");
+
+    /// <summary>
+    /// FDDD017: Comparing Result or Maybe to null.
+    /// </summary>
+    public static readonly DiagnosticDescriptor ComparingToNull = new(
+        id: "FDDD017",
+        title: "Don't compare Result or Maybe to null",
+        messageFormat: "Don't compare {0} to null. Use '{1}' instead.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Result<T> and Maybe<T> are structs and cannot be null. " +
+                     "Use IsSuccess/IsFailure for Result, or HasValue/HasNoValue for Maybe.",
+        helpLinkUri: HelpLinkBase + "FDDD017");
+
+    /// <summary>
+    /// FDDD018: Using .Value in LINQ without checking success state.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UnsafeValueInLinq = new(
+        id: "FDDD018",
+        title: "Unsafe access to Value in LINQ expression",
+        messageFormat: "Accessing '{0}' in LINQ without filtering by {1} first may throw exceptions",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "When using LINQ on collections of Result<T> or Maybe<T>, filter by IsSuccess/HasValue first, " +
+                     "or use methods like Select with Match to safely extract values.",
+        helpLinkUri: HelpLinkBase + "FDDD018");
 }

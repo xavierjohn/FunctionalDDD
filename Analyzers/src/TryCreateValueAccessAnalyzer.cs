@@ -8,8 +8,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 /// <summary>
-/// Analyzer that detects when .Value is accessed on a TryCreate() result for types
-/// implementing IScalarValue, suggesting to use Create() instead for clearer intent.
+/// Analyzer that detects when .Value is accessed on a TryCreate() result,
+/// suggesting to use Create() instead for clearer intent and better error messages.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
@@ -45,36 +45,49 @@ public sealed class TryCreateValueAccessAnalyzer : DiagnosticAnalyzer
         if (methodSymbol.Name != "TryCreate")
             return;
 
-        var containingType = methodSymbol.ContainingType;
+        // Check the return type is Result<T>
+        var returnType = methodSymbol.ReturnType;
+        if (returnType is not INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } resultType)
+            return;
+
+        // Get the type being created (the T in Result<T>)
+        var containingType = resultType.TypeArguments[0] as INamedTypeSymbol;
         if (containingType == null)
             return;
 
-        // Check if the type implements IScalarValue<TSelf, TPrimitive>
-        if (!ImplementsIScalarValue(containingType))
+        // If it's a static method named TryCreate that returns Result<T>,
+        // and there's a corresponding Create method, suggest using Create instead.
+        // This pattern indicates the type follows the value object creation pattern.
+        if (!methodSymbol.IsStatic)
             return;
 
-        // Check if it has a Create method (redundant check since IScalarValue guarantees it, but kept for safety)
         if (!HasCreateMethod(containingType))
             return;
 
         var diagnostic = Diagnostic.Create(
             DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue,
-            memberAccess.GetLocation(),
+            memberAccess.Name.GetLocation(),  // Report on just .Value, not the whole expression
             containingType.Name);
 
         context.ReportDiagnostic(diagnostic);
     }
 
-    // Check if the type implements IScalarValue<TSelf, TPrimitive>
-    private static bool ImplementsIScalarValue(INamedTypeSymbol typeSymbol) =>
-        typeSymbol.AllInterfaces.Any(i =>
-            i.Name == "IScalarValue" &&
-            i.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-            i.TypeArguments.Length == 2);
+    // Verify the type has a static Create method (checks the type and its base types)
+    private static bool HasCreateMethod(INamedTypeSymbol typeSymbol)
+    {
+        var currentType = typeSymbol;
+        while (currentType != null)
+        {
+            if (currentType.GetMembers("Create")
+                .OfType<IMethodSymbol>()
+                .Any(m => m.IsStatic))
+            {
+                return true;
+            }
 
-    // Verify the type has a static Create method (guaranteed by IScalarValue but checked for robustness)
-    private static bool HasCreateMethod(INamedTypeSymbol typeSymbol) =>
-        typeSymbol.GetMembers("Create")
-            .OfType<IMethodSymbol>()
-            .Any(m => m.IsStatic);
+            currentType = currentType.BaseType;
+        }
+
+        return false;
+    }
 }

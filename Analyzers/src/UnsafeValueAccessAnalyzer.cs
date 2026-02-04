@@ -44,10 +44,14 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check for Result<T>.Value or Result<T>.Error
-        if (IsResultType(type))
+        if (type.IsResultType())
         {
             if (memberName == "Value" && !IsGuardedBySuccessCheck(memberAccess, context.SemanticModel))
             {
+                // Skip invocation patterns like TryCreate().Value - they're handled by FDDD007
+                if (memberAccess.Expression is InvocationExpressionSyntax)
+                    return;
+
                 var diagnostic = Diagnostic.Create(
                     DiagnosticDescriptors.UnsafeResultValueAccess,
                     memberAccess.Name.GetLocation());
@@ -62,7 +66,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             }
         }
         // Check for Maybe<T>.Value
-        else if (IsMaybeType(type) && memberName == "Value")
+        else if (type.IsMaybeType() && memberName == "Value")
         {
             if (!IsGuardedByHasValueCheck(memberAccess, context.SemanticModel))
             {
@@ -73,18 +77,6 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             }
         }
     }
-
-    private static bool IsResultType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Result" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
-
-    private static bool IsMaybeType(ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Maybe" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
 
     private static bool IsGuardedBySuccessCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", true) ||
@@ -203,54 +195,6 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             {
                 matchesThenBranch = false;
                 return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool IsConditionCheckingProperty(
-        ExpressionSyntax condition,
-        ExpressionSyntax targetExpression,
-        string propertyName,
-        bool expectedValue,
-        SemanticModel semanticModel)
-    {
-        // Handle simple property access: result.IsSuccess
-        if (condition is MemberAccessExpressionSyntax conditionMemberAccess &&
-            conditionMemberAccess.Name.Identifier.Text == propertyName)
-        {
-            return AreSameVariable(conditionMemberAccess.Expression, targetExpression, semanticModel) && expectedValue;
-        }
-
-        // Handle negation: !result.IsSuccess
-        if (condition is PrefixUnaryExpressionSyntax { Operand: MemberAccessExpressionSyntax negatedMemberAccess } prefixUnary &&
-            prefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
-            negatedMemberAccess.Name.Identifier.Text == propertyName)
-        {
-            return AreSameVariable(negatedMemberAccess.Expression, targetExpression, semanticModel) && !expectedValue;
-        }
-
-        // Handle equality: result.IsSuccess == true
-        if (condition is BinaryExpressionSyntax binaryExpression)
-        {
-            if (binaryExpression.IsKind(SyntaxKind.EqualsExpression) ||
-                binaryExpression.IsKind(SyntaxKind.NotEqualsExpression))
-            {
-                var left = binaryExpression.Left;
-                var right = binaryExpression.Right;
-
-                if (left is MemberAccessExpressionSyntax leftMemberAccess &&
-                    leftMemberAccess.Name.Identifier.Text == propertyName &&
-                    right is LiteralExpressionSyntax literal)
-                {
-                    var literalValue = literal.IsKind(SyntaxKind.TrueLiteralExpression);
-                    var isEquals = binaryExpression.IsKind(SyntaxKind.EqualsExpression);
-                    var effectiveValue = isEquals ? literalValue : !literalValue;
-
-                    return AreSameVariable(leftMemberAccess.Expression, targetExpression, semanticModel) &&
-                           effectiveValue == expectedValue;
-                }
             }
         }
 

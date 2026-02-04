@@ -36,7 +36,8 @@ public sealed class UseCreateInsteadOfTryCreateValueCodeFixProvider : CodeFixPro
         var diagnosticSpan = diagnostic.Location.SourceSpan;
 
         // Find the .Value member access
-        var memberAccess = root.FindNode(diagnosticSpan) as MemberAccessExpressionSyntax;
+        var node = root.FindNode(diagnosticSpan);
+        var memberAccess = node.Parent as MemberAccessExpressionSyntax ?? node as MemberAccessExpressionSyntax;
         if (memberAccess == null || memberAccess.Name.Identifier.Text != "Value")
             return;
 

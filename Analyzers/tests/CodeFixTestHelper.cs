@@ -59,22 +59,36 @@ public static class CodeFixTestHelper
     private static void AddFunctionalDddStubSource(SolutionState state) =>
         state.Sources.Add(("FunctionalDddStubs.cs", FunctionalDddStubSource));
 
-    private static string WrapInNamespace(string source) =>
-        $$"""
+    private static readonly string[] LineSeparators = ["\r\n", "\r", "\n"];
+
+    private static string WrapInNamespace(string source)
+    {
+        // Indent all lines of the source by 4 spaces (to be inside the namespace)
+        // Use proper line splitting that preserves empty lines
+        var lines = source.Split(LineSeparators, StringSplitOptions.None);
+        var indentedSource = string.Join(
+            Environment.NewLine,
+            lines.Select(line => string.IsNullOrWhiteSpace(line) ? line : "    " + line));
+
+        return $$"""
             using FunctionalDdd;
             using System;
             using System.Threading.Tasks;
 
             namespace TestNamespace
             {
-                {{source}}
+            {{indentedSource}}
             }
             """;
+    }
 
     /// <summary>
     /// Stub source code for FunctionalDdd types used in code fix tests.
     /// </summary>
     private const string FunctionalDddStubSource = """
+        #pragma warning disable FDDD003 // Unsafe Result.Value access
+        #pragma warning disable FDDD004 // Unsafe Result.Error access
+        #pragma warning disable FDDD006 // Unsafe Maybe.Value access
         namespace FunctionalDdd
         {
             using System;
@@ -118,41 +132,18 @@ public static class CodeFixTestHelper
                 public T GetValueOrDefault(T defaultValue) => _isSuccess ? _value : defaultValue;
             }
 
-            // Result extensions stub
-            public static class ResultExtensions
-            {
-                public static Result<TResult> Map<T, TResult>(this Result<T> result, Func<T, TResult> func)
-                {
-                    if (result.IsSuccess)
-                        return Result.Success(func(result.Value));
-                    return Result.Failure<TResult>(result.Error);
-                }
-
-                public static Result<TResult> Bind<T, TResult>(this Result<T> result, Func<T, Result<TResult>> func)
-                {
-                    if (result.IsSuccess)
-                        return func(result.Value);
-                    return Result.Failure<TResult>(result.Error);
-                }
-
-                public static Task<Result<TResult>> MapAsync<T, TResult>(this Result<T> result, Func<T, Task<TResult>> func)
-                {
-                    if (result.IsSuccess)
-                        return func(result.Value).ContinueWith(t => Result.Success(t.Result));
-                    return Task.FromResult(Result.Failure<TResult>(result.Error));
-                }
-
-                public static Task<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, Task<Result<TResult>>> func)
-                {
-                    if (result.IsSuccess)
-                        return func(result.Value);
-                    return Task.FromResult(Result.Failure<TResult>(result.Error));
-                }
-            }
-
             // Error stub
-            public record Error(string Code, string Detail)
+            public class Error
             {
+                public string Code { get; }
+                public string Detail { get; }
+
+                public Error(string code, string detail)
+                {
+                    Code = code;
+                    Detail = detail;
+                }
+
                 public static Error Validation(string detail) => new Error("Validation", detail);
                 public static Error NotFound(string detail) => new Error("NotFound", detail);
             }
@@ -162,6 +153,58 @@ public static class CodeFixTestHelper
             {
                 public static Result<T> Success<T>(T value) => value;
                 public static Result<T> Failure<T>(Error error) => error;
+            }
+
+            // Result extensions stub (safe - no unsafe access)
+            public static class ResultExtensions
+            {
+                public static Result<TResult> Map<T, TResult>(this Result<T> result, Func<T, TResult> func)
+                {
+                    if (!result.IsSuccess)
+                        return Result.Failure<TResult>(default!);
+                    return Result.Success(func(result.Value));
+                }
+
+                public static Result<TResult> Bind<T, TResult>(this Result<T> result, Func<T, Result<TResult>> func)
+                {
+                    if (!result.IsSuccess)
+                        return Result.Failure<TResult>(default!);
+                    return func(result.Value);
+                }
+
+                public static Task<Result<TResult>> MapAsync<T, TResult>(this Result<T> result, Func<T, Task<TResult>> func)
+                {
+                    if (!result.IsSuccess)
+                        return Task.FromResult(Result.Failure<TResult>(default!));
+                    return func(result.Value).ContinueWith(t => Result.Success(t.Result));
+                }
+
+                public static Task<Result<TResult>> BindAsync<T, TResult>(this Result<T> result, Func<T, Task<Result<TResult>>> func)
+                {
+                    if (!result.IsSuccess)
+                        return Task.FromResult(Result.Failure<TResult>(default!));
+                    return func(result.Value);
+                }
+            }
+
+            // Maybe<T> stub
+            public readonly struct Maybe<T>
+            {
+                private readonly bool _hasValue;
+                private readonly T _value;
+
+                private Maybe(bool hasValue, T value)
+                {
+                    _hasValue = hasValue;
+                    _value = value;
+                }
+
+                public bool HasValue => _hasValue;
+                public bool HasNoValue => !_hasValue;
+                public T Value => _hasValue ? _value : throw new InvalidOperationException("Maybe has no value");
+
+                public static Maybe<T> Some(T value) => new Maybe<T>(true, value);
+                public static Maybe<T> None() => new Maybe<T>(false, default);
             }
 
             // EmailAddress stub (for TryCreate tests)
@@ -183,9 +226,35 @@ public static class CodeFixTestHelper
                     var result = TryCreate(value);
                     if (result.IsFailure)
                         throw new InvalidOperationException($"Failed to create EmailAddress: {result.Error.Detail}");
-                    return result.Value;
+                    if (result.IsSuccess)
+                        return result.Value;
+                    throw new InvalidOperationException("Unexpected result state");
                 }
             }
+
+            // ValidationError stub (for type checking in tests)
+            public class ValidationError : Error
+            {
+                public ValidationError(string detail) : base("Validation", detail) { }
+            }
+
+            // FluentAssertions-style stub for tests
+            public static class FluentAssertionsStub
+            {
+                public static AssertionHelper<T> Should<T>(this T value) => new AssertionHelper<T>();
+            }
+
+            public class AssertionHelper<T>
+            {
+                public void Be(T expected) { }
+                public void BeTrue() { }
+                public void BeFalse() { }
+                public void BeOfType<TExpected>() { }
+                public void NotBeNull() { }
+            }
         }
+        #pragma warning restore FDDD003
+        #pragma warning restore FDDD004
+        #pragma warning restore FDDD006
         """;
 }

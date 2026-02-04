@@ -1,0 +1,375 @@
+﻿namespace PrimitiveValueObjects.Tests;
+
+using FluentAssertions;
+using Xunit;
+
+/// <summary>
+/// Tests for source-generated Create() methods that throw on validation failure.
+/// These methods are generated for all RequiredGuid, RequiredUlid, RequiredString,
+/// RequiredInt, and RequiredDecimal value objects.
+/// 
+/// Note: Test value objects (EmployeeId, OrderUlidId, TicketNumber, UnitPrice, TrackingId)
+/// are declared in their respective test files (RequiredGuidTests.cs, etc.).
+/// </summary>
+public class SourceGeneratedCreateMethodTests
+{
+    #region RequiredGuid Create Methods
+
+    [Fact]
+    public void RequiredGuid_Create_WithValidGuid_ReturnsInstance()
+    {
+        // Arrange
+        var validGuid = Guid.NewGuid();
+
+        // Act
+        var employeeId = EmployeeId.Create(validGuid);
+
+        // Assert
+        employeeId.Should().NotBeNull();
+        employeeId.Value.Should().Be(validGuid);
+    }
+
+    [Fact]
+    public void RequiredGuid_Create_WithEmptyGuid_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var emptyGuid = Guid.Empty;
+
+        // Act
+        var act = () => EmployeeId.Create(emptyGuid);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create EmployeeId:*Employee Id cannot be empty*");
+    }
+
+    [Fact]
+    public void RequiredGuid_Create_WithValidStringGuid_ReturnsInstance()
+    {
+        // Arrange
+        var guidString = "2F45ACF9-6E51-4DC7-8732-DBE7F260E951";
+
+        // Act
+        var employeeId = EmployeeId.Create(guidString);
+
+        // Assert
+        employeeId.Should().NotBeNull();
+        employeeId.Value.Should().Be(Guid.Parse(guidString));
+    }
+
+    [Fact]
+    public void RequiredGuid_Create_WithInvalidStringGuid_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var invalidGuidString = "not-a-guid";
+
+        // Act
+        var act = () => EmployeeId.Create(invalidGuidString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create EmployeeId:*Guid should contain 32 digits with 4 dashes*");
+    }
+
+    [Fact]
+    public void RequiredGuid_Create_WithEmptyString_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var emptyString = "";
+
+        // Act
+        var act = () => EmployeeId.Create(emptyString);
+
+        // Assert - Empty string fails at parsing stage, not empty validation
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create EmployeeId:*Guid should contain 32 digits with 4 dashes*");
+    }
+
+    #endregion
+
+    #region RequiredUlid Create Methods
+
+    [Fact]
+    public void RequiredUlid_Create_WithValidUlid_ReturnsInstance()
+    {
+        // Arrange
+        var validUlid = Ulid.NewUlid();
+
+        // Act
+        var orderId = OrderUlidId.Create(validUlid);
+
+        // Assert
+        orderId.Should().NotBeNull();
+        orderId.Value.Should().Be(validUlid);
+    }
+
+    [Fact]
+    public void RequiredUlid_Create_WithDefaultUlid_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var defaultUlid = default(Ulid);
+
+        // Act
+        var act = () => OrderUlidId.Create(defaultUlid);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create OrderUlidId:*Order Ulid Id cannot be empty*");
+    }
+
+    [Fact]
+    public void RequiredUlid_Create_WithValidStringUlid_ReturnsInstance()
+    {
+        // Arrange
+        var ulidString = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+
+        // Act
+        var orderId = OrderUlidId.Create(ulidString);
+
+        // Assert
+        orderId.Should().NotBeNull();
+        orderId.Value.Should().Be(Ulid.Parse(ulidString, null));
+    }
+
+    [Fact]
+    public void RequiredUlid_Create_WithInvalidStringUlid_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var invalidUlidString = "not-a-ulid";
+
+        // Act
+        var act = () => OrderUlidId.Create(invalidUlidString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create OrderUlidId:*Ulid should be a 26-character Crockford Base32 string*");
+    }
+
+    #endregion
+
+    #region RequiredInt Create Methods
+
+    [Fact]
+    public void RequiredInt_Create_WithValidInt_ReturnsInstance()
+    {
+        // Arrange
+        var validInt = 42;
+
+        // Act
+        var ticketNumber = TicketNumber.Create(validInt);
+
+        // Assert
+        ticketNumber.Should().NotBeNull();
+        ticketNumber.Value.Should().Be(validInt);
+    }
+
+    [Fact]
+    public void RequiredInt_Create_WithZero_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var zero = 0;
+
+        // Act
+        var act = () => TicketNumber.Create(zero);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create TicketNumber:*Ticket Number cannot be zero*");
+    }
+
+    [Fact]
+    public void RequiredInt_Create_WithValidStringInt_ReturnsInstance()
+    {
+        // Arrange
+        var intString = "123";
+
+        // Act
+        var ticketNumber = TicketNumber.Create(intString);
+
+        // Assert
+        ticketNumber.Should().NotBeNull();
+        ticketNumber.Value.Should().Be(123);
+    }
+
+    [Fact]
+    public void RequiredInt_Create_WithInvalidStringInt_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var invalidIntString = "not-a-number";
+
+        // Act
+        var act = () => TicketNumber.Create(invalidIntString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create TicketNumber:*Value must be a valid integer*");
+    }
+
+    #endregion
+
+    #region RequiredDecimal Create Methods
+
+    [Fact]
+    public void RequiredDecimal_Create_WithValidDecimal_ReturnsInstance()
+    {
+        // Arrange
+        var validDecimal = 99.99m;
+
+        // Act
+        var unitPrice = UnitPrice.Create(validDecimal);
+
+        // Assert
+        unitPrice.Should().NotBeNull();
+        unitPrice.Value.Should().Be(validDecimal);
+    }
+
+    [Fact]
+    public void RequiredDecimal_Create_WithZero_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var zero = 0m;
+
+        // Act
+        var act = () => UnitPrice.Create(zero);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create UnitPrice:*Unit Price cannot be zero*");
+    }
+
+    [Fact]
+    public void RequiredDecimal_Create_WithValidStringDecimal_ReturnsInstance()
+    {
+        // Arrange
+        var decimalString = "19.99";
+
+        // Act
+        var unitPrice = UnitPrice.Create(decimalString);
+
+        // Assert
+        unitPrice.Should().NotBeNull();
+        unitPrice.Value.Should().Be(19.99m);
+    }
+
+    [Fact]
+    public void RequiredDecimal_Create_WithInvalidStringDecimal_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var invalidDecimalString = "not-a-decimal";
+
+        // Act
+        var act = () => UnitPrice.Create(invalidDecimalString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create UnitPrice:*Value must be a valid decimal*");
+    }
+
+    #endregion
+
+    #region RequiredString Create Methods
+
+    [Fact]
+    public void RequiredString_Create_WithValidString_ReturnsInstance()
+    {
+        // Arrange
+        var validString = "ABC123";
+
+        // Act
+        var trackingId = TrackingId.Create(validString);
+
+        // Assert
+        trackingId.Should().NotBeNull();
+        trackingId.Value.Should().Be(validString);
+    }
+
+    [Fact]
+    public void RequiredString_Create_WithNullString_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        string? nullString = null;
+
+        // Act
+        var act = () => TrackingId.Create(nullString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be empty*");
+    }
+
+    [Fact]
+    public void RequiredString_Create_WithEmptyString_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var emptyString = "";
+
+        // Act
+        var act = () => TrackingId.Create(emptyString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be empty*");
+    }
+
+    [Fact]
+    public void RequiredString_Create_WithWhitespaceString_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var whitespaceString = "   ";
+
+        // Act
+        var act = () => TrackingId.Create(whitespaceString);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be empty*");
+    }
+
+    #endregion
+
+    #region Integration Tests - FDDD007 Compatibility
+
+    [Fact]
+    public void Create_CanBeUsedInsteadOfTryCreateValue_ForAllTypes()
+    {
+        // This test verifies that Create() methods work as drop-in replacements
+        // for TryCreate().Value pattern (what FDDD007 analyzer suggests)
+
+        // Arrange & Act & Assert - All should succeed
+        var employeeId = EmployeeId.Create(Guid.NewGuid());
+        employeeId.Should().NotBeNull();
+
+        var orderId = OrderUlidId.Create(Ulid.NewUlid());
+        orderId.Should().NotBeNull();
+
+        var ticketNumber = TicketNumber.Create(42);
+        ticketNumber.Should().NotBeNull();
+
+        var unitPrice = UnitPrice.Create(99.99m);
+        unitPrice.Should().NotBeNull();
+
+        var trackingId = TrackingId.Create("ABC123");
+        trackingId.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Create_WithStringParsing_WorksForAllTypes()
+    {
+        // Verifies that Create(string) overloads work correctly
+
+        // Arrange & Act & Assert
+        var employeeId = EmployeeId.Create("2F45ACF9-6E51-4DC7-8732-DBE7F260E951");
+        employeeId.Value.Should().Be(Guid.Parse("2F45ACF9-6E51-4DC7-8732-DBE7F260E951"));
+
+        var orderId = OrderUlidId.Create("01ARZ3NDEKTSV4RRFFQ69G5FAV");
+        orderId.Value.Should().Be(Ulid.Parse("01ARZ3NDEKTSV4RRFFQ69G5FAV", null));
+
+        var ticketNumber = TicketNumber.Create("123");
+        ticketNumber.Value.Should().Be(123);
+
+        var unitPrice = UnitPrice.Create("19.99");
+        unitPrice.Value.Should().Be(19.99m);
+    }
+
+    #endregion
+}

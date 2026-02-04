@@ -1,0 +1,38 @@
+﻿- name: Overview
+  href: index.md
+- name: FDDD001 - Result not handled
+  href: FDDD001.md
+- name: FDDD002 - Use Bind instead of Map
+  href: FDDD002.md
+- name: FDDD003 - Unsafe Result.Value access
+  href: FDDD003.md
+- name: FDDD004 - Unsafe Result.Error access
+  href: FDDD004.md
+- name: FDDD005 - Use MatchError
+  href: FDDD005.md
+- name: FDDD006 - Unsafe Maybe.Value access
+  href: FDDD006.md
+- name: FDDD007 - Use Create instead of TryCreate().Value
+  href: FDDD007.md
+- name: FDDD008 - Result double-wrapped
+  href: FDDD008.md
+- name: FDDD009 - Incorrect async Result usage
+  href: FDDD009.md
+- name: FDDD010 - Use specific error type
+  href: FDDD010.md
+- name: FDDD011 - Maybe double-wrapped
+  href: FDDD011.md
+- name: FDDD012 - Use Result.Combine
+  href: FDDD012.md
+- name: FDDD013 - Use GetValueOrDefault or Match
+  href: FDDD013.md
+- name: FDDD014 - Use async method variant
+  href: FDDD014.md
+- name: FDDD015 - Don't throw in Result chains
+  href: FDDD015.md
+- name: FDDD016 - Empty error message
+  href: FDDD016.md
+- name: FDDD017 - Don't compare to null
+  href: FDDD017.md
+- name: FDDD018 - Unsafe Value in LINQ
+  href: FDDD018.md

@@ -37,7 +37,7 @@ public sealed class TernaryValueOrDefaultAnalyzer : DiagnosticAnalyzer
 
         // Get the type being accessed
         var conditionType = context.SemanticModel.GetTypeInfo(conditionMemberAccess.Expression).Type;
-        if (!IsResultType(conditionType))
+        if (!conditionType.IsResultType())
             return;
 
         // Check if whenTrue is accessing .Value on the same result
@@ -45,8 +45,8 @@ public sealed class TernaryValueOrDefaultAnalyzer : DiagnosticAnalyzer
         {
             if (whenTrueMemberAccess.Name.Identifier.Text == "Value")
             {
-                // Check if it's the same expression
-                if (AreEquivalentExpressions(conditionMemberAccess.Expression, whenTrueMemberAccess.Expression))
+                // Check if it's the same expression using symbol comparison
+                if (AreEquivalentExpressions(conditionMemberAccess.Expression, whenTrueMemberAccess.Expression, context.SemanticModel))
                 {
                     var diagnostic = Diagnostic.Create(
                         DiagnosticDescriptors.UseFunctionalValueOrDefault,
@@ -58,14 +58,19 @@ public sealed class TernaryValueOrDefaultAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    // Check if two expressions are equivalent (simplified comparison)
-    private static bool AreEquivalentExpressions(ExpressionSyntax expr1, ExpressionSyntax expr2) =>
-        expr1.ToString() == expr2.ToString();
+    /// <summary>
+    /// Check if two expressions refer to the same variable using symbol comparison.
+    /// Falls back to syntax equivalence if symbols are not available.
+    /// </summary>
+    private static bool AreEquivalentExpressions(ExpressionSyntax expr1, ExpressionSyntax expr2, SemanticModel semanticModel)
+    {
+        var symbol1 = semanticModel.GetSymbolInfo(expr1).Symbol;
+        var symbol2 = semanticModel.GetSymbolInfo(expr2).Symbol;
 
-    // Check if type is Result<T> from FunctionalDdd
-    private static bool IsResultType(ITypeSymbol? typeSymbol) =>
-        typeSymbol is INamedTypeSymbol namedType &&
-        namedType.Name == "Result" &&
-        namedType.ContainingNamespace?.ToDisplayString() == "FunctionalDdd" &&
-        namedType.TypeArguments.Length == 1;
+        if (symbol1 != null && symbol2 != null)
+            return SymbolEqualityComparer.Default.Equals(symbol1, symbol2);
+
+        // Fallback to syntax equivalence
+        return SyntaxFactory.AreEquivalent(expr1, expr2);
+    }
 }

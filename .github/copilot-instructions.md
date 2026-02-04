@@ -81,15 +81,42 @@ if (result.IsFailure)
 ### Implementation Details
 
 **The `Create` method is automatically provided:**
-- ✅ All scalar value objects inherit it from `ScalarValueObject<TSelf, T>` base class
-- ✅ No need to implement it manually - it's already there
+- ✅ All scalar value objects inherit base `Create(T value)` from `ScalarValueObject<TSelf, T>` base class  
 - ✅ Default implementation calls `TryCreate` and throws `InvalidOperationException` on failure
 - ✅ Can be overridden if custom behavior is needed (e.g., multi-parameter signatures like `Money.Create(amount, currency)`)
 
-**For source-generated value objects (`RequiredGuid`, `RequiredString`):**
-- The generator doesn't emit a `Create` method
-- They automatically inherit it from the base class
-- Works out of the box with no additional code
+**For source-generated value objects (`RequiredGuid`, `RequiredUlid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`):**
+- ✅ **Generator creates `Create()` methods that mirror each `TryCreate()` overload**
+- ✅ **Avoids ambiguity by removing optional parameters and nullable overloads**
+- ✅ **Works perfectly with FDDD007 analyzer** (suggests using `Create()` instead of `TryCreate().Value`)
+
+**Generated Create methods per type:**
+
+```csharp
+// RequiredGuid / RequiredUlid
+public static MenuItemId Create(Guid value);         // Hides base Create(T)
+public static MenuItemId Create(string stringValue); // Parse from string
+
+// RequiredString  
+public static FirstName Create(string? value, string? fieldName = null); // Keeps fieldName for validation
+
+// RequiredInt / RequiredDecimal
+public static Quantity Create(int value);            // Hides base Create(T)
+public static Quantity Create(string stringValue);   // Parse from string
+```
+
+**Example usage:**
+```csharp
+// ✅ Direct value - calls Create(Guid)
+var menuId = MenuItemId.Create(Guid.Parse("2F45ACF9-..."));
+
+// ✅ Parse from string - calls Create(string)  
+var menuId = MenuItemId.Create("2F45ACF9-...");
+
+// ✅ No ambiguity - compiler knows which overload to use
+var quantity = Quantity.Create(42);       // Create(int)
+var quantity = Quantity.Create("42");     // Create(string)
+```
 
 **Custom value objects:**
 ```csharp
@@ -891,17 +918,8 @@ public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, 
 - Result constructor sets `Activity.Current`, not the child activity
 - Therefore, ROP methods must explicitly set their child activity status using `result.LogActivityStatus()` or `activity?.SetStatus(...)`
 
-**Note:** `result.LogActivityStatus()` is a helper that calls `Activity.Current?.SetStatus(...)` based on the result's success/failure state.
+## PowerShell Command Usage
 
-### Summary: When to Set Activity Status
-
-| Scenario | Manual Status Needed? | Why |
-|----------|----------------------|-----|
-| **Value Object `TryCreate`** | ❌ No | Result constructor sets `Activity.Current` which equals the `activity` variable (no parent activity) |
-| **ROP Extensions (Bind, Map, Tap)** | ✅ **YES - REQUIRED** | Create child activities; Result constructor only sets `Activity.Current`, not the child activity created by the extension method |
-| **Direct Result creation** | ❌ No | Result constructor always sets `Activity.Current` |
-
-**Key Insight:**
-- In `TryCreate` methods, the `using var activity` **IS** `Activity.Current` (no parent activity exists when called)
-- In ROP methods, `using var activity` creates a **child** of `Activity.Current` (parent activity exists from calling code)
-- Result constructor only sets `Activity.Current`, so child activities need explicit status setting via `result.LogActivityStatus()` or manually set the activity status.
+When running PowerShell commands in the terminal:
+- Avoid long or complex scripts as they tend to get stuck or timeout.
+- Use smaller, targeted file edits with the `replace_string_in_file` tool instead of large PowerShell scripts for file manipulation.

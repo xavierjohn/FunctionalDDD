@@ -41,12 +41,8 @@ public sealed class UseFunctionalValueOrDefaultCodeFixProvider : CodeFixProvider
         if (ternary == null)
             return;
 
-        // Try to determine if the false branch is a simple default value
-        var semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
-        if (semanticModel == null)
-            return;
-
-        var isSimpleDefault = IsSimpleDefaultValue(ternary.WhenFalse, semanticModel);
+        // Determine if the false branch is a simple default value
+        var isSimpleDefault = IsSimpleDefaultValue(ternary.WhenFalse);
 
         if (isSimpleDefault)
         {
@@ -74,7 +70,7 @@ public sealed class UseFunctionalValueOrDefaultCodeFixProvider : CodeFixProvider
             diagnostic);
     }
 
-    private static bool IsSimpleDefaultValue(ExpressionSyntax expression, SemanticModel semanticModel)
+    private static bool IsSimpleDefaultValue(ExpressionSyntax expression)
     {
         // Accept all literal values (null, default, numbers, strings, bools)
         // This enables GetValueOrDefault() for both simple defaults and custom values
