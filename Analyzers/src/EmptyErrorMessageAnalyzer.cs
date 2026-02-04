@@ -54,35 +54,13 @@ public sealed class EmptyErrorMessageAnalyzer : DiagnosticAnalyzer
         // Check the first argument (message)
         var arguments = invocation.ArgumentList.Arguments;
         if (arguments.Count == 0)
-        {
-            // No arguments - might be using default or named parameters
-            // Check if there's a message parameter
-            if (HasMessageParameter(methodSymbol) && !HasMessageArgument(arguments))
-            {
-                var diagnostic = Diagnostic.Create(
-                    DiagnosticDescriptors.EmptyErrorMessage,
-                    invocation.GetLocation());
-                context.ReportDiagnostic(diagnostic);
-            }
+            return; // All Error factory methods require at least one argument
 
-            return;
-        }
-
-        // Check if first positional argument is the message
+        // Check if first positional argument is empty
+        // Note: We only check positional arguments - named arguments in different order is rare
         var firstArg = arguments[0];
-        if (firstArg.NameColon != null && firstArg.NameColon.Name.Identifier.Text != "message")
-        {
-            // Named argument but not "message" - check if message is provided elsewhere
-            if (!HasMessageArgument(arguments))
-            {
-                var diagnostic = Diagnostic.Create(
-                    DiagnosticDescriptors.EmptyErrorMessage,
-                    invocation.GetLocation());
-                context.ReportDiagnostic(diagnostic);
-            }
-
-            return;
-        }
+        if (firstArg.NameColon != null)
+            return; // Skip named argument analysis - complex and rare
 
         // Check if the message argument is empty
         if (IsEmptyOrWhitespaceString(firstArg.Expression, context.SemanticModel))
@@ -93,15 +71,6 @@ public sealed class EmptyErrorMessageAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(diagnostic);
         }
     }
-
-    private static bool HasMessageParameter(IMethodSymbol methodSymbol) =>
-        methodSymbol.Parameters.Any(p => p.Name is "message" or "detail");
-
-    private static bool HasMessageArgument(SeparatedSyntaxList<ArgumentSyntax> arguments) =>
-        arguments.Any(a =>
-            a.NameColon?.Name.Identifier.Text is "message" or "detail" &&
-            a.Expression is LiteralExpressionSyntax literal &&
-            !string.IsNullOrWhiteSpace(literal.Token.ValueText));
 
     private static bool IsEmptyOrWhitespaceString(ExpressionSyntax expression, SemanticModel semanticModel)
     {

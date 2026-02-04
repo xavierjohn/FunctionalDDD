@@ -66,7 +66,7 @@ public sealed class UnsafeValueInLinqAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check if the .Value access is on the lambda parameter
-        if (!IsAccessOnParameter(memberAccess, lambdaParameter, context.SemanticModel))
+        if (!IsAccessOnParameter(memberAccess, lambdaParameter))
             return;
 
         // Check if the type of the expression is Result or Maybe
@@ -94,7 +94,7 @@ public sealed class UnsafeValueInLinqAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check if there's a Where clause before this that filters by IsSuccess/HasValue
-        if (HasPriorFilterClause(invocation, lambdaParameter, checkProperty, context.SemanticModel))
+        if (HasPriorFilterClause(invocation, checkProperty))
             return;
 
         var diagnostic = Diagnostic.Create(
@@ -115,7 +115,7 @@ public sealed class UnsafeValueInLinqAnalyzer : DiagnosticAnalyzer
             _ => null
         };
 
-    private static bool IsAccessOnParameter(MemberAccessExpressionSyntax memberAccess, string parameterName, SemanticModel semanticModel)
+    private static bool IsAccessOnParameter(MemberAccessExpressionSyntax memberAccess, string parameterName)
     {
         // Check if the expression is directly the parameter or parameter.Property
         var expression = memberAccess.Expression;
@@ -145,9 +145,7 @@ public sealed class UnsafeValueInLinqAnalyzer : DiagnosticAnalyzer
 
     private static bool HasPriorFilterClause(
         InvocationExpressionSyntax currentInvocation,
-        string parameterName,
-        string checkProperty,
-        SemanticModel semanticModel)
+        string checkProperty)
     {
         // Look for a .Where() clause before this Select/etc.
         // Pattern: collection.Where(x => x.IsSuccess).Select(x => x.Value)
@@ -169,7 +167,7 @@ public sealed class UnsafeValueInLinqAnalyzer : DiagnosticAnalyzer
             }
 
             // Recurse to check further back in the chain
-            return HasPriorFilterClause(priorInvocation, parameterName, checkProperty, semanticModel);
+            return HasPriorFilterClause(priorInvocation, checkProperty);
         }
 
         return false;

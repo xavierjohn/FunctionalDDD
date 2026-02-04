@@ -31,7 +31,7 @@ public sealed class ComparingToNullAnalyzer : DiagnosticAnalyzer
         var binaryExpression = (BinaryExpressionSyntax)context.Node;
 
         // Check if one side is null
-        var (expression, isNullOnRight) = GetNonNullSide(binaryExpression);
+        var expression = GetNonNullSide(binaryExpression);
         if (expression == null)
             return;
 
@@ -83,15 +83,15 @@ public sealed class ComparingToNullAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static (ExpressionSyntax? expression, bool isNullOnRight) GetNonNullSide(BinaryExpressionSyntax binary)
+    private static ExpressionSyntax? GetNonNullSide(BinaryExpressionSyntax binary)
     {
         if (binary.Right.IsKind(SyntaxKind.NullLiteralExpression))
-            return (binary.Left, true);
+            return binary.Left;
 
         if (binary.Left.IsKind(SyntaxKind.NullLiteralExpression))
-            return (binary.Right, false);
+            return binary.Right;
 
-        return (null, false);
+        return null;
     }
 
     private static (string? typeName, string? propertyToUse) GetTypeAndProperty(ITypeSymbol? typeSymbol)
