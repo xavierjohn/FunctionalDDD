@@ -36,7 +36,7 @@ public class UseCreateInsteadOfTryCreateValueCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
                 .WithArguments("EmailAddress")
-                .WithLocation(11, 21));
+                .WithLocation(11, 64));
 
         await test.RunAsync();
     }
@@ -71,7 +71,7 @@ public class UseCreateInsteadOfTryCreateValueCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
                 .WithArguments("EmailAddress")
-                .WithLocation(12, 17));
+                .WithLocation(12, 60));
 
         await test.RunAsync();
     }
@@ -106,7 +106,7 @@ public class UseCreateInsteadOfTryCreateValueCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
                 .WithArguments("EmailAddress")
-                .WithLocation(12, 21));
+                .WithLocation(12, 64));
 
         await test.RunAsync();
     }
@@ -139,7 +139,7 @@ public class UseCreateInsteadOfTryCreateValueCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
                 .WithArguments("EmailAddress")
-                .WithLocation(11, 16));
+                .WithLocation(11, 59));
 
         await test.RunAsync();
     }

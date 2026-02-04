@@ -24,7 +24,7 @@ public class TryCreateValueAccessAnalyzerTests
         var test = AnalyzerTestHelper.CreateDiagnosticTest<TryCreateValueAccessAnalyzer>(
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
-                .WithLocation(11, 21)
+                .WithLocation(11, 43)
                 .WithArguments("Money"));
 
         await test.RunAsync();
@@ -51,7 +51,7 @@ public class TryCreateValueAccessAnalyzerTests
         var test = AnalyzerTestHelper.CreateDiagnosticTest<TryCreateValueAccessAnalyzer>(
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
-                .WithLocation(11, 22)
+                .WithLocation(11, 44)
                 .WithArguments("Money"));
 
         await test.RunAsync();
@@ -193,10 +193,10 @@ public class TryCreateValueAccessAnalyzerTests
         var test = AnalyzerTestHelper.CreateDiagnosticTest<TryCreateValueAccessAnalyzer>(
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
-                .WithLocation(11, 21)
+                .WithLocation(11, 43)
                 .WithArguments("Money"),
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
-                .WithLocation(12, 21)
+                .WithLocation(12, 64)
                 .WithArguments("EmailAddress"));
 
         await test.RunAsync();
@@ -221,7 +221,7 @@ public class TryCreateValueAccessAnalyzerTests
         var test = AnalyzerTestHelper.CreateDiagnosticTest<TryCreateValueAccessAnalyzer>(
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseCreateInsteadOfTryCreateValue)
-                .WithLocation(11, 16)
+                .WithLocation(11, 38)
                 .WithArguments("Money"));
 
         await test.RunAsync();
