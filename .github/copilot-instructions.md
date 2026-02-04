@@ -81,15 +81,42 @@ if (result.IsFailure)
 ### Implementation Details
 
 **The `Create` method is automatically provided:**
-- ✅ All scalar value objects inherit it from `ScalarValueObject<TSelf, T>` base class
-- ✅ No need to implement it manually - it's already there
+- ✅ All scalar value objects inherit base `Create(T value)` from `ScalarValueObject<TSelf, T>` base class  
 - ✅ Default implementation calls `TryCreate` and throws `InvalidOperationException` on failure
 - ✅ Can be overridden if custom behavior is needed (e.g., multi-parameter signatures like `Money.Create(amount, currency)`)
 
-**For source-generated value objects (`RequiredGuid`, `RequiredString`):**
-- The generator doesn't emit a `Create` method
-- They automatically inherit it from the base class
-- Works out of the box with no additional code
+**For source-generated value objects (`RequiredGuid`, `RequiredUlid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`):**
+- ✅ **Generator creates `Create()` methods that mirror each `TryCreate()` overload**
+- ✅ **Avoids ambiguity by removing optional parameters and nullable overloads**
+- ✅ **Works perfectly with FDDD007 analyzer** (suggests using `Create()` instead of `TryCreate().Value`)
+
+**Generated Create methods per type:**
+
+```csharp
+// RequiredGuid / RequiredUlid
+public static MenuItemId Create(Guid value);         // Hides base Create(T)
+public static MenuItemId Create(string stringValue); // Parse from string
+
+// RequiredString  
+public static FirstName Create(string? value, string? fieldName = null); // Keeps fieldName for validation
+
+// RequiredInt / RequiredDecimal
+public static Quantity Create(int value);            // Hides base Create(T)
+public static Quantity Create(string stringValue);   // Parse from string
+```
+
+**Example usage:**
+```csharp
+// ✅ Direct value - calls Create(Guid)
+var menuId = MenuItemId.Create(Guid.Parse("2F45ACF9-..."));
+
+// ✅ Parse from string - calls Create(string)  
+var menuId = MenuItemId.Create("2F45ACF9-...");
+
+// ✅ No ambiguity - compiler knows which overload to use
+var quantity = Quantity.Create(42);       // Create(int)
+var quantity = Quantity.Create("42");     // Create(string)
+```
 
 **Custom value objects:**
 ```csharp
