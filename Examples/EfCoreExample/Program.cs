@@ -19,6 +19,7 @@
 
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
+using EfCoreExample.SmartEnums;
 using FunctionalDdd;
 using Microsoft.EntityFrameworkCore;
 
@@ -198,7 +199,90 @@ foreach (var o in sortedOrders)
 Console.WriteLine();
 
 // =============================================================================
-// 7. TYPE SAFETY DEMONSTRATION
+// 7. SMART ENUM DEMONSTRATION (State Machine with Behavior)
+// =============================================================================
+Console.WriteLine("🎯 SmartEnum Demonstration (Order State Machine)...");
+Console.WriteLine("────────────────────────────────────────────────────────────────────");
+
+// Create an order using SmartEnum for state
+Console.WriteLine("  Creating order with SmartEnum state...");
+SmartOrder.TryCreate(customer.Id)
+    .Bind(order => order.AddLine(products[0], 1))
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order created in '{order.State.Name}' state");
+        Console.WriteLine($"      CanModify: {order.State.CanModify}");
+        Console.WriteLine($"      CanCancel: {order.State.CanCancel}");
+        Console.WriteLine($"      IsTerminal: {order.State.IsTerminal}");
+        Console.WriteLine($"      Allowed transitions: {string.Join(", ", order.State.AllowedTransitions.Select(s => s.Name))}");
+    })
+    .Bind(order => order.Confirm())
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order confirmed -> '{order.State.Name}'");
+        Console.WriteLine($"      CanModify: {order.State.CanModify}");
+        Console.WriteLine($"      Allowed transitions: {string.Join(", ", order.State.AllowedTransitions.Select(s => s.Name))}");
+        context.SmartOrders.Add(order);
+    })
+    .Bind(order => order.Ship())
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order shipped -> '{order.State.Name}'");
+        Console.WriteLine($"      CanCancel: {order.State.CanCancel} (too late to cancel!)");
+    })
+    .Bind(order => order.Deliver())
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order delivered -> '{order.State.Name}'");
+        Console.WriteLine($"      IsTerminal: {order.State.IsTerminal}");
+    })
+    .TapOnFailure(error => Console.WriteLine($"    ✗ Failed: {error.Detail}"));
+
+await context.SaveChangesAsync();
+Console.WriteLine();
+
+// Demonstrate invalid transitions
+Console.WriteLine("  Testing invalid state transitions...");
+SmartOrder.TryCreate(customer.Id)
+    .Bind(order => order.AddLine(products[1], 1))
+    .Bind(order =>
+    {
+        // Try to ship without confirming first - should fail!
+        Console.WriteLine("    Trying to ship an unconfirmed order...");
+        return order.Ship();
+    })
+    .Tap(_ => Console.WriteLine("    ✓ Unexpected success"))
+    .TapOnFailure(error => Console.WriteLine($"    ✗ Correctly rejected: {error.Detail}"));
+
+Console.WriteLine();
+
+// Demonstrate trying to cancel a shipped order
+SmartOrder.TryCreate(customer.Id)
+    .Bind(order => order.AddLine(products[2], 1))
+    .Bind(order => order.Confirm())
+    .Bind(order => order.Ship())
+    .Bind(order =>
+    {
+        Console.WriteLine("    Trying to cancel a shipped order...");
+        return order.Cancel();
+    })
+    .Tap(_ => Console.WriteLine("    ✓ Unexpected success"))
+    .TapOnFailure(error => Console.WriteLine($"    ✗ Correctly rejected: {error.Detail}"));
+
+Console.WriteLine();
+
+// Query SmartOrders and show state is persisted
+Console.WriteLine("  Querying SmartOrders from database...");
+var smartOrders = await context.SmartOrders.ToListAsync();
+foreach (var so in smartOrders)
+{
+    Console.WriteLine($"    Order {so.Id}: State={so.State.Name}, CanCancel={so.State.CanCancel}");
+}
+
+Console.WriteLine();
+
+// =============================================================================
+// 8. TYPE SAFETY DEMONSTRATION
 // =============================================================================
 Console.WriteLine("🛡️  Type Safety Demonstration...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
@@ -206,10 +290,12 @@ Console.WriteLine("  The following would NOT compile:");
 Console.WriteLine("    // OrderId orderId = CustomerId.NewUnique();  // Error!");
 Console.WriteLine("    // ProductId productId = OrderId.NewUnique(); // Error!");
 Console.WriteLine("    // context.Customers.Find(orderId);           // Error!");
+Console.WriteLine("    // var status = (OrderState)999;              // Error! SmartEnum prevents this");
 Console.WriteLine();
 Console.WriteLine("  This is the power of strongly-typed value objects:");
 Console.WriteLine("    - Cannot accidentally mix OrderId with CustomerId");
 Console.WriteLine("    - Cannot pass ProductId where CustomerId is expected");
+Console.WriteLine("    - SmartEnum prevents invalid enum values at compile/runtime");
 Console.WriteLine("    - Compile-time safety prevents runtime bugs");
 Console.WriteLine();
 
@@ -223,6 +309,7 @@ Console.WriteLine("║  ✓ RequiredUlid<T>   - Time-ordered, sortable identifie
 Console.WriteLine("║  ✓ RequiredGuid<T>   - Traditional GUID identifiers              ║");
 Console.WriteLine("║  ✓ RequiredString<T> - Non-empty string validation               ║");
 Console.WriteLine("║  ✓ EmailAddress      - RFC 5322 email validation                 ║");
+Console.WriteLine("║  ✓ SmartEnum<T>      - Type-safe enums with behavior             ║");
 Console.WriteLine("║  ✓ EF Core           - Seamless persistence with converters      ║");
 Console.WriteLine("║  ✓ ROP               - Railway Oriented Programming for errors   ║");
 Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");

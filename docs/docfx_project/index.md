@@ -185,6 +185,36 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
+### Smart Enums — Type-Safe Enumerations with Behavior
+
+Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values.
+
+```csharp
+public class OrderState : SmartEnum<OrderState>
+{
+    public static readonly OrderState Draft = new(1, "Draft", canModify: true);
+    public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false);
+    public static readonly OrderState Shipped = new(3, "Shipped", canModify: false);
+    
+    public bool CanModify { get; }
+    private OrderState(int value, string name, bool canModify) : base(value, name) 
+        => CanModify = canModify;
+
+    // State machine transitions
+    public Result<OrderState> TryTransitionTo(OrderState newState) =>
+        CanTransitionTo(newState) 
+            ? newState 
+            : Error.Validation($"Cannot transition from {Name} to {newState.Name}");
+}
+
+// Usage
+if (order.State.CanModify)
+    order.AddLine(product, quantity);
+
+order.State.TryTransitionTo(OrderState.Confirmed)
+    .Tap(newState => order.State = newState);
+```
+
 ---
 
 ## Rich Error Types
@@ -284,6 +314,7 @@ Model your **business domain** with rich types that enforce rules at compile tim
 - **Value Objects** - Immutable, validated primitives (`EmailAddress`, `Money`)
 - **Entities** - Objects with identity (`Customer`, `Order`)
 - **Aggregates** - Consistency boundaries with domain events
+- **Smart Enums** - Type-safe enumerations with behavior (`OrderState`, `PaymentMethod`)
 
 **Learn more:** [Domain-Driven Design in Practice (Pluralsight)](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)
 
@@ -295,7 +326,7 @@ Model your **business domain** with rich types that enforce rules at compile tim
 # Core library - Railway Oriented Programming
 dotnet add package FunctionalDdd.RailwayOrientedProgramming
 
-# Domain-Driven Design - Entities, Aggregates, Value Objects
+# Domain-Driven Design - Entities, Aggregates, Value Objects, Smart Enums
 dotnet add package FunctionalDdd.DomainDrivenDesign
 
 # ASP.NET Core integration - ToActionResult, ToHttpResult

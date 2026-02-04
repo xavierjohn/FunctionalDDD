@@ -221,6 +221,7 @@ Robust, Maintainable Software
 ## What's New
 
 **Recent enhancements:**
+- 🎯 **NEW: SmartEnum** - Type-safe enumerations with behavior, state machine support, and JSON serialization. Prevents invalid values unlike C# enums.
 - 🔍 **NEW: Roslyn Analyzers** - 14 compile-time diagnostics to enforce ROP best practices and prevent common mistakes with Result/Maybe types
 - ✨ **ASP.NET Core Auto-Validation** - Value objects automatically validate in requests (route params, query strings, JSON bodies) via `AddScalarValueObjectValidation()`
 - 🎯 **11 New Value Objects** - Ready-to-use: `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, plus `RequiredInt`/`RequiredDecimal`
@@ -245,7 +246,7 @@ Robust, Maintainable Software
 | **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](PrimitiveValueObjects/README.md) |
 | **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
 | **[Analyzers](https://www.nuget.org/packages/FunctionalDdd.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDdd.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [📖 Docs](Analyzers/README.md) |
-| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
+| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, SmartEnum, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/FunctionalDdd.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
 
 ---

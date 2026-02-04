@@ -73,6 +73,55 @@ public class Money : ValueObject
 }
 ```
 
+### SmartEnum
+
+Type-safe enumerations with behavior. Unlike C# enums, SmartEnums prevent invalid values and can encapsulate domain logic.
+
+```csharp
+[JsonConverter(typeof(SmartEnumJsonConverter<OrderState>))]
+public class OrderState : SmartEnum<OrderState>
+{
+    public static readonly OrderState Draft = new(1, "Draft", canModify: true, canCancel: true);
+    public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false, canCancel: true);
+    public static readonly OrderState Shipped = new(3, "Shipped", canModify: false, canCancel: false);
+    public static readonly OrderState Delivered = new(4, "Delivered", canModify: false, canCancel: false);
+
+    public bool CanModify { get; }
+    public bool CanCancel { get; }
+
+    private OrderState(int value, string name, bool canModify, bool canCancel) 
+        : base(value, name)
+    {
+        CanModify = canModify;
+        CanCancel = canCancel;
+    }
+
+    public IReadOnlyList<OrderState> AllowedTransitions => this switch
+    {
+        _ when this == Draft => [Confirmed],
+        _ when this == Confirmed => [Shipped],
+        _ when this == Shipped => [Delivered],
+        _ => []
+    };
+
+    public Result<OrderState> TryTransitionTo(OrderState newState) =>
+        AllowedTransitions.Contains(newState)
+            ? newState
+            : Error.Validation($"Cannot transition from '{Name}' to '{newState.Name}'");
+}
+
+// Usage
+var state = OrderState.TryFromName("Draft");           // Result<OrderState>
+var state2 = OrderState.TryFromValue(1);               // Result<OrderState>
+var all = OrderState.GetAll();                         // All defined states
+
+if (order.State.CanModify)
+    order.AddLine(product, quantity);
+
+order.State.TryTransitionTo(OrderState.Confirmed)
+    .Tap(newState => order.State = newState);
+```
+
 ### Aggregate
 
 Cluster of entities and value objects treated as a unit. Manages domain events.
@@ -235,6 +284,12 @@ public decimal Amount { get; set; }
 - Type safety for primitives
 - Implicit conversion to `T`
 
+### SmartEnum<T>
+- Type-safe enumeration with behavior
+- Prevents invalid values (unlike C# enums)
+- Supports state machine patterns
+- Built-in JSON serialization
+
 ### Aggregate<TId>
 - Consistency boundary
 - Manages domain events
@@ -251,6 +306,7 @@ public decimal Amount { get; set; }
 - **[Main Documentation](https://github.com/xavierjohn/FunctionalDDD)** - Full repository documentation
 - **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** - Result type and functional patterns
 - **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** - RequiredString, RequiredGuid, EmailAddress
+- **[Ardalis.SmartEnum](https://github.com/ardalis/SmartEnum)** - Inspiration for SmartEnum pattern
 
 ## License
 

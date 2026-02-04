@@ -2,7 +2,9 @@
 
 using System.Globalization;
 using EfCoreExample.Entities;
+using EfCoreExample.SmartEnums;
 using EfCoreExample.ValueObjects;
+using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +19,11 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
 
+    /// <summary>
+    /// Orders using SmartEnum for state - demonstrates rich domain behavior.
+    /// </summary>
+    public DbSet<SmartOrder> SmartOrders => Set<SmartOrder>();
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
@@ -29,6 +36,7 @@ public class AppDbContext : DbContext
         ConfigureProduct(modelBuilder);
         ConfigureOrder(modelBuilder);
         ConfigureOrderLine(modelBuilder);
+        ConfigureSmartOrder(modelBuilder);
     }
 
     private static void ConfigureCustomer(ModelBuilder modelBuilder) =>
@@ -173,5 +181,51 @@ public class AppDbContext : DbContext
 
             // Ignore computed property
             builder.Ignore(l => l.LineTotal);
+        });
+
+    /// <summary>
+    /// Configures the SmartOrder entity demonstrating SmartEnum persistence.
+    /// </summary>
+    private static void ConfigureSmartOrder(ModelBuilder modelBuilder) =>
+        modelBuilder.Entity<SmartOrder>(builder =>
+        {
+            builder.HasKey(o => o.Id);
+
+            // RequiredUlid<OrderId> -> Ulid -> string
+            builder.Property(o => o.Id)
+                .HasConversion(
+                    id => id.Value.ToString(),
+                    str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+
+            // Foreign key to Customer using ULID
+            builder.Property(o => o.CustomerId)
+                .HasConversion(
+                    id => id.Value.ToString(),
+                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+
+            // ✨ SmartEnum -> stored as string Name for readability
+            // Alternative: store as int Value for efficiency
+            builder.Property(o => o.State)
+                .HasConversion(
+                    state => state.Name,  // Store the name (human-readable)
+                    name => OrderState.FromName(name))  // Restore from name
+                .HasMaxLength(20)
+                .IsRequired();
+
+            builder.Property(o => o.CreatedAt).IsRequired();
+            builder.Property(o => o.ConfirmedAt);
+            builder.Property(o => o.ShippedAt);
+            builder.Property(o => o.DeliveredAt);
+            builder.Property(o => o.CancelledAt);
+
+            // Ignore computed property
+            builder.Ignore(o => o.Total);
+
+            // Note: For simplicity, we're not configuring the Lines relationship here
+            // In a real app, you'd configure it similar to Order
         });
 }

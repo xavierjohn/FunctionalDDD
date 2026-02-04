@@ -45,11 +45,13 @@
   - name: Clean Architecture Example
     href: clean-architecture.md
 - name: Design Patterns
-  items:
-  - name: Aggregate Factory Pattern
-    href: aggregate-factory-pattern.md
-  - name: Specification Pattern Alternative
-    href: specification-pattern.md
+items:
+- name: Aggregate Factory Pattern
+  href: aggregate-factory-pattern.md
+- name: Specification Pattern Alternative
+  href: specification-pattern.md
+- name: Smart Enums
+  href: smart-enums.md
 - name: Analyzers
   href: analyzers/toc.yml
 - name: Advanced

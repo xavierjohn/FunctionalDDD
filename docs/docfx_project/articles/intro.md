@@ -100,18 +100,30 @@ return FirstName.TryCreate(input.FirstName)
 
 ## Domain-Driven Design
 
-Build rich domain models with **Aggregates**, **Entities**, and **Value Objects** that enforce business rules and maintain valid state.
+Build rich domain models with **Aggregates**, **Entities**, **Value Objects**, and **Smart Enums** that enforce business rules and maintain valid state.
 
 **Key DDD building blocks:**
 - **Aggregates** - Consistency boundaries with domain events (e.g., `Order`, `Customer`)
 - **Entities** - Objects with identity that change over time (e.g., `User`, `Product`)
 - **Value Objects** - Immutable objects defined by their values (e.g., `EmailAddress`, `Money`)
 - **Scalar Value Objects** - Single-value wrappers with validation (e.g., `FirstName`, `Age`)
+- **Smart Enums** - Type-safe enumerations with behavior and state machine support (e.g., `OrderState`, `PaymentStatus`)
 
 **Quick example:**
 ```csharp
 // Value object with validation
 public partial class EmailAddress : RequiredString { }
+
+// Smart enum with behavior
+public class OrderState : SmartEnum<OrderState>
+{
+    public static readonly OrderState Draft = new(1, "Draft", canModify: true);
+    public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false);
+    
+    public bool CanModify { get; }
+    private OrderState(int value, string name, bool canModify) : base(value, name) 
+        => CanModify = canModify;
+}
 
 // Use in domain entity
 public class User : Entity<UserId>
