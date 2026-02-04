@@ -317,29 +317,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a Guid. Throws if validation fails.
+        /// Use this for known-valid values in tests or with constants.
         /// </summary>
         /// <param name=""value"">The Guid value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(Guid value, string? fieldName = null)
+        public static new {g.ClassName} Create(Guid value)
         {{
-            var result = TryCreate(value, fieldName);
-            if (result.IsFailure)
-                throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
-            return result.Value;
-        }}
-
-        /// <summary>
-        /// Creates a validated instance from a nullable Guid. Throws if validation fails.
-        /// </summary>
-        /// <param name=""requiredGuidOrNothing"">The nullable Guid value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
-        /// <returns>The validated value object.</returns>
-        /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(Guid? requiredGuidOrNothing, string? fieldName = null)
-        {{
-            var result = TryCreate(requiredGuidOrNothing, fieldName);
+            var result = TryCreate(value, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -347,14 +332,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a string by parsing it as a Guid. Throws if validation or parsing fails.
+        /// Use this for known-valid GUID strings in tests or with constants.
         /// </summary>
-        /// <param name=""stringOrNull"">The string value to parse and validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <param name=""stringValue"">The string value to parse and validate.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation or parsing fails.</exception>
-        public static {g.ClassName} Create(string? stringOrNull, string? fieldName = null)
+        public static {g.ClassName} Create(string stringValue)
         {{
-            var result = TryCreate(stringOrNull, fieldName);
+            var result = TryCreate(stringValue, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -414,29 +399,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a Ulid. Throws if validation fails.
+        /// Use this for known-valid values in tests or with constants.
         /// </summary>
         /// <param name=""value"">The Ulid value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(Ulid value, string? fieldName = null)
+        public static new {g.ClassName} Create(Ulid value)
         {{
-            var result = TryCreate(value, fieldName);
-            if (result.IsFailure)
-                throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
-            return result.Value;
-        }}
-
-        /// <summary>
-        /// Creates a validated instance from a nullable Ulid. Throws if validation fails.
-        /// </summary>
-        /// <param name=""requiredUlidOrNothing"">The nullable Ulid value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
-        /// <returns>The validated value object.</returns>
-        /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(Ulid? requiredUlidOrNothing, string? fieldName = null)
-        {{
-            var result = TryCreate(requiredUlidOrNothing, fieldName);
+            var result = TryCreate(value, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -444,14 +414,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a string by parsing it as a Ulid. Throws if validation or parsing fails.
+        /// Use this for known-valid ULID strings in tests or with constants.
         /// </summary>
-        /// <param name=""stringOrNull"">The string value to parse and validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <param name=""stringValue"">The string value to parse and validate.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation or parsing fails.</exception>
-        public static {g.ClassName} Create(string? stringOrNull, string? fieldName = null)
+        public static {g.ClassName} Create(string stringValue)
         {{
-            var result = TryCreate(stringOrNull, fieldName);
+            var result = TryCreate(stringValue, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -548,29 +518,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from an integer. Throws if validation fails.
+        /// Use this for known-valid values in tests or with constants.
         /// </summary>
         /// <param name=""value"">The integer value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(int value, string? fieldName = null)
+        public static new {g.ClassName} Create(int value)
         {{
-            var result = TryCreate(value, fieldName);
-            if (result.IsFailure)
-                throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
-            return result.Value;
-        }}
-
-        /// <summary>
-        /// Creates a validated instance from a nullable integer. Throws if validation fails.
-        /// </summary>
-        /// <param name=""valueOrNothing"">The nullable integer value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
-        /// <returns>The validated value object.</returns>
-        /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(int? valueOrNothing, string? fieldName = null)
-        {{
-            var result = TryCreate(valueOrNothing, fieldName);
+            var result = TryCreate(value, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -578,14 +533,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a string by parsing it as an integer. Throws if validation or parsing fails.
+        /// Use this for known-valid integer strings in tests or with constants.
         /// </summary>
-        /// <param name=""stringOrNull"">The string value to parse and validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <param name=""stringValue"">The string value to parse and validate.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation or parsing fails.</exception>
-        public static {g.ClassName} Create(string? stringOrNull, string? fieldName = null)
+        public static {g.ClassName} Create(string stringValue)
         {{
-            var result = TryCreate(stringOrNull, fieldName);
+            var result = TryCreate(stringValue, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -643,29 +598,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a decimal. Throws if validation fails.
+        /// Use this for known-valid values in tests or with constants.
         /// </summary>
         /// <param name=""value"">The decimal value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(decimal value, string? fieldName = null)
+        public static new {g.ClassName} Create(decimal value)
         {{
-            var result = TryCreate(value, fieldName);
-            if (result.IsFailure)
-                throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
-            return result.Value;
-        }}
-
-        /// <summary>
-        /// Creates a validated instance from a nullable decimal. Throws if validation fails.
-        /// </summary>
-        /// <param name=""valueOrNothing"">The nullable decimal value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
-        /// <returns>The validated value object.</returns>
-        /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static {g.ClassName} Create(decimal? valueOrNothing, string? fieldName = null)
-        {{
-            var result = TryCreate(valueOrNothing, fieldName);
+            var result = TryCreate(value, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
@@ -673,14 +613,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
         /// <summary>
         /// Creates a validated instance from a string by parsing it as a decimal. Throws if validation or parsing fails.
+        /// Use this for known-valid decimal strings in tests or with constants.
         /// </summary>
-        /// <param name=""stringOrNull"">The string value to parse and validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <param name=""stringValue"">The string value to parse and validate.</param>
         /// <returns>The validated value object.</returns>
         /// <exception cref=""InvalidOperationException"">Thrown when validation or parsing fails.</exception>
-        public static {g.ClassName} Create(string? stringOrNull, string? fieldName = null)
+        public static {g.ClassName} Create(string stringValue)
         {{
-            var result = TryCreate(stringOrNull, fieldName);
+            var result = TryCreate(stringValue, null);
             if (result.IsFailure)
                 throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
             return result.Value;
