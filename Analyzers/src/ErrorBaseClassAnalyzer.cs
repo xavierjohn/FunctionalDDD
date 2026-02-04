@@ -51,24 +51,10 @@ public sealed class ErrorBaseClassAnalyzer : DiagnosticAnalyzer
     }
 
     // Check if type is the Error base class from FunctionalDdd (not a derived type)
-    private static bool IsErrorBaseClass(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol.Name != "Error")
-            return false;
-
-        if (typeSymbol.ContainingNamespace?.ToDisplayString() != "FunctionalDdd")
-            return false;
-
-        // Check if it's exactly the Error class, not a derived type
+    private static bool IsErrorBaseClass(ITypeSymbol typeSymbol) =>
+        // Check if it's exactly the Error class from FunctionalDdd namespace
         // The base Error class is just "Error", derived types have different names
         // (ValidationError, NotFoundError, etc.)
-        if (typeSymbol is INamedTypeSymbol namedType)
-        {
-            // If the type name is exactly "Error" and it's from FunctionalDdd namespace,
-            // it's the base class
-            return true;
-        }
-
-        return false;
-    }
+        typeSymbol.Name == "Error" &&
+        typeSymbol.ContainingNamespace?.ToDisplayString() == "FunctionalDdd";
 }

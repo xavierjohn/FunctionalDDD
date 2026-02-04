@@ -201,54 +201,6 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool IsConditionCheckingProperty(
-        ExpressionSyntax condition,
-        ExpressionSyntax targetExpression,
-        string propertyName,
-        bool expectedValue,
-        SemanticModel semanticModel)
-    {
-        // Handle simple property access: result.IsSuccess
-        if (condition is MemberAccessExpressionSyntax conditionMemberAccess &&
-            conditionMemberAccess.Name.Identifier.Text == propertyName)
-        {
-            return AreSameVariable(conditionMemberAccess.Expression, targetExpression, semanticModel) && expectedValue;
-        }
-
-        // Handle negation: !result.IsSuccess
-        if (condition is PrefixUnaryExpressionSyntax { Operand: MemberAccessExpressionSyntax negatedMemberAccess } prefixUnary &&
-            prefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
-            negatedMemberAccess.Name.Identifier.Text == propertyName)
-        {
-            return AreSameVariable(negatedMemberAccess.Expression, targetExpression, semanticModel) && !expectedValue;
-        }
-
-        // Handle equality: result.IsSuccess == true
-        if (condition is BinaryExpressionSyntax binaryExpression)
-        {
-            if (binaryExpression.IsKind(SyntaxKind.EqualsExpression) ||
-                binaryExpression.IsKind(SyntaxKind.NotEqualsExpression))
-            {
-                var left = binaryExpression.Left;
-                var right = binaryExpression.Right;
-
-                if (left is MemberAccessExpressionSyntax leftMemberAccess &&
-                    leftMemberAccess.Name.Identifier.Text == propertyName &&
-                    right is LiteralExpressionSyntax literal)
-                {
-                    var literalValue = literal.IsKind(SyntaxKind.TrueLiteralExpression);
-                    var isEquals = binaryExpression.IsKind(SyntaxKind.EqualsExpression);
-                    var effectiveValue = isEquals ? literalValue : !literalValue;
-
-                    return AreSameVariable(leftMemberAccess.Expression, targetExpression, semanticModel) &&
-                           effectiveValue == expectedValue;
-                }
-            }
-        }
-
-        return false;
-    }
-
     private static bool AreSameVariable(ExpressionSyntax expr1, ExpressionSyntax expr2, SemanticModel semanticModel)
     {
         var symbol1 = semanticModel.GetSymbolInfo(expr1).Symbol;
