@@ -16,13 +16,15 @@
   href: FDDD007.md
 - name: FDDD008 - Result double-wrapped
   href: FDDD008.md
-- name: FDDD010 - Incorrect async Result usage
+- name: FDDD009 - Incorrect async Result usage
+  href: FDDD009.md
+- name: FDDD010 - Use specific error type
   href: FDDD010.md
-- name: FDDD011 - Use specific error type
+- name: FDDD011 - Maybe double-wrapped
   href: FDDD011.md
-- name: FDDD012 - Maybe double-wrapped
+- name: FDDD012 - Use Result.Combine
   href: FDDD012.md
-- name: FDDD013 - Use Result.Combine
+- name: FDDD013 - Use GetValueOrDefault or Match
   href: FDDD013.md
-- name: FDDD014 - Use GetValueOrDefault or Match
+- name: FDDD014 - Use async method variant
   href: FDDD014.md

@@ -194,4 +194,18 @@ public static class DiagnosticDescriptors
         description: "The pattern 'result.IsSuccess ? result.Value : default' can be replaced with GetValueOrDefault() or Match() " +
                      "for more idiomatic and safer code.",
         helpLinkUri: HelpLinkBase + "FDDD013");
+
+    /// <summary>
+    /// FDDD014: Using async lambda with synchronous Map/Bind instead of async variant.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UseAsyncMethodVariant = new(
+        id: "FDDD014",
+        title: "Use async method variant for async lambda",
+        messageFormat: "Use '{0}' instead of '{1}' when the lambda is async",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "When using an async lambda with Map, Bind, Tap, or Ensure, use the async variant (MapAsync, BindAsync, etc.) " +
+                     "to properly handle the async operation. Using sync methods with async lambdas causes the Task to not be awaited.",
+        helpLinkUri: HelpLinkBase + "FDDD014");
 }

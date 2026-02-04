@@ -1,133 +1,166 @@
-﻿# FDDD013: Consider using Result.Combine
+﻿# FDDD013: Consider using GetValueOrDefault or Match
 
 ## Cause
 
-Manually checking `IsSuccess` on multiple `Result<T>` values when `Result.Combine()` provides a cleaner alternative.
+Using the ternary operator pattern `result.IsSuccess ? result.Value : defaultValue` when `GetValueOrDefault()` or `Match()` provides a more functional and safer alternative.
 
 ## Rule Description
 
-When you need to validate multiple inputs and proceed only if all are successful, `Result.Combine()` provides a declarative approach that:
-- Automatically collects all validation errors
-- Returns success only if all inputs are successful
-- Reduces boilerplate code
+The pattern `result.IsSuccess ? result.Value : defaultValue` is verbose and can be replaced with more idiomatic functional methods:
+- `GetValueOrDefault()` for simple fallback values
+- `Match()` for transformations or side effects
 
 ## How to Fix Violations
 
-Replace manual checks with `Result.Combine()`:
+### Option 1: Use GetValueOrDefault
 
 ```csharp
-// ❌ Verbose - Manual checks
-var emailResult = EmailAddress.TryCreate(dto.Email);
-var phoneResult = PhoneNumber.TryCreate(dto.Phone);
+// ❌ Verbose - Ternary operator
+var customer = result.IsSuccess ? result.Value : defaultCustomer;
 
-if (emailResult.IsFailure)
-    return emailResult.Error;
-if (phoneResult.IsFailure)
-    return phoneResult.Error;
+// ✅ Concise - GetValueOrDefault
+var customer = result.GetValueOrDefault(defaultCustomer);
+```
 
-var customer = Customer.Create(emailResult.Value, phoneResult.Value);
+### Option 2: Use Match
 
-// ✅ Concise - Result.Combine
-return Result.Combine(
-        EmailAddress.TryCreate(dto.Email),
-        PhoneNumber.TryCreate(dto.Phone))
-    .Bind((email, phone) => Customer.Create(email, phone));
+```csharp
+// ❌ Verbose - Ternary with transformation
+var dto = result.IsSuccess ? result.Value.ToDto() : DefaultDto();
+
+// ✅ Better - Match with transformation
+var dto = result.Match(
+    onSuccess: customer => customer.ToDto(),
+    onFailure: _ => DefaultDto());
 ```
 
 ## Examples
 
-### Example 1: Combining 2 Results
+### Example 1: Simple Fallback
 
 ```csharp
-public Result<Customer> CreateCustomer(CreateCustomerDto dto)
-{
-    return Result.Combine(
-            EmailAddress.TryCreate(dto.Email),
-            Name.TryCreate(dto.Name))
-        .Map((email, name) => new Customer(email, name));
-}
+// ❌ Ternary
+var email = emailResult.IsSuccess 
+    ? emailResult.Value 
+    : EmailAddress.Create("noreply@example.com");
+
+// ✅ GetValueOrDefault
+var email = emailResult.GetValueOrDefault(
+    EmailAddress.Create("noreply@example.com"));
 ```
 
-### Example 2: Combining 3 Results
+### Example 2: Fallback to Default Struct Value
 
 ```csharp
-public Result<Address> CreateAddress(AddressDto dto)
-{
-    return Result.Combine(
-            Street.TryCreate(dto.Street),
-            City.TryCreate(dto.City),
-            PostalCode.TryCreate(dto.PostalCode))
-        .Map((street, city, postalCode) => 
-            new Address(street, city, postalCode));
-}
+// ❌ Ternary
+var id = idResult.IsSuccess ? idResult.Value : Guid.Empty;
+
+// ✅ GetValueOrDefault with default
+var id = idResult.GetValueOrDefault();  // Uses default(Guid) = Guid.Empty
 ```
 
-### Example 3: Combining up to 9 Results
+### Example 3: With Transformation
 
 ```csharp
-// Result.Combine supports 2-9 tuple combinations
-return Result.Combine(r1, r2, r3, r4, r5, r6, r7, r8, r9)
-    .Map((v1, v2, v3, v4, v5, v6, v7, v8, v9) => 
-        CreateEntity(v1, v2, v3, v4, v5, v6, v7, v8, v9));
+// ❌ Ternary with transformation
+var displayName = nameResult.IsSuccess 
+    ? nameResult.Value.ToString() 
+    : "Unknown";
+
+// ✅ Match
+var displayName = nameResult.Match(
+    onSuccess: name => name.ToString(),
+    onFailure: _ => "Unknown");
+```
+
+### Example 4: Error-Dependent Fallback
+
+```csharp
+// ❌ Can't easily access error details
+var message = result.IsSuccess 
+    ? "Success" 
+    : "Failed";  // Lost error information
+
+// ✅ Match with error details
+var message = result.Match(
+    onSuccess: _ => "Success",
+    onFailure: error => $"Failed: {error.Detail}");
+```
+
+## GetValueOrDefault Overloads
+
+```csharp
+// Uses default(T) as fallback
+result.GetValueOrDefault()
+
+// Uses provided value as fallback
+result.GetValueOrDefault(customDefault)
+
+// Uses factory function as fallback (lazily evaluated)
+result.GetValueOrDefault(() => CreateDefault())
+```
+
+## Match Variants
+
+```csharp
+// Match for transformations
+var output = result.Match(
+    onSuccess: value => TransformValue(value),
+    onFailure: error => HandleError(error));
+
+// Match for side effects (void return)
+result.Match(
+    onSuccess: value => Console.WriteLine(value),
+    onFailure: error => Logger.LogError(error.Detail));
+
+// MatchAsync for async transformations
+var output = await result.MatchAsync(
+    onSuccess: async value => await TransformAsync(value),
+    onFailure: error => Task.FromResult(default));
 ```
 
 ## Benefits
 
-### Collects All Errors
+### Null Safety
 
 ```csharp
-// Manual approach - Returns first error only
-var emailResult = EmailAddress.TryCreate(invalidEmail);
-if (emailResult.IsFailure)
-    return emailResult.Error;  // Returns immediately
+// ❌ Ternary - Can accidentally access Value on failure
+var name = result.IsSuccess ? result.Value : defaultName;
+// If you mistype IsFailure, you get an exception!
 
-var phoneResult = PhoneNumber.TryCreate(invalidPhone);
-if (phoneResult.IsFailure)
-    return phoneResult.Error;  // Never reached if email failed
-
-// Result.Combine - Can collect all errors
-Result.Combine(
-    EmailAddress.TryCreate(invalidEmail),
-    PhoneNumber.TryCreate(invalidPhone))
-// Returns both errors if both fail!
+// ✅ GetValueOrDefault - Can't access Value incorrectly
+var name = result.GetValueOrDefault(defaultName);
 ```
 
-### Declarative Intent
+### Functional Composition
 
 ```csharp
-// ✅ Clear intent - "combine these validations"
-Result.Combine(
-    ValidateEmail(dto.Email),
-    ValidateAge(dto.Age),
-    ValidateAddress(dto.Address))
+// ✅ Chainable
+return GetCustomer(id)
+    .Match(
+        onSuccess: customer => customer.Email,
+        onFailure: _ => EmailAddress.Create("noreply@example.com"))
+    .ToString();
 ```
 
-## When to Use Manual Checks
+## When to Use Ternary
 
-Use manual checks when:
-- You need short-circuit behavior (stop at first error)
-- You have conditional validation logic
-- The results are not independent
+Use the ternary operator when:
+- You're checking other properties (not just `IsSuccess`)
+- The logic is complex and doesn't fit `Match`
 
 ```csharp
-// Manual checks appropriate here - conditional logic
-var userResult = GetUser(userId);
-if (userResult.IsFailure)
-    return userResult.Error;
-
-// Only validate permissions if user exists
-var permissionResult = ValidatePermissions(userResult.Value);
-if (permissionResult.IsFailure)
-    return permissionResult.Error;
+// Ternary appropriate - checking different property
+var count = list.Count > 0 ? list.Count : defaultCount;
 ```
 
 ## When to Suppress Warnings
 
 This is a suggestion-level diagnostic. Suppress it if:
-- You need short-circuit behavior
-- You prefer explicit control flow
-- You're validating a variable number of items
+- You prefer explicit ternary operators for clarity
+- The pattern doesn't fit `GetValueOrDefault` or `Match`
+- You're working with legacy code
 
 ## Related Rules
 
-None - this is a suggestion to improve code clarity.
+- [FDDD003](FDDD003.md) - Unsafe access to Result.Value

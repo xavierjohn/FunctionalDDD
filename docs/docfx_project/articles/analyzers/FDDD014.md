@@ -1,166 +1,125 @@
-﻿# FDDD014: Consider using GetValueOrDefault or Match
+﻿# FDDD014: Use async method variant for async lambda
 
 ## Cause
 
-Using the ternary operator pattern `result.IsSuccess ? result.Value : defaultValue` when `GetValueOrDefault()` or `Match()` provides a more functional and safer alternative.
+Using a synchronous ROP method (Map, Bind, Tap, Ensure, TapOnFailure) with an async lambda, which results in the async operation not being properly awaited.
 
 ## Rule Description
 
-The pattern `result.IsSuccess ? result.Value : defaultValue` is verbose and can be replaced with more idiomatic functional methods:
-- `GetValueOrDefault()` for simple fallback values
-- `Match()` for transformations or side effects
+When you pass an async lambda to a synchronous method like `Map`, the result type becomes `Result<Task<T>>` instead of `Task<Result<T>>`. This means:
+
+- The async operation may not complete before you try to use the result
+- The Task is never awaited
+- Exceptions in the async operation may be unobserved
+
+Always use the async variant (`MapAsync`, `BindAsync`, etc.) when your lambda is async.
 
 ## How to Fix Violations
 
-### Option 1: Use GetValueOrDefault
+Replace the sync method with its async variant:
 
 ```csharp
-// ❌ Verbose - Ternary operator
-var customer = result.IsSuccess ? result.Value : defaultCustomer;
+// ❌ Bad - Map with async lambda creates Result<Task<T>>
+var result = userResult.Map(async user => await SendEmailAsync(user));
 
-// ✅ Concise - GetValueOrDefault
-var customer = result.GetValueOrDefault(defaultCustomer);
-```
-
-### Option 2: Use Match
-
-```csharp
-// ❌ Verbose - Ternary with transformation
-var dto = result.IsSuccess ? result.Value.ToDto() : DefaultDto();
-
-// ✅ Better - Match with transformation
-var dto = result.Match(
-    onSuccess: customer => customer.ToDto(),
-    onFailure: _ => DefaultDto());
+// ✅ Good - MapAsync properly handles async lambda
+var result = await userResult.MapAsync(async user => await SendEmailAsync(user));
 ```
 
 ## Examples
 
-### Example 1: Simple Fallback
+### Example 1: Async Map
 
 ```csharp
-// ❌ Ternary
-var email = emailResult.IsSuccess 
-    ? emailResult.Value 
-    : EmailAddress.Create("noreply@example.com");
+// ❌ Bad - Result<Task<EmailResult>> (Task never awaited!)
+var result = emailAddress
+    .Map(async email => await emailService.SendAsync(email));
 
-// ✅ GetValueOrDefault
-var email = emailResult.GetValueOrDefault(
-    EmailAddress.Create("noreply@example.com"));
+// ✅ Good - Task<Result<EmailResult>>
+var result = await emailAddress
+    .MapAsync(async email => await emailService.SendAsync(email));
 ```
 
-### Example 2: Fallback to Default Struct Value
+### Example 2: Async Bind
 
 ```csharp
-// ❌ Ternary
-var id = idResult.IsSuccess ? idResult.Value : Guid.Empty;
+// ❌ Bad
+var result = userId
+    .Bind(async id => await GetUserAsync(id));  // Returns Result<Task<Result<User>>>!
 
-// ✅ GetValueOrDefault with default
-var id = idResult.GetValueOrDefault();  // Uses default(Guid) = Guid.Empty
+// ✅ Good
+var result = await userId
+    .BindAsync(async id => await GetUserAsync(id));  // Returns Task<Result<User>>
 ```
 
-### Example 3: With Transformation
+### Example 3: Async Tap
 
 ```csharp
-// ❌ Ternary with transformation
-var displayName = nameResult.IsSuccess 
-    ? nameResult.Value.ToString() 
-    : "Unknown";
+// ❌ Bad - Side effect may not complete
+var result = order
+    .Tap(async o => await auditService.LogAsync(o));
 
-// ✅ Match
-var displayName = nameResult.Match(
-    onSuccess: name => name.ToString(),
-    onFailure: _ => "Unknown");
+// ✅ Good - Side effect is awaited
+var result = await order
+    .TapAsync(async o => await auditService.LogAsync(o));
 ```
 
-### Example 4: Error-Dependent Fallback
+### Example 4: Method Group
 
 ```csharp
-// ❌ Can't easily access error details
-var message = result.IsSuccess 
-    ? "Success" 
-    : "Failed";  // Lost error information
+// ❌ Bad - ProcessAsync returns Task
+var result = items.Map(ProcessAsync);
 
-// ✅ Match with error details
-var message = result.Match(
-    onSuccess: _ => "Success",
-    onFailure: error => $"Failed: {error.Detail}");
+// ✅ Good
+var result = await items.MapAsync(ProcessAsync);
 ```
 
-## GetValueOrDefault Overloads
+## Async Method Variants
+
+| Sync Method | Async Variant | Use When |
+|-------------|---------------|----------|
+| `Map` | `MapAsync` | Lambda returns `Task<T>` |
+| `Bind` | `BindAsync` | Lambda returns `Task<Result<T>>` |
+| `Tap` | `TapAsync` | Lambda returns `Task` (side effect) |
+| `Ensure` | `EnsureAsync` | Predicate returns `Task<bool>` |
+| `TapOnFailure` | `TapOnFailureAsync` | Lambda returns `Task` (error handling) |
+
+## Code Fix
+
+The code fix automatically replaces the sync method with its async variant:
+
+**Before:**
+```csharp
+result.Map(async x => await ProcessAsync(x))
+```
+
+**After:**
+```csharp
+result.MapAsync(async x => await ProcessAsync(x))
+```
+
+> **Note:** You'll still need to add `await` to the call chain if not already present.
+
+## Why This Matters
+
+When you use `Map` with an async lambda:
 
 ```csharp
-// Uses default(T) as fallback
-result.GetValueOrDefault()
-
-// Uses provided value as fallback
-result.GetValueOrDefault(customDefault)
-
-// Uses factory function as fallback (lazily evaluated)
-result.GetValueOrDefault(() => CreateDefault())
+Result<int> number = Result.Success(42);
+var result = number.Map(async n => await ComputeAsync(n));
+// result is Result<Task<int>>, NOT Task<Result<int>>!
 ```
 
-## Match Variants
-
-```csharp
-// Match for transformations
-var output = result.Match(
-    onSuccess: value => TransformValue(value),
-    onFailure: error => HandleError(error));
-
-// Match for side effects (void return)
-result.Match(
-    onSuccess: value => Console.WriteLine(value),
-    onFailure: error => Logger.LogError(error.Detail));
-
-// MatchAsync for async transformations
-var output = await result.MatchAsync(
-    onSuccess: async value => await TransformAsync(value),
-    onFailure: error => Task.FromResult(default));
-```
-
-## Benefits
-
-### Null Safety
-
-```csharp
-// ❌ Ternary - Can accidentally access Value on failure
-var name = result.IsSuccess ? result.Value : defaultName;
-// If you mistype IsFailure, you get an exception!
-
-// ✅ GetValueOrDefault - Can't access Value incorrectly
-var name = result.GetValueOrDefault(defaultName);
-```
-
-### Functional Composition
-
-```csharp
-// ✅ Chainable
-return GetCustomer(id)
-    .Match(
-        onSuccess: customer => customer.Email,
-        onFailure: _ => EmailAddress.Create("noreply@example.com"))
-    .ToString();
-```
-
-## When to Use Ternary
-
-Use the ternary operator when:
-- You're checking other properties (not just `IsSuccess`)
-- The logic is complex and doesn't fit `Match`
-
-```csharp
-// Ternary appropriate - checking different property
-var count = list.Count > 0 ? list.Count : defaultCount;
-```
-
-## When to Suppress Warnings
-
-This is a suggestion-level diagnostic. Suppress it if:
-- You prefer explicit ternary operators for clarity
-- The pattern doesn't fit `GetValueOrDefault` or `Match`
-- You're working with legacy code
+The `Task` inside the `Result` is never awaited, leading to:
+- Unobserved exceptions
+- Operations that don't complete before you use the result
+- Confusing debugging experiences
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
+- [FDDD009](FDDD009.md) - Incorrect async Result usage (blocking with .Result/.Wait())
+- [FDDD002](FDDD002.md) - Use Bind instead of Map when lambda returns Result
+
+## See Also
+
+- [Async/Await Best Practices](https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming)

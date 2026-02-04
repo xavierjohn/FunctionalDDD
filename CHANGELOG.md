@@ -11,21 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### FunctionalDDD.Analyzers - NEW Package! 🎉
 
-A comprehensive suite of 13 Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:
+A comprehensive suite of 14 Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:
 
 **Safety Rules (Warnings):**
 - **FDDD001**: Detect unhandled Result return values
 - **FDDD003**: Prevent unsafe `Result.Value` access without `IsSuccess` check
 - **FDDD004**: Prevent unsafe `Result.Error` access without `IsFailure` check
 - **FDDD006**: Prevent unsafe `Maybe.Value` access without `HasValue` check
+- **FDDD007**: Suggest `Create()` instead of `TryCreate().Value` for clearer intent
 - **FDDD008**: Detect `Result<Result<T>>` double wrapping
 - **FDDD009**: Prevent blocking on `Task<Result<T>>` with `.Result` or `.Wait()`
 - **FDDD011**: Detect `Maybe<Maybe<T>>` double wrapping
+- **FDDD014**: Detect async lambda used with sync method (Map instead of MapAsync)
 
 **Best Practice Rules (Info):**
 - **FDDD002**: Suggest `Bind` instead of `Map` when lambda returns Result
 - **FDDD005**: Suggest `MatchError` for type-safe error discrimination
-- **FDDD007**: Suggest `Create()` instead of `TryCreate().Value` for clearer intent
 - **FDDD010**: Suggest specific error types instead of base `Error` class
 - **FDDD012**: Suggest `Result.Combine()` for multiple Result checks
 - **FDDD013**: Suggest `GetValueOrDefault`/`Match` instead of ternary operator
@@ -34,7 +35,7 @@ A comprehensive suite of 13 Roslyn analyzers to enforce Railway Oriented Program
 - ✅ Catch common ROP mistakes at compile time
 - ✅ Guide developers toward best practices
 - ✅ Improve code quality and maintainability
-- ✅ 119 comprehensive tests ensuring accuracy
+- ✅ 124 comprehensive tests ensuring accuracy
 
 **Installation:**
 ```bash

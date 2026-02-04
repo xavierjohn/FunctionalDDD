@@ -25,6 +25,7 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 - **Double wrapping (FDDD008)** - Detects `Result<Result<T>>` patterns (usually indicates Map should be Bind)
 - **Wrong method usage (FDDD002)** - Suggests using `Bind` instead of `Map` when lambda returns Result
 - **Async misuse (FDDD009)** - Prevents blocking on `Task<Result<T>>` with `.Result` or `.Wait()`
+- **Async lambda misuse (FDDD014)** - Detects async lambda used with sync method (Map instead of MapAsync)
 - **TryCreate().Value anti-pattern (FDDD007)** - Suggests using `.Create()` for clearer errors
 - **Manual result combination (FDDD012)** - Suggests using `Result.Combine()` for multiple validations
 - **Ternary operator patterns (FDDD013)** - Suggests using `GetValueOrDefault()` or `Match()`
@@ -164,7 +165,7 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 ```xml
 <!-- In .csproj -->
 <PropertyGroup>
-  <NoWarn>$(NoWarn);FDDD001;FDDD002;FDDD003;FDDD004;FDDD005;FDDD006;FDDD007;FDDD008;FDDD009;FDDD010;FDDD011;FDDD012;FDDD013</NoWarn>
+  <NoWarn>$(NoWarn);FDDD001;FDDD002;FDDD003;FDDD004;FDDD005;FDDD006;FDDD007;FDDD008;FDDD009;FDDD010;FDDD011;FDDD012;FDDD013;FDDD014</NoWarn>
 </PropertyGroup>
 ```
 
@@ -185,6 +186,7 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 | FDDD011 | Maybe is double-wrapped (Maybe&lt;Maybe&lt;T&gt;&gt;) | Warning |
 | FDDD012 | Consider using Result.Combine | Info |
 | FDDD013 | Consider using GetValueOrDefault or Match instead of ternary | Info |
+| FDDD014 | Use async method variant for async lambda | Warning |
 
 ## Requirements
 
@@ -196,6 +198,7 @@ dotnet_diagnostic.FDDD007.severity = warning     # Upgrade to warning
 Found a false positive or have suggestions? [Open an issue on GitHub](https://github.com/xavierjohn/FunctionalDDD/issues).
 
 ## Related Packages
+
 
 - [FunctionalDdd.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) - Core Result/Maybe types
 - [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) - ASP.NET Core integration

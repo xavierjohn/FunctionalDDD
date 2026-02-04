@@ -29,22 +29,22 @@ The analyzer package is automatically included when you install any FunctionalDD
 |----|-------|----------|--------------|
 | [FDDD007](FDDD007.md) | Use Create instead of TryCreate().Value | Warning | ✅ |
 
-### Type Safety (FDDD008-FDDD012)
+### Type Safety (FDDD008-FDDD011)
 
 | ID | Title | Severity | Has Code Fix |
 |----|-------|----------|--------------|
 | [FDDD008](FDDD008.md) | Result is double-wrapped | Warning | ❌ |
-| FDDD009 | ~~Maybe.ToResult without error~~ (removed - enforced at compile time) | - | - |
-| [FDDD010](FDDD010.md) | Incorrect async Result usage | Warning | ❌ |
-| [FDDD011](FDDD011.md) | Use specific error type instead of base Error class | Info | ❌ |
-| [FDDD012](FDDD012.md) | Maybe is double-wrapped | Warning | ❌ |
+| [FDDD009](FDDD009.md) | Incorrect async Result usage (blocking) | Warning | ❌ |
+| [FDDD010](FDDD010.md) | Use specific error type instead of base Error class | Info | ❌ |
+| [FDDD011](FDDD011.md) | Maybe is double-wrapped | Warning | ❌ |
 
-### Code Quality (FDDD013-FDDD014)
+### Code Quality (FDDD012-FDDD014)
 
 | ID | Title | Severity | Has Code Fix |
 |----|-------|----------|--------------|
-| [FDDD013](FDDD013.md) | Consider using Result.Combine | Info | ❌ |
-| [FDDD014](FDDD014.md) | Consider using GetValueOrDefault or Match | Info | ❌ |
+| [FDDD012](FDDD012.md) | Consider using Result.Combine | Info | ❌ |
+| [FDDD013](FDDD013.md) | Consider using GetValueOrDefault or Match | Info | ✅ |
+| [FDDD014](FDDD014.md) | Use async method variant for async lambda | Warning | ✅ |
 
 ## Severity Levels
 
@@ -60,6 +60,8 @@ Several analyzers provide automatic code fixes (✅ in the table above):
 - **FDDD004**: Wraps unsafe `result.Error` access in `if (result.IsFailure)` guard
 - **FDDD006**: Wraps unsafe `maybe.Value` access in `if (maybe.HasValue)` guard
 - **FDDD007**: Replaces `TryCreate().Value` with `Create()`
+- **FDDD013**: Replaces ternary with `GetValueOrDefault()` or `Match()`
+- **FDDD014**: Replaces sync method with async variant (e.g., `Map` → `MapAsync`)
 
 ## Configuration
 

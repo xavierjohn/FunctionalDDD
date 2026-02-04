@@ -1,123 +1,85 @@
-﻿# FDDD011: Use specific error type instead of base Error class
+﻿# FDDD011: Maybe is double-wrapped
 
 ## Cause
 
-Instantiating the base `Error` class directly instead of using specific error factory methods like `Error.Validation()`, `Error.NotFound()`, etc.
+A `Maybe<Maybe<T>>` type is detected, indicating that a `Maybe` is wrapped inside another `Maybe`.
 
 ## Rule Description
 
-FunctionalDDD provides specific error types (ValidationError, NotFoundError, UnauthorizedError, etc.) that enable type-safe error handling with `MatchError`.
+`Maybe<Maybe<T>>` is almost always unintended and indicates a logic error. This typically happens when using `Map` with a function that returns `Maybe<T>`.
 
-Using the base `Error` class directly:
-- Prevents type-safe pattern matching
-- Loses semantic information about the error category
-- Makes it harder to handle errors appropriately
+Unlike `Result<T>`, `Maybe<T>` doesn't have a `Bind` operation, which makes composition more challenging. This is by design - `Maybe` is for optional values without context, while `Result` is for operations that can fail with error information.
 
 ## How to Fix Violations
 
-Use specific error factory methods:
+### Option 1: Convert to Result for better composability
 
 ```csharp
-// ❌ Bad - Base Error class
-return Result.Failure<Customer>(new Error("ERR001", "Customer not found"));
+// ❌ Bad - Maybe<Maybe<Customer>>
+Maybe<string> maybeEmail = GetEmail();
+Maybe<Maybe<Customer>> doubleWrapped = maybeEmail.Map(email => FindCustomer(email));
+//                                                              ^^^^^^^^^^^^^^^^^^
+//                                                         Returns Maybe<Customer>
 
-// ✅ Good - Specific error type
-return Result.Failure<Customer>(Error.NotFound("Customer not found"));
+// ✅ Good - Use Result instead
+Result<Customer> result = GetEmail()
+    .ToResult(Error.Validation("Email is required"))
+    .Bind(email => FindCustomer(email)
+        .ToResult(Error.NotFound("Customer not found")));
 ```
 
-## Available Error Types
+### Option 2: Flatten manually (not recommended)
 
-### Validation Errors
 ```csharp
-Error.Validation("Invalid email format")
-Error.Validation("Age must be positive", fieldName: "age")
+// ⚠️ Works but not recommended
+Maybe<string> maybeEmail = GetEmail();
+Maybe<Maybe<Customer>> doubleWrapped = maybeEmail.Map(email => FindCustomer(email));
+Maybe<Customer> flattened = doubleWrapped.HasValue && doubleWrapped.Value.HasValue
+    ? doubleWrapped.Value
+    : Maybe<Customer>.None;
 ```
 
-### Not Found Errors
-```csharp
-Error.NotFound("Customer not found")
-Error.NotFound($"Order {id} does not exist")
-```
+## Why Maybe Doesn't Have Bind
 
-### Unauthorized Errors
-```csharp
-Error.Unauthorized("Invalid credentials")
-Error.Unauthorized("Access denied to resource")
-```
+`Maybe<T>` is intentionally limited to avoid complex compositions:
+- Use `Maybe<T>` for simple optional values (configuration, nullable references)
+- Use `Result<T>` for operations that need composition and error context
 
-### Conflict Errors
-```csharp
-Error.Conflict("Email already exists")
-Error.Conflict("Duplicate order number")
-```
-
-### Unexpected Errors
-```csharp
-Error.Unexpected("Database connection failed")
-Error.Unexpected("External service unavailable")
-```
-
-## Benefits of Specific Error Types
-
-### Type-Safe Error Handling
+## Example Migration
 
 ```csharp
-return result.MatchError(
-    onValidationError: ve => BadRequest(ve.Detail),
-    onNotFoundError: nfe => NotFound(nfe.Detail),
-    onUnauthorizedError: ue => Unauthorized(ue.Detail),
-    onConflictError: ce => Conflict(ce.Detail),
-    onOtherError: e => StatusCode(500, e.Detail));
-```
-
-### Clear Semantics
-
-```csharp
-// ❌ Unclear - What kind of error is this?
-Error.Create("ERR001", "Operation failed")
-
-// ✅ Clear - Immediately obvious this is a validation error
-Error.Validation("Email is required", "email")
-```
-
-## Example
-
-```csharp
-public class Customer : ValueObject
+// ❌ Bad - Trying to compose with Maybe
+public Maybe<Order> CreateOrder(Guid customerId, decimal amount)
 {
-    private Customer(EmailAddress email, string name)
-    {
-        Email = email;
-        Name = name;
-    }
-
-    public EmailAddress Email { get; }
-    public string Name { get; }
-
-    public static Result<Customer> Create(string emailStr, string name)
-    {
-        // ❌ Bad - Generic error
-        if (string.IsNullOrWhiteSpace(name))
-            return new Error("INVALID", "Name is required");
-
-        // ✅ Good - Specific validation error
-        if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation("Name is required", fieldName: "name");
-
-        return EmailAddress.TryCreate(emailStr)
-            .Map(email => new Customer(email, name));
-    }
+    Maybe<Customer> maybeCustomer = FindCustomer(customerId);
+    // Can't easily compose - would create Maybe<Maybe<Order>>
 }
+
+// ✅ Good - Use Result for composition
+public Result<Order> CreateOrder(Guid customerId, decimal amount)
+{
+    return FindCustomer(customerId)
+        .ToResult(Error.NotFound($"Customer {customerId} not found"))
+        .Bind(customer => Order.Create(customer, amount));
+}
+
+private Maybe<Customer> FindCustomer(Guid id) =>
+    repository.FindById(id);
 ```
+
+## When to Use Maybe vs Result
+
+| Use `Maybe<T>` | Use `Result<T>` |
+|----------------|-----------------|
+| Optional configuration | Validation that can fail |
+| Nullable reference alternative | Database operations |
+| Simple presence/absence | API calls |
+| No error context needed | Need to explain failures |
 
 ## When to Suppress Warnings
 
-This is a suggestion-level diagnostic. Suppress it if:
-- You're creating a custom error type that doesn't fit the standard categories
-- You're wrapping errors from external libraries
-
-However, consider creating a custom error type that inherits from Error instead.
+Do not suppress this warning. If you have `Maybe<Maybe<T>>`, restructure your code to use `Result<T>` instead.
 
 ## Related Rules
 
-- [FDDD005](FDDD005.md) - Consider using MatchError for error type discrimination
+- [FDDD008](FDDD008.md) - Result is double-wrapped

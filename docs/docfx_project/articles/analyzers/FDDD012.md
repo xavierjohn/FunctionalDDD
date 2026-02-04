@@ -1,85 +1,133 @@
-﻿# FDDD012: Maybe is double-wrapped
+﻿# FDDD012: Consider using Result.Combine
 
 ## Cause
 
-A `Maybe<Maybe<T>>` type is detected, indicating that a `Maybe` is wrapped inside another `Maybe`.
+Manually checking `IsSuccess` on multiple `Result<T>` values when `Result.Combine()` provides a cleaner alternative.
 
 ## Rule Description
 
-`Maybe<Maybe<T>>` is almost always unintended and indicates a logic error. This typically happens when using `Map` with a function that returns `Maybe<T>`.
-
-Unlike `Result<T>`, `Maybe<T>` doesn't have a `Bind` operation, which makes composition more challenging. This is by design - `Maybe` is for optional values without context, while `Result` is for operations that can fail with error information.
+When you need to validate multiple inputs and proceed only if all are successful, `Result.Combine()` provides a declarative approach that:
+- Automatically collects all validation errors
+- Returns success only if all inputs are successful
+- Reduces boilerplate code
 
 ## How to Fix Violations
 
-### Option 1: Convert to Result for better composability
+Replace manual checks with `Result.Combine()`:
 
 ```csharp
-// ❌ Bad - Maybe<Maybe<Customer>>
-Maybe<string> maybeEmail = GetEmail();
-Maybe<Maybe<Customer>> doubleWrapped = maybeEmail.Map(email => FindCustomer(email));
-//                                                              ^^^^^^^^^^^^^^^^^^
-//                                                         Returns Maybe<Customer>
+// ❌ Verbose - Manual checks
+var emailResult = EmailAddress.TryCreate(dto.Email);
+var phoneResult = PhoneNumber.TryCreate(dto.Phone);
 
-// ✅ Good - Use Result instead
-Result<Customer> result = GetEmail()
-    .ToResult(Error.Validation("Email is required"))
-    .Bind(email => FindCustomer(email)
-        .ToResult(Error.NotFound("Customer not found")));
+if (emailResult.IsFailure)
+    return emailResult.Error;
+if (phoneResult.IsFailure)
+    return phoneResult.Error;
+
+var customer = Customer.Create(emailResult.Value, phoneResult.Value);
+
+// ✅ Concise - Result.Combine
+return Result.Combine(
+        EmailAddress.TryCreate(dto.Email),
+        PhoneNumber.TryCreate(dto.Phone))
+    .Bind((email, phone) => Customer.Create(email, phone));
 ```
 
-### Option 2: Flatten manually (not recommended)
+## Examples
+
+### Example 1: Combining 2 Results
 
 ```csharp
-// ⚠️ Works but not recommended
-Maybe<string> maybeEmail = GetEmail();
-Maybe<Maybe<Customer>> doubleWrapped = maybeEmail.Map(email => FindCustomer(email));
-Maybe<Customer> flattened = doubleWrapped.HasValue && doubleWrapped.Value.HasValue
-    ? doubleWrapped.Value
-    : Maybe<Customer>.None;
-```
-
-## Why Maybe Doesn't Have Bind
-
-`Maybe<T>` is intentionally limited to avoid complex compositions:
-- Use `Maybe<T>` for simple optional values (configuration, nullable references)
-- Use `Result<T>` for operations that need composition and error context
-
-## Example Migration
-
-```csharp
-// ❌ Bad - Trying to compose with Maybe
-public Maybe<Order> CreateOrder(Guid customerId, decimal amount)
+public Result<Customer> CreateCustomer(CreateCustomerDto dto)
 {
-    Maybe<Customer> maybeCustomer = FindCustomer(customerId);
-    // Can't easily compose - would create Maybe<Maybe<Order>>
+    return Result.Combine(
+            EmailAddress.TryCreate(dto.Email),
+            Name.TryCreate(dto.Name))
+        .Map((email, name) => new Customer(email, name));
 }
-
-// ✅ Good - Use Result for composition
-public Result<Order> CreateOrder(Guid customerId, decimal amount)
-{
-    return FindCustomer(customerId)
-        .ToResult(Error.NotFound($"Customer {customerId} not found"))
-        .Bind(customer => Order.Create(customer, amount));
-}
-
-private Maybe<Customer> FindCustomer(Guid id) =>
-    repository.FindById(id);
 ```
 
-## When to Use Maybe vs Result
+### Example 2: Combining 3 Results
 
-| Use `Maybe<T>` | Use `Result<T>` |
-|----------------|-----------------|
-| Optional configuration | Validation that can fail |
-| Nullable reference alternative | Database operations |
-| Simple presence/absence | API calls |
-| No error context needed | Need to explain failures |
+```csharp
+public Result<Address> CreateAddress(AddressDto dto)
+{
+    return Result.Combine(
+            Street.TryCreate(dto.Street),
+            City.TryCreate(dto.City),
+            PostalCode.TryCreate(dto.PostalCode))
+        .Map((street, city, postalCode) => 
+            new Address(street, city, postalCode));
+}
+```
+
+### Example 3: Combining up to 9 Results
+
+```csharp
+// Result.Combine supports 2-9 tuple combinations
+return Result.Combine(r1, r2, r3, r4, r5, r6, r7, r8, r9)
+    .Map((v1, v2, v3, v4, v5, v6, v7, v8, v9) => 
+        CreateEntity(v1, v2, v3, v4, v5, v6, v7, v8, v9));
+```
+
+## Benefits
+
+### Collects All Errors
+
+```csharp
+// Manual approach - Returns first error only
+var emailResult = EmailAddress.TryCreate(invalidEmail);
+if (emailResult.IsFailure)
+    return emailResult.Error;  // Returns immediately
+
+var phoneResult = PhoneNumber.TryCreate(invalidPhone);
+if (phoneResult.IsFailure)
+    return phoneResult.Error;  // Never reached if email failed
+
+// Result.Combine - Can collect all errors
+Result.Combine(
+    EmailAddress.TryCreate(invalidEmail),
+    PhoneNumber.TryCreate(invalidPhone))
+// Returns both errors if both fail!
+```
+
+### Declarative Intent
+
+```csharp
+// ✅ Clear intent - "combine these validations"
+Result.Combine(
+    ValidateEmail(dto.Email),
+    ValidateAge(dto.Age),
+    ValidateAddress(dto.Address))
+```
+
+## When to Use Manual Checks
+
+Use manual checks when:
+- You need short-circuit behavior (stop at first error)
+- You have conditional validation logic
+- The results are not independent
+
+```csharp
+// Manual checks appropriate here - conditional logic
+var userResult = GetUser(userId);
+if (userResult.IsFailure)
+    return userResult.Error;
+
+// Only validate permissions if user exists
+var permissionResult = ValidatePermissions(userResult.Value);
+if (permissionResult.IsFailure)
+    return permissionResult.Error;
+```
 
 ## When to Suppress Warnings
 
-Do not suppress this warning. If you have `Maybe<Maybe<T>>`, restructure your code to use `Result<T>` instead.
+This is a suggestion-level diagnostic. Suppress it if:
+- You need short-circuit behavior
+- You prefer explicit control flow
+- You're validating a variable number of items
 
 ## Related Rules
 
-- [FDDD008](FDDD008.md) - Result is double-wrapped
+None - this is a suggestion to improve code clarity.
