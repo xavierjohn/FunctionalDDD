@@ -1,23 +1,12 @@
 ﻿namespace EfCoreExample.Entities;
 
+using EfCoreExample.EnumValueObjects;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd;
 
 /// <summary>
-/// Order status enumeration.
-/// </summary>
-public enum OrderStatus
-{
-    Draft,
-    Confirmed,
-    Shipped,
-    Delivered,
-    Cancelled
-}
-
-/// <summary>
-/// Order aggregate with ULID-based ID for time-ordered, sortable identifiers.
-/// ULIDs are perfect for orders as they naturally sort by creation time.
+/// Order aggregate using EnumValueObject for state management.
+/// Demonstrates how EnumValueObject encapsulates business rules within the state itself.
 /// </summary>
 public class Order : Aggregate<OrderId>
 {
@@ -25,10 +14,18 @@ public class Order : Aggregate<OrderId>
 
     public CustomerId CustomerId { get; private set; } = null!;
     public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
-    public OrderStatus Status { get; private set; }
+
+    /// <summary>
+    /// The order state as an EnumValueObject with rich behavior.
+    /// </summary>
+    public OrderState State { get; private set; } = null!;
+
     public decimal Total => _lines.Sum(l => l.LineTotal);
     public DateTime CreatedAt { get; private set; }
     public DateTime? ConfirmedAt { get; private set; }
+    public DateTime? ShippedAt { get; private set; }
+    public DateTime? DeliveredAt { get; private set; }
+    public DateTime? CancelledAt { get; private set; }
 
     // EF Core requires parameterless constructor
     private Order() : base(OrderId.NewUnique()) { }
@@ -36,7 +33,7 @@ public class Order : Aggregate<OrderId>
     private Order(CustomerId customerId) : base(OrderId.NewUnique())
     {
         CustomerId = customerId;
-        Status = OrderStatus.Draft;
+        State = OrderState.Draft;
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -50,25 +47,72 @@ public class Order : Aggregate<OrderId>
 
     /// <summary>
     /// Adds a product to the order.
+    /// Uses EnumValueObject behavior to check if order can be modified.
     /// </summary>
     public Result<Order> AddLine(Product product, int quantity) =>
         this.ToResult()
-            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation("Cannot modify confirmed order"))
+            // EnumValueObject provides the CanModify property
+            .Ensure(_ => State.CanModify, Error.Validation($"Cannot modify order in '{State.Name}' state"))
             .Ensure(_ => quantity > 0, Error.Validation("Quantity must be positive", nameof(quantity)))
             .Tap(_ => _lines.Add(new OrderLine(Id, product, quantity)));
 
     /// <summary>
     /// Confirms the order.
+    /// Uses EnumValueObject's transition validation.
     /// </summary>
     public Result<Order> Confirm() =>
         this.ToResult()
-            .Ensure(_ => Status == OrderStatus.Draft, Error.Validation("Order is not in draft status"))
             .Ensure(_ => _lines.Count > 0, Error.Validation("Order must have at least one item"))
-            .Tap(_ =>
+            // EnumValueObject validates the transition
+            .Bind(_ => State.TryTransitionTo(OrderState.Confirmed))
+            .Tap(newState =>
             {
-                Status = OrderStatus.Confirmed;
+                State = newState;
                 ConfirmedAt = DateTime.UtcNow;
-            });
+            })
+            .Map(_ => this);
+
+    /// <summary>
+    /// Ships the order.
+    /// </summary>
+    public Result<Order> Ship() =>
+        this.ToResult()
+            .Bind(_ => State.TryTransitionTo(OrderState.Shipped))
+            .Tap(newState =>
+            {
+                State = newState;
+                ShippedAt = DateTime.UtcNow;
+            })
+            .Map(_ => this);
+
+    /// <summary>
+    /// Marks the order as delivered.
+    /// </summary>
+    public Result<Order> Deliver() =>
+        this.ToResult()
+            .Bind(_ => State.TryTransitionTo(OrderState.Delivered))
+            .Tap(newState =>
+            {
+                State = newState;
+                DeliveredAt = DateTime.UtcNow;
+            })
+            .Map(_ => this);
+
+    /// <summary>
+    /// Cancels the order.
+    /// Uses EnumValueObject behavior to check if order can be cancelled.
+    /// </summary>
+    public Result<Order> Cancel() =>
+        this.ToResult()
+            // EnumValueObject provides the CanCancel property
+            .Ensure(_ => State.CanCancel, Error.Validation($"Cannot cancel order in '{State.Name}' state"))
+            .Bind(_ => State.TryTransitionTo(OrderState.Cancelled))
+            .Tap(newState =>
+            {
+                State = newState;
+                CancelledAt = DateTime.UtcNow;
+            })
+            .Map(_ => this);
 
     // For EF Core to populate the lines collection
     internal void SetLines(List<OrderLine> lines) => _lines.AddRange(lines);

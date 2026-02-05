@@ -18,11 +18,6 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
 
-    /// <summary>
-    /// Orders using SmartEnum for state - demonstrates rich domain behavior.
-    /// </summary>
-    public DbSet<SmartOrder> SmartOrders => Set<SmartOrder>();
-
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
@@ -35,7 +30,6 @@ public class AppDbContext : DbContext
         ConfigureProduct(modelBuilder);
         ConfigureOrder(modelBuilder);
         ConfigureOrderLine(modelBuilder);
-        ConfigureSmartOrder(modelBuilder);
     }
 
     private static void ConfigureCustomer(ModelBuilder modelBuilder) =>
@@ -122,15 +116,19 @@ public class AppDbContext : DbContext
                 .HasMaxLength(26)
                 .IsRequired();
 
-            builder.Property(o => o.Status)
-                .HasConversion<string>()
-                .HasMaxLength(20)
+            // EnumValueObject -> stored as int using auto-generated Value
+            // Value is assigned based on declaration order (0, 1, 2, ...)
+            builder.Property(o => o.State)
+                .HasConversion(
+                    state => state.Value,
+                    value => OrderState.GetAll().First(s => s.Value == value))
                 .IsRequired();
 
-            builder.Property(o => o.CreatedAt)
-                .IsRequired();
-
+            builder.Property(o => o.CreatedAt).IsRequired();
             builder.Property(o => o.ConfirmedAt);
+            builder.Property(o => o.ShippedAt);
+            builder.Property(o => o.DeliveredAt);
+            builder.Property(o => o.CancelledAt);
 
             // Ignore computed property
             builder.Ignore(o => o.Total);
@@ -180,50 +178,5 @@ public class AppDbContext : DbContext
 
             // Ignore computed property
             builder.Ignore(l => l.LineTotal);
-        });
-
-    /// <summary>
-    /// Configures the SmartOrder entity demonstrating SmartEnum persistence.
-    /// </summary>
-    private static void ConfigureSmartOrder(ModelBuilder modelBuilder) =>
-        modelBuilder.Entity<SmartOrder>(builder =>
-        {
-            builder.HasKey(o => o.Id);
-
-            // RequiredUlid<OrderId> -> Ulid -> string
-            builder.Property(o => o.Id)
-                .HasConversion(
-                    id => id.Value.ToString(),
-                    str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
-                .IsRequired();
-
-            // Foreign key to Customer using ULID
-            builder.Property(o => o.CustomerId)
-                .HasConversion(
-                    id => id.Value.ToString(),
-                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
-                .IsRequired();
-
-            // ✨ EnumValueObject -> stored as int using auto-generated Value
-            // Value is assigned based on declaration order (0, 1, 2, ...)
-            builder.Property(o => o.State)
-                .HasConversion(
-                    state => state.Value,
-                    value => OrderState.GetAll().First(s => s.Value == value))
-                .IsRequired();
-
-            builder.Property(o => o.CreatedAt).IsRequired();
-            builder.Property(o => o.ConfirmedAt);
-            builder.Property(o => o.ShippedAt);
-            builder.Property(o => o.DeliveredAt);
-            builder.Property(o => o.CancelledAt);
-
-            // Ignore computed property
-            builder.Ignore(o => o.Total);
-
-            // Note: For simplicity, we're not configuring the Lines relationship here
-            // In a real app, you'd configure it similar to Order
         });
 }

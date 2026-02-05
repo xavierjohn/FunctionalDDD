@@ -20,6 +20,7 @@
 using System.Text;
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
+using EfCoreExample.EnumValueObjects;
 using FunctionalDdd;
 using Microsoft.EntityFrameworkCore;
 
@@ -122,25 +123,25 @@ Console.WriteLine("🛒 Creating Order...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
 
 Order.TryCreate(customer.Id)
-    .Bind(order => order.AddLine(products[0], 1)) // MacBook
-    .Bind(order => order.AddLine(products[1], 2)) // 2x iPhone
-    .Bind(order => order.AddLine(products[2], 3)) // 3x AirPods
-    .Bind(order => order.Confirm())
-    .Tap(order =>
-    {
-        context.Orders.Add(order);
-        Console.WriteLine($"  ✓ Order Created and Confirmed!");
-        Console.WriteLine($"             Order ID: {order.Id}");
-        Console.WriteLine($"             Customer: {customer.Name} ({order.CustomerId})");
-        Console.WriteLine($"             Status: {order.Status}");
-        Console.WriteLine($"             Items: {order.Lines.Count}");
-        Console.WriteLine($"             Total: ${order.Total:N2}");
-        Console.WriteLine();
-        Console.WriteLine("    Order Lines:");
-        foreach (var line in order.Lines)
-            Console.WriteLine($"      - {line.ProductName} x{line.Quantity} @ ${line.UnitPrice:N2} = ${line.LineTotal:N2}");
-    })
-    .TapOnFailure(error => Console.WriteLine($"  ✗ Failed: {error.Detail}"));
+.Bind(order => order.AddLine(products[0], 1)) // MacBook
+.Bind(order => order.AddLine(products[1], 2)) // 2x iPhone
+.Bind(order => order.AddLine(products[2], 3)) // 3x AirPods
+.Bind(order => order.Confirm())
+.Tap(order =>
+{
+    context.Orders.Add(order);
+    Console.WriteLine($"  ✓ Order Created and Confirmed!");
+    Console.WriteLine($"             Order ID: {order.Id}");
+    Console.WriteLine($"             Customer: {customer.Name} ({order.CustomerId})");
+    Console.WriteLine($"             State: {order.State}");
+    Console.WriteLine($"             Items: {order.Lines.Count}");
+    Console.WriteLine($"             Total: ${order.Total:N2}");
+    Console.WriteLine();
+    Console.WriteLine("    Order Lines:");
+    foreach (var line in order.Lines)
+        Console.WriteLine($"      - {line.ProductName} x{line.Quantity} @ ${line.UnitPrice:N2} = ${line.LineTotal:N2}");
+})
+.TapOnFailure(error => Console.WriteLine($"  ✗ Failed: {error.Detail}"));
 
 await context.SaveChangesAsync();
 Console.WriteLine();
@@ -164,7 +165,7 @@ Console.WriteLine($"  Total Orders: {orders.Count}");
 foreach (var order in orders)
 {
     Console.WriteLine($"    Order {order.Id}:");
-    Console.WriteLine($"      Status: {order.Status}, Total: ${order.Total:N2}");
+    Console.WriteLine($"      State: {order.State}, Total: ${order.Total:N2}");
     Console.WriteLine($"      Created: {order.CreatedAt:yyyy-MM-dd HH:mm:ss}");
 }
 
@@ -190,13 +191,13 @@ await context.SaveChangesAsync();
 // Query orders sorted by ID (ULIDs sort chronologically!)
 var sortedOrders = await context.Orders
     .OrderBy(o => o.Id) // ULID provides natural chronological ordering
-    .Select(o => new { o.Id, o.CreatedAt, o.Status })
+    .Select(o => new { o.Id, o.CreatedAt, o.State })
     .ToListAsync();
 
 Console.WriteLine("  Orders sorted by ULID (natural chronological order):");
 foreach (var o in sortedOrders)
 {
-    Console.WriteLine($"    {o.Id} - Created: {o.CreatedAt:HH:mm:ss.fff} - {o.Status}");
+    Console.WriteLine($"    {o.Id} - Created: {o.CreatedAt:HH:mm:ss.fff} - {o.State}");
 }
 
 Console.WriteLine();
@@ -207,13 +208,13 @@ Console.WriteLine();
 Console.WriteLine("🎯 EnumValueObject Demonstration (Order State Machine)...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
 
-// Create an order using EnumValueObject for state
-Console.WriteLine("  Creating order with EnumValueObject state...");
-SmartOrder.TryCreate(customer.Id)
+// Demonstrate full order lifecycle with state transitions
+Console.WriteLine("  Full order lifecycle demonstration...");
+Order.TryCreate(customer.Id)
     .Bind(order => order.AddLine(products[0], 1))
     .Tap(order =>
     {
-        Console.WriteLine($"    ✓ Order created in '{order.State.Name}' state");
+        Console.WriteLine($"    ✓ Order created in '{order.State}' state");
         Console.WriteLine($"      CanModify: {order.State.CanModify}");
         Console.WriteLine($"      CanCancel: {order.State.CanCancel}");
         Console.WriteLine($"      IsTerminal: {order.State.IsTerminal}");
@@ -222,22 +223,22 @@ SmartOrder.TryCreate(customer.Id)
     .Bind(order => order.Confirm())
     .Tap(order =>
     {
-        Console.WriteLine($"    ✓ Order confirmed -> '{order.State.Name}'");
+        Console.WriteLine($"    ✓ Order confirmed -> '{order.State}'");
         Console.WriteLine($"      CanModify: {order.State.CanModify}");
         Console.WriteLine($"      Allowed transitions: {string.Join(", ", order.State.AllowedTransitions.Select(s => s.Name))}");
-        context.SmartOrders.Add(order);
     })
     .Bind(order => order.Ship())
     .Tap(order =>
     {
-        Console.WriteLine($"    ✓ Order shipped -> '{order.State.Name}'");
+        Console.WriteLine($"    ✓ Order shipped -> '{order.State}'");
         Console.WriteLine($"      CanCancel: {order.State.CanCancel} (too late to cancel!)");
     })
     .Bind(order => order.Deliver())
     .Tap(order =>
     {
-        Console.WriteLine($"    ✓ Order delivered -> '{order.State.Name}'");
+        Console.WriteLine($"    ✓ Order delivered -> '{order.State}'");
         Console.WriteLine($"      IsTerminal: {order.State.IsTerminal}");
+        context.Orders.Add(order);
     })
     .TapOnFailure(error => Console.WriteLine($"    ✗ Failed: {error.Detail}"));
 
@@ -246,7 +247,7 @@ Console.WriteLine();
 
 // Demonstrate invalid transitions
 Console.WriteLine("  Testing invalid state transitions...");
-SmartOrder.TryCreate(customer.Id)
+Order.TryCreate(customer.Id)
     .Bind(order => order.AddLine(products[1], 1))
     .Bind(order =>
     {
@@ -260,7 +261,7 @@ SmartOrder.TryCreate(customer.Id)
 Console.WriteLine();
 
 // Demonstrate trying to cancel a shipped order
-SmartOrder.TryCreate(customer.Id)
+Order.TryCreate(customer.Id)
     .Bind(order => order.AddLine(products[2], 1))
     .Bind(order => order.Confirm())
     .Bind(order => order.Ship())
@@ -274,12 +275,12 @@ SmartOrder.TryCreate(customer.Id)
 
 Console.WriteLine();
 
-// Query SmartOrders and show state is persisted
-Console.WriteLine("  Querying SmartOrders from database...");
-var smartOrders = await context.SmartOrders.ToListAsync();
-foreach (var so in smartOrders)
+// Query Orders and show state is persisted
+Console.WriteLine("  Querying Orders from database (showing state persistence)...");
+var persistedOrders = await context.Orders.OrderByDescending(o => o.CreatedAt).Take(3).ToListAsync();
+foreach (var o in persistedOrders)
 {
-    Console.WriteLine($"    Order {so.Id}: State={so.State.Name}, CanCancel={so.State.CanCancel}");
+    Console.WriteLine($"    Order {o.Id}: State={o.State}, CanCancel={o.State.CanCancel}");
 }
 
 Console.WriteLine();
