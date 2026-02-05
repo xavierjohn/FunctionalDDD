@@ -114,15 +114,14 @@ Build rich domain models with **Aggregates**, **Entities**, **Value Objects**, a
 // Value object with validation
 public partial class EmailAddress : RequiredString { }
 
-// Enum Value Object with behavior
+// Enum Value Object - type-safe enumeration
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new(1, "Draft", canModify: true);
-    public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false);
+    public static readonly OrderState Draft = new("Draft");
+    public static readonly OrderState Confirmed = new("Confirmed");
+    public static readonly OrderState Shipped = new("Shipped");
     
-    public bool CanModify { get; }
-    private OrderState(int value, string name, bool canModify) : base(value, name) 
-        => CanModify = canModify;
+    private OrderState(string name) : base(name) { }
 }
 
 // Use in domain entity
@@ -406,3 +405,4 @@ graph TD
 **Need to integrate with existing code?** See [Integration](integration.md) and [FluentValidation](integration-fluentvalidation.md)
 
 **Looking for specific patterns?** Check [Examples](examples.md) and [Error Handling](error-handling.md)
+

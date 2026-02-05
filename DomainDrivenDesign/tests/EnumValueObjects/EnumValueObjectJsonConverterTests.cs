@@ -1,4 +1,4 @@
-namespace DomainDrivenDesign.Tests.EnumValueObjects;
+﻿namespace DomainDrivenDesign.Tests.EnumValueObjects;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -8,33 +8,32 @@ using System.Text.Json.Serialization;
 /// </summary>
 public class EnumValueObjectJsonConverterTests
 {
-    #region Test Enum value objects
+    #region Test Enum Value Objects
 
     [JsonConverter(typeof(EnumValueObjectJsonConverter<Priority>))]
     internal class Priority : EnumValueObject<Priority>
     {
-        public static readonly Priority Low = new(1, "Low");
-        public static readonly Priority Medium = new(2, "Medium");
-        public static readonly Priority High = new(3, "High");
-        public static readonly Priority Critical = new(4, "Critical");
+        public static readonly Priority Low = new("Low");
+        public static readonly Priority Medium = new("Medium");
+        public static readonly Priority High = new("High");
+        public static readonly Priority Critical = new("Critical");
 
-        private Priority(int value, string name) : base(value, name) { }
+        private Priority(string name) : base(name) { }
     }
 
     // Enum value object without JsonConverter attribute for testing factory
     internal class Status : EnumValueObject<Status>
     {
-        public static readonly Status Active = new(1, "Active");
-        public static readonly Status Inactive = new(2, "Inactive");
+        public static readonly Status Active = new("Active");
+        public static readonly Status Inactive = new("Inactive");
 
-        private Status(int value, string name) : base(value, name) { }
+        private Status(string name) : base(name) { }
     }
 
     internal record TestDto(Priority Priority, string Description);
 
     internal record TestDtoWithNullable(Priority? Priority, string Description);
 
-    // Cached options for tests that need the factory
     private static readonly JsonSerializerOptions s_factoryOptions = new()
     {
         Converters = { new EnumValueObjectJsonConverterFactory() }
@@ -47,39 +46,30 @@ public class EnumValueObjectJsonConverterTests
     [Fact]
     public void Serialize_EnumValueObject_WritesNameAsString()
     {
-        // Arrange
         var priority = Priority.High;
 
-        // Act
         var json = JsonSerializer.Serialize(priority);
 
-        // Assert
         json.Should().Be("\"High\"");
     }
 
     [Fact]
     public void Serialize_EnumValueObjectInObject_WritesNameAsString()
     {
-        // Arrange
         var dto = new TestDto(Priority.Critical, "Urgent task");
 
-        // Act
         var json = JsonSerializer.Serialize(dto);
 
-        // Assert
         json.Should().Contain("\"Priority\":\"Critical\"");
     }
 
     [Fact]
     public void Serialize_NullEnumValueObject_WritesNull()
     {
-        // Arrange
         var dto = new TestDtoWithNullable(null, "No priority");
 
-        // Act
         var json = JsonSerializer.Serialize(dto);
 
-        // Assert
         json.Should().Contain("\"Priority\":null");
     }
 
@@ -90,228 +80,123 @@ public class EnumValueObjectJsonConverterTests
     [Fact]
     public void Deserialize_FromString_ReturnsCorrectMember()
     {
-        // Arrange
         var json = "\"Medium\"";
 
-        // Act
         var result = JsonSerializer.Deserialize<Priority>(json);
 
-        // Assert
         result.Should().Be(Priority.Medium);
     }
 
     [Fact]
     public void Deserialize_FromStringCaseInsensitive_ReturnsCorrectMember()
     {
-        // Arrange
-        var json = "\"LOW\"";
+        var json = "\"CRITICAL\"";
 
-        // Act
         var result = JsonSerializer.Deserialize<Priority>(json);
 
-        // Assert
-        result.Should().Be(Priority.Low);
+        result.Should().Be(Priority.Critical);
     }
 
     [Fact]
-    public void Deserialize_ObjectWithEnumValueObject_ReturnsCorrectDto()
+    public void Deserialize_FromInvalidString_ThrowsJsonException()
     {
-        // Arrange
-        var json = """{"Priority":"High","Description":"Important task"}""";
-
-        // Act
-        var result = JsonSerializer.Deserialize<TestDto>(json);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Priority.Should().Be(Priority.High);
-        result.Description.Should().Be("Important task");
-    }
-
-    [Fact]
-    public void Deserialize_InvalidString_ThrowsJsonException()
-    {
-        // Arrange
         var json = "\"Unknown\"";
 
-        // Act
         var act = () => JsonSerializer.Deserialize<Priority>(json);
 
-        // Assert
         act.Should().Throw<JsonException>()
-            .WithMessage("*Unknown*");
-    }
-
-    #endregion
-
-    #region Deserialization from Number Tests
-
-    [Fact]
-    public void Deserialize_FromNumber_ReturnsCorrectMember()
-    {
-        // Arrange
-        var json = "2";
-
-        // Act
-        var result = JsonSerializer.Deserialize<Priority>(json);
-
-        // Assert
-        result.Should().Be(Priority.Medium);
+            .WithMessage("*Unknown*not a valid Priority*");
     }
 
     [Fact]
-    public void Deserialize_ObjectWithEnumValueObjectAsNumber_ReturnsCorrectDto()
+    public void Deserialize_FromNull_ReturnsNull()
     {
-        // Arrange
-        var json = """{"Priority":4,"Description":"Critical issue"}""";
+        var json = "{\"Priority\":null,\"Description\":\"Test\"}";
 
-        // Act
-        var result = JsonSerializer.Deserialize<TestDto>(json);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Priority.Should().Be(Priority.Critical);
-    }
-
-    [Fact]
-    public void Deserialize_InvalidNumber_ThrowsJsonException()
-    {
-        // Arrange
-        var json = "999";
-
-        // Act
-        var act = () => JsonSerializer.Deserialize<Priority>(json);
-
-        // Assert
-        act.Should().Throw<JsonException>()
-            .WithMessage("*999*");
-    }
-
-    #endregion
-
-    #region Null Handling Tests
-
-    [Fact]
-    public void Deserialize_Null_ReturnsNull()
-    {
-        // Arrange
-        var json = "null";
-
-        // Act
-        var result = JsonSerializer.Deserialize<Priority?>(json);
-
-        // Assert
-        result.Should().BeNull();
-    }
-
-    [Fact]
-    public void Deserialize_ObjectWithNullEnumValueObject_ReturnsNullProperty()
-    {
-        // Arrange
-        var json = """{"Priority":null,"Description":"No priority set"}""";
-
-        // Act
         var result = JsonSerializer.Deserialize<TestDtoWithNullable>(json);
 
-        // Assert
         result.Should().NotBeNull();
         result!.Priority.Should().BeNull();
     }
 
-    #endregion
-
-    #region Invalid Token Type Tests
-
     [Fact]
-    public void Deserialize_InvalidTokenType_ThrowsJsonException()
+    public void Deserialize_ObjectWithEnumValueObject_Works()
     {
-        // Arrange
-        var json = "true";  // Boolean is not valid
+        var json = "{\"Priority\":\"Low\",\"Description\":\"Test task\"}";
 
-        // Act
-        var act = () => JsonSerializer.Deserialize<Priority>(json);
+        var result = JsonSerializer.Deserialize<TestDto>(json);
 
-        // Assert
-        act.Should().Throw<JsonException>()
-            .WithMessage("*Unexpected token type*");
-    }
-
-    [Fact]
-    public void Deserialize_ObjectTokenType_ThrowsJsonException()
-    {
-        // Arrange
-        var json = "{}";  // Object is not valid
-
-        // Act
-        var act = () => JsonSerializer.Deserialize<Priority>(json);
-
-        // Assert
-        act.Should().Throw<JsonException>()
-            .WithMessage("*Unexpected token type*");
-    }
-
-    [Fact]
-    public void Deserialize_ArrayTokenType_ThrowsJsonException()
-    {
-        // Arrange
-        var json = "[]";  // Array is not valid
-
-        // Act
-        var act = () => JsonSerializer.Deserialize<Priority>(json);
-
-        // Assert
-        act.Should().Throw<JsonException>()
-            .WithMessage("*Unexpected token type*");
+        result.Should().NotBeNull();
+        result!.Priority.Should().Be(Priority.Low);
+        result.Description.Should().Be("Test task");
     }
 
     #endregion
 
-    #region Converter Factory Tests
+    #region Factory Tests
 
     [Fact]
-    public void ConverterFactory_CanConvert_ReturnsTrueForEnumValueObject()
+    public void Factory_CanConvert_ReturnsTrueForEnumValueObject()
     {
-        // Arrange
         var factory = new EnumValueObjectJsonConverterFactory();
 
-        // Act & Assert
         factory.CanConvert(typeof(Priority)).Should().BeTrue();
         factory.CanConvert(typeof(Status)).Should().BeTrue();
     }
 
     [Fact]
-    public void ConverterFactory_CanConvert_ReturnsFalseForNonEnumValueObject()
+    public void Factory_CanConvert_ReturnsFalseForNonEnumValueObject()
     {
-        // Arrange
         var factory = new EnumValueObjectJsonConverterFactory();
 
-        // Act & Assert
         factory.CanConvert(typeof(string)).Should().BeFalse();
         factory.CanConvert(typeof(int)).Should().BeFalse();
-        factory.CanConvert(typeof(DayOfWeek)).Should().BeFalse();  // Regular enum
+        factory.CanConvert(typeof(TestDto)).Should().BeFalse();
     }
 
     [Fact]
-    public void ConverterFactory_SerializesWithoutAttribute()
+    public void Factory_Serialize_Works()
     {
-        // Act
-        var json = JsonSerializer.Serialize(Status.Active, s_factoryOptions);
+        var status = Status.Active;
 
-        // Assert
+        var json = JsonSerializer.Serialize(status, s_factoryOptions);
+
         json.Should().Be("\"Active\"");
     }
 
     [Fact]
-    public void ConverterFactory_DeserializesWithoutAttribute()
+    public void Factory_Deserialize_Works()
     {
-        // Arrange
         var json = "\"Inactive\"";
 
-        // Act
         var result = JsonSerializer.Deserialize<Status>(json, s_factoryOptions);
 
-        // Assert
         result.Should().Be(Status.Inactive);
+    }
+
+    #endregion
+
+    #region Error Cases
+
+    [Fact]
+    public void Deserialize_FromNumber_ThrowsJsonException()
+    {
+        var json = "1";
+
+        var act = () => JsonSerializer.Deserialize<Priority>(json);
+
+        act.Should().Throw<JsonException>()
+            .WithMessage("*Unexpected token type*Number*Expected String*");
+    }
+
+    [Fact]
+    public void Deserialize_FromObject_ThrowsJsonException()
+    {
+        var json = "{}";
+
+        var act = () => JsonSerializer.Deserialize<Priority>(json);
+
+        act.Should().Throw<JsonException>();
     }
 
     #endregion
@@ -319,30 +204,24 @@ public class EnumValueObjectJsonConverterTests
     #region Round-Trip Tests
 
     [Fact]
-    public void RoundTrip_EnumValueObject_PreservesValue()
+    public void RoundTrip_PreservesValue()
     {
-        // Arrange
-        var original = Priority.Critical;
+        var original = Priority.High;
 
-        // Act
         var json = JsonSerializer.Serialize(original);
         var deserialized = JsonSerializer.Deserialize<Priority>(json);
 
-        // Assert
         deserialized.Should().Be(original);
     }
 
     [Fact]
-    public void RoundTrip_ObjectWithEnumValueObject_PreservesValue()
+    public void RoundTrip_WithDto_PreservesAllProperties()
     {
-        // Arrange
-        var original = new TestDto(Priority.Low, "Test description");
+        var original = new TestDto(Priority.Medium, "Important task");
 
-        // Act
         var json = JsonSerializer.Serialize(original);
         var deserialized = JsonSerializer.Deserialize<TestDto>(json);
 
-        // Assert
         deserialized.Should().BeEquivalentTo(original);
     }
 

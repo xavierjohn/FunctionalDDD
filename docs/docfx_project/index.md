@@ -1,6 +1,6 @@
-# Functional Programming with Domain-Driven Design
+ï»¿# Functional Programming with Domain-Driven Design
 
-**Build robust, type-safe applications** with Railway-Oriented Programming and Domain-Driven Design—combining the best of functional programming with clean architecture principles.
+**Build robust, type-safe applications** with Railway-Oriented Programming and Domain-Driven Designâ€”combining the best of functional programming with clean architecture principles.
 
 ```mermaid
 graph TB
@@ -101,9 +101,9 @@ return FirstName.TryCreate(input.FirstName)
 
 ## Core Types
 
-### Result&lt;T&gt; — Success or Failure
+### Result&lt;T&gt; â€” Success or Failure
 
-The foundation of Railway-Oriented Programming. A `Result<T>` represents either a **successful value** or an **error**—never null, never ambiguous.
+The foundation of Railway-Oriented Programming. A `Result<T>` represents either a **successful value** or an **error**â€”never null, never ambiguous.
 
 ```csharp
 // Create results
@@ -121,9 +121,9 @@ var message = result.Match(
 );
 ```
 
-### Maybe&lt;T&gt; — Optional Values
+### Maybe&lt;T&gt; â€” Optional Values
 
-Represents a value that **may or may not exist**—eliminating null reference exceptions.
+Represents a value that **may or may not exist**â€”eliminating null reference exceptions.
 
 ```csharp
 Maybe<string> name = "John";           // Has value
@@ -138,7 +138,7 @@ if (name.TryGetValue(out var value))
 
 ## Domain-Driven Design Building Blocks
 
-### Value Objects — Immutable, Validated Types
+### Value Objects â€” Immutable, Validated Types
 
 Replace primitive strings and ints with **type-safe domain concepts**. The compiler catches mistakes that runtime never would.
 
@@ -152,7 +152,7 @@ CreateUser(lastName, firstName);  // ? Compile error!
 CreateUser(firstName, lastName);  // ? Correct
 ```
 
-### Entities — Identity-Based Objects
+### Entities â€” Identity-Based Objects
 
 Objects with a **unique identity** that persists through state changes.
 
@@ -168,7 +168,7 @@ public class Customer : Entity<CustomerId>
 }
 ```
 
-### Aggregates — Consistency Boundaries
+### Aggregates â€” Consistency Boundaries
 
 **Cluster related objects** and enforce business rules. Aggregates raise **domain events** to communicate changes.
 
@@ -185,34 +185,26 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
-### Enum Value Objects — Type-Safe Enumerations with Behavior
+### Enum Value Objects â€” Type-Safe Enumerations with Behavior
 
 Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values.
 
 ```csharp
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new(1, "Draft", canModify: true);
-    public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false);
-    public static readonly OrderState Shipped = new(3, "Shipped", canModify: false);
+    public static readonly OrderState Draft = new("Draft");
+    public static readonly OrderState Confirmed = new("Confirmed");
+    public static readonly OrderState Shipped = new("Shipped");
+    public static readonly OrderState Delivered = new("Delivered");
     
-    public bool CanModify { get; }
-    private OrderState(int value, string name, bool canModify) : base(value, name) 
-        => CanModify = canModify;
-
-    // State machine transitions
-    public Result<OrderState> TryTransitionTo(OrderState newState) =>
-        CanTransitionTo(newState) 
-            ? newState 
-            : Error.Validation($"Cannot transition from {Name} to {newState.Name}");
+    private OrderState(string name) : base(name) { }
 }
 
 // Usage
-if (order.State.CanModify)
-    order.AddLine(product, quantity);
+var result = OrderState.TryFromName("Draft");  // Result<OrderState>
 
-order.State.TryTransitionTo(OrderState.Confirmed)
-    .Tap(newState => order.State = newState);
+if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
+    order.Cancel();
 ```
 
 ---

@@ -20,8 +20,8 @@ Enum Value Objects solve these issues:
 // ? Enum Value Object benefits
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new(1, "Draft");
-    public static readonly OrderState Confirmed = new(2, "Confirmed");
+    public static readonly OrderState Draft = new("Draft");
+    public static readonly OrderState Confirmed = new("Confirmed");
     
     private OrderState(int value, string name) : base(value, name) { }
 }
@@ -40,10 +40,10 @@ using FunctionalDdd;
 
 public class PaymentMethod : EnumValueObject<PaymentMethod>
 {
-    public static readonly PaymentMethod CreditCard = new(1, "CreditCard");
-    public static readonly PaymentMethod DebitCard = new(2, "DebitCard");
-    public static readonly PaymentMethod BankTransfer = new(3, "BankTransfer");
-    public static readonly PaymentMethod Crypto = new(4, "Crypto");
+    public static readonly PaymentMethod CreditCard = new("CreditCard");
+    public static readonly PaymentMethod DebitCard = new("DebitCard");
+    public static readonly PaymentMethod BankTransfer = new("BankTransfer");
+    public static readonly PaymentMethod Crypto = new("Crypto");
 
     private PaymentMethod(int value, string name) : base(value, name) { }
 }
@@ -76,15 +76,15 @@ Enum Value Objects can have properties and methods:
 ```csharp
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new(1, "Draft", 
+    public static readonly OrderState Draft = new("Draft", 
         canModify: true, canCancel: true, isTerminal: false);
-    public static readonly OrderState Confirmed = new(2, "Confirmed", 
+    public static readonly OrderState Confirmed = new("Confirmed", 
         canModify: false, canCancel: true, isTerminal: false);
-    public static readonly OrderState Shipped = new(3, "Shipped", 
+    public static readonly OrderState Shipped = new("Shipped", 
         canModify: false, canCancel: false, isTerminal: false);
-    public static readonly OrderState Delivered = new(4, "Delivered", 
+    public static readonly OrderState Delivered = new("Delivered", 
         canModify: false, canCancel: false, isTerminal: true);
-    public static readonly OrderState Cancelled = new(5, "Cancelled", 
+    public static readonly OrderState Cancelled = new("Cancelled", 
         canModify: false, canCancel: false, isTerminal: true);
 
     public bool CanModify { get; }

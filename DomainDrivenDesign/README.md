@@ -1,4 +1,4 @@
-# Domain Driven Design
+﻿# Domain Driven Design
 
 [![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)
 
@@ -81,20 +81,12 @@ Type-safe enumerations with behavior. Unlike C# enums, EnumValueObjects prevent 
 [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new(1, "Draft", canModify: true, canCancel: true);
-    public static readonly OrderState Confirmed = new(2, "Confirmed", canModify: false, canCancel: true);
-    public static readonly OrderState Shipped = new(3, "Shipped", canModify: false, canCancel: false);
-    public static readonly OrderState Delivered = new(4, "Delivered", canModify: false, canCancel: false);
+    public static readonly OrderState Draft = new("Draft");
+    public static readonly OrderState Confirmed = new("Confirmed");
+    public static readonly OrderState Shipped = new("Shipped");
+    public static readonly OrderState Delivered = new("Delivered");
 
-    public bool CanModify { get; }
-    public bool CanCancel { get; }
-
-    private OrderState(int value, string name, bool canModify, bool canCancel) 
-        : base(value, name)
-    {
-        CanModify = canModify;
-        CanCancel = canCancel;
-    }
+    private OrderState(string name) : base(name) { }
 
     public IReadOnlyList<OrderState> AllowedTransitions => this switch
     {
@@ -112,11 +104,10 @@ public class OrderState : EnumValueObject<OrderState>
 
 // Usage
 var state = OrderState.TryFromName("Draft");           // Result<OrderState>
-var state2 = OrderState.TryFromValue(1);               // Result<OrderState>
 var all = OrderState.GetAll();                         // All defined states
 
-if (order.State.CanModify)
-    order.AddLine(product, quantity);
+if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
+    order.Cancel();
 
 order.State.TryTransitionTo(OrderState.Confirmed)
     .Tap(newState => order.State = newState);
@@ -287,8 +278,10 @@ public decimal Amount { get; set; }
 ### EnumValueObject<T>
 - Type-safe enumeration with behavior
 - Prevents invalid values (unlike C# enums)
+- Name-only constructor (Value auto-generated for persistence)
 - Supports state machine patterns
 - Built-in JSON serialization
+- `Is()` and `IsNot()` helper methods
 
 ### Aggregate<TId>
 - Consistency boundary
