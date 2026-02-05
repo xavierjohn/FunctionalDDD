@@ -17,11 +17,14 @@
 // 4. EF Core Ready   - Simple value converters for database persistence
 // =============================================================================
 
+using System.Text;
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
-using EfCoreExample.EnumValueObjects;
 using FunctionalDdd;
 using Microsoft.EntityFrameworkCore;
+
+// Enable UTF-8 output for Unicode characters (emojis, box-drawing, etc.)
+Console.OutputEncoding = Encoding.UTF8;
 
 Console.WriteLine("╔══════════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║  EF Core Example with FunctionalDDD Primitive Value Objects      ║");
