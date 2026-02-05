@@ -17,10 +17,15 @@
 // 4. EF Core Ready   - Simple value converters for database persistence
 // =============================================================================
 
+using System.Text;
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
+using EfCoreExample.EnumValueObjects;
 using FunctionalDdd;
 using Microsoft.EntityFrameworkCore;
+
+// Enable UTF-8 output for Unicode characters (emojis, box-drawing, etc.)
+Console.OutputEncoding = Encoding.UTF8;
 
 Console.WriteLine("╔══════════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║  EF Core Example with FunctionalDDD Primitive Value Objects      ║");
@@ -118,25 +123,25 @@ Console.WriteLine("🛒 Creating Order...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
 
 Order.TryCreate(customer.Id)
-    .Bind(order => order.AddLine(products[0], 1)) // MacBook
-    .Bind(order => order.AddLine(products[1], 2)) // 2x iPhone
-    .Bind(order => order.AddLine(products[2], 3)) // 3x AirPods
-    .Bind(order => order.Confirm())
-    .Tap(order =>
-    {
-        context.Orders.Add(order);
-        Console.WriteLine($"  ✓ Order Created and Confirmed!");
-        Console.WriteLine($"             Order ID: {order.Id}");
-        Console.WriteLine($"             Customer: {customer.Name} ({order.CustomerId})");
-        Console.WriteLine($"             Status: {order.Status}");
-        Console.WriteLine($"             Items: {order.Lines.Count}");
-        Console.WriteLine($"             Total: ${order.Total:N2}");
-        Console.WriteLine();
-        Console.WriteLine("    Order Lines:");
-        foreach (var line in order.Lines)
-            Console.WriteLine($"      - {line.ProductName} x{line.Quantity} @ ${line.UnitPrice:N2} = ${line.LineTotal:N2}");
-    })
-    .TapOnFailure(error => Console.WriteLine($"  ✗ Failed: {error.Detail}"));
+.Bind(order => order.AddLine(products[0], 1)) // MacBook
+.Bind(order => order.AddLine(products[1], 2)) // 2x iPhone
+.Bind(order => order.AddLine(products[2], 3)) // 3x AirPods
+.Bind(order => order.Confirm())
+.Tap(order =>
+{
+    context.Orders.Add(order);
+    Console.WriteLine($"  ✓ Order Created and Confirmed!");
+    Console.WriteLine($"             Order ID: {order.Id}");
+    Console.WriteLine($"             Customer: {customer.Name} ({order.CustomerId})");
+    Console.WriteLine($"             State: {order.State}");
+    Console.WriteLine($"             Items: {order.Lines.Count}");
+    Console.WriteLine($"             Total: ${order.Total:N2}");
+    Console.WriteLine();
+    Console.WriteLine("    Order Lines:");
+    foreach (var line in order.Lines)
+        Console.WriteLine($"      - {line.ProductName} x{line.Quantity} @ ${line.UnitPrice:N2} = ${line.LineTotal:N2}");
+})
+.TapOnFailure(error => Console.WriteLine($"  ✗ Failed: {error.Detail}"));
 
 await context.SaveChangesAsync();
 Console.WriteLine();
@@ -160,7 +165,7 @@ Console.WriteLine($"  Total Orders: {orders.Count}");
 foreach (var order in orders)
 {
     Console.WriteLine($"    Order {order.Id}:");
-    Console.WriteLine($"      Status: {order.Status}, Total: ${order.Total:N2}");
+    Console.WriteLine($"      State: {order.State}, Total: ${order.Total:N2}");
     Console.WriteLine($"      Created: {order.CreatedAt:yyyy-MM-dd HH:mm:ss}");
 }
 
@@ -186,19 +191,102 @@ await context.SaveChangesAsync();
 // Query orders sorted by ID (ULIDs sort chronologically!)
 var sortedOrders = await context.Orders
     .OrderBy(o => o.Id) // ULID provides natural chronological ordering
-    .Select(o => new { o.Id, o.CreatedAt, o.Status })
+    .Select(o => new { o.Id, o.CreatedAt, o.State })
     .ToListAsync();
 
 Console.WriteLine("  Orders sorted by ULID (natural chronological order):");
 foreach (var o in sortedOrders)
 {
-    Console.WriteLine($"    {o.Id} - Created: {o.CreatedAt:HH:mm:ss.fff} - {o.Status}");
+    Console.WriteLine($"    {o.Id} - Created: {o.CreatedAt:HH:mm:ss.fff} - {o.State}");
 }
 
 Console.WriteLine();
 
 // =============================================================================
-// 7. TYPE SAFETY DEMONSTRATION
+// 7. ENUM VALUE OBJECT DEMONSTRATION (State Machine with Behavior)
+// =============================================================================
+Console.WriteLine("🎯 EnumValueObject Demonstration (Order State Machine)...");
+Console.WriteLine("────────────────────────────────────────────────────────────────────");
+
+// Demonstrate full order lifecycle with state transitions
+Console.WriteLine("  Full order lifecycle demonstration...");
+Order.TryCreate(customer.Id)
+    .Bind(order => order.AddLine(products[0], 1))
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order created in '{order.State}' state");
+        Console.WriteLine($"      CanModify: {order.State.CanModify}");
+        Console.WriteLine($"      CanCancel: {order.State.CanCancel}");
+        Console.WriteLine($"      IsTerminal: {order.State.IsTerminal}");
+        Console.WriteLine($"      Allowed transitions: {string.Join(", ", order.State.AllowedTransitions.Select(s => s.Name))}");
+    })
+    .Bind(order => order.Confirm())
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order confirmed -> '{order.State}'");
+        Console.WriteLine($"      CanModify: {order.State.CanModify}");
+        Console.WriteLine($"      Allowed transitions: {string.Join(", ", order.State.AllowedTransitions.Select(s => s.Name))}");
+    })
+    .Bind(order => order.Ship())
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order shipped -> '{order.State}'");
+        Console.WriteLine($"      CanCancel: {order.State.CanCancel} (too late to cancel!)");
+    })
+    .Bind(order => order.Deliver())
+    .Tap(order =>
+    {
+        Console.WriteLine($"    ✓ Order delivered -> '{order.State}'");
+        Console.WriteLine($"      IsTerminal: {order.State.IsTerminal}");
+        context.Orders.Add(order);
+    })
+    .TapOnFailure(error => Console.WriteLine($"    ✗ Failed: {error.Detail}"));
+
+await context.SaveChangesAsync();
+Console.WriteLine();
+
+// Demonstrate invalid transitions
+Console.WriteLine("  Testing invalid state transitions...");
+Order.TryCreate(customer.Id)
+    .Bind(order => order.AddLine(products[1], 1))
+    .Bind(order =>
+    {
+        // Try to ship without confirming first - should fail!
+        Console.WriteLine("    Trying to ship an unconfirmed order...");
+        return order.Ship();
+    })
+    .Tap(_ => Console.WriteLine("    ✓ Unexpected success"))
+    .TapOnFailure(error => Console.WriteLine($"    ✗ Correctly rejected: {error.Detail}"));
+
+Console.WriteLine();
+
+// Demonstrate trying to cancel a shipped order
+Order.TryCreate(customer.Id)
+    .Bind(order => order.AddLine(products[2], 1))
+    .Bind(order => order.Confirm())
+    .Bind(order => order.Ship())
+    .Bind(order =>
+    {
+        Console.WriteLine("    Trying to cancel a shipped order...");
+        return order.Cancel();
+    })
+    .Tap(_ => Console.WriteLine("    ✓ Unexpected success"))
+    .TapOnFailure(error => Console.WriteLine($"    ✗ Correctly rejected: {error.Detail}"));
+
+Console.WriteLine();
+
+// Query Orders and show state is persisted
+Console.WriteLine("  Querying Orders from database (showing state persistence)...");
+var persistedOrders = await context.Orders.OrderByDescending(o => o.CreatedAt).Take(3).ToListAsync();
+foreach (var o in persistedOrders)
+{
+    Console.WriteLine($"    Order {o.Id}: State={o.State}, CanCancel={o.State.CanCancel}");
+}
+
+Console.WriteLine();
+
+// =============================================================================
+// 8. TYPE SAFETY DEMONSTRATION
 // =============================================================================
 Console.WriteLine("🛡️  Type Safety Demonstration...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
@@ -206,10 +294,12 @@ Console.WriteLine("  The following would NOT compile:");
 Console.WriteLine("    // OrderId orderId = CustomerId.NewUnique();  // Error!");
 Console.WriteLine("    // ProductId productId = OrderId.NewUnique(); // Error!");
 Console.WriteLine("    // context.Customers.Find(orderId);           // Error!");
+Console.WriteLine("    // var status = (OrderState)999;              // Error! EnumValueObject prevents this");
 Console.WriteLine();
 Console.WriteLine("  This is the power of strongly-typed value objects:");
 Console.WriteLine("    - Cannot accidentally mix OrderId with CustomerId");
 Console.WriteLine("    - Cannot pass ProductId where CustomerId is expected");
+Console.WriteLine("    - EnumValueObject prevents invalid enum values at compile/runtime");
 Console.WriteLine("    - Compile-time safety prevents runtime bugs");
 Console.WriteLine();
 
@@ -223,6 +313,7 @@ Console.WriteLine("║  ✓ RequiredUlid<T>   - Time-ordered, sortable identifie
 Console.WriteLine("║  ✓ RequiredGuid<T>   - Traditional GUID identifiers              ║");
 Console.WriteLine("║  ✓ RequiredString<T> - Non-empty string validation               ║");
 Console.WriteLine("║  ✓ EmailAddress      - RFC 5322 email validation                 ║");
+Console.WriteLine("║  ✓ EnumValueObject<T> - Type-safe enums with behavior            ║");
 Console.WriteLine("║  ✓ EF Core           - Seamless persistence with converters      ║");
 Console.WriteLine("║  ✓ ROP               - Railway Oriented Programming for errors   ║");
 Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");

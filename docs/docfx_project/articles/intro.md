@@ -55,14 +55,14 @@ graph TB
 Railway-Oriented Programming (ROP) is a pattern for explicit error handling that **eliminates nested if-statements** and **makes your code read like a story**.
 
 **The problem with traditional code:**
-- ❌ Scattered error checks interrupt the flow
-- ❌ Easy to forget a validation step
-- ❌ Hard to see the "happy path"
-- ❌ Verbose and repetitive
+- ? Scattered error checks interrupt the flow
+- ? Easy to forget a validation step
+- ? Hard to see the "happy path"
+- ? Verbose and repetitive
 
 **Instead of this:**
 ```csharp
-// ❌ Traditional approach - 15+ lines, hard to follow the logic
+// ? Traditional approach - 15+ lines, hard to follow the logic
 var firstName = ValidateFirstName(input.FirstName);
 if (firstName == null) return BadRequest("Invalid first name");
 
@@ -81,7 +81,7 @@ return Ok(user);
 
 **You write this:**
 ```csharp
-// ✅ ROP approach - 6 lines that read like English
+// ? ROP approach - 6 lines that read like English
 return FirstName.TryCreate(input.FirstName)
     .Combine(LastName.TryCreate(input.LastName))
     .Bind((first, last) => User.TryCreate(first, last))
@@ -91,27 +91,38 @@ return FirstName.TryCreate(input.FirstName)
 ```
 
 **What you gain:**
-- 📖 **60% less code** - More readable, less to maintain
-- 🎯 **Self-documenting** - Chain reads like a recipe
-- 🔒 **Compiler-enforced** - Can't skip error handling
-- ✨ **Zero hidden logic** - Every step is visible
+- ?? **60% less code** - More readable, less to maintain
+- ?? **Self-documenting** - Chain reads like a recipe
+- ?? **Compiler-enforced** - Can't skip error handling
+- ? **Zero hidden logic** - Every step is visible
 
-👉 **Learn the fundamentals:** [Basics](basics.md) - Complete ROP tutorial with all core operations
+?? **Learn the fundamentals:** [Basics](basics.md) - Complete ROP tutorial with all core operations
 
 ## Domain-Driven Design
 
-Build rich domain models with **Aggregates**, **Entities**, and **Value Objects** that enforce business rules and maintain valid state.
+Build rich domain models with **Aggregates**, **Entities**, **Value Objects**, and **Enum Value Objects** that enforce business rules and maintain valid state.
 
 **Key DDD building blocks:**
 - **Aggregates** - Consistency boundaries with domain events (e.g., `Order`, `Customer`)
 - **Entities** - Objects with identity that change over time (e.g., `User`, `Product`)
 - **Value Objects** - Immutable objects defined by their values (e.g., `EmailAddress`, `Money`)
 - **Scalar Value Objects** - Single-value wrappers with validation (e.g., `FirstName`, `Age`)
+- **Enum Value Objects** - Type-safe enumerations with behavior and state machine support (e.g., `OrderState`, `PaymentStatus`)
 
 **Quick example:**
 ```csharp
 // Value object with validation
 public partial class EmailAddress : RequiredString { }
+
+// Enum Value Object - type-safe enumeration (Name auto-derived)
+public class OrderState : EnumValueObject<OrderState>
+{
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    
+    private OrderState() { }
+}
 
 // Use in domain entity
 public class User : Entity<UserId>
@@ -127,8 +138,8 @@ public class User : Entity<UserId>
 }
 ```
 
-👉 **See patterns in action:** [Clean Architecture](clean-architecture.md) - DDD with ROP in layered applications  
-👉 **Integrate validation:** [FluentValidation Integration](integration-fluentvalidation.md) - Domain validation patterns
+?? **See patterns in action:** [Clean Architecture](clean-architecture.md) - DDD with ROP in layered applications  
+?? **Integrate validation:** [FluentValidation Integration](integration-fluentvalidation.md) - Domain validation patterns
 
 ## Error Types
 
@@ -149,11 +160,11 @@ graph LR
 ```
 
 **Common error types:**
-- `ValidationError` → 400 Bad Request (with field-level details)
-- `NotFoundError` → 404 Not Found
-- `UnauthorizedError` → 401 Unauthorized
-- `ConflictError` → 409 Conflict
-- `DomainError` → 422 Unprocessable Entity
+- `ValidationError` ? 400 Bad Request (with field-level details)
+- `NotFoundError` ? 404 Not Found
+- `UnauthorizedError` ? 401 Unauthorized
+- `ConflictError` ? 409 Conflict
+- `DomainError` ? 422 Unprocessable Entity
 
 **Example - Discriminated union matching:**
 ```csharp
@@ -165,7 +176,7 @@ return ProcessOrder(order).MatchError(
 );
 ```
 
-👉 **Complete error catalog:** [Error Handling](error-handling.md) - All 11 error types, custom errors, aggregation
+?? **Complete error catalog:** [Error Handling](error-handling.md) - All 11 error types, custom errors, aggregation
 
 ## Key Features
 
@@ -191,10 +202,10 @@ Use strongly-typed value objects instead of primitive types. RequiredString prov
 
 **Example:**
 ```csharp
-// ❌ Easy to swap parameters
+// ? Easy to swap parameters
 Person CreatePerson(string firstName, string lastName);
 
-// ✅ Compiler catches mistakes
+// ? Compiler catches mistakes
 Person CreatePerson(FirstName firstName, LastName lastName);
 ```
 
@@ -274,9 +285,9 @@ Ready to get started? Choose your learning path:
 graph TD
     START[Choose Your Path]
     
-    START --> BEG[🎓 Beginner Path<br/>2-3 hours]
-    START --> INT[📚 Intermediate Path<br/>4-6 hours]
-    START --> ADV[🚀 Advanced Path<br/>2-3 hours]
+    START --> BEG[?? Beginner Path<br/>2-3 hours]
+    START --> INT[?? Intermediate Path<br/>4-6 hours]
+    START --> ADV[?? Advanced Path<br/>2-3 hours]
     
     BEG --> B1[Basics]
     BEG --> B2[Examples]
@@ -311,72 +322,72 @@ graph TD
     style A4 fill:#E1FFE1
 ```
 
-### 🎓 Beginner Path (Start Here!)
+### ?? Beginner Path (Start Here!)
 **Time:** 2-3 hours | **Goal:** Understand ROP basics and build your first features
 
-1. 📖 **[Basics](basics.md)** - Learn Railway-Oriented Programming fundamentals
+1. ?? **[Basics](basics.md)** - Learn Railway-Oriented Programming fundamentals
    - Result type, Combine, Bind, Map, Tap, Match
    - Safe error handling patterns
    - Complete working examples
 
-2. 💡 **[Examples](examples.md)** - See real-world patterns and code snippets
+2. ?? **[Examples](examples.md)** - See real-world patterns and code snippets
    - User registration, form validation
    - HTTP response handling
    - Common patterns library
 
-3. 🔗 **[ASP.NET Core Integration](integration-aspnet.md)** - Connect to your API
+3. ?? **[ASP.NET Core Integration](integration-aspnet.md)** - Connect to your API
    - ToActionResult, ToHttpResult
    - Automatic error-to-HTTP mapping
    - MVC and Minimal API examples
 
-### 📚 Intermediate Path
+### ?? Intermediate Path
 **Time:** 4-6 hours | **Prerequisites:** Basics | **Goal:** Master error handling and async patterns
 
-1. 🚨 **[Error Handling](error-handling.md)** - Discriminated unions, error aggregation
+1. ?? **[Error Handling](error-handling.md)** - Discriminated unions, error aggregation
    - Custom error types
    - MatchError patterns
    - ValidationError fluent API
 
-2. ⚡ **[Working with Async Operations](basics.md#working-with-async-operations)** - CancellationToken patterns, timeouts
+2. ? **[Working with Async Operations](basics.md#working-with-async-operations)** - CancellationToken patterns, timeouts
    - Async operation chains
    - Parallel execution
    - Timeout and retry patterns
 
-3. ✅ **[FluentValidation Integration](integration-fluentvalidation.md)** - Domain validation
+3. ? **[FluentValidation Integration](integration-fluentvalidation.md)** - Domain validation
    - InlineValidator
    - Async validation rules
    - Reuse domain validation at API layer
 
-4. 🔍 **[Debugging](debugging.md)** - Tools and techniques for debugging ROP chains
+4. ?? **[Debugging](debugging.md)** - Tools and techniques for debugging ROP chains
    - Built-in debug extensions
    - OpenTelemetry tracing
    - Common pitfalls and solutions
 
-### 🚀 Advanced Path
+### ?? Advanced Path
 **Time:** 2-3 hours | **Prerequisites:** Intermediate | **Goal:** Expert-level patterns and optimization
 
-1. 🎯 **[Advanced Features](advanced-features.md)** - LINQ, parallel operations, Maybe type
+1. ?? **[Advanced Features](advanced-features.md)** - LINQ, parallel operations, Maybe type
    - LINQ query syntax
    - Parallel async operations
    - Pattern matching
    - Exception capture
 
-2. 🏗️ **[Entity Framework Core](integration-ef.md)** - Repository patterns
+2. ??? **[Entity Framework Core](integration-ef.md)** - Repository patterns
    - Result-based repositories
    - Async database operations
    - Transaction handling
 
-3. 📊 **[OpenTelemetry Integration](integration-observability.md)** - Observability
+3. ?? **[OpenTelemetry Integration](integration-observability.md)** - Observability
    - Automatic ROP tracing
    - Distributed tracing
    - Performance monitoring
 
-4. ⚡ **[Performance](performance.md)** - Optimization and benchmarks
+4. ? **[Performance](performance.md)** - Optimization and benchmarks
    - Performance characteristics
    - Benchmarking results
    - Optimization tips
 
-### 📚 Reference Materials (Jump to as Needed)
+### ?? Reference Materials (Jump to as Needed)
 
 - **[Error Handling Reference](error-handling.md)** - Complete error type catalog
 - **[Debugging Guide](debugging.md)** - Troubleshooting and tools
@@ -394,3 +405,4 @@ graph TD
 **Need to integrate with existing code?** See [Integration](integration.md) and [FluentValidation](integration-fluentvalidation.md)
 
 **Looking for specific patterns?** Check [Examples](examples.md) and [Error Handling](error-handling.md)
+

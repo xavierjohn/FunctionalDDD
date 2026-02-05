@@ -17,9 +17,9 @@ graph TB
     end
     
     subgraph Output["What You Get"]
-        READ[📖 Readable Code<br/><i>60% less boilerplate</i>]
-        SUCC[✨ Succinct Code<br/><i>Reads like English</i>]
-        SAFE[🔒 Type-Safe Code<br/><i>Compiler-enforced</i>]
+        READ[?? Readable Code<br/><i>60% less boilerplate</i>]
+        SUCC[? Succinct Code<br/><i>Reads like English</i>]
+        SAFE[?? Type-Safe Code<br/><i>Compiler-enforced</i>]
     end
     
     FP --> ROP
@@ -49,7 +49,7 @@ graph TB
 
 Traditional error handling creates **nested if-statements** and **scattered error checks** that make code hard to read and maintain. This library provides a better way: **write less code that reads like English**.
 
-### Before: Traditional Approach ❌
+### Before: Traditional Approach ?
 
 ```csharp
 // 20 lines of repetitive error checking - easy to miss a check!
@@ -76,10 +76,10 @@ _emailService.SendWelcome(user.Email);
 return Ok(user);
 ```
 
-### After: Railway-Oriented Programming ✅
+### After: Railway-Oriented Programming ?
 
 ```csharp
-// 8 lines - reads like a story: validate → create → check → save → notify
+// 8 lines - reads like a story: validate ? create ? check ? save ? notify
 return FirstName.TryCreate(input.FirstName)
     .Combine(LastName.TryCreate(input.LastName))
     .Combine(EmailAddress.TryCreate(input.Email))
@@ -91,11 +91,11 @@ return FirstName.TryCreate(input.FirstName)
 ```
 
 **Result:** 
-- 📖 **60% less code** - 8 lines vs 20 lines
-- 🎯 **Reads like English** - "Create name, combine with email, create user, ensure unique, save, notify"
-- ✨ **Zero hidden logic** - Every step visible in the chain
-- 🔒 **Impossible to forget** - Can't skip error handling steps
-- ⚡ **Zero performance cost** - Only 11-16 nanoseconds overhead
+- ?? **60% less code** - 8 lines vs 20 lines
+- ?? **Reads like English** - "Create name, combine with email, create user, ensure unique, save, notify"
+- ? **Zero hidden logic** - Every step visible in the chain
+- ?? **Impossible to forget** - Can't skip error handling steps
+- ? **Zero performance cost** - Only 11-16 nanoseconds overhead
 
 ---
 
@@ -148,8 +148,8 @@ public partial class FirstName : RequiredString { }
 public partial class LastName : RequiredString { }
 
 // Compiler prevents parameter mix-ups
-CreateUser(lastName, firstName);  // ❌ Compile error!
-CreateUser(firstName, lastName);  // ✅ Correct
+CreateUser(lastName, firstName);  // ? Compile error!
+CreateUser(firstName, lastName);  // ? Correct
 ```
 
 ### Entities — Identity-Based Objects
@@ -185,6 +185,29 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
+### Enum Value Objects — Type-Safe Enumerations with Behavior
+
+Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values. Name is auto-derived from the field name (pure DDD).
+
+```csharp
+public class OrderState : EnumValueObject<OrderState>
+{
+    // Pure domain - Name auto-derived from field name
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    public static readonly OrderState Delivered = new();
+    
+    private OrderState() { }
+}
+
+// Usage - Name is "Draft", "Confirmed", etc.
+var result = OrderState.TryFromName("Draft");  // Result<OrderState>
+
+if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
+    order.Cancel();
+```
+
 ---
 
 ## Rich Error Types
@@ -215,20 +238,20 @@ result.MatchError(
 
 | Operation | Track | Purpose | Example |
 |-----------|-------|---------|---------|
-| **Bind** | 🟢 Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
-| **Map** | 🟢 Success | Transform success values | `.Map(user => user.Name)` |
-| **Tap** | 🟢 Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
-| **TapOnFailure** | 🔴 Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
-| **MapOnFailure** | 🔴 Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
-| **RecoverOnFailure** | 🔴 Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
-| **Ensure** | 🟢→🔴 | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
-| **Combine** | ✅ Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
-| **Match** | ✅ Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
+| **Bind** | ?? Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
+| **Map** | ?? Success | Transform success values | `.Map(user => user.Name)` |
+| **Tap** | ?? Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
+| **TapOnFailure** | ?? Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
+| **MapOnFailure** | ?? Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
+| **RecoverOnFailure** | ?? Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
+| **Ensure** | ????? | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
+| **Combine** | ? Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
+| **Match** | ? Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
 
 **Track Legend:**
-- 🟢 **Success** - Only runs when result is successful
-- 🔴 **Failure** - Only runs when result is a failure  
-- ✅ **Both/Terminal** - Runs on both tracks or handles both
+- ?? **Success** - Only runs when result is successful
+- ?? **Failure** - Only runs when result is a failure  
+- ? **Both/Terminal** - Runs on both tracks or handles both
 
 **Naming Pattern:** Success track operations have **no suffix**. Failure track operations have **`OnFailure` suffix**.
 
@@ -238,7 +261,7 @@ All operations have **async variants** (`BindAsync`, `MapAsync`, `TapOnFailureAs
 
 ## Core Concepts
 
-### 🎯 Functional Programming
+### ?? Functional Programming
 
 **Pure functions** take inputs and produce outputs without side effects, making code:
 - **Predictable** - Same inputs always produce same outputs
@@ -247,7 +270,7 @@ All operations have **async variants** (`BindAsync`, `MapAsync`, `TapOnFailureAs
 
 **Learn more:** [Applying Functional Principles in C# (Pluralsight)](https://enterprisecraftsmanship.com/ps-func)
 
-### 🚂 Railway-Oriented Programming
+### ?? Railway-Oriented Programming
 
 **The key insight:** Your code should read like a story, not a maze of if-statements.
 
@@ -260,7 +283,7 @@ graph LR
     B -->|Failure| E[Error Track]
     C -->|Success| D{Save}
     C -->|Failure| E
-    D -->|Success| F[Success ✓]
+    D -->|Success| F[Success ?]
     D -->|Failure| E
     E --> G[Handle Error]
     
@@ -277,13 +300,14 @@ graph LR
 
 **If any step fails, the rest are skipped automatically.** No `if (error) return` after every line!
 
-### 🏗️ Domain-Driven Design
+### ??? Domain-Driven Design
 
 Model your **business domain** with rich types that enforce rules at compile time:
 
 - **Value Objects** - Immutable, validated primitives (`EmailAddress`, `Money`)
 - **Entities** - Objects with identity (`Customer`, `Order`)
 - **Aggregates** - Consistency boundaries with domain events
+- **Enum Value Objects** - Type-safe enumerations with behavior (`OrderState`, `PaymentMethod`)
 
 **Learn more:** [Domain-Driven Design in Practice (Pluralsight)](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)
 
@@ -295,7 +319,7 @@ Model your **business domain** with rich types that enforce rules at compile tim
 # Core library - Railway Oriented Programming
 dotnet add package FunctionalDdd.RailwayOrientedProgramming
 
-# Domain-Driven Design - Entities, Aggregates, Value Objects
+# Domain-Driven Design - Entities, Aggregates, Value Objects, Enum Value Objects
 dotnet add package FunctionalDdd.DomainDrivenDesign
 
 # ASP.NET Core integration - ToActionResult, ToHttpResult

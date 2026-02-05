@@ -2,6 +2,7 @@
 
 using System.Globalization;
 using EfCoreExample.Entities;
+using EfCoreExample.EnumValueObjects;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -115,15 +116,19 @@ public class AppDbContext : DbContext
                 .HasMaxLength(26)
                 .IsRequired();
 
-            builder.Property(o => o.Status)
-                .HasConversion<string>()
-                .HasMaxLength(20)
+            // EnumValueObject -> stored as int using auto-generated Value
+            // Value is assigned based on declaration order (0, 1, 2, ...)
+            builder.Property(o => o.State)
+                .HasConversion(
+                    state => state.Value,
+                    value => OrderState.GetAll().First(s => s.Value == value))
                 .IsRequired();
 
-            builder.Property(o => o.CreatedAt)
-                .IsRequired();
-
+            builder.Property(o => o.CreatedAt).IsRequired();
             builder.Property(o => o.ConfirmedAt);
+            builder.Property(o => o.ShippedAt);
+            builder.Property(o => o.DeliveredAt);
+            builder.Property(o => o.CancelledAt);
 
             // Ignore computed property
             builder.Ignore(o => o.Total);
