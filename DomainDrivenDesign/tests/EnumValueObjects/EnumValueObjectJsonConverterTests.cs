@@ -13,21 +13,22 @@ public class EnumValueObjectJsonConverterTests
     [JsonConverter(typeof(EnumValueObjectJsonConverter<Priority>))]
     internal class Priority : EnumValueObject<Priority>
     {
-        public static readonly Priority Low = new("Low");
-        public static readonly Priority Medium = new("Medium");
-        public static readonly Priority High = new("High");
-        public static readonly Priority Critical = new("Critical");
+        // Name auto-derived from field name
+        public static readonly Priority Low = new();
+        public static readonly Priority Medium = new();
+        public static readonly Priority High = new();
+        public static readonly Priority Critical = new();
 
-        private Priority(string name) : base(name) { }
+        private Priority() { }
     }
 
     // Enum value object without JsonConverter attribute for testing factory
     internal class Status : EnumValueObject<Status>
     {
-        public static readonly Status Active = new("Active");
-        public static readonly Status Inactive = new("Inactive");
+        public static readonly Status Active = new();
+        public static readonly Status Inactive = new();
 
-        private Status(string name) : base(name) { }
+        private Status() { }
     }
 
     internal record TestDto(Priority Priority, string Description);

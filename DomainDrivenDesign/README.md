@@ -75,18 +75,19 @@ public class Money : ValueObject
 
 ### EnumValueObject
 
-Type-safe enumerations with behavior. Unlike C# enums, EnumValueObjects prevent invalid values and can encapsulate domain logic.
+Type-safe enumerations with behavior. Unlike C# enums, EnumValueObjects prevent invalid values and can encapsulate domain logic. Name is auto-derived from the field name (pure DDD).
 
 ```csharp
 [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new("Draft");
-    public static readonly OrderState Confirmed = new("Confirmed");
-    public static readonly OrderState Shipped = new("Shipped");
-    public static readonly OrderState Delivered = new("Delivered");
+    // Pure domain - Name auto-derived from field name
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    public static readonly OrderState Delivered = new();
 
-    private OrderState(string name) : base(name) { }
+    private OrderState() { }
 
     public IReadOnlyList<OrderState> AllowedTransitions => this switch
     {

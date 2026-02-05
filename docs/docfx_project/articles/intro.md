@@ -1,4 +1,4 @@
-# Introduction
+ï»¿# Introduction
 
 Learn why functional domain modeling with Railway-Oriented Programming makes your code cleaner, safer, and more maintainable.
 
@@ -19,7 +19,7 @@ Learn why functional domain modeling with Railway-Oriented Programming makes you
 
 ## Why Use This Library?
 
-Building robust applications requires explicit error handling, type safety, and clean code. This library combines **Railway-Oriented Programming** with **Domain-Driven Design** to achieve all three—without sacrificing performance or readability.
+Building robust applications requires explicit error handling, type safety, and clean code. This library combines **Railway-Oriented Programming** with **Domain-Driven Design** to achieve all threeâ€”without sacrificing performance or readability.
 
 ```mermaid
 graph TB
@@ -114,14 +114,14 @@ Build rich domain models with **Aggregates**, **Entities**, **Value Objects**, a
 // Value object with validation
 public partial class EmailAddress : RequiredString { }
 
-// Enum Value Object - type-safe enumeration
+// Enum Value Object - type-safe enumeration (Name auto-derived)
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new("Draft");
-    public static readonly OrderState Confirmed = new("Confirmed");
-    public static readonly OrderState Shipped = new("Shipped");
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
     
-    private OrderState(string name) : base(name) { }
+    private OrderState() { }
 }
 
 // Use in domain entity
@@ -250,7 +250,7 @@ See [Advanced Features](advanced-features.md) for parallel operations, LINQ synt
 
 ## Performance
 
-The library adds only **~11-16 nanoseconds** of overhead compared to imperative code—less than 0.002% of typical I/O operations. You get cleaner, more maintainable code with virtually zero performance cost.
+The library adds only **~11-16 nanoseconds** of overhead compared to imperative codeâ€”less than 0.002% of typical I/O operations. You get cleaner, more maintainable code with virtually zero performance cost.
 
 **Typical operation costs:**
 

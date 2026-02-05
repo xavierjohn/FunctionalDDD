@@ -23,25 +23,25 @@ using System.Reflection;
 /// Each enum value object member is defined as a static readonly field:
 /// <list type="bullet">
 /// <item>Members are discovered via reflection and cached for performance</item>
-/// <item>The <see cref="Name"/> property is the domain concept (primary identifier)</item>
+/// <item>The <see cref="Name"/> property is auto-derived from the field name (infrastructure concern)</item>
 /// <item>The <see cref="Value"/> property is auto-generated for persistence (infrastructure concern)</item>
 /// </list>
 /// </para>
 /// </remarks>
 /// <example>
-/// Basic enum value object:
+/// Basic enum value object (pure domain - no strings needed):
 /// <code><![CDATA[
 /// public class OrderState : EnumValueObject<OrderState>
 /// {
-///     public static readonly OrderState Draft = new("Draft");
-///     public static readonly OrderState Confirmed = new("Confirmed");
-///     public static readonly OrderState Shipped = new("Shipped");
+///     public static readonly OrderState Draft = new();
+///     public static readonly OrderState Confirmed = new();
+///     public static readonly OrderState Shipped = new();
 ///     
-///     private OrderState(string name) : base(name) { }
+///     private OrderState() { }
 /// }
 /// 
-/// // Usage
-/// var state = OrderState.Draft;
+/// // Usage - Name is auto-derived from field name
+/// var state = OrderState.Draft;           // Name = "Draft"
 /// var all = OrderState.GetAll();
 /// var result = OrderState.TryFromName("Draft");  // Result<OrderState>
 /// ]]></code>
@@ -51,20 +51,20 @@ using System.Reflection;
 /// <code><![CDATA[
 /// public class PaymentMethod : EnumValueObject<PaymentMethod>
 /// {
-///     public static readonly PaymentMethod CreditCard = new("CreditCard", fee: 0.029m);
-///     public static readonly PaymentMethod BankTransfer = new("BankTransfer", fee: 0.005m);
-///     public static readonly PaymentMethod Cash = new("Cash", fee: 0m);
+///     public static readonly PaymentMethod CreditCard = new(fee: 0.029m);
+///     public static readonly PaymentMethod BankTransfer = new(fee: 0.005m);
+///     public static readonly PaymentMethod Cash = new(fee: 0m);
 ///     
 ///     public decimal Fee { get; }
 ///     
-///     private PaymentMethod(string name, decimal fee) : base(name) => Fee = fee;
+///     private PaymentMethod(decimal fee) => Fee = fee;
 ///     
 ///     public decimal CalculateFee(decimal amount) => amount * Fee;
 /// }
 /// ]]></code>
 /// </example>
 #pragma warning disable CA1000 // Do not declare static members on generic types - required for factory pattern
-public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf> 
+public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf>
     : IEquatable<EnumValueObject<TSelf>>, IComparable<EnumValueObject<TSelf>>
     where TSelf : EnumValueObject<TSelf>
 {
@@ -72,29 +72,36 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
 
     /// <summary>
     /// Gets the name of this enum value object member.
-    /// This is the domain concept - the primary identifier.
+    /// Auto-derived from the field name during discovery.
+    /// This is an infrastructure concern for serialization and display.
     /// </summary>
-    public string Name { get; }
+    public string Name
+    {
+        get
+        {
+            // Ensure cache is populated (which sets Name)
+            if (_name is null)
+                _ = GetCache();
+
+            return _name!;
+        }
+        private set => _name = value;
+    }
+
+    private string? _name;
 
     /// <summary>
     /// Gets the auto-generated integer value for persistence.
-    /// This is an infrastructure concern - use <see cref="Name"/> for domain logic.
-    /// Values are assigned based on declaration order (0, 1, 2, ...).
+    /// This is an infrastructure concern - values are assigned based on declaration order (0, 1, 2, ...).
     /// </summary>
     public int Value { get; private set; }
 
     /// <summary>
-    /// Initializes a new instance with the specified name.
-    /// The integer value is auto-assigned based on declaration order.
+    /// Initializes a new instance. The Name is auto-derived from the field name.
     /// </summary>
-    /// <param name="name">The name for this enum member.</param>
-    protected EnumValueObject(string name)
+    protected EnumValueObject()
     {
-        ArgumentNullException.ThrowIfNull(name);
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name cannot be empty or whitespace.", nameof(name));
-
-        Name = name;
+        // Name and Value are set during discovery via reflection
     }
 
     /// <summary>
@@ -131,6 +138,7 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
         var result = TryFromName(name);
         if (result.IsFailure)
             throw new InvalidOperationException($"Failed to create {typeof(TSelf).Name}: {result.Error.Detail}");
+
         return result.Value;
     }
 
@@ -170,6 +178,7 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
+
         return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -207,9 +216,6 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
         s_cache.GetOrAdd(typeof(TSelf), _ =>
         {
             var members = DiscoverMembers().ToList();
-            for (int i = 0; i < members.Count; i++)
-                members[i].Value = i;
-
             var byName = members.ToDictionary(m => m.Name, StringComparer.OrdinalIgnoreCase);
             return (members, byName);
         });
@@ -217,10 +223,17 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
     private static IEnumerable<TSelf> DiscoverMembers()
     {
         var fields = typeof(TSelf).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+        var index = 0;
+
         foreach (var field in fields)
         {
             if (field.FieldType == typeof(TSelf) && field.IsInitOnly && field.GetValue(null) is TSelf member)
+            {
+                // Auto-derive Name from field name and assign Value
+                member.Name = field.Name;
+                member.Value = index++;
                 yield return member;
+            }
         }
     }
 

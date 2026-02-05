@@ -12,26 +12,26 @@ public class EnumValueObjectTests
     [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderStatus>))]
     internal class OrderStatus : EnumValueObject<OrderStatus>
     {
-        public static readonly OrderStatus Pending = new("Pending");
-        public static readonly OrderStatus Processing = new("Processing");
-        public static readonly OrderStatus Shipped = new("Shipped");
-        public static readonly OrderStatus Delivered = new("Delivered");
-        public static readonly OrderStatus Cancelled = new("Cancelled");
+        // Name is auto-derived from field name
+        public static readonly OrderStatus Pending = new();
+        public static readonly OrderStatus Processing = new();
+        public static readonly OrderStatus Shipped = new();
+        public static readonly OrderStatus Delivered = new();
+        public static readonly OrderStatus Cancelled = new();
 
-        private OrderStatus(string name) : base(name) { }
+        private OrderStatus() { }
     }
 
     internal class PaymentStatus : EnumValueObject<PaymentStatus>
     {
-        public static readonly PaymentStatus Pending = new("Pending", isTerminal: false);
-        public static readonly PaymentStatus Completed = new("Completed", isTerminal: true);
-        public static readonly PaymentStatus Failed = new("Failed", isTerminal: true);
-        public static readonly PaymentStatus Refunded = new("Refunded", isTerminal: true);
+        public static readonly PaymentStatus Pending = new(isTerminal: false);
+        public static readonly PaymentStatus Completed = new(isTerminal: true);
+        public static readonly PaymentStatus Failed = new(isTerminal: true);
+        public static readonly PaymentStatus Refunded = new(isTerminal: true);
 
         public bool IsTerminal { get; }
 
-        private PaymentStatus(string name, bool isTerminal) : base(name) =>
-            IsTerminal = isTerminal;
+        private PaymentStatus(bool isTerminal) => IsTerminal = isTerminal;
     }
 
     #endregion
@@ -375,8 +375,9 @@ public class EnumValueObjectTests
     }
 
     [Fact]
-    public void Name_ReturnsAssignedName()
+    public void Name_ReturnsDerivedFromFieldName()
     {
+        // Name is auto-derived from the field name
         OrderStatus.Pending.Name.Should().Be("Pending");
         OrderStatus.Cancelled.Name.Should().Be("Cancelled");
     }
@@ -405,37 +406,6 @@ public class EnumValueObjectTests
         terminalStatuses.Should().Contain(PaymentStatus.Completed);
         terminalStatuses.Should().Contain(PaymentStatus.Failed);
         terminalStatuses.Should().Contain(PaymentStatus.Refunded);
-    }
-
-    #endregion
-
-    #region Constructor Validation Tests
-
-    [Fact]
-    public void Constructor_NullName_ThrowsArgumentNullException()
-    {
-        var act = () => new TestNullName();
-
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void Constructor_EmptyName_ThrowsArgumentException()
-    {
-        var act = () => new TestEmptyName();
-
-        act.Should().Throw<ArgumentException>();
-    }
-
-    // Test classes to verify constructor validation
-    private class TestNullName : EnumValueObject<TestNullName>
-    {
-        public TestNullName() : base(null!) { }
-    }
-
-    private class TestEmptyName : EnumValueObject<TestEmptyName>
-    {
-        public TestEmptyName() : base("") { }
     }
 
     #endregion

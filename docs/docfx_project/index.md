@@ -187,20 +187,21 @@ public class Order : Aggregate<OrderId>
 
 ### Enum Value Objects — Type-Safe Enumerations with Behavior
 
-Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values.
+Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values. Name is auto-derived from the field name (pure DDD).
 
 ```csharp
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new("Draft");
-    public static readonly OrderState Confirmed = new("Confirmed");
-    public static readonly OrderState Shipped = new("Shipped");
-    public static readonly OrderState Delivered = new("Delivered");
+    // Pure domain - Name auto-derived from field name
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    public static readonly OrderState Delivered = new();
     
-    private OrderState(string name) : base(name) { }
+    private OrderState() { }
 }
 
-// Usage
+// Usage - Name is "Draft", "Confirmed", etc.
 var result = OrderState.TryFromName("Draft");  // Result<OrderState>
 
 if (order.State.Is(OrderState.Draft, OrderState.Confirmed))

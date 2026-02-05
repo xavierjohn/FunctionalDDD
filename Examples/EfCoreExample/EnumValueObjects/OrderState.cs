@@ -6,21 +6,23 @@ using FunctionalDdd;
 /// <summary>
 /// Enum value object demonstrating rich domain behavior for order state.
 /// Unlike a regular C# enum, this encapsulates business rules about state transitions.
+/// Name is auto-derived from the field name (pure DDD - no strings in domain).
 /// </summary>
 [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new("Draft", canModify: true, canCancel: true, isTerminal: false);
-    public static readonly OrderState Confirmed = new("Confirmed", canModify: false, canCancel: true, isTerminal: false);
-    public static readonly OrderState Shipped = new("Shipped", canModify: false, canCancel: false, isTerminal: false);
-    public static readonly OrderState Delivered = new("Delivered", canModify: false, canCancel: false, isTerminal: true);
-    public static readonly OrderState Cancelled = new("Cancelled", canModify: false, canCancel: false, isTerminal: true);
+    // Pure domain - Name auto-derived from field name
+    public static readonly OrderState Draft = new(canModify: true, canCancel: true, isTerminal: false);
+    public static readonly OrderState Confirmed = new(canModify: false, canCancel: true, isTerminal: false);
+    public static readonly OrderState Shipped = new(canModify: false, canCancel: false, isTerminal: false);
+    public static readonly OrderState Delivered = new(canModify: false, canCancel: false, isTerminal: true);
+    public static readonly OrderState Cancelled = new(canModify: false, canCancel: false, isTerminal: true);
 
     public bool CanModify { get; }
     public bool CanCancel { get; }
     public bool IsTerminal { get; }
 
-    private OrderState(string name, bool canModify, bool canCancel, bool isTerminal) : base(name)
+    private OrderState(bool canModify, bool canCancel, bool isTerminal)
     {
         CanModify = canModify;
         CanCancel = canCancel;
