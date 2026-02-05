@@ -1,13 +1,13 @@
-# Enum Value Objects
+﻿# Enum Value Objects (SmartEnum)
 
-Enum Value Objects are type-safe enumerations with behavior, providing a powerful alternative to C# enums for domain modeling.
+Enum Value Objects are type-safe enumerations with behavior, providing a powerful alternative to C# enums for domain modeling. Also known as "Smart Enums" in the .NET community or "Standard Types" in DDD terminology.
 
 ## Why Enum Value Objects?
 
 C# enums have limitations that can lead to bugs:
 
 ```csharp
-// ? C# enum problems
+// C# enum problems
 public enum OrderStatus { Draft, Confirmed, Shipped }
 
 var status = (OrderStatus)999;  // Valid! No compile or runtime error
@@ -17,56 +17,63 @@ var invalid = Enum.Parse<OrderStatus>("Invalid");  // Throws at runtime
 Enum Value Objects solve these issues:
 
 ```csharp
-// ? Enum Value Object benefits
+// Enum Value Object - type-safe, with behavior
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new("Draft");
-    public static readonly OrderState Confirmed = new("Confirmed");
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
     
-    private OrderState(int value, string name) : base(value, name) { }
+    private OrderState() { }
 }
 
-// Cannot create invalid values
-var result = OrderState.TryFromValue(999);  // Returns Result.Failure
-var state = OrderState.TryFromName("Invalid");  // Returns Result.Failure
+// Cannot create invalid values - Name is auto-derived from field name
+var result = OrderState.TryFromName("Invalid");  // Returns Result.Failure
+var state = OrderState.Draft;  // state.Name == "Draft"
 ```
 
 ## Basic Usage
 
-### Defining a Enum Value Object
+### Defining an Enum Value Object
+
+The Name is automatically derived from the field name - pure domain, no strings needed:
 
 ```csharp
 using FunctionalDdd;
 
 public class PaymentMethod : EnumValueObject<PaymentMethod>
 {
-    public static readonly PaymentMethod CreditCard = new("CreditCard");
-    public static readonly PaymentMethod DebitCard = new("DebitCard");
-    public static readonly PaymentMethod BankTransfer = new("BankTransfer");
-    public static readonly PaymentMethod Crypto = new("Crypto");
+    // Name auto-derived: "CreditCard", "DebitCard", etc.
+    public static readonly PaymentMethod CreditCard = new();
+    public static readonly PaymentMethod DebitCard = new();
+    public static readonly PaymentMethod BankTransfer = new();
+    public static readonly PaymentMethod Crypto = new();
 
-    private PaymentMethod(int value, string name) : base(value, name) { }
+    private PaymentMethod() { }
 }
 ```
 
 ### Creating Instances
 
 ```csharp
-// From value (returns Result<T>)
-var result = PaymentMethod.TryFromValue(1);
+// From name (case-insensitive, returns Result<T>)
+var result = PaymentMethod.TryFromName("creditcard");
 if (result.IsSuccess)
     Console.WriteLine(result.Value.Name);  // "CreditCard"
 
-// From name (case-insensitive)
-var result2 = PaymentMethod.TryFromName("creditcard");  // Success
-
 // Direct access when known valid
-var method = PaymentMethod.FromValue(1);  // Throws if invalid
-var method2 = PaymentMethod.FromName("CreditCard");  // Throws if invalid
+var method = PaymentMethod.FromName("CreditCard");  // Throws if invalid
+
+// Check membership
+if (payment.Is(PaymentMethod.CreditCard, PaymentMethod.DebitCard))
+    ApplyCardFee();
+
+if (payment.IsNot(PaymentMethod.Crypto))
+    ProcessTraditionalPayment();
 
 // Enumerate all values
-foreach (var method in PaymentMethod.GetAll())
-    Console.WriteLine($"{method.Value}: {method.Name}");
+foreach (var m in PaymentMethod.GetAll())
+    Console.WriteLine($"{m.Value}: {m.Name}");
 ```
 
 ## Adding Behavior
@@ -76,23 +83,18 @@ Enum Value Objects can have properties and methods:
 ```csharp
 public class OrderState : EnumValueObject<OrderState>
 {
-    public static readonly OrderState Draft = new("Draft", 
-        canModify: true, canCancel: true, isTerminal: false);
-    public static readonly OrderState Confirmed = new("Confirmed", 
-        canModify: false, canCancel: true, isTerminal: false);
-    public static readonly OrderState Shipped = new("Shipped", 
-        canModify: false, canCancel: false, isTerminal: false);
-    public static readonly OrderState Delivered = new("Delivered", 
-        canModify: false, canCancel: false, isTerminal: true);
-    public static readonly OrderState Cancelled = new("Cancelled", 
-        canModify: false, canCancel: false, isTerminal: true);
+    // Name auto-derived from field name
+    public static readonly OrderState Draft = new(canModify: true, canCancel: true, isTerminal: false);
+    public static readonly OrderState Confirmed = new(canModify: false, canCancel: true, isTerminal: false);
+    public static readonly OrderState Shipped = new(canModify: false, canCancel: false, isTerminal: false);
+    public static readonly OrderState Delivered = new(canModify: false, canCancel: false, isTerminal: true);
+    public static readonly OrderState Cancelled = new(canModify: false, canCancel: false, isTerminal: true);
 
     public bool CanModify { get; }
     public bool CanCancel { get; }
     public bool IsTerminal { get; }
 
-    private OrderState(int value, string name, bool canModify, bool canCancel, bool isTerminal)
-        : base(value, name)
+    private OrderState(bool canModify, bool canCancel, bool isTerminal)
     {
         CanModify = canModify;
         CanCancel = canCancel;
@@ -138,24 +140,6 @@ public class OrderState : EnumValueObject<OrderState>
             $"Allowed: {string.Join(", ", AllowedTransitions.Select(s => s.Name))}");
     }
 }
-
-// Usage in aggregate
-public class Order : Aggregate<OrderId>
-{
-    public OrderState State { get; private set; } = OrderState.Draft;
-
-    public Result<Order> Confirm() =>
-        this.ToResult()
-            .Ensure(_ => Lines.Count > 0, Error.Validation("Order must have items"))
-            .Bind(_ => State.TryTransitionTo(OrderState.Confirmed))
-            .Tap(newState => State = newState)
-            .Map(_ => this);
-
-    public Result<Order> Ship() =>
-        State.TryTransitionTo(OrderState.Shipped)
-            .Tap(newState => State = newState)
-            .Map(_ => this);
-}
 ```
 
 ## JSON Serialization
@@ -171,12 +155,11 @@ public class OrderState : EnumValueObject<OrderState>
     // ...
 }
 
-// Serializes to: "Confirmed"
+// Serializes to: "Confirmed" (the Name)
 var json = JsonSerializer.Serialize(OrderState.Confirmed);
 
-// Deserializes from string or int
-var state1 = JsonSerializer.Deserialize<OrderState>("\"Confirmed\"");
-var state2 = JsonSerializer.Deserialize<OrderState>("2");
+// Deserializes from string
+var state = JsonSerializer.Deserialize<OrderState>("\"Confirmed\"");
 ```
 
 ### Using Converter Factory
@@ -193,83 +176,26 @@ var options = new JsonSerializerOptions
 var json = JsonSerializer.Serialize(order, options);
 ```
 
-### ASP.NET Core Configuration
-
-```csharp
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new EnumValueObjectJsonConverterFactory());
-    });
-```
-
 ## Entity Framework Core
 
-Store Enum Value Objects as string or int:
+Store Enum Value Objects using the auto-generated Value property:
 
 ```csharp
 // In DbContext.OnModelCreating
 modelBuilder.Entity<Order>(builder =>
 {
-    // Store as string (human-readable)
-    builder.Property(o => o.State)
-        .HasConversion(
-            state => state.Name,
-            name => OrderState.FromName(name))
-        .HasMaxLength(20)
-        .IsRequired();
-
-    // Or store as int (efficient)
+    // Store as int using auto-generated Value (0, 1, 2, ...)
     builder.Property(o => o.State)
         .HasConversion(
             state => state.Value,
-            value => OrderState.FromValue(value))
+            value => OrderState.GetAll().First(s => s.Value == value))
         .IsRequired();
 });
 ```
 
-## Polymorphic Behavior
-
-For complex behavior, use inheritance:
-
-```csharp
-public abstract class PaymentMethod : EnumValueObject<PaymentMethod>
-{
-    public static readonly PaymentMethod CreditCard = new CreditCardPayment();
-    public static readonly PaymentMethod BankTransfer = new BankTransferPayment();
-    public static readonly PaymentMethod Crypto = new CryptoPayment();
-
-    private PaymentMethod(int value, string name) : base(value, name) { }
-
-    public abstract decimal CalculateFee(decimal amount);
-    public abstract TimeSpan EstimatedProcessingTime { get; }
-
-    private sealed class CreditCardPayment : PaymentMethod
-    {
-        public CreditCardPayment() : base(1, "CreditCard") { }
-        public override decimal CalculateFee(decimal amount) => amount * 0.029m + 0.30m;
-        public override TimeSpan EstimatedProcessingTime => TimeSpan.FromSeconds(5);
-    }
-
-    private sealed class BankTransferPayment : PaymentMethod
-    {
-        public BankTransferPayment() : base(2, "BankTransfer") { }
-        public override decimal CalculateFee(decimal amount) => 0.50m;
-        public override TimeSpan EstimatedProcessingTime => TimeSpan.FromDays(3);
-    }
-
-    private sealed class CryptoPayment : PaymentMethod
-    {
-        public CryptoPayment() : base(3, "Crypto") { }
-        public override decimal CalculateFee(decimal amount) => amount * 0.01m;
-        public override TimeSpan EstimatedProcessingTime => TimeSpan.FromMinutes(30);
-    }
-}
-
-// Usage
-var fee = PaymentMethod.CreditCard.CalculateFee(100.00m);  // $3.20
-var time = PaymentMethod.BankTransfer.EstimatedProcessingTime;  // 3 days
-```
+**Note:** The Value is assigned based on field declaration order (0, 1, 2, ...). 
+If you reorder fields, database values will change. For existing databases, 
+use explicit mapping instead.
 
 ## API Reference
 
@@ -277,35 +203,41 @@ var time = PaymentMethod.BankTransfer.EstimatedProcessingTime;  // 3 days
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `Value` | `int` | Integer value for persistence |
-| `Name` | `string` | String name for display |
+| `Name` | `string` | Auto-derived from field name |
+| `Value` | `int` | Auto-generated based on declaration order (0, 1, 2, ...) |
 
 ### Static Methods
 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `GetAll()` | `IReadOnlyCollection<T>` | All defined members |
-| `TryFromValue(int)` | `Result<T>` | Find by value with validation |
 | `TryFromName(string)` | `Result<T>` | Find by name (case-insensitive) |
-| `FromValue(int)` | `T` | Find by value, throws if invalid |
-| `FromName(string)` | `T` | Find by name, throws if invalid |
-| `TryFromValue(int, out T)` | `bool` | Try-pattern for value lookup |
 | `TryFromName(string, out T)` | `bool` | Try-pattern for name lookup |
+| `FromName(string)` | `T` | Find by name, throws if invalid |
+
+### Instance Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `Is(params T[])` | `bool` | Check if instance is one of the specified values |
+| `IsNot(params T[])` | `bool` | Check if instance is not one of the specified values |
 
 ### Operators
 
 - Equality: `==`, `!=`
-- Comparison: `<`, `<=`, `>`, `>=`
-- Implicit conversion to `int` and `string`
+- Comparison: `<`, `<=`, `>`, `>=` (based on Value)
+- Implicit conversion to `string` (returns Name)
 
 ## Best Practices
 
 1. **Use private constructor** - Prevent external instantiation
-2. **Define members as `static readonly`** - Ensures single instances
-3. **Add behavior for domain logic** - Encapsulate rules in the enum
-4. **Use `TryFromValue`/`TryFromName`** - For user input validation
-5. **Use `FromValue`/`FromName`** - For known-valid values (tests, constants)
-6. **Model state machines** - When values have valid transitions
+2. **Define members as static readonly** - Ensures single instances
+3. **No strings in domain** - Name is auto-derived from field name
+4. **Add behavior for domain logic** - Encapsulate rules in the enum
+5. **Use TryFromName** - For user input validation
+6. **Use FromName** - For known-valid values (tests, constants)
+7. **Model state machines** - When values have valid transitions
+8. **Use Is() and IsNot()** - For readable membership checks
 
 ## See Also
 

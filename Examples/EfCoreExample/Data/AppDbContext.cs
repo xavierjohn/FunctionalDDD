@@ -206,13 +206,12 @@ public class AppDbContext : DbContext
                 .HasMaxLength(26)
                 .IsRequired();
 
-            // ✨ EnumValueObject -> stored as int for database efficiency
-            // The mapping is explicit in the infrastructure layer (ACL pattern)
-            // Domain uses Name ("Draft"), Database uses int (1)
+            // ✨ EnumValueObject -> stored as int using auto-generated Value
+            // Value is assigned based on declaration order (0, 1, 2, ...)
             builder.Property(o => o.State)
                 .HasConversion(
-                    state => OrderStateToInt(state),    // Domain → Database
-                    value => IntToOrderState(value))   // Database → Domain
+                    state => state.Value,
+                    value => OrderState.GetAll().First(s => s.Value == value))
                 .IsRequired();
 
             builder.Property(o => o.CreatedAt).IsRequired();
@@ -227,35 +226,4 @@ public class AppDbContext : DbContext
             // Note: For simplicity, we're not configuring the Lines relationship here
             // In a real app, you'd configure it similar to Order
         });
-
-    #region EnumValueObject ACL Mapping
-
-    /// <summary>
-    /// Anti-Corruption Layer: Maps domain OrderState to database integer.
-    /// Uses direct reference comparison (type-safe, refactor-friendly).
-    /// </summary>
-    private static int OrderStateToInt(OrderState state) => state switch
-    {
-        _ when state == OrderState.Draft => 1,
-        _ when state == OrderState.Confirmed => 2,
-        _ when state == OrderState.Shipped => 3,
-        _ when state == OrderState.Delivered => 4,
-        _ when state == OrderState.Cancelled => 5,
-        _ => throw new InvalidOperationException($"Unknown OrderState: {state.Name}")
-    };
-
-    /// <summary>
-    /// Anti-Corruption Layer: Maps database integer to domain OrderState.
-    /// </summary>
-    private static OrderState IntToOrderState(int value) => value switch
-    {
-        1 => OrderState.Draft,
-        2 => OrderState.Confirmed,
-        3 => OrderState.Shipped,
-        4 => OrderState.Delivered,
-        5 => OrderState.Cancelled,
-        _ => throw new InvalidOperationException($"Unknown OrderState value: {value}")
-    };
-
-    #endregion
 }
