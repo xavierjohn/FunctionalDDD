@@ -4,7 +4,6 @@ using System.Globalization;
 using EfCoreExample.Entities;
 using EfCoreExample.EnumValueObjects;
 using EfCoreExample.ValueObjects;
-using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
 
@@ -233,15 +232,15 @@ public class AppDbContext : DbContext
 
     /// <summary>
     /// Anti-Corruption Layer: Maps domain OrderState to database integer.
-    /// This keeps the domain pure (Name-based) while storing efficient integers in the database.
+    /// Uses direct reference comparison (type-safe, refactor-friendly).
     /// </summary>
-    private static int OrderStateToInt(OrderState state) => state.Name switch
+    private static int OrderStateToInt(OrderState state) => state switch
     {
-        "Draft" => 1,
-        "Confirmed" => 2,
-        "Shipped" => 3,
-        "Delivered" => 4,
-        "Cancelled" => 5,
+        _ when state == OrderState.Draft => 1,
+        _ when state == OrderState.Confirmed => 2,
+        _ when state == OrderState.Shipped => 3,
+        _ when state == OrderState.Delivered => 4,
+        _ when state == OrderState.Cancelled => 5,
         _ => throw new InvalidOperationException($"Unknown OrderState: {state.Name}")
     };
 
