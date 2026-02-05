@@ -75,20 +75,19 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
     /// Auto-derived from the field name during discovery.
     /// This is an infrastructure concern for serialization and display.
     /// </summary>
-    public string Name
-    {
-        get
-        {
-            // Ensure cache is populated (which sets Name)
-            if (_name is null)
-                _ = GetCache();
-
-            return _name!;
-        }
-        private set => _name = value;
-    }
+    /// <remarks>
+    /// Name is lazily initialized on first access to avoid chicken-and-egg issues
+    /// with static field initialization order.
+    /// </remarks>
+    public string Name => _name ?? InitializeName();
 
     private string? _name;
+
+    private string InitializeName()
+    {
+        _ = GetCache(); // Populates _name
+        return _name!;
+    }
 
     /// <summary>
     /// Gets the auto-generated integer value for persistence.
@@ -230,7 +229,7 @@ public abstract class EnumValueObject<[DynamicallyAccessedMembers(DynamicallyAcc
             if (field.FieldType == typeof(TSelf) && field.IsInitOnly && field.GetValue(null) is TSelf member)
             {
                 // Auto-derive Name from field name and assign Value
-                member.Name = field.Name;
+                member._name = field.Name;
                 member.Value = index++;
                 yield return member;
             }
