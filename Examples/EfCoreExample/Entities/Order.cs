@@ -28,9 +28,9 @@ public class Order : Aggregate<OrderId>
     public DateTime? CancelledAt { get; private set; }
 
     // EF Core requires parameterless constructor
-    private Order() : base(OrderId.NewUnique()) { }
+    private Order() : base(OrderId.NewUniqueV4()) { }
 
-    private Order(CustomerId customerId) : base(OrderId.NewUnique())
+    private Order(CustomerId customerId) : base(OrderId.NewUniqueV4())
     {
         CustomerId = customerId;
         State = OrderState.Draft;

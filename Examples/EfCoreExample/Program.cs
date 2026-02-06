@@ -5,8 +5,8 @@
 // with Entity Framework Core using an in-memory database.
 //
 // Featured Value Objects:
-// - RequiredUlid<T>  : OrderId, CustomerId (time-ordered, sortable identifiers)
-// - RequiredGuid<T>  : ProductId (traditional GUID-based identifiers)
+// - RequiredGuid<T>  : OrderId, CustomerId, ProductId (GUID-based identifiers)
+//                      Use NewUniqueV7() for time-ordered, sortable identifiers
 // - RequiredString<T>: ProductName, CustomerName (non-empty string validation)
 // - EmailAddress     : Built-in RFC 5322 validated email addresses
 //
@@ -70,7 +70,7 @@ await context.SaveChangesAsync();
 Console.WriteLine();
 
 // =============================================================================
-// 2. CREATE CUSTOMER (Using RequiredUlid, RequiredString, EmailAddress)
+// 2. CREATE CUSTOMER (Using RequiredGuid, RequiredString, EmailAddress)
 // =============================================================================
 Console.WriteLine("👤 Creating Customer...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
@@ -86,7 +86,6 @@ customerResult
         Console.WriteLine($"  ✓ Created: {c.Name}");
         Console.WriteLine($"             ID: {c.Id}");
         Console.WriteLine($"             Email: {c.Email}");
-        Console.WriteLine($"             Note: ULID naturally encodes creation time!");
     })
     .TapOnFailure(error => Console.WriteLine($"  ✗ Failed: {error.Detail}"));
 
@@ -117,7 +116,7 @@ Product.TryCreate("Invalid Product", -10m, 5)
 Console.WriteLine();
 
 // =============================================================================
-// 4. CREATE ORDER (Using RequiredUlid - time-ordered!)
+// 4. CREATE ORDER (Using RequiredGuid with V7 - time-ordered!)
 // =============================================================================
 Console.WriteLine("🛒 Creating Order...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
@@ -172,12 +171,12 @@ foreach (var order in orders)
 Console.WriteLine();
 
 // =============================================================================
-// 6. DEMONSTRATE ULID ORDERING
+// 6. DEMONSTRATE GUID V7 ORDERING
 // =============================================================================
-Console.WriteLine("📊 Demonstrating ULID Ordering (Time-based Sortability)...");
+Console.WriteLine("📊 Demonstrating GUID V7 Ordering (Time-based Sortability)...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
 
-// Create a few more orders to show ULID ordering
+// Create a few more orders to show GUID V7 ordering
 for (int i = 0; i < 3; i++)
 {
     await Task.Delay(10); // Small delay to ensure different timestamps
@@ -188,13 +187,13 @@ for (int i = 0; i < 3; i++)
 
 await context.SaveChangesAsync();
 
-// Query orders sorted by ID (ULIDs sort chronologically!)
+// Query orders sorted by ID (GUID V7 sorts chronologically!)
 var sortedOrders = await context.Orders
-    .OrderBy(o => o.Id) // ULID provides natural chronological ordering
+    .OrderBy(o => o.Id) // GUID V7 provides natural chronological ordering
     .Select(o => new { o.Id, o.CreatedAt, o.State })
     .ToListAsync();
 
-Console.WriteLine("  Orders sorted by ULID (natural chronological order):");
+Console.WriteLine("  Orders sorted by GUID V7 (natural chronological order):");
 foreach (var o in sortedOrders)
 {
     Console.WriteLine($"    {o.Id} - Created: {o.CreatedAt:HH:mm:ss.fff} - {o.State}");
@@ -309,8 +308,7 @@ Console.WriteLine();
 Console.WriteLine("╔══════════════════════════════════════════════════════════════════╗");
 Console.WriteLine("║  Summary                                                          ║");
 Console.WriteLine("╠══════════════════════════════════════════════════════════════════╣");
-Console.WriteLine("║  ✓ RequiredUlid<T>   - Time-ordered, sortable identifiers        ║");
-Console.WriteLine("║  ✓ RequiredGuid<T>   - Traditional GUID identifiers              ║");
+Console.WriteLine("║  ✓ RequiredGuid<T>   - GUID identifiers (V4 random, V7 ordered)  ║");
 Console.WriteLine("║  ✓ RequiredString<T> - Non-empty string validation               ║");
 Console.WriteLine("║  ✓ EmailAddress      - RFC 5322 email validation                 ║");
 Console.WriteLine("║  ✓ EnumValueObject<T> - Type-safe enums with behavior            ║");

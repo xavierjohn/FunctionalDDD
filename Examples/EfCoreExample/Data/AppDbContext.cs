@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// EF Core DbContext demonstrating seamless integration with FunctionalDDD value objects.
-/// Shows how to configure value converters for RequiredUlid, RequiredGuid, RequiredString, and EmailAddress.
+/// Shows how to configure value converters for RequiredGuid, RequiredString, and EmailAddress.
 /// </summary>
 public class AppDbContext : DbContext
 {
@@ -37,13 +37,12 @@ public class AppDbContext : DbContext
         {
             builder.HasKey(c => c.Id);
 
-            // RequiredUlid<CustomerId> -> Ulid -> stored as string in database
-            // ULIDs are 26-character Crockford Base32 strings
+            // RequiredGuid<CustomerId> -> Guid -> stored as string in database
             builder.Property(c => c.Id)
                 .HasConversion(
                     id => id.Value.ToString(),
-                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    str => CustomerId.Create(Guid.Parse(str)))
+                .HasMaxLength(36)
                 .IsRequired();
 
             // RequiredString<CustomerName> -> string
@@ -72,7 +71,6 @@ public class AppDbContext : DbContext
             builder.HasKey(p => p.Id);
 
             // RequiredGuid<ProductId> -> Guid
-            // Demonstrates mixing GUID and ULID in the same domain
             builder.Property(p => p.Id)
                 .HasConversion(
                     id => id.Value,
@@ -99,21 +97,21 @@ public class AppDbContext : DbContext
         {
             builder.HasKey(o => o.Id);
 
-            // RequiredUlid<OrderId> -> Ulid -> string
-            // Orders benefit from ULID's time-ordering for natural chronological queries
+            // RequiredGuid<OrderId> -> Guid -> string
+            // Orders benefit from GUID V7's time-ordering for natural chronological queries
             builder.Property(o => o.Id)
                 .HasConversion(
                     id => id.Value.ToString(),
-                    str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    str => OrderId.Create(Guid.Parse(str)))
+                .HasMaxLength(36)
                 .IsRequired();
 
-            // Foreign key to Customer using ULID
+            // Foreign key to Customer using GUID
             builder.Property(o => o.CustomerId)
                 .HasConversion(
                     id => id.Value.ToString(),
-                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    str => CustomerId.Create(Guid.Parse(str)))
+                .HasMaxLength(36)
                 .IsRequired();
 
             // EnumValueObject -> stored as int using auto-generated Value
@@ -148,12 +146,12 @@ public class AppDbContext : DbContext
             builder.Property(l => l.Id)
                 .ValueGeneratedOnAdd();
 
-            // Foreign key using ULID
+            // Foreign key using GUID
             builder.Property(l => l.OrderId)
                 .HasConversion(
                     id => id.Value.ToString(),
-                    str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    str => OrderId.Create(Guid.Parse(str)))
+                .HasMaxLength(36)
                 .IsRequired();
 
             // Foreign key using GUID

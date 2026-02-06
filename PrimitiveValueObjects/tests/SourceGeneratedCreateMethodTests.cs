@@ -5,10 +5,10 @@ using Xunit;
 
 /// <summary>
 /// Tests for source-generated Create() methods that throw on validation failure.
-/// These methods are generated for all RequiredGuid, RequiredUlid, RequiredString,
+/// These methods are generated for all RequiredGuid, RequiredString,
 /// RequiredInt, and RequiredDecimal value objects.
 /// 
-/// Note: Test value objects (EmployeeId, OrderUlidId, TicketNumber, UnitPrice, TrackingId)
+/// Note: Test value objects (EmployeeId, TicketNumber, UnitPrice, TrackingId)
 /// are declared in their respective test files (RequiredGuidTests.cs, etc.).
 /// </summary>
 public class SourceGeneratedCreateMethodTests
@@ -83,66 +83,6 @@ public class SourceGeneratedCreateMethodTests
         // Assert - Empty string fails at parsing stage, not empty validation
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Failed to create EmployeeId:*Guid should contain 32 digits with 4 dashes*");
-    }
-
-    #endregion
-
-    #region RequiredUlid Create Methods
-
-    [Fact]
-    public void RequiredUlid_Create_WithValidUlid_ReturnsInstance()
-    {
-        // Arrange
-        var validUlid = Ulid.NewUlid();
-
-        // Act
-        var orderId = OrderUlidId.Create(validUlid);
-
-        // Assert
-        orderId.Should().NotBeNull();
-        orderId.Value.Should().Be(validUlid);
-    }
-
-    [Fact]
-    public void RequiredUlid_Create_WithDefaultUlid_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var defaultUlid = default(Ulid);
-
-        // Act
-        var act = () => OrderUlidId.Create(defaultUlid);
-
-        // Assert
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create OrderUlidId:*Order Ulid Id cannot be empty*");
-    }
-
-    [Fact]
-    public void RequiredUlid_Create_WithValidStringUlid_ReturnsInstance()
-    {
-        // Arrange
-        var ulidString = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
-
-        // Act
-        var orderId = OrderUlidId.Create(ulidString);
-
-        // Assert
-        orderId.Should().NotBeNull();
-        orderId.Value.Should().Be(Ulid.Parse(ulidString, null));
-    }
-
-    [Fact]
-    public void RequiredUlid_Create_WithInvalidStringUlid_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var invalidUlidString = "not-a-ulid";
-
-        // Act
-        var act = () => OrderUlidId.Create(invalidUlidString);
-
-        // Assert
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create OrderUlidId:*Ulid should be a 26-character Crockford Base32 string*");
     }
 
     #endregion
@@ -339,9 +279,6 @@ public class SourceGeneratedCreateMethodTests
         var employeeId = EmployeeId.Create(Guid.NewGuid());
         employeeId.Should().NotBeNull();
 
-        var orderId = OrderUlidId.Create(Ulid.NewUlid());
-        orderId.Should().NotBeNull();
-
         var ticketNumber = TicketNumber.Create(42);
         ticketNumber.Should().NotBeNull();
 
@@ -360,9 +297,6 @@ public class SourceGeneratedCreateMethodTests
         // Arrange & Act & Assert
         var employeeId = EmployeeId.Create("2F45ACF9-6E51-4DC7-8732-DBE7F260E951");
         employeeId.Value.Should().Be(Guid.Parse("2F45ACF9-6E51-4DC7-8732-DBE7F260E951"));
-
-        var orderId = OrderUlidId.Create("01ARZ3NDEKTSV4RRFFQ69G5FAV");
-        orderId.Value.Should().Be(Ulid.Parse("01ARZ3NDEKTSV4RRFFQ69G5FAV", null));
 
         var ticketNumber = TicketNumber.Create("123");
         ticketNumber.Value.Should().Be(123);
