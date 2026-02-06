@@ -1,0 +1,294 @@
+﻿###############################################################################
+# FunctionalDDD RequiredEnum (Order API) Tests
+# 
+# This file tests RequiredEnum functionality across all three sample implementations:
+# 1. SampleMinimalApi (Port 5001) - Minimal API with AOT and source generation
+# 2. SampleMinimalApiNoAot (Port 5002) - Minimal API with reflection fallback
+# 3. SampleWebApplication (Port 5003) - MVC Controllers
+#
+# To switch between implementations, use the environment selector in Visual Studio
+# or your IDE. Available environments: MinimalApi, MinimalApiNoAot, WebApplication
+#
+# RequiredEnum demonstrates:
+# - Enum value objects with rich behavior (properties, methods)
+# - Automatic JSON validation via IScalarValue<T, string>
+# - Model binding from route and query string parameters
+# - Validation error collection with multiple fields
+###############################################################################
+
+###############################################################################
+# Get All Order States
+# Returns all defined OrderState enum members with their properties
+###############################################################################
+
+### Get All States - Success (200 OK)
+GET {{host}}/orders/states
+Accept: application/json
+
+###############################################################################
+# Get Order State by Name (Route Binding)
+# Tests model binding of RequiredEnum from route parameter
+###############################################################################
+
+### Get State - Draft (200 OK)
+GET {{host}}/orders/states/Draft
+Accept: application/json
+
+### Get State - Confirmed (200 OK)
+GET {{host}}/orders/states/Confirmed
+Accept: application/json
+
+### Get State - Shipped (200 OK)
+GET {{host}}/orders/states/Shipped
+Accept: application/json
+
+### Get State - Delivered (200 OK)
+GET {{host}}/orders/states/Delivered
+Accept: application/json
+
+### Get State - Cancelled (200 OK)
+GET {{host}}/orders/states/Cancelled
+Accept: application/json
+
+### Get State - Case Insensitive (200 OK)
+# RequiredEnum supports case-insensitive matching
+GET {{host}}/orders/states/DRAFT
+Accept: application/json
+
+### Get State - Invalid State (400 Bad Request)
+# Tests validation error for invalid enum value
+GET {{host}}/orders/states/InvalidState
+Accept: application/json
+
+### Get State - Empty (404 Not Found)
+# Empty route parameter results in 404
+GET {{host}}/orders/states/
+Accept: application/json
+
+###############################################################################
+# Filter Orders by State (Query String Binding)
+# Tests model binding of RequiredEnum from query string
+###############################################################################
+
+### Filter - No State (200 OK)
+# Optional parameter - returns message when not provided
+GET {{host}}/orders/filter
+Accept: application/json
+
+### Filter - Draft (200 OK)
+GET {{host}}/orders/filter?state=Draft
+Accept: application/json
+
+### Filter - Shipped (200 OK)
+GET {{host}}/orders/filter?state=Shipped
+Accept: application/json
+
+### Filter - Case Insensitive (200 OK)
+GET {{host}}/orders/filter?state=CONFIRMED
+Accept: application/json
+
+### Filter - Invalid State (400 Bad Request)
+GET {{host}}/orders/filter?state=BadState
+Accept: application/json
+
+###############################################################################
+# Update Order (JSON Body Validation)
+# Tests RequiredEnum validation during JSON deserialization
+###############################################################################
+
+### Update Order - Draft (200 OK)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Draft",
+    "notes": "Initial draft order"
+}
+
+### Update Order - Confirmed (200 OK)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Confirmed",
+    "notes": "Order has been confirmed by customer"
+}
+
+### Update Order - Shipped (200 OK)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Shipped",
+    "notes": "Shipped via FedEx tracking #123456"
+}
+
+### Update Order - Case Insensitive (200 OK)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "DELIVERED",
+    "notes": "Delivered to front door"
+}
+
+### Update Order - Without Notes (200 OK)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Cancelled"
+}
+
+### Update Order - Invalid State (400 Bad Request)
+# Returns validation error with all valid state options
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "InvalidState",
+    "notes": "This should fail"
+}
+
+### Update Order - Empty State (400 Bad Request)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "",
+    "notes": "Empty state should fail"
+}
+
+### Update Order - Null State (400 Bad Request)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": null,
+    "notes": "Null state should fail"
+}
+
+### Update Order - Missing State (400 Bad Request)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "notes": "Missing state field should fail"
+}
+
+###############################################################################
+# Create Order (Multiple Value Objects with RequiredEnum)
+# Tests validation of RequiredEnum combined with other value objects
+###############################################################################
+
+### Create Order - Success (200 OK)
+# All fields valid: FirstName, LastName, EmailAddress, and OrderState
+POST {{host}}/orders/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerFirstName": "John",
+    "customerLastName": "Doe",
+    "customerEmail": "john.doe@example.com",
+    "initialState": "Draft"
+}
+
+### Create Order - Confirmed State (200 OK)
+POST {{host}}/orders/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerFirstName": "Jane",
+    "customerLastName": "Smith",
+    "customerEmail": "jane.smith@company.com",
+    "initialState": "Confirmed"
+}
+
+### Create Order - Invalid State Only (400 Bad Request)
+# Only OrderState validation fails
+POST {{host}}/orders/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerFirstName": "John",
+    "customerLastName": "Doe",
+    "customerEmail": "john@example.com",
+    "initialState": "BadState"
+}
+
+### Create Order - Invalid Email Only (400 Bad Request)
+# Only EmailAddress validation fails
+POST {{host}}/orders/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerFirstName": "John",
+    "customerLastName": "Doe",
+    "customerEmail": "not-an-email",
+    "initialState": "Draft"
+}
+
+### Create Order - Multiple Errors (400 Bad Request)
+# All fields invalid - errors collected together
+# Expected: firstName, lastName, email, and initialState errors
+POST {{host}}/orders/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerFirstName": "",
+    "customerLastName": "",
+    "customerEmail": "invalid-email",
+    "initialState": "InvalidState"
+}
+
+### Create Order - Missing All Fields (400 Bad Request)
+POST {{host}}/orders/create
+Content-Type: application/json
+Accept: application/json
+
+{
+}
+
+###############################################################################
+# RequiredEnum Behavior Tests
+# Tests that OrderState properties and behavior work correctly
+###############################################################################
+
+### Verify Draft Properties
+# canModify: true, canCancel: true
+GET {{host}}/orders/states/Draft
+Accept: application/json
+
+### Verify Confirmed Properties
+# canModify: false, canCancel: true
+GET {{host}}/orders/states/Confirmed
+Accept: application/json
+
+### Verify Shipped Properties
+# canModify: false, canCancel: false
+GET {{host}}/orders/states/Shipped
+Accept: application/json
+
+### Verify Delivered Properties
+# canModify: false, canCancel: false (terminal state)
+GET {{host}}/orders/states/Delivered
+Accept: application/json
+
+### Verify Cancelled Properties
+# canModify: false, canCancel: false (terminal state)
+GET {{host}}/orders/states/Cancelled
+Accept: application/json
