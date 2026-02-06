@@ -5,7 +5,6 @@ using FunctionalDdd;
 
 /// <summary>
 /// Product entity with strongly-typed ID (GUID) and validated name.
-/// Demonstrates using RequiredGuid alongside RequiredUlid in the same domain.
 /// </summary>
 public class Product : Entity<ProductId>
 {

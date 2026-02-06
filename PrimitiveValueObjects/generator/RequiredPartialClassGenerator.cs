@@ -199,7 +199,6 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var classType = g.ClassBase switch
             {
                 "RequiredGuid" => "Guid",
-                "RequiredUlid" => "Ulid",
                 "RequiredString" => "string",
                 "RequiredInt" => "int",
                 "RequiredDecimal" => "decimal",
@@ -213,7 +212,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                     new DiagnosticDescriptor(
                         id: "FDDD001",
                         title: "Unsupported base type for RequiredPartialClassGenerator",
-                        messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredUlid, RequiredString, RequiredInt, RequiredDecimal.",
+                        messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal.",
                         category: "SourceGenerator",
                         DiagnosticSeverity.Warning,
                         isEnabledByDefault: true),
@@ -351,88 +350,6 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         /// <summary>
         /// Creates a validated instance from a string by parsing it as a Guid. Throws if validation or parsing fails.
         /// Use this for known-valid GUID strings in tests or with constants.
-        /// </summary>
-        /// <param name=""stringValue"">The string value to parse and validate.</param>
-        /// <returns>The validated value object.</returns>
-        /// <exception cref=""InvalidOperationException"">Thrown when validation or parsing fails.</exception>
-        public static {g.ClassName} Create(string stringValue)
-        {{
-            var result = TryCreate(stringValue, null);
-            if (result.IsFailure)
-                throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
-            return result.Value;
-        }}
-    }}";
-            }
-
-            if (g.ClassBase == "RequiredUlid")
-            {
-                source += $@"
-
-        public static {g.ClassName} NewUnique() => new(Ulid.NewUlid());
-
-        /// <summary>
-        /// Creates a validated instance from a Ulid.
-        /// Required by IScalarValue interface for model binding and JSON deserialization.
-        /// </summary>
-        /// <param name=""value"">The Ulid value to validate.</param>
-        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
-        /// <returns>Success with the value object, or Failure with validation errors.</returns>
-        public static Result<{g.ClassName}> TryCreate(Ulid value, string? fieldName = null)
-        {{
-            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
-            var field = !string.IsNullOrEmpty(fieldName)
-                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-                : ""{g.ClassName.ToCamelCase()}"";
-            if (value == default)
-                return Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field);
-            return new {g.ClassName}(value);
-        }}
-
-        public static Result<{g.ClassName}> TryCreate(Ulid? requiredUlidOrNothing, string? fieldName = null)
-        {{
-            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
-            var field = !string.IsNullOrEmpty(fieldName)
-                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-                : ""{g.ClassName.ToCamelCase()}"";
-            return requiredUlidOrNothing
-                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
-                .Ensure(x => x != default, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
-                .Map(ulid => new {g.ClassName}(ulid));
-        }}
-
-        public static Result<{g.ClassName}> TryCreate(string? stringOrNull, string? fieldName = null)
-        {{
-            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
-            var field = !string.IsNullOrEmpty(fieldName)
-                ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-                : ""{g.ClassName.ToCamelCase()}"";
-            Ulid parsedUlid = default;
-            return stringOrNull
-                .ToResult(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
-                .Ensure(x => Ulid.TryParse(x, out parsedUlid), Error.Validation(""Ulid should be a 26-character Crockford Base32 string."", field))
-                .Ensure(_ => parsedUlid != default, Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
-                .Map(ulid => new {g.ClassName}(parsedUlid));
-        }}
-
-        /// <summary>
-        /// Creates a validated instance from a Ulid. Throws if validation fails.
-        /// Use this for known-valid values in tests or with constants.
-        /// </summary>
-        /// <param name=""value"">The Ulid value to validate.</param>
-        /// <returns>The validated value object.</returns>
-        /// <exception cref=""InvalidOperationException"">Thrown when validation fails.</exception>
-        public static new {g.ClassName} Create(Ulid value)
-        {{
-            var result = TryCreate(value, null);
-            if (result.IsFailure)
-                throw new InvalidOperationException($""Failed to create {g.ClassName}: {{result.Error.Detail}}"");
-            return result.Value;
-        }}
-
-        /// <summary>
-        /// Creates a validated instance from a string by parsing it as a Ulid. Throws if validation or parsing fails.
-        /// Use this for known-valid ULID strings in tests or with constants.
         /// </summary>
         /// <param name=""stringValue"">The string value to parse and validate.</param>
         /// <returns>The validated value object.</returns>
@@ -704,7 +621,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
     /// </summary>
     /// <param name="node">The syntax node to examine.</param>
     /// <returns>
-    /// <c>true</c> if the node is a partial class inheriting from RequiredGuid, RequiredUlid, or RequiredString;
+    /// <c>true</c> if the node is a partial class inheriting from RequiredGuid or RequiredString;
     /// otherwise, <c>false</c>.
     /// </returns>
     /// <remarks>
@@ -717,7 +634,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
     /// <list type="number">
     /// <item>Is it a class declaration?</item>
     /// <item>Does it have a base type list?</item>
-    /// <item>Is the first base type named "RequiredGuid", "RequiredUlid", or "RequiredString"?</item>
+    /// <item>Is the first base type named "RequiredGuid" or "RequiredString"?</item>
     /// </list>
     /// </para>
     /// <para>
@@ -736,8 +653,6 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredString", StringComparison.Ordinal))
                 return true;
             if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredGuid", StringComparison.Ordinal))
-                return true;
-            if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredUlid", StringComparison.Ordinal))
                 return true;
             if (nameOfFirstBaseType != null && nameOfFirstBaseType.StartsWith("RequiredInt", StringComparison.Ordinal))
                 return true;

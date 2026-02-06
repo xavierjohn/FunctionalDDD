@@ -5,7 +5,7 @@ using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
-/// Customer entity with strongly-typed ID (ULID) and validated email address.
+/// Customer entity with strongly-typed ID (GUID) and validated email address.
 /// </summary>
 public class Customer : Entity<CustomerId>
 {
@@ -14,7 +14,7 @@ public class Customer : Entity<CustomerId>
     public DateTime CreatedAt { get; private set; }
 
     // EF Core requires parameterless constructor
-    private Customer() : base(CustomerId.NewUnique()) { }
+    private Customer() : base(CustomerId.NewUniqueV4()) { }
 
     private Customer(CustomerId id, CustomerName name, EmailAddress email) : base(id)
     {
@@ -31,7 +31,7 @@ public class Customer : Entity<CustomerId>
         CustomerName.TryCreate(name, nameof(name))
             .Combine(EmailAddress.TryCreate(email, nameof(email)))
             .Map((customerName, emailAddress) => new Customer(
-                CustomerId.NewUnique(),
+                CustomerId.NewUniqueV4(),
                 customerName,
                 emailAddress));
 

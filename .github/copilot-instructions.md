@@ -85,7 +85,7 @@ if (result.IsFailure)
 - ✅ Default implementation calls `TryCreate` and throws `InvalidOperationException` on failure
 - ✅ Can be overridden if custom behavior is needed (e.g., multi-parameter signatures like `Money.Create(amount, currency)`)
 
-**For source-generated value objects (`RequiredGuid`, `RequiredUlid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`):**
+**For source-generated value objects (`RequiredGuid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`):**
 - ✅ **Generator creates `Create()` methods that mirror each `TryCreate()` overload**
 - ✅ **Avoids ambiguity by removing optional parameters and nullable overloads**
 - ✅ **Works perfectly with FDDD007 analyzer** (suggests using `Create()` instead of `TryCreate().Value`)
@@ -98,11 +98,6 @@ public static MenuItemId Create(Guid value);         // Hides base Create(T)
 public static MenuItemId Create(string stringValue); // Parse from string
 public static MenuItemId NewUniqueV4();              // Version 4 (random) GUID
 public static MenuItemId NewUniqueV7();              // Version 7 (time-ordered) GUID
-
-// RequiredUlid
-public static MenuItemId Create(Ulid value);         // Hides base Create(T)
-public static MenuItemId Create(string stringValue); // Parse from string
-public static MenuItemId NewUnique();                // New ULID
 
 // RequiredString  
 public static FirstName Create(string? value, string? fieldName = null); // Keeps fieldName for validation

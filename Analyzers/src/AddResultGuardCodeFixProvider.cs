@@ -174,11 +174,11 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
 
         // Replace the old block with the new one
         var newRoot = root.ReplaceNode(containingBlock, newBlock);
-        
+
         // Format the document to fix indentation
         var formattedRoot = Microsoft.CodeAnalysis.Formatting.Formatter.Format(
-            newRoot, 
-            Microsoft.CodeAnalysis.Formatting.Formatter.Annotation, 
+            newRoot,
+            Microsoft.CodeAnalysis.Formatting.Formatter.Annotation,
             document.Project.Solution.Workspace,
             cancellationToken: cancellationToken);
         return document.WithSyntaxRoot(formattedRoot);
@@ -208,17 +208,17 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         for (int i = startIndex; i < statements.Count; i++)
         {
             var stmt = statements[i];
-            
+
             // Get all descendant nodes once to avoid multiple tree walks
             var descendants = stmt.DescendantNodes().ToList();
-            
+
             // Check if this statement accesses the unsafe property on any tracked identifier
             var accessesUnsafeProperty = descendants
                 .OfType<MemberAccessExpressionSyntax>()
-                .Any(ma => 
+                .Any(ma =>
                 {
                     var baseId = GetBaseIdentifier(ma.Expression);
-                    return baseId != null 
+                    return baseId != null
                         && trackedIdentifiers.Contains(baseId.Identifier.Text)
                         && ma.Name.Identifier.Text == unsafeProperty;
                 });
@@ -239,7 +239,7 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
             // Track any new variables declared in this statement that are derived from tracked variables
             var declaredVariables = descendants
                 .OfType<VariableDeclaratorSyntax>()
-                .Where(v => v.Initializer != null && 
+                .Where(v => v.Initializer != null &&
                            v.Initializer.DescendantNodes()
                                .OfType<IdentifierNameSyntax>()
                                .Any(id => trackedIdentifiers.Contains(id.Identifier.Text)))
