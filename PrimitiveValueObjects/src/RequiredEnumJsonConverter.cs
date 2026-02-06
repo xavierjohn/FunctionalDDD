@@ -26,7 +26,7 @@ using System.Text.Json.Serialization;
 /// ]]></code>
 /// </example>
 public sealed class RequiredEnumJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TRequiredEnum> : JsonConverter<TRequiredEnum>
-    where TRequiredEnum : RequiredEnum<TRequiredEnum>
+    where TRequiredEnum : RequiredEnum<TRequiredEnum>, IScalarValue<TRequiredEnum, string>
 {
     /// <inheritdoc />
     public override TRequiredEnum? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>

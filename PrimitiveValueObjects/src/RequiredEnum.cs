@@ -112,10 +112,10 @@ using System.Reflection;
 /// </example>
 /// <remarks>
 /// <para>
-/// <strong>Note on IScalarValue implementation:</strong> The <see cref="IScalarValue{TSelf, TPrimitive}"/> interface
-/// is added by the source generator to each derived class, not in this base class. This is because
-/// <c>IScalarValue</c> has a <c>static abstract TryCreate</c> method that must be implemented by each
-/// concrete type (abstract classes cannot satisfy <c>static abstract</c> interface members).
+/// <strong>Note on IScalarValue implementation:</strong> This base class requires <c>TSelf</c> to implement
+/// <see cref="IScalarValue{TSelf, TPrimitive}"/> via the constraint <c>where TSelf : IScalarValue&lt;TSelf, string&gt;</c>.
+/// The actual interface implementation (including the <c>static abstract TryCreate</c> method and <c>Value</c> property)
+/// is provided by the source generator on each concrete derived class.
 /// </para>
 /// <para>
 /// The source generator adds:
@@ -132,7 +132,7 @@ using System.Reflection;
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix - RequiredEnum is a valid DDD pattern name
 public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf>
     : IEquatable<RequiredEnum<TSelf>>, IComparable<RequiredEnum<TSelf>>
-    where TSelf : RequiredEnum<TSelf>
+    where TSelf : RequiredEnum<TSelf>, IScalarValue<TSelf, string>
 #pragma warning restore CA1711
 {
     private static readonly ConcurrentDictionary<Type, (List<TSelf> Members, Dictionary<string, TSelf> ByName)> s_cache = new();
