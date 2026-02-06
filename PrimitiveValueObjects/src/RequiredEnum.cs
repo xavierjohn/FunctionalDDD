@@ -1,22 +1,41 @@
 ﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 /// <summary>
-/// Base class for creating strongly-typed enum value objects with source-generated ASP.NET Core support.
-/// Extends <see cref="EnumValueObject{TSelf}"/> to provide automatic model binding, JSON validation, and error collection.
+/// Base class for creating strongly-typed, behavior-rich enumeration value objects.
+/// Enum value objects are a DDD pattern that replaces C# enums with full-featured classes.
 /// </summary>
 /// <typeparam name="TSelf">The derived enum value object type itself (CRTP pattern).</typeparam>
 /// <remarks>
 /// <para>
-/// This class combines the power of <see cref="EnumValueObject{TSelf}"/> with the PrimitiveValueObjectGenerator
-/// source generator to provide:
+/// Enum value objects address limitations of C# enums:
+/// <list type="bullet">
+/// <item><strong>Behavior</strong>: Each value can have associated behavior and properties</item>
+/// <item><strong>Type safety</strong>: Invalid values are impossible (no <c>(OrderStatus)999</c>)</item>
+/// <item><strong>Extensibility</strong>: Add methods, computed properties, and domain logic</item>
+/// <item><strong>State machines</strong>: Model valid transitions between states</item>
+/// </list>
+/// </para>
+/// <para>
+/// Each enum value object member is defined as a static readonly field:
+/// <list type="bullet">
+/// <item>Members are discovered via reflection and cached for performance</item>
+/// <item>The <see cref="Name"/> property is auto-derived from the field name (infrastructure concern)</item>
+/// <item>The <see cref="Value"/> property is auto-generated for persistence (infrastructure concern)</item>
+/// </list>
+/// </para>
+/// <para>
+/// When used with the <c>partial</c> keyword, the PrimitiveValueObjectGenerator source generator
+/// automatically creates:
 /// <list type="bullet">
 /// <item><c>IScalarValue&lt;TSelf, string&gt;</c> implementation for ASP.NET Core automatic validation</item>
 /// <item><c>TryCreate(string)</c> - Factory method for non-nullable strings (required by IScalarValue)</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method with validation and custom field name</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
-/// <item>JSON serialization support via <c>EnumValueObjectJsonConverter&lt;T&gt;</c></item>
+/// <item>JSON serialization support via <c>RequiredEnumJsonConverter&lt;T&gt;</c></item>
 /// <item>ASP.NET Core model binding from route/query/form/headers</item>
 /// <item>OpenTelemetry activity tracing</item>
 /// </list>
@@ -30,20 +49,10 @@ using System.Diagnostics.CodeAnalysis;
 /// <item>Any finite set of domain values with behavior</item>
 /// </list>
 /// </para>
-/// <para>
-/// Benefits over plain C# enums:
-/// <list type="bullet">
-/// <item><strong>Type safety</strong>: Invalid values are impossible (no <c>(OrderStatus)999</c>)</item>
-/// <item><strong>Behavior</strong>: Each value can have associated methods and properties</item>
-/// <item><strong>ASP.NET integration</strong>: Automatic validation with error collection</item>
-/// <item><strong>Extensibility</strong>: Add computed properties and domain logic</item>
-/// </list>
-/// </para>
 /// </remarks>
 /// <example>
-/// Creating a strongly-typed enum value object:
+/// Basic enum value object:
 /// <code><![CDATA[
-/// // Define the enum value object (partial keyword enables source generation)
 /// public partial class OrderState : RequiredEnum<OrderState>
 /// {
 ///     public static readonly OrderState Draft = new();
@@ -59,12 +68,12 @@ using System.Diagnostics.CodeAnalysis;
 /// // - public static Result<OrderState> TryCreate(string? value, string? fieldName = null)
 /// // - public static OrderState Parse(string s, IFormatProvider? provider)
 /// // - public static bool TryParse(string? s, IFormatProvider? provider, out OrderState result)
-/// // - [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))] attribute
+/// // - [JsonConverter(typeof(RequiredEnumJsonConverter<OrderState>))] attribute
 /// 
-/// // Usage examples:
-/// var result = OrderState.TryCreate("Draft");           // Result<OrderState>
-/// var state = OrderState.Parse("Confirmed");            // Throws on invalid
-/// var all = OrderState.GetAll();                        // All defined values
+/// // Usage - Name is auto-derived from field name
+/// var state = OrderState.Draft;           // Name = "Draft"
+/// var all = OrderState.GetAll();
+/// var result = OrderState.TryFromName("Draft");  // Result<OrderState>
 /// ]]></code>
 /// </example>
 /// <example>
@@ -101,16 +110,202 @@ using System.Diagnostics.CodeAnalysis;
 /// }
 /// ]]></code>
 /// </example>
+/// <remarks>
+/// <para>
+/// <strong>Note on IScalarValue implementation:</strong> The <see cref="IScalarValue{TSelf, TPrimitive}"/> interface
+/// is added by the source generator to each derived class, not in this base class. This is because
+/// <c>IScalarValue</c> has a <c>static abstract TryCreate</c> method that must be implemented by each
+/// concrete type (abstract classes cannot satisfy <c>static abstract</c> interface members).
+/// </para>
+/// <para>
+/// The source generator adds:
+/// <list type="bullet">
+/// <item><c>IScalarValue&lt;TSelf, string&gt;</c> interface declaration</item>
+/// <item>Explicit implementation of <c>string IScalarValue&lt;TSelf, string&gt;.Value =&gt; Name;</c></item>
+/// <item><c>TryCreate(string)</c> and <c>TryCreate(string?, string?)</c> methods (required by IScalarValue)</item>
+/// <item><c>IParsable&lt;TSelf&gt;</c> implementation</item>
+/// <item><c>[JsonConverter]</c> attribute</item>
+/// </list>
+/// </para>
+/// </remarks>
+#pragma warning disable CA1000 // Do not declare static members on generic types - required for factory pattern
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix - RequiredEnum is a valid DDD pattern name
 public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf>
-    : EnumValueObject<TSelf>
+    : IEquatable<RequiredEnum<TSelf>>, IComparable<RequiredEnum<TSelf>>
     where TSelf : RequiredEnum<TSelf>
 #pragma warning restore CA1711
 {
+    private static readonly ConcurrentDictionary<Type, (List<TSelf> Members, Dictionary<string, TSelf> ByName)> s_cache = new();
+
+    /// <summary>
+    /// Gets the name of this enum value object member.
+    /// Auto-derived from the field name during discovery.
+    /// This is an infrastructure concern for serialization and display.
+    /// </summary>
+    /// <remarks>
+    /// Name is lazily initialized on first access to avoid chicken-and-egg issues
+    /// with static field initialization order.
+    /// </remarks>
+    public string Name => _name ?? InitializeName();
+
+    private string? _name;
+
+    private string InitializeName()
+    {
+        _ = GetCache(); // Populates _name
+        return _name!;
+    }
+
+    /// <summary>
+    /// Gets the auto-generated integer value for persistence.
+    /// This is an infrastructure concern - values are assigned based on declaration order (0, 1, 2, ...).
+    /// </summary>
+    public int Value { get; private set; }
+
     /// <summary>
     /// Initializes a new instance. The Name is auto-derived from the field name.
     /// </summary>
     protected RequiredEnum()
     {
+        // Name and Value are set during discovery via reflection
     }
+
+    /// <summary>
+    /// Gets all defined members of this enum value object type.
+    /// </summary>
+    public static IReadOnlyCollection<TSelf> GetAll() => GetCache().Members;
+
+    /// <summary>
+    /// Attempts to find a member by its name (case-insensitive).
+    /// </summary>
+    /// <param name="name">The name to search for.</param>
+    /// <param name="fieldName">Optional field name for validation error messages.</param>
+    /// <returns>A <see cref="Result{TSelf}"/> containing the matching member or a validation error.</returns>
+    public static Result<TSelf> TryFromName(string? name, string? fieldName = null)
+    {
+        var field = NormalizeFieldName(fieldName, typeof(TSelf).Name);
+
+        if (string.IsNullOrWhiteSpace(name))
+            return Error.Validation($"{typeof(TSelf).Name} cannot be empty.", field);
+
+        var cache = GetCache();
+        if (cache.ByName.TryGetValue(name, out var member))
+            return member;
+
+        var validNames = string.Join(", ", cache.ByName.Keys.OrderBy(n => n));
+        return Error.Validation($"'{name}' is not a valid {typeof(TSelf).Name}. Valid values: {validNames}", field);
+    }
+
+    /// <summary>
+    /// Gets a member by its name (case-insensitive). Throws if not found.
+    /// </summary>
+    public static TSelf FromName(string name)
+    {
+        var result = TryFromName(name);
+        if (result.IsFailure)
+            throw new InvalidOperationException($"Failed to create {typeof(TSelf).Name}: {result.Error.Detail}");
+
+        return result.Value;
+    }
+
+    /// <summary>
+    /// Attempts to find a member by its name (case-insensitive).
+    /// </summary>
+    public static bool TryFromName(string? name, [NotNullWhen(true)] out TSelf? result)
+    {
+        result = null;
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
+        return GetCache().ByName.TryGetValue(name, out result);
+    }
+
+    /// <summary>
+    /// Checks if this instance is one of the specified values.
+    /// </summary>
+    public bool Is(params TSelf[] values) => values.Contains((TSelf)this);
+
+    /// <summary>
+    /// Checks if this instance is not one of the specified values.
+    /// </summary>
+    public bool IsNot(params TSelf[] values) => !Is(values);
+
+    /// <inheritdoc />
+    public override string ToString() => Name;
+
+    /// <inheritdoc />
+    public override int GetHashCode() => Name.GetHashCode(StringComparison.OrdinalIgnoreCase);
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => obj is RequiredEnum<TSelf> other && Equals(other);
+
+    /// <inheritdoc />
+    public bool Equals(RequiredEnum<TSelf>? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <inheritdoc />
+    public int CompareTo(RequiredEnum<TSelf>? other) =>
+        other is null ? 1 : Value.CompareTo(other.Value);
+
+    /// <summary>Determines whether two instances are equal.</summary>
+    public static bool operator ==(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
+        left is null ? right is null : left.Equals(right);
+
+    /// <summary>Determines whether two instances are not equal.</summary>
+    public static bool operator !=(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) => !(left == right);
+
+    /// <summary>Determines whether left is less than right.</summary>
+    public static bool operator <(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
+        left is null ? right is not null : left.CompareTo(right) < 0;
+
+    /// <summary>Determines whether left is less than or equal to right.</summary>
+    public static bool operator <=(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
+        left is null || left.CompareTo(right) <= 0;
+
+    /// <summary>Determines whether left is greater than right.</summary>
+    public static bool operator >(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
+        left is not null && left.CompareTo(right) > 0;
+
+    /// <summary>Determines whether left is greater than or equal to right.</summary>
+    public static bool operator >=(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
+        left is null ? right is null : left.CompareTo(right) >= 0;
+
+    /// <summary>Implicitly converts to string (the Name).</summary>
+    public static implicit operator string(RequiredEnum<TSelf> requiredEnum) => requiredEnum.Name;
+
+    private static (List<TSelf> Members, Dictionary<string, TSelf> ByName) GetCache() =>
+        s_cache.GetOrAdd(typeof(TSelf), _ =>
+        {
+            var members = DiscoverMembers().ToList();
+            var byName = members.ToDictionary(m => m.Name, StringComparer.OrdinalIgnoreCase);
+            return (members, byName);
+        });
+
+    private static IEnumerable<TSelf> DiscoverMembers()
+    {
+        var fields = typeof(TSelf).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+        var index = 0;
+
+        foreach (var field in fields)
+        {
+            if (field.FieldType == typeof(TSelf) && field.IsInitOnly && field.GetValue(null) is TSelf member)
+            {
+                // Auto-derive Name from field name and assign Value
+                member._name = field.Name;
+                member.Value = index++;
+                yield return member;
+            }
+        }
+    }
+
+    private static string NormalizeFieldName(string? fieldName, string typeName) =>
+        !string.IsNullOrEmpty(fieldName)
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : char.ToLowerInvariant(typeName[0]) + typeName[1..];
 }
+#pragma warning restore CA1000

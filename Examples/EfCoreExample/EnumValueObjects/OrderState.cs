@@ -1,15 +1,15 @@
 ﻿namespace EfCoreExample.EnumValueObjects;
 
-using System.Text.Json.Serialization;
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
 /// <summary>
 /// Enum value object demonstrating rich domain behavior for order state.
 /// Unlike a regular C# enum, this encapsulates business rules about state transitions.
 /// Name is auto-derived from the field name (pure DDD - no strings in domain).
+/// Note: JsonConverter is automatically added by the source generator.
 /// </summary>
-[JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
-public class OrderState : EnumValueObject<OrderState>
+public partial class OrderState : RequiredEnum<OrderState>
 {
     // Pure domain - Name auto-derived from field name
     public static readonly OrderState Draft = new(canModify: true, canCancel: true, isTerminal: false);

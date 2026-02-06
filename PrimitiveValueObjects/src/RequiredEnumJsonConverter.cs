@@ -1,23 +1,21 @@
-﻿namespace FunctionalDdd;
+﻿namespace FunctionalDdd.PrimitiveValueObjects;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// JSON converter for <see cref="EnumValueObject{TSelf}"/> types.
+/// JSON converter for <see cref="RequiredEnum{TSelf}"/> types.
 /// Serializes to the string Name and deserializes from string name.
 /// </summary>
-/// <typeparam name="TEnumValueObject">The enum value object type to convert.</typeparam>
+/// <typeparam name="TRequiredEnum">The enum value object type to convert.</typeparam>
 /// <example>
 /// <code><![CDATA[
-/// [JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
-/// public class OrderState : EnumValueObject<OrderState>
+/// [JsonConverter(typeof(RequiredEnumJsonConverter<OrderState>))]
+/// public partial class OrderState : RequiredEnum<OrderState>
 /// {
-///     public static readonly OrderState Draft = new("Draft");
-///     public static readonly OrderState Confirmed = new("Confirmed");
-///     
-///     private OrderState(string name) : base(name) { }
+///     public static readonly OrderState Draft = new();
+///     public static readonly OrderState Confirmed = new();
 /// }
 /// 
 /// // Serialization
@@ -27,20 +25,20 @@ using System.Text.Json.Serialization;
 /// var state = JsonSerializer.Deserialize<OrderState>("\"Draft\"");
 /// ]]></code>
 /// </example>
-public sealed class EnumValueObjectJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnumValueObject> : JsonConverter<TEnumValueObject>
-    where TEnumValueObject : EnumValueObject<TEnumValueObject>
+public sealed class RequiredEnumJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TRequiredEnum> : JsonConverter<TRequiredEnum>
+    where TRequiredEnum : RequiredEnum<TRequiredEnum>
 {
     /// <inheritdoc />
-    public override TEnumValueObject? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+    public override TRequiredEnum? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
         reader.TokenType switch
         {
             JsonTokenType.String => ReadFromString(ref reader),
             JsonTokenType.Null => null,
-            _ => throw new JsonException($"Unexpected token type '{reader.TokenType}' when parsing {typeof(TEnumValueObject).Name}. Expected String.")
+            _ => throw new JsonException($"Unexpected token type '{reader.TokenType}' when parsing {typeof(TRequiredEnum).Name}. Expected String.")
         };
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, TEnumValueObject value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, TRequiredEnum value, JsonSerializerOptions options)
     {
         if (value is null)
             writer.WriteNullValue();
@@ -48,43 +46,41 @@ public sealed class EnumValueObjectJsonConverter<[DynamicallyAccessedMembers(Dyn
             writer.WriteStringValue(value.Name);
     }
 
-    private static TEnumValueObject ReadFromString(ref Utf8JsonReader reader)
+    private static TRequiredEnum ReadFromString(ref Utf8JsonReader reader)
     {
         var name = reader.GetString();
-        var result = EnumValueObject<TEnumValueObject>.TryFromName(name);
+        var result = RequiredEnum<TRequiredEnum>.TryFromName(name);
 
         if (result.IsFailure)
-            throw new JsonException($"Invalid {typeof(TEnumValueObject).Name} value: '{name}'. {result.Error.Detail}");
+            throw new JsonException($"Invalid {typeof(TRequiredEnum).Name} value: '{name}'. {result.Error.Detail}");
 
         return result.Value;
     }
 }
 
 /// <summary>
-/// JSON converter factory that automatically creates <see cref="EnumValueObjectJsonConverter{TEnumValueObject}"/>
-/// for any <see cref="EnumValueObject{TSelf}"/> derived type.
+/// JSON converter factory that automatically creates <see cref="RequiredEnumJsonConverter{TRequiredEnum}"/>
+/// for any <see cref="RequiredEnum{TSelf}"/> derived type.
 /// </summary>
 /// <example>
 /// <code><![CDATA[
 /// var options = new JsonSerializerOptions
 /// {
-///     Converters = { new EnumValueObjectJsonConverterFactory() }
+///     Converters = { new RequiredEnumJsonConverterFactory() }
 /// };
 /// 
 /// var json = JsonSerializer.Serialize(new Order { State = OrderState.Draft }, options);
 /// ]]></code>
 /// </example>
-public sealed class EnumValueObjectJsonConverterFactory : JsonConverterFactory
+public sealed class RequiredEnumJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert)
     {
         for (var baseType = typeToConvert.BaseType; baseType is not null; baseType = baseType.BaseType)
         {
-            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(EnumValueObject<>))
-            {
+            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(RequiredEnum<>))
                 return true;
-            }
         }
 
         return false;
@@ -97,7 +93,7 @@ public sealed class EnumValueObjectJsonConverterFactory : JsonConverterFactory
 #pragma warning disable IL2071 // Generic argument does not satisfy DynamicallyAccessedMembers
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var converterType = typeof(EnumValueObjectJsonConverter<>).MakeGenericType(typeToConvert);
+        var converterType = typeof(RequiredEnumJsonConverter<>).MakeGenericType(typeToConvert);
         return (JsonConverter?)Activator.CreateInstance(converterType);
     }
 #pragma warning restore IL2071
