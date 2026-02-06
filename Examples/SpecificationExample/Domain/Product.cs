@@ -53,7 +53,7 @@ public class Product : Aggregate<ProductId>
             .Combine(CategoryName.TryCreate(category, "category"))
             .Map((productName, productSku, productPrice, productCategory) =>
                 new Product(
-                    ProductId.NewUnique(),  // ✅ New ID for new products
+                    ProductId.NewUniqueV4(),  // ✅ New ID for new products
                     productName,
                     productSku,
                     productPrice,

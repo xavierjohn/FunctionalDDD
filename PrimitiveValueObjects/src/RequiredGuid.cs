@@ -11,7 +11,8 @@
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
 /// <item><c>IScalarValue&lt;TSelf, Guid&gt;</c> implementation for ASP.NET Core automatic validation</item>
-/// <item><c>NewUnique()</c> - Factory method for generating new unique identifiers</item>
+/// <item><c>NewUniqueV4()</c> - Factory method for generating new unique Version 4 (random) identifiers</item>
+/// <item><c>NewUniqueV7()</c> - Factory method for generating new unique Version 7 (time-ordered) identifiers</item>
 /// <item><c>TryCreate(Guid)</c> - Factory method for non-nullable GUIDs (required by IScalarValue)</item>
 /// <item><c>TryCreate(Guid?, string?)</c> - Factory method with empty GUID validation and custom field name</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method for parsing strings with validation</item>
@@ -51,7 +52,8 @@
 /// 
 /// // The source generator automatically creates:
 /// // - IScalarValue&lt;CustomerId, Guid&gt; interface implementation
-/// // - public static CustomerId NewUnique() => new(Guid.NewGuid());
+/// // - public static CustomerId NewUniqueV4() => new(Guid.NewGuid());        // Version 4 (random)
+/// // - public static CustomerId NewUniqueV7() => new(Guid.CreateVersion7()); // Version 7 (time-ordered)
 /// // - public static Result&lt;CustomerId&gt; TryCreate(Guid value)
 /// // - public static Result&lt;CustomerId&gt; TryCreate(Guid? value, string? fieldName = null)
 /// // - public static Result&lt;CustomerId&gt; TryCreate(string? value, string? fieldName = null)
@@ -62,8 +64,11 @@
 /// 
 /// // Usage examples:
 /// 
-/// // Generate a new unique ID
-/// var customerId = CustomerId.NewUnique();
+/// // Generate a new unique ID (Version 4 - random)
+/// var customerId = CustomerId.NewUniqueV4();
+/// 
+/// // Generate a new unique ID (Version 7 - time-ordered, better for database indexes)
+/// var customerId = CustomerId.NewUniqueV7();
 /// 
 /// // Create from existing GUID with validation
 /// var result1 = CustomerId.TryCreate(existingGuid);

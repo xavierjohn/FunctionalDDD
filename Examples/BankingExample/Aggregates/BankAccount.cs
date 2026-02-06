@@ -41,7 +41,7 @@ public class BankAccount : Aggregate<AccountId>
         AccountType accountType,
         Money initialBalance,
         Money dailyWithdrawalLimit,
-        Money overdraftLimit) : base(AccountId.NewUnique())
+        Money overdraftLimit) : base(AccountId.NewUniqueV4())
     {
         CustomerId = customerId;
         AccountType = accountType;
@@ -91,7 +91,7 @@ public class BankAccount : Aggregate<AccountId>
             .Tap(newBalance =>
             {
                 Balance = newBalance;
-                _transactions.Add(Transaction.CreateDeposit(TransactionId.NewUnique(), amount, Balance, description));
+                _transactions.Add(Transaction.CreateDeposit(TransactionId.NewUniqueV4(), amount, Balance, description));
 
                 // Raise domain event
                 DomainEvents.Add(new MoneyDeposited(
@@ -125,7 +125,7 @@ public class BankAccount : Aggregate<AccountId>
             .Tap(newBalance =>
             {
                 Balance = newBalance;
-                _transactions.Add(Transaction.CreateWithdrawal(TransactionId.NewUnique(), amount, Balance, description));
+                _transactions.Add(Transaction.CreateWithdrawal(TransactionId.NewUniqueV4(), amount, Balance, description));
 
                 // Raise domain event
                 DomainEvents.Add(new MoneyWithdrawn(

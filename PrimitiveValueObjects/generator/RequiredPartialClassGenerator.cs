@@ -22,7 +22,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// For each partial class inheriting from <c>RequiredGuid</c>, generates:
 /// <list type="bullet">
 /// <item><c>IScalarValue&lt;TSelf, Guid&gt;</c> - Interface for ASP.NET Core automatic validation</item>
-/// <item><c>NewUnique()</c> - Creates a new instance with a unique GUID</item>
+/// <item><c>NewUniqueV4()</c> - Creates a new instance with a unique Version 4 (random) GUID</item>
+/// <item><c>NewUniqueV7()</c> - Creates a new instance with a unique Version 7 (time-ordered) GUID</item>
 /// <item><c>TryCreate(Guid)</c> - Creates from non-nullable GUID (required by IScalarValue)</item>
 /// <item><c>TryCreate(Guid?)</c> - Creates from nullable GUID with empty validation</item>
 /// <item><c>TryCreate(string?)</c> - Parses from string with format and empty validation</item>
@@ -94,7 +95,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 ///     public static explicit operator CustomerId(Guid customerId)
 ///         =&gt; TryCreate(customerId).Value;
 ///
-///     public static CustomerId NewUnique() =&gt; new(Guid.NewGuid());
+///     public static CustomerId NewUniqueV4() =&gt; new(Guid.NewGuid());
+///     public static CustomerId NewUniqueV7() =&gt; new(Guid.CreateVersion7());
 ///
 ///     // Required by IScalarValue - enables automatic ASP.NET Core validation
 ///     public static Result&lt;CustomerId&gt; TryCreate(Guid value)
@@ -269,7 +271,23 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             {
                 source += $@"
 
-        public static {g.ClassName} NewUnique() => new(Guid.NewGuid());
+        /// <summary>
+        /// Creates a new instance with a unique Version 4 (random) GUID.
+        /// </summary>
+        /// <returns>A new instance with a randomly generated GUID.</returns>
+        public static {g.ClassName} NewUniqueV4() => new(Guid.NewGuid());
+
+        /// <summary>
+        /// Creates a new instance with a unique Version 7 (time-ordered) GUID.
+        /// Version 7 GUIDs are time-sortable, making them ideal for database primary keys
+        /// as they reduce index fragmentation compared to random Version 4 GUIDs.
+        /// </summary>
+        /// <returns>A new instance with a time-ordered GUID.</returns>
+        /// <remarks>
+        /// Requires .NET 9 or later. The generated GUID contains a Unix timestamp
+        /// with millisecond precision, followed by random data for uniqueness.
+        /// </remarks>
+        public static {g.ClassName} NewUniqueV7() => new(Guid.CreateVersion7());
 
         /// <summary>
         /// Creates a validated instance from a Guid.

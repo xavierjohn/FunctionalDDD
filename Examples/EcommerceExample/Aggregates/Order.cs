@@ -36,7 +36,7 @@ public class Order : Aggregate<OrderId>
     public DateTime? ConfirmedAt { get; private set; }
     public string? PaymentTransactionId { get; private set; }
 
-    private Order(CustomerId customerId) : base(OrderId.NewUnique())
+    private Order(CustomerId customerId) : base(OrderId.NewUniqueV4())
     {
         CustomerId = customerId;
         Total = Money.Create(0, "USD");

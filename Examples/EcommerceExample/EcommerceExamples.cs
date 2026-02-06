@@ -44,8 +44,8 @@ public static class EcommerceExamples
         Console.WriteLine("Example 1: Simple Order Creation with Domain Events");
         Console.WriteLine("----------------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
-        var productId = ProductId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
+        var productId = ProductId.NewUniqueV4();
 
         var result = Order.TryCreate(customerId)
             .Tap(order => Console.WriteLine($"Order created with {order.UncommittedEvents().Count} uncommitted event(s)"))
@@ -86,7 +86,7 @@ public static class EcommerceExamples
         var notificationService = new NotificationService();
         var workflow = new OrderWorkflow(paymentService, inventoryService, notificationService);
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
         var stock = inventoryService.GetAllStock();
         var product1 = stock.Keys.First();
         var product2 = stock.Keys.Skip(1).First();
@@ -123,7 +123,7 @@ public static class EcommerceExamples
         var notificationService = new NotificationService();
         var workflow = new OrderWorkflow(paymentService, inventoryService, notificationService);
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
         var stock = inventoryService.GetAllStock();
         var product1 = stock.Keys.First();
 
@@ -159,7 +159,7 @@ public static class EcommerceExamples
         var notificationService = new NotificationService();
         var workflow = new OrderWorkflow(paymentService, inventoryService, notificationService);
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
         var stock = inventoryService.GetAllStock();
         var product1 = stock.Keys.First();
 
@@ -190,9 +190,9 @@ public static class EcommerceExamples
         Console.WriteLine("Example 5: Domain Events and Change Tracking");
         Console.WriteLine("---------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
-        var productId1 = ProductId.NewUnique();
-        var productId2 = ProductId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
+        var productId1 = ProductId.NewUniqueV4();
+        var productId2 = ProductId.NewUniqueV4();
 
         // Create order - this raises OrderCreatedEvent
         var orderResult = Order.TryCreate(customerId);
