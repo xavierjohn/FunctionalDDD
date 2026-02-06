@@ -14,9 +14,9 @@ public class InventoryService
     public InventoryService()
     {
         // Initialize with sample data
-        var product1 = ProductId.NewUnique();
-        var product2 = ProductId.NewUnique();
-        var product3 = ProductId.NewUnique();
+        var product1 = ProductId.NewUniqueV4();
+        var product2 = ProductId.NewUniqueV4();
+        var product3 = ProductId.NewUniqueV4();
 
         _stock[product1] = 100;
         _stock[product2] = 50;

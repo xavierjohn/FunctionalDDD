@@ -39,7 +39,7 @@ public class User : Aggregate<UserId>
         CountryCode country,
         string password,
         Url? website)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV4())
     {
         FirstName = firstName;
         LastName = lastName;

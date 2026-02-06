@@ -228,8 +228,8 @@ public class RequiredGuidTests
     public void Can_use_Contains()
     {
         // Arrange
-        var employeeId1 = EmployeeId.NewUnique();
-        var employeeId2 = EmployeeId.NewUnique();
+        var employeeId1 = EmployeeId.NewUniqueV4();
+        var employeeId2 = EmployeeId.NewUniqueV4();
         IReadOnlyList<EmployeeId> employeeIds = new List<EmployeeId> { employeeId1, employeeId2 };
 
         // Act
@@ -240,10 +240,54 @@ public class RequiredGuidTests
     }
 
     [Fact]
+    public void NewUniqueV7_creates_valid_version7_guid()
+    {
+        // Act
+        var employeeId = EmployeeId.NewUniqueV7();
+
+        // Assert
+        employeeId.Should().BeOfType<EmployeeId>();
+        employeeId.Value.Should().NotBe(Guid.Empty);
+
+        // Version 7 GUIDs have version nibble = 7 (bits 48-51)
+        var bytes = employeeId.Value.ToByteArray();
+        var versionNibble = (bytes[7] >> 4) & 0x0F;
+        versionNibble.Should().Be(7, "GUID should be Version 7");
+    }
+
+    [Fact]
+    public void NewUniqueV7_creates_time_ordered_guids()
+    {
+        // Act - create GUIDs with time delay to ensure different timestamps
+        var id1 = EmployeeId.NewUniqueV7();
+        Thread.Sleep(2); // Small delay to ensure different millisecond timestamp
+        var id2 = EmployeeId.NewUniqueV7();
+        Thread.Sleep(2);
+        var id3 = EmployeeId.NewUniqueV7();
+
+        // Assert - they should be in ascending order when sorted
+        // (Version 7 GUIDs are time-sortable by their timestamp prefix)
+        var sorted = new[] { id3, id1, id2 }.OrderBy(x => x.Value).ToArray();
+        sorted[0].Should().Be(id1);
+        sorted[1].Should().Be(id2);
+        sorted[2].Should().Be(id3);
+    }
+
+    [Fact]
+    public void NewUniqueV7_creates_unique_values()
+    {
+        // Act
+        var ids = Enumerable.Range(0, 100).Select(_ => EmployeeId.NewUniqueV7()).ToList();
+
+        // Assert
+        ids.Distinct().Count().Should().Be(100, "all generated IDs should be unique");
+    }
+
+    [Fact]
     public void ConvertToJson()
     {
         // Arrange
-        var employeeId = EmployeeId.NewUnique();
+        var employeeId = EmployeeId.NewUniqueV4();
         Guid primEmployeeId = employeeId.Value;
         var expected = JsonSerializer.Serialize(primEmployeeId);
 

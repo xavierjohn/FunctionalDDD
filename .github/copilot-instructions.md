@@ -93,9 +93,16 @@ if (result.IsFailure)
 **Generated Create methods per type:**
 
 ```csharp
-// RequiredGuid / RequiredUlid
+// RequiredGuid
 public static MenuItemId Create(Guid value);         // Hides base Create(T)
 public static MenuItemId Create(string stringValue); // Parse from string
+public static MenuItemId NewUniqueV4();              // Version 4 (random) GUID
+public static MenuItemId NewUniqueV7();              // Version 7 (time-ordered) GUID
+
+// RequiredUlid
+public static MenuItemId Create(Ulid value);         // Hides base Create(T)
+public static MenuItemId Create(string stringValue); // Parse from string
+public static MenuItemId NewUnique();                // New ULID
 
 // RequiredString  
 public static FirstName Create(string? value, string? fieldName = null); // Keeps fieldName for validation

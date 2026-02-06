@@ -14,7 +14,7 @@ public class Product : Entity<ProductId>
     public int StockQuantity { get; private set; }
 
     // EF Core requires parameterless constructor
-    private Product() : base(ProductId.NewUnique()) { }
+    private Product() : base(ProductId.NewUniqueV4()) { }
 
     private Product(ProductId id, ProductName name, decimal price, int stockQuantity) : base(id)
     {
@@ -31,7 +31,7 @@ public class Product : Entity<ProductId>
             .Ensure(_ => price > 0, Error.Validation("Price must be greater than zero", nameof(price)))
             .Ensure(_ => stockQuantity >= 0, Error.Validation("Stock cannot be negative", nameof(stockQuantity)))
             .Map(productName => new Product(
-                ProductId.NewUnique(),
+                ProductId.NewUniqueV4(),
                 productName,
                 price,
                 stockQuantity));

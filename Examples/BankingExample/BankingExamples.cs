@@ -42,7 +42,7 @@ public static class BankingExamples
         Console.WriteLine("Example 1: Basic Account Operations with Domain Events");
         Console.WriteLine("-------------------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
 
         var result = BankAccount.TryCreate(
                 customerId,
@@ -87,8 +87,8 @@ public static class BankingExamples
         Console.WriteLine("Example 2: Transfer Between Accounts with Event Publishing");
         Console.WriteLine("-----------------------------------------------------------");
 
-        var customer1 = CustomerId.NewUnique();
-        var customer2 = CustomerId.NewUnique();
+        var customer1 = CustomerId.NewUniqueV4();
+        var customer2 = CustomerId.NewUniqueV4();
 
         var account1 = BankAccount.TryCreate(
             customer1,
@@ -138,7 +138,7 @@ public static class BankingExamples
         Console.WriteLine("Example 3: Fraud Detection with Error Types");
         Console.WriteLine("--------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
         var account = BankAccount.TryCreate(
             customerId,
             AccountType.Checking,
@@ -177,7 +177,7 @@ public static class BankingExamples
         Console.WriteLine("Example 4: Daily Withdrawal Limit (Domain Errors)");
         Console.WriteLine("--------------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
         var dailyLimit = Money.Create(500m, "USD");
 
         var account = BankAccount.TryCreate(
@@ -222,7 +222,7 @@ public static class BankingExamples
         Console.WriteLine("Example 5: Interest Payment with Domain Events");
         Console.WriteLine("-----------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
         var account = BankAccount.TryCreate(
             customerId,
             AccountType.Savings,
@@ -265,7 +265,7 @@ public static class BankingExamples
         Console.WriteLine("Example 6: Domain Events and Change Tracking");
         Console.WriteLine("---------------------------------------------");
 
-        var customerId = CustomerId.NewUnique();
+        var customerId = CustomerId.NewUniqueV4();
 
         // Create account - this raises AccountOpenedEvent
         var accountResult = BankAccount.TryCreate(
