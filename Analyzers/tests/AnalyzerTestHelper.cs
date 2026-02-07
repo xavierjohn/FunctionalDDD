@@ -149,10 +149,10 @@ public static class AnalyzerTestHelper
             {
                 public static Result<T> Success<T>(T value) => value;
                 public static Result<T> Failure<T>(Error error) => error;
-                
-                // Combine stub
-                public static Result<(T1, T2)> Combine<T1, T2>(Result<T1> result1, Result<T2> result2) => default;
-                public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(Result<T1> result1, Result<T2> result2, Result<T3> result3) => default;
+
+                // Combine stubs
+                public static Result<(T1, T2)> Combine<T1, T2>(Result<T1> r1, Result<T2> r2) => default;
+                public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(Result<T1> r1, Result<T2> r2, Result<T3> r3) => default;
             }
 
             // Maybe<T> stub

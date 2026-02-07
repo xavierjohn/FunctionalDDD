@@ -62,19 +62,6 @@ public static partial class CombineExtensions
   void WriteT1Values(int n) {
      Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t1.Value.Item{i}")));
   }
-  
-  void WriteResultT(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"Result<T{i}> t{i}")));
-  }
-
-  void WriteAddFailure(int n) {
-    for(var i = 1; i <= n; i++)
-        WriteLine($"if (t{i}.IsFailure) error = error.Combine(t{i}.Error);");
-  }
-
-  void WriteTValues(int n) {
-     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"t{i}.Value")));
-  }
 
   for(var i = 3; i <=9; i++) { 
 #>
@@ -152,43 +139,6 @@ public static partial class CombineExtensions
         if (tc.IsFailure) error = error.Combine(tc.Error);
         if (error is not null) return Result.Failure<(<# WriteTs(i); #>)>(error);
         return Result.Success((<# WriteT1Values(i - 1); #>, tc.Value));
-    }
-
-    /// <summary>
-    /// Combines <#= i #> independent results into a single <#= i #>-element tuple result.
-    /// </summary>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <typeparam name="T<#= j #>">The type of element <#= j #> in the resulting tuple.</typeparam>
-<# } #>
-<# for(var j = 1; j <= i; j++) { #>
-    /// <param name="t<#= j #>">The <#= GetOrdinalName(j) #> result to combine.</param>
-<# } #>
-    /// <returns>
-    /// If all results succeed, returns a success result with a <#= i #>-element tuple containing all values.
-    /// If any result fails, returns a failure with all errors combined.
-    /// </returns>
-    /// <remarks>
-    /// This overload allows combining <#= i #> results in a single call rather than chaining.
-    /// Useful when all results are available simultaneously.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// var result = CombineExtensions.Combine(
-    ///     EmailAddress.TryCreate(email),
-    ///     FirstName.TryCreate(firstName),
-    ///     LastName.TryCreate(lastName)<# if(i > 3) { for(var k = 4; k <= i; k++) { #>,
-    ///     Field<#= k #>.TryCreate("value<#= k #>")<# } } #>);
-    /// </code>
-    /// </example>
-    public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(
-       this <# WriteResultT(i); #>)
-    {
-        using var activity = RopTrace.ActivitySource.StartActivity();
-        Error? error = null;
-        <# WriteAddFailure(i); #>
-
-        if (error is not null) return Result.Failure<(<# WriteTs(i); #>)>(error);
-        return Result.Success((<# WriteTValues(i); #>));
     }
 
 <#
@@ -279,6 +229,47 @@ public static partial class CombineExtensionsAsync
  }
 #>
 
+}
+
+/// <summary>
+/// Static Combine methods for combining multiple independent Result values without chaining (3-9 tuples).
+/// </summary>
+/// <remarks>
+/// Use <c>Result.Combine(r1, r2, r3, ...)</c> when you already have individual Result variables
+/// and want to combine them before error checking. Delegates to the chaining extension methods.
+/// </remarks>
+public readonly partial struct Result
+{
+<#
+  for(var i = 3; i <= 9; i++) {
+#>
+    /// <summary>
+    /// Combines <#= i #> independent <see cref="Result{TValue}"/> instances into a single <#= i #>-element tuple result.
+    /// </summary>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <typeparam name="T<#= j #>">Type of the <#= GetOrdinalName(j) #> result value.</typeparam>
+<# } #>
+<# for(var j = 1; j <= i; j++) { #>
+    /// <param name="r<#= j #>">The <#= GetOrdinalName(j) #> result.</param>
+<# } #>
+    /// <returns>
+    /// A success result with a <#= i #>-element tuple if all succeed; otherwise a failure with combined errors.
+    /// </returns>
+    /// <example>
+    /// <code>
+    /// var result = Result.Combine(<# for(var j = 1; j <= i; j++) { #><#= j > 1 ? ", " : "" #>r<#= j #><# } #>)
+    ///     .Bind((<# for(var j = 1; j <= i; j++) { #><#= j > 1 ? ", " : "" #>v<#= j #><# } #>) => Process(<# for(var j = 1; j <= i; j++) { #><#= j > 1 ? ", " : "" #>v<#= j #><# } #>));
+    /// </code>
+    /// </example>
+    public static Result<(<# WriteTs(i); #>)> Combine<<# WriteTs(i); #>>(
+<# for(var j = 1; j <= i; j++) { #>
+        Result<T<#= j #>> r<#= j #><#= j < i ? "," : ")" #>
+<# } #>
+        => r1.Combine(r2)<# for(var k = 3; k <= i; k++) { #>.Combine(r<#= k #>)<# } #>;
+
+<#
+ }
+#>
 }
 
 <#+

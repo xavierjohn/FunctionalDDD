@@ -210,69 +210,6 @@ public class CombineTracingTests : TestBase
 
     #endregion
 
-    #region Static Combine Method Tracing Tests
-
-    [Fact]
-    public void StaticCombine_3Tuple_AllSuccess_CreatesActivityWithOkStatus()
-    {
-        // Arrange
-        using var activityTest = new ActivityTestHelper();
-
-        // Act
-        var result = CombineExtensions.Combine(
-            Result.Success("First"),
-            Result.Success("Second"),
-            Result.Success("Third"));
-
-        // Assert
-        result.Should().BeSuccess();
-        activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Ok);
-    }
-
-    [Fact]
-    public void StaticCombine_3Tuple_OneFails_CreatesActivityWithErrorStatus()
-    {
-        // Arrange
-        using var activityTest = new ActivityTestHelper();
-
-        // Act
-        var result = CombineExtensions.Combine(
-            Result.Success("First"),
-            Result.Failure<string>(Error.Validation("Bad second")),
-            Result.Success("Third"));
-
-        // Assert
-        result.Should().BeFailure();
-
-        var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
-
-        // Verify error is also tracked in tags
-        var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
-        errorTag.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void StaticCombine_3Tuple_AllFail_CreatesActivityWithErrorStatus()
-    {
-        // Arrange
-        using var activityTest = new ActivityTestHelper();
-
-        // Act
-        var result = CombineExtensions.Combine(
-            Result.Failure<string>(Error.Validation("Bad first")),
-            Result.Failure<string>(Error.Validation("Bad second")),
-            Result.Failure<string>(Error.Validation("Bad third")));
-
-        // Assert
-        result.Should().BeFailure();
-
-        var activity = activityTest.AssertActivityCapturedWithStatus("Combine", ActivityStatusCode.Error);
-        var errorTag = activity.TagObjects.FirstOrDefault(t => t.Key == "result.error.code");
-        errorTag.Should().NotBeNull();
-    }
-
-    #endregion
-
     #region Chained Combine Operations Tracing
 
     [Fact]
@@ -521,23 +458,6 @@ public class CombineTracingTests : TestBase
         // Act
         var result = Result.Success("First")
             .Combine(Result.Success("Second"));
-
-        // Assert
-        var activity = activityTest.AssertActivityCaptured("Combine");
-        activity.DisplayName.Should().Be("Combine");
-    }
-
-    [Fact]
-    public void StaticCombine_CreatesActivity_WithCorrectName()
-    {
-        // Arrange
-        using var activityTest = new ActivityTestHelper();
-
-        // Act
-        var result = CombineExtensions.Combine(
-            Result.Success("First"),
-            Result.Success("Second"),
-            Result.Success("Third"));
 
         // Assert
         var activity = activityTest.AssertActivityCaptured("Combine");

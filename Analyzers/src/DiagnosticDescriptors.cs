@@ -173,11 +173,11 @@ public static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor UseResultCombine = new(
         id: "FDDD012",
         title: "Consider using Result.Combine",
-        messageFormat: "Consider using Result.Combine() for combining multiple Results instead of manual checks",
+        messageFormat: "Consider using Result.Combine() or .Combine() chaining for combining multiple Results instead of manual checks",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "When combining multiple Result<T> values, Result.Combine() provides a cleaner and more maintainable approach " +
+        description: "When combining multiple Result<T> values, Result.Combine() or .Combine() chaining provides a cleaner and more maintainable approach " +
                      "than manually checking IsSuccess on each result.",
         helpLinkUri: HelpLinkBase + "FDDD012");
 

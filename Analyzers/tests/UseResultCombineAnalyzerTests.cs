@@ -61,6 +61,26 @@ public class UseResultCombineAnalyzerTests
     }
 
     [Fact]
+    public async Task UsingCombineChaining_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public void TestMethod()
+                {
+                    Result<int> result1 = Result.Success(1);
+                    Result<int> result2 = Result.Success(2);
+                    
+                    var combined = result1.Combine(result2);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UseResultCombineAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
     public async Task UsingResultCombine_NoDiagnostic()
     {
         const string source = """
