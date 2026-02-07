@@ -318,6 +318,19 @@ public class ScalarValueValidationMiddlewareTests
     // Helper method signatures used to obtain ParameterInfo via reflection
     private static void ScalarValueParam(OrderCode code) { }
     private static void NonScalarValueParam(int id) { }
+    private static void IntOnlyScalarValueParam(IntOnlyScalarValue val) { }
+
+    /// <summary>
+    /// An IScalarValue type with only TryCreate(int, string?) — no TryCreate(string, string) overload.
+    /// Used to test the CreateFallbackErrors path.
+    /// </summary>
+    public class IntOnlyScalarValue : IScalarValue<IntOnlyScalarValue, int>
+    {
+        public int Value { get; }
+        private IntOnlyScalarValue(int value) => Value = value;
+        public static Result<IntOnlyScalarValue> TryCreate(int value, string? fieldName = null) =>
+            value > 0 ? new IntOnlyScalarValue(value) : Error.Validation("Must be positive.", fieldName ?? "value");
+    }
 
     [Fact]
     public async Task InvokeAsync_BindingFailure_ForScalarValue_Returns400WithRichErrors()
@@ -459,6 +472,55 @@ public class ScalarValueValidationMiddlewareTests
 
         // Assert
         ValidationErrorsContext.Current.Should().BeNull("scope should be disposed after handling the exception");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ScalarValueWithoutStringTryCreate_ReturnsFallbackError()
+    {
+        // Arrange - IntOnlyScalarValue has no TryCreate(string, string), so GetValidationErrors returns null
+        // and the middleware falls back to CreateFallbackErrors
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(IntOnlyScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "val");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "IntOnlyScalarValue val" from "abc".""", 400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("val")[0].GetString()
+            .Should().Contain("not a valid IntOnlyScalarValue", "should use the fallback error message");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ScalarValueWithoutStringTryCreate_EmptyValue_ReturnsFallbackRequiredError()
+    {
+        // Arrange - empty value triggers the "required" branch of CreateFallbackErrors
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(IntOnlyScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "val");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "IntOnlyScalarValue val" from "".""", 400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("val")[0].GetString()
+            .Should().Contain("is required", "should use the fallback 'required' message for empty values");
     }
 
     #endregion
