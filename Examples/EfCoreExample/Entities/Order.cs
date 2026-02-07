@@ -1,12 +1,12 @@
 ﻿namespace EfCoreExample.Entities;
 
-using EfCoreExample.EnumValueObjects;
+using EfCoreExample.Enums;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd;
 
 /// <summary>
-/// Order aggregate using EnumValueObject for state management.
-/// Demonstrates how EnumValueObject encapsulates business rules within the state itself.
+/// Order aggregate using RequiredEnum for state management.
+/// Demonstrates how RequiredEnum encapsulates business rules within the state itself.
 /// </summary>
 public class Order : Aggregate<OrderId>
 {
@@ -16,7 +16,7 @@ public class Order : Aggregate<OrderId>
     public IReadOnlyList<OrderLine> Lines => _lines.AsReadOnly();
 
     /// <summary>
-    /// The order state as an EnumValueObject with rich behavior.
+    /// The order state as a RequiredEnum with rich behavior.
     /// </summary>
     public OrderState State { get; private set; } = null!;
 
@@ -47,23 +47,23 @@ public class Order : Aggregate<OrderId>
 
     /// <summary>
     /// Adds a product to the order.
-    /// Uses EnumValueObject behavior to check if order can be modified.
+    /// Uses RequiredEnum behavior to check if order can be modified.
     /// </summary>
     public Result<Order> AddLine(Product product, int quantity) =>
         this.ToResult()
-            // EnumValueObject provides the CanModify property
+            // RequiredEnum provides the CanModify property
             .Ensure(_ => State.CanModify, Error.Validation($"Cannot modify order in '{State.Name}' state"))
             .Ensure(_ => quantity > 0, Error.Validation("Quantity must be positive", nameof(quantity)))
             .Tap(_ => _lines.Add(new OrderLine(Id, product, quantity)));
 
     /// <summary>
     /// Confirms the order.
-    /// Uses EnumValueObject's transition validation.
+    /// Uses RequiredEnum's transition validation.
     /// </summary>
     public Result<Order> Confirm() =>
         this.ToResult()
             .Ensure(_ => _lines.Count > 0, Error.Validation("Order must have at least one item"))
-            // EnumValueObject validates the transition
+            // RequiredEnum validates the transition
             .Bind(_ => State.TryTransitionTo(OrderState.Confirmed))
             .Tap(newState =>
             {
@@ -100,11 +100,11 @@ public class Order : Aggregate<OrderId>
 
     /// <summary>
     /// Cancels the order.
-    /// Uses EnumValueObject behavior to check if order can be cancelled.
+    /// Uses RequiredEnum behavior to check if order can be cancelled.
     /// </summary>
     public Result<Order> Cancel() =>
         this.ToResult()
-            // EnumValueObject provides the CanCancel property
+            // RequiredEnum provides the CanCancel property
             .Ensure(_ => State.CanCancel, Error.Validation($"Cannot cancel order in '{State.Name}' state"))
             .Bind(_ => State.TryTransitionTo(OrderState.Cancelled))
             .Tap(newState =>

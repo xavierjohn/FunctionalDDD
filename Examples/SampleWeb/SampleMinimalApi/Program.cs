@@ -50,6 +50,7 @@ app.MapGet("/", () => Results.Ok(new WelcomeResponse(
 
 app.UseUserRoute();
 app.UseMoneyRoute();
+app.UseOrderRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces
@@ -83,6 +84,16 @@ public record UserEndpoints(string Register, string RegisterCreated, string Regi
 [JsonSerializable(typeof(SampleMinimalApi.API.SplitBillRequest))]
 [JsonSerializable(typeof(SampleMinimalApi.API.RevenueShareRequest))]
 [JsonSerializable(typeof(SampleMinimalApi.API.RevenueShareResponse))]
+[JsonSerializable(typeof(UpdateOrderDto))]
+[JsonSerializable(typeof(CreateOrderDto))]
+[JsonSerializable(typeof(OrderState))]
+[JsonSerializable(typeof(SampleMinimalApi.API.OrderStateInfo))]
+[JsonSerializable(typeof(SampleMinimalApi.API.OrderStatesResponse))]
+[JsonSerializable(typeof(SampleMinimalApi.API.OrderStateDetailResponse))]
+[JsonSerializable(typeof(SampleMinimalApi.API.UpdateOrderResponse))]
+[JsonSerializable(typeof(SampleMinimalApi.API.CustomerInfo))]
+[JsonSerializable(typeof(SampleMinimalApi.API.CreateOrderResponse))]
+[JsonSerializable(typeof(SampleMinimalApi.API.FilterOrdersResponse))]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Http.HttpResults.ValidationProblem))]

@@ -1,0 +1,88 @@
+﻿namespace SampleMinimalApi.API;
+
+using FunctionalDdd;
+using SampleUserLibrary;
+
+public static class OrderRoutes
+{
+    public static void UseOrderRoute(this WebApplication app)
+    {
+        RouteGroupBuilder orderApi = app.MapGroup("/orders");
+
+        // GET all order states
+        orderApi.MapGet("/states", () =>
+            Results.Ok(new OrderStatesResponse(
+                OrderState.GetAll().Select(s => new OrderStateInfo(
+                    s.Name,
+                    s.Value,
+                    s.CanModify,
+                    s.CanCancel
+                )).ToArray()
+            )))
+            .WithName("GetOrderStates");
+
+        // GET order state by name (tests model binding from route)
+        orderApi.MapGet("/states/{state}", (OrderState state) =>
+            Results.Ok(new OrderStateDetailResponse(
+                state.Name,
+                state.Value,
+                state.CanModify,
+                state.CanCancel,
+                $"Successfully bound OrderState '{state.Name}' from route!"
+            )))
+            .WithScalarValueValidation()
+            .WithName("GetOrderStateByName");
+
+        // POST update order (tests JSON body validation)
+        orderApi.MapPost("/update", (UpdateOrderDto dto) =>
+            Results.Ok(new UpdateOrderResponse(
+                dto.State.Name,
+                dto.State.CanModify,
+                dto.State.CanCancel,
+                dto.Notes,
+                "Order state updated successfully!"
+            )))
+            .WithScalarValueValidation()
+            .WithName("UpdateOrder");
+
+        // POST create order (tests multiple value objects including RequiredEnum)
+        orderApi.MapPost("/create", (CreateOrderDto dto) =>
+            Results.Ok(new CreateOrderResponse(
+                new CustomerInfo(
+                    dto.CustomerFirstName.Value,
+                    dto.CustomerLastName.Value,
+                    dto.CustomerEmail.Value
+                ),
+                new OrderStateInfo(
+                    dto.InitialState.Name,
+                    dto.InitialState.Value,
+                    dto.InitialState.CanModify,
+                    dto.InitialState.CanCancel
+                ),
+                "Order created successfully with auto-validated RequiredEnum!"
+            )))
+            .WithScalarValueValidation()
+            .WithName("CreateOrder");
+
+        // GET to test query string binding
+        orderApi.MapGet("/filter", (OrderState? state) =>
+            state is null
+                ? Results.Ok(new FilterOrdersResponse(null, null, "No state filter provided"))
+                : Results.Ok(new FilterOrdersResponse(
+                    state.Name,
+                    state.CanModify,
+                    $"Filtering orders by state: {state.Name}"
+                )))
+            .WithScalarValueValidation()
+            .WithName("FilterOrders");
+    }
+}
+
+// Response types for AOT compatibility
+public record OrderStateInfo(string Name, int Value, bool CanModify, bool CanCancel);
+public record OrderStatesResponse(OrderStateInfo[] States);
+public record OrderStateDetailResponse(string Name, int Value, bool CanModify, bool CanCancel, string Message);
+public record UpdateOrderResponse(string NewState, bool CanModify, bool CanCancel, string? Notes, string Message);
+public record CustomerInfo(string FirstName, string LastName, string Email);
+public record CreateOrderResponse(CustomerInfo Customer, OrderStateInfo State, string Message);
+public record FilterOrdersResponse(string? FilterState, bool? CanModify, string Message);

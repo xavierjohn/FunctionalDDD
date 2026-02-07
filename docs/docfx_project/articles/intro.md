@@ -107,15 +107,15 @@ Build rich domain models with **Aggregates**, **Entities**, **Value Objects**, a
 - **Entities** - Objects with identity that change over time (e.g., `User`, `Product`)
 - **Value Objects** - Immutable objects defined by their values (e.g., `EmailAddress`, `Money`)
 - **Scalar Value Objects** - Single-value wrappers with validation (e.g., `FirstName`, `Age`)
-- **Enum Value Objects** - Type-safe enumerations with behavior and state machine support (e.g., `OrderState`, `PaymentStatus`)
+- **RequiredEnum** - Type-safe enumerations with behavior and state machine support (e.g., `OrderState`, `PaymentStatus`)
 
 **Quick example:**
 ```csharp
 // Value object with validation
 public partial class EmailAddress : RequiredString { }
 
-// Enum Value Object - type-safe enumeration (Name auto-derived)
-public class OrderState : EnumValueObject<OrderState>
+// RequiredEnum - type-safe enumeration (Name auto-derived)
+public partial class OrderState : RequiredEnum<OrderState>
 {
     public static readonly OrderState Draft = new();
     public static readonly OrderState Confirmed = new();

@@ -2,7 +2,7 @@
 
 using System.Globalization;
 using EfCoreExample.Entities;
-using EfCoreExample.EnumValueObjects;
+using EfCoreExample.Enums;
 using EfCoreExample.ValueObjects;
 using FunctionalDdd.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -114,7 +114,7 @@ public class AppDbContext : DbContext
                 .HasMaxLength(36)
                 .IsRequired();
 
-            // EnumValueObject -> stored as int using auto-generated Value
+            // RequiredEnum -> stored as int using auto-generated Value
             // Value is assigned based on declaration order (0, 1, 2, ...)
             builder.Property(o => o.State)
                 .HasConversion(

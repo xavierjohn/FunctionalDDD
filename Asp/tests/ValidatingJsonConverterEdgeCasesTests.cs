@@ -44,7 +44,7 @@ public class ValidatingJsonConverterEdgeCasesTests
     #region Null Handling Tests
 
     [Fact]
-    public void Read_NullJsonValue_ReturnsNull()
+    public void Read_NullJsonValue_ReturnsNullAndCollectsError()
     {
         // Arrange
         var converter = new ValidatingJsonConverter<Email, string>();
@@ -59,12 +59,16 @@ public class ValidatingJsonConverterEdgeCasesTests
 
             // Assert
             result.Should().BeNull();
-            ValidationErrorsContext.HasErrors.Should().BeFalse("null should be allowed");
+            ValidationErrorsContext.HasErrors.Should().BeTrue("null values should produce a validation error for required value objects");
+            var error = ValidationErrorsContext.GetValidationError();
+            error!.FieldErrors.Should().ContainSingle()
+                .Which.FieldName.Should().Be("email");
+            error.FieldErrors[0].Details.Should().Contain("Email cannot be null.");
         }
     }
 
     [Fact]
-    public void Read_NullPrimitiveValue_CollectsError()
+    public void Read_NullPrimitiveValue_CollectsErrorWithPropertyName()
     {
         // Arrange
         var converter = new ValidatingJsonConverter<Email, string>();
@@ -81,8 +85,11 @@ public class ValidatingJsonConverterEdgeCasesTests
 
             // Assert
             result.Should().BeNull();
-            // For null JSON values, no error should be added (null is valid for nullable types)
-            ValidationErrorsContext.HasErrors.Should().BeFalse();
+            ValidationErrorsContext.HasErrors.Should().BeTrue("null value should produce a validation error");
+            var error = ValidationErrorsContext.GetValidationError();
+            error!.FieldErrors.Should().ContainSingle()
+                .Which.FieldName.Should().Be("UserEmail");
+            error.FieldErrors[0].Details.Should().Contain("Email cannot be null.");
         }
     }
 

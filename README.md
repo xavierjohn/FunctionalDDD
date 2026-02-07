@@ -1,4 +1,4 @@
-# Functional Domain Driven Design
+ï»¿# Functional Domain Driven Design
 
 [![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/xavierjohn/FunctionalDDD/branch/main/graph/badge.svg)](https://codecov.io/gh/xavierjohn/FunctionalDDD)
@@ -12,7 +12,7 @@
 
 > **Write 60% less code that reads like English** using Railway-Oriented Programming and Domain-Driven Design
 
-Transform error-prone imperative code into readable, succinct functional pipelines—with zero performance overhead.
+Transform error-prone imperative code into readable, succinct functional pipelinesâ€”with zero performance overhead.
 
 ```csharp
 // ? Before: 20 lines of nested error checking
@@ -61,7 +61,7 @@ return FirstName.TryCreate(input.FirstName)
 Traditional error handling in C# creates verbose, error-prone code with nested if-statements that obscure business logic and make errors easy to miss.
 
 **The Solution:**
-Railway-Oriented Programming (ROP) treats your code like railway tracks—operations flow along the success track or automatically switch to the error track. **You write what should happen, not what could go wrong.**
+Railway-Oriented Programming (ROP) treats your code like railway tracksâ€”operations flow along the success track or automatically switch to the error track. **You write what should happen, not what could go wrong.**
 
 **Real-World Impact:**
 - ? **Teams report 40-60% reduction** in error-handling boilerplate
@@ -125,7 +125,7 @@ var result = await GetUserAsync(userId)
 ## Key Features
 
 ### ?? Railway-Oriented Programming
-Chain operations that automatically handle success/failure paths—no more nested if-statements.
+Chain operations that automatically handle success/failure pathsâ€”no more nested if-statements.
 
 ```csharp
 return GetUserAsync(id)
@@ -221,7 +221,7 @@ Robust, Maintainable Software
 ## What's New
 
 **Recent enhancements:**
-- ?? **NEW: EnumValueObject** - Type-safe enumerations with behavior, state machine support, and JSON serialization. Prevents invalid values unlike C# enums.
+- ?? **NEW: RequiredEnum** - Type-safe enumerations with behavior, state machine support, and JSON serialization. Prevents invalid values unlike C# enums. Source-generated `IScalarValue` support for ASP.NET Core auto-validation.
 - ?? **NEW: Roslyn Analyzers** - 14 compile-time diagnostics to enforce ROP best practices and prevent common mistakes with Result/Maybe types
 - ? **ASP.NET Core Auto-Validation** - Value objects automatically validate in requests (route params, query strings, JSON bodies) via `AddScalarValueObjectValidation()`
 - ?? **11 New Value Objects** - Ready-to-use: `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, plus `RequiredInt`/`RequiredDecimal`
@@ -246,7 +246,7 @@ Robust, Maintainable Software
 | **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [?? Docs](PrimitiveValueObjects/README.md) |
 | **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [?? Docs](PrimitiveValueObjects/generator/README.md) |
 | **[Analyzers](https://www.nuget.org/packages/FunctionalDdd.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDdd.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [?? Docs](Analyzers/README.md) |
-| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, EnumValueObject, Domain Events | [?? Docs](DomainDrivenDesign/README.md) |
+| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [?? Docs](DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/FunctionalDdd.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing) | FluentAssertions extensions, test builders, fakes | [?? Docs](Testing/README.md) |
 
 ---
@@ -255,7 +255,7 @@ Robust, Maintainable Software
 
 ### ? Negligible Overhead, Maximum Clarity
 
-Comprehensive benchmarks on **.NET 10** show ROP adds only **11-16 nanoseconds** of overhead—less than **0.002%** of typical I/O operations.
+Comprehensive benchmarks on **.NET 10** show ROP adds only **11-16 nanoseconds** of overheadâ€”less than **0.002%** of typical I/O operations.
 
 | Operation | Time | Overhead | Memory |
 |-----------|------|----------|--------|

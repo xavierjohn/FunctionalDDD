@@ -48,6 +48,14 @@ app.MapGet("/", () => Results.Ok(new
                 "GET /users/unauthorized/{id} - Returns 401 Unauthorized",
                 "GET /users/unexpected/{id} - Returns 500 Internal Server Error"
             }
+        },
+        orders = new
+        {
+            getStates = "GET /orders/states - Get all order states (RequiredEnum demo)",
+            getStateByName = "GET /orders/states/{state} - Get state by name (model binding)",
+            updateOrder = "POST /orders/update - Update order with RequiredEnum in JSON body",
+            createOrder = "POST /orders/create - Create order with multiple value objects",
+            filterOrders = "GET /orders/filter?state=Draft - Filter orders by state (query string)"
         }
     },
     documentation = "See SampleApi.http for complete API examples"
@@ -56,6 +64,7 @@ app.MapGet("/", () => Results.Ok(new
 
 app.UseUserRoute();
 app.UseMoneyRoute();
+app.UseOrderRoute();
 app.Run();
 
 #pragma warning disable CA1050 // Declare types in namespaces

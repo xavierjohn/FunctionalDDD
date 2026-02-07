@@ -1,10 +1,16 @@
 ﻿namespace Asp.Tests;
 
 using System;
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FunctionalDdd;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 /// <summary>
@@ -288,4 +294,276 @@ public class ScalarValueValidationMiddlewareTests
         await act.Should().ThrowAsync<OperationCanceledException>();
         ValidationErrorsContext.Current.Should().BeNull("scope should be disposed even after cancellation");
     }
+
+    #region BadHttpRequestException Handling Tests
+
+    /// <summary>
+    /// Test scalar value type for middleware tests.
+    /// Validates that the value starts with "ORD-".
+    /// </summary>
+    public class OrderCode : ScalarValueObject<OrderCode, string>, IScalarValue<OrderCode, string>
+    {
+        private OrderCode(string value) : base(value) { }
+        public static Result<OrderCode> TryCreate(string? value, string? fieldName = null)
+        {
+            var field = fieldName ?? "orderCode";
+            if (string.IsNullOrWhiteSpace(value))
+                return Error.Validation("Order code is required.", field);
+            if (!value.StartsWith("ORD-", StringComparison.Ordinal))
+                return Error.Validation("Order code must start with 'ORD-'.", field);
+            return new OrderCode(value);
+        }
+    }
+
+    // Helper method signatures used to obtain ParameterInfo via reflection
+    private static void ScalarValueParam(OrderCode code) { }
+    private static void NonScalarValueParam(int id) { }
+    private static void IntOnlyScalarValueParam(IntOnlyScalarValue val) { }
+
+    /// <summary>
+    /// An IScalarValue type with only TryCreate(int, string?) — no TryCreate(string, string) overload.
+    /// Used to test the CreateFallbackErrors path.
+    /// </summary>
+    public class IntOnlyScalarValue : IScalarValue<IntOnlyScalarValue, int>
+    {
+        public int Value { get; }
+        private IntOnlyScalarValue(int value) => Value = value;
+        public static Result<IntOnlyScalarValue> TryCreate(int value, string? fieldName = null) =>
+            value > 0 ? new IntOnlyScalarValue(value) : Error.Validation("Must be positive.", fieldName ?? "value");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ForScalarValue_Returns400WithRichErrors()
+    {
+        // Arrange
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(ScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "code");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "OrderCode code" from "INVALID".""", 400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("code")[0].GetString()
+            .Should().Contain("ORD-", "should contain the rich validation error from TryCreate");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ForNonScalarValue_Rethrows()
+    {
+        // Arrange
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(NonScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "id");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "Int32 id" from "abc".""", 400));
+
+        // Act
+        var act = async () => await middleware.InvokeAsync(context);
+
+        // Assert
+        await act.Should().ThrowAsync<BadHttpRequestException>();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_NoEndpoint_Rethrows()
+    {
+        // Arrange - no endpoint set on context
+        var context = CreateHttpContextWithServices();
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "OrderCode code" from "INVALID".""", 400));
+
+        // Act
+        var act = async () => await middleware.InvokeAsync(context);
+
+        // Assert
+        await act.Should().ThrowAsync<BadHttpRequestException>();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ReadParameterFailure_Returns400WithErrorDetails()
+    {
+        // Arrange
+        var innerException = new JsonException("JSON deserialization for type 'CreateOrderRequest' was missing required properties including: 'state'.");
+        var context = CreateHttpContextWithServices();
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException(
+                """Failed to read parameter "CreateOrderRequest order" from the request body as JSON.""",
+                400,
+                innerException));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("$")[0].GetString()
+            .Should().Contain("missing required properties");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ReadParameterFailure_NoInnerException_UsesExceptionMessage()
+    {
+        // Arrange
+        var context = CreateHttpContextWithServices();
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException(
+                """Failed to read parameter "CreateOrderRequest order" from the request body as JSON.""",
+                400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("$")[0].GetString()
+            .Should().Contain("Failed to read parameter");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_OtherBadHttpRequestException_Rethrows()
+    {
+        // Arrange
+        var context = new DefaultHttpContext();
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("Some other bad request error", 400));
+
+        // Act
+        var act = async () => await middleware.InvokeAsync(context);
+
+        // Assert
+        await act.Should().ThrowAsync<BadHttpRequestException>();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ScopeStillDisposed()
+    {
+        // Arrange
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(ScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "code");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "OrderCode code" from "BAD".""", 400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        ValidationErrorsContext.Current.Should().BeNull("scope should be disposed after handling the exception");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ScalarValueWithoutStringTryCreate_ReturnsFallbackError()
+    {
+        // Arrange - IntOnlyScalarValue has no TryCreate(string, string), so GetValidationErrors returns null
+        // and the middleware falls back to CreateFallbackErrors
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(IntOnlyScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "val");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "IntOnlyScalarValue val" from "abc".""", 400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("val")[0].GetString()
+            .Should().Contain("not a valid IntOnlyScalarValue", "should use the fallback error message");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_BindingFailure_ScalarValueWithoutStringTryCreate_EmptyValue_ReturnsFallbackRequiredError()
+    {
+        // Arrange - empty value triggers the "required" branch of CreateFallbackErrors
+        var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
+            .GetMethod(nameof(IntOnlyScalarValueParam), BindingFlags.Static | BindingFlags.NonPublic)!
+            .GetParameters()[0];
+
+        var context = CreateContextWithEndpointMetadata(paramInfo, "val");
+
+        var middleware = new ScalarValueValidationMiddleware(_ =>
+            throw new BadHttpRequestException("""Failed to bind parameter "IntOnlyScalarValue val" from "".""", 400));
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.StatusCode.Should().Be(400);
+        var body = await ReadResponseBodyAsync(context);
+        var problem = JsonSerializer.Deserialize<JsonElement>(body);
+        problem.GetProperty("errors").GetProperty("val")[0].GetString()
+            .Should().Contain("is required", "should use the fallback 'required' message for empty values");
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static DefaultHttpContext CreateContextWithEndpointMetadata(ParameterInfo paramInfo, string paramName)
+    {
+        var mockMetadata = new Mock<IParameterBindingMetadata>();
+        mockMetadata.Setup(m => m.Name).Returns(paramName);
+        mockMetadata.Setup(m => m.ParameterInfo).Returns(paramInfo);
+
+        var endpoint = new Endpoint(
+            requestDelegate: _ => Task.CompletedTask,
+            metadata: new EndpointMetadataCollection(mockMetadata.Object),
+            displayName: "TestEndpoint");
+
+        var context = CreateHttpContextWithServices();
+        context.SetEndpoint(endpoint);
+        return context;
+    }
+
+    private static DefaultHttpContext CreateHttpContextWithServices()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMvcCore();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var context = new DefaultHttpContext
+        {
+            RequestServices = serviceProvider,
+        };
+        context.Response.Body = new MemoryStream();
+        return context;
+    }
+
+    private static async Task<string> ReadResponseBodyAsync(DefaultHttpContext context)
+    {
+        context.Response.Body.Position = 0;
+        using var reader = new StreamReader(context.Response.Body);
+        return await reader.ReadToEndAsync();
+    }
+
+    #endregion
 }

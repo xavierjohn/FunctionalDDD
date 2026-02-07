@@ -7,16 +7,17 @@
 /// <remarks>
 /// <para>
 /// This class captures the essential information needed to generate the complementary partial class
-/// that provides the public API for value objects inheriting from <see cref="RequiredGuid"/> or <see cref="RequiredString"/>.
+/// that provides the public API for value objects inheriting from <see cref="RequiredGuid"/>, <see cref="RequiredString"/>,
+/// <see cref="RequiredInt"/>, <see cref="RequiredDecimal"/>, or <see cref="RequiredEnum"/>.
 /// </para>
 /// <para>
 /// The generator uses this information to create:
 /// <list type="bullet">
-/// <item>Static factory methods (NewUnique for GUIDs, TryCreate for strings)</item>
+/// <item>Static factory methods (NewUnique for GUIDs, TryCreate for all types)</item>
 /// <item>Validation logic ensuring non-empty values</item>
 /// <item>IParsable implementation for parsing support</item>
 /// <item>JSON serialization attributes</item>
-/// <item>Private constructors that call the base class</item>
+/// <item>Private constructors that call the base class (except for RequiredEnum)</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -42,12 +43,16 @@ internal class RequiredPartialClassInfo
     /// Gets the base class that the partial class inherits from.
     /// </summary>
     /// <value>
-    /// Either "RequiredGuid" or "RequiredString", determining which factory methods are generated.
+    /// One of "RequiredGuid", "RequiredString", "RequiredInt", "RequiredDecimal", or "RequiredEnum",
+    /// determining which factory methods are generated.
     /// </value>
     /// <remarks>
     /// <list type="bullet">
-    /// <item><c>RequiredGuid</c>: Generates NewUnique(), TryCreate(Guid?), TryParse(string?)</item>
+    /// <item><c>RequiredGuid</c>: Generates NewUniqueV4(), NewUniqueV7(), TryCreate(Guid?), TryParse(string?)</item>
     /// <item><c>RequiredString</c>: Generates TryCreate(string?)</item>
+    /// <item><c>RequiredInt</c>: Generates TryCreate(int?), TryParse(string?)</item>
+    /// <item><c>RequiredDecimal</c>: Generates TryCreate(decimal?), TryParse(string?)</item>
+    /// <item><c>RequiredEnum</c>: Generates TryCreate(string?) delegating to TryFromName()</item>
     /// </list>
     /// </remarks>
     public readonly string ClassBase;

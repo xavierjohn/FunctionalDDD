@@ -73,13 +73,13 @@ public class Money : ValueObject
 }
 ```
 
-### EnumValueObject
+### RequiredEnum
 
-Type-safe enumerations with behavior. Unlike C# enums, EnumValueObjects prevent invalid values and can encapsulate domain logic. Name is auto-derived from the field name (pure DDD).
+Type-safe enumerations with behavior have moved to the **PrimitiveValueObjects** package as `RequiredEnum<T>`. Unlike C# enums, RequiredEnum prevents invalid values and can encapsulate domain logic. Name is auto-derived from the field name (pure DDD). The source generator automatically adds `IScalarValue<TSelf, string>` support, JSON serialization, and ASP.NET Core model binding.
 
 ```csharp
-[JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
-public class OrderState : EnumValueObject<OrderState>
+// Use 'partial' to enable source generation (IScalarValue, JSON, model binding)
+public partial class OrderState : RequiredEnum<OrderState>
 {
     // Pure domain - Name auto-derived from field name
     public static readonly OrderState Draft = new();
@@ -104,7 +104,7 @@ public class OrderState : EnumValueObject<OrderState>
 }
 
 // Usage
-var state = OrderState.TryFromName("Draft");           // Result<OrderState>
+var state = OrderState.TryCreate("Draft");             // Result<OrderState>
 var all = OrderState.GetAll();                         // All defined states
 
 if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
@@ -113,6 +113,8 @@ if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
 order.State.TryTransitionTo(OrderState.Confirmed)
     .Tap(newState => order.State = newState);
 ```
+
+See **[PrimitiveValueObjects README](../PrimitiveValueObjects/README.md)** for full documentation.
 
 ### Aggregate
 
@@ -276,12 +278,12 @@ public decimal Amount { get; set; }
 - Type safety for primitives
 - Implicit conversion to `T`
 
-### EnumValueObject<T>
-- Type-safe enumeration with behavior
+### RequiredEnum<T>
+- Type-safe enumeration with behavior (moved to PrimitiveValueObjects)
 - Prevents invalid values (unlike C# enums)
 - Name-only constructor (Value auto-generated for persistence)
 - Supports state machine patterns
-- Built-in JSON serialization
+- Source-generated JSON serialization and ASP.NET Core model binding
 - `Is()` and `IsNot()` helper methods
 
 ### Aggregate<TId>
@@ -299,8 +301,8 @@ public decimal Amount { get; set; }
 - **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
 - **[Main Documentation](https://github.com/xavierjohn/FunctionalDDD)** - Full repository documentation
 - **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** - Result type and functional patterns
-- **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** - RequiredString, RequiredGuid, EmailAddress
-- **[Ardalis.EnumValueObject](https://github.com/ardalis/EnumValueObject)** - Inspiration for EnumValueObject pattern
+- **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** - RequiredString, RequiredGuid, RequiredEnum, EmailAddress
+- **[Ardalis.SmartEnum](https://github.com/ardalis/SmartEnum)** - Inspiration for RequiredEnum pattern
 
 ## License
 

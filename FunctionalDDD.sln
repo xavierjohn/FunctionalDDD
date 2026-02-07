@@ -114,6 +114,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleWeb", "SampleWeb", "{
 	ProjectSection(SolutionItems) = preProject
 		Examples\SampleWeb\ErrorResponse.http = Examples\SampleWeb\ErrorResponse.http
 		Examples\SampleWeb\MoneyApi.http = Examples\SampleWeb\MoneyApi.http
+		Examples\SampleWeb\OrderApi.http = Examples\SampleWeb\OrderApi.http
 		Examples\SampleWeb\UserApi.http = Examples\SampleWeb\UserApi.http
 	EndProjectSection
 EndProject

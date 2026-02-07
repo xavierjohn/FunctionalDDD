@@ -1,14 +1,17 @@
 ﻿namespace Asp.Tests;
 
+using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using FunctionalDdd;
+using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 /// <summary>
@@ -100,9 +103,9 @@ public class ScalarValueValidationFilterTests
             filter.OnActionExecuting(context);
 
             // Assert
-            context.ModelState.IsValid.Should().BeFalse();
-            context.ModelState["Email"]!.Errors.Should().ContainSingle()
-                .Which.ErrorMessage.Should().Be("Email must contain @.");
+            var problemDetails = GetValidationProblemDetails(context);
+            problemDetails.Errors.Should().ContainKey("Email");
+            problemDetails.Errors["Email"].Should().Contain("Email must contain @.");
         }
     }
 
@@ -123,9 +126,10 @@ public class ScalarValueValidationFilterTests
             filter.OnActionExecuting(context);
 
             // Assert
-            context.ModelState.IsValid.Should().BeFalse();
-            context.ModelState["Email"]!.Errors.Should().HaveCount(3);
-            context.ModelState["Email"]!.Errors.Select(e => e.ErrorMessage).Should().Contain(ExpectedEmailErrors);
+            var problemDetails = GetValidationProblemDetails(context);
+            problemDetails.Errors.Should().ContainKey("Email");
+            problemDetails.Errors["Email"].Should().HaveCount(3);
+            problemDetails.Errors["Email"].Should().Contain(ExpectedEmailErrors);
         }
     }
 
@@ -147,11 +151,11 @@ public class ScalarValueValidationFilterTests
             // Act
             filter.OnActionExecuting(context);
 
-            // Assert
-            context.ModelState.IsValid.Should().BeFalse();
-            // Should only have our custom error, not the default required error
-            context.ModelState["Email"]!.Errors.Should().ContainSingle()
-                .Which.ErrorMessage.Should().Be("Email must contain @.");
+            // Assert - uses fresh ModelState, so pre-existing errors are excluded
+            var problemDetails = GetValidationProblemDetails(context);
+            problemDetails.Errors.Should().ContainKey("Email");
+            problemDetails.Errors["Email"].Should().ContainSingle()
+                .Which.Should().Be("Email must contain @.");
         }
     }
 
@@ -163,7 +167,6 @@ public class ScalarValueValidationFilterTests
         var context = CreateActionExecutingContext();
 
         // Add pre-existing error with different casing
-        // Note: ModelState is case-insensitive, so "email" and "Email" refer to the same entry
         context.ModelState.AddModelError("email", "Default error");
 
         using (ValidationErrorsContext.BeginScope())
@@ -173,13 +176,11 @@ public class ScalarValueValidationFilterTests
             // Act
             filter.OnActionExecuting(context);
 
-            // Assert
-            // ModelState is case-insensitive, so we can access with either casing
-            context.ModelState.ContainsKey("email").Should().BeTrue();
-            context.ModelState.ContainsKey("Email").Should().BeTrue();
-            // The old error should be replaced with the new one
-            context.ModelState["Email"]!.Errors.Should().ContainSingle()
-                .Which.ErrorMessage.Should().Be("Email is invalid.");
+            // Assert - fresh ModelState is used, so pre-existing errors are excluded
+            var problemDetails = GetValidationProblemDetails(context);
+            problemDetails.Errors.Should().ContainKey("Email");
+            problemDetails.Errors["Email"].Should().ContainSingle()
+                .Which.Should().Be("Email is invalid.");
         }
     }
 
@@ -200,11 +201,12 @@ public class ScalarValueValidationFilterTests
             // Act
             filter.OnActionExecuting(context);
 
-            // Assert
-            // Should clear the "dto.Email" entry
-            context.ModelState.Keys.Should().NotContain("dto.Email");
-            context.ModelState["Email"]!.Errors.Should().ContainSingle()
-                .Which.ErrorMessage.Should().Be("Email is invalid.");
+            // Assert - fresh ModelState is used, so pre-existing "dto.Email" is excluded
+            var problemDetails = GetValidationProblemDetails(context);
+            problemDetails.Errors.Keys.Should().NotContain("dto.Email");
+            problemDetails.Errors.Should().ContainKey("Email");
+            problemDetails.Errors["Email"].Should().ContainSingle()
+                .Which.Should().Be("Email is invalid.");
         }
     }
 
@@ -263,7 +265,8 @@ public class ScalarValueValidationFilterTests
 
             var problemDetails = badRequestResult!.Value as ValidationProblemDetails;
             problemDetails.Should().NotBeNull();
-            problemDetails!.Title.Should().Be("One or more validation errors occurred.");
+            problemDetails!.Type.Should().Be("https://tools.ietf.org/html/rfc9110#section-15.5.1");
+            problemDetails.Title.Should().Be("One or more validation errors occurred.");
             problemDetails.Status.Should().Be(400);
             problemDetails.Errors.Should().HaveCount(2);
             problemDetails.Errors.Should().ContainKey("Field1");
@@ -271,11 +274,230 @@ public class ScalarValueValidationFilterTests
         }
     }
 
+    #region ValidateScalarValueParameters Tests
+
+    [Fact]
+    public void OnActionExecuting_NullScalarValueParam_WithRouteValue_ReturnsRichValidationError()
+    {
+        // Arrange - parameter is IScalarValue type, value is null (binding failed), raw route value present
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["code"] = null },
+            routeValues: new RouteValueDictionary { ["code"] = "INVALID" });
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert - should get rich error from TryCreate
+        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        var problemDetails = GetValidationProblemDetails(context);
+        problemDetails.Errors.Should().ContainKey("code");
+        problemDetails.Errors["code"].Should().Contain(e => e.Contains("ORD-"));
+    }
+
+    [Fact]
+    public void OnActionExecuting_NullScalarValueParam_WithQueryValue_ReturnsRichValidationError()
+    {
+        // Arrange - raw value from query string instead of route
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["code"] = null },
+            routeValues: new RouteValueDictionary(),
+            queryString: "?code=BAD");
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert
+        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        var problemDetails = GetValidationProblemDetails(context);
+        problemDetails.Errors.Should().ContainKey("code");
+        problemDetails.Errors["code"].Should().Contain(e => e.Contains("ORD-"));
+    }
+
+    [Fact]
+    public void OnActionExecuting_NullScalarValueParam_NoRawValue_DoesNotShortCircuit()
+    {
+        // Arrange - no raw value in route or query means the parameter was simply not provided
+        // (e.g., optional query param like OrderState? state). Should not validate.
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["code"] = null },
+            routeValues: new RouteValueDictionary());
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert - no raw value means parameter was not provided, not a binding failure
+        context.Result.Should().BeNull("absent optional parameter should not trigger validation");
+    }
+
+    [Fact]
+    public void OnActionExecuting_NonNullScalarValueParam_DoesNotShortCircuit()
+    {
+        // Arrange - parameter is IScalarValue type but non-null (successfully bound)
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var testCode = TestOrderCode.Create("ORD-123");
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["code"] = testCode },
+            routeValues: new RouteValueDictionary { ["code"] = "ORD-123" });
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert
+        context.Result.Should().BeNull("non-null IScalarValue should not trigger validation");
+    }
+
+    [Fact]
+    public void OnActionExecuting_NonScalarValueParam_Null_DoesNotShortCircuit()
+    {
+        // Arrange - parameter is NOT an IScalarValue type, even though null
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "name", ParameterType = typeof(string) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["name"] = null },
+            routeValues: new RouteValueDictionary());
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert
+        context.Result.Should().BeNull("non-IScalarValue params should be skipped");
+    }
+
+    [Fact]
+    public void OnActionExecuting_NullableScalarValueParam_Null_ReturnsValidationError()
+    {
+        // Arrange - Nullable<> wrapping of IScalarValue is handled by Nullable.GetUnderlyingType
+        // In practice, ScalarValueObjects are reference types so Nullable<> doesn't apply,
+        // but the code handles it defensively. Test with the direct type + null value.
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["code"] = null },
+            routeValues: new RouteValueDictionary { ["code"] = "X" });
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert
+        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        var problemDetails = GetValidationProblemDetails(context);
+        problemDetails.Errors.Should().ContainKey("code");
+    }
+
+    [Fact]
+    public void OnActionExecuting_MixedParams_OnlyValidatesScalarValues()
+    {
+        // Arrange - multiple params, only the IScalarValue one should be validated
+        var filter = new ScalarValueValidationFilter();
+        var codeParam = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var idParam = new ParameterDescriptor { Name = "id", ParameterType = typeof(int) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [codeParam, idParam],
+            arguments: new Dictionary<string, object?> { ["code"] = null, ["id"] = null },
+            routeValues: new RouteValueDictionary { ["code"] = "BAD" });
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert - only the IScalarValue param should have an error
+        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        var problemDetails = GetValidationProblemDetails(context);
+        problemDetails.Errors.Should().ContainKey("code");
+        problemDetails.Errors.Keys.Should().NotContain("id");
+    }
+
+    [Fact]
+    public void OnActionExecuting_ParamNotInArguments_DoesNotShortCircuit()
+    {
+        // Arrange - parameter declared but not present in ActionArguments
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?>(), // code not present
+            routeValues: new RouteValueDictionary { ["code"] = "BAD" });
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert - TryGetValue returns false, so no validation error
+        context.Result.Should().BeNull();
+    }
+
+    [Fact]
+    public void OnActionExecuting_OptionalNullableScalarValueParam_NotProvided_DoesNotShortCircuit()
+    {
+        // Arrange - simulates: FilterOrders([FromQuery] OrderState? state) called without ?state=
+        // The parameter is in ActionArguments as null, but no raw value exists in route or query.
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "state", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["state"] = null },
+            routeValues: new RouteValueDictionary());
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert - parameter was not provided, not a binding failure
+        context.Result.Should().BeNull("optional parameter not provided should not trigger validation");
+    }
+
+    #endregion
+
+    #region Test Value Objects
+
+    /// <summary>
+    /// Test value object that validates order codes start with "ORD-".
+    /// </summary>
+    public class TestOrderCode : ScalarValueObject<TestOrderCode, string>, IScalarValue<TestOrderCode, string>
+    {
+        private TestOrderCode(string value) : base(value) { }
+        public static Result<TestOrderCode> TryCreate(string? value, string? fieldName = null)
+        {
+            var field = fieldName ?? "orderCode";
+            if (string.IsNullOrEmpty(value) || !value.StartsWith("ORD-", StringComparison.OrdinalIgnoreCase))
+                return Error.Validation($"Order code must start with 'ORD-'. Got: '{value}'.", field);
+            return new TestOrderCode(value);
+        }
+    }
+
+    #endregion
+
     #region Helper Methods
+
+    private static ValidationProblemDetails GetValidationProblemDetails(ActionExecutingContext context)
+    {
+        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        var badRequest = (BadRequestObjectResult)context.Result!;
+        badRequest.Value.Should().NotBeNull().And.BeOfType<ValidationProblemDetails>();
+        return (ValidationProblemDetails)badRequest.Value!;
+    }
 
     private static ActionExecutingContext CreateActionExecutingContext()
     {
-        var httpContext = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMvcCore();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = serviceProvider
+        };
         var actionContext = new ActionContext(
             httpContext,
             new RouteData(),
@@ -291,7 +513,15 @@ public class ScalarValueValidationFilterTests
 
     private static ActionExecutedContext CreateActionExecutedContext()
     {
-        var httpContext = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMvcCore();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = serviceProvider
+        };
         var actionContext = new ActionContext(
             httpContext,
             new RouteData(),
@@ -301,6 +531,39 @@ public class ScalarValueValidationFilterTests
         return new ActionExecutedContext(
             actionContext,
             new List<IFilterMetadata>(),
+            controller: null!);
+    }
+
+    private static ActionExecutingContext CreateActionExecutingContextWithParams(
+        IList<ParameterDescriptor> parameters,
+        Dictionary<string, object?> arguments,
+        RouteValueDictionary routeValues,
+        string? queryString = null)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddMvcCore();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = serviceProvider
+        };
+
+        if (queryString is not null)
+            httpContext.Request.QueryString = new QueryString(queryString);
+
+        var actionDescriptor = new ActionDescriptor { Parameters = parameters };
+        var actionContext = new ActionContext(
+            httpContext,
+            new RouteData(routeValues),
+            actionDescriptor,
+            new ModelStateDictionary());
+
+        return new ActionExecutingContext(
+            actionContext,
+            new List<IFilterMetadata>(),
+            arguments,
             controller: null!);
     }
 
