@@ -319,7 +319,7 @@ Content-Type: application/json
 
 ### Shopping Cart - Calculate Total (200 OK)
 # Add multiple items together
-POST {{host}}/money/cart-total
+POST {{host}}/money/CartTotal
 Content-Type: application/json
 
 {
@@ -332,7 +332,7 @@ Content-Type: application/json
 }
 
 ### Apply Discount - 15% Off (200 OK)
-POST {{host}}/money/apply-discount
+POST {{host}}/money/ApplyDiscount
 Content-Type: application/json
 
 {
@@ -345,7 +345,7 @@ Content-Type: application/json
 
 ### Split Bill - Restaurant (200 OK)
 # Split $87.50 among 4 people
-POST {{host}}/money/split-bill
+POST {{host}}/money/SplitBill
 Content-Type: application/json
 
 {
@@ -358,7 +358,7 @@ Content-Type: application/json
 
 ### Revenue Share - 3-Way Split (200 OK)
 # Platform (10%), Creator (70%), Referrer (20%)
-POST {{host}}/money/revenue-share
+POST {{host}}/money/RevenueShare
 Content-Type: application/json
 
 {

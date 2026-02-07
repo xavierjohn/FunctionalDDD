@@ -63,7 +63,7 @@ public static class MoneyRoutes
                 .ToHttpResult());
 
         // Real-World Scenarios
-        moneyApi.MapPost("/cart-total", (CartTotalRequest request) =>
+        moneyApi.MapPost("/CartTotal", (CartTotalRequest request) =>
         {
             if (request.Items.Length == 0)
                 return Result.Failure<Money>(Error.Validation("Cart cannot be empty")).ToHttpResult();
@@ -87,7 +87,7 @@ public static class MoneyRoutes
             return Result.Success(total).ToHttpResult();
         });
 
-        moneyApi.MapPost("/apply-discount", (ApplyDiscountRequest request) =>
+        moneyApi.MapPost("/ApplyDiscount", (ApplyDiscountRequest request) =>
             Money.TryCreate(request.OriginalPrice.Amount, request.OriginalPrice.Currency)
                 .Ensure(price => request.DiscountPercent is >= 0 and <= 100,
                     Error.Validation("Discount percent must be between 0 and 100"))
@@ -98,13 +98,13 @@ public static class MoneyRoutes
                 })
                 .ToHttpResult());
 
-        moneyApi.MapPost("/split-bill", (SplitBillRequest request) =>
+        moneyApi.MapPost("/SplitBill", (SplitBillRequest request) =>
             Money.TryCreate(request.Total.Amount, request.Total.Currency)
                 .Ensure(_ => request.People > 0, Error.Validation("Number of people must be positive"))
                 .Bind(total => total.Divide(request.People))
                 .ToHttpResult());
 
-        moneyApi.MapPost("/revenue-share", (RevenueShareRequest request) =>
+        moneyApi.MapPost("/RevenueShare", (RevenueShareRequest request) =>
         {
             var totalPercent = request.PlatformPercent + request.CreatorPercent + request.ReferrerPercent;
             if (totalPercent != 100)
