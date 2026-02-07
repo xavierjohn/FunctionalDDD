@@ -219,8 +219,6 @@ Because the source generator adds `IScalarValue<TSelf, string>`, RequiredEnum ty
 ### Operators
 
 - Equality: `==`, `!=`
-- Comparison: `<`, `<=`, `>`, `>=` (based on Value)
-- Implicit conversion to `string` (returns Name)
 
 ## Best Practices
 

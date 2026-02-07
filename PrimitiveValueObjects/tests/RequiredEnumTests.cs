@@ -183,6 +183,38 @@ public class RequiredEnumTests
     }
 
     [Fact]
+    public void JsonDeserialize_Null_ReturnsNull()
+    {
+        // Act
+        var state = JsonSerializer.Deserialize<TestOrderState>("null");
+
+        // Assert
+        state.Should().BeNull();
+    }
+
+    [Fact]
+    public void JsonDeserialize_UnexpectedToken_ThrowsJsonException()
+    {
+        // Act & Assert
+        var act = () => JsonSerializer.Deserialize<TestOrderState>("123");
+        act.Should().Throw<JsonException>()
+            .WithMessage("*Unexpected token type*");
+    }
+
+    [Fact]
+    public void JsonSerialize_NullValue_WritesNull()
+    {
+        // Arrange
+        TestOrderState? state = null;
+
+        // Act
+        var json = JsonSerializer.Serialize(state);
+
+        // Assert
+        json.Should().Be("null");
+    }
+
+    [Fact]
     public void JsonSerialize_InObject_WritesCorrectly()
     {
         // Arrange

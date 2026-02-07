@@ -131,7 +131,7 @@ using System.Reflection;
 #pragma warning disable CA1000 // Do not declare static members on generic types - required for factory pattern
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix - RequiredEnum is a valid DDD pattern name
 public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TSelf>
-    : IEquatable<RequiredEnum<TSelf>>, IComparable<RequiredEnum<TSelf>>
+    : IEquatable<RequiredEnum<TSelf>>
     where TSelf : RequiredEnum<TSelf>, IScalarValue<TSelf, string>
 #pragma warning restore CA1711
 {
@@ -224,35 +224,12 @@ public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccess
         return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <inheritdoc />
-    public int CompareTo(RequiredEnum<TSelf>? other) =>
-        other is null ? 1 : Value.CompareTo(other.Value);
-
     /// <summary>Determines whether two instances are equal.</summary>
     public static bool operator ==(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
         left is null ? right is null : left.Equals(right);
 
     /// <summary>Determines whether two instances are not equal.</summary>
     public static bool operator !=(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) => !(left == right);
-
-    /// <summary>Determines whether left is less than right.</summary>
-    public static bool operator <(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
-        left is null ? right is not null : left.CompareTo(right) < 0;
-
-    /// <summary>Determines whether left is less than or equal to right.</summary>
-    public static bool operator <=(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
-        left is null || left.CompareTo(right) <= 0;
-
-    /// <summary>Determines whether left is greater than right.</summary>
-    public static bool operator >(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
-        left is not null && left.CompareTo(right) > 0;
-
-    /// <summary>Determines whether left is greater than or equal to right.</summary>
-    public static bool operator >=(RequiredEnum<TSelf>? left, RequiredEnum<TSelf>? right) =>
-        left is null ? right is null : left.CompareTo(right) >= 0;
-
-    /// <summary>Implicitly converts to string (the Name).</summary>
-    public static implicit operator string(RequiredEnum<TSelf> requiredEnum) => requiredEnum.Name;
 
     private static (List<TSelf> Members, Dictionary<string, TSelf> ByName) GetCache() =>
         s_cache.GetOrAdd(typeof(TSelf), _ =>
