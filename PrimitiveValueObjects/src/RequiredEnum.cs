@@ -73,7 +73,7 @@ using System.Reflection;
 /// // Usage - Name is auto-derived from field name
 /// var state = OrderState.Draft;           // Name = "Draft"
 /// var all = OrderState.GetAll();
-/// var result = OrderState.TryFromName("Draft");  // Result<OrderState>
+/// var result = OrderState.TryCreate("Draft");  // Result<OrderState>
 /// ]]></code>
 /// </example>
 /// <example>
@@ -194,30 +194,6 @@ public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccess
 
         var validNames = string.Join(", ", cache.ByName.Keys.OrderBy(n => n));
         return Error.Validation($"'{name}' is not a valid {typeof(TSelf).Name}. Valid values: {validNames}", field);
-    }
-
-    /// <summary>
-    /// Gets a member by its name (case-insensitive). Throws if not found.
-    /// </summary>
-    public static TSelf FromName(string name)
-    {
-        var result = TryFromName(name);
-        if (result.IsFailure)
-            throw new InvalidOperationException($"Failed to create {typeof(TSelf).Name}: {result.Error.Detail}");
-
-        return result.Value;
-    }
-
-    /// <summary>
-    /// Attempts to find a member by its name (case-insensitive).
-    /// </summary>
-    public static bool TryFromName(string? name, [NotNullWhen(true)] out TSelf? result)
-    {
-        result = null;
-        if (string.IsNullOrWhiteSpace(name))
-            return false;
-
-        return GetCache().ByName.TryGetValue(name, out result);
     }
 
     /// <summary>
