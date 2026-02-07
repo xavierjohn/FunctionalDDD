@@ -39,9 +39,13 @@ public sealed class ValidatingJsonConverter<TValue, TPrimitive> : JsonConverter<
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JSON deserialization of primitive types is compatible with AOT")]
     public override TValue? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // Handle null JSON values
+        // Handle null JSON values — collect validation error since value objects represent required domain concepts
         if (reader.TokenType == JsonTokenType.Null)
+        {
+            var fieldName = ValidationErrorsContext.CurrentPropertyName ?? GetDefaultFieldName(typeToConvert);
+            ValidationErrorsContext.AddError(fieldName, $"{typeof(TValue).Name} cannot be null.");
             return null;
+        }
 
         // Deserialize the primitive value
         var primitiveValue = JsonSerializer.Deserialize<TPrimitive>(ref reader, options);

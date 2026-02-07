@@ -1,12 +1,17 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics.CodeAnalysis;
+using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// An action filter that checks for validation errors collected during JSON deserialization
-/// and returns a 400 Bad Request response with validation problem details.
+/// and validates <see cref="IScalarValue{TSelf, TPrimitive}"/> route/query parameters.
+/// Returns a 400 Bad Request response with validation problem details when validation fails.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -15,7 +20,12 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 /// during deserialization, and this filter checks for errors before the action executes.
 /// </para>
 /// <para>
-/// If validation errors were collected during deserialization:
+/// Additionally, this filter validates route and query string parameters that are
+/// <see cref="IScalarValue{TSelf, TPrimitive}"/> types. When model binding fails for these types
+/// (resulting in a null parameter), the filter returns a validation error.
+/// </para>
+/// <para>
+/// If validation errors are detected:
 /// <list type="bullet">
 /// <item>The action is short-circuited (not executed)</item>
 /// <item>A 400 Bad Request response with validation problem details is returned</item>
@@ -43,39 +53,103 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
     /// <inheritdoc />
     public void OnActionExecuting(ActionExecutingContext context)
     {
+        // First, check for validation errors from JSON deserialization
         var validationError = ValidationErrorsContext.GetValidationError();
-        if (validationError is null)
-            return;
-
-        // Clear existing ModelState errors for fields we have validation errors for
-        // This overrides the "field is required" errors from ASP.NET Core's null validation
-        foreach (var fieldError in validationError.FieldErrors)
+        if (validationError is not null)
         {
-            // Try common field name patterns (direct name or dto.fieldName)
-            context.ModelState.Remove(fieldError.FieldName);
-            foreach (var key in context.ModelState.Keys.ToList())
+            HandleJsonValidationErrors(context, validationError);
+            return;
+        }
+
+        // Second, check for null IScalarValue route/query parameters (binding failures)
+        ValidateScalarValueParameters(context);
+    }
+
+    private static void HandleJsonValidationErrors(ActionExecutingContext context, ValidationError validationError)
+    {
+        // Create a fresh ModelStateDictionary to avoid key casing issues.
+        // MVC's model validation adds errors with PascalCase C# property names (e.g., "State").
+        // ModelStateDictionary's internal trie preserves the original key casing even after
+        // Remove + re-Add with different casing. Using a fresh dictionary ensures our
+        // camelCase field names (matching JSON property names) are preserved correctly.
+        var modelState = new ModelStateDictionary();
+        foreach (var (fieldName, details) in validationError.ToDictionary())
+        {
+            foreach (var detail in details)
+                modelState.AddModelError(fieldName, detail);
+        }
+
+        var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, modelState, statusCode: 400);
+        context.Result = new BadRequestObjectResult(problemDetails);
+    }
+
+    private static BadRequestObjectResult CreateValidationProblemResult(ActionExecutingContext context)
+    {
+        var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, statusCode: 400);
+        return new BadRequestObjectResult(problemDetails);
+    }
+
+    [UnconditionalSuppressMessage("AOT", "IL2072:Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.",
+        Justification = "The type check for IScalarValue interfaces is safe - we only check interface implementation, not instantiate or invoke members.")]
+    private static void ValidateScalarValueParameters(ActionExecutingContext context)
+    {
+        var actionParameters = context.ActionDescriptor.Parameters;
+
+        foreach (var parameter in actionParameters)
+        {
+            var parameterType = parameter.ParameterType;
+
+            // Handle nullable types (e.g., OrderState?)
+            var underlyingType = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
+
+            // Skip if not an IScalarValue type
+            if (!ScalarValueTypeHelper.IsScalarValue(underlyingType))
+                continue;
+
+            // Check if the parameter value is null (indicates binding failure for non-nullable IScalarValue)
+            if (context.ActionArguments.TryGetValue(parameter.Name!, out var value) && value is null)
             {
-                if (key.EndsWith("." + fieldError.FieldName, StringComparison.OrdinalIgnoreCase) ||
-                    key.Equals(fieldError.FieldName, StringComparison.OrdinalIgnoreCase))
+                // Call TryCreate to get the real validation error (e.g., with valid values list)
+                var rawValue = GetRawParameterValue(context, parameter.Name!);
+                var errors = ScalarValueTypeHelper.GetValidationErrors(underlyingType, rawValue, parameter.Name!);
+
+                if (errors is not null)
                 {
-                    context.ModelState.Remove(key);
+                    foreach (var (fieldName, details) in errors)
+                        foreach (var detail in details)
+                            context.ModelState.AddModelError(fieldName, detail);
+                }
+                else
+                {
+                    // Fallback if TryCreate method wasn't found
+                    var typeName = underlyingType.Name;
+                    var errorMessage = string.IsNullOrEmpty(rawValue)
+                        ? $"'{parameter.Name}' is required."
+                        : $"'{rawValue}' is not a valid {typeName}.";
+
+                    context.ModelState.AddModelError(parameter.Name!, errorMessage);
                 }
             }
         }
 
-        // Add our validation errors to ModelState
-        foreach (var (fieldName, details) in validationError.ToDictionary())
-        {
-            foreach (var detail in details)
-                context.ModelState.AddModelError(fieldName, detail);
-        }
+        // Return validation problem if any errors were added
+        if (!context.ModelState.IsValid)
+            context.Result = CreateValidationProblemResult(context);
+    }
 
-        context.Result = new BadRequestObjectResult(
-            new ValidationProblemDetails(context.ModelState)
-            {
-                Title = "One or more validation errors occurred.",
-                Status = 400
-            });
+    private static string? GetRawParameterValue(ActionExecutingContext context, string parameterName)
+    {
+        // Try to get the raw value from route data
+        if (context.RouteData.Values.TryGetValue(parameterName, out var routeValue))
+            return routeValue?.ToString();
+
+        // Try to get from query string
+        if (context.HttpContext.Request.Query.TryGetValue(parameterName, out var queryValue))
+            return queryValue.ToString();
+
+        return null;
     }
 
     /// <inheritdoc />

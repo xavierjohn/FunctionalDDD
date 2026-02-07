@@ -1,8 +1,10 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
+using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http.Metadata;
 
 /// <summary>
 /// Middleware that creates a validation error collection scope for each request.
@@ -19,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// <list type="bullet">
 /// <item>Creates a new validation error collection scope</item>
 /// <item>Allows the request to proceed through the pipeline</item>
-/// <item>Catches <see cref="BadHttpRequestException"/> for parameter binding failures and returns validation problem</item>
+/// <item>Catches <see cref="BadHttpRequestException"/> for <see cref="IScalarValue{TSelf, TPrimitive}"/> parameter binding failures and returns validation problem</item>
 /// <item>Cleans up the scope when the request completes</item>
 /// </list>
 /// </para>
@@ -61,33 +63,100 @@ public sealed partial class ScalarValueValidationMiddleware
             }
             catch (BadHttpRequestException ex) when (ex.Message.StartsWith("Failed to bind parameter", StringComparison.Ordinal))
             {
-                // Handle parameter binding failures (e.g., invalid route parameters for value objects)
-                // Convert to validation problem response with structured errors
-                await WriteValidationProblemAsync(context, ex.Message).ConfigureAwait(false);
+                // Parse the exception message to extract parameter info
+                var (parameterName, typeName, invalidValue) = ParseBindingFailureMessage(ex.Message);
+
+                // Only handle binding failures for IScalarValue types
+                var scalarValueType = GetScalarValueParameterType(context, parameterName);
+                if (scalarValueType is not null)
+                {
+                    // Call TryCreate to get the real validation error (e.g., with valid values list)
+                    var errors = ScalarValueTypeHelper.GetValidationErrors(scalarValueType, invalidValue, parameterName)
+                        ?? CreateFallbackErrors(parameterName, typeName, invalidValue);
+
+                    await WriteValidationProblemAsync(context, errors).ConfigureAwait(false);
+                }
+                else
+                {
+                    // Re-throw for non-scalar value types (e.g., int, Guid, DateTime)
+                    throw;
+                }
+            }
+            catch (BadHttpRequestException ex) when (ex.Message.StartsWith("Failed to read parameter", StringComparison.Ordinal))
+            {
+                // Handle JSON body deserialization failures (e.g., missing required properties)
+                await WriteJsonDeserializationErrorAsync(context, ex).ConfigureAwait(false);
             }
         }
     }
 
-    private static async Task WriteValidationProblemAsync(HttpContext context, string exceptionMessage)
+    [UnconditionalSuppressMessage("AOT", "IL2072:Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.",
+        Justification = "The type check for IScalarValue interfaces is safe - we only check interface implementation, not instantiate or invoke members.")]
+    [UnconditionalSuppressMessage("AOT", "IL2073:Return type does not satisfy 'DynamicallyAccessedMembersAttribute' requirements.",
+        Justification = "The returned type comes from ParameterInfo.ParameterType which preserves type metadata at runtime.")]
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods | DynamicallyAccessedMemberTypes.Interfaces)]
+    private static Type? GetScalarValueParameterType(HttpContext context, string parameterName)
+    {
+        var endpoint = context.GetEndpoint();
+        if (endpoint is null)
+            return null;
+
+        // Get the parameter binding metadata from the endpoint
+        var parameterMetadata = endpoint.Metadata
+            .OfType<IParameterBindingMetadata>()
+            .FirstOrDefault(p => p.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase));
+
+        if (parameterMetadata is null)
+            return null;
+
+        // Check if the parameter type implements IScalarValue<,>
+        var parameterType = parameterMetadata.ParameterInfo.ParameterType;
+
+        // Handle nullable types (e.g., OrderState?)
+        var underlyingType = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
+
+        return ScalarValueTypeHelper.IsScalarValue(underlyingType) ? underlyingType : null;
+    }
+
+    private static async Task WriteValidationProblemAsync(
+        HttpContext context,
+        IDictionary<string, string[]> errors)
     {
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
 
-        // Parse the exception message to extract parameter info
-        // Format: Failed to bind parameter "TypeName paramName" from "value".
-        var (parameterName, typeName, invalidValue) = ParseBindingFailureMessage(exceptionMessage);
+        // Use Results.ValidationProblem for consistent response format
+        var result = Results.ValidationProblem(errors);
+        await result.ExecuteAsync(context).ConfigureAwait(false);
+    }
 
+    private static async Task WriteJsonDeserializationErrorAsync(HttpContext context, BadHttpRequestException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+        // Extract meaningful error from the inner JsonException
+        var errorMessage = ex.InnerException?.Message ?? ex.Message;
+        var errors = new Dictionary<string, string[]>
+        {
+            ["$"] = [errorMessage]
+        };
+
+        var result = Results.ValidationProblem(errors);
+        await result.ExecuteAsync(context).ConfigureAwait(false);
+    }
+
+    private static Dictionary<string, string[]> CreateFallbackErrors(
+        string parameterName,
+        string typeName,
+        string invalidValue)
+    {
         var errorMessage = string.IsNullOrEmpty(invalidValue)
             ? $"'{parameterName}' is required."
             : $"'{invalidValue}' is not a valid {typeName}.";
 
-        var errors = new Dictionary<string, string[]>
+        return new Dictionary<string, string[]>
         {
             [parameterName] = [errorMessage]
         };
-
-        // Try to use Results.ValidationProblem for consistent response format
-        var result = Results.ValidationProblem(errors);
-        await result.ExecuteAsync(context).ConfigureAwait(false);
     }
 
     private static (string ParameterName, string TypeName, string InvalidValue) ParseBindingFailureMessage(string message)

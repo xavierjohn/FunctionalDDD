@@ -148,7 +148,7 @@ public class ValidatingJsonConverterTests
     }
 
     [Fact]
-    public void Read_NullString_ReturnsNull()
+    public void Read_NullString_ReturnsNullAndCollectsError()
     {
         // Arrange
         var converter = new ValidatingJsonConverter<Email, string>();
@@ -165,7 +165,11 @@ public class ValidatingJsonConverterTests
 
             // Assert
             result.Should().BeNull();
-            ValidationErrorsContext.HasErrors.Should().BeFalse(); // Null is allowed
+            ValidationErrorsContext.HasErrors.Should().BeTrue("null values should produce a validation error for required value objects");
+            var error = ValidationErrorsContext.GetValidationError();
+            error!.FieldErrors.Should().ContainSingle()
+                .Which.FieldName.Should().Be("Email");
+            error.FieldErrors[0].Details.Should().Contain("Email cannot be null.");
         }
     }
 

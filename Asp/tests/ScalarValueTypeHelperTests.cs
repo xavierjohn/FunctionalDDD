@@ -400,6 +400,122 @@ public class ScalarValueTypeHelperTests
 
     #endregion
 
+    #region GetValidationErrors Tests
+
+    [Fact]
+    public void GetValidationErrors_InvalidValue_ReturnsDictionaryWithErrors()
+    {
+        // Arrange - ValidVO rejects empty strings
+        var type = typeof(ValidVO);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "", "email");
+
+        // Assert
+        errors.Should().NotBeNull();
+        errors!.Should().ContainKey("email");
+        errors!["email"].Should().Contain("Required");
+    }
+
+    [Fact]
+    public void GetValidationErrors_ValidValue_ReturnsNull()
+    {
+        // Arrange - ValidVO accepts non-empty strings
+        var type = typeof(ValidVO);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "valid-value", "email");
+
+        // Assert
+        errors.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetValidationErrors_NullValue_ReturnsDictionaryWithErrors()
+    {
+        // Arrange - ValidVO rejects null
+        var type = typeof(ValidVO);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, null, "email");
+
+        // Assert
+        errors.Should().NotBeNull();
+        errors!.Should().ContainKey("email");
+        errors!["email"].Should().Contain("Required");
+    }
+
+    [Fact]
+    public void GetValidationErrors_TypeWithoutStringTryCreate_ReturnsNull()
+    {
+        // Arrange - InterfaceOnly has TryCreate(int, string?) — no TryCreate(string, string) overload
+        var type = typeof(InterfaceOnly);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "someValue", "param");
+
+        // Assert
+        errors.Should().BeNull("InterfaceOnly has no TryCreate(string, string) overload");
+    }
+
+    [Fact]
+    public void GetValidationErrors_NonScalarValueType_ReturnsNull()
+    {
+        // Arrange - NotAValueObject has no TryCreate at all
+        var type = typeof(NotAValueObject);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "someValue", "param");
+
+        // Assert
+        errors.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetValidationErrors_NullParameterName_UsesDefaultFieldName()
+    {
+        // Arrange - ValidVO uses fieldName ?? "field" in its TryCreate
+        var type = typeof(ValidVO);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "", null);
+
+        // Assert
+        errors.Should().NotBeNull();
+        // The ValidVO defaults to "field" when fieldName is null
+        errors!.Should().ContainKey("field");
+    }
+
+    [Fact]
+    public void GetValidationErrors_CustomParameterName_PassedThroughCorrectly()
+    {
+        // Arrange
+        var type = typeof(ValidVO);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "", "customFieldName");
+
+        // Assert
+        errors.Should().NotBeNull();
+        errors!.Should().ContainKey("customFieldName");
+    }
+
+    [Fact]
+    public void GetValidationErrors_MultiInterfaceVO_StillWorks()
+    {
+        // Arrange - MultiInterfaceVO implements both IScalarValue and IComparable
+        var type = typeof(MultiInterfaceVO);
+
+        // Act
+        var errors = ScalarValueTypeHelper.GetValidationErrors(type, "", "field");
+
+        // Assert
+        errors.Should().NotBeNull();
+        errors!.Should().ContainKey("field");
+    }
+
+    #endregion
+
     #region Integration Tests
 
     [Fact]
