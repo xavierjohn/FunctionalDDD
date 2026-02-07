@@ -203,4 +203,63 @@ public static class MatchExtensionsAsync
             await onFailure(result.Error).ConfigureAwait(false);
         }
     }
+
+    #region ValueTask-based overloads
+
+    /// <summary>
+    /// Executes either the success or failure function based on the ValueTask result state. Left is async (ValueTask), handlers are sync.
+    /// </summary>
+    public static async ValueTask<TOut> MatchAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, TOut> onSuccess, Func<Error, TOut> onFailure)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.Match(onSuccess, onFailure);
+    }
+
+    /// <summary>
+    /// Executes either the success or failure async function based on the result state. Right is async (ValueTask).
+    /// </summary>
+    public static async ValueTask<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, ValueTask<TOut>> onSuccess, Func<Error, ValueTask<TOut>> onFailure)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        if (result.IsSuccess)
+        {
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return await onSuccess(result.Value).ConfigureAwait(false);
+        }
+        else
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
+            return await onFailure(result.Error).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Executes either the success or failure async function based on the ValueTask result state. Both sides are async (ValueTask).
+    /// </summary>
+    public static async ValueTask<TOut> MatchAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> onSuccess, Func<Error, ValueTask<TOut>> onFailure)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return await result.MatchAsync(onSuccess, onFailure).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Executes either the success or failure async action based on the ValueTask result state. Both are async (ValueTask).
+    /// </summary>
+    public static async ValueTask SwitchAsync<TIn>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask> onSuccess, Func<Error, ValueTask> onFailure)
+    {
+        using var activity = RopTrace.ActivitySource.StartActivity();
+        var result = await resultTask.ConfigureAwait(false);
+        if (result.IsSuccess)
+        {
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            await onSuccess(result.Value).ConfigureAwait(false);
+        }
+        else
+        {
+            activity?.SetStatus(ActivityStatusCode.Error);
+            await onFailure(result.Error).ConfigureAwait(false);
+        }
+    }
+
+    #endregion
 }

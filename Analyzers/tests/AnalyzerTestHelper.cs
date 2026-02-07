@@ -181,6 +181,34 @@ public static class AnalyzerTestHelper
             }
 
             // Extension methods stub
+            // Extension methods for Combine chaining (matching CombineTs.g.cs pattern)
+            public static class CombineExtensions
+            {
+                // 2-element: Result<T1>.Combine(Result<T2>) → Result<(T1, T2)>
+                public static Result<(T1, T2)> Combine<T1, T2>(this Result<T1> t1, Result<T2> t2) => default;
+
+                // 3-element: Result<(T1, T2)>.Combine(Result<T3>) → Result<(T1, T2, T3)>
+                public static Result<(T1, T2, T3)> Combine<T1, T2, T3>(this Result<(T1, T2)> t1, Result<T3> tc) => default;
+
+                // 4-element
+                public static Result<(T1, T2, T3, T4)> Combine<T1, T2, T3, T4>(this Result<(T1, T2, T3)> t1, Result<T4> tc) => default;
+
+                // 5-element
+                public static Result<(T1, T2, T3, T4, T5)> Combine<T1, T2, T3, T4, T5>(this Result<(T1, T2, T3, T4)> t1, Result<T5> tc) => default;
+
+                // 6-element
+                public static Result<(T1, T2, T3, T4, T5, T6)> Combine<T1, T2, T3, T4, T5, T6>(this Result<(T1, T2, T3, T4, T5)> t1, Result<T6> tc) => default;
+
+                // 7-element
+                public static Result<(T1, T2, T3, T4, T5, T6, T7)> Combine<T1, T2, T3, T4, T5, T6, T7>(this Result<(T1, T2, T3, T4, T5, T6)> t1, Result<T7> tc) => default;
+
+                // 8-element
+                public static Result<(T1, T2, T3, T4, T5, T6, T7, T8)> Combine<T1, T2, T3, T4, T5, T6, T7, T8>(this Result<(T1, T2, T3, T4, T5, T6, T7)> t1, Result<T8> tc) => default;
+
+                // 9-element (maximum supported)
+                public static Result<(T1, T2, T3, T4, T5, T6, T7, T8, T9)> Combine<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this Result<(T1, T2, T3, T4, T5, T6, T7, T8)> t1, Result<T9> tc) => default;
+            }
+
             public static class ResultExtensions
             {
                 public static Result<TResult> Map<T, TResult>(this Result<T> result, Func<T, TResult> func) => default;
