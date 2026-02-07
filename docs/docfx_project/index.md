@@ -185,12 +185,12 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
-### Enum Value Objects — Type-Safe Enumerations with Behavior
+### RequiredEnum — Type-Safe Enumerations with Behavior
 
 Replace C# enums with **type-safe enumerations** that encapsulate behavior and prevent invalid values. Name is auto-derived from the field name (pure DDD).
 
 ```csharp
-public class OrderState : EnumValueObject<OrderState>
+public partial class OrderState : RequiredEnum<OrderState>
 {
     // Pure domain - Name auto-derived from field name
     public static readonly OrderState Draft = new();
@@ -202,7 +202,7 @@ public class OrderState : EnumValueObject<OrderState>
 }
 
 // Usage - Name is "Draft", "Confirmed", etc.
-var result = OrderState.TryFromName("Draft");  // Result<OrderState>
+var result = OrderState.TryCreate("Draft");  // Result<OrderState>
 
 if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
     order.Cancel();

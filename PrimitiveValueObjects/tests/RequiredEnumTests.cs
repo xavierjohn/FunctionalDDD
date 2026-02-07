@@ -243,7 +243,7 @@ public class RequiredEnumTests
 
     #endregion
 
-    #region GetAll and Standard EnumValueObject Tests
+    #region GetAll and Standard RequiredEnum Tests
 
     [Fact]
     public void GetAll_ReturnsAllMembers()

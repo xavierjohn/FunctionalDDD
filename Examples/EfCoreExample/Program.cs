@@ -20,7 +20,7 @@
 using System.Text;
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
-using EfCoreExample.EnumValueObjects;
+using EfCoreExample.Enums;
 using FunctionalDdd;
 using Microsoft.EntityFrameworkCore;
 
@@ -202,9 +202,9 @@ foreach (var o in sortedOrders)
 Console.WriteLine();
 
 // =============================================================================
-// 7. ENUM VALUE OBJECT DEMONSTRATION (State Machine with Behavior)
+// 7. REQUIRED ENUM DEMONSTRATION (State Machine with Behavior)
 // =============================================================================
-Console.WriteLine("🎯 EnumValueObject Demonstration (Order State Machine)...");
+Console.WriteLine("🎯 RequiredEnum Demonstration (Order State Machine)...");
 Console.WriteLine("────────────────────────────────────────────────────────────────────");
 
 // Demonstrate full order lifecycle with state transitions
@@ -293,12 +293,12 @@ Console.WriteLine("  The following would NOT compile:");
 Console.WriteLine("    // OrderId orderId = CustomerId.NewUnique();  // Error!");
 Console.WriteLine("    // ProductId productId = OrderId.NewUnique(); // Error!");
 Console.WriteLine("    // context.Customers.Find(orderId);           // Error!");
-Console.WriteLine("    // var status = (OrderState)999;              // Error! EnumValueObject prevents this");
+Console.WriteLine("    // var status = (OrderState)999;              // Error! RequiredEnum prevents this");
 Console.WriteLine();
 Console.WriteLine("  This is the power of strongly-typed value objects:");
 Console.WriteLine("    - Cannot accidentally mix OrderId with CustomerId");
 Console.WriteLine("    - Cannot pass ProductId where CustomerId is expected");
-Console.WriteLine("    - EnumValueObject prevents invalid enum values at compile/runtime");
+Console.WriteLine("    - RequiredEnum prevents invalid enum values at compile/runtime");
 Console.WriteLine("    - Compile-time safety prevents runtime bugs");
 Console.WriteLine();
 
@@ -311,7 +311,7 @@ Console.WriteLine("╠═══════════════════�
 Console.WriteLine("║  ✓ RequiredGuid<T>   - GUID identifiers (V4 random, V7 ordered)  ║");
 Console.WriteLine("║  ✓ RequiredString<T> - Non-empty string validation               ║");
 Console.WriteLine("║  ✓ EmailAddress      - RFC 5322 email validation                 ║");
-Console.WriteLine("║  ✓ EnumValueObject<T> - Type-safe enums with behavior            ║");
+Console.WriteLine("║  ✓ RequiredEnum<T>    - Type-safe enums with behavior            ║");
 Console.WriteLine("║  ✓ EF Core           - Seamless persistence with converters      ║");
 Console.WriteLine("║  ✓ ROP               - Railway Oriented Programming for errors   ║");
 Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");

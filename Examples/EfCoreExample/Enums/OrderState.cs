@@ -1,4 +1,4 @@
-﻿namespace EfCoreExample.EnumValueObjects;
+﻿namespace EfCoreExample.Enums;
 
 using FunctionalDdd;
 using FunctionalDdd.PrimitiveValueObjects;

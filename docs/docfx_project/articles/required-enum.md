@@ -1,8 +1,8 @@
-﻿# Enum Value Objects (SmartEnum)
+﻿# RequiredEnum
 
-Enum Value Objects are type-safe enumerations with behavior, providing a powerful alternative to C# enums for domain modeling. Also known as "Smart Enums" in the .NET community or "Standard Types" in DDD terminology.
+RequiredEnum is a type-safe enumeration with behavior, providing a powerful alternative to C# enums for domain modeling. When used with the `partial` keyword, the source generator automatically adds `IScalarValue<TSelf, string>`, JSON serialization, ASP.NET Core model binding, and `IParsable<T>`.
 
-## Why Enum Value Objects?
+## Why RequiredEnum?
 
 C# enums have limitations that can lead to bugs:
 
@@ -14,11 +14,11 @@ var status = (OrderStatus)999;  // Valid! No compile or runtime error
 var invalid = Enum.Parse<OrderStatus>("Invalid");  // Throws at runtime
 ```
 
-Enum Value Objects solve these issues:
+RequiredEnum solves these issues:
 
 ```csharp
-// Enum Value Object - type-safe, with behavior
-public class OrderState : EnumValueObject<OrderState>
+// RequiredEnum - type-safe, with behavior
+public partial class OrderState : RequiredEnum<OrderState>
 {
     public static readonly OrderState Draft = new();
     public static readonly OrderState Confirmed = new();
@@ -28,20 +28,21 @@ public class OrderState : EnumValueObject<OrderState>
 }
 
 // Cannot create invalid values - Name is auto-derived from field name
-var result = OrderState.TryFromName("Invalid");  // Returns Result.Failure
+var result = OrderState.TryCreate("Invalid");  // Returns Result.Failure with "Valid values: Draft, Confirmed, Shipped"
 var state = OrderState.Draft;  // state.Name == "Draft"
 ```
 
 ## Basic Usage
 
-### Defining an Enum Value Object
+### Defining a RequiredEnum
 
-The Name is automatically derived from the field name - pure domain, no strings needed:
+Use `partial` to enable source generation. The Name is automatically derived from the field name — pure domain, no strings needed:
 
 ```csharp
 using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
 
-public class PaymentMethod : EnumValueObject<PaymentMethod>
+public partial class PaymentMethod : RequiredEnum<PaymentMethod>
 {
     // Name auto-derived: "CreditCard", "DebitCard", etc.
     public static readonly PaymentMethod CreditCard = new();
@@ -57,12 +58,12 @@ public class PaymentMethod : EnumValueObject<PaymentMethod>
 
 ```csharp
 // From name (case-insensitive, returns Result<T>)
-var result = PaymentMethod.TryFromName("creditcard");
+var result = PaymentMethod.TryCreate("creditcard");
 if (result.IsSuccess)
     Console.WriteLine(result.Value.Name);  // "CreditCard"
 
 // Direct access when known valid
-var method = PaymentMethod.FromName("CreditCard");  // Throws if invalid
+var method = PaymentMethod.Create("CreditCard");  // Throws if invalid
 
 // Check membership
 if (payment.Is(PaymentMethod.CreditCard, PaymentMethod.DebitCard))
@@ -78,10 +79,10 @@ foreach (var m in PaymentMethod.GetAll())
 
 ## Adding Behavior
 
-Enum Value Objects can have properties and methods:
+RequiredEnum types can have properties and methods:
 
 ```csharp
-public class OrderState : EnumValueObject<OrderState>
+public partial class OrderState : RequiredEnum<OrderState>
 {
     // Name auto-derived from field name
     public static readonly OrderState Draft = new(canModify: true, canCancel: true, isTerminal: false);
@@ -112,10 +113,10 @@ if (order.State.CanCancel)
 
 ## State Machine Pattern
 
-Enum Value Objects excel at modeling state machines with valid transitions:
+RequiredEnum types excel at modeling state machines with valid transitions:
 
 ```csharp
-public class OrderState : EnumValueObject<OrderState>
+public partial class OrderState : RequiredEnum<OrderState>
 {
     // ... members defined above ...
 
@@ -144,13 +145,11 @@ public class OrderState : EnumValueObject<OrderState>
 
 ## JSON Serialization
 
-### Using JsonConverter Attribute
+When using the `partial` keyword, the source generator automatically adds a `[JsonConverter]` attribute. No manual configuration needed:
 
 ```csharp
-using System.Text.Json.Serialization;
-
-[JsonConverter(typeof(EnumValueObjectJsonConverter<OrderState>))]
-public class OrderState : EnumValueObject<OrderState>
+// Source generator adds [JsonConverter(typeof(RequiredEnumJsonConverter<OrderState>))]
+public partial class OrderState : RequiredEnum<OrderState>
 {
     // ...
 }
@@ -158,27 +157,13 @@ public class OrderState : EnumValueObject<OrderState>
 // Serializes to: "Confirmed" (the Name)
 var json = JsonSerializer.Serialize(OrderState.Confirmed);
 
-// Deserializes from string
+// Deserializes from string (case-insensitive)
 var state = JsonSerializer.Deserialize<OrderState>("\"Confirmed\"");
-```
-
-### Using Converter Factory
-
-Register once to handle all Enum Value Objects:
-
-```csharp
-var options = new JsonSerializerOptions
-{
-    Converters = { new EnumValueObjectJsonConverterFactory() }
-};
-
-// All EnumValueObject types now serialize/deserialize automatically
-var json = JsonSerializer.Serialize(order, options);
 ```
 
 ## Entity Framework Core
 
-Store Enum Value Objects using the auto-generated Value property:
+Store RequiredEnum types using the auto-generated Value property:
 
 ```csharp
 // In DbContext.OnModelCreating
@@ -197,6 +182,15 @@ modelBuilder.Entity<Order>(builder =>
 If you reorder fields, database values will change. For existing databases, 
 use explicit mapping instead.
 
+## ASP.NET Core Integration
+
+Because the source generator adds `IScalarValue<TSelf, string>`, RequiredEnum types work automatically with ASP.NET Core:
+
+- **Route parameters:** `/orders/states/{state}` — binds and validates automatically
+- **Query parameters:** `?state=Draft` — binds and validates automatically  
+- **JSON body:** `{ "state": "Draft" }` — validates via `ValidatingJsonConverter`
+- **Validation errors:** Returns rich error messages like `"Valid values: Draft, Confirmed, Shipped, Delivered, Cancelled"`
+
 ## API Reference
 
 ### Properties
@@ -211,9 +205,9 @@ use explicit mapping instead.
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `GetAll()` | `IReadOnlyCollection<T>` | All defined members |
-| `TryFromName(string)` | `Result<T>` | Find by name (case-insensitive) |
-| `TryFromName(string, out T)` | `bool` | Try-pattern for name lookup |
-| `FromName(string)` | `T` | Find by name, throws if invalid |
+| `TryCreate(string)` | `Result<T>` | Find by name (case-insensitive) |
+| `TryCreate(string?, string?)` | `Result<T>` | Find by name with field name for errors |
+| `Create(string)` | `T` | Find by name, throws if invalid |
 
 ### Instance Methods
 
@@ -234,8 +228,8 @@ use explicit mapping instead.
 2. **Define members as static readonly** - Ensures single instances
 3. **No strings in domain** - Name is auto-derived from field name
 4. **Add behavior for domain logic** - Encapsulate rules in the enum
-5. **Use TryFromName** - For user input validation
-6. **Use FromName** - For known-valid values (tests, constants)
+5. **Use TryCreate** - For user input validation
+6. **Use Create** - For known-valid values (tests, constants)
 7. **Model state machines** - When values have valid transitions
 8. **Use Is() and IsNot()** - For readable membership checks
 
@@ -243,4 +237,4 @@ use explicit mapping instead.
 
 - [Domain-Driven Design](intro.md#domain-driven-design) - Overview of DDD patterns
 - [Entity Framework Core Integration](integration-ef.md) - Persistence patterns
-- [Clean Architecture](clean-architecture.md) - Using Enum Value Objects in layered applications
+- [Clean Architecture](clean-architecture.md) - Using RequiredEnum in layered applications
