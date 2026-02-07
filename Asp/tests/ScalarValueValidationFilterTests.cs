@@ -320,9 +320,10 @@ public class ScalarValueValidationFilterTests
     }
 
     [Fact]
-    public void OnActionExecuting_NullScalarValueParam_NoRawValue_ReturnsFallbackError()
+    public void OnActionExecuting_NullScalarValueParam_NoRawValue_DoesNotShortCircuit()
     {
-        // Arrange - no raw value in route or query (empty string passed to TryCreate)
+        // Arrange - no raw value in route or query means the parameter was simply not provided
+        // (e.g., optional query param like OrderState? state). Should not validate.
         var filter = new ScalarValueValidationFilter();
         var paramDescriptor = new ParameterDescriptor { Name = "code", ParameterType = typeof(TestOrderCode) };
         var context = CreateActionExecutingContextWithParams(
@@ -333,10 +334,8 @@ public class ScalarValueValidationFilterTests
         // Act
         filter.OnActionExecuting(context);
 
-        // Assert - TryCreate(null, "code") returns error from TestOrderCode
-        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
-        var problemDetails = GetValidationProblemDetails(context);
-        problemDetails.Errors.Should().ContainKey("code");
+        // Assert - no raw value means parameter was not provided, not a binding failure
+        context.Result.Should().BeNull("absent optional parameter should not trigger validation");
     }
 
     [Fact]
@@ -436,6 +435,25 @@ public class ScalarValueValidationFilterTests
 
         // Assert - TryGetValue returns false, so no validation error
         context.Result.Should().BeNull();
+    }
+
+    [Fact]
+    public void OnActionExecuting_OptionalNullableScalarValueParam_NotProvided_DoesNotShortCircuit()
+    {
+        // Arrange - simulates: FilterOrders([FromQuery] OrderState? state) called without ?state=
+        // The parameter is in ActionArguments as null, but no raw value exists in route or query.
+        var filter = new ScalarValueValidationFilter();
+        var paramDescriptor = new ParameterDescriptor { Name = "state", ParameterType = typeof(TestOrderCode) };
+        var context = CreateActionExecutingContextWithParams(
+            parameters: [paramDescriptor],
+            arguments: new Dictionary<string, object?> { ["state"] = null },
+            routeValues: new RouteValueDictionary());
+
+        // Act
+        filter.OnActionExecuting(context);
+
+        // Assert - parameter was not provided, not a binding failure
+        context.Result.Should().BeNull("optional parameter not provided should not trigger validation");
     }
 
     #endregion

@@ -1,4 +1,4 @@
-# Functional Domain Driven Design
+﻿# Functional Domain Driven Design
 
 [![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/xavierjohn/FunctionalDDD/branch/main/graph/badge.svg)](https://codecov.io/gh/xavierjohn/FunctionalDDD)
@@ -12,7 +12,7 @@
 
 > **Write 60% less code that reads like English** using Railway-Oriented Programming and Domain-Driven Design
 
-Transform error-prone imperative code into readable, succinct functional pipelines�with zero performance overhead.
+Transform error-prone imperative code into readable, succinct functional pipelines—with zero performance overhead.
 
 ```csharp
 // ? Before: 20 lines of nested error checking
@@ -61,7 +61,7 @@ return FirstName.TryCreate(input.FirstName)
 Traditional error handling in C# creates verbose, error-prone code with nested if-statements that obscure business logic and make errors easy to miss.
 
 **The Solution:**
-Railway-Oriented Programming (ROP) treats your code like railway tracks�operations flow along the success track or automatically switch to the error track. **You write what should happen, not what could go wrong.**
+Railway-Oriented Programming (ROP) treats your code like railway tracks—operations flow along the success track or automatically switch to the error track. **You write what should happen, not what could go wrong.**
 
 **Real-World Impact:**
 - ? **Teams report 40-60% reduction** in error-handling boilerplate
@@ -125,7 +125,7 @@ var result = await GetUserAsync(userId)
 ## Key Features
 
 ### ?? Railway-Oriented Programming
-Chain operations that automatically handle success/failure paths�no more nested if-statements.
+Chain operations that automatically handle success/failure paths—no more nested if-statements.
 
 ```csharp
 return GetUserAsync(id)
@@ -255,7 +255,7 @@ Robust, Maintainable Software
 
 ### ? Negligible Overhead, Maximum Clarity
 
-Comprehensive benchmarks on **.NET 10** show ROP adds only **11-16 nanoseconds** of overhead�less than **0.002%** of typical I/O operations.
+Comprehensive benchmarks on **.NET 10** show ROP adds only **11-16 nanoseconds** of overhead—less than **0.002%** of typical I/O operations.
 
 | Operation | Time | Overhead | Memory |
 |-----------|------|----------|--------|

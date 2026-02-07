@@ -111,8 +111,15 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             // Check if the parameter value is null (indicates binding failure for non-nullable IScalarValue)
             if (context.ActionArguments.TryGetValue(parameter.Name!, out var value) && value is null)
             {
-                // Call TryCreate to get the real validation error (e.g., with valid values list)
+                // Check whether a raw value was actually provided in the request.
+                // If no raw value exists in route data or query string, the parameter
+                // was simply not provided (e.g., optional query param like OrderState? state).
+                // Only validate when a raw value is present but binding produced null (invalid input).
                 var rawValue = GetRawParameterValue(context, parameter.Name!);
+                if (rawValue is null)
+                    continue;
+
+                // Call TryCreate to get the real validation error (e.g., with valid values list)
                 var errors = ScalarValueTypeHelper.GetValidationErrors(underlyingType, rawValue, parameter.Name!);
 
                 if (errors is not null)
