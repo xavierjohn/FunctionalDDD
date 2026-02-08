@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
     <Description>
       Infrastructure and ready-to-use implementations for primitive value objects in Domain-Driven Design. Includes base classes (RequiredString, RequiredGuid) with source generation, plus EmailAddress with RFC 5322 validation. Eliminates primitive obsession with strongly-typed domain primitives.
     </Description>
@@ -9,7 +9,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../README.md" Pack="true" PackagePath="\" />
+    <None Include="../NUGET_README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\DomainDrivenDesign\src\DomainDrivenDesign.csproj" />
