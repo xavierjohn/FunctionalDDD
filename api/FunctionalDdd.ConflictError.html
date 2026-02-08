@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class ConflictError </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class ConflictError ">
+      
+      <meta name="description" content="Represents a conflict error indicating the request conflicts with the current state of the resource. Use this when an operation cannot be completed due to a conflict with existing data or state. Maps to HTTP 409 Conflict.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_ConflictError.md&amp;value=---%0Auid%3A%20FunctionalDdd.ConflictError%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.ConflictError">
+
+
+
+  <h1 id="FunctionalDdd_ConflictError" data-uid="FunctionalDdd.ConflictError" class="text-break">
+Class ConflictError  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ConflictError.cs/#L28"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.RailwayOrientedProgramming.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Represents a conflict error indicating the request conflicts with the current state of the resource.
+Use this when an operation cannot be completed due to a conflict with existing data or state.
+Maps to HTTP 409 Conflict.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public sealed class ConflictError : Error, IEquatable&lt;Error&gt;</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><a class="xref" href="FunctionalDdd.Error.html">Error</a></div>
+      <div><span class="xref">ConflictError</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Code">Error.Code</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Detail">Error.Detail</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Instance">Error.Instance</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Equals_FunctionalDdd_Error_">Error.Equals(Error)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Equals_System_Object_">Error.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_GetHashCode">Error.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_ToString">Error.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_String_System_String_System_String_System_String_">Error.Validation(string, string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String_">Error.Validation(ImmutableArray&lt;ValidationError.FieldError&gt;, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Validation_System_Collections_Immutable_ImmutableArray_FunctionalDdd_ValidationError_FieldError__System_String_System_String_System_String_">Error.Validation(ImmutableArray&lt;ValidationError.FieldError&gt;, string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_BadRequest_System_String_System_String_">Error.BadRequest(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Conflict_System_String_System_String_">Error.Conflict(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_NotFound_System_String_System_String_">Error.NotFound(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unauthorized_System_String_System_String_">Error.Unauthorized(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Forbidden_System_String_System_String_">Error.Forbidden(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unexpected_System_String_System_String_">Error.Unexpected(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Domain_System_String_System_String_">Error.Domain(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_RateLimit_System_String_System_String_">Error.RateLimit(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_ServiceUnavailable_System_String_System_String_">Error.ServiceUnavailable(string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_BadRequest_System_String_System_String_System_String_">Error.BadRequest(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Conflict_System_String_System_String_System_String_">Error.Conflict(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_NotFound_System_String_System_String_System_String_">Error.NotFound(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unauthorized_System_String_System_String_System_String_">Error.Unauthorized(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Forbidden_System_String_System_String_System_String_">Error.Forbidden(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unexpected_System_String_System_String_System_String_">Error.Unexpected(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Domain_System_String_System_String_System_String_">Error.Domain(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_RateLimit_System_String_System_String_System_String_">Error.RateLimit(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_ServiceUnavailable_System_String_System_String_System_String_">Error.ServiceUnavailable(string, string, string)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_AsMaybe__1___0_">MaybeExtensions.AsMaybe&lt;T&gt;(T)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.NullableExtensions.html#FunctionalDdd_NullableExtensions_ToResult__1___0_FunctionalDdd_Error_">NullableExtensions.ToResult&lt;T&gt;(T?, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CombineErrorExtensions.html#FunctionalDdd_CombineErrorExtensions_Combine_FunctionalDdd_Error_FunctionalDdd_Error_">CombineErrorExtensions.Combine(Error?, Error)</a>
+  </div>
+  </dd></dl>
+
+
+  <h2 id="FunctionalDdd_ConflictError_examples">Examples</h2>
+  <pre><code class="lang-csharp">Error.Conflict("Email address already in use")
+Error.Conflict("Cannot delete user with active subscriptions")
+Error.Conflict("Resource has been modified by another user")
+Error.Conflict("Product SKU already exists in catalog")</code></pre>
+
+
+  <h2 id="FunctionalDdd_ConflictError_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+Common scenarios include:
+- Duplicate keys or unique constraint violations
+- Concurrent modification conflicts (optimistic locking)
+- State-based conflicts (e.g., cannot delete a resource that has dependencies)
+</p>
+<p>
+This is distinct from validation errors (field-level) and domain errors (business rules).
+Conflicts are typically state-based and may be resolved by the client with different input or timing.
+</p>
+</div>
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="FunctionalDdd_ConflictError__ctor_" data-uid="FunctionalDdd.ConflictError.#ctor*"></a>
+
+  <h3 id="FunctionalDdd_ConflictError__ctor_System_String_System_String_System_String_" data-uid="FunctionalDdd.ConflictError.#ctor(System.String,System.String,System.String)">
+  ConflictError(string, string, string?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ConflictError.cs/#L36"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a> class.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ConflictError(string detail, string code, string? instance = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>detail</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Description of the conflict.</p>
+</dd>
+    <dt><code>code</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The error code identifying this type of conflict error.</p>
+</dd>
+    <dt><code>instance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>Optional identifier for the conflicting resource.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Errors/Types/ConflictError.cs/#L28" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

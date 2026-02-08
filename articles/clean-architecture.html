@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Architecture Patterns with Functional DDD </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Architecture Patterns with Functional DDD ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/clean-architecture.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="architecture-patterns-with-functional-ddd">Architecture Patterns with Functional DDD</h1>
+
+<p><strong>Level:</strong> Intermediate to Advanced 📚→🚀 | <strong>Time:</strong> 30-60 min | <strong>Prerequisites:</strong> <a href="basics.html">Basics</a>, <a href="error-handling.html">Error Handling</a></p>
+<p>Learn how to architect applications with <strong>Railway-Oriented Programming</strong> and <strong>Domain-Driven Design</strong>, from simple controller-based patterns to advanced CQRS architectures. Choose the pattern that fits your needs.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#choosing-your-architecture">Choosing Your Architecture</a></li>
+<li><a href="#simple-pattern-controller--domain--repository">Simple Pattern: Controller → Domain → Repository</a>
+<ul>
+<li><a href="#simple-architecture-diagram">Architecture Diagram</a></li>
+<li><a href="#simple-example-user-registration">Complete Example: User Registration</a></li>
+<li><a href="#when-to-use-simple-pattern">When to Use Simple Pattern</a></li>
+</ul>
+</li>
+<li><a href="#advanced-pattern-cqrs-with-application-layer">Advanced Pattern: CQRS with Application Layer</a>
+<ul>
+<li><a href="#cqrs-architecture-diagram">Architecture Diagram</a></li>
+<li><a href="#architecture-layers">Architecture Layers</a></li>
+<li><a href="#complete-example-user-registration">Complete Example: User Registration</a></li>
+<li><a href="#when-to-use-cqrs-pattern">When to Use CQRS Pattern</a></li>
+</ul>
+</li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#benefits">Benefits</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>This guide demonstrates <strong>two production-ready architectural patterns</strong> that combine:</p>
+<ul>
+<li><strong>Railway-Oriented Programming (ROP)</strong> - Explicit error handling with <code>Result&lt;T&gt;</code></li>
+<li><strong>Domain-Driven Design (DDD)</strong> - Rich domain models with business logic</li>
+<li><strong>Functional Programming</strong> - Immutability, pure functions, composition</li>
+<li><strong>Clean Architecture Principles</strong> - Dependencies point inward, testable layers</li>
+</ul>
+<p>Both patterns are <strong>valid for production</strong> - choose based on your application's complexity and team size.</p>
+<h2 id="choosing-your-architecture">Choosing Your Architecture</h2>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Simple Pattern</th>
+<th>CQRS Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Complexity</strong></td>
+<td>Low to Medium</td>
+<td>Medium to High</td>
+</tr>
+<tr>
+<td><strong>Team Size</strong></td>
+<td>1-10 developers</td>
+<td>10+ developers</td>
+</tr>
+<tr>
+<td><strong>Domain Complexity</strong></td>
+<td>Straightforward business rules</td>
+<td>Complex, evolving business logic</td>
+</tr>
+<tr>
+<td><strong>Read vs Write</strong></td>
+<td>Similar concerns</td>
+<td>Need separate optimization</td>
+</tr>
+<tr>
+<td><strong>Layers</strong></td>
+<td>3 (API, Domain, Infrastructure)</td>
+<td>3 (API, Domain*, Infrastructure)</td>
+</tr>
+<tr>
+<td><strong>Assemblies</strong></td>
+<td>3 assemblies</td>
+<td>4 assemblies (2 in Domain Layer)</td>
+</tr>
+<tr>
+<td><strong>Learning Curve</strong></td>
+<td>Gentle - Start here ✅</td>
+<td>Steep - Graduate to this</td>
+</tr>
+<tr>
+<td><strong>Example Code</strong></td>
+<td>SampleWebApplication (Examples folder)</td>
+<td>Enterprise applications</td>
+</tr>
+<tr>
+<td><strong>Time to Market</strong></td>
+<td>Fast 🚀</td>
+<td>Slower (more structure)</td>
+</tr>
+</tbody>
+</table>
+<p>*Domain Layer contains 2 assemblies: Application (use cases) + Domain (business rules)</p>
+<p><strong>Recommendation:</strong> Start with the <strong>Simple Pattern</strong> and evolve to CQRS <strong>only when you need it</strong>.</p>
+<h2 id="simple-pattern-controller--domain--repository">Simple Pattern: Controller → Domain → Repository</h2>
+<p>The <strong>Simple Pattern</strong> goes directly from Controllers to Domain logic, with minimal layers. This is perfect for most applications and matches the <strong>SampleWebApplication</strong> example in the Examples folder.</p>
+<h3 id="simple-architecture-diagram">Simple Architecture Diagram</h3>
+<pre><code class="lang-mermaid">graph TB
+    subgraph API[&quot;API Layer (ASP.NET Core)&quot;]
+        C[Controllers]
+        VO[Value Objects]
+        D[Domain Logic]
+    end
+    
+    subgraph Domain[&quot;Domain Layer (DDD)&quot;]
+        A[Aggregates]
+        E[Entities]
+        VO2[Value Objects]
+        DL[Domain Logic]
+    end
+    
+    subgraph Infrastructure[&quot;Infrastructure Layer&quot;]
+        R[Repositories]
+        DB[(Database)]
+        EXT[External Services]
+    end
+    
+    C --&gt; VO
+    VO --&gt; D
+    D --&gt; A
+    A --&gt; E
+    A --&gt; VO2
+    D --&gt; R
+    R --&gt; DB
+    D --&gt; EXT
+    
+    style API fill:#e1f5ff
+    style Domain fill:#fff4e1
+    style Infrastructure fill:#f0f0f0
+</code></pre>
+<h3 id="simple-example-user-registration">Simple Example: User Registration</h3>
+<p><strong>1. Controller (API Layer)</strong></p>
+<p>The controller validates inputs, calls domain logic, and converts to HTTP:</p>
+<pre><code class="lang-csharp">[ApiController]
+[Route(&quot;api/[controller]&quot;)]
+public class UsersController : ControllerBase
+{
+    private readonly IUserRepository _repository;
+
+    public UsersController(IUserRepository repository)
+        =&gt; _repository = repository;
+
+    [HttpPost]
+    public ActionResult&lt;User&gt; Register([FromBody] RegisterUserRequest request) =&gt;
+        FirstName.TryCreate(request.FirstName)
+            .Combine(LastName.TryCreate(request.LastName))
+            .Combine(EmailAddress.TryCreate(request.Email))
+            .Bind((firstName, lastName, email) =&gt; 
+                User.TryCreate(firstName, lastName, email, request.Password))
+            .Tap(user =&gt; _repository.Save(user))
+            .ToActionResult(this);
+}
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ol>
+<li><strong>Validate</strong> - <code>TryCreate</code> validates each value object</li>
+<li><strong>Combine</strong> - Collects all validations (returns all errors if multiple fail)</li>
+<li><strong>Bind</strong> - Creates domain aggregate (User)</li>
+<li><strong>Tap</strong> - Saves to database (side effect)</li>
+<li><strong>ToActionResult</strong> - Converts <code>Result&lt;User&gt;</code> → <code>ActionResult&lt;User&gt;</code></li>
+</ol>
+<h3 id="railway-oriented-flow">Railway-Oriented Flow</h3>
+<pre><code class="lang-mermaid">graph TB
+    START[HTTP Request] --&gt; VC1{FirstName&lt;br/&gt;TryCreate}
+    START --&gt; VC2{LastName&lt;br/&gt;TryCreate}
+    START --&gt; VC3{EmailAddress&lt;br/&gt;TryCreate}
+    
+    VC1 --&gt;|Success| CMB{Combine}
+    VC2 --&gt;|Success| CMB
+    VC3 --&gt;|Success| CMB
+    
+    VC1 -.-&gt;|Failure| ERR[Aggregate Errors]
+    VC2 -.-&gt;|Failure| ERR
+    VC3 -.-&gt;|Failure| ERR
+    
+    CMB --&gt;|Success| BIND{Bind&lt;br/&gt;User.TryCreate}
+    CMB -.-&gt;|Failure| ERR
+    
+    BIND --&gt;|Success| TAP{Tap&lt;br/&gt;Save to DB}
+    BIND -.-&gt;|Failure| ERR
+    
+    TAP --&gt; MATCH{ToActionResult}
+    ERR --&gt; MATCH
+    
+    MATCH --&gt;|Success| SUCCESS[200 OK&lt;br/&gt;User JSON]
+    MATCH --&gt;|Failure| FAIL[400/409&lt;br/&gt;Error Details]
+    
+    style SUCCESS fill:#90EE90
+    style FAIL fill:#FFB6C6
+    style ERR fill:#FFD700
+</code></pre>
+<p><strong>2. Domain Layer</strong></p>
+<pre><code class="lang-csharp">// Value Object
+public record EmailAddress
+{
+    public string Value { get; }
+
+    private EmailAddress(string value) =&gt; Value = value;
+
+    public static Result&lt;EmailAddress&gt; TryCreate(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Error.Validation(&quot;Email is required&quot;, nameof(email));
+
+        if (!email.Contains('@'))
+            return Error.Validation(&quot;Invalid email format&quot;, nameof(email));
+
+        return new EmailAddress(email.ToLowerInvariant());
+    }
+
+    public override string ToString() =&gt; Value;
+}
+
+// Aggregate Root
+public class User : Aggregate&lt;UserId&gt;
+{
+    public FirstName FirstName { get; }
+    public LastName LastName { get; }
+    public EmailAddress Email { get; }
+    public string Password { get; }
+
+    public static Result&lt;User&gt; TryCreate(
+        FirstName firstName,
+        LastName lastName,
+        EmailAddress email,
+        string password)
+    {
+        var user = new User(firstName, lastName, email, password);
+        return Validator.ValidateToResult(user);
+    }
+
+    private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
+        : base(UserId.NewUnique())
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        Password = password; // Should use Password value object in production
+    }
+
+    private static readonly InlineValidator&lt;User&gt; Validator = new()
+    {
+        v =&gt; v.RuleFor(x =&gt; x.FirstName).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.LastName).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.Email).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.Password)
+            .NotEmpty().WithMessage(&quot;Password must not be empty.&quot;)
+            .MinimumLength(8).WithMessage(&quot;Password must be at least 8 characters long.&quot;)
+            .Matches(&quot;[A-Z]&quot;).WithMessage(&quot;Password must contain at least one uppercase letter.&quot;)
+    };
+}
+</code></pre>
+<p><strong>3. Infrastructure Layer (Repository)</strong></p>
+<pre><code class="lang-csharp">public interface IUserRepository
+{
+    Maybe&lt;User&gt; GetById(UserId id);
+    Maybe&lt;User&gt; GetByEmail(EmailAddress email);
+    Result&lt;Unit&gt; Save(User user);
+}
+
+public class UserRepository : IUserRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public Maybe&lt;User&gt; GetById(UserId id)
+    {
+        var user = _context.Users.Find(id);
+        return Maybe.From(user);
+    }
+
+    public Result&lt;Unit&gt; Save(User user)
+    {
+        try
+        {
+            _context.Users.Add(user);
+            _context.SaveChanges();
+            return Result.Success();
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+        {
+            return Error.Conflict(&quot;Email already in use&quot;);
+        }
+    }
+
+    private static bool IsDuplicateKey(DbUpdateException ex)
+        =&gt; ex.InnerException?.Message.Contains(&quot;duplicate key&quot;) ?? false;
+}
+</code></pre>
+<h3 id="when-to-use-simple-pattern">When to Use Simple Pattern</h3>
+<p><strong>Use the Simple Pattern when:</strong></p>
+<ul>
+<li>✅ <strong>Small to medium applications</strong> - Most web APIs, microservices</li>
+<li>✅ <strong>Straightforward business logic</strong> - CRUD + validation + some rules</li>
+<li>✅ <strong>Small teams</strong> - 1-10 developers</li>
+<li>✅ <strong>Fast iteration</strong> - Need to ship features quickly</li>
+<li>✅ <strong>Learning ROP/DDD</strong> - Best place to start</li>
+<li>✅ <strong>Microservices</strong> - Each service is focused and simple</li>
+</ul>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li><strong>Less code</strong> - Fewer layers, less boilerplate</li>
+<li><strong>Easier to understand</strong> - Direct flow from controller → domain → database</li>
+<li><strong>Faster development</strong> - No command/query objects, no handlers</li>
+<li><strong>Still testable</strong> - Domain logic pure, easy to test</li>
+<li><strong>Production-ready</strong> - Fully capable for most applications</li>
+</ul>
+<p><strong>Limitations:</strong></p>
+<ul>
+<li>Controllers become complex if orchestrating multiple services</li>
+<li>Read/write concerns not separated (acceptable for most apps)</li>
+<li>No built-in cross-cutting concerns (add as needed)</li>
+</ul>
+<h2 id="advanced-pattern-cqrs-with-application-layer">Advanced Pattern: CQRS with Application Layer</h2>
+<p>The <strong>CQRS Pattern</strong> adds a dedicated Application Layer between API and Domain for complex orchestration, separate read/write models, and cross-cutting concerns.</p>
+<p><strong>⚠️ Only graduate to this pattern when you experience pain with the Simple Pattern.</strong></p>
+<h3 id="cqrs-architecture-diagram">CQRS Architecture Diagram</h3>
+<pre><code class="lang-mermaid">graph TB
+    subgraph API[&quot;API Layer (ASP.NET Core)&quot;]
+        CTRL[Controllers/Endpoints]
+        HTTP[ToActionResult/ToHttpResult]
+    end
+    
+    subgraph DomainCore[&quot;Domain Layer - Core Business Logic&quot;]
+        subgraph Application[&quot;Application Assembly&lt;br/&gt;(Use Cases &amp; Orchestration)&quot;]
+            CMD[Commands]
+            QRY[Queries]
+            HAND[Handlers]
+            VAL[Validation]
+        end
+        
+        subgraph Domain[&quot;Domain Assembly&lt;br/&gt;(Business Rules &amp; Models)&quot;]
+            AGG[Aggregates]
+            ENT[Entities]
+            VO[Value Objects]
+            EVT[Domain Events]
+        end
+    end
+    
+    subgraph Infrastructure[&quot;Infrastructure Layer&quot;]
+        REPO[Repositories]
+        DBCTX[DbContext]
+        EXT[External Services]
+        DB[(Database)]
+    end
+    
+    CTRL --&gt; HTTP
+    HTTP --&gt; CMD
+    HTTP --&gt; QRY
+    CMD --&gt; HAND
+    QRY --&gt; HAND
+    HAND --&gt; VAL
+    VAL --&gt; AGG
+    AGG --&gt; ENT
+    AGG --&gt; VO
+    AGG --&gt; EVT
+    HAND --&gt; REPO
+    REPO --&gt; DBCTX
+    DBCTX --&gt; DB
+    HAND --&gt; EXT
+    
+    style API fill:#e1f5ff
+    style DomainCore fill:#fff4e1
+    style Application fill:#fffacd
+    style Domain fill:#ffe4b5
+    style Infrastructure fill:#f0f0f0
+</code></pre>
+<h2 id="architecture-layers">Architecture Layers</h2>
+<p><strong>Note:</strong> In this architecture, both the <strong>Application</strong> and <strong>Domain</strong> assemblies are part of the <strong>Domain Layer</strong>. They represent different concerns within the core business logic but share the same architectural layer.</p>
+<h3 id="assembly-organization">Assembly Organization</h3>
+<p>The Domain Layer is split into two assemblies for better organization:</p>
+<ul>
+<li><p><strong>Domain Assembly</strong> - Pure business logic with zero dependencies</p>
+<ul>
+<li>Aggregates, Entities, Value Objects</li>
+<li>Domain Events</li>
+<li>Repository interfaces</li>
+<li>Domain services</li>
+</ul>
+</li>
+<li><p><strong>Application Assembly</strong> - Use case orchestration (depends only on Domain)</p>
+<ul>
+<li>Commands and Queries (CQRS)</li>
+<li>Command/Query Handlers</li>
+<li>Application services</li>
+<li>DTOs and mapping logic</li>
+</ul>
+</li>
+</ul>
+<p>This separation allows you to:</p>
+<ul>
+<li>Keep domain logic pure and framework-agnostic</li>
+<li>Organize complex use cases separately from core business rules</li>
+<li>Test business logic in complete isolation</li>
+<li>Share the domain assembly across multiple applications</li>
+</ul>
+<h3 id="1-api-layer-presentation">1. API Layer (Presentation)</h3>
+<p><strong>Responsibility:</strong> HTTP concerns only<br>
+<strong>Dependencies:</strong> Application Layer<br>
+<strong>Returns:</strong> <code>ActionResult&lt;T&gt;</code> or <code>IResult</code></p>
+<pre><code class="lang-csharp">[ApiController]
+[Route(&quot;api/[controller]&quot;)]
+public class UsersController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public UsersController(IMediator mediator) =&gt; _mediator = mediator;
+    
+    [HttpPost]
+    public async Task&lt;ActionResult&lt;UserDto&gt;&gt; Register(
+        [FromBody] RegisterUserRequest request,
+        CancellationToken ct)
+        =&gt; await RegisterUserCommand.TryCreate( request.Email, request.FirstName, request.LastName)
+            .BindAsync(_mediator.Send, ct)
+            .Map(user =&gt; new UserDto(user))
+            .ToActionResult(this);
+}
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li>Receives HTTP requests</li>
+<li><strong>Validates raw inputs using <code>TryCreate</code></strong></li>
+<li>Sends <strong>validated command</strong> to application layer via mediator</li>
+<li>Converts <code>Result&lt;T&gt;</code> to HTTP responses</li>
+<li><strong>No business logic</strong></li>
+</ul>
+<h3 id="2-application-layer-use-cases">2. Application Layer (Use Cases)</h3>
+<p><strong>Responsibility:</strong> Application workflows, orchestration<br>
+<strong>Dependencies:</strong> Domain Layer<br>
+<strong>Returns:</strong> <code>Result&lt;T&gt;</code></p>
+<pre><code class="lang-csharp">public record RegisterUserCommand(
+    EmailAddress Email,
+    FirstName FirstName,
+    LastName LastName
+) : IRequest&lt;Result&lt;User&gt;&gt;
+{
+    // Factory method for validation
+    public static Result&lt;RegisterUserCommand&gt; TryCreate(
+        string email,
+        string firstName,
+        string lastName)
+    {
+        return EmailAddress.TryCreate(email)
+            .Combine(FirstName.TryCreate(firstName))
+            .Combine(LastName.TryCreate(lastName))
+            .Map((e, f, l) =&gt; new RegisterUserCommand(e, f, l));
+    }
+}
+
+public class RegisterUserCommandHandler 
+    : IRequestHandler&lt;RegisterUserCommand, Result&lt;User&gt;&gt;
+{
+    private readonly IUserRepository _repository;
+    private readonly IEmailService _emailService;
+
+    public async ValueTask&lt;Result&lt;User&gt;&gt; Handle(
+        RegisterUserCommand command,
+        CancellationToken ct)
+    {
+        // Command is already validated, no need to re-validate
+        // Check uniqueness (application-level concern)
+        var maybeExistingUser = await _repository.GetByEmailAsync(command.Email, ct);
+        if (maybeExistingUser.HasValue)
+            return Error.Conflict($&quot;Email {command.Email} already registered&quot;);
+
+        // Create aggregate (domain operation)
+        return User.Create(command.Email, command.FirstName, command.LastName)
+            // Save to database (transaction boundary)
+            .TapAsync(async (user, cancellationToken) =&gt;
+                await _repository.SaveAsync(user, cancellationToken), ct)
+            // Send welcome email (side effect)
+            .TapAsync(async (user, cancellationToken) =&gt;
+                await _emailService.SendWelcomeEmailAsync(user, cancellationToken), ct);
+    }
+}
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li><strong>Command validates inputs via <code>TryCreate</code></strong> (value objects)</li>
+<li>Handler receives <strong>pre-validated command</strong></li>
+<li>Orchestrates domain operations</li>
+<li>Manages transaction boundaries</li>
+<li><strong>No HTTP knowledge</strong></li>
+<li><strong>No database knowledge</strong> (uses repositories)</li>
+</ul>
+<h3 id="3-domain-layer-business-logic">3. Domain Layer (Business Logic)</h3>
+<p><strong>Responsibility:</strong> Business rules, invariants<br>
+<strong>Dependencies:</strong> None (pure domain)<br>
+<strong>Returns:</strong> <code>Result&lt;T&gt;</code> for operations that can fail</p>
+<pre><code class="lang-csharp">// Aggregate Root
+public class User : Aggregate&lt;UserId&gt;
+{
+    public EmailAddress Email { get; private set; }
+    public FirstName FirstName { get; private set; }
+    public LastName LastName { get; private set; }
+    public bool IsActive { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+
+    // Factory method with validation
+    public static Result&lt;User&gt; Create(
+        EmailAddress email,
+        FirstName firstName,
+        LastName lastName)
+    {
+        var user = new User(email, firstName, lastName);
+        return Validator.ValidateToResult(user);
+    }
+
+    private User(
+        EmailAddress email,
+        FirstName firstName,
+        LastName lastName)
+        : base(UserId.NewUnique())
+    {
+        Email = email;
+        FirstName = firstName;
+        LastName = lastName;
+        IsActive = true;
+        CreatedAt = DateTime.UtcNow;
+
+        // Domain event
+        AddDomainEvent(new UserCreated(Id, Email));
+    }
+
+    // Business operation
+    public Result&lt;User&gt; Deactivate(string reason)
+    {
+        if (!IsActive)
+            return Error.Domain(&quot;User is already deactivated&quot;);
+
+        if (string.IsNullOrWhiteSpace(reason))
+            return Error.Validation(&quot;Deactivation reason is required&quot;, nameof(reason));
+
+        IsActive = false;
+        AddDomainEvent(new UserDeactivated(Id, reason));
+        return Result.Success(this);
+    }
+
+    // Domain validator
+    private static readonly InlineValidator&lt;User&gt; Validator = new()
+    {
+        v =&gt; v.RuleFor(x =&gt; x.Email).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.FirstName).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.LastName).NotNull()
+    };
+}
+
+// Value Objects
+public record EmailAddress
+{
+    public string Value { get; }
+
+    private EmailAddress(string value) =&gt; Value = value;
+
+    public static Result&lt;EmailAddress&gt; TryCreate(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Error.Validation(&quot;Email is required&quot;, nameof(email));
+
+        if (!email.Contains('@'))
+            return Error.Validation(&quot;Invalid email format&quot;, nameof(email));
+
+        return new EmailAddress(email.ToLowerInvariant());
+    }
+
+    public override string ToString() =&gt; Value;
+}
+
+// Domain Events
+public record UserCreated(UserId UserId, EmailAddress Email) : DomainEvent;
+public record UserDeactivated(UserId UserId, string Reason) : DomainEvent;
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li>Enforces business rules (invariants)</li>
+<li>Validates domain operations</li>
+<li>Raises domain events</li>
+<li><strong>No infrastructure dependencies</strong></li>
+<li><strong>No knowledge of HTTP, database, etc.</strong></li>
+<li>Fully testable in isolation</li>
+</ul>
+<h3 id="4-infrastructure-layer-data-access">4. Infrastructure Layer (Data Access)</h3>
+<p><strong>Responsibility:</strong> External concerns<br>
+<strong>Dependencies:</strong> Domain Layer (interfaces)<br>
+<strong>Returns:</strong> <code>Result&lt;T&gt;</code> (no exceptions)</p>
+<pre><code class="lang-csharp">public class UserRepository : IUserRepository
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger&lt;UserRepository&gt; _logger;
+
+    public async Task&lt;Result&lt;User&gt;&gt; GetByIdAsync(
+        UserId id,
+        CancellationToken ct)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u =&gt; u.Id == id, ct);
+
+        return user.ToResult(Error.NotFound($&quot;User {id} not found&quot;));
+    }
+
+    public async Task&lt;bool&gt; ExistsByEmailAsync(
+        EmailAddress email,
+        CancellationToken ct)
+    {
+        return await _context.Users
+            .AnyAsync(u =&gt; u.Email == email, ct);
+    }
+
+    public async Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(
+        User user,
+        CancellationToken ct)
+    {
+        try
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync(ct);
+            return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Error.Conflict(&quot;User was modified by another process&quot;);
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+        {
+            return Error.Conflict(&quot;Email already in use&quot;);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, &quot;Error saving user&quot;);
+            return Error.Unexpected(&quot;Failed to save user&quot;);
+        }
+    }
+
+    private static bool IsDuplicateKey(DbUpdateException ex)
+        =&gt; ex.InnerException?.Message.Contains(&quot;duplicate key&quot;) ?? false;
+}
+
+// EF Core Configuration
+public class UserConfiguration : IEntityTypeConfiguration&lt;User&gt;
+{
+    public void Configure(EntityTypeBuilder&lt;User&gt; builder)
+    {
+        builder.ToTable(&quot;Users&quot;);
+        builder.HasKey(u =&gt; u.Id);
+
+        builder.Property(u =&gt; u.Id)
+            .HasConversion(id =&gt; id.Value, value =&gt; new UserId(value));
+
+        builder.Property(u =&gt; u.Email)
+            .HasConversion(
+                email =&gt; email.Value,
+                value =&gt; EmailAddress.TryCreate(value).Value)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.HasIndex(u =&gt; u.Email).IsUnique();
+    }
+}
+</code></pre>
+<p><strong>What it does:</strong></p>
+<ul>
+<li>Implements repository interfaces from domain</li>
+<li>Handles database exceptions → <code>Result&lt;T&gt;</code> errors</li>
+<li>Configures EF Core mappings for value objects</li>
+<li><strong>No business logic</strong></li>
+</ul>
+<h2 id="complete-example-user-registration">Complete Example: User Registration</h2>
+<p>Let's see how all layers work together for a complete user registration flow:</p>
+<h3 id="user-registration-sequence-diagram">User Registration Sequence Diagram</h3>
+<pre><code class="lang-mermaid">sequenceDiagram
+    participant Client
+    participant Controller
+    participant ValueObjects
+    participant Domain
+    participant Repository
+    participant Database
+    
+    Client-&gt;&gt;Controller: POST /api/users/register&lt;br/&gt;{email, firstName, lastName}
+    
+    Controller-&gt;&gt;ValueObjects: FirstName.TryCreate()
+    ValueObjects--&gt;&gt;Controller: Result&lt;FirstName&gt;
+    
+    Controller-&gt;&gt;ValueObjects: LastName.TryCreate()
+    ValueObjects--&gt;&gt;Controller: Result&lt;LastName&gt;
+    
+    Controller-&gt;&gt;ValueObjects: EmailAddress.TryCreate()
+    ValueObjects--&gt;&gt;Controller: Result&lt;EmailAddress&gt;
+    
+    Note over Controller: Combine all validations
+    
+    alt All validations pass
+        Controller-&gt;&gt;Domain: User.TryCreate(...)
+        Domain-&gt;&gt;Domain: Validate business rules
+        Domain--&gt;&gt;Controller: Result&lt;User&gt;
+        
+        Controller-&gt;&gt;Repository: Save(user)
+        Repository-&gt;&gt;Database: INSERT INTO Users
+        
+        alt Save successful
+            Database--&gt;&gt;Repository: Success
+            Repository--&gt;&gt;Controller: Result.Success()
+            Controller--&gt;&gt;Client: 200 OK + User JSON
+        else Duplicate email
+            Database--&gt;&gt;Repository: Duplicate key error
+            Repository--&gt;&gt;Controller: Error.Conflict()
+            Controller--&gt;&gt;Client: 409 Conflict
+        end
+    else Validation fails
+        Controller--&gt;&gt;Client: 400 Bad Request&lt;br/&gt;+ Validation errors
+    end
+</code></pre>
+<h3 id="cqrs-command-flow-diagram">CQRS Command Flow Diagram</h3>
+<pre><code class="lang-mermaid">sequenceDiagram
+    participant Client
+    participant Controller
+    participant Mediator
+    participant CommandHandler
+    participant Domain
+    participant Repository
+    participant EventBus
+    
+    Client-&gt;&gt;Controller: POST /api/users/register
+    Controller-&gt;&gt;Controller: RegisterUserCommand.TryCreate()
+    Controller-&gt;&gt;Mediator: Send(command)
+    Mediator-&gt;&gt;CommandHandler: Handle(command)
+    
+    CommandHandler-&gt;&gt;Repository: GetByEmailAsync(email)
+    Repository--&gt;&gt;CommandHandler: Maybe&lt;User&gt;
+    
+    CommandHandler-&gt;&gt;Domain: User.Create()
+    Domain--&gt;&gt;CommandHandler: Result&lt;User&gt;
+    
+    CommandHandler-&gt;&gt;Repository: SaveAsync(user)
+    Repository--&gt;&gt;CommandHandler: Result&lt;Unit&gt;
+    
+    CommandHandler-&gt;&gt;Domain: user.UncommittedEvents()
+    Domain--&gt;&gt;CommandHandler: [UserCreated]
+    
+    CommandHandler-&gt;&gt;EventBus: Publish(events)
+    EventBus--&gt;&gt;CommandHandler: Ack
+    
+    CommandHandler-&gt;&gt;Domain: user.AcceptChanges()
+    
+    CommandHandler--&gt;&gt;Mediator: Result&lt;User&gt;
+    Mediator--&gt;&gt;Controller: Result&lt;User&gt;
+    Controller--&gt;&gt;Client: 200 OK
+</code></pre>
+<h3 id="http-response-examples">HTTP Response Examples</h3>
+<p><strong>Success Response (200 OK):</strong></p>
+<pre><code class="lang-http">HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  &quot;id&quot;: &quot;550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;email&quot;: &quot;john@example.com&quot;,
+  &quot;firstName&quot;: &quot;John&quot;,
+  &quot;lastName&quot;: &quot;Doe&quot;,
+  &quot;isActive&quot;: true,
+  &quot;createdAt&quot;: &quot;2024-01-15T10:30:00Z&quot;
+}
+</code></pre>
+<p><strong>Validation Failure (400 Bad Request):</strong></p>
+<pre><code class="lang-http">HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.1&quot;,
+  &quot;title&quot;: &quot;One or more validation errors occurred.&quot;,
+  &quot;status&quot;: 400,
+  &quot;errors&quot;: {
+    &quot;email&quot;: [&quot;'Email' must not be empty.&quot;],
+    &quot;firstName&quot;: [&quot;'First Name' must not be empty.&quot;]
+  }
+}
+</code></pre>
+<p><strong>Conflict Response (409 Conflict):</strong></p>
+<pre><code class="lang-http">HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.8&quot;,
+  &quot;title&quot;: &quot;Conflict&quot;,
+  &quot;status&quot;: 409,
+  &quot;detail&quot;: &quot;Email john@example.com already registered&quot;
+}
+</code></pre>
+<h2 id="when-to-use-cqrs-pattern">When to Use CQRS Pattern</h2>
+<p><strong>Use the CQRS Pattern when you experience these pain points:</strong></p>
+<ul>
+<li>✅ <strong>Complex orchestration</strong> - Controllers juggling multiple services/repositories</li>
+<li>✅ <strong>Cross-cutting concerns</strong> - Need logging, caching, authorization across many operations</li>
+<li>✅ <strong>Different read/write needs</strong> - Queries need denormalized views, commands need rich validation</li>
+<li>✅ <strong>Large teams</strong> - Need clear boundaries between teams working on different features</li>
+<li>✅ <strong>Event-driven architecture</strong> - Publishing domain events to message buses</li>
+<li>✅ <strong>Complex transactions</strong> - Multi-aggregate transactions with compensation logic</li>
+</ul>
+<p><strong>Benefits of CQRS:</strong></p>
+<ul>
+<li><strong>Dedicated orchestration layer</strong> - Commands/Queries handle complex workflows</li>
+<li><strong>Separation of concerns</strong> - Read models optimized separately from write models</li>
+<li><strong>Testability</strong> - Handlers easy to test in isolation</li>
+<li><strong>Scalability</strong> - Read/write can scale independently</li>
+<li><strong>Clear contracts</strong> - Commands/Queries define explicit contracts</li>
+</ul>
+<p><strong>Trade-offs:</strong></p>
+<ul>
+<li><strong>More code</strong> - Additional layer, command/query objects, handlers</li>
+<li><strong>Learning curve</strong> - Team needs to understand mediator pattern, CQRS</li>
+<li><strong>Overkill for simple apps</strong> - Unnecessary complexity for CRUD operations</li>
+</ul>
+<p><strong>Migration path from Simple Pattern:</strong></p>
+<ol>
+<li>Start with Simple Pattern</li>
+<li>When controllers get complex, introduce handlers for those specific controllers</li>
+<li>Gradually migrate complex operations to CQRS</li>
+<li>Keep simple CRUD in Simple Pattern if it works</li>
+</ol>
+<p>You <strong>don't need to choose</strong> one pattern for the entire application - <strong>mix both</strong> based on complexity per feature!</p>
+<h2 id="testing">Testing</h2>
+<h3 id="unit-tests-domain-layer">Unit Tests (Domain Layer)</h3>
+<pre><code class="lang-csharp">public class UserTests
+{
+    [Fact]
+    public void Create_ValidData_ReturnsSuccess()
+    {
+        // Arrange
+        var email = EmailAddress.TryCreate(&quot;john@example.com&quot;).Value;
+        var firstName = FirstName.TryCreate(&quot;John&quot;).Value;
+        var lastName = LastName.TryCreate(&quot;Doe&quot;).Value;
+
+        // Act
+        var result = User.Create(email, firstName, lastName);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Email.Should().Be(email);
+        result.Value.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Deactivate_WhenActive_ReturnsSuccess()
+    {
+        // Arrange
+        var user = CreateValidUser();
+
+        // Act
+        var result = user.Deactivate(&quot;No longer needed&quot;);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        user.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Deactivate_WhenAlreadyInactive_ReturnsFailure()
+    {
+        // Arrange
+        var user = CreateValidUser();
+        user.Deactivate(&quot;First time&quot;);
+
+        // Act
+        var result = user.Deactivate(&quot;Second time&quot;);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType&lt;DomainError&gt;();
+    }
+}
+</code></pre>
+<h3 id="integration-tests-application-layer">Integration Tests (Application Layer)</h3>
+<pre><code class="lang-csharp">public class RegisterUserCommandHandlerTests
+{
+    [Fact]
+    public async Task Handle_ValidCommand_CreatesUser()
+    {
+        // Arrange
+        var repository = new InMemoryUserRepository();
+        var handler = new RegisterUserCommandHandler(repository, new EmailServiceFake());
+        var command = new RegisterUserCommand(
+            EmailAddress.TryCreate(&quot;john@example.com&quot;).Value,
+            FirstName.TryCreate(&quot;John&quot;).Value,
+            LastName.TryCreate(&quot;Doe&quot;).Value);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Email.Value.Should().Be(&quot;john@example.com&quot;);
+        
+        var saved = await repository.GetByIdAsync(result.Value.Id, CancellationToken.None);
+        saved.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_DuplicateEmail_ReturnsConflict()
+    {
+        // Arrange
+        var repository = new InMemoryUserRepository();
+        var existingEmail = EmailAddress.TryCreate(&quot;john@example.com&quot;).Value;
+        await repository.SaveAsync(CreateExistingUser(existingEmail));
+        
+        var handler = new RegisterUserCommandHandler(repository, new EmailServiceFake());
+        var command = new RegisterUserCommand(
+            existingEmail,
+            FirstName.TryCreate(&quot;Jane&quot;).Value,
+            LastName.TryCreate(&quot;Smith&quot;).Value);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType&lt;ConflictError&gt;();
+    }
+}
+</code></pre>
+<h3 id="api-tests-end-to-end">API Tests (End-to-End)</h3>
+<pre><code class="lang-csharp">public class UsersControllerTests : IClassFixture&lt;WebApplicationFactory&lt;Program&gt;&gt;
+{
+    private readonly HttpClient _client;
+
+    public UsersControllerTests(WebApplicationFactory&lt;Program&gt; factory)
+    {
+        _client = factory.CreateClient();
+    }
+
+    [Fact]
+    public async Task Register_ValidRequest_Returns200WithUser()
+    {
+        // Arrange
+        var request = new RegisterUserRequest
+        {
+            Email = &quot;john@example.com&quot;,
+            FirstName = &quot;John&quot;,
+            LastName = &quot;Doe&quot;
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync(&quot;/api/users/register&quot;, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var user = await response.Content.ReadFromJsonAsync&lt;UserDto&gt;();
+        user.Should().NotBeNull();
+        user!.Email.Should().Be(&quot;john@example.com&quot;);
+    }
+
+    [Fact]
+    public async Task Register_InvalidEmail_Returns400WithValidationErrors()
+    {
+        // Arrange
+        var request = new RegisterUserRequest
+        {
+            Email = &quot;&quot;,
+            FirstName = &quot;John&quot;,
+            LastName = &quot;Doe&quot;
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync(&quot;/api/users/register&quot;, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.Content.ReadFromJsonAsync&lt;ValidationProblemDetails&gt;();
+        problemDetails.Should().NotBeNull();
+        problemDetails!.Errors.Should().ContainKey(&quot;email&quot;);
+    }
+}
+</code></pre>
+<h2 id="benefits">Benefits</h2>
+<h3 id="1-testability">1. <strong>Testability</strong></h3>
+<ul>
+<li>Domain logic testable without infrastructure</li>
+<li>Application logic testable with in-memory repositories</li>
+<li>API testable end-to-end with WebApplicationFactory</li>
+</ul>
+<h3 id="2-maintainability">2. <strong>Maintainability</strong></h3>
+<ul>
+<li>Clear separation of concerns</li>
+<li>Changes isolated to specific layers</li>
+<li>Easy to understand and modify</li>
+</ul>
+<h3 id="3-explicit-error-handling">3. <strong>Explicit Error Handling</strong></h3>
+<ul>
+<li>No hidden exceptions</li>
+<li>All failures represented as <code>Result&lt;T&gt;</code></li>
+<li>HTTP status codes automatically mapped</li>
+</ul>
+<h3 id="4-type-safety">4. <strong>Type Safety</strong></h3>
+<ul>
+<li>Value objects prevent primitive obsession</li>
+<li>Compiler catches errors early</li>
+<li>Impossible states impossible</li>
+</ul>
+<h3 id="5-business-logic-clarity">5. <strong>Business Logic Clarity</strong></h3>
+<ul>
+<li>Domain rules explicit in code</li>
+<li>No business logic leaked to infrastructure</li>
+<li>Easy to communicate with domain experts</li>
+</ul>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-dependencies-always-point-inward">1. Dependencies Always Point Inward</h3>
+<pre><code>API → Application → Domain ← Infrastructure
+     (Both in Domain Layer)
+</code></pre>
+<ul>
+<li><strong>Domain Assembly</strong> has <strong>zero</strong> external dependencies</li>
+<li><strong>Application Assembly</strong> depends only on Domain Assembly</li>
+<li>Infrastructure implements domain interfaces</li>
+<li>Application orchestrates domain + infrastructure</li>
+<li>API depends on Application (or Domain for simple scenarios)</li>
+</ul>
+<p><strong>Layer vs Assembly:</strong></p>
+<ul>
+<li><strong>3 Layers</strong>: API, Domain, Infrastructure</li>
+<li><strong>4 Assemblies</strong>: API, Application (in Domain Layer), Domain (in Domain Layer), Infrastructure</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/clean-architecture.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

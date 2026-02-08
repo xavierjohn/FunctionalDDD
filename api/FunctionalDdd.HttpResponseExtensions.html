@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class HttpResponseExtensions </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class HttpResponseExtensions ">
+      
+      <meta name="description" content="Provides extension methods for handling HTTP response messages with Result and Maybe monads.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_HttpResponseExtensions.md&amp;value=---%0Auid%3A%20FunctionalDdd.HttpResponseExtensions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.HttpResponseExtensions">
+
+
+
+  <h1 id="FunctionalDdd_HttpResponseExtensions" data-uid="FunctionalDdd.HttpResponseExtensions" class="text-break">
+Class HttpResponseExtensions  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L36"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.Http.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Provides extension methods for handling HTTP response messages with Result and Maybe monads.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class HttpResponseExtensions</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">HttpResponseExtensions</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+  <h2 id="FunctionalDdd_HttpResponseExtensions_examples">Examples</h2>
+  <p>Typical usage with Railway Oriented Programming:</p>
+<pre><code class="lang-csharp">var result = await httpClient.GetAsync(url, ct)
+    .HandleNotFoundAsync(Error.NotFound("User", userId))
+    .ReadResultFromJsonAsync(UserJsonContext.Default.User, ct)
+    .TapAsync(user =&gt; _logger.LogInformation("Retrieved user: {UserId}", user.Id));</code></pre>
+
+
+  <h2 id="FunctionalDdd_HttpResponseExtensions_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+These extension methods simplify common patterns when working with HTTP responses in a functional style:
+<ul><li>Error handling for specific status codes (404 Not Found)</li><li>Custom error handling for failed responses</li><li>JSON deserialization with Result&lt;T&gt; and Maybe&lt;T&gt; support</li><li>Fluent composition with Railway Oriented Programming</li></ul>
+
+<p>
+All methods are designed to integrate seamlessly with functional result types, enabling fluent error
+handling and composition in asynchronous workflows. The caller is responsible for disposing of the
+underlying HttpResponseMessage and handling cancellation via CancellationToken where applicable.
+</p>
+</div>
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_EnsureSuccess_" data-uid="FunctionalDdd.HttpResponseExtensions.EnsureSuccess*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_EnsureSuccess_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error__" data-uid="FunctionalDdd.HttpResponseExtensions.EnsureSuccess(System.Net.Http.HttpResponseMessage,System.Func{System.Net.HttpStatusCode,FunctionalDdd.Error})">
+  EnsureSuccess(HttpResponseMessage, Func&lt;HttpStatusCode, Error&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L263"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Ensures the HTTP response has a success status code, otherwise returns an error.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; EnsureSuccess(this HttpResponseMessage response, Func&lt;HttpStatusCode, Error&gt;? errorFactory = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>errorFactory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.httpstatuscode">HttpStatusCode</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Optional function to create a custom error based on the status code.
+If not provided, a default unexpected error will be created.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResponseExtensions_EnsureSuccess_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error___examples">Examples</h4>
+  <pre><code class="lang-csharp">var result = await httpClient.GetAsync(url, ct)
+    .EnsureSuccessAsync()
+    .ReadResultFromJsonAsync(jsonContext, ct);</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResponseExtensions_EnsureSuccess_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This is a functional alternative to HttpResponseMessage.EnsureSuccessStatusCode(),
+which throws an exception. This method returns a Result instead, making it compatible
+with Railway Oriented Programming patterns.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_EnsureSuccessAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.EnsureSuccessAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_EnsureSuccessAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error__" data-uid="FunctionalDdd.HttpResponseExtensions.EnsureSuccessAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},System.Func{System.Net.HttpStatusCode,FunctionalDdd.Error})">
+  EnsureSuccessAsync(Task&lt;HttpResponseMessage&gt;, Func&lt;HttpStatusCode, Error&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L284"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Ensures the HTTP response has a success status code, otherwise returns an error asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; EnsureSuccessAsync(this Task&lt;HttpResponseMessage&gt; responseTask, Func&lt;HttpStatusCode, Error&gt;? errorFactory = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>errorFactory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.httpstatuscode">HttpStatusCode</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Optional function to create a custom error based on the status code.
+If not provided, a default unexpected error will be created.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleClientError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleClientError*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleClientError_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error__" data-uid="FunctionalDdd.HttpResponseExtensions.HandleClientError(System.Net.Http.HttpResponseMessage,System.Func{System.Net.HttpStatusCode,FunctionalDdd.Error})">
+  HandleClientError(HttpResponseMessage, Func&lt;HttpStatusCode, Error&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L176"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles any client error (4xx) status codes with a custom error factory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; HandleClientError(this HttpResponseMessage response, Func&lt;HttpStatusCode, Error&gt; errorFactory)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>errorFactory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.httpstatuscode">HttpStatusCode</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>A function that creates an error based on the status code.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResponseExtensions_HandleClientError_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error___examples">Examples</h4>
+  <pre><code class="lang-csharp">var result = await httpClient.GetAsync(url, ct)
+    .HandleClientErrorAsync(code =&gt; Error.BadRequest($"Client error: {code}"))
+    .ReadResultFromJsonAsync(jsonContext, ct);</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResponseExtensions_HandleClientError_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This method intercepts HTTP responses with status codes in the 400-499 range.
+Use this when you want to handle all client errors uniformly, or when you need
+to create context-specific errors based on the actual status code received.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleClientErrorAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleClientErrorAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleClientErrorAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error__" data-uid="FunctionalDdd.HttpResponseExtensions.HandleClientErrorAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},System.Func{System.Net.HttpStatusCode,FunctionalDdd.Error})">
+  HandleClientErrorAsync(Task&lt;HttpResponseMessage&gt;, Func&lt;HttpStatusCode, Error&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L193"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles any client error (4xx) status codes with a custom error factory asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleClientErrorAsync(this Task&lt;HttpResponseMessage&gt; responseTask, Func&lt;HttpStatusCode, Error&gt; errorFactory)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>errorFactory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.httpstatuscode">HttpStatusCode</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>A function that creates an error based on the status code.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleConflict_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleConflict*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleConflict_System_Net_Http_HttpResponseMessage_FunctionalDdd_ConflictError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleConflict(System.Net.Http.HttpResponseMessage,FunctionalDdd.ConflictError)">
+  HandleConflict(HttpResponseMessage, ConflictError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L134"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of Conflict (409).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; HandleConflict(this HttpResponseMessage response, ConflictError conflictError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>conflictError</code> <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></dt>
+    <dd><p>The error to return if the response has a status code of Conflict.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleConflictAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleConflictAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleConflictAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__FunctionalDdd_ConflictError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleConflictAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},FunctionalDdd.ConflictError)">
+  HandleConflictAsync(Task&lt;HttpResponseMessage&gt;, ConflictError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L150"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of Conflict (409) asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleConflictAsync(this Task&lt;HttpResponseMessage&gt; responseTask, ConflictError conflictError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>conflictError</code> <a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></dt>
+    <dd><p>The error to return if the response has a status code of Conflict.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleFailureAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleFailureAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleFailureAsync__1_System_Net_Http_HttpResponseMessage_System_Func_System_Net_Http_HttpResponseMessage___0_System_Threading_CancellationToken_System_Threading_Tasks_Task_FunctionalDdd_Error_____0_System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleFailureAsync``1(System.Net.Http.HttpResponseMessage,System.Func{System.Net.Http.HttpResponseMessage,``0,System.Threading.CancellationToken,System.Threading.Tasks.Task{FunctionalDdd.Error}},``0,System.Threading.CancellationToken)">
+  HandleFailureAsync&lt;TContext&gt;(HttpResponseMessage, Func&lt;HttpResponseMessage, TContext, CancellationToken, Task&lt;Error&gt;&gt;, TContext, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L301"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response is not successful.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleFailureAsync&lt;TContext&gt;(this HttpResponseMessage response, Func&lt;HttpResponseMessage, TContext, CancellationToken, Task&lt;Error&gt;&gt; callbackFailedStatusCode, TContext context, CancellationToken cancellationToken)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>callbackFailedStatusCode</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-4">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>, TContext, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;&gt;</dt>
+    <dd><p>The callback function to handle the failed status code.</p>
+</dd>
+    <dt><code>context</code> <span class="xref">TContext</span></dt>
+    <dd><p>The context object.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TContext</code></dt>
+    <dd><p>The type of the context object.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleFailureAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleFailureAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleFailureAsync__1_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__System_Func_System_Net_Http_HttpResponseMessage___0_System_Threading_CancellationToken_System_Threading_Tasks_Task_FunctionalDdd_Error_____0_System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleFailureAsync``1(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},System.Func{System.Net.Http.HttpResponseMessage,``0,System.Threading.CancellationToken,System.Threading.Tasks.Task{FunctionalDdd.Error}},``0,System.Threading.CancellationToken)">
+  HandleFailureAsync&lt;TContext&gt;(Task&lt;HttpResponseMessage&gt;, Func&lt;HttpResponseMessage, TContext, CancellationToken, Task&lt;Error&gt;&gt;, TContext, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L325"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response is not successful asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleFailureAsync&lt;TContext&gt;(this Task&lt;HttpResponseMessage&gt; responseTask, Func&lt;HttpResponseMessage, TContext, CancellationToken, Task&lt;Error&gt;&gt; callbackFailedStatusCode, TContext context, CancellationToken cancellationToken)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>callbackFailedStatusCode</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-4">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>, TContext, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;&gt;</dt>
+    <dd><p>The callback function to handle the failed status code.</p>
+</dd>
+    <dt><code>context</code> <span class="xref">TContext</span></dt>
+    <dd><p>The context object.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TContext</code></dt>
+    <dd><p>The type of the context object.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleForbidden_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleForbidden*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleForbidden_System_Net_Http_HttpResponseMessage_FunctionalDdd_ForbiddenError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleForbidden(System.Net.Http.HttpResponseMessage,FunctionalDdd.ForbiddenError)">
+  HandleForbidden(HttpResponseMessage, ForbiddenError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L104"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of Forbidden (403).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; HandleForbidden(this HttpResponseMessage response, ForbiddenError forbiddenError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>forbiddenError</code> <a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></dt>
+    <dd><p>The error to return if the response has a status code of Forbidden.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleForbiddenAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleForbiddenAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleForbiddenAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__FunctionalDdd_ForbiddenError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleForbiddenAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},FunctionalDdd.ForbiddenError)">
+  HandleForbiddenAsync(Task&lt;HttpResponseMessage&gt;, ForbiddenError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L120"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of Forbidden (403) asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleForbiddenAsync(this Task&lt;HttpResponseMessage&gt; responseTask, ForbiddenError forbiddenError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>forbiddenError</code> <a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></dt>
+    <dd><p>The error to return if the response has a status code of Forbidden.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleNotFound_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleNotFound*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleNotFound_System_Net_Http_HttpResponseMessage_FunctionalDdd_NotFoundError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleNotFound(System.Net.Http.HttpResponseMessage,FunctionalDdd.NotFoundError)">
+  HandleNotFound(HttpResponseMessage, NotFoundError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L44"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of NotFound.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; HandleNotFound(this HttpResponseMessage response, NotFoundError notFoundError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>notFoundError</code> <a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></dt>
+    <dd><p>The error to return if the response has a status code of NotFound.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleNotFoundAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleNotFoundAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleNotFoundAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__FunctionalDdd_NotFoundError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleNotFoundAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},FunctionalDdd.NotFoundError)">
+  HandleNotFoundAsync(Task&lt;HttpResponseMessage&gt;, NotFoundError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L60"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of NotFound asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleNotFoundAsync(this Task&lt;HttpResponseMessage&gt; responseTask, NotFoundError notFoundError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>notFoundError</code> <a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></dt>
+    <dd><p>The error to return if the response has a status code of NotFound.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleServerError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleServerError*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleServerError_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error__" data-uid="FunctionalDdd.HttpResponseExtensions.HandleServerError(System.Net.Http.HttpResponseMessage,System.Func{System.Net.HttpStatusCode,FunctionalDdd.Error})">
+  HandleServerError(HttpResponseMessage, Func&lt;HttpStatusCode, Error&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L219"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles any server error (5xx) status codes with a custom error factory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; HandleServerError(this HttpResponseMessage response, Func&lt;HttpStatusCode, Error&gt; errorFactory)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>errorFactory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.httpstatuscode">HttpStatusCode</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>A function that creates an error based on the status code.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResponseExtensions_HandleServerError_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error___examples">Examples</h4>
+  <pre><code class="lang-csharp">var result = await httpClient.GetAsync(url, ct)
+    .HandleServerErrorAsync(code =&gt; Error.ServiceUnavailable($"Server error: {code}"))
+    .ReadResultFromJsonAsync(jsonContext, ct);</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResponseExtensions_HandleServerError_System_Net_Http_HttpResponseMessage_System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This method intercepts HTTP responses with status codes in the 500-599 range.
+Use this when you want to handle all server errors uniformly, such as for retry
+logic or fallback mechanisms.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleServerErrorAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleServerErrorAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleServerErrorAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__System_Func_System_Net_HttpStatusCode_FunctionalDdd_Error__" data-uid="FunctionalDdd.HttpResponseExtensions.HandleServerErrorAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},System.Func{System.Net.HttpStatusCode,FunctionalDdd.Error})">
+  HandleServerErrorAsync(Task&lt;HttpResponseMessage&gt;, Func&lt;HttpStatusCode, Error&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L236"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles any server error (5xx) status codes with a custom error factory asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleServerErrorAsync(this Task&lt;HttpResponseMessage&gt; responseTask, Func&lt;HttpStatusCode, Error&gt; errorFactory)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>errorFactory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.httpstatuscode">HttpStatusCode</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>A function that creates an error based on the status code.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleUnauthorized_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleUnauthorized*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleUnauthorized_System_Net_Http_HttpResponseMessage_FunctionalDdd_UnauthorizedError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleUnauthorized(System.Net.Http.HttpResponseMessage,FunctionalDdd.UnauthorizedError)">
+  HandleUnauthorized(HttpResponseMessage, UnauthorizedError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L74"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of Unauthorized (401).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;HttpResponseMessage&gt; HandleUnauthorized(this HttpResponseMessage response, UnauthorizedError unauthorizedError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>unauthorizedError</code> <a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></dt>
+    <dd><p>The error to return if the response has a status code of Unauthorized.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>A <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_HandleUnauthorizedAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleUnauthorizedAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_HandleUnauthorizedAsync_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__FunctionalDdd_UnauthorizedError_" data-uid="FunctionalDdd.HttpResponseExtensions.HandleUnauthorizedAsync(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},FunctionalDdd.UnauthorizedError)">
+  HandleUnauthorizedAsync(Task&lt;HttpResponseMessage&gt;, UnauthorizedError)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L90"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Handles the case when the HTTP response has a status code of Unauthorized (401) asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;HttpResponseMessage&gt;&gt; HandleUnauthorizedAsync(this Task&lt;HttpResponseMessage&gt; responseTask, UnauthorizedError unauthorizedError)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>unauthorizedError</code> <a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></dt>
+    <dd><p>The error to return if the response has a status code of Unauthorized.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync__1_FunctionalDdd_Result_System_Net_Http_HttpResponseMessage__System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync``1(FunctionalDdd.Result{System.Net.Http.HttpResponseMessage},System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultFromJsonAsync&lt;TValue&gt;(Result&lt;HttpResponseMessage&gt;, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L377"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type using the Result monad.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; ReadResultFromJsonAsync&lt;TValue&gt;(this Result&lt;HttpResponseMessage&gt; response, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The Result object containing the HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the deserialized value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync__1_System_Net_Http_HttpResponseMessage_System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync``1(System.Net.Http.HttpResponseMessage,System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultFromJsonAsync&lt;TValue&gt;(HttpResponseMessage, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L343"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; ReadResultFromJsonAsync&lt;TValue&gt;(this HttpResponseMessage response, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the deserialized value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result_System_Net_Http_HttpResponseMessage___System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{System.Net.Http.HttpResponseMessage}},System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultFromJsonAsync&lt;TValue&gt;(Task&lt;Result&lt;HttpResponseMessage&gt;&gt;, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L392"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type using the Result monad asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; ReadResultFromJsonAsync&lt;TValue&gt;(this Task&lt;Result&lt;HttpResponseMessage&gt;&gt; responseTask, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>The task representing the Result object containing the HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the deserialized value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultFromJsonAsync__1_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultFromJsonAsync``1(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultFromJsonAsync&lt;TValue&gt;(Task&lt;HttpResponseMessage&gt;, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L359"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; ReadResultFromJsonAsync&lt;TValue&gt;(this Task&lt;HttpResponseMessage&gt; responseTask, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the deserialized value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync__1_FunctionalDdd_Result_System_Net_Http_HttpResponseMessage__System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync``1(FunctionalDdd.Result{System.Net.Http.HttpResponseMessage},System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultMaybeFromJsonAsync&lt;TValue&gt;(Result&lt;HttpResponseMessage&gt;, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L451"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type using the Maybe monad and the Result monad.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;Maybe&lt;TValue&gt;&gt;&gt; ReadResultMaybeFromJsonAsync&lt;TValue&gt;(this Result&lt;HttpResponseMessage&gt; response, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The Result object containing the HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe</a>&lt;TValue&gt;&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync__1_System_Net_Http_HttpResponseMessage_System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync``1(System.Net.Http.HttpResponseMessage,System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultMaybeFromJsonAsync&lt;TValue&gt;(HttpResponseMessage, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L410"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type using the Maybe monad.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;Maybe&lt;TValue&gt;&gt;&gt; ReadResultMaybeFromJsonAsync&lt;TValue&gt;(this HttpResponseMessage response, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>response</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a></dt>
+    <dd><p>The HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe</a>&lt;TValue&gt;&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result_System_Net_Http_HttpResponseMessage___System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{System.Net.Http.HttpResponseMessage}},System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultMaybeFromJsonAsync&lt;TValue&gt;(Task&lt;Result&lt;HttpResponseMessage&gt;&gt;, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L466"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type using the Maybe monad and the Result monad asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;Maybe&lt;TValue&gt;&gt;&gt; ReadResultMaybeFromJsonAsync&lt;TValue&gt;(this Task&lt;Result&lt;HttpResponseMessage&gt;&gt; responseTask, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;&gt;</dt>
+    <dd><p>The task representing the Result object containing the HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe</a>&lt;TValue&gt;&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync*"></a>
+
+  <h3 id="FunctionalDdd_HttpResponseExtensions_ReadResultMaybeFromJsonAsync__1_System_Threading_Tasks_Task_System_Net_Http_HttpResponseMessage__System_Text_Json_Serialization_Metadata_JsonTypeInfo___0__System_Threading_CancellationToken_" data-uid="FunctionalDdd.HttpResponseExtensions.ReadResultMaybeFromJsonAsync``1(System.Threading.Tasks.Task{System.Net.Http.HttpResponseMessage},System.Text.Json.Serialization.Metadata.JsonTypeInfo{``0},System.Threading.CancellationToken)">
+  ReadResultMaybeFromJsonAsync&lt;TValue&gt;(Task&lt;HttpResponseMessage&gt;, JsonTypeInfo&lt;TValue&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L433"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Reads the HTTP response content as JSON and deserializes it to the specified type using the Maybe monad asynchronously.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;Maybe&lt;TValue&gt;&gt;&gt; ReadResultMaybeFromJsonAsync&lt;TValue&gt;(this Task&lt;HttpResponseMessage&gt; responseTask, JsonTypeInfo&lt;TValue&gt; jsonTypeInfo, CancellationToken cancellationToken) where TValue : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>responseTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.httpresponsemessage">HttpResponseMessage</a>&gt;</dt>
+    <dd><p>The task representing the HTTP response message.</p>
+</dd>
+    <dt><code>jsonTypeInfo</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.text.json.serialization.metadata.jsontypeinfo-1">JsonTypeInfo</a>&lt;TValue&gt;</dt>
+    <dd><p>The JSON type information for deserialization.</p>
+</dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>The cancellation token.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe</a>&lt;TValue&gt;&gt;&gt;</dt>
+    <dd><p>A <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> of <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type to deserialize the JSON content to.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Http/src/HttpResponseMessageJsonExtensions.cs/#L36" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

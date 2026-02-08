@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Aggregate Factory Pattern </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Aggregate Factory Pattern ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/aggregate-factory-pattern.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="aggregate-factory-pattern">Aggregate Factory Pattern</h1>
+
+<h2 id="the-problem-how-to-handle-both-new-and-existing-aggregates">The Problem: How to Handle Both New and Existing Aggregates?</h2>
+<p>When working with DDD aggregates, you need <strong>two different creation scenarios</strong>:</p>
+<ol>
+<li><strong>Creating NEW aggregates</strong> - Generate fresh ID</li>
+<li><strong>Reconstituting EXISTING aggregates</strong> - Preserve existing ID (from database, tests, etc.)</li>
+</ol>
+<p>If you only have one factory method that always generates a new ID, you <strong>can't</strong> load existing aggregates from the database!</p>
+<h2 id="the-solution-dual-factory-methods">The Solution: Dual Factory Methods</h2>
+<h3 id="pattern-overview">Pattern Overview</h3>
+<pre><code class="lang-csharp">public class Product : Aggregate&lt;ProductId&gt;
+{
+    // ✅ Pattern 1: Parameterless constructor for EF Core
+    private Product() : base(null!) { }
+
+    // ✅ Pattern 2: Private constructor accepting ID
+    private Product(ProductId id, ...) : base(id) { }
+
+    // ✅ Pattern 3: TryCreate for NEW aggregates (generates ID)
+    public static Result&lt;Product&gt; TryCreate(...) =&gt;
+        // ... validation ...
+        .Map(() =&gt; new Product(ProductId.NewUnique(), ...));
+
+    // ✅ Pattern 4: TryCreateExisting for EXISTING aggregates (accepts ID)
+    public static Result&lt;Product&gt; TryCreateExisting(ProductId id, ...) =&gt;
+        // ... validation ...
+        .Map(() =&gt; new Product(id, ...));
+
+    // ✅ Pattern 5: Convenience methods that throw
+    public static Product Create(...) =&gt; TryCreate(...).Value;
+    public static Product CreateExisting(ProductId id, ...) =&gt; TryCreateExisting(id, ...).Value;
+}
+</code></pre>
+<h2 id="when-to-use-each-method">When to Use Each Method</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Use Case</th>
+<th>ID Handling</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TryCreate</code></td>
+<td>Creating new domain objects</td>
+<td>Generates new ID</td>
+<td><code>Product.TryCreate(&quot;Laptop&quot;, &quot;SKU-001&quot;, 999.99m, &quot;Electronics&quot;)</code></td>
+</tr>
+<tr>
+<td><code>TryCreateExisting</code></td>
+<td>Loading from database, tests with known IDs</td>
+<td>Accepts existing ID</td>
+<td><code>Product.TryCreateExisting(productId, &quot;Laptop&quot;, &quot;SKU-001&quot;, 999.99m, &quot;Electronics&quot;)</code></td>
+</tr>
+<tr>
+<td><code>Create</code></td>
+<td>Tests where validation should never fail</td>
+<td>Generates new ID, throws</td>
+<td><code>var product = Product.Create(&quot;Laptop&quot;, &quot;SKU-001&quot;, 999.99m, &quot;Electronics&quot;)</code></td>
+</tr>
+<tr>
+<td><code>CreateExisting</code></td>
+<td>Tests needing specific ID</td>
+<td>Accepts existing ID, throws</td>
+<td><code>var product = Product.CreateExisting(knownId, &quot;Laptop&quot;, &quot;SKU-001&quot;, 999.99m, &quot;Electronics&quot;)</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="real-world-examples">Real-World Examples</h2>
+<h3 id="example-1-creating-a-new-product-domain-logic">Example 1: Creating a New Product (Domain Logic)</h3>
+<pre><code class="lang-csharp">// ✅ Use TryCreate - generates new ID
+public async Task&lt;Result&lt;Product&gt;&gt; CreateProductAsync(ProductDto dto)
+{
+    return await Product.TryCreate(
+            dto.Name,
+            dto.Sku,
+            dto.Price,
+            dto.Category,
+            dto.StockQuantity)
+        .EnsureAsync(
+            async p =&gt; !await _repository.SkuExistsAsync(p.Sku),
+            Error.Conflict(&quot;SKU already exists&quot;))
+        .TapAsync(async p =&gt; await _repository.SaveAsync(p));
+}
+</code></pre>
+<h3 id="example-2-loading-from-database-ef-core">Example 2: Loading from Database (EF Core)</h3>
+<pre><code class="lang-csharp">// ✅ EF Core uses parameterless constructor + property setters
+var product = await _dbContext.Products
+    .FirstOrDefaultAsync(p =&gt; p.Id == productId);
+// EF Core reconstitutes: new Product() { Id = productId, Name = ..., etc. }
+</code></pre>
+<h3 id="example-3-testing-with-known-ids">Example 3: Testing with Known IDs</h3>
+<pre><code class="lang-csharp">[Fact]
+public void Product_with_specific_id_for_testing()
+{
+    // ✅ Use CreateExisting in tests when you need a specific ID
+    var knownId = ProductId.Create(Guid.Parse(&quot;12345678-1234-1234-1234-123456789abc&quot;));
+    
+    var product = Product.CreateExisting(
+        knownId,
+        &quot;Test Product&quot;,
+        &quot;TEST-SKU&quot;,
+        99.99m,
+        &quot;Test Category&quot;);
+    
+    product.Id.Should().Be(knownId);
+}
+</code></pre>
+<h3 id="example-4-updating-an-existing-product">Example 4: Updating an Existing Product</h3>
+<pre><code class="lang-csharp">// ✅ Load existing product, then update
+public async Task&lt;Result&lt;Product&gt;&gt; UpdateProductAsync(ProductId id, UpdateProductDto dto)
+{
+    return await _repository.GetByIdAsync(id)  // Loads with existing ID
+        .ToResultAsync(Error.NotFound($&quot;Product {id} not found&quot;))
+        .Bind(product =&gt; product.UpdateDetails(dto.Name, dto.Price, dto.Category))
+        .TapAsync(async product =&gt; await _repository.SaveAsync(product));
+}
+</code></pre>
+<h3 id="example-5-manual-reconstitution-if-not-using-ef-core">Example 5: Manual Reconstitution (if not using EF Core)</h3>
+<pre><code class="lang-csharp">// ✅ Use TryCreateExisting when manually deserializing
+public Result&lt;Product&gt; DeserializeProduct(ProductData data) =&gt;
+    Product.TryCreateExisting(
+        data.Id,
+        data.Name,
+        data.Sku,
+        data.Price,
+        data.Category,
+        data.StockQuantity,
+        data.IsActive);
+</code></pre>
+<h2 id="why-two-factory-methods">Why Two Factory Methods?</h2>
+<h3 id="-anti-pattern-single-factory-always-generates-id">❌ Anti-Pattern: Single Factory Always Generates ID</h3>
+<pre><code class="lang-csharp">// ❌ BAD: Can't load existing products!
+public static Result&lt;Product&gt; TryCreate(string name, ...) =&gt;
+    // ...
+    .Map(() =&gt; new Product(ProductId.NewUnique(), ...));  // Always new ID!
+
+// Problem 1: Can't load from database
+var existingProduct = Product.TryCreate(dbData.Name, ...);  // ❌ Creates NEW ID!
+
+// Problem 2: Can't test with known IDs
+var testId = ProductId.Create(Guid.Parse(&quot;...&quot;));
+var product = Product.TryCreate(...);  // ❌ Generates random ID, can't use testId
+</code></pre>
+<h3 id="-correct-pattern-dual-factory-methods">✅ Correct Pattern: Dual Factory Methods</h3>
+<pre><code class="lang-csharp">// ✅ GOOD: Separate methods for different scenarios
+
+// For creating NEW products
+public static Result&lt;Product&gt; TryCreate(string name, ...) =&gt;
+    .Map(() =&gt; new Product(ProductId.NewUnique(), ...));  // ✅ New ID
+
+// For EXISTING products
+public static Result&lt;Product&gt; TryCreateExisting(ProductId id, string name, ...) =&gt;
+    .Map(() =&gt; new Product(id, ...));  // ✅ Existing ID preserved
+</code></pre>
+<h2 id="benefits">Benefits</h2>
+<p>✅ <strong>Type-safe</strong> - Compiler ensures you provide an ID when needed<br>
+✅ <strong>Clear intent</strong> - Method name tells you if ID is new or existing<br>
+✅ <strong>EF Core compatible</strong> - Parameterless constructor for ORM<br>
+✅ <strong>Testable</strong> - Can create products with specific IDs in tests<br>
+✅ <strong>Domain-driven</strong> - <code>TryCreate</code> for business logic, <code>TryCreateExisting</code> for infrastructure</p>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Method</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Creating new product in domain</strong></td>
+<td><code>TryCreate</code></td>
+<td>Business logic should generate IDs</td>
+</tr>
+<tr>
+<td><strong>Loading from database</strong></td>
+<td>EF Core parameterless constructor</td>
+<td>ORM handles reconstitution</td>
+</tr>
+<tr>
+<td><strong>Manual deserialization</strong></td>
+<td><code>TryCreateExisting</code></td>
+<td>Preserve existing ID from source</td>
+</tr>
+<tr>
+<td><strong>Testing with known ID</strong></td>
+<td><code>CreateExisting</code></td>
+<td>Tests need predictable IDs</td>
+</tr>
+<tr>
+<td><strong>Quick test setup</strong></td>
+<td><code>Create</code></td>
+<td>Tests where validation won't fail</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Insight:</strong> The <code>TryCreate</code> vs <code>TryCreateExisting</code> distinction mirrors the DDD principle that <strong>aggregate identity is immutable</strong>. New aggregates get new IDs; existing aggregates keep their IDs. 🎯</p>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/aggregate-factory-pattern.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

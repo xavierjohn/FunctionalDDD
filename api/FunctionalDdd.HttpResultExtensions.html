@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class HttpResultExtensions </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class HttpResultExtensions ">
+      
+      <meta name="description" content="Provides extension methods to convert Result types to ASP.NET Core Minimal API  responses. These methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_HttpResultExtensions.md&amp;value=---%0Auid%3A%20FunctionalDdd.HttpResultExtensions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.HttpResultExtensions">
+
+
+
+  <h1 id="FunctionalDdd_HttpResultExtensions" data-uid="FunctionalDdd.HttpResultExtensions" class="text-break">
+Class HttpResultExtensions  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensions.cs/#L37"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.Asp.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Provides extension methods to convert Result types to ASP.NET Core Minimal API <a class="xref" href="FunctionalDdd.IResult.html">IResult</a> responses.
+These methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class HttpResultExtensions</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">HttpResultExtensions</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+  <h2 id="FunctionalDdd_HttpResultExtensions_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+These extensions enable clean, functional-style Minimal API endpoints by automatically mapping
+domain Result types to appropriate HTTP responses. They provide the same functionality as
+<a class="xref" href="FunctionalDdd.ActionResultExtensions.html">ActionResultExtensions</a> but for the Minimal API programming model (ASP.NET Core 6+).
+</p>
+<p>
+Key features:
+<ul><li>Automatic HTTP status code selection based on error type</li><li>Problem Details (RFC 7807) formatting for errors</li><li>Validation error formatting with field-level details</li><li>Unit result to 204 No Content conversion</li><li>Clean, declarative endpoint definitions</li></ul>
+
+<p>
+Usage pattern in Minimal APIs:
+<pre><code class="lang-csharp">app.MapGet("/users/{id}", (string id, IUserService userService) =&gt;
+    UserId.TryCreate(id)
+        .Bind(userService.GetUser)
+        .Map(user =&gt; new UserDto(user))
+        .ToHttpResult()
+);</code></pre>
+
+</div>
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="FunctionalDdd_HttpResultExtensions_ToHttpResult_" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult*"></a>
+
+  <h3 id="FunctionalDdd_HttpResultExtensions_ToHttpResult_FunctionalDdd_Error_" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult(FunctionalDdd.Error)">
+  ToHttpResult(Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensions.cs/#L257"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a domain <a class="xref" href="FunctionalDdd.Error.html">Error</a> to an <a class="xref" href="FunctionalDdd.IResult.html">IResult</a> with appropriate HTTP status code and Problem Details format.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IResult ToHttpResult(this Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>The domain error to convert.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.iresult">IResult</a></dt>
+    <dd><p>An IResult with Problem Details (RFC 7807) response containing:</p>
+<table><thead><tr><th class="term">Domain Error Type</th><th class="description">HTTP Status Code</th></tr></thead><tbody><tr><td class="term"><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></td><td class="description">400 Bad Request with validation problem details and field errors</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a></td><td class="description">400 Bad Request</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></td><td class="description">401 Unauthorized</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></td><td class="description">403 Forbidden</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></td><td class="description">404 Not Found</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></td><td class="description">409 Conflict</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a></td><td class="description">422 Unprocessable Entity</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a></td><td class="description">429 Too Many Requests</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a></td><td class="description">500 Internal Server Error</td></tr><tr><td class="term"><a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a></td><td class="description">503 Service Unavailable</td></tr><tr><td class="term">Unknown types</td><td class="description">500 Internal Server Error</td></tr></tbody></table>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResultExtensions_ToHttpResult_FunctionalDdd_Error__examples">Examples</h4>
+  <p>Example Problem Details response for a validation error:</p>
+<pre><code class="lang-csharp">{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "detail": "User data validation failed",
+  "instance": "/api/users",
+  "errors": {
+    "email": ["Email address is invalid", "Email is required"],
+    "age": ["Age must be 18 or older"]
+  }
+}</code></pre>
+
+  <p>Using custom error types in domain logic:</p>
+<pre><code class="lang-csharp">public class UserService
+{
+    public Result&lt;User&gt; GetUser(UserId id)
+    {
+        var user = _repository.FindById(id);
+        if (user == null)
+            return Error.NotFound($"User {id} not found", $"/users/{id}");
+
+        return user;
+    }
+
+    public Result&lt;User&gt; CreateUser(EmailAddress email, FirstName name)
+    {
+        if (_repository.ExistsByEmail(email))
+            return Error.Conflict("User with this email already exists");
+
+        var user = User.Create(email, name);
+        _repository.Add(user);
+        return user;
+    }
+}
+
+// Minimal API endpoint
+app.MapGet("/users/{id}", (string id, UserService service) =&gt;
+    UserId.TryCreate(id)
+        .Bind(service.GetUser)
+        .ToHttpResult());
+
+// Error automatically mapped to 404 Not Found with Problem Details</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResultExtensions_ToHttpResult_FunctionalDdd_Error__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+All responses use Problem Details format (RFC 7807) which provides a standard way to
+communicate errors in HTTP APIs. The format includes:
+<ul><li><code>type</code>: A URI reference identifying the problem type</li><li><code>title</code>: A short human-readable summary</li><li><code>status</code>: The HTTP status code</li><li><code>detail</code>: A human-readable explanation (from error.Detail)</li><li><code>instance</code>: A URI reference identifying the specific occurrence (from error.Instance)</li></ul>
+
+<p>
+For <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>, the response includes an additional <code>errors</code> object
+containing field-level validation messages grouped by field name.
+</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_HttpResultExtensions_ToHttpResult_" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult*"></a>
+
+  <h3 id="FunctionalDdd_HttpResultExtensions_ToHttpResult__1_FunctionalDdd_Result___0__" data-uid="FunctionalDdd.HttpResultExtensions.ToHttpResult``1(FunctionalDdd.Result{``0})">
+  ToHttpResult&lt;TValue&gt;(Result&lt;TValue&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensions.cs/#L119"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="FunctionalDdd.IResult.html">IResult</a> with appropriate HTTP status code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IResult ToHttpResult&lt;TValue&gt;(this Result&lt;TValue&gt; result)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>result</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>The result object to convert.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.iresult">IResult</a></dt>
+    <dd><ul><li>200 OK with value if result is successful (except for Unit)</li><li>204 No Content if result is successful and TValue is Unit</li><li>Appropriate error status code (400-599) based on error type if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type of the value contained in the result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResultExtensions_ToHttpResult__1_FunctionalDdd_Result___0___examples">Examples</h4>
+  <p>Simple GET endpoint:</p>
+<pre><code class="lang-csharp">app.MapGet("/users/{id}", (Guid id, IUserRepository repository) =&gt;
+    UserId.TryCreate(id)
+        .Bind(repository.GetAsync)
+        .Map(user =&gt; new UserDto(user))
+        .ToHttpResult());
+
+// Success: 200 OK with UserDto
+// Not found: 404 Not Found with Problem Details
+// Validation error: 400 Bad Request with validation details</code></pre>
+
+  <p>POST endpoint with validation:</p>
+<pre><code class="lang-csharp">app.MapPost("/users", (CreateUserRequest request, IUserService userService) =&gt;
+    EmailAddress.TryCreate(request.Email)
+        .Combine(FirstName.TryCreate(request.FirstName))
+        .Bind((email, name) =&gt; userService.CreateUser(email, name))
+        .Map(user =&gt; new UserDto(user))
+        .ToHttpResult());
+
+// Success: 200 OK with UserDto
+// Validation error: 400 Bad Request with field-level errors
+// Conflict: 409 Conflict if user already exists</code></pre>
+
+  <p>DELETE endpoint returning Unit:</p>
+<pre><code class="lang-csharp">app.MapDelete("/users/{id}", (Guid id, IUserRepository repository) =&gt;
+    UserId.TryCreate(id)
+        .Bind(repository.DeleteAsync)
+        .ToHttpResult());
+
+// Success: 204 No Content (automatic for Unit)
+// Not found: 404 Not Found</code></pre>
+
+  <p>Complex endpoint with multiple operations:</p>
+<pre><code class="lang-csharp">app.MapPost("/orders", async (
+    CreateOrderRequest request,
+    IOrderService orderService,
+    IEventBus eventBus) =&gt;
+    await CustomerId.TryCreate(request.CustomerId)
+        .BindAsync(orderService.GetCustomerAsync)
+        .BindAsync(customer =&gt; orderService.CreateOrderAsync(customer, request.Items))
+        .TapAsync(async order =&gt; await eventBus.PublishAsync(new OrderCreatedEvent(order.Id)))
+        .MapAsync(order =&gt; new OrderDto(order))
+        .ToHttpResultAsync());</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_HttpResultExtensions_ToHttpResult__1_FunctionalDdd_Result___0___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+This is the primary method for converting domain results to HTTP responses in Minimal APIs.
+It automatically selects the appropriate status code based on the error type.
+</p>
+<p>
+Special handling for <a class="xref" href="FunctionalDdd.Unit.html">Unit</a>: Since Unit represents "no value",
+successful Unit results return 204 No Content instead of 200 OK.
+This is appropriate for operations like DELETE or state-changing operations
+that don't return data.
+</p>
+</div>
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/HttpResultExtensions.cs/#L37" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

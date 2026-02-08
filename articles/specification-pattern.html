@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Specification Pattern Integration </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Specification Pattern Integration ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/specification-pattern.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="specification-pattern-integration">Specification Pattern Integration</h1>
+
+<p><strong>TL;DR:</strong> FunctionalDDD integrates seamlessly with Ardalis.Specification, combining the power of type-safe queries with Railway-Oriented Programming.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#what-is-the-specification-pattern">What is the Specification Pattern?</a></li>
+<li><a href="#functionalddd-integration">FunctionalDDD Integration</a></li>
+<li><a href="#type-safe-specifications-with-value-objects">Type-Safe Specifications with Value Objects</a></li>
+<li><a href="#rop-extensions-for-repository-queries">ROP Extensions for Repository Queries</a></li>
+<li><a href="#combining-specifications-with-rop-pipelines">Combining Specifications with ROP Pipelines</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+<li><a href="#real-world-example">Real-World Example</a></li>
+</ul>
+<h2 id="what-is-the-specification-pattern">What is the Specification Pattern?</h2>
+<p>The Specification pattern encapsulates query logic into reusable, composable objects. It's particularly useful for:</p>
+<ul>
+<li><strong>Dynamic query building</strong> - Build complex database queries programmatically</li>
+<li><strong>Query reuse</strong> - Share query logic across your application</li>
+<li><strong>Separation of concerns</strong> - Keep query logic separate from business logic</li>
+<li><strong>Type safety</strong> - Strongly-typed query parameters</li>
+</ul>
+<p><strong>Traditional Repository Pattern:</strong></p>
+<pre><code class="lang-csharp">// ❌ Query logic mixed with business logic
+var products = await _dbContext.Products
+    .Where(p =&gt; p.IsActive)
+    .Where(p =&gt; p.Category == category)
+    .OrderBy(p =&gt; p.Name)
+    .ToListAsync();
+</code></pre>
+<p><strong>Specification Pattern:</strong></p>
+<pre><code class="lang-csharp">// ✅ Query logic encapsulated in reusable specification
+public class ActiveProductsByCategorySpec : Specification&lt;Product&gt;
+{
+    public ActiveProductsByCategorySpec(CategoryName category) =&gt;
+        Query
+            .Where(p =&gt; p.IsActive)
+            .Where(p =&gt; p.Category == category)
+            .OrderBy(p =&gt; p.Name);
+}
+
+// Usage
+var products = await repository.ToListAsync(new ActiveProductsByCategorySpec(category));
+</code></pre>
+<h2 id="functionalddd-integration">FunctionalDDD Integration</h2>
+<p>FunctionalDDD provides <strong>seamless integration</strong> with <a href="https://github.com/ardalis/Specification">Ardalis.Specification</a> through the <code>FunctionalDdd.ArdalisSpecification</code> package.</p>
+<h3 id="installation">Installation</h3>
+<pre><code class="lang-bash">dotnet add package FunctionalDdd.ArdalisSpecification
+</code></pre>
+<h3 id="key-features">Key Features</h3>
+<p>✅ <strong>Result-returning repository methods</strong> - Returns <code>Result&lt;T&gt;</code> instead of throwing exceptions<br>
+✅ <strong>Type-safe value object queries</strong> - Specifications accept value objects, not primitives<br>
+✅ <strong>ROP pipeline integration</strong> - Chain specifications with <code>Ensure</code>, <code>Bind</code>, <code>Map</code>, etc.<br>
+✅ <strong>Automatic error handling</strong> - <code>NotFoundError</code> and <code>ConflictError</code> instead of exceptions</p>
+<h2 id="type-safe-specifications-with-value-objects">Type-Safe Specifications with Value Objects</h2>
+<p>FunctionalDDD specifications work seamlessly with <strong>strongly-typed value objects</strong>, preventing primitive obsession:</p>
+<h3 id="example-product-specifications">Example: Product Specifications</h3>
+<pre><code class="lang-csharp">/// &lt;summary&gt;
+/// Find a product by its unique SKU value object.
+/// &lt;/summary&gt;
+public sealed class ProductBySkuSpec : SingleResultSpecification&lt;Product&gt;
+{
+    public ProductBySkuSpec(Sku sku) =&gt;  // ✅ Accepts Sku value object, not string
+        Query.Where(p =&gt; p.Sku == sku);
+}
+
+/// &lt;summary&gt;
+/// Find products within a price range using Money value objects.
+/// &lt;/summary&gt;
+public sealed class ProductsByPriceRangeSpec : Specification&lt;Product&gt;
+{
+    public ProductsByPriceRangeSpec(Money minPrice, Money maxPrice) =&gt;  // ✅ Money value objects
+        Query
+            .Where(p =&gt; p.IsActive)
+            .Where(p =&gt; p.Price.Amount &gt;= minPrice.Amount &amp;&amp; p.Price.Amount &lt;= maxPrice.Amount)
+            .OrderBy(p =&gt; p.Price.Amount);
+}
+
+/// &lt;summary&gt;
+/// Find active products in a category.
+/// &lt;/summary&gt;
+public sealed class ActiveProductsByCategorySpec : Specification&lt;Product&gt;
+{
+    public ActiveProductsByCategorySpec(CategoryName category) =&gt;  // ✅ CategoryName value object
+        Query
+            .Where(p =&gt; p.IsActive)
+            .Where(p =&gt; p.Category == category)
+            .OrderBy(p =&gt; p.Name);
+}
+</code></pre>
+<h3 id="type-safety-benefits">Type Safety Benefits</h3>
+<pre><code class="lang-csharp">// ✅ Compiler enforces correct types
+var sku = Sku.Create(&quot;LAPTOP-001&quot;);
+var spec = new ProductBySkuSpec(sku);  // ✅ Type-safe
+
+// ❌ Compiler error - can't pass string!
+var wrongSpec = new ProductBySkuSpec(&quot;LAPTOP-001&quot;);  // ❌ Compile error!
+</code></pre>
+<h2 id="rop-extensions-for-repository-queries">ROP Extensions for Repository Queries</h2>
+<p>FunctionalDDD extends Ardalis.Specification repositories with <strong>Result-returning methods</strong>:</p>
+<h3 id="firstornotfoundasynct"><code>FirstOrNotFoundAsync&lt;T&gt;</code></h3>
+<p>Returns the first entity matching the specification, or <code>NotFoundError</code>:</p>
+<pre><code class="lang-csharp">public static async Task&lt;Result&lt;T&gt;&gt; FirstOrNotFoundAsync&lt;T&gt;(
+    this IRepositoryBase&lt;T&gt; repository,
+    ISpecification&lt;T&gt; specification,
+    string? entityName = null,
+    CancellationToken ct = default) where T : class
+</code></pre>
+<p><strong>Usage:</strong></p>
+<pre><code class="lang-csharp">var result = await repository.FirstOrNotFoundAsync(
+    new ActiveProductsByCategorySpec(category),
+    entityName: &quot;Product&quot;);
+
+// Returns Result&lt;Product&gt;:
+// - Success(product) if found
+// - Failure(NotFoundError) if none exist
+</code></pre>
+<h3 id="singleornotfoundasynct"><code>SingleOrNotFoundAsync&lt;T&gt;</code></h3>
+<p>Returns the single entity matching the specification, or an error:</p>
+<pre><code class="lang-csharp">public static async Task&lt;Result&lt;T&gt;&gt; SingleOrNotFoundAsync&lt;T&gt;(
+    this IRepositoryBase&lt;T&gt; repository,
+    ISingleResultSpecification&lt;T&gt; specification,
+    string? entityName = null,
+    CancellationToken ct = default) where T : class
+</code></pre>
+<p><strong>Usage:</strong></p>
+<pre><code class="lang-csharp">var result = await repository.SingleOrNotFoundAsync(
+    new ProductBySkuSpec(sku),
+    entityName: &quot;Product&quot;);
+
+// Returns Result&lt;Product&gt;:
+// - Success(product) if exactly one found
+// - Failure(NotFoundError) if none found
+// - Failure(ConflictError) if multiple found
+</code></pre>
+<h3 id="tolistasynct"><code>ToListAsync&lt;T&gt;</code></h3>
+<p>Returns a list of entities (standard Ardalis.Specification method):</p>
+<pre><code class="lang-csharp">var products = await repository.ToListAsync(new LowStockProductsSpec(threshold: 10));
+// Returns List&lt;Product&gt; directly
+</code></pre>
+<h2 id="combining-specifications-with-rop-pipelines">Combining Specifications with ROP Pipelines</h2>
+<p>The real power comes from <strong>chaining specifications with ROP operations</strong>:</p>
+<h3 id="pattern-1-validate-input--query--transform">Pattern 1: Validate Input → Query → Transform</h3>
+<pre><code class="lang-csharp">// User input
+string userInputSku = &quot;LAPTOP-001&quot;;
+
+// Validate → Query → Business Rules → Transform
+var result = await Sku.TryCreate(userInputSku, &quot;sku&quot;)
+    .BindAsync(async sku =&gt; 
+        await repository.SingleOrNotFoundAsync(new ProductBySkuSpec(sku)))
+    .Ensure(p =&gt; p.IsActive, Error.Validation(&quot;Product is not active&quot;))
+    .Ensure(p =&gt; p.StockQuantity &gt; 0, Error.Validation(&quot;Product is out of stock&quot;))
+    .Map(p =&gt; new ProductDto(p.Id, p.Name, p.Price, p.StockQuantity));
+
+// Returns Result&lt;ProductDto&gt;:
+// - If SKU validation fails → Failure(ValidationError)
+// - If product not found → Failure(NotFoundError)
+// - If product inactive → Failure(ValidationError)
+// - If out of stock → Failure(ValidationError)
+// - Otherwise → Success(ProductDto)
+</code></pre>
+<h3 id="pattern-2-query--complex-business-logic">Pattern 2: Query → Complex Business Logic</h3>
+<pre><code class="lang-csharp">var orderPipeline = await repository
+    .SingleOrNotFoundAsync(new ProductBySkuSpec(sku))
+    .Ensure(p =&gt; p.IsActive, Error.Validation(&quot;Product is not active&quot;))
+    .Ensure(p =&gt; p.StockQuantity &gt;= quantity, Error.Validation(&quot;Insufficient stock&quot;))
+    .Bind(p =&gt; CreateOrderLine(p, quantity))
+    .TapAsync(async line =&gt; await _orderRepository.AddLineAsync(line));
+
+// Returns Result&lt;OrderLine&gt;
+</code></pre>
+<h3 id="pattern-3-multiple-queries-combined">Pattern 3: Multiple Queries Combined</h3>
+<pre><code class="lang-csharp">var combinedResult = await repository
+    .SingleOrNotFoundAsync(new ProductByIdSpec(productId))
+    .Combine(
+        await _customerRepository.SingleOrNotFoundAsync(new CustomerByIdSpec(customerId)))
+    .Bind((product, customer) =&gt; ValidateOrderEligibility(product, customer))
+    .Tap((product, customer) =&gt; CreateOrder(product, customer));
+
+// Returns Result&lt;(Product, Customer)&gt;
+</code></pre>
+<h3 id="pattern-4-specification--async-validation">Pattern 4: Specification + Async Validation</h3>
+<pre><code class="lang-csharp">var result = await repository
+    .SingleOrNotFoundAsync(new CustomerByEmailSpec(email))
+    .EnsureAsync(
+        async c =&gt; !await _blacklistService.IsBlacklistedAsync(c.Id),
+        Error.Validation(&quot;Customer is blacklisted&quot;))
+    .TapAsync(async c =&gt; await SendWelcomeEmailAsync(c.Email));
+
+// Returns Result&lt;Customer&gt;
+</code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="-use-specifications-for-queries">✅ Use Specifications For Queries</h3>
+<pre><code class="lang-csharp">// ✅ Good - Specification encapsulates query logic
+public class ActiveCustomersByRegionSpec : Specification&lt;Customer&gt;
+{
+    public ActiveCustomersByRegionSpec(string region) =&gt;
+        Query
+            .Where(c =&gt; c.IsActive)
+            .Where(c =&gt; c.Region == region)
+            .OrderBy(c =&gt; c.Name);
+}
+
+var customers = await repository.ToListAsync(new ActiveCustomersByRegionSpec(&quot;West&quot;));
+</code></pre>
+<h3 id="-use-rop-for-business-logic">✅ Use ROP For Business Logic</h3>
+<pre><code class="lang-csharp">// ✅ Good - ROP enforces business rules after query
+var result = await repository
+    .SingleOrNotFoundAsync(new CustomerByIdSpec(customerId))
+    .Ensure(c =&gt; c.CreditLimit &gt;= orderTotal,
+           Error.Validation(&quot;Insufficient credit limit&quot;))
+    .Ensure(c =&gt; !c.IsBlacklisted,
+           Error.Validation(&quot;Customer is blacklisted&quot;))
+    .Tap(c =&gt; PlaceOrder(c, orderTotal));
+</code></pre>
+<h3 id="-use-value-objects-in-specifications">✅ Use Value Objects in Specifications</h3>
+<pre><code class="lang-csharp">// ✅ Good - Type-safe with value objects
+public class ProductBySkuSpec : SingleResultSpecification&lt;Product&gt;
+{
+    public ProductBySkuSpec(Sku sku) =&gt;  // ← Sku value object
+        Query.Where(p =&gt; p.Sku == sku);
+}
+
+// ❌ Bad - Primitive obsession
+public class ProductBySkuSpec : SingleResultSpecification&lt;Product&gt;
+{
+    public ProductBySkuSpec(string sku) =&gt;  // ← string primitive
+        Query.Where(p =&gt; p.Sku.Value == sku);
+}
+</code></pre>
+<h3 id="-validate-before-querying">✅ Validate Before Querying</h3>
+<pre><code class="lang-csharp">// ✅ Good - Validate input first, then query
+var result = await Sku.TryCreate(userInput, &quot;sku&quot;)
+    .BindAsync(async sku =&gt; 
+        await repository.SingleOrNotFoundAsync(new ProductBySkuSpec(sku)));
+
+// ❌ Bad - Query with potentially invalid input
+var product = await repository.SingleOrDefaultAsync(spec);
+if (product is null) return Error.NotFound(&quot;Product not found&quot;);
+</code></pre>
+<h3 id="-use-singleresultspecificationt-for-unique-queries">✅ Use <code>SingleResultSpecification&lt;T&gt;</code> for Unique Queries</h3>
+<pre><code class="lang-csharp">// ✅ Good - Indicates single result expected
+public class ProductByIdSpec : SingleResultSpecification&lt;Product&gt;
+{
+    public ProductByIdSpec(ProductId id) =&gt;
+        Query.Where(p =&gt; p.Id == id);
+}
+
+// Use with SingleOrNotFoundAsync
+var result = await repository.SingleOrNotFoundAsync(new ProductByIdSpec(id));
+// Returns Result&lt;Product&gt; with proper error handling
+</code></pre>
+<h3 id="-chain-specifications-with-rop">✅ Chain Specifications with ROP</h3>
+<pre><code class="lang-csharp">// ✅ Good - Query → Validate → Transform pipeline
+var dto = await repository
+    .FirstOrNotFoundAsync(new RecentOrdersSpec(customerId))
+    .Ensure(o =&gt; o.Status == OrderStatus.Pending,
+           Error.Validation(&quot;Only pending orders can be modified&quot;))
+    .Map(o =&gt; new OrderDto(o.Id, o.Total, o.Status));
+
+// Returns Result&lt;OrderDto&gt;
+</code></pre>
+<h2 id="real-world-example">Real-World Example</h2>
+<h3 id="e-commerce-order-processing">E-Commerce Order Processing</h3>
+<pre><code class="lang-csharp">public class OrderService
+{
+    private readonly IRepository&lt;Product&gt; _productRepository;
+    private readonly IRepository&lt;Customer&gt; _customerRepository;
+    private readonly IRepository&lt;Order&gt; _orderRepository;
+
+    public async Task&lt;Result&lt;Order&gt;&gt; CreateOrderAsync(
+        string customerEmail,
+        string productSku,
+        int quantity)
+    {
+        // 1. Validate and create value objects
+        return await EmailAddress.TryCreate(customerEmail, &quot;email&quot;)
+            .Combine(Sku.TryCreate(productSku, &quot;sku&quot;))
+            
+            // 2. Query using specifications
+            .BindAsync(async (email, sku) =&gt;
+                await _customerRepository.SingleOrNotFoundAsync(
+                    new CustomerByEmailSpec(email),
+                    entityName: &quot;Customer&quot;)
+                .Combine(
+                    await _productRepository.SingleOrNotFoundAsync(
+                        new ProductBySkuSpec(sku),
+                        entityName: &quot;Product&quot;))
+                .Map((customer, product) =&gt; (customer, product, quantity)))
+            
+            // 3. Apply business rules
+            .Ensure(tuple =&gt; tuple.customer.IsActive,
+                   Error.Validation(&quot;Customer account is inactive&quot;))
+            .Ensure(tuple =&gt; tuple.product.IsActive,
+                   Error.Validation(&quot;Product is not available&quot;))
+            .Ensure(tuple =&gt; tuple.product.StockQuantity &gt;= tuple.quantity,
+                   Error.Validation(&quot;Insufficient stock&quot;))
+            .Ensure(tuple =&gt; tuple.customer.CreditLimit &gt;= tuple.product.Price.Amount * tuple.quantity,
+                   Error.Validation(&quot;Insufficient credit limit&quot;))
+            
+            // 4. Create and persist order
+            .BindAsync(async tuple =&gt; 
+                await Order.TryCreate(tuple.customer.Id, tuple.product.Id, tuple.quantity))
+            .TapAsync(async order =&gt; await _orderRepository.AddAsync(order))
+            
+            // 5. Side effects
+            .TapAsync(async order =&gt; await SendOrderConfirmationAsync(order));
+    }
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<h3 id="when-to-use-each-pattern">When to Use Each Pattern</h3>
+<table>
+<thead>
+<tr>
+<th>Use Case</th>
+<th>Pattern</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Database queries</strong></td>
+<td>Specifications</td>
+<td>Encapsulates EF Core query logic</td>
+</tr>
+<tr>
+<td><strong>Reusable query logic</strong></td>
+<td>Specifications</td>
+<td>DRY principle for queries</td>
+</tr>
+<tr>
+<td><strong>Dynamic filtering</strong></td>
+<td>Specifications</td>
+<td>Build queries programmatically</td>
+</tr>
+<tr>
+<td><strong>Complex joins</strong></td>
+<td>Specifications</td>
+<td>Handle complex EF Core queries</td>
+</tr>
+<tr>
+<td><strong>Business rule validation</strong></td>
+<td>ROP (<code>Ensure</code>, <code>Bind</code>)</td>
+<td>Type-safe error handling</td>
+</tr>
+<tr>
+<td><strong>Data transformation</strong></td>
+<td>ROP (<code>Map</code>)</td>
+<td>Functional composition</td>
+</tr>
+<tr>
+<td><strong>Side effects</strong></td>
+<td>ROP (<code>Tap</code>)</td>
+<td>Controlled side-effect execution</td>
+</tr>
+<tr>
+<td><strong>Error propagation</strong></td>
+<td>ROP (automatic)</td>
+<td>Railway track automatic failure routing</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-perfect-combination">The Perfect Combination</h3>
+<p><strong>Specifications + ROP</strong> gives you the best of both worlds:</p>
+<p>✅ <strong>Type-safe queries</strong> with value objects<br>
+✅ <strong>Reusable query logic</strong> through specifications<br>
+✅ <strong>Rich error handling</strong> through <code>Result&lt;T&gt;</code><br>
+✅ <strong>Composable pipelines</strong> combining queries and business logic<br>
+✅ <strong>No exceptions</strong> for expected failures<br>
+✅ <strong>Self-documenting code</strong> that reads like English</p>
+<p><strong>The railway stays on track, powered by specifications.</strong> 🚂✨</p>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/specification-pattern.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

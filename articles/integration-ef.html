@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Entity Framework Core Integration </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Entity Framework Core Integration ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration-ef.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="entity-framework-core-integration">Entity Framework Core Integration</h1>
+
+<p><strong>Level:</strong> Intermediate 📚 | <strong>Time:</strong> 30-40 min | <strong>Prerequisites:</strong> <a href="basics.html">Basics</a></p>
+<p>Integrate Railway-Oriented Programming with Entity Framework Core for type-safe repository patterns. Learn when to use <code>Result&lt;T&gt;</code> vs <code>Maybe&lt;T&gt;</code> in your repositories.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#repository-return-types">Repository Return Types</a></li>
+<li><a href="#result-vs-maybe-pattern">Result vs Maybe Pattern</a></li>
+<li><a href="#extension-methods-for-nullable-conversion">Extension Methods for Nullable Conversion</a></li>
+<li><a href="#handling-database-exceptions">Handling Database Exceptions</a></li>
+<li><a href="#value-object-configuration">Value Object Configuration</a></li>
+</ul>
+<h2 id="repository-return-types">Repository Return Types</h2>
+<p><strong>Key Principle:</strong> The repository (Anti-Corruption Layer) should not make domain decisions. Use the appropriate return type based on the operation's nature.</p>
+<h3 id="when-to-use-each-type">When to Use Each Type</h3>
+<table>
+<thead>
+<tr>
+<th>Return Type</th>
+<th>Use When</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Result&lt;T&gt;</code></td>
+<td>Operation can fail due to <strong>expected infrastructure failures</strong></td>
+<td>Concurrency conflict, duplicate key, foreign key violation</td>
+</tr>
+<tr>
+<td><code>Maybe&lt;T&gt;</code></td>
+<td>Item may or may not exist (<strong>domain's decision</strong>)</td>
+<td>Looking up by email (might be checking uniqueness)</td>
+</tr>
+<tr>
+<td><code>bool</code></td>
+<td>Simple existence check</td>
+<td><code>ExistsByEmailAsync(email)</code></td>
+</tr>
+<tr>
+<td><code>Exception</code></td>
+<td><strong>Unexpected infrastructure failures</strong></td>
+<td>Database connection failure, network timeout, disk full</td>
+</tr>
+<tr>
+<td><code>void</code>/<code>Task</code></td>
+<td>Fire-and-forget side effects</td>
+<td>Publishing domain events</td>
+</tr>
+</tbody>
+</table>
+<h3 id="repository-pattern-architecture">Repository Pattern Architecture</h3>
+<pre><code class="lang-mermaid">graph TB
+    subgraph Controller[&quot;Controller Layer&quot;]
+        REQ[HTTP Request]
+    end
+    
+    subgraph Service[&quot;Service/Domain Layer&quot;]
+        VAL{Validate Input}
+        LOGIC{Business Logic}
+        DEC{Domain Decision}
+    end
+    
+    subgraph Repository[&quot;Repository Layer&quot;]
+        QUERY[Query Methods&lt;br/&gt;return Maybe&amp;lt;T&amp;gt;]
+        COMMAND[Command Methods&lt;br/&gt;return Result&amp;lt;Unit&amp;gt;]
+    end
+    
+    subgraph Database[&quot;Database&quot;]
+        DB[(EF Core&lt;br/&gt;DbContext)]
+    end
+    
+    REQ --&gt; VAL
+    VAL --&gt;|Valid| LOGIC
+    LOGIC --&gt; DEC
+    
+    DEC --&gt;|Need Data?| QUERY
+    QUERY --&gt; DB
+    DB -.-&gt;|null?| MAYBE[Maybe&amp;lt;T&amp;gt;]
+    MAYBE --&gt; DEC
+    
+    DEC --&gt;|Save/Update?| COMMAND
+    COMMAND --&gt; DB
+    DB -.-&gt;|Success| RES_OK[Result.Success]
+    DB -.-&gt;|Duplicate Key| RES_CONFLICT[Error.Conflict]
+    DB -.-&gt;|FK Violation| RES_DOMAIN[Error.Domain]
+    DB -.-&gt;|Concurrency| RES_CONFLICT2[Error.Conflict]
+    
+    RES_OK --&gt; HTTP_OK[200 OK]
+    RES_CONFLICT --&gt; HTTP_409[409 Conflict]
+    RES_DOMAIN --&gt; HTTP_422[422 Unprocessable]
+    RES_CONFLICT2 --&gt; HTTP_409
+    
+    style MAYBE fill:#E1F5FF
+    style RES_OK fill:#90EE90
+    style RES_CONFLICT fill:#FFB6C6
+    style RES_DOMAIN fill:#FFD700
+    style RES_CONFLICT2 fill:#FFB6C6
+</code></pre>
+<h2 id="result-vs-maybe-pattern">Result vs Maybe Pattern</h2>
+<h3 id="-use-maybe-for-queries">✅ Use Maybe<t> for Queries</t></h3>
+<p><strong>When the domain needs to interpret &quot;not found&quot;:</strong></p>
+<pre><code class="lang-csharp">public interface IUserRepository
+{
+    // 🔍 Returns Maybe - domain decides if absence is good/bad
+    Task&lt;Maybe&lt;User&gt;&gt; GetByEmailAsync(EmailAddress email, CancellationToken ct);
+    Task&lt;Maybe&lt;User&gt;&gt; GetByIdAsync(UserId id, CancellationToken ct);
+    
+    // 🔍 Simple existence check
+    Task&lt;bool&gt; ExistsByEmailAsync(EmailAddress email, CancellationToken ct);
+}
+
+public class UserRepository : IUserRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public async Task&lt;Maybe&lt;User&gt;&gt; GetByEmailAsync(
+        EmailAddress email,
+        CancellationToken ct)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u =&gt; u.Email == email, ct);
+        
+        return Maybe.From(user);  // ✅ Neutral - just presence/absence
+    }
+
+    public async Task&lt;bool&gt; ExistsByEmailAsync(
+        EmailAddress email,
+        CancellationToken ct)
+    {
+        return await _context.Users
+            .AnyAsync(u =&gt; u.Email == email, ct);
+    }
+}
+</code></pre>
+<p><strong>Domain layer interprets the Maybe:</strong></p>
+<pre><code class="lang-csharp">// Example 1: Not found is BAD (user login)
+public async Task&lt;Result&lt;User&gt;&gt; LoginAsync(
+    EmailAddress email,
+    Password password,
+    CancellationToken ct)
+{
+    var maybeUser = await _repository.GetByEmailAsync(email, ct);
+    
+    // Domain decides: no user = error
+    if (maybeUser.HasNoValue)
+        return Error.NotFound($&quot;User with email {email} not found&quot;);
+    
+    return maybeUser.Value.VerifyPassword(password);
+}
+
+// Example 2: Not found is GOOD (checking availability)
+public async Task&lt;Result&lt;User&gt;&gt; RegisterUserAsync(
+    RegisterUserCommand cmd,
+    CancellationToken ct)
+{
+    var existingUser = await _repository.GetByEmailAsync(cmd.Email, ct);
+    
+    // Domain decides: user exists = error
+    if (existingUser.HasValue)
+        return Error.Conflict($&quot;Email {cmd.Email} already in use&quot;);
+    
+    // No user = good, can register
+    return User.Create(cmd.Email, cmd.FirstName, cmd.LastName);
+}
+
+// Example 3: Simple boolean check
+public async Task&lt;Result&lt;Unit&gt;&gt; CheckEmailAvailabilityAsync(
+    EmailAddress email,
+    CancellationToken ct)
+{
+    var exists = await _repository.ExistsByEmailAsync(email, ct);
+    
+    if (exists)
+        return Error.Conflict(&quot;Email already in use&quot;);
+    
+    return Result.Success();
+}
+</code></pre>
+<h3 id="-use-result-for-commands">✅ Use Result<t> for Commands</t></h3>
+<p><strong>When the operation can fail due to infrastructure:</strong></p>
+<pre><code class="lang-csharp">public interface IUserRepository
+{
+    // 🔑 Returns Result - can fail due to DB constraints, concurrency, etc.
+    Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(User user, CancellationToken ct);
+    Task&lt;Result&lt;Unit&gt;&gt; DeleteAsync(UserId id, CancellationToken ct);
+}
+
+public class UserRepository : IUserRepository
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger&lt;UserRepository&gt; _logger;
+
+    public async Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(
+        User user,
+        CancellationToken ct)
+    {
+        try
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync(ct);
+            return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Infrastructure failure
+            return Error.Conflict(&quot;User was modified by another process&quot;);
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+        {
+            // Database constraint violation
+            return Error.Conflict(&quot;User with this email already exists&quot;);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, &quot;Error saving user {UserId}&quot;, user.Id);
+            return Error.Unexpected(&quot;Failed to save user&quot;);
+        }
+    }
+
+    public async Task&lt;Result&lt;Unit&gt;&gt; DeleteAsync(
+        UserId id,
+        CancellationToken ct)
+    {
+        try
+        {
+            var user = await _context.Users.FindAsync(new object[] { id }, ct);
+            
+            if (user == null)
+                return Error.NotFound($&quot;User {id} not found&quot;);
+            
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync(ct);
+            return Result.Success();
+        }
+        catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
+        {
+            // Database constraint violation
+            return Error.Domain(&quot;Cannot delete user with active orders&quot;);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, &quot;Error deleting user {UserId}&quot;, id);
+            return Error.Unexpected(&quot;Failed to delete user&quot;);
+        }
+    }
+
+    private static bool IsDuplicateKeyException(DbUpdateException ex)
+        =&gt; ex.InnerException?.Message.Contains(&quot;duplicate key&quot;) ?? false;
+
+    private static bool IsForeignKeyViolation(DbUpdateException ex)
+        =&gt; ex.InnerException?.Message.Contains(&quot;FOREIGN KEY constraint&quot;) ?? false;
+}
+</code></pre>
+<h3 id="complete-repository-example">Complete Repository Example</h3>
+<pre><code class="lang-csharp">using Microsoft.EntityFrameworkCore;
+using FunctionalDdd;
+
+public interface IUserRepository
+{
+    // Queries - return Maybe (domain interprets)
+    Task&lt;Maybe&lt;User&gt;&gt; GetByIdAsync(UserId id, CancellationToken ct);
+    Task&lt;Maybe&lt;User&gt;&gt; GetByEmailAsync(EmailAddress email, CancellationToken ct);
+    Task&lt;bool&gt; ExistsByEmailAsync(EmailAddress email, CancellationToken ct);
+    
+    // Commands - return Result (infrastructure can fail)
+    Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(User user, CancellationToken ct);
+    Task&lt;Result&lt;Unit&gt;&gt; DeleteAsync(UserId id, CancellationToken ct);
+    
+    // Pagination - return Result (query execution can fail)
+    Task&lt;Result&lt;PagedResult&lt;User&gt;&gt;&gt; GetPagedAsync(
+        int page, 
+        int pageSize, 
+        CancellationToken ct);
+}
+
+public class UserRepository : IUserRepository
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger&lt;UserRepository&gt; _logger;
+
+    public UserRepository(
+        ApplicationDbContext context,
+        ILogger&lt;UserRepository&gt; logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    // Maybe pattern - domain decides if &quot;not found&quot; is good/bad
+    public async Task&lt;Maybe&lt;User&gt;&gt; GetByIdAsync(UserId id, CancellationToken ct)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u =&gt; u.Id == id, ct);
+        
+        return Maybe.From(user);
+    }
+
+    public async Task&lt;Maybe&lt;User&gt;&gt; GetByEmailAsync(
+        EmailAddress email,
+        CancellationToken ct)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u =&gt; u.Email == email, ct);
+        
+        return Maybe.From(user);
+    }
+
+    public async Task&lt;bool&gt; ExistsByEmailAsync(
+        EmailAddress email,
+        CancellationToken ct)
+    {
+        return await _context.Users
+            .AnyAsync(u =&gt; u.Email == email, ct);
+    }
+
+    // Result pattern - infrastructure can fail
+    public async Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(User user, CancellationToken ct)
+    {
+        try
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync(ct);
+            return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Error.Conflict(&quot;User was modified by another process&quot;);
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+        {
+            return Error.Conflict(&quot;User with this email already exists&quot;);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, &quot;Error saving user {UserId}&quot;, user.Id);
+            return Error.Unexpected(&quot;Failed to save user&quot;);
+        }
+    }
+
+    public async Task&lt;Result&lt;Unit&gt;&gt; DeleteAsync(UserId id, CancellationToken ct)
+    {
+        try
+        {
+            var user = await _context.Users.FindAsync(new object[] { id }, ct);
+            
+            if (user == null)
+                return Error.NotFound($&quot;User {id} not found&quot;);
+            
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync(ct);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, &quot;Error deleting user {UserId}&quot;, id);
+            return Error.Unexpected(&quot;Failed to delete user&quot;);
+        }
+    }
+
+    public async Task&lt;Result&lt;PagedResult&lt;User&gt;&gt;&gt; GetPagedAsync(
+        int page,
+        int pageSize,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (page &lt; 0)
+                return Error.Validation(&quot;Page number must be non-negative&quot;, &quot;page&quot;);
+            
+            if (pageSize &lt;= 0 || pageSize &gt; 100)
+                return Error.Validation(&quot;Page size must be between 1 and 100&quot;, &quot;pageSize&quot;);
+            
+            var skip = page * pageSize;
+            var totalCount = await _context.Users.CountAsync(ct);
+            
+            var users = await _context.Users
+                .AsNoTracking()
+                .OrderBy(u =&gt; u.CreatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync(ct);
+            
+            var result = new PagedResult&lt;User&gt;(
+                Items: users,
+                From: skip,
+                To: skip + users.Count - 1,
+                TotalCount: totalCount
+            );
+            
+            return Result.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, &quot;Error fetching paged users&quot;);
+            return Error.Unexpected(&quot;Failed to retrieve users&quot;);
+        }
+    }
+
+    private static bool IsDuplicateKeyException(DbUpdateException ex)
+        =&gt; ex.InnerException?.Message.Contains(&quot;duplicate key&quot;) ?? false;
+}
+
+public record PagedResult&lt;T&gt;(
+    IEnumerable&lt;T&gt; Items,
+    long From,
+    long To,
+    long TotalCount);
+</code></pre>
+<h2 id="extension-methods-for-nullable-conversion">Extension Methods for Nullable Conversion</h2>
+<p>Create reusable extension methods for common nullable-to-Result conversions:</p>
+<pre><code class="lang-csharp">public static class RepositoryExtensions
+{
+    /// &lt;summary&gt;
+    /// Converts a task returning a nullable reference type to a Result.
+    /// &lt;/summary&gt;
+    public static async Task&lt;Result&lt;T&gt;&gt; ToResultAsync&lt;T&gt;(
+        this Task&lt;T?&gt; task,
+        Error notFoundError) where T : class
+    {
+        var entity = await task;
+        return entity != null
+            ? Result.Success(entity)
+            : Result.Failure&lt;T&gt;(notFoundError);
+    }
+    
+    /// &lt;summary&gt;
+    /// Converts a task returning a nullable value type to a Result.
+    /// &lt;/summary&gt;
+    public static async Task&lt;Result&lt;T&gt;&gt; ToResultAsync&lt;T&gt;(
+        this Task&lt;T?&gt; task,
+        Error notFoundError) where T : struct
+    {
+        var entity = await task;
+        return entity.HasValue
+            ? Result.Success(entity.Value)
+            : Result.Failure&lt;T&gt;(notFoundError);
+    }
+}
+</code></pre>
+<h3 id="usage">Usage</h3>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;User&gt;&gt; GetByIdAsync(UserId id, CancellationToken ct)
+{
+    return await _context.Users
+        .FirstOrDefaultAsync(u =&gt; u.Id == id, ct)
+        .ToResultAsync(Error.NotFound($&quot;User {id} not found&quot;));
+}
+
+public async Task&lt;Result&lt;Order&gt;&gt; GetOrderByNumberAsync(string orderNumber, CancellationToken ct)
+{
+    return await _context.Orders
+        .Include(o =&gt; o.Items)
+        .Include(o =&gt; o.Customer)
+        .FirstOrDefaultAsync(o =&gt; o.OrderNumber == orderNumber, ct)
+        .ToResultAsync(Error.NotFound($&quot;Order {orderNumber} not found&quot;));
+}
+</code></pre>
+<h2 id="handling-database-exceptions">Handling Database Exceptions</h2>
+<p><strong>Key Principle:</strong> Only convert <strong>expected failures</strong> to <code>Result&lt;T&gt;</code>. Let <strong>unexpected failures</strong> (infrastructure exceptions) propagate as exceptions.</p>
+<h3 id="expected-vs-unexpected-failures">Expected vs Unexpected Failures</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Example</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Expected Failure</strong></td>
+<td>Duplicate key, concurrency conflict, foreign key violation</td>
+<td>Convert to <code>Result&lt;T&gt;</code> with appropriate error</td>
+</tr>
+<tr>
+<td><strong>Unexpected Failure</strong></td>
+<td>Database connection failure, network timeout</td>
+<td>Let exception propagate (don't catch)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="exception-handling-strategy">Exception Handling Strategy</h3>
+<pre><code class="lang-mermaid">flowchart TB
+    START[Database Operation] --&gt; CATCH{Exception Type?}
+    
+    CATCH --&gt;|DbUpdateConcurrencyException| EXPECTED1[Expected Failure]
+    CATCH --&gt;|DbUpdateException&lt;br/&gt;Duplicate Key| EXPECTED2[Expected Failure]
+    CATCH --&gt;|DbUpdateException&lt;br/&gt;Foreign Key| EXPECTED3[Expected Failure]
+    CATCH --&gt;|Connection Error&lt;br/&gt;Timeout&lt;br/&gt;Network Issue| UNEXPECTED[Unexpected Failure]
+    
+    EXPECTED1 --&gt; CONVERT1[Convert to Result&lt;br/&gt;Error.Conflict]
+    EXPECTED2 --&gt; CONVERT2[Convert to Result&lt;br/&gt;Error.Conflict]
+    EXPECTED3 --&gt; CONVERT3[Convert to Result&lt;br/&gt;Error.Domain]
+    
+    CONVERT1 --&gt; RETURN[Return Result&amp;lt;T&amp;gt;&lt;br/&gt;to caller]
+    CONVERT2 --&gt; RETURN
+    CONVERT3 --&gt; RETURN
+    
+    UNEXPECTED --&gt; PROPAGATE[Let Exception&lt;br/&gt;Propagate]
+    PROPAGATE --&gt; GLOBAL[Global Exception&lt;br/&gt;Handler]
+    GLOBAL --&gt; RETRY{Retry Policy?}
+    RETRY --&gt;|Transient| CIRCUIT[Circuit Breaker]
+    RETRY --&gt;|Non-Transient| LOG[Log &amp; Return 500]
+    
+    RETURN --&gt; HTTP_4XX[4xx Response&lt;br/&gt;Client Error]
+    LOG --&gt; HTTP_500[500 Response&lt;br/&gt;Server Error]
+    
+    style EXPECTED1 fill:#FFE1A8
+    style EXPECTED2 fill:#FFE1A8
+    style EXPECTED3 fill:#FFE1A8
+    style UNEXPECTED fill:#FFB6C6
+    style RETURN fill:#90EE90
+    style PROPAGATE fill:#FF6B6B
+</code></pre>
+<h3 id="-convert-expected-failures-to-result">✅ Convert Expected Failures to Result</h3>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(User user, CancellationToken ct)
+{
+    try
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+    // Expected failure: concurrent modification
+    catch (DbUpdateConcurrencyException)
+    {
+        return Error.Conflict(&quot;User was modified by another process&quot;);
+    }
+    // Expected failure: unique constraint violation
+    catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+    {
+        return Error.Conflict(&quot;User with this email already exists&quot;);
+    }
+    // Expected failure: foreign key violation
+    catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
+    {
+        return Error.Domain(&quot;Cannot save user due to referential integrity&quot;);
+    }
+    // ⚠️ Don't catch generic Exception - let infrastructure failures propagate
+}
+
+public async Task&lt;Result&lt;Unit&gt;&gt; DeleteAsync(UserId id, CancellationToken ct)
+{
+    try
+    {
+        var user = await _context.Users.FindAsync(new object[] { id }, ct);
+        
+        if (user == null)
+            return Error.NotFound($&quot;User {id} not found&quot;);
+        
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+    // Expected failure: foreign key violation (user has orders)
+    catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
+    {
+        return Error.Domain(&quot;Cannot delete user with active orders&quot;);
+    }
+    // ⚠️ Let unexpected failures (connection issues, etc.) propagate
+}
+</code></pre>
+<h3 id="-dont-catch-unexpected-failures">❌ Don't Catch Unexpected Failures</h3>
+<pre><code class="lang-csharp">// ❌ Bad - catches ALL exceptions, even unexpected ones
+public async Task&lt;Result&lt;User&gt;&gt; SaveAsync(User user, CancellationToken ct)
+{
+    try
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(ct);
+        return Result.Success(user);
+    }
+    catch (Exception ex)  // ❌ Too broad - hides infrastructure problems
+    {
+        _logger.LogError(ex, &quot;Failed to save user&quot;);
+        return Error.Unexpected(&quot;Failed to save user&quot;);
+    }
+}
+
+// ✅ Good - only catches expected failures
+public async Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(User user, CancellationToken ct)
+{
+    try
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        return Error.Conflict(&quot;User was modified by another process&quot;);
+    }
+    catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+    {
+        return Error.Conflict(&quot;User with this email already exists&quot;);
+    }
+    // Database connection failures, etc. will propagate as exceptions
+}
+</code></pre>
+<h3 id="why-let-unexpected-failures-propagate">Why Let Unexpected Failures Propagate?</h3>
+<ol>
+<li><p><strong>Infrastructure problems need different handling</strong> - Connection failures, timeouts, etc. should bubble up to global exception handlers, retry policies, or circuit breakers</p>
+</li>
+<li><p><strong>Hiding infrastructure failures is dangerous</strong> - If the database is down, wrapping it in <code>Result&lt;T&gt;</code> makes it look like a normal business failure</p>
+</li>
+<li><p><strong>Let the infrastructure layer fail fast</strong> - The calling layer can decide how to handle infrastructure exceptions (retry, circuit breaker, failover)</p>
+</li>
+<li><p><strong>Logging and monitoring</strong> - Exception middleware, Application Insights, and monitoring tools can properly track infrastructure failures</p>
+</li>
+</ol>
+<h3 id="exception-helper-methods">Exception Helper Methods</h3>
+<pre><code class="lang-csharp">public static class DbExceptionHelpers
+{
+    public static bool IsDuplicateKeyException(DbUpdateException ex)
+    {
+        // SQL Server
+        if (ex.InnerException?.Message.Contains(&quot;duplicate key&quot;) ?? false)
+            return true;
+        
+        // PostgreSQL
+        if (ex.InnerException?.Message.Contains(&quot;duplicate key value violates unique constraint&quot;) ?? false)
+            return true;
+        
+        // SQLite
+        if (ex.InnerException?.Message.Contains(&quot;UNIQUE constraint failed&quot;) ?? false)
+            return true;
+        
+        return false;
+    }
+
+    public static bool IsForeignKeyViolation(DbUpdateException ex)
+    {
+        // SQL Server
+        if (ex.InnerException?.Message.Contains(&quot;FOREIGN KEY constraint&quot;) ?? false)
+            return true;
+        
+        // PostgreSQL
+        if (ex.InnerException?.Message.Contains(&quot;violates foreign key constraint&quot;) ?? false)
+            return true;
+        
+        // SQLite
+        if (ex.InnerException?.Message.Contains(&quot;FOREIGN KEY constraint&quot;) ?? false)
+            return true;
+        
+        return false;
+    }
+}
+</code></pre>
+<h3 id="global-exception-handling">Global Exception Handling</h3>
+<p>Let unexpected infrastructure failures be handled by ASP.NET Core's global exception handler:</p>
+<pre><code class="lang-csharp">// Program.cs
+var app = builder.Build();
+
+// Global exception handler for unexpected failures
+app.UseExceptionHandler(errorApp =&gt;
+{
+    errorApp.Run(async context =&gt;
+    {
+        var exceptionHandlerFeature = context.Features.Get&lt;IExceptionHandlerFeature&gt;();
+        var exception = exceptionHandlerFeature?.Error;
+
+        // Log the infrastructure failure
+        var logger = context.RequestServices.GetRequiredService&lt;ILogger&lt;Program&gt;&gt;();
+        logger.LogError(exception, &quot;Unhandled exception occurred&quot;);
+
+        // Return Problem Details for infrastructure failures
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = &quot;application/problem+json&quot;;
+
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = &quot;An error occurred&quot;,
+            Detail = &quot;An unexpected error occurred. Please try again later.&quot;,
+            Instance = context.Request.Path
+        };
+
+        await context.Response.WriteAsJsonAsync(problemDetails);
+    });
+});
+</code></pre>
+<h3 id="complete-example-with-retry-policy">Complete Example with Retry Policy</h3>
+<p>For transient failures (connection issues, timeouts), use a retry policy instead of catching exceptions:</p>
+<pre><code class="lang-csharp">// Using Polly for retry logic
+public class UserRepository : IUserRepository
+{
+    private readonly ApplicationDbContext _context;
+    private readonly IAsyncPolicy _retryPolicy;
+
+    public UserRepository(ApplicationDbContext context)
+    {
+        _context = context;
+        
+        // Retry transient failures (connection issues, timeouts)
+        _retryPolicy = Policy
+            .Handle&lt;DbUpdateException&gt;(ex =&gt; IsTransientFailure(ex))
+            .Or&lt;TimeoutException&gt;()
+            .WaitAndRetryAsync(3, retryAttempt =&gt; 
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+    }
+
+    public async Task&lt;Result&lt;Unit&gt;&gt; SaveAsync(User user, CancellationToken ct)
+    {
+        return await _retryPolicy.ExecuteAsync(async () =&gt;
+        {
+            try
+            {
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync(ct);
+                return Result.Success();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Error.Conflict(&quot;User was modified by another process&quot;);
+            }
+            catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+            {
+                return Error.Conflict(&quot;User with this email already exists&quot;);
+            }
+            // Transient failures will be retried by Polly
+            // Non-transient failures will propagate as exceptions
+        });
+    }
+
+    private static bool IsTransientFailure(DbUpdateException ex)
+    {
+        // SQL Server transient error codes
+        var sqlErrorCodes = new[] { -1, -2, 1205, 49918, 49919, 49920, 4060, 40197, 40501, 40613, 49918, 49919, 49920 };
+        // Check if it's a transient SQL error
+        return false; // Implement based on your database provider
+    }
+
+    private static bool IsDuplicateKeyException(DbUpdateException ex)
+        =&gt; ex.InnerException?.Message.Contains(&quot;duplicate key&quot;) ?? false;
+}
+
+</code></pre>
+<h3 id="-use-maybe-for-queries-1">✅ Use Maybe<t> for Queries</t></h3>
+<p><strong>When the domain needs to interpret &quot;not found&quot;:</strong></p>
+<pre><code class="lang-mermaid">flowchart LR
+    subgraph Repository
+        REPO_QUERY[Repository Query&lt;br/&gt;GetByEmailAsync]
+        DB_QUERY[(Database Query&lt;br/&gt;FirstOrDefaultAsync)]
+    end
+    
+    subgraph Domain
+        CHECK{User exists?}
+        LOGIN[Login Flow&lt;br/&gt;HasNoValue = Error]
+        REGISTER[Register Flow&lt;br/&gt;HasValue = Error]
+    end
+    
+    REPO_QUERY --&gt; DB_QUERY
+    DB_QUERY --&gt;|User or null| MAYBE[Maybe&amp;lt;User&amp;gt;]
+    MAYBE --&gt; CHECK
+    
+    CHECK --&gt;|Login scenario| LOGIN
+    CHECK --&gt;|Register scenario| REGISTER
+    
+    LOGIN --&gt;|HasNoValue| ERR1[Error.NotFound&lt;br/&gt;User not found]
+    LOGIN --&gt;|HasValue| OK1[Result.Success&lt;br/&gt;Verify password]
+    
+    REGISTER --&gt;|HasValue| ERR2[Error.Conflict&lt;br/&gt;Email taken]
+    REGISTER --&gt;|HasNoValue| OK2[Result.Success&lt;br/&gt;Can register]
+    
+    style MAYBE fill:#E1F5FF
+    style ERR1 fill:#FFB6C6
+    style ERR2 fill:#FFB6C6
+    style OK1 fill:#90EE90
+    style OK2 fill:#90EE90
+</code></pre>
+<p><strong>Implementation:</strong></p>
+<h3 id="-use-result-for-commands-1">✅ Use Result<t> for Commands</t></h3>
+<p><strong>When the operation can fail due to infrastructure:</strong></p>
+<pre><code class="lang-mermaid">flowchart TB
+    START[SaveAsync User] --&gt; TRY{Try SaveChangesAsync}
+    
+    TRY --&gt;|Success| SUCCESS[Result.Success]
+    
+    TRY --&gt;|DbUpdateConcurrencyException| CONFLICT1[Error.Conflict&lt;br/&gt;Modified by another process]
+    
+    TRY --&gt;|DbUpdateException&lt;br/&gt;Duplicate Key| CONFLICT2[Error.Conflict&lt;br/&gt;Email already exists]
+    
+    TRY --&gt;|DbUpdateException&lt;br/&gt;Foreign Key| DOMAIN[Error.Domain&lt;br/&gt;Referential integrity]
+    
+    TRY --&gt;|Other Exception&lt;br/&gt;Connection/Timeout| PROPAGATE[Exception Propagates&lt;br/&gt;Global Handler]
+    
+    SUCCESS --&gt; HTTP_200[200 OK]
+    CONFLICT1 --&gt; HTTP_409[409 Conflict]
+    CONFLICT2 --&gt; HTTP_409_2[409 Conflict]
+    DOMAIN --&gt; HTTP_422[422 Unprocessable]
+    PROPAGATE --&gt; HTTP_500[500 Internal Server Error]
+    
+    style SUCCESS fill:#90EE90
+    style CONFLICT1 fill:#FFB6C6
+    style CONFLICT2 fill:#FFB6C6
+    style DOMAIN fill:#FFD700
+    style PROPAGATE fill:#FF6B6B
+</code></pre>
+<h2 id="value-object-configuration">Value Object Configuration</h2>
+<p>Configure strongly-typed value objects (<code>RequiredGuid</code>, <code>RequiredUlid</code>, <code>RequiredString</code>, <code>EmailAddress</code>) with EF Core using value converters.</p>
+<h3 id="value-converter-examples">Value Converter Examples</h3>
+<pre><code class="lang-csharp">using Microsoft.EntityFrameworkCore;
+using FunctionalDdd.PrimitiveValueObjects;
+
+public class AppDbContext : DbContext
+{
+    public DbSet&lt;Customer&gt; Customers =&gt; Set&lt;Customer&gt;();
+    public DbSet&lt;Order&gt; Orders =&gt; Set&lt;Order&gt;();
+    public DbSet&lt;Product&gt; Products =&gt; Set&lt;Product&gt;();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ConfigureCustomer(modelBuilder);
+        ConfigureOrder(modelBuilder);
+        ConfigureProduct(modelBuilder);
+    }
+
+    private static void ConfigureCustomer(ModelBuilder modelBuilder) =&gt;
+        modelBuilder.Entity&lt;Customer&gt;(builder =&gt;
+        {
+            builder.HasKey(c =&gt; c.Id);
+
+            // RequiredUlid&lt;CustomerId&gt; -&gt; string (26-char Crockford Base32)
+            builder.Property(c =&gt; c.Id)
+                .HasConversion(
+                    id =&gt; id.Value.ToString(),
+                    str =&gt; CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+
+            // RequiredString&lt;CustomerName&gt; -&gt; string
+            builder.Property(c =&gt; c.Name)
+                .HasConversion(
+                    name =&gt; name.Value,
+                    str =&gt; CustomerName.Create(str))
+                .HasMaxLength(100)
+                .IsRequired();
+
+            // EmailAddress -&gt; string
+            builder.Property(c =&gt; c.Email)
+                .HasConversion(
+                    email =&gt; email.Value,
+                    str =&gt; EmailAddress.Create(str))
+                .HasMaxLength(254)
+                .IsRequired();
+        });
+
+    private static void ConfigureOrder(ModelBuilder modelBuilder) =&gt;
+        modelBuilder.Entity&lt;Order&gt;(builder =&gt;
+        {
+            builder.HasKey(o =&gt; o.Id);
+
+            // RequiredUlid&lt;OrderId&gt; -&gt; string
+            // ULIDs provide natural chronological ordering for queries!
+            builder.Property(o =&gt; o.Id)
+                .HasConversion(
+                    id =&gt; id.Value.ToString(),
+                    str =&gt; OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+
+            // Foreign key using ULID
+            builder.Property(o =&gt; o.CustomerId)
+                .HasConversion(
+                    id =&gt; id.Value.ToString(),
+                    str =&gt; CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
+                .HasMaxLength(26)
+                .IsRequired();
+        });
+
+    private static void ConfigureProduct(ModelBuilder modelBuilder) =&gt;
+        modelBuilder.Entity&lt;Product&gt;(builder =&gt;
+        {
+            builder.HasKey(p =&gt; p.Id);
+
+            // RequiredGuid&lt;ProductId&gt; -&gt; Guid
+            builder.Property(p =&gt; p.Id)
+                .HasConversion(
+                    id =&gt; id.Value,
+                    guid =&gt; ProductId.Create(guid))
+                .IsRequired();
+
+            // RequiredString&lt;ProductName&gt; -&gt; string
+            builder.Property(p =&gt; p.Name)
+                .HasConversion(
+                    name =&gt; name.Value,
+                    str =&gt; ProductName.Create(str))
+                .HasMaxLength(200)
+                .IsRequired();
+        });
+}
+</code></pre>
+<h3 id="value-object-types-quick-reference">Value Object Types Quick Reference</h3>
+<table>
+<thead>
+<tr>
+<th>Value Object</th>
+<th>EF Core Storage</th>
+<th>Converter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RequiredGuid&lt;T&gt;</code></td>
+<td><code>Guid</code></td>
+<td><code>id =&gt; id.Value</code> ↔ <code>guid =&gt; T.Create(guid)</code></td>
+</tr>
+<tr>
+<td><code>RequiredUlid&lt;T&gt;</code></td>
+<td><code>string(26)</code></td>
+<td><code>id =&gt; id.Value.ToString()</code> ↔ <code>str =&gt; T.Create(Ulid.Parse(str))</code></td>
+</tr>
+<tr>
+<td><code>RequiredString&lt;T&gt;</code></td>
+<td><code>string</code></td>
+<td><code>val =&gt; val.Value</code> ↔ <code>str =&gt; T.Create(str)</code></td>
+</tr>
+<tr>
+<td><code>RequiredInt&lt;T&gt;</code></td>
+<td><code>int</code></td>
+<td><code>val =&gt; val.Value</code> ↔ <code>num =&gt; T.Create(num)</code></td>
+</tr>
+<tr>
+<td><code>RequiredDecimal&lt;T&gt;</code></td>
+<td><code>decimal</code></td>
+<td><code>val =&gt; val.Value</code> ↔ <code>num =&gt; T.Create(num)</code></td>
+</tr>
+<tr>
+<td><code>EmailAddress</code></td>
+<td><code>string(254)</code></td>
+<td><code>email =&gt; email.Value</code> ↔ <code>str =&gt; EmailAddress.Create(str)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-use-ulid-for-entity-ids">Why Use ULID for Entity IDs?</h3>
+<p>ULIDs provide several advantages over GUIDs for entity identifiers:</p>
+<pre><code class="lang-csharp">// Define ULID-based identifiers
+public partial class OrderId : RequiredUlid&lt;OrderId&gt; { }
+public partial class CustomerId : RequiredUlid&lt;CustomerId&gt; { }
+
+// ULIDs sort chronologically - great for database indexes!
+var orders = await context.Orders
+    .OrderBy(o =&gt; o.Id)  // Natural creation-time ordering
+    .Take(10)
+    .ToListAsync();
+
+// ULID format: 01ARZ3NDEKTSV4RRFFQ69G5FAV (26 chars, URL-safe)
+// - First 10 chars: millisecond timestamp
+// - Last 16 chars: random component
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>ULID</th>
+<th>GUID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Database Index Performance</strong></td>
+<td>✅ Sequential (better)</td>
+<td>❌ Random (fragmentation)</td>
+</tr>
+<tr>
+<td><strong>Natural Ordering</strong></td>
+<td>✅ By creation time</td>
+<td>❌ Random</td>
+</tr>
+<tr>
+<td><strong>Format</strong></td>
+<td>26 chars (URL-safe)</td>
+<td>36 chars (with dashes)</td>
+</tr>
+<tr>
+<td><strong>Use Case</strong></td>
+<td>Orders, Events, Logs</td>
+<td>Legacy systems</td>
+</tr>
+</tbody>
+</table>
+<h3 id="complete-example">Complete Example</h3>
+<p>See the <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EfCoreExample">EF Core Example</a> for a full working example demonstrating:</p>
+<ul>
+<li><code>RequiredUlid&lt;T&gt;</code> for time-ordered identifiers (<code>OrderId</code>, <code>CustomerId</code>)</li>
+<li><code>RequiredGuid&lt;T&gt;</code> for traditional identifiers (<code>ProductId</code>)</li>
+<li><code>RequiredString&lt;T&gt;</code> for validated strings (<code>ProductName</code>, <code>CustomerName</code>)</li>
+<li><code>EmailAddress</code> for RFC 5322 email validation</li>
+<li>Complete EF Core configuration with value converters</li>
+<li>Railway-Oriented Programming for entity creation and validation</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration-ef.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

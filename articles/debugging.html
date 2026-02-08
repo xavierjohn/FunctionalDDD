@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Debugging Railway Oriented Programming </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Debugging Railway Oriented Programming ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/debugging.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="debugging-railway-oriented-programming">Debugging Railway Oriented Programming</h1>
+
+<p>Chained operations can be challenging to debug. This guide provides strategies for identifying failures in ROP chains.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#understanding-the-railway-track">Understanding the Railway Track</a></li>
+<li><a href="#common-debugging-challenges">Common Debugging Challenges</a></li>
+<li><a href="#debugging-tools--techniques">Debugging Tools &amp; Techniques</a></li>
+<li><a href="#visual-studio-debugging-tips">Visual Studio Debugging Tips</a></li>
+<li><a href="#common-error-messages">Common Error Messages</a></li>
+<li><a href="#performance-debugging">Performance Debugging</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+<li><a href="#debugging-checklist">Debugging Checklist</a></li>
+</ul>
+<h2 id="understanding-the-railway-track">Understanding the Railway Track</h2>
+<p>Railway Oriented Programming chains operations on two tracks:</p>
+<ul>
+<li><strong>Success Track</strong>: Operations continue through the chain</li>
+<li><strong>Failure Track</strong>: Once an error occurs, subsequent operations are skipped</li>
+</ul>
+<p><strong>Key insight:</strong> Only the first failure matters—everything after is bypassed.</p>
+<pre><code class="lang-csharp">var result = Step1()      // ✅ Succeeds
+    .Bind(Step2)          // ❌ Fails - switches to error track
+    .Bind(Step3)          // ⏭️ Skipped - on error track
+    .Bind(Step4)          // ⏭️ Skipped - on error track
+    .Match(
+        onSuccess: x =&gt; &quot;Won't reach here&quot;,
+        onFailure: e =&gt; &quot;Error from Step2&quot;
+    );
+</code></pre>
+<h2 id="common-debugging-challenges">Common Debugging Challenges</h2>
+<h3 id="1-identifying-the-failure-point">1. Identifying the Failure Point</h3>
+<p><strong>Problem</strong>: A long chain fails, but you don't know which operation caused the failure.</p>
+<pre><code class="lang-csharp">// Which of these operations failed?
+var result = await GetUserAsync(id)
+    .ToResultAsync(Error.NotFound(&quot;User not found&quot;))
+    .EnsureAsync(u =&gt; u.IsActive, Error.Validation(&quot;User inactive&quot;))
+    .BindAsync(u =&gt; GetOrdersAsync(u.Id))
+    .EnsureAsync(orders =&gt; orders.Any(), Error.NotFound(&quot;No orders&quot;))
+    .MapAsync(orders =&gt; orders.Sum(o =&gt; o.Total));
+</code></pre>
+<p><strong>Solution 1</strong>: Use <code>Tap</code> or <code>TapOnFailure</code> for logging at each step:</p>
+<pre><code class="lang-csharp">var result = await GetUserAsync(id)
+    .Tap(u =&gt; _logger.LogDebug(&quot;Found user: {UserId}&quot;, u.Id))
+    .ToResultAsync(Error.NotFound(&quot;User not found&quot;))
+    .TapOnFailure(err =&gt; _logger.LogWarning(&quot;Failed to find user: {Error}&quot;, err))
+    .EnsureAsync(u =&gt; u.IsActive, Error.Validation(&quot;User inactive&quot;))
+    .Tap(u =&gt; _logger.LogDebug(&quot;User {UserId} is active&quot;, u.Id))
+    .TapOnFailure(err =&gt; _logger.LogWarning(&quot;User validation failed: {Error}&quot;, err))
+    .BindAsync(u =&gt; GetOrdersAsync(u.Id))
+    .Tap(orders =&gt; _logger.LogDebug(&quot;Found {Count} orders&quot;, orders.Count));
+</code></pre>
+<p><strong>Solution 2</strong>: Break the chain into smaller, named steps:</p>
+<pre><code class="lang-csharp">var userResult = await GetUserAsync(id)
+    .ToResultAsync(Error.NotFound(&quot;User not found&quot;));
+    
+if (userResult.IsFailure)
+{
+    _logger.LogWarning(&quot;GetUser failed: {Error}&quot;, userResult.Error);
+    return userResult;
+}
+
+var ordersResult = await GetOrdersAsync(userResult.Value.Id);
+if (ordersResult.IsFailure)
+{
+    _logger.LogWarning(&quot;GetOrders failed: {Error}&quot;, ordersResult.Error);
+    return ordersResult;
+}
+
+return ordersResult.Map(orders =&gt; orders.Sum(o =&gt; o.Total));
+</code></pre>
+<p><strong>Solution 3</strong>: Use descriptive error messages with context:</p>
+<pre><code class="lang-csharp">var result = await GetUserAsync(id)
+    .ToResultAsync(Error.NotFound($&quot;User {id} not found in database&quot;))
+    .EnsureAsync(u =&gt; u.IsActive, 
+        Error.Validation($&quot;User {id} account inactive since {u.DeactivatedAt}&quot;))
+    .BindAsync(u =&gt; GetOrdersAsync(u.Id))
+    .EnsureAsync(orders =&gt; orders.Any(), 
+        Error.NotFound($&quot;No orders found for user {id}&quot;));
+</code></pre>
+<h3 id="2-inspecting-values-mid-chain">2. Inspecting Values Mid-Chain</h3>
+<p><strong>Problem</strong>: You want to see what value is flowing through the chain at a specific point.</p>
+<p><strong>Solution 1</strong>: Use <code>Tap</code> with a breakpoint:</p>
+<pre><code class="lang-csharp">var result = await GetUserAsync(id)
+    .Tap(user =&gt; 
+    {
+        // Set breakpoint here to inspect 'user'
+        var debug = new { user.Id, user.Name, user.Email };
+        _logger.LogDebug(&quot;User state: {@User}&quot;, debug);
+    })
+    .BindAsync(u =&gt; ProcessUserAsync(u));
+</code></pre>
+<p><strong>Solution 2</strong>: Capture values in tests:</p>
+<pre><code class="lang-csharp">[Fact]
+public async Task Should_Process_Valid_User()
+{
+    User? capturedUser = null;
+    
+    var result = await GetUserAsync(&quot;123&quot;)
+        .Tap(user =&gt; capturedUser = user)  // Capture for inspection
+        .BindAsync(u =&gt; ProcessUserAsync(u));
+    
+    Assert.NotNull(capturedUser);
+    Assert.Equal(&quot;123&quot;, capturedUser.Id);
+    result.IsSuccess.Should().BeTrue();
+}
+</code></pre>
+<p><strong>Solution 3</strong>: Use <code>Map</code> to inspect without changing the value:</p>
+<pre><code class="lang-csharp">var result = await GetOrdersAsync(userId)
+    .Map(orders =&gt; 
+    {
+        _logger.LogDebug(&quot;Order count: {Count}, Total: {Total}&quot;, 
+            orders.Count, orders.Sum(o =&gt; o.Total));
+        return orders;  // Return unchanged
+    })
+    .BindAsync(orders =&gt; ProcessOrdersAsync(orders));
+</code></pre>
+<h3 id="3-debugging-async-chains">3. Debugging Async Chains</h3>
+<p><strong>Problem</strong>: Async chains are harder to step through in the debugger.</p>
+<p><strong>Solution</strong>: Break async chains into named variables:</p>
+<pre><code class="lang-csharp">// Instead of one long chain
+var result = await GetUserAsync(id)
+    .BindAsync(u =&gt; GetOrdersAsync(u.Id))
+    .MapAsync(orders =&gt; ProcessOrders(orders));
+
+// Break it up for debugging
+var userResult = await GetUserAsync(id);  // Set breakpoint here
+if (userResult.IsFailure) return userResult;
+
+var ordersResult = await GetOrdersAsync(userResult.Value.Id);  // Breakpoint
+if (ordersResult.IsFailure) return ordersResult;
+
+var processed = ordersResult.Map(orders =&gt; ProcessOrders(orders));  // Breakpoint
+return processed;
+</code></pre>
+<h3 id="4-debugging-aggregated-errors">4. Debugging Aggregated Errors</h3>
+<p><strong>Problem</strong>: When using <code>Combine</code>, all errors are collected. Which validations failed?</p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(&quot;invalid&quot;)
+    .Combine(FirstName.TryCreate(&quot;&quot;))
+    .Combine(Age.TryCreate(-5));
+// Might fail with 3 errors - which ones?
+</code></pre>
+<p><strong>Solution</strong>: Use <code>TapOnFailure</code> to log aggregated errors:</p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(email)
+    .Combine(FirstName.TryCreate(firstName))
+    .Combine(Age.TryCreate(age))
+    .TapOnFailure(error =&gt; 
+    {
+        if (error is AggregateError aggregated)
+        {
+            foreach (var err in aggregated.Errors)
+            {
+                _logger.LogWarning(&quot;Validation failed: {Message}&quot;, err.Detail);
+            }
+        }
+    });
+</code></pre>
+<h3 id="5-testing-individual-steps">5. Testing Individual Steps</h3>
+<p><strong>Problem</strong>: A complex chain makes it hard to test individual operations.</p>
+<p><strong>Solution</strong>: Extract operations into testable methods:</p>
+<pre><code class="lang-csharp">// Instead of inline
+public Result&lt;User&gt; ValidateAndProcessUser(string id)
+{
+    return GetUser(id)
+        .Ensure(u =&gt; u.IsActive, Error.Validation(&quot;Inactive&quot;))
+        .Ensure(u =&gt; u.Email.Contains(&quot;@&quot;), Error.Validation(&quot;Invalid email&quot;))
+        .Tap(u =&gt; u.LastLoginAt = DateTime.UtcNow);
+}
+
+// Extract testable pieces
+public Result&lt;User&gt; GetActiveUser(string id) =&gt;
+    GetUser(id).Ensure(u =&gt; u.IsActive, Error.Validation(&quot;User inactive&quot;));
+
+public Result&lt;User&gt; ValidateUserEmail(User user) =&gt;
+    user.Email.Contains(&quot;@&quot;) 
+        ? Result.Success(user)
+        : Error.Validation(&quot;Invalid email&quot;);
+
+public void UpdateLastLogin(User user) =&gt;
+    user.LastLoginAt = DateTime.UtcNow;
+
+// Compose
+public Result&lt;User&gt; ValidateAndProcessUser(string id) =&gt;
+    GetActiveUser(id)
+        .Bind(ValidateUserEmail)
+        .Tap(UpdateLastLogin);
+
+// Easy to test
+[Fact]
+public void GetActiveUser_Should_Fail_For_Inactive_User()
+{
+    var result = GetActiveUser(&quot;inactive-id&quot;);
+    result.IsFailure.Should().BeTrue();
+}
+</code></pre>
+<h2 id="debugging-tools--techniques">Debugging Tools &amp; Techniques</h2>
+<h3 id="built-in-debug-extension-methods">Built-in Debug Extension Methods</h3>
+<p>The library includes debug extension methods that are <strong>automatically excluded from RELEASE builds</strong> (no performance impact in production):</p>
+<pre><code class="lang-csharp">// Basic debug output - prints success/failure and value/error
+var result = GetUser(id)
+    .Debug(&quot;After GetUser&quot;)
+    .Ensure(u =&gt; u.IsActive, Error.Validation(&quot;Inactive&quot;))
+    .Debug(&quot;After Ensure&quot;)
+    .Bind(ProcessUser)
+    .Debug(&quot;After ProcessUser&quot;);
+
+// Output in DEBUG mode:
+// [DEBUG] After GetUser: Success(User { Id = &quot;123&quot;, Name = &quot;John&quot; })
+// [DEBUG] After Ensure: Success(User { Id = &quot;123&quot;, Name = &quot;John&quot; })
+// [DEBUG] After ProcessUser: Success(ProcessedUser { ... })
+</code></pre>
+<p><strong>Detailed debug output</strong> (includes error properties and aggregated errors):</p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(email)
+    .Combine(FirstName.TryCreate(firstName))
+    .Combine(LastName.TryCreate(lastName))
+    .DebugDetailed(&quot;After validation&quot;);
+
+// Output shows:
+// - Success/Failure state
+// - Error type, code, detail, instance
+// - For ValidationError: all field errors
+// - For AggregateError: all nested errors
+</code></pre>
+<p><strong>Debug with stack trace</strong>:</p>
+<pre><code class="lang-csharp">var result = ProcessOrder(orderId)
+    .DebugWithStack(&quot;Processing order&quot;, includeStackTrace: true);
+
+// Includes full stack trace showing where the result originated
+</code></pre>
+<p><strong>Custom debug actions</strong>:</p>
+<pre><code class="lang-csharp">var result = GetUser(id)
+    .DebugOnSuccess(user =&gt; 
+    {
+        Console.WriteLine($&quot;User: {user.Id}, Email: {user.Email}&quot;);
+        Console.WriteLine($&quot;IsActive: {user.IsActive}&quot;);
+    })
+    .DebugOnFailure(error =&gt; 
+    {
+        Console.WriteLine($&quot;Error Type: {error.GetType().Name}&quot;);
+        Console.WriteLine($&quot;Message: {error.Detail}&quot;);
+    });
+</code></pre>
+<p><strong>Async variants</strong>:</p>
+<pre><code class="lang-csharp">var result = await GetUserAsync(id)
+    .DebugAsync(&quot;After GetUser&quot;)
+    .BindAsync(u =&gt; GetOrdersAsync(u.Id))
+    .DebugDetailedAsync(&quot;After GetOrders&quot;);
+</code></pre>
+<p><strong>Note</strong>: All <code>Debug*</code> methods are conditionally compiled with <code>#if DEBUG</code> and have <strong>zero overhead</strong> in Release builds.</p>
+<h3 id="opentelemetry-distributed-tracing">OpenTelemetry Distributed Tracing</h3>
+<p>Enable distributed tracing to automatically trace your ROP chains:</p>
+<pre><code class="lang-csharp">// Startup configuration (Program.cs or Startup.cs)
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerBuilder =&gt; tracerBuilder
+        .AddRailwayOrientedProgrammingInstrumentation()  // Built-in ROP instrumentation!
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter());  // Or .AddConsoleExporter() for development
+</code></pre>
+<p><strong>Your ROP chains are automatically traced</strong>:</p>
+<pre><code class="lang-csharp">// Each operation creates a span in your trace
+var result = await GetUserAsync(id)        // Span: &quot;GetUserAsync&quot;
+    .BindAsync(u =&gt; GetOrdersAsync(u.Id))  // Span: &quot;GetOrdersAsync&quot;
+    .MapAsync(ProcessOrders);              // Span: &quot;ProcessOrders&quot;
+
+// Trace hierarchy in Application Insights/Jaeger/Zipkin:
+// POST /api/users/123/orders
+//   └─ GetUserAsync (42ms)
+//   └─ GetOrdersAsync (156ms)
+//   └─ ProcessOrders (23ms)
+</code></pre>
+<p><strong>Trace includes</strong>:</p>
+<ul>
+<li><strong>Operation name</strong> - Method being called</li>
+<li><strong>Duration</strong> - How long each step took</li>
+<li><strong>Status</strong> - Ok (success) or Error (failure)</li>
+<li><strong>Error details</strong> - Error code and message for failures</li>
+<li><strong>Parent/child relationships</strong> - Full call hierarchy</li>
+</ul>
+<p><strong>View traces in</strong>:</p>
+<ul>
+<li>Azure Application Insights</li>
+<li>Jaeger</li>
+<li>Zipkin</li>
+<li>Grafana Tempo</li>
+<li>Any OpenTelemetry-compatible backend</li>
+</ul>
+<h3 id="conditional-breakpoints">Conditional Breakpoints</h3>
+<p>Set conditional breakpoints in <code>Tap</code> operations:</p>
+<pre><code class="lang-csharp">var result = ProcessUsers(users)
+    .Tap(user =&gt; 
+    {
+        // Set breakpoint here with condition: user.Id == &quot;problem-id&quot;
+        if (user.Id == &quot;problem-id&quot;)
+        {
+            var state = new { user.Id, user.Status, user.Email };
+            Console.WriteLine($&quot;Problem user state: {state}&quot;);
+        }
+    });
+</code></pre>
+<h3 id="fluentassertions-for-tests">FluentAssertions for Tests</h3>
+<p>Use FluentAssertions for readable test assertions:</p>
+<pre><code class="lang-csharp">[Fact]
+public void Should_Fail_With_Validation_Error()
+{
+    var result = ProcessOrder(invalidOrder);
+    
+    result.IsFailure.Should().BeTrue();
+    result.Error.Should().BeOfType&lt;ValidationError&gt;();
+    result.Error.Code.Should().Be(&quot;validation.error&quot;);
+    result.Error.Detail.Should().Contain(&quot;invalid quantity&quot;);
+}
+
+[Fact]
+public void Should_Return_Processed_User()
+{
+    var result = ProcessUser(validUserId);
+    
+    result.IsSuccess.Should().BeTrue();
+    result.Value.Should().NotBeNull();
+    result.Value.Status.Should().Be(UserStatus.Active);
+}
+</code></pre>
+<h3 id="logging-strategies">Logging Strategies</h3>
+<h4 id="application-level-logging">Application-Level Logging</h4>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Order&gt;&gt; ProcessOrderAsync(OrderId orderId)
+{
+    _logger.LogInformation(&quot;Processing order {OrderId}&quot;, orderId);
+    
+    return await GetOrderAsync(orderId)
+        .TapOnFailure(err =&gt; _logger.LogWarning(
+            &quot;Failed to get order {OrderId}: {Error}&quot;, orderId, err.Detail))
+        .BindAsync(order =&gt; ValidateOrderAsync(order))
+        .TapOnFailure(err =&gt; _logger.LogWarning(
+            &quot;Order {OrderId} validation failed: {Error}&quot;, orderId, err.Detail))
+        .BindAsync(order =&gt; ProcessPaymentAsync(order))
+        .Tap(order =&gt; _logger.LogInformation(
+            &quot;Successfully processed order {OrderId}&quot;, order.Id))
+        .TapOnFailure(err =&gt; _logger.LogError(
+            &quot;Order {OrderId} processing failed: {Error}&quot;, orderId, err.Detail));
+}
+</code></pre>
+<h4 id="structured-logging-with-context">Structured Logging with Context</h4>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;User&gt;&gt; RegisterUserAsync(UserRegistration registration)
+{
+    using var scope = _logger.BeginScope(new Dictionary&lt;string, object&gt;
+    {
+        [&quot;Email&quot;] = registration.Email,
+        [&quot;RegistrationSource&quot;] = registration.Source
+    });
+    
+    return await ValidateEmailAsync(registration.Email)
+        .Tap(_ =&gt; _logger.LogDebug(&quot;Email validated&quot;))
+        .BindAsync(email =&gt; CreateUserAsync(email, registration))
+        .Tap(user =&gt; _logger.LogInformation(&quot;User created: {UserId}&quot;, user.Id))
+        .TapOnFailure(err =&gt; _logger.LogWarning(&quot;Registration failed: {Error}&quot;, err));
+}
+</code></pre>
+<h2 id="visual-studio-debugging-tips">Visual Studio Debugging Tips</h2>
+<h3 id="watch-window-tips">Watch Window Tips</h3>
+<p>When stopped at a breakpoint with a <code>Result&lt;T&gt;</code> in scope:</p>
+<table>
+<thead>
+<tr>
+<th>Expression</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>result.IsSuccess</code></td>
+<td><code>true</code>/<code>false</code></td>
+<td>Safe to evaluate</td>
+</tr>
+<tr>
+<td><code>result.IsFailure</code></td>
+<td><code>true</code>/<code>false</code></td>
+<td>Safe to evaluate</td>
+</tr>
+<tr>
+<td><code>result.Value</code></td>
+<td>⚠️ Value or <strong>Exception</strong></td>
+<td>Throws <code>InvalidOperationException</code> if <code>IsFailure</code>!</td>
+</tr>
+<tr>
+<td><code>result.Error</code></td>
+<td>⚠️ Error or <strong>Exception</strong></td>
+<td>Throws <code>InvalidOperationException</code> if <code>IsSuccess</code>!</td>
+</tr>
+<tr>
+<td><code>result.TryGetValue(out var v)</code></td>
+<td><code>true</code> + populates <code>v</code></td>
+<td><strong>Safe</strong> - no exceptions</td>
+</tr>
+<tr>
+<td><code>result.TryGetError(out var e)</code></td>
+<td><code>true</code> + populates <code>e</code></td>
+<td><strong>Safe</strong> - no exceptions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tip</strong>: Use <code>TryGetValue</code> and <code>TryGetError</code> in the Watch window to safely inspect without exceptions.</p>
+<h3 id="quick-watch-for-error-details">Quick Watch for Error Details</h3>
+<pre><code class="lang-csharp">// In Watch window or Quick Watch:
+result.Error.Code          // &quot;validation.error&quot;
+result.Error.Detail        // &quot;Email is required&quot;
+result.Error.Instance      // &quot;user-123&quot; (if set)
+
+// For ValidationError:
+((ValidationError)result.Error).FieldErrors.Count  // Number of field errors
+((ValidationError)result.Error).FieldErrors[0].FieldName  // &quot;email&quot;
+((ValidationError)result.Error).FieldErrors[0].Details[0]  // &quot;Email is required&quot;
+</code></pre>
+<h2 id="common-error-messages">Common Error Messages</h2>
+<h3 id="no-handler-provided-for-error-type">&quot;No handler provided for error type&quot;</h3>
+<pre><code>InvalidOperationException: No handler provided for error type NotFoundError
+</code></pre>
+<p><strong>Cause</strong>: Using <code>MatchError</code> without providing handlers for all error types and no <code>onError</code> fallback.</p>
+<p><strong>Fix</strong>: Add an <code>onError</code> fallback to catch all unhandled error types:</p>
+<pre><code class="lang-csharp">.MatchError(
+    onValidation: err =&gt; HandleValidation(err),
+    onNotFound: err =&gt; HandleNotFound(err),
+    onError: err =&gt; HandleOtherErrors(err),  // ✅ Catches all other types
+    onSuccess: val =&gt; HandleSuccess(val)
+)
+</code></pre>
+<h3 id="attempted-to-access-value-for-a-failed-result">&quot;Attempted to access Value for a failed result&quot;</h3>
+<pre><code>InvalidOperationException: Attempted to access the Value for a failed result. A failed result has no Value.
+</code></pre>
+<p><strong>Cause</strong>: Accessing <code>result.Value</code> when <code>result.IsFailure == true</code>.</p>
+<p><strong>Fix</strong>: Always check state first or use safe alternatives:</p>
+<pre><code class="lang-csharp">// ✅ Check first
+if (result.IsSuccess)
+    var value = result.Value;
+
+// ✅ Use TryGetValue (recommended)
+if (result.TryGetValue(out var value))
+    Console.WriteLine(value);
+
+// ✅ Use Match
+result.Match(
+    onSuccess: val =&gt; UseValue(val),
+    onFailure: err =&gt; HandleError(err)
+);
+</code></pre>
+<h3 id="attempted-to-access-error-for-a-successful-result">&quot;Attempted to access Error for a successful result&quot;</h3>
+<pre><code>InvalidOperationException: Attempted to access the Error property for a successful result. A successful result has no Error.
+</code></pre>
+<p><strong>Cause</strong>: Accessing <code>result.Error</code> when <code>result.IsSuccess == true</code>.</p>
+<p><strong>Fix</strong>: Check state or use <code>TryGetError</code>:</p>
+<pre><code class="lang-csharp">// ✅ Check first
+if (result.IsFailure)
+    var error = result.Error;
+
+// ✅ Use TryGetError (recommended)
+if (result.TryGetError(out var error))
+    _logger.LogError(error.Detail);
+
+// ✅ Use MatchError
+result.MatchError(
+    onError: err =&gt; LogError(err),
+    onSuccess: val =&gt; ProcessValue(val)
+);
+</code></pre>
+<h2 id="performance-debugging">Performance Debugging</h2>
+<h3 id="profiling-rop-chains">Profiling ROP Chains</h3>
+<p>ROP adds <strong>minimal overhead</strong> (~11-16 nanoseconds per operation on .NET 10). If you're experiencing performance issues:</p>
+<ol>
+<li><strong>Profile I/O operations first</strong> - Database queries, HTTP calls, file I/O are typically <strong>1000-10000x slower</strong> than ROP overhead</li>
+<li><strong>Check for N+1 queries</strong> - Multiple <code>BindAsync</code> calls in a loop may indicate an N+1 problem</li>
+<li><strong>Use parallel operations</strong> - Independent async operations should use <code>ParallelAsync</code></li>
+</ol>
+<pre><code class="lang-csharp">// ❌ Sequential - slow (300ms total)
+var user = await GetUserAsync(id);          // 100ms
+var orders = await GetOrdersAsync(id);      // 100ms  
+var prefs = await GetPreferencesAsync(id);  // 100ms
+
+// ✅ Parallel - fast (100ms total)
+var result = await GetUserAsync(id)
+    .ParallelAsync(GetOrdersAsync(id))
+    .ParallelAsync(GetPreferencesAsync(id))
+    .WhenAllAsync();  // All 3 run concurrently
+</code></pre>
+<p><strong>Key insight</strong>: The ROP overhead (16ns) is <strong>0.000016%</strong> of a 100ms database query. Focus on optimizing I/O, not ROP chains.</p>
+<h3 id="identifying-n1-queries">Identifying N+1 Queries</h3>
+<pre><code class="lang-csharp">// ❌ N+1 problem - executes N database queries
+var orderResults = new List&lt;Result&lt;Order&gt;&gt;();
+foreach (var orderId in orderIds)  // If 100 IDs → 100 queries!
+{
+    var order = await GetOrderAsync(orderId);  // Database call in loop
+    orderResults.Add(order);
+}
+
+// ✅ Single query - much faster
+var orders = await GetOrdersAsync(orderIds);  // 1 query for all IDs
+</code></pre>
+<h3 id="performance-tips">Performance Tips</h3>
+<ul>
+<li><strong>Use <code>ParallelAsync</code> for independent operations</strong> - Runs operations concurrently</li>
+<li><strong>Batch database operations</strong> - Fetch multiple records in one query</li>
+<li><strong>Profile with real tools</strong> - Use dotnet-trace, PerfView, or Application Insights</li>
+<li><strong>Don't optimize ROP chains</strong> - Focus on I/O (database, HTTP, files)</li>
+</ul>
+<p>See <a href="BENCHMARKS.html">BENCHMARKS.md</a> for detailed performance analysis showing ROP overhead is <strong>negligible</strong> compared to typical I/O operations.</p>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-use-descriptive-error-messages">1. Use Descriptive Error Messages</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Generic error
+.Ensure(user =&gt; user.Age &gt;= 18, Error.Validation(&quot;Invalid age&quot;))
+
+// ✅ Good - Specific, actionable error with context
+.Ensure(user =&gt; user.Age &gt;= 18, 
+    Error.Validation(
+        $&quot;User {user.Id} must be 18 or older. Current age: {user.Age}&quot;,
+        &quot;age&quot;
+    ))
+</code></pre>
+<h3 id="2-add-context-to-errors">2. Add Context to Errors</h3>
+<pre><code class="lang-csharp">// ✅ Include relevant IDs in error detail and instance
+return await GetOrderAsync(orderId)
+    .ToResultAsync(Error.NotFound(
+        $&quot;Order {orderId} not found for user {userId}&quot;,
+        $&quot;order-{orderId}&quot;
+    ));
+</code></pre>
+<h3 id="3-use-tap-for-side-effects-not-logic">3. Use Tap for Side Effects, Not Logic</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Logic in Tap (mutating state)
+.Tap(user =&gt; user.IsActive = true)
+
+// ✅ Good - Pure transformation with Map
+.Map(user =&gt; user with { IsActive = true })
+
+// ✅ Good - True side effect (logging, metrics, notifications)
+.Tap(user =&gt; _logger.LogInformation(&quot;User activated: {UserId}&quot;, user.Id))
+</code></pre>
+<h3 id="4-break-long-chains-when-debugging">4. Break Long Chains When Debugging</h3>
+<pre><code class="lang-csharp">// ❌ Hard to debug - can't inspect intermediate steps
+var result = Step1().Bind(Step2).Bind(Step3).Bind(Step4).Bind(Step5);
+
+// ✅ Easier to debug - break at major boundaries
+var validationResult = ValidateInput(input);  // Breakpoint
+var dataResult = validationResult.Bind(FetchData);  // Breakpoint
+var processedResult = dataResult.Bind(ProcessData);  // Breakpoint
+var finalResult = processedResult.Bind(SaveData);  // Breakpoint
+
+// Each variable can be inspected independently
+</code></pre>
+<p><strong>Note</strong>: In production code, long chains are fine—only break them when actively debugging!</p>
+<h3 id="5-name-your-lambdas-for-better-stack-traces">5. Name Your Lambdas for Better Stack Traces</h3>
+<pre><code class="lang-csharp">// ❌ Anonymous lambda - hard to see in call stack
+.BindAsync(x =&gt; ProcessAsync(x))
+
+// ✅ Named method - shows in call stack and exceptions
+.BindAsync(ProcessOrderAsync)
+
+async Task&lt;Result&lt;Order&gt;&gt; ProcessOrderAsync(Order order)
+{
+    // Implementation
+}
+</code></pre>
+<h2 id="debugging-checklist">Debugging Checklist</h2>
+<p>When debugging a failing ROP chain, ask yourself:</p>
+<ul>
+<li>[ ] <strong>Check the error message</strong> - Does it tell you which operation failed?</li>
+<li>[ ] <strong>Add <code>Tap</code> or <code>TapOnFailure</code></strong> - Log at each step to find the failure point</li>
+<li>[ ] <strong>Use <code>Debug()</code> extension</strong> - Add <code>.Debug(&quot;step name&quot;)</code> for quick debugging</li>
+<li>[ ] <strong>Break the chain</strong> - Split into smaller variables for inspection</li>
+<li>[ ] <strong>Check aggregated errors</strong> - Are multiple validations failing? Check <code>ValidationError.FieldErrors</code></li>
+<li>[ ] <strong>Verify async operations</strong> - Is <code>CancellationToken</code> passed correctly?</li>
+<li>[ ] <strong>Review error codes</strong> - Are custom error codes being used consistently?</li>
+<li>[ ] <strong>Test individual operations</strong> - Extract and test each step separately</li>
+<li>[ ] <strong>Check for null values</strong> - Is <code>ToResult</code>/<code>ToResultAsync</code> being used for nullable types?</li>
+<li>[ ] <strong>Inspect error metadata</strong> - Does the error include the <code>instance</code> identifier?</li>
+<li>[ ] <strong>Add structured logging</strong> - Use correlation IDs and scopes</li>
+<li>[ ] <strong>Enable OpenTelemetry</strong> - Trace distributed operations across services</li>
+<li>[ ] <strong>Use Watch window safely</strong> - Use <code>TryGetValue</code>/<code>TryGetError</code> to avoid exceptions</li>
+<li>[ ] <strong>Check performance</strong> - Profile I/O operations, not ROP overhead</li>
+</ul>
+<h2 id="common-pitfalls">Common Pitfalls</h2>
+<h3 id="forgetting-toresulttoresultasync">Forgetting ToResult/ToResultAsync</h3>
+<pre><code class="lang-csharp">// ❌ Nullable&lt;T&gt; doesn't automatically convert to Result
+User? user = await _repository.GetByIdAsync(userId);
+return user.Bind(u =&gt; ProcessUser(u));  // Compile error!
+
+// ✅ Convert nullable to Result first
+return await _repository.GetByIdAsync(userId)
+    .ToResultAsync(Error.NotFound($&quot;User {userId} not found&quot;))
+    .BindAsync(ProcessUserAsync);
+</code></pre>
+<h3 id="accessing-value-on-failure">Accessing Value on Failure</h3>
+<pre><code class="lang-csharp">// ❌ Throws InvalidOperationException if result is failure
+var result = GetUser(userId);
+var userName = result.Value.Name;  // Boom!
+
+// ✅ Check state first
+if (result.IsSuccess)
+{
+    var userName = result.Value.Name;
+}
+
+// ✅ Use Match (recommended)
+var userName = result.Match(
+    onSuccess: user =&gt; user.Name,
+    onFailure: _ =&gt; &quot;Unknown&quot;
+);
+
+// ✅ Or use TryGetValue (safest)
+if (result.TryGetValue(out var user))
+{
+    var userName = user.Name;
+}
+</code></pre>
+<h3 id="mixing-result-and-exceptions">Mixing Result and Exceptions</h3>
+<pre><code class="lang-csharp">// ❌ Don't throw exceptions in ROP chains
+.Bind(x =&gt; 
+{
+    if (x.IsInvalid) 
+        throw new InvalidOperationException();  // Breaks the railway!
+    return Result.Success(x);
+})
+
+// ✅ Return Result instead
+.Bind(x =&gt; 
+    x.IsInvalid 
+        ? Error.Validation(&quot;Invalid operation&quot;)
+        : Result.Success(x)
+)
+
+// ✅ Or use Result.Try to wrap exception-throwing code
+.Bind(x =&gt; Result.Try(() =&gt; RiskyOperation(x)))
+</code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>See <a href="advanced-features.html">Advanced Features</a> for LINQ query syntax and parallel operations</li>
+<li>Learn about <a href="error-handling.html">Error Handling</a> for discriminated error matching</li>
+<li>Check <a href="BENCHMARKS.html">BENCHMARKS.md</a> for detailed performance analysis</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/debugging.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

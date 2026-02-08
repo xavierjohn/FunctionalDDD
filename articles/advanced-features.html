@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Advanced Features </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Advanced Features ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/advanced-features.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="advanced-features">Advanced Features</h1>
+
+<p>Advanced Railway Oriented Programming patterns for complex scenarios.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#pattern-matching">Pattern Matching</a></li>
+<li><a href="#tuple-destructuring">Tuple Destructuring</a></li>
+<li><a href="#exception-capture">Exception Capture</a></li>
+<li><a href="#parallel-operations">Parallel Operations</a></li>
+<li><a href="#linq-query-syntax">LINQ Query Syntax</a></li>
+<li><a href="#maybe-type">Maybe Type</a></li>
+</ul>
+<h2 id="pattern-matching">Pattern Matching</h2>
+<p><code>Match</code> handles both success and failure cases elegantly:</p>
+<h3 id="basic-pattern-matching">Basic Pattern Matching</h3>
+<pre><code class="lang-csharp">var description = GetUser(&quot;123&quot;).Match(
+    onSuccess: user =&gt; $&quot;User: {user.Name}&quot;,
+    onFailure: error =&gt; $&quot;Error: {error.Code}&quot;
+);
+</code></pre>
+<h3 id="async-pattern-matching">Async Pattern Matching</h3>
+<pre><code class="lang-csharp">await ProcessOrderAsync(order).MatchAsync(
+    onSuccess: async order =&gt; await SendConfirmationAsync(order),
+    onFailure: async error =&gt; await LogErrorAsync(error)
+);
+</code></pre>
+<h3 id="with-http-results">With HTTP Results</h3>
+<pre><code class="lang-csharp">app.MapGet(&quot;/users/{id}&quot;, async (string id) =&gt;
+{
+    return await GetUserAsync(id)
+        .ToResultAsync(Error.NotFound($&quot;User {id} not found&quot;))
+        .MatchAsync(
+            onSuccess: user =&gt; Results.Ok(user),
+            onFailure: error =&gt; error.ToHttpResult()
+        );
+});
+</code></pre>
+<h2 id="tuple-destructuring">Tuple Destructuring</h2>
+<p>Automatically destructure tuples in Match and Bind operations:</p>
+<h3 id="automatic-destructuring">Automatic Destructuring</h3>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(email)
+    .Combine(UserId.TryCreate(userId))
+    .Combine(OrderId.TryCreate(orderId))
+    .Match(
+        // Tuple automatically destructured into named parameters
+        onSuccess: (email, userId, orderId) =&gt; 
+            $&quot;Order {orderId} for user {userId} at {email}&quot;,
+        onFailure: error =&gt; 
+            $&quot;Validation failed: {error.Detail}&quot;
+    );
+</code></pre>
+<h3 id="tuple-destructuring-in-bind">Tuple Destructuring in Bind</h3>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;))
+    .Combine(EmailAddress.TryCreate(&quot;john@example.com&quot;))
+    .Bind((firstName, lastName, email) =&gt; 
+        CreateUser(firstName, lastName, email)
+    );
+</code></pre>
+<h3 id="support-for-2-9-parameters">Support for 2-9 Parameters</h3>
+<p>Tuple destructuring supports 2 to 9 combined values:</p>
+<pre><code class="lang-csharp">// Works with any number of combined results
+var result = value1.TryCreate()
+    .Combine(value2.TryCreate())
+    .Combine(value3.TryCreate())
+    .Combine(value4.TryCreate())
+    // ... up to 9 values
+    .Bind((v1, v2, v3, v4, /* ... */) =&gt; ProcessAll(...));
+</code></pre>
+<h2 id="exception-capture">Exception Capture</h2>
+<p>Convert exception-throwing code into Results using <code>Try</code> and <code>TryAsync</code>:</p>
+<h3 id="synchronous-exception-capture">Synchronous Exception Capture</h3>
+<pre><code class="lang-csharp">Result&lt;string&gt; LoadFile(string path)
+{
+    return Result.Try(() =&gt; File.ReadAllText(path));
+}
+
+// Usage
+var content = LoadFile(&quot;config.json&quot;)
+    .Ensure(c =&gt; !string.IsNullOrEmpty(c), 
+           Error.Validation(&quot;File is empty&quot;))
+    .Bind(ParseConfig);
+</code></pre>
+<h3 id="async-exception-capture">Async Exception Capture</h3>
+<pre><code class="lang-csharp">async Task&lt;Result&lt;User&gt;&gt; FetchUserAsync(string url)
+{
+    return await Result.TryAsync(async () =&gt; 
+        await _httpClient.GetFromJsonAsync&lt;User&gt;(url));
+}
+
+// Usage with chaining
+var user = await FetchUserAsync(apiUrl)
+    .EnsureAsync(u =&gt; u != null, Error.NotFound(&quot;User not found&quot;))
+    .TapAsync(u =&gt; LogUserAccessAsync(u.Id));
+</code></pre>
+<h3 id="custom-exception-mapping">Custom Exception Mapping</h3>
+<pre><code class="lang-csharp">Result&lt;string&gt; ReadFileWithCustomErrors(string path)
+{
+    return Result.Try(
+        () =&gt; File.ReadAllText(path),
+        exception =&gt; exception switch
+        {
+            FileNotFoundException =&gt; Error.NotFound($&quot;File not found: {path}&quot;),
+            UnauthorizedAccessException =&gt; Error.Forbidden(&quot;Access denied&quot;),
+            _ =&gt; Error.Unexpected(exception.Message)
+        }
+    );
+}
+</code></pre>
+<h2 id="parallel-operations">Parallel Operations</h2>
+<p>Execute multiple async operations in parallel while maintaining ROP style using <code>Result.ParallelAsync</code>:</p>
+<h3 id="parallel-execution-with-resultparallelasync">Parallel Execution with Result.ParallelAsync</h3>
+<pre><code class="lang-csharp">// Execute multiple async operations in parallel
+var result = await Result.ParallelAsync(
+    () =&gt; GetUserAsync(userId, cancellationToken),
+    () =&gt; GetOrdersAsync(userId, cancellationToken),
+    () =&gt; GetPreferencesAsync(userId, cancellationToken)
+)
+.WhenAllAsync()
+.BindAsync((user, orders, preferences, ct) =&gt; 
+    CreateDashboard(user, orders, preferences, ct),
+    cancellationToken
+);
+</code></pre>
+<p><strong>How it works:</strong></p>
+<ol>
+<li><code>Result.ParallelAsync</code> accepts factory functions (<code>Func&lt;Task&lt;Result&lt;T&gt;&gt;&gt;</code>)</li>
+<li>All operations <strong>start immediately</strong> and run <strong>concurrently</strong></li>
+<li><code>.WhenAllAsync()</code> waits for all operations to complete</li>
+<li>Returns <code>Result&lt;(T1, T2, T3)&gt;</code> tuple containing all values</li>
+<li>If any operation fails, returns combined errors</li>
+<li>Tuple is automatically destructured in <code>BindAsync</code></li>
+</ol>
+<h3 id="multi-stage-parallel-execution">Multi-Stage Parallel Execution</h3>
+<p>Execute dependent operations in stages - parallel within stages, sequential between stages:</p>
+<pre><code class="lang-csharp">// Stage 1: Fetch core data in parallel
+var result = await Result.ParallelAsync(
+    () =&gt; FetchUserAsync(userId, ct),
+    () =&gt; CheckInventoryAsync(productId, ct),
+    () =&gt; ValidatePaymentAsync(paymentId, ct)
+)
+.WhenAllAsync()  // Wait for Stage 1 to complete
+
+// Stage 2: Use results from Stage 1 to run fraud &amp; shipping in parallel
+.BindAsync((user, inventory, payment, ct) =&gt;
+    Result.ParallelAsync(
+        () =&gt; RunFraudDetectionAsync(user, payment, inventory, ct),
+        () =&gt; CalculateShippingAsync(address, inventory, ct)
+    )
+    .WhenAllAsync()
+    .BindAsync((fraudCheck, shipping, ct2) =&gt;
+        Result.Success(new CheckoutResult(user, inventory, payment, fraudCheck, shipping))
+    ),
+    ct
+);
+</code></pre>
+<p><strong>Why multi-stage?</strong></p>
+<ul>
+<li>Stage 2 operations <strong>depend on</strong> Stage 1 results</li>
+<li>Each stage runs <strong>in parallel</strong> internally</li>
+<li>Stages run <strong>sequentially</strong> (Stage 2 waits for Stage 1)</li>
+<li><strong>2-3x performance</strong> improvement over sequential execution</li>
+</ul>
+<h3 id="real-world-example-fraud-detection">Real-World Example: Fraud Detection</h3>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Transaction&gt;&gt; ProcessTransactionAsync(
+    Transaction transaction,
+    CancellationToken ct)
+{
+    // Run all fraud checks in parallel
+    var result = await Result.ParallelAsync(
+        () =&gt; CheckBlacklistAsync(transaction.AccountId, ct),
+        () =&gt; CheckVelocityLimitsAsync(transaction, ct),
+        () =&gt; CheckAmountThresholdAsync(transaction, ct),
+        () =&gt; CheckGeolocationAsync(transaction, ct)
+    )
+    .WhenAllAsync()
+    .BindAsync((check1, check2, check3, check4, ct) =&gt; 
+        ApproveTransactionAsync(transaction, ct), 
+        ct
+    );
+    
+    return result;
+}
+</code></pre>
+<p><strong>Performance benefit:</strong></p>
+<ul>
+<li><strong>Sequential:</strong> 4 checks × 50ms each = 200ms</li>
+<li><strong>Parallel:</strong> max(50ms, 50ms, 50ms, 50ms) = 50ms</li>
+<li><strong>4x faster!</strong></li>
+</ul>
+<h3 id="error-handling-in-parallel-operations">Error Handling in Parallel Operations</h3>
+<pre><code class="lang-csharp">// If ANY operation fails, the entire result fails
+var result = await Result.ParallelAsync(
+    () =&gt; GetUserAsync(userId, ct),           // ✅ Success
+    () =&gt; GetOrdersAsync(userId, ct),          // ❌ Fails (user has no orders)
+    () =&gt; GetPreferencesAsync(userId, ct)      // ✅ Success
+).WhenAllAsync();
+
+// result.IsFailure == true
+// result.Error contains the &quot;no orders&quot; error
+</code></pre>
+<p><strong>Multiple failures:</strong></p>
+<pre><code class="lang-csharp">var result = await Result.ParallelAsync(
+    () =&gt; ValidateEmailAsync(&quot;invalid&quot;),       // ❌ ValidationError
+    () =&gt; ValidatePhoneAsync(&quot;bad&quot;),           // ❌ ValidationError
+    () =&gt; ValidateAgeAsync(-5)                 // ❌ ValidationError
+).WhenAllAsync();
+
+// result.Error is ValidationError with all 3 field errors combined
+</code></pre>
+<h3 id="parallel-vs-sequential-comparison">Parallel vs Sequential Comparison</h3>
+<p><strong>Sequential (old way):</strong></p>
+<pre><code class="lang-csharp">var user = await GetUserAsync(userId, ct);
+if (user.IsFailure) return user.Error;
+
+var orders = await GetOrdersAsync(userId, ct);
+if (orders.IsFailure) return orders.Error;
+
+var prefs = await GetPreferencesAsync(userId, ct);
+if (prefs.IsFailure) return prefs.Error;
+
+// Total time: ~150ms (50ms + 50ms + 50ms)
+</code></pre>
+<p><strong>Parallel (new way):</strong></p>
+<pre><code class="lang-csharp">var result = await Result.ParallelAsync(
+    () =&gt; GetUserAsync(userId, ct),
+    () =&gt; GetOrdersAsync(userId, ct),
+    () =&gt; GetPreferencesAsync(userId, ct)
+).WhenAllAsync();
+
+// Total time: ~50ms (all run concurrently)
+// 3x faster!
+</code></pre>
+<h3 id="when-to-use-parallel-execution">When to Use Parallel Execution</h3>
+<p>✅ <strong>DO use <code>Result.ParallelAsync</code> when:</strong></p>
+<ul>
+<li>Operations are <strong>independent</strong> (no dependencies between them)</li>
+<li>Operations can run <strong>concurrently</strong> safely</li>
+<li><strong>Performance matters</strong> (user-facing, high-throughput)</li>
+<li>Need to <strong>aggregate errors</strong> from multiple validations</li>
+</ul>
+<p>❌ <strong>DON'T use when:</strong></p>
+<ul>
+<li>Operations have <strong>dependencies</strong> (use <code>BindAsync</code> chain)</li>
+<li>Operations must run <strong>sequentially</strong></li>
+<li>Operations <strong>modify shared state</strong> (need synchronization)</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li><strong>Use factory functions</strong> - Ensures operations don't start until <code>ParallelAsync</code> is called</li>
+<li><strong>Always call <code>.WhenAllAsync()</code></strong> - Waits for all operations to complete</li>
+<li><strong>Short-circuit on failure</strong> - If one fails, others may still complete but result will be failure</li>
+<li><strong>Combine errors intelligently</strong> - ValidationErrors merge field errors, different types create AggregateError</li>
+<li><strong>Pass CancellationToken</strong> - Allows graceful cancellation of all operations</li>
+</ol>
+<h2 id="linq-query-syntax">LINQ Query Syntax</h2>
+<p>Use C#'s LINQ query syntax for readable multi-step operations:</p>
+<h3 id="basic-linq-query">Basic LINQ Query</h3>
+<pre><code class="lang-csharp">var result =
+    from user in GetUser(userId)
+    from order in GetLastOrder(user)
+    from payment in ProcessPayment(order)
+    select new OrderConfirmation(user, order, payment);
+</code></pre>
+<h3 id="linq-with-where-clause">LINQ with Where Clause</h3>
+<pre><code class="lang-csharp">var result =
+    from email in EmailAddress.TryCreate(emailInput)
+    from user in GetUserByEmail(email)
+    where user.IsActive
+    from orders in GetUserOrders(user.Id)
+    select new UserSummary(user, orders);
+</code></pre>
+<p><strong>Note:</strong> The <code>where</code> clause uses a generic &quot;filtered out&quot; error. For domain-specific error messages, use <code>Ensure</code> instead:</p>
+<pre><code class="lang-csharp">// Better: Use Ensure for custom error messages
+var result = EmailAddress.TryCreate(emailInput)
+    .Bind(email =&gt; GetUserByEmail(email))
+    .Ensure(user =&gt; user.IsActive, Error.Validation(&quot;User account is not active&quot;))
+    .Bind(user =&gt; GetUserOrders(user.Id))
+    .Map(orders =&gt; new UserSummary(user, orders));
+</code></pre>
+<h3 id="linq-with-async-operations">LINQ with Async Operations</h3>
+<pre><code class="lang-csharp">var result = await (
+    from userId in UserId.TryCreate(userIdInput)
+    from user in GetUserAsync(userId)
+    from permissions in GetPermissionsAsync(user.Id)
+    select new UserWithPermissions(user, permissions)
+).ConfigureAwait(false);
+</code></pre>
+<p><strong>Note:</strong> LINQ query syntax works best with synchronous operations. For complex async workflows, consider using <code>BindAsync</code> for better readability and cancellation token support.</p>
+<h2 id="maybe-type">Maybe Type</h2>
+<p><code>Maybe&lt;T&gt;</code> represents an optional value that may or may not exist, without implying an error:</p>
+<h3 id="creating-maybe-values">Creating Maybe Values</h3>
+<pre><code class="lang-csharp">// From nullable value
+Maybe&lt;User&gt; user = Maybe.From(nullableUser);
+
+// Implicit conversion
+Maybe&lt;string&gt; some = &quot;value&quot;;
+Maybe&lt;string&gt; none = Maybe.None&lt;string&gt;();
+
+// Checking for value
+if (user.HasValue)
+{
+    Console.WriteLine($&quot;Hello {user.Value.Name}&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;No user found&quot;);
+}
+</code></pre>
+<h3 id="maybe-vs-result">Maybe vs Result</h3>
+<p>Use <code>Maybe&lt;T&gt;</code> when absence is <strong>not an error</strong> (optional data):</p>
+<pre><code class="lang-csharp">Maybe&lt;string&gt; middleName = GetMiddleName(user); // OK to be missing
+</code></pre>
+<p>Use <code>Result&lt;T&gt;</code> when you need to <strong>track why</strong> something failed:</p>
+<pre><code class="lang-csharp">Result&lt;User&gt; user = GetUser(id); // Need to know why it failed
+</code></pre>
+<h3 id="converting-maybe-to-result">Converting Maybe to Result</h3>
+<pre><code class="lang-csharp">Maybe&lt;User&gt; maybeUser = FindUserInCache(id);
+
+Result&lt;User&gt; result = maybeUser
+    .ToResult(Error.NotFound($&quot;User {id} not found in cache&quot;));
+</code></pre>
+<h3 id="using-maybe-operations">Using Maybe Operations</h3>
+<pre><code class="lang-csharp">Maybe&lt;User&gt; maybeUser = GetUserById(id);
+
+// Convert to Result for chaining
+var result = maybeUser
+    .ToResult(Error.NotFound($&quot;User {id} not found&quot;))
+    .Bind(user =&gt; GetEmailPreferences(user.Email));
+
+// Or use directly with HasValue
+string preferences = maybeUser.HasValue 
+    ? GetEmailPreferences(maybeUser.Value.Email)
+    : &quot;No preferences found&quot;;
+</code></pre>
+<h2 id="best-practices-1">Best Practices</h2>
+<ol>
+<li><strong>Use Try for Third-Party Code</strong>: Wrap exception-throwing code with <code>Result.Try</code> or <code>Result.TryAsync</code></li>
+<li><strong>Leverage Tuples</strong>: Use tuple destructuring for combining multiple validations</li>
+<li><strong>Parallel When Possible</strong>: Use <code>Task.WhenAll</code> for independent async operations</li>
+<li><strong>Choose Maybe vs Result Carefully</strong>: Use Maybe for optional data, Result for operations that can fail</li>
+<li><strong>LINQ for Readability</strong>: Use LINQ query syntax for complex multi-step operations</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>Learn about <a href="error-handling.html">Error Handling</a> for discriminated error matching</li>
+<li>See <a href="basics.html#working-with-async-operations">Working with Async Operations</a> for CancellationToken support</li>
+<li>Check <a href="integration.html">Integration</a> for ASP.NET and FluentValidation usage</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/advanced-features.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

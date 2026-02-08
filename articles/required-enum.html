@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>RequiredEnum </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="RequiredEnum ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/required-enum.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="requiredenum">RequiredEnum</h1>
+
+<p>RequiredEnum is a type-safe enumeration with behavior, providing a powerful alternative to C# enums for domain modeling. When used with the <code>partial</code> keyword, the source generator automatically adds <code>IScalarValue&lt;TSelf, string&gt;</code>, JSON serialization, ASP.NET Core model binding, and <code>IParsable&lt;T&gt;</code>.</p>
+<h2 id="why-requiredenum">Why RequiredEnum?</h2>
+<p>C# enums have limitations that can lead to bugs:</p>
+<pre><code class="lang-csharp">// C# enum problems
+public enum OrderStatus { Draft, Confirmed, Shipped }
+
+var status = (OrderStatus)999;  // Valid! No compile or runtime error
+var invalid = Enum.Parse&lt;OrderStatus&gt;(&quot;Invalid&quot;);  // Throws at runtime
+</code></pre>
+<p>RequiredEnum solves these issues:</p>
+<pre><code class="lang-csharp">// RequiredEnum - type-safe, with behavior
+public partial class OrderState : RequiredEnum&lt;OrderState&gt;
+{
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    
+    private OrderState() { }
+}
+
+// Cannot create invalid values - Name is auto-derived from field name
+var result = OrderState.TryCreate(&quot;Invalid&quot;);  // Returns Result.Failure with &quot;Valid values: Draft, Confirmed, Shipped&quot;
+var state = OrderState.Draft;  // state.Name == &quot;Draft&quot;
+</code></pre>
+<h2 id="basic-usage">Basic Usage</h2>
+<h3 id="defining-a-requiredenum">Defining a RequiredEnum</h3>
+<p>Use <code>partial</code> to enable source generation. The Name is automatically derived from the field name — pure domain, no strings needed:</p>
+<pre><code class="lang-csharp">using FunctionalDdd;
+using FunctionalDdd.PrimitiveValueObjects;
+
+public partial class PaymentMethod : RequiredEnum&lt;PaymentMethod&gt;
+{
+    // Name auto-derived: &quot;CreditCard&quot;, &quot;DebitCard&quot;, etc.
+    public static readonly PaymentMethod CreditCard = new();
+    public static readonly PaymentMethod DebitCard = new();
+    public static readonly PaymentMethod BankTransfer = new();
+    public static readonly PaymentMethod Crypto = new();
+
+    private PaymentMethod() { }
+}
+</code></pre>
+<h3 id="creating-instances">Creating Instances</h3>
+<pre><code class="lang-csharp">// From name (case-insensitive, returns Result&lt;T&gt;)
+var result = PaymentMethod.TryCreate(&quot;creditcard&quot;);
+if (result.IsSuccess)
+    Console.WriteLine(result.Value.Name);  // &quot;CreditCard&quot;
+
+// Direct access when known valid
+var method = PaymentMethod.Create(&quot;CreditCard&quot;);  // Throws if invalid
+
+// Check membership
+if (payment.Is(PaymentMethod.CreditCard, PaymentMethod.DebitCard))
+    ApplyCardFee();
+
+if (payment.IsNot(PaymentMethod.Crypto))
+    ProcessTraditionalPayment();
+
+// Enumerate all values
+foreach (var m in PaymentMethod.GetAll())
+    Console.WriteLine($&quot;{m.Value}: {m.Name}&quot;);
+</code></pre>
+<h2 id="adding-behavior">Adding Behavior</h2>
+<p>RequiredEnum types can have properties and methods:</p>
+<pre><code class="lang-csharp">public partial class OrderState : RequiredEnum&lt;OrderState&gt;
+{
+    // Name auto-derived from field name
+    public static readonly OrderState Draft = new(canModify: true, canCancel: true, isTerminal: false);
+    public static readonly OrderState Confirmed = new(canModify: false, canCancel: true, isTerminal: false);
+    public static readonly OrderState Shipped = new(canModify: false, canCancel: false, isTerminal: false);
+    public static readonly OrderState Delivered = new(canModify: false, canCancel: false, isTerminal: true);
+    public static readonly OrderState Cancelled = new(canModify: false, canCancel: false, isTerminal: true);
+
+    public bool CanModify { get; }
+    public bool CanCancel { get; }
+    public bool IsTerminal { get; }
+
+    private OrderState(bool canModify, bool canCancel, bool isTerminal)
+    {
+        CanModify = canModify;
+        CanCancel = canCancel;
+        IsTerminal = isTerminal;
+    }
+}
+
+// Usage
+if (order.State.CanModify)
+    order.AddLine(product, quantity);
+
+if (order.State.CanCancel)
+    order.Cancel();
+</code></pre>
+<h2 id="state-machine-pattern">State Machine Pattern</h2>
+<p>RequiredEnum types excel at modeling state machines with valid transitions:</p>
+<pre><code class="lang-csharp">public partial class OrderState : RequiredEnum&lt;OrderState&gt;
+{
+    // ... members defined above ...
+
+    public IReadOnlyList&lt;OrderState&gt; AllowedTransitions =&gt; this switch
+    {
+        _ when this == Draft =&gt; [Confirmed, Cancelled],
+        _ when this == Confirmed =&gt; [Shipped, Cancelled],
+        _ when this == Shipped =&gt; [Delivered],
+        _ =&gt; []  // Terminal states have no transitions
+    };
+
+    public bool CanTransitionTo(OrderState newState) =&gt;
+        AllowedTransitions.Contains(newState);
+
+    public Result&lt;OrderState&gt; TryTransitionTo(OrderState newState)
+    {
+        if (CanTransitionTo(newState))
+            return newState;
+
+        return Error.Validation(
+            $&quot;Cannot transition from '{Name}' to '{newState.Name}'. &quot; +
+            $&quot;Allowed: {string.Join(&quot;, &quot;, AllowedTransitions.Select(s =&gt; s.Name))}&quot;);
+    }
+}
+</code></pre>
+<h2 id="json-serialization">JSON Serialization</h2>
+<p>When using the <code>partial</code> keyword, the source generator automatically adds a <code>[JsonConverter]</code> attribute. No manual configuration needed:</p>
+<pre><code class="lang-csharp">// Source generator adds [JsonConverter(typeof(RequiredEnumJsonConverter&lt;OrderState&gt;))]
+public partial class OrderState : RequiredEnum&lt;OrderState&gt;
+{
+    // ...
+}
+
+// Serializes to: &quot;Confirmed&quot; (the Name)
+var json = JsonSerializer.Serialize(OrderState.Confirmed);
+
+// Deserializes from string (case-insensitive)
+var state = JsonSerializer.Deserialize&lt;OrderState&gt;(&quot;\&quot;Confirmed\&quot;&quot;);
+</code></pre>
+<h2 id="entity-framework-core">Entity Framework Core</h2>
+<p>Store RequiredEnum types using the auto-generated Value property:</p>
+<pre><code class="lang-csharp">// In DbContext.OnModelCreating
+modelBuilder.Entity&lt;Order&gt;(builder =&gt;
+{
+    // Store as int using auto-generated Value (0, 1, 2, ...)
+    builder.Property(o =&gt; o.State)
+        .HasConversion(
+            state =&gt; state.Value,
+            value =&gt; OrderState.GetAll().First(s =&gt; s.Value == value))
+        .IsRequired();
+});
+</code></pre>
+<p><strong>Note:</strong> The Value is assigned based on field declaration order (0, 1, 2, ...).
+If you reorder fields, database values will change. For existing databases,
+use explicit mapping instead.</p>
+<h2 id="aspnet-core-integration">ASP.NET Core Integration</h2>
+<p>Because the source generator adds <code>IScalarValue&lt;TSelf, string&gt;</code>, RequiredEnum types work automatically with ASP.NET Core:</p>
+<ul>
+<li><strong>Route parameters:</strong> <code>/orders/states/{state}</code> — binds and validates automatically</li>
+<li><strong>Query parameters:</strong> <code>?state=Draft</code> — binds and validates automatically</li>
+<li><strong>JSON body:</strong> <code>{ &quot;state&quot;: &quot;Draft&quot; }</code> — validates via <code>ValidatingJsonConverter</code></li>
+<li><strong>Validation errors:</strong> Returns rich error messages like <code>&quot;Valid values: Draft, Confirmed, Shipped, Delivered, Cancelled&quot;</code></li>
+</ul>
+<h2 id="api-reference">API Reference</h2>
+<h3 id="properties">Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Name</code></td>
+<td><code>string</code></td>
+<td>Auto-derived from field name</td>
+</tr>
+<tr>
+<td><code>Value</code></td>
+<td><code>int</code></td>
+<td>Auto-generated based on declaration order (0, 1, 2, ...)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="static-methods">Static Methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GetAll()</code></td>
+<td><code>IReadOnlyCollection&lt;T&gt;</code></td>
+<td>All defined members</td>
+</tr>
+<tr>
+<td><code>TryCreate(string)</code></td>
+<td><code>Result&lt;T&gt;</code></td>
+<td>Find by name (case-insensitive)</td>
+</tr>
+<tr>
+<td><code>TryCreate(string?, string?)</code></td>
+<td><code>Result&lt;T&gt;</code></td>
+<td>Find by name with field name for errors</td>
+</tr>
+<tr>
+<td><code>Create(string)</code></td>
+<td><code>T</code></td>
+<td>Find by name, throws if invalid</td>
+</tr>
+</tbody>
+</table>
+<h3 id="instance-methods">Instance Methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Is(params T[])</code></td>
+<td><code>bool</code></td>
+<td>Check if instance is one of the specified values</td>
+</tr>
+<tr>
+<td><code>IsNot(params T[])</code></td>
+<td><code>bool</code></td>
+<td>Check if instance is not one of the specified values</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operators">Operators</h3>
+<ul>
+<li>Equality: <code>==</code>, <code>!=</code></li>
+</ul>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use private constructor</strong> - Prevent external instantiation</li>
+<li><strong>Define members as static readonly</strong> - Ensures single instances</li>
+<li><strong>No strings in domain</strong> - Name is auto-derived from field name</li>
+<li><strong>Add behavior for domain logic</strong> - Encapsulate rules in the enum</li>
+<li><strong>Use TryCreate</strong> - For user input validation</li>
+<li><strong>Use Create</strong> - For known-valid values (tests, constants)</li>
+<li><strong>Model state machines</strong> - When values have valid transitions</li>
+<li><strong>Use Is() and IsNot()</strong> - For readable membership checks</li>
+</ol>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="intro.html#domain-driven-design">Domain-Driven Design</a> - Overview of DDD patterns</li>
+<li><a href="integration-ef.html">Entity Framework Core Integration</a> - Persistence patterns</li>
+<li><a href="clean-architecture.html">Clean Architecture</a> - Using RequiredEnum in layered applications</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/required-enum.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

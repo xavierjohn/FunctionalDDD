@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Basics </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Basics ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/basics.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="basics">Basics</h1>
+
+<p>Learn the fundamentals of Railway-Oriented Programming (ROP) and type-safe domain modeling in just a few minutes.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#what-is-railway-oriented-programming">What is Railway-Oriented Programming?</a></li>
+<li><a href="#why-avoid-primitive-obsession">Why Avoid Primitive Obsession?</a></li>
+<li><a href="#resulttvalue-type">Result Type</a></li>
+<li><a href="#core-extension-methods-building-blocks">Core Extension Methods</a></li>
+<li><a href="#putting-it-all-together">Putting It All Together</a></li>
+<li><a href="#working-with-async-operations">Working with Async Operations</a></li>
+<li><a href="#common-beginner-questions">Common Beginner Questions</a></li>
+<li><a href="#quick-reference">Quick Reference</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+</ul>
+<h2 id="what-is-railway-oriented-programming">What is Railway-Oriented Programming?</h2>
+<p>Railway-Oriented Programming is a functional programming pattern that treats your code like a railway track with <strong>two paths</strong>:</p>
+<ul>
+<li>🟢 <strong>Success Track</strong> - Operations continue when everything works</li>
+<li>🔴 <strong>Failure Track</strong> - Errors are captured and propagated automatically</li>
+</ul>
+<p>Instead of checking for errors after every operation, ROP lets you chain operations together. If any step fails, the rest are automatically skipped—like a train switching to an error track.</p>
+<pre><code class="lang-mermaid">graph LR
+    A[Start] --&gt; B{Operation 1}
+    B --&gt;|Success| C{Operation 2}
+    B --&gt;|Failure| E[Error Track]
+    C --&gt;|Success| D{Operation 3}
+    C --&gt;|Failure| E
+    D --&gt;|Success| F[Success Result]
+    D --&gt;|Failure| E
+    E --&gt; G[Failure Result]
+    
+    style F fill:#90EE90
+    style G fill:#FFB6C6
+    style E fill:#FFD700
+</code></pre>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>✅ Explicit error handling (no hidden exceptions)</li>
+<li>✅ Clean, readable code without nested if-statements</li>
+<li>✅ Type-safe operations that prevent runtime errors</li>
+<li>✅ Compiler-enforced error handling</li>
+</ul>
+<h3 id="visual-comparison-traditional-vs-railway-oriented">Visual Comparison: Traditional vs Railway-Oriented</h3>
+<p><strong>Traditional Approach:</strong></p>
+<pre><code class="lang-csharp">// ❌ Nested error checking - hard to read
+var firstName = ValidateFirstName(input.FirstName);
+if (firstName == null) return BadRequest(&quot;Invalid first name&quot;);
+
+var lastName = ValidateLastName(input.LastName);
+if (lastName == null) return BadRequest(&quot;Invalid last name&quot;);
+
+var email = ValidateEmail(input.Email);
+if (email == null) return BadRequest(&quot;Invalid email&quot;);
+
+var user = CreateUser(firstName, lastName, email);
+if (user == null) return BadRequest(&quot;Cannot create user&quot;);
+
+return Ok(user);
+</code></pre>
+<p><strong>Railway-Oriented Approach:</strong></p>
+<pre><code class="lang-csharp">// ✅ Clean railway - automatic error handling
+return FirstName.TryCreate(input.FirstName)
+    .Combine(LastName.TryCreate(input.LastName))
+    .Combine(EmailAddress.TryCreate(input.Email))
+    .Bind((first, last, email) =&gt; User.TryCreate(first, last, email))
+    .Match(
+        onSuccess: user =&gt; Ok(user),
+        onFailure: error =&gt; BadRequest(error.Detail)
+    );
+</code></pre>
+<p><img src="../images/railway-oriented-programming.jpg" alt="Railway-Oriented Programming Concept"></p>
+<h2 id="why-avoid-primitive-obsession">Why Avoid Primitive Obsession?</h2>
+<p>Passing strings as parameters can cause errors. Consider this example where first and last names could be swapped:</p>
+<pre><code class="lang-csharp">Person CreatePerson(string firstName, string lastName)
+{
+    return new Person(firstName, lastName);
+}
+
+var firstName = &quot;John&quot;;
+var lastName = &quot;Smith&quot;;
+var person = CreatePerson(lastName, firstName);  // ❌ Oops! Swapped parameters
+</code></pre>
+<p>This compiles successfully but creates a person with first name &quot;Smith&quot; and last name &quot;John&quot;—a <strong>runtime logic bug</strong> the compiler can't catch.</p>
+<h3 id="creating-type-safe-parameters">Creating Type-Safe Parameters</h3>
+<p>Create dedicated classes for each domain type (FirstName, LastName). In Domain-Driven Design, objects must maintain valid state, requiring parameter validation before instantiation.</p>
+<p>For simple null/empty checks, use the <code>RequiredString</code> base class provided by the library:</p>
+<pre><code class="lang-csharp">// These classes inherit from RequiredString which ensures non-empty values
+public partial class FirstName : RequiredString
+{
+}
+
+public partial class LastName : RequiredString
+{
+}
+
+Person CreatePerson(FirstName firstName, LastName lastName)
+{
+    return new Person(firstName, lastName);
+}
+</code></pre>
+<p><strong>Why <code>partial</code>?</strong> The class must be partial to allow source code generation of the <code>TryCreate</code> method by the library.</p>
+<p>The generated <code>TryCreate</code> method returns a <code>Result</code> type that is either <code>Success</code> or <code>Failure</code>:</p>
+<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.TryCreate(&quot;John&quot;);
+// Returns Success with value &quot;John&quot;
+
+Result&lt;FirstName&gt; emptyResult = FirstName.TryCreate(&quot;&quot;);
+// Returns Failure with error &quot;First Name cannot be empty&quot;
+</code></pre>
+<h3 id="the-old-way-manual-error-checking-verbose-">The Old Way: Manual Error Checking (Verbose) ❌</h3>
+<pre><code class="lang-csharp">Result&lt;FirstName&gt; firstNameResult = FirstName.TryCreate(&quot;John&quot;);
+if (firstNameResult.IsFailure)
+{
+    Console.WriteLine(firstNameResult.Error.Detail);
+    return;
+}
+
+Result&lt;LastName&gt; lastNameResult = LastName.TryCreate(&quot;Smith&quot;);
+if (lastNameResult.IsFailure)
+{
+    Console.WriteLine(lastNameResult.Error.Detail);
+    return;
+}
+
+var person = CreatePerson(firstNameResult.Value, lastNameResult.Value);
+</code></pre>
+<p><strong>Problems with this approach:</strong></p>
+<ul>
+<li>Lots of repetitive if-statements</li>
+<li>Easy to forget error checks</li>
+<li>Verbose and hard to read</li>
+</ul>
+<p><strong>The compiler will catch parameter order mistakes</strong> because <code>FirstName</code> and <code>LastName</code> are different types!</p>
+<h2 id="resulttvalue-type">Result&lt;TValue&gt; Type</h2>
+<p><code>Result&lt;T&gt;</code> is a generic type that holds <strong>either</strong> a value <strong>or</strong> an error—never both. It's the foundation of Railway-Oriented Programming.</p>
+<h3 id="result-structure">Result Structure</h3>
+<pre><code class="lang-csharp">// Simplified structure (actual implementation in the library)
+public readonly struct Result&lt;TValue&gt;
+{
+    public bool IsSuccess { get; }
+    public bool IsFailure { get; }
+    public TValue Value { get; }      // ⚠️ Throws if IsFailure
+    public Error Error { get; }       // ⚠️ Throws if IsSuccess
+    
+    // Safe access methods (recommended)
+    public bool TryGetValue(out TValue value);
+    public bool TryGetError(out Error error);
+}
+</code></pre>
+<p><strong>⚠️ Important:</strong> Accessing <code>Value</code> on failure or <code>Error</code> on success throws an <code>InvalidOperationException</code>.</p>
+<h3 id="safe-ways-to-access-result-values">Safe Ways to Access Result Values</h3>
+<p><strong>Option 1: Check state first</strong></p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;);
+
+if (result.IsSuccess)
+{
+    var name = result.Value;  // ✅ Safe
+    Console.WriteLine($&quot;Name: {name}&quot;);
+}
+else
+{
+    var error = result.Error;  // ✅ Safe
+    Console.WriteLine($&quot;Error: {error.Detail}&quot;);
+}
+</code></pre>
+<p><strong>Option 2: Use TryGetValue (recommended)</strong></p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;);
+
+if (result.TryGetValue(out var name))
+{
+    Console.WriteLine($&quot;Name: {name}&quot;);
+}
+else if (result.TryGetError(out var error))
+{
+    Console.WriteLine($&quot;Error: {error.Detail}&quot;);
+}
+</code></pre>
+<p><strong>Option 3: Use Match (most functional)</strong></p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;);
+
+var message = result.Match(
+    onSuccess: name =&gt; $&quot;Hello, {name}!&quot;,
+    onFailure: error =&gt; $&quot;Error: {error.Detail}&quot;
+);
+Console.WriteLine(message);
+</code></pre>
+<h2 id="core-extension-methods-building-blocks">Core Extension Methods (Building Blocks)</h2>
+<p>Extension methods eliminate tedious failure handling after each call, enabling Railway-Oriented Programming.</p>
+<h3 id="railway-operations-flow">Railway Operations Flow</h3>
+<pre><code class="lang-mermaid">flowchart TB
+    START[Input Data] --&gt; COMBINE[Combine&lt;br/&gt;Validate All Inputs]
+    COMBINE --&gt;|All Valid| BIND[Bind&lt;br/&gt;Chain Operation]
+    COMBINE --&gt;|Any Invalid| ERROR[Error Result]
+    
+    BIND --&gt;|Success| MAP[Map&lt;br/&gt;Transform Value]
+    BIND --&gt;|Failure| ERROR
+    
+    MAP --&gt; ENSURE[Ensure&lt;br/&gt;Business Rules]
+    
+    ENSURE --&gt;|Valid| TAP[Tap&lt;br/&gt;Side Effects]
+    ENSURE --&gt;|Invalid| ERROR
+    
+    TAP --&gt; MATCH[Match&lt;br/&gt;Extract Result]
+    
+    MATCH --&gt; SUCCESS[Success Output]
+    MATCH --&gt; FAILURE[Failure Output]
+    
+    ERROR --&gt; RecoverOnFailure{RecoverOnFailure&lt;br/&gt;Retry/Fallback?}
+    RecoverOnFailure --&gt;|Recover| TAP
+    RecoverOnFailure --&gt;|No Recovery| FAILURE
+    
+    style SUCCESS fill:#90EE90
+    style FAILURE fill:#FFB6C6
+    style ERROR fill:#FFD700
+    style COMBINE fill:#E1F5FF
+    style BIND fill:#FFE1F5
+    style MAP fill:#FFF4E1
+    style ENSURE fill:#E1FFE1
+    style TAP fill:#FFE4B5
+    style MATCH fill:#F0E68C
+</code></pre>
+<h3 id="combine---validate-multiple-inputs">Combine - Validate Multiple Inputs</h3>
+<p><strong>Use when:</strong> You need to validate multiple inputs and collect all errors together.</p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;));
+
+// ✅ Success: result contains tuple (FirstName(&quot;John&quot;), LastName(&quot;Smith&quot;))
+// ❌ Failure: result contains all validation errors from both
+</code></pre>
+<p><strong>What you get:</strong></p>
+<ul>
+<li><strong>Success</strong>: A tuple <code>(FirstName, LastName)</code> with both values</li>
+<li><strong>Failure</strong>: All validation errors collected together</li>
+</ul>
+<p><strong>Real-world example:</strong></p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(&quot;user@example.com&quot;)
+    .Combine(FirstName.TryCreate(&quot;John&quot;))
+    .Combine(LastName.TryCreate(&quot;Smith&quot;))
+    .Combine(Password.TryCreate(&quot;SecurePass123!&quot;));
+
+// If email AND password are invalid, you get BOTH errors
+// Perfect for form validation where you want to show all problems at once
+</code></pre>
+<h3 id="bind---chain-operations">Bind - Chain Operations</h3>
+<p><strong>Use when:</strong> You want to call another operation that returns a <code>Result</code>.</p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;))
+    .Bind((firstName, lastName) =&gt; CreatePerson(firstName, lastName));
+
+// Calls CreatePerson only if both names are valid
+// Returns the Person on success, or any validation/creation error
+</code></pre>
+<p><strong>Key point:</strong> <code>Bind</code> is for chaining operations that return <code>Result&lt;T&gt;</code>.</p>
+<p><strong>Real-world example:</strong></p>
+<pre><code class="lang-csharp">var result = UserId.TryCreate(&quot;12345&quot;)
+    .Bind(userId =&gt; GetUserFromDatabase(userId))
+    .Bind(user =&gt; UpdateUserEmail(user, newEmail))
+    .Bind(user =&gt; SaveUserToDatabase(user));
+
+// Each step only runs if the previous succeeded
+// If GetUserFromDatabase fails (user not found), the rest are skipped
+</code></pre>
+<h3 id="map---transform-values">Map - Transform Values</h3>
+<p><strong>Use when:</strong> You want to transform a successful value without returning a <code>Result</code>.</p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(&quot;user@example.com&quot;)
+    .Map(email =&gt; email.ToString().ToUpper());
+// Result&lt;string&gt; containing &quot;USER@EXAMPLE.COM&quot; or an error
+</code></pre>
+<p><strong>Key difference:</strong></p>
+<ul>
+<li><strong>Map</strong>: Transforms the value (function returns <code>T</code>)</li>
+<li><strong>Bind</strong>: Chains operations (function returns <code>Result&lt;T&gt;</code>)</li>
+</ul>
+<p><strong>When to use Map:</strong></p>
+<pre><code class="lang-csharp">// ✅ Use Map for simple transformations
+.Map(email =&gt; email.Domain)
+.Map(price =&gt; price * 1.10m)  // Add 10% tax
+.Map(user =&gt; new UserDto(user))
+
+// ❌ Don't use Map if your function returns Result&lt;T&gt;
+// Use Bind instead!
+</code></pre>
+<p><strong>Map with Combine (Tuple Destructuring):</strong></p>
+<p>Just like <code>Bind</code>, <code>Map</code> supports tuple destructuring after <code>Combine</code>:</p>
+<pre><code class="lang-csharp">// ✅ Use Map when constructor cannot fail
+var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Doe&quot;))
+    .Map((firstName, lastName) =&gt; new PersonDto(firstName, lastName));
+
+// ✅ Use Bind when constructor returns Result&lt;T&gt;
+var result = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Doe&quot;))
+    .Bind((firstName, lastName) =&gt; Person.TryCreate(firstName, lastName));
+</code></pre>
+<p><strong>Rule of thumb:</strong></p>
+<ul>
+<li>Use <code>.Map((a, b) =&gt; ...)</code> when creating objects that <strong>cannot fail</strong></li>
+<li>Use <code>.Bind((a, b) =&gt; ...)</code> when calling methods that return <code>Result&lt;T&gt;</code></li>
+</ul>
+<h3 id="tap---execute-side-effects">Tap - Execute Side Effects</h3>
+<p><strong>Use when:</strong> You want to do something with the value (like logging) without changing it.</p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;John&quot;)
+    .Tap(name =&gt; Console.WriteLine($&quot;Created name: {name}&quot;))
+    .Tap(name =&gt; _logger.LogInformation(&quot;Name validated: {Name}&quot;, name));
+// Result&lt;FirstName&gt; - unchanged, but side effects executed on success
+</code></pre>
+<p><strong>Common uses:</strong></p>
+<ul>
+<li>📝 Logging</li>
+<li>📊 Auditing</li>
+<li>🔔 Sending notifications</li>
+<li>💾 Caching</li>
+<li>🖥️ Updating UI</li>
+</ul>
+<p><strong>Important:</strong> <code>Tap</code> only runs on <strong>success</strong>. Use <code>TapOnFailure</code> for failures:</p>
+<pre><code class="lang-csharp">var result = FirstName.TryCreate(&quot;&quot;)
+    .Tap(name =&gt; Console.WriteLine(&quot;Success!&quot;))          // Skipped (failure path)
+    .TapOnFailure(error =&gt; Console.WriteLine($&quot;Error: {error.Detail}&quot;));  // Runs!
+// Output: &quot;Error: First Name cannot be empty&quot;
+</code></pre>
+<h3 id="ensure---add-validation">Ensure - Add Validation</h3>
+<p><strong>Use when:</strong> You need additional validation beyond what <code>TryCreate</code> does.</p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(&quot;user@spam.com&quot;)
+    .Ensure(email =&gt; !email.Domain.Contains(&quot;spam&quot;),
+           Error.Validation(&quot;Spam domains not allowed&quot;));
+// Fails if email is from spam domain
+</code></pre>
+<p><strong>Chaining multiple validations:</strong></p>
+<pre><code class="lang-csharp">var result = Age.TryCreate(25)
+    .Ensure(age =&gt; age &gt;= 18, Error.Validation(&quot;Must be 18 or older&quot;))
+    .Ensure(age =&gt; age &lt;= 120, Error.Validation(&quot;Invalid age&quot;));
+// Each validation only runs if the previous succeeded
+</code></pre>
+<p><strong>When to use <code>Ensure</code> vs validation in <code>TryCreate</code>:</strong></p>
+<ul>
+<li><strong>TryCreate validation</strong>: Format and structure rules (email format, non-empty)</li>
+<li><strong>Ensure validation</strong>: Business rules and context-specific rules (age limits, domain restrictions)</li>
+</ul>
+<h3 id="recoveronfailure---recover-from-errors">RecoverOnFailure - Recover from Errors</h3>
+<p><strong>Use when:</strong> You want to try a fallback when an error occurs.</p>
+<pre><code class="lang-csharp">var result = GetUserFromCache(id)
+    .RecoverOnFailure(error =&gt; GetUserFromDatabase(id));
+// Try cache first, fallback to database on ANY error
+</code></pre>
+<p><strong>With predicate for selective recovery:</strong></p>
+<pre><code class="lang-csharp">var result = CallExternalApi()
+    .RecoverOnFailure(
+        predicate: error =&gt; error is ServiceUnavailableError,
+        func: () =&gt; GetCachedData()
+    );
+// Only use cache if service is unavailable (not on other errors)
+</code></pre>
+<p><strong>Real-world example:</strong></p>
+<pre><code class="lang-csharp">var result = GetUserFromCache(userId)
+    .RecoverOnFailure(error =&gt; GetUserFromDatabase(userId))
+    .RecoverOnFailure(error =&gt; GetDefaultUser());
+// Try cache → database → default user
+// Stops at first success
+</code></pre>
+<h3 id="match---unwrap-the-result">Match - Unwrap the Result</h3>
+<p><strong>Use when:</strong> You're at the end of your chain and need to extract the final value.</p>
+<pre><code class="lang-csharp">string message = FirstName.TryCreate(&quot;John&quot;)
+    .Combine(LastName.TryCreate(&quot;Smith&quot;))
+    .Bind((firstName, lastName) =&gt; CreatePerson(firstName, lastName))
+    .Match(
+        onSuccess: person =&gt; $&quot;Created: {person.FullName}&quot;,
+        onFailure: error =&gt; $&quot;Error: {error.Detail}&quot;
+    );
+// message is a plain string, not wrapped in Result
+</code></pre>
+<p><strong>Match accepts two functions:</strong></p>
+<ul>
+<li><code>onSuccess</code>: Called when <code>IsSuccess == true</code></li>
+<li><code>onFailure</code>: Called when <code>IsFailure == true</code></li>
+</ul>
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<h3 id="example-user-registration-the-rop-way-">Example: User Registration (The ROP Way) ✅</h3>
+<pre><code class="lang-csharp">public Result&lt;User&gt; RegisterUser(string firstName, string lastName, string email, string password)
+{
+    return FirstName.TryCreate(firstName)
+        .Combine(LastName.TryCreate(lastName))
+        .Combine(EmailAddress.TryCreate(email))
+        .Combine(Password.TryCreate(password))
+        .Tap(tuple =&gt; _logger.LogInformation(&quot;All inputs validated&quot;))
+        .Bind((first, last, emailAddr, pwd) =&gt; User.TryCreate(first, last, emailAddr, pwd))
+        .Ensure(user =&gt; !_repository.EmailExists(user.Email), 
+                Error.Conflict(&quot;Email already registered&quot;))
+        .Tap(user =&gt; _repository.Save(user))
+        .Tap(user =&gt; _emailService.SendWelcomeEmail(user.Email));
+}
+
+// Usage in a controller
+var result = RegisterUser(&quot;John&quot;, &quot;Smith&quot;, &quot;john@example.com&quot;, &quot;SecurePass123!&quot;);
+
+return result.Match(
+    onSuccess: user =&gt; Ok(new { userId = user.Id, message = &quot;Registration successful&quot; }),
+    onFailure: error =&gt; error switch
+    {
+        ValidationError validationErr =&gt; BadRequest(validationErr.FieldErrors),
+        ConflictError conflictErr =&gt; Conflict(conflictErr.Detail),
+        _ =&gt; StatusCode(500, &quot;Unexpected error&quot;)
+    }
+);
+</code></pre>
+<p><strong>What's happening:</strong></p>
+<ol>
+<li>✅ Validate all 4 inputs (collects all errors if multiple fail)</li>
+<li>✅ Log successful validation</li>
+<li>✅ Create user (business validation)</li>
+<li>✅ Check email doesn't exist (database validation)</li>
+<li>✅ Save to database</li>
+<li>✅ Send welcome email</li>
+<li>✅ Return appropriate HTTP response based on error type</li>
+</ol>
+<p><strong>If ANY step fails, the rest are automatically skipped!</strong></p>
+<h2 id="working-with-async-operations">Working with Async Operations</h2>
+<p>All operations have async variants with <code>Async</code> suffix and support <code>CancellationToken</code> for graceful cancellation:</p>
+<h3 id="simple-async-example">Simple Async Example</h3>
+<pre><code class="lang-csharp">var result = await GetUserAsync(userId, cancellationToken)
+    .BindAsync(user =&gt; GetOrdersAsync(user.Id, cancellationToken), cancellationToken)
+    .MapAsync(orders =&gt; orders.Count);
+// Returns Result&lt;int&gt; with order count
+</code></pre>
+<h3 id="parallel-async-operations">Parallel Async Operations</h3>
+<p>Execute multiple independent async operations in parallel using <code>Result.ParallelAsync</code>:</p>
+<pre><code class="lang-csharp">var result = await Result.ParallelAsync(
+    () =&gt; GetStudentInfoAsync(studentId, cancellationToken),
+    () =&gt; GetStudentGradesAsync(studentId, cancellationToken),
+    () =&gt; GetLibraryBooksAsync(studentId, cancellationToken)
+)
+.WhenAllAsync()
+.BindAsync((info, grades, books, ct) =&gt; 
+    PrepareReportAsync(info, grades, books, ct),
+    cancellationToken
+);
+</code></pre>
+<p><strong>Key Points:</strong></p>
+<ul>
+<li><code>Result.ParallelAsync</code> takes factory functions (<code>Func&lt;Task&lt;Result&lt;T&gt;&gt;&gt;</code>)</li>
+<li>All operations start <strong>immediately</strong> and run in <strong>parallel</strong></li>
+<li><code>.WhenAllAsync()</code> waits for all to complete and returns tuple result</li>
+<li>If any operation fails, the result contains the combined errors</li>
+<li>Results are automatically destructured for the next operation</li>
+</ul>
+<h3 id="complete-async-example">Complete Async Example</h3>
+<pre><code class="lang-csharp">public async Task&lt;IActionResult&gt; ProcessOrderAsync(int orderId, CancellationToken ct)
+{
+    return await GetOrderAsync(orderId, ct)
+        .EnsureAsync(order =&gt; order.Status == OrderStatus.Pending,
+                     Error.Validation(&quot;Order already processed&quot;))
+        .TapAsync(order =&gt; _logger.LogInformation(&quot;Processing order {OrderId}&quot;, order.Id), ct)
+        .BindAsync(order =&gt; ChargePaymentAsync(order, ct), ct)
+        .TapAsync(order =&gt; _repository.SaveAsync(order, ct), ct)
+        .TapAsync(order =&gt; SendConfirmationEmailAsync(order.CustomerEmail, ct), ct)
+        .MatchAsync(
+            onSuccess: order =&gt; Results.Ok(new { orderId = order.Id }),
+            onFailure: error =&gt; Results.BadRequest(error.Detail),
+            cancellationToken: ct
+        );
+}
+</code></pre>
+<p><strong>Async + CancellationToken benefits:</strong></p>
+<ul>
+<li>⏱️ Timeout support</li>
+<li>🛑 Graceful shutdown</li>
+<li>🔄 Request cancellation when client disconnects</li>
+</ul>
+<h2 id="summary-of-core-operations">Summary of Core Operations</h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>When to Use</th>
+<th>Input Function Returns</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Combine</strong></td>
+<td>Validate multiple inputs together</td>
+<td>N/A</td>
+<td>Form validation with multiple fields</td>
+</tr>
+<tr>
+<td><strong>Bind</strong></td>
+<td>Chain operations that return Result</td>
+<td><code>Result&lt;T&gt;</code></td>
+<td>Database lookups, business operations</td>
+</tr>
+<tr>
+<td><strong>Map</strong></td>
+<td>Transform successful values</td>
+<td><code>T</code></td>
+<td>Type conversion, formatting</td>
+</tr>
+<tr>
+<td><strong>Tap</strong></td>
+<td>Execute side effects (logging, etc.)</td>
+<td><code>void</code></td>
+<td>Logging, notifications, caching</td>
+</tr>
+<tr>
+<td><strong>Ensure</strong></td>
+<td>Add business rule validation</td>
+<td><code>bool</code></td>
+<td>Age limits, domain restrictions</td>
+</tr>
+<tr>
+<td><strong>RecoverOnFailure</strong></td>
+<td>Provide fallback on errors</td>
+<td><code>Result&lt;T&gt;</code></td>
+<td>Retry logic, default values</td>
+</tr>
+<tr>
+<td><strong>Match</strong></td>
+<td>Extract final value</td>
+<td><code>TResult</code></td>
+<td>Convert to HTTP response, display message</td>
+</tr>
+</tbody>
+</table>
+<p><strong>All operations have <code>Async</code> variants</strong> that accept <code>CancellationToken</code> for async/await support.</p>
+<h2 id="common-beginner-questions">Common Beginner Questions</h2>
+<h3 id="q-when-should-i-use-bind-vs-map">Q: When should I use <code>Bind</code> vs <code>Map</code>?</h3>
+<p><strong>Use <code>Bind</code></strong> when your function returns <code>Result&lt;T&gt;</code>:</p>
+<pre><code class="lang-csharp">Result&lt;User&gt; GetUser(UserId id);  // Returns Result
+.Bind(userId =&gt; GetUser(userId))  // ✅ Use Bind
+</code></pre>
+<p><strong>Use <code>Map</code></strong> when your function returns a plain value:</p>
+<pre><code class="lang-csharp">string FormatName(string name);   // Returns plain string
+.Map(name =&gt; FormatName(name))    // ✅ Use Map
+</code></pre>
+<h3 id="q-how-do-i-handle-errors">Q: How do I handle errors?</h3>
+<p>Three ways:</p>
+<p><strong>1. Pattern matching (recommended for complex scenarios):</strong></p>
+<pre><code class="lang-csharp">var response = result.Match(
+    onSuccess: user =&gt; Ok(user),
+    onFailure: error =&gt; error switch
+    {
+        ValidationError =&gt; BadRequest(error),
+        NotFoundError =&gt; NotFound(error),
+        _ =&gt; StatusCode(500, error)
+    }
+);
+</code></pre>
+<p><strong>2. MatchError (discriminated union):</strong></p>
+<pre><code class="lang-csharp">var response = result.MatchError(
+    onValidation: err =&gt; BadRequest(err.FieldErrors),
+    onNotFound: err =&gt; NotFound(err.Detail),
+    onError: err =&gt; StatusCode(500, err.Detail),
+    onSuccess: user =&gt; Ok(user)
+);
+</code></pre>
+<p><strong>3. Safe access:</strong></p>
+<pre><code class="lang-csharp">if (result.TryGetError(out var error))
+{
+    _logger.LogError(&quot;Operation failed: {Error}&quot;, error.Detail);
+    return;
+}
+</code></pre>
+<h3 id="q-what-if-i-need-the-error-in-the-middle-of-a-chain">Q: What if I need the error in the middle of a chain?</h3>
+<p>Use <code>TapOnFailure</code>:</p>
+<pre><code class="lang-csharp">var result = GetUser(userId)
+    .TapOnFailure(error =&gt; _logger.LogWarning(&quot;User not found: {Error}&quot;, error.Detail))
+    .RecoverOnFailure(error =&gt; GetDefaultUser());
+</code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<p>Now that you understand the basics:</p>
+<ol>
+<li>✅ <strong>Practice</strong> - Try refactoring some of your existing validation code to use ROP</li>
+<li>📚 <strong>Learn more</strong> - Read <a href="advanced-features.html">Advanced Features</a> for LINQ syntax, parallel operations</li>
+<li>🔍 <strong>See examples</strong> - Check out <a href="examples.html">Examples</a> for real-world patterns</li>
+<li>🏗️ <strong>Architecture</strong> - Learn how to structure apps with <a href="clean-architecture.html">Clean Architecture</a></li>
+<li>🔌 <strong>Integration</strong> - See <a href="integration-aspnet.html">ASP.NET Core Integration</a> for web APIs</li>
+</ol>
+<h2 id="quick-reference">Quick Reference</h2>
+<h3 id="creating-value-objects">Creating Value Objects</h3>
+<pre><code class="lang-csharp">// Define your value object (must be partial)
+public partial class EmailAddress : RequiredString { }
+
+// Use the generated TryCreate method
+var result = EmailAddress.TryCreate(&quot;user@example.com&quot;);
+</code></pre>
+<h3 id="cheat-sheet-operation-selection">Cheat Sheet: Operation Selection</h3>
+<pre><code class="lang-mermaid">flowchart TD
+    START{What do you&lt;br/&gt;need to do?}
+    
+    START --&gt;|Validate multiple inputs| COMBINE[Use Combine]
+    START --&gt;|Call another Result operation| BIND[Use Bind]
+    START --&gt;|Transform a value| MAP[Use Map]
+    START --&gt;|Log/Save/Notify| TAP[Use Tap]
+    START --&gt;|Add validation rule| ENSURE[Use Ensure]
+    START --&gt;|Provide fallback| RecoverOnFailure[Use RecoverOnFailure]
+    START --&gt;|Get final value| MATCH[Use Match]
+    
+    COMBINE --&gt; CODE1[&quot;firstName.Combine(lastName)&quot;]
+    BIND --&gt; CODE2[&quot;userId.Bind(GetUser)&quot;]
+    MAP --&gt; CODE3[&quot;email.Map(e =&gt; e.ToUpper())&quot;]
+    TAP --&gt; CODE4[&quot;user.Tap(u =&gt; Log(u))&quot;]
+    ENSURE --&gt; CODE5[&quot;age.Ensure(a =&gt; a &gt;= 18, error)&quot;]
+    RecoverOnFailure --&gt; CODE6[&quot;cache.RecoverOnFailure(() =&gt; db)&quot;]
+    MATCH --&gt; CODE7[&quot;result.Match(success, failure)&quot;]
+    
+    style COMBINE fill:#E1F5FF
+    style BIND fill:#FFE1F5
+    style MAP fill:#FFF4E1
+    style TAP fill:#FFE4B5
+    style ENSURE fill:#E1FFE1
+    style RecoverOnFailure fill:#FFE4E1
+    style MATCH fill:#F0E68C
+</code></pre>
+<h3 id="common-patterns">Common Patterns</h3>
+<p><strong>Form Validation:</strong></p>
+<pre><code class="lang-csharp">FirstName.TryCreate(input.FirstName)
+    .Combine(LastName.TryCreate(input.LastName))
+    .Combine(EmailAddress.TryCreate(input.Email))
+    .Bind((first, last, email) =&gt; User.TryCreate(first, last, email))
+    .ToActionResult(this);
+</code></pre>
+<p><strong>Database Operations:</strong></p>
+<pre><code class="lang-csharp">await GetUserAsync(userId, ct)
+    .BindAsync(user =&gt; UpdateUserAsync(user, ct), ct)
+    .TapAsync(user =&gt; SaveAsync(user, ct), ct)
+    .TapAsync(user =&gt; PublishEventAsync(user, ct), ct);
+</code></pre>
+<p><strong>Retry Pattern:</strong></p>
+<pre><code class="lang-csharp">CallServiceA()
+    .RecoverOnFailure(error =&gt; CallServiceB())
+    .RecoverOnFailure(error =&gt; GetCachedData())
+    .Ensure(data =&gt; data.IsValid, Error.Validation(&quot;Invalid data&quot;));
+</code></pre>
+<h3 id="error-handling-patterns">Error Handling Patterns</h3>
+<p><strong>Simple Match:</strong></p>
+<pre><code class="lang-csharp">result.Match(
+    onSuccess: value =&gt; Ok(value),
+    onFailure: error =&gt; BadRequest(error.Detail)
+);
+</code></pre>
+<p><strong>Discriminated Union:</strong></p>
+<pre><code class="lang-csharp">result.MatchError(
+    onValidation: err =&gt; BadRequest(err.FieldErrors),
+    onNotFound: err =&gt; NotFound(err.Detail),
+    onConflict: err =&gt; Conflict(err.Detail),
+    onError: err =&gt; StatusCode(500, err.Detail),
+    onSuccess: value =&gt; Ok(value)
+);
+</code></pre>
+<p><strong>Pattern Matching:</strong></p>
+<pre><code class="lang-csharp">return result.Match(
+    onSuccess: user =&gt; Ok(user),
+    onFailure: error =&gt; error switch
+    {
+        ValidationError e =&gt; BadRequest(e.FieldErrors),
+        NotFoundError e =&gt; NotFound(e.Detail),
+        ConflictError e =&gt; Conflict(e.Detail),
+        _ =&gt; StatusCode(500, error.Detail)
+    }
+);
+</code></pre>
+<h3 id="async--cancellationtoken">Async + CancellationToken</h3>
+<pre><code class="lang-csharp">public async Task&lt;IActionResult&gt; ProcessAsync(int id, CancellationToken ct)
+{
+    return await GetItemAsync(id, ct)
+        .BindAsync(item =&gt; ValidateAsync(item, ct), ct)
+        .TapAsync(item =&gt; SaveAsync(item, ct), ct)
+        .MatchAsync(
+            onSuccess: item =&gt; Results.Ok(item),
+            onFailure: error =&gt; Results.BadRequest(error.Detail),
+            cancellationToken: ct
+        );
+}
+</code></pre>
+<h3 id="key-reminders">Key Reminders</h3>
+<table>
+<thead>
+<tr>
+<th>✅ Do</th>
+<th>❌ Don't</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use <code>Bind</code> when function returns <code>Result&lt;T&gt;</code></td>
+<td>Use <code>Map</code> when function returns <code>Result&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td>Use <code>Map</code> when function returns plain <code>T</code></td>
+<td>Access <code>.Value</code> without checking <code>IsSuccess</code></td>
+</tr>
+<tr>
+<td>Chain operations for readability</td>
+<td>Nest if-statements for error checking</td>
+</tr>
+<tr>
+<td>Use <code>Combine</code> to collect all validation errors</td>
+<td>Check each validation separately</td>
+</tr>
+<tr>
+<td>Use <code>TryCreate</code> for value object construction</td>
+<td>Use constructors directly</td>
+</tr>
+<tr>
+<td>Handle errors with <code>Match</code> or <code>MatchError</code></td>
+<td>Throw exceptions for business logic errors</td>
+</tr>
+</tbody>
+</table>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/basics.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

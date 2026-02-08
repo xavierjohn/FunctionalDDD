@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Struct Result </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Struct Result ">
+      
+      <meta name="description" content="Static Combine methods for combining multiple independent Result values without chaining.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_Result.md&amp;value=---%0Auid%3A%20FunctionalDdd.Result%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.Result">
+
+
+
+  <h1 id="FunctionalDdd_Result" data-uid="FunctionalDdd.Result" class="text-break">
+Struct Result  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L10"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.RailwayOrientedProgramming.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Static Combine methods for combining multiple independent Result values without chaining.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly struct Result</code></pre>
+  </div>
+
+
+
+
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.equals">ValueType.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.gethashcode">ValueType.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.valuetype.tostring">ValueType.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  </dd></dl>
+
+
+
+  <h2 id="FunctionalDdd_Result_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>Use <code>Result.Combine(r1, r2, r3)</code> when you already have individual Result variables
+and want to combine them before error checking. This is syntactic sugar over chaining:</p>
+<pre><code class="lang-csharp">// These are equivalent:
+Result.Combine(r1, r2, r3)
+r1.Combine(r2).Combine(r3)</code></pre>
+</div>
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="FunctionalDdd_Result_Combine_" data-uid="FunctionalDdd.Result.Combine*"></a>
+
+  <h3 id="FunctionalDdd_Result_Combine__2_FunctionalDdd_Result___0__FunctionalDdd_Result___1__" data-uid="FunctionalDdd.Result.Combine``2(FunctionalDdd.Result{``0},FunctionalDdd.Result{``1})">
+  Combine&lt;T1, T2&gt;(Result&lt;T1&gt;, Result&lt;T2&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.Combine.cs/#L36"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Combines two independent <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> instances into a single tuple result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;(T1, T2)&gt; Combine&lt;T1, T2&gt;(Result&lt;T1&gt; r1, Result&lt;T2&gt; r2)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>r1</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;T1&gt;</dt>
+    <dd><p>First result.</p>
+</dd>
+    <dt><code>r2</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;T2&gt;</dt>
+    <dd><p>Second result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;(T1, T2)&gt;</dt>
+    <dd><p>A success result with a 2-element tuple if both succeed; otherwise a failure with combined errors.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T1</code></dt>
+    <dd><p>Type of the first result value.</p>
+</dd>
+    <dt><code>T2</code></dt>
+    <dd><p>Type of the second result value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_Combine__2_FunctionalDdd_Result___0__FunctionalDdd_Result___1___examples">Examples</h4>
+  <pre><code class="lang-csharp">var emailResult = EmailAddress.TryCreate(dto.Email);
+var nameResult = FirstName.TryCreate(dto.Name);
+
+var result = Result.Combine(emailResult, nameResult)
+    .Bind((email, name) =&gt; User.Create(email, name));</code></pre>
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_Failure_" data-uid="FunctionalDdd.Result.Failure*"></a>
+
+  <h3 id="FunctionalDdd_Result_Failure_FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.Failure(FunctionalDdd.Error)">
+  Failure(Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L141"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a failed unit result with the specified <code class="paramref">error</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;Unit&gt; Failure(Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error describing the failure.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Unit.html">Unit</a>&gt;</dt>
+    <dd><p>A failed <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="FunctionalDdd.Unit.html">Unit</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_FailureIfAsync_" data-uid="FunctionalDdd.Result.FailureIfAsync*"></a>
+
+  <h3 id="FunctionalDdd_Result_FailureIfAsync__1_System_Func_System_Threading_Tasks_Task_System_Boolean_____0_FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.FailureIfAsync``1(System.Func{System.Threading.Tasks.Task{System.Boolean}},``0,FunctionalDdd.Error)">
+  FailureIfAsync&lt;TValue&gt;(Func&lt;Task&lt;bool&gt;&gt;, TValue, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L123"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Asynchronously determines failure/success using <code class="paramref">failurePredicate</code> (inverse semantics of <a class="xref" href="FunctionalDdd.Result.html#FunctionalDdd_Result_SuccessIfAsync__1_System_Func_System_Threading_Tasks_Task_System_Boolean_____0_FunctionalDdd_Error_">SuccessIfAsync&lt;TValue&gt;(Func&lt;Task&lt;bool&gt;&gt;, TValue, Error)</a>).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; FailureIfAsync&lt;TValue&gt;(Func&lt;Task&lt;bool&gt;&gt; failurePredicate, TValue value, Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>failurePredicate</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a>&gt;&gt;</dt>
+    <dd><p>Async predicate producing true for failure.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>Success value if predicate is false.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error if predicate is true.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A task producing a success or failure <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_FailureIf_" data-uid="FunctionalDdd.Result.FailureIf*"></a>
+
+  <h3 id="FunctionalDdd_Result_FailureIf__1_System_Boolean___0_FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.FailureIf``1(System.Boolean,``0,FunctionalDdd.Error)">
+  FailureIf&lt;TValue&gt;(bool, TValue, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L87"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns failure if <code class="paramref">isFailure</code> is true; otherwise success with <code class="paramref">value</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; FailureIf&lt;TValue&gt;(bool isFailure, TValue value, Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>isFailure</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>If true produce a failure result.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>Success value when not failing.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error when failing.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A success or failure <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_FailureIf_" data-uid="FunctionalDdd.Result.FailureIf*"></a>
+
+  <h3 id="FunctionalDdd_Result_FailureIf__1_System_Func_System_Boolean____0__FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.FailureIf``1(System.Func{System.Boolean},``0@,FunctionalDdd.Error)">
+  FailureIf&lt;TValue&gt;(Func&lt;bool&gt;, in TValue, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L98"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns failure if the provided predicate returns true; otherwise success with <code class="paramref">value</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; FailureIf&lt;TValue&gt;(Func&lt;bool&gt; failurePredicate, in TValue value, Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>failurePredicate</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a>&gt;</dt>
+    <dd><p>Predicate indicating a failure condition.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>Success value when predicate is false.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error when predicate is true.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A success or failure <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_Failure_" data-uid="FunctionalDdd.Result.Failure*"></a>
+
+  <h3 id="FunctionalDdd_Result_Failure__1_FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.Failure``1(FunctionalDdd.Error)">
+  Failure&lt;TValue&gt;(Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L40"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a failed result with the specified <code class="paramref">error</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; Failure&lt;TValue&gt;(Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error describing the failure.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A failed <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the (missing) success value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_Failure_" data-uid="FunctionalDdd.Result.Failure*"></a>
+
+  <h3 id="FunctionalDdd_Result_Failure__1_System_Func_FunctionalDdd_Error__" data-uid="FunctionalDdd.Result.Failure``1(System.Func{FunctionalDdd.Error})">
+  Failure&lt;TValue&gt;(Func&lt;Error&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L49"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a failed result using a deferred error factory.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; Failure&lt;TValue&gt;(Func&lt;Error&gt; error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>error</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Factory function producing an <a class="xref" href="FunctionalDdd.Error.html">Error</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A failed <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the (missing) success value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_FromException_" data-uid="FunctionalDdd.Result.FromException*"></a>
+
+  <h3 id="FunctionalDdd_Result_FromException_System_Exception_System_Func_System_Exception_FunctionalDdd_Error__" data-uid="FunctionalDdd.Result.FromException(System.Exception,System.Func{System.Exception,FunctionalDdd.Error})">
+  FromException(Exception, Func&lt;Exception, Error&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L190"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts an exception to a failed unit result using the optional mapper (default Unexpected).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;Unit&gt; FromException(Exception ex, Func&lt;Exception, Error&gt;? map = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Exception to convert.</p>
+</dd>
+    <dt><code>map</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Optional exception-to-error mapper.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Unit.html">Unit</a>&gt;</dt>
+    <dd><p>A failed unit result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_FromException_" data-uid="FunctionalDdd.Result.FromException*"></a>
+
+  <h3 id="FunctionalDdd_Result_FromException__1_System_Exception_System_Func_System_Exception_FunctionalDdd_Error__" data-uid="FunctionalDdd.Result.FromException``1(System.Exception,System.Func{System.Exception,FunctionalDdd.Error})">
+  FromException&lt;T&gt;(Exception, Func&lt;Exception, Error&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L200"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts an exception to a failed result of type <code class="typeparamref">T</code> using the optional mapper (default Unexpected).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;T&gt; FromException&lt;T&gt;(Exception ex, Func&lt;Exception, Error&gt;? map = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>ex</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a></dt>
+    <dd><p>Exception to convert.</p>
+</dd>
+    <dt><code>map</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Optional exception-to-error mapper.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;T&gt;</dt>
+    <dd><p>A failed result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd><p>Type parameter of the target result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_Success_" data-uid="FunctionalDdd.Result.Success*"></a>
+
+  <h3 id="FunctionalDdd_Result_Success" data-uid="FunctionalDdd.Result.Success">
+  Success()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L133"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a successful unit result (no payload).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;Unit&gt; Success()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;<a class="xref" href="FunctionalDdd.Unit.html">Unit</a>&gt;</dt>
+    <dd><p>A successful <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> of <a class="xref" href="FunctionalDdd.Unit.html">Unit</a>.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_SuccessIfAsync_" data-uid="FunctionalDdd.Result.SuccessIfAsync*"></a>
+
+  <h3 id="FunctionalDdd_Result_SuccessIfAsync__1_System_Func_System_Threading_Tasks_Task_System_Boolean_____0_FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.SuccessIfAsync``1(System.Func{System.Threading.Tasks.Task{System.Boolean}},``0,FunctionalDdd.Error)">
+  SuccessIfAsync&lt;TValue&gt;(Func&lt;Task&lt;bool&gt;&gt;, TValue, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L109"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Asynchronously determines success/failure using <code class="paramref">predicate</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;TValue&gt;&gt; SuccessIfAsync&lt;TValue&gt;(Func&lt;Task&lt;bool&gt;&gt; predicate, TValue value, Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>predicate</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a>&gt;&gt;</dt>
+    <dd><p>Async predicate producing true for success.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>Success value if predicate is true.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error if predicate is false.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A task producing a success or failure <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the success value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_SuccessIf_" data-uid="FunctionalDdd.Result.SuccessIf*"></a>
+
+  <h3 id="FunctionalDdd_Result_SuccessIf__1_System_Boolean___0__FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.SuccessIf``1(System.Boolean,``0@,FunctionalDdd.Error)">
+  SuccessIf&lt;TValue&gt;(bool, in TValue, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L63"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a success or failure result based on <code class="paramref">isSuccess</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; SuccessIf&lt;TValue&gt;(bool isSuccess, in TValue value, Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>isSuccess</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>If true returns success; otherwise failure.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>Value for the success case.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error for the failure case.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A success or failure <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the success value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_SuccessIf_" data-uid="FunctionalDdd.Result.SuccessIf*"></a>
+
+  <h3 id="FunctionalDdd_Result_SuccessIf__2_System_Boolean___0____1__FunctionalDdd_Error_" data-uid="FunctionalDdd.Result.SuccessIf``2(System.Boolean,``0@,``1@,FunctionalDdd.Error)">
+  SuccessIf&lt;T1, T2&gt;(bool, in T1, in T2, Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L76"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a success (tuple) or failure result based on <code class="paramref">isSuccess</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;(T1, T2)&gt; SuccessIf&lt;T1, T2&gt;(bool isSuccess, in T1 t1, in T2 t2, Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>isSuccess</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>If true returns success; otherwise failure.</p>
+</dd>
+    <dt><code>t1</code> <span class="xref">T1</span></dt>
+    <dd><p>First value for the success case.</p>
+</dd>
+    <dt><code>t2</code> <span class="xref">T2</span></dt>
+    <dd><p>Second value for the success case.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>Error for the failure case.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;(T1, T2)&gt;</dt>
+    <dd><p>A success or failure <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> with a tuple payload.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T1</code></dt>
+    <dd><p>Type of first value.</p>
+</dd>
+    <dt><code>T2</code></dt>
+    <dd><p>Type of second value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_Success_" data-uid="FunctionalDdd.Result.Success*"></a>
+
+  <h3 id="FunctionalDdd_Result_Success__1_System_Func___0__" data-uid="FunctionalDdd.Result.Success``1(System.Func{``0})">
+  Success&lt;TValue&gt;(Func&lt;TValue&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L28"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a successful result by invoking the supplied factory function.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; Success&lt;TValue&gt;(Func&lt;TValue&gt; funcOk)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>funcOk</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;TValue&gt;</dt>
+    <dd><p>Factory function producing the value. Must not be null.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A successful <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing the produced value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the success value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p>Thrown if <code class="paramref">funcOk</code> is null.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="FunctionalDdd_Result_Success_" data-uid="FunctionalDdd.Result.Success*"></a>
+
+  <h3 id="FunctionalDdd_Result_Success__1___0_" data-uid="FunctionalDdd.Result.Success``1(``0)">
+  Success&lt;TValue&gt;(TValue)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L18"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a successful result wrapping the provided <code class="paramref">value</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;TValue&gt; Success&lt;TValue&gt;(TValue value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>Value to wrap in a successful result (may be null for reference types).</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A successful <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> containing <code class="paramref">value</code>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Type of the success value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_TryAsync_" data-uid="FunctionalDdd.Result.TryAsync*"></a>
+
+  <h3 id="FunctionalDdd_Result_TryAsync__1_System_Func_System_Threading_Tasks_Task___0___System_Func_System_Exception_FunctionalDdd_Error__" data-uid="FunctionalDdd.Result.TryAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Func{System.Exception,FunctionalDdd.Error})">
+  TryAsync&lt;T&gt;(Func&lt;Task&lt;T&gt;&gt;, Func&lt;Exception, Error&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L172"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Executes the asynchronous function and converts exceptions to a failed result using the optional mapper (default maps to Unexpected).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;Result&lt;T&gt;&gt; TryAsync&lt;T&gt;(Func&lt;Task&lt;T&gt;&gt; func, Func&lt;Exception, Error&gt;? map = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;T&gt;&gt;</dt>
+    <dd><p>Asynchronous function to execute.</p>
+</dd>
+    <dt><code>map</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Optional exception-to-error mapper. If null, a default Unexpected error is used.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;T&gt;&gt;</dt>
+    <dd><p>A task producing either a success or failure result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd><p>Type of the produced value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_Try_" data-uid="FunctionalDdd.Result.Try*"></a>
+
+  <h3 id="FunctionalDdd_Result_Try__1_System_Func___0__System_Func_System_Exception_FunctionalDdd_Error__" data-uid="FunctionalDdd.Result.Try``1(System.Func{``0},System.Func{System.Exception,FunctionalDdd.Error})">
+  Try&lt;T&gt;(Func&lt;T&gt;, Func&lt;Exception, Error&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L153"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Executes the function and converts exceptions to a failed result using the optional mapper (default maps to <a class="xref" href="FunctionalDdd.Error.html#FunctionalDdd_Error_Unexpected_System_String_System_String_System_String_">Unexpected(string, string, string?)</a>).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Result&lt;T&gt; Try&lt;T&gt;(Func&lt;T&gt; func, Func&lt;Exception, Error&gt;? map = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>func</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-1">Func</a>&lt;T&gt;</dt>
+    <dd><p>Function to execute.</p>
+</dd>
+    <dt><code>map</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception">Exception</a>, <a class="xref" href="FunctionalDdd.Error.html">Error</a>&gt;</dt>
+    <dd><p>Optional exception-to-error mapper. If null, a default Unexpected error is used.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;T&gt;</dt>
+    <dd><p>A success result with the value or a failure result if an exception was thrown.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd><p>Type of the produced value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result.cs/#L10" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

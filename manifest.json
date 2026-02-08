@@ -1,0 +1,1943 @@
+{
+  "source_base_path": "/home/runner/work/FunctionalDDD/FunctionalDDD/docs/docfx_project",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ActionResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ActionResultExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ActionResultExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ActionResultExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.\nThese methods bridge Railway Oriented Programming with ASP.NET Core MVC/Web API controllers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ActionResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ActionResultExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ActionResultExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ActionResultExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses.\nThese methods enable clean async/await patterns in controllers while maintaining Railway Oriented Programming benefits.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Aggregate-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Aggregate-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Aggregate<TId>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Aggregate-1.yml\" sourcestartlinenumber=\"1\">Base class for aggregate roots in Domain-Driven Design.\nAn aggregate is a cluster of domain objects (entities and value objects) that form a consistency boundary.\nThe aggregate root is the only entry point for modifications and ensures all invariants within the boundary are maintained.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.AggregateError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.AggregateError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.AggregateError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.AggregateError.yml\" sourcestartlinenumber=\"1\">Represents an aggregate of multiple errors that occurred together.\nUse this when multiple independent errors need to be returned as a single failure result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.ModelBinding.MaybeModelBinder-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.ModelBinding.MaybeModelBinder-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.ModelBinding.MaybeModelBinder<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.ModelBinding.MaybeModelBinder-2.yml\" sourcestartlinenumber=\"1\">Model binder for <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> parameters where <code class=\"typeparamref\">TValue</code>\nimplements <xref href=\"FunctionalDdd.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.\nBinds optional route, query, form, and header parameters to <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinder-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinder-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinder<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinder-2.yml\" sourcestartlinenumber=\"1\">Model binder for scalar value types.\nValidates scalar values during model binding by calling TryCreate.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinderProvider.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinderProvider.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinderProvider",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.ModelBinding.ScalarValueModelBinderProvider.yml\" sourcestartlinenumber=\"1\">Detects scalar value types and <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> wrapping scalar value types,\nand provides model binders for them.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.ModelBinding.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.ModelBinding.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.ModelBinding",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverter-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverter-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverter<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverter-2.yml\" sourcestartlinenumber=\"1\">A JSON converter for <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties where <code class=\"typeparamref\">TValue</code>\nimplements <xref href=\"FunctionalDdd.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverterFactory.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverterFactory.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverterFactory",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverterFactory.yml\" sourcestartlinenumber=\"1\">Factory for creating <xref href=\"FunctionalDdd.Asp.Validation.MaybeScalarValueJsonConverter%602\" data-throw-if-not-resolved=\"false\"></xref> instances\nfor <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties where T implements <xref href=\"FunctionalDdd.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.Validation.ValidatingJsonConverter-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.Validation.ValidatingJsonConverter-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.Validation.ValidatingJsonConverter<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.Validation.ValidatingJsonConverter-2.yml\" sourcestartlinenumber=\"1\">A JSON converter for value objects that implement <xref href=\"FunctionalDdd.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.\nThis converter collects validation errors instead of throwing exceptions,\nenabling comprehensive validation error responses.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.Validation.ValidatingJsonConverterFactory.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.Validation.ValidatingJsonConverterFactory.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.Validation.ValidatingJsonConverterFactory",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Asp.Validation.ValidatingJsonConverterFactory.yml\" sourcestartlinenumber=\"1\">Factory for creating validating JSON converters for <xref href=\"FunctionalDdd.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref> types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Asp.Validation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Asp.Validation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Asp.Validation",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.BadRequestError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.BadRequestError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.BadRequestError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.BadRequestError.yml\" sourcestartlinenumber=\"1\">Represents a bad request error indicating the request was malformed or syntactically invalid.\nUse this for requests that cannot be processed due to syntax errors, missing required data, or malformed content.\nMaps to HTTP 400 Bad Request.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.BindExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.BindExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.BindExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.BindExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for binding (chaining) operations over Result values.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.BindExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.BindExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.BindExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.BindExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for binding (chaining) operations over Result values.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.CombineErrorExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.CombineErrorExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.CombineErrorExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.CombineErrorExtensions.yml\" sourcestartlinenumber=\"1\">Combine errors into one.\nIf both the errors types are <xref href=\"FunctionalDdd.ValidationError\" data-throw-if-not-resolved=\"false\"></xref>, the validation errors will be merged.\nOtherwise, the errors will be wrapped into an <xref href=\"FunctionalDdd.AggregateError\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.CombineExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.CombineExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.CombineExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.CombineExtensions.yml\" sourcestartlinenumber=\"1\">Combines two or more <xref href=\"FunctionalDdd.Result%601\" data-throw-if-not-resolved=\"false\"></xref> into one tuple containing all the Results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.CombineExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.CombineExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.CombineExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.CombineExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Combines two or more <xref href=\"FunctionalDdd.Result%601\" data-throw-if-not-resolved=\"false\"></xref> into one tuple containing all the Results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ConflictError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ConflictError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ConflictError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ConflictError.yml\" sourcestartlinenumber=\"1\">Represents a conflict error indicating the request conflicts with the current state of the resource.\nUse this when an operation cannot be completed due to a conflict with existing data or state.\nMaps to HTTP 409 Conflict.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.DomainError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.DomainError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.DomainError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.DomainError.yml\" sourcestartlinenumber=\"1\">Represents a domain or business rule violation.\nUse this for errors that occur when domain logic or business rules prevent an operation from completing.\nMaps to HTTP 422 Unprocessable Entity.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.EnsureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.EnsureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.EnsureExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.EnsureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for ensuring conditions on Result values.\nIf conditions fail, the result is converted to a failure with the specified error.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.EnsureExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.EnsureExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.EnsureExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.EnsureExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Async Ensure extensions where BOTH input and predicates are async (Task).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Entity-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Entity-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Entity<TId>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Entity-1.yml\" sourcestartlinenumber=\"1\">Base class for entities in Domain-Driven Design.\nAn entity is a domain object defined by its identity rather than its attributes.\nTwo entities with different attributes but the same ID are considered equal.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Error.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Error.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Error",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Error.yml\" sourcestartlinenumber=\"1\">Base class for all error types in the functional DDD library.\nErrors represent failure states and contain structured information about what went wrong.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.FluentValidationResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.FluentValidationResultExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.FluentValidationResultExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.FluentValidationResultExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods to integrate FluentValidation with Railway Oriented Programming Result types.\nEnables seamless conversion of FluentValidation results to Result&lt;T&gt; for functional error handling.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ForbiddenError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ForbiddenError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ForbiddenError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ForbiddenError.yml\" sourcestartlinenumber=\"1\">Represents a forbidden error when an authenticated user lacks permission to access a resource.\nUse this when the user is authenticated but does not have the required authorization or role.\nMaps to HTTP 403 Forbidden.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.HttpResponseExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.HttpResponseExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.HttpResponseExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.HttpResponseExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for handling HTTP response messages with Result and Maybe monads.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.HttpResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.HttpResultExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.HttpResultExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.HttpResultExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods to convert Result types to ASP.NET Core Minimal API <xref href=\"FunctionalDdd.IResult\" data-throw-if-not-resolved=\"false\"></xref> responses.\nThese methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.HttpResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.HttpResultExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.HttpResultExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.HttpResultExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core Minimal API <xref href=\"Microsoft.AspNetCore.Http.IResult\" data-throw-if-not-resolved=\"false\"></xref> responses.\nThese methods enable clean async patterns in Minimal API endpoints while maintaining Railway Oriented Programming benefits.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IAggregate.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IAggregate.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.IAggregate",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.IAggregate.yml\" sourcestartlinenumber=\"1\">Defines the contract for an aggregate root in Domain-Driven Design.\nAn aggregate is a cluster of domain objects that can be treated as a single unit for data changes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IDomainEvent.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IDomainEvent.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.IDomainEvent",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.IDomainEvent.yml\" sourcestartlinenumber=\"1\">Represents a domain event - a record of something significant that happened in the business domain.\nDomain events capture state changes and business occurrences that domain experts care about.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IResult-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IResult-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.IResult<TValue>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.IResult-1.yml\" sourcestartlinenumber=\"1\">Generic interface for result types, providing typed access to the success value.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IResult.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.IResult",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.IResult.yml\" sourcestartlinenumber=\"1\">Non-generic base interface for result types, exposing success/failure state and error information.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.IScalarValue-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.IScalarValue-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.IScalarValue<TSelf, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.IScalarValue-2.yml\" sourcestartlinenumber=\"1\">Interface for scalar value objects that can be created with validation.\nEnables automatic ASP.NET Core model binding and JSON serialization.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MapExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MapExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MapExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MapExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for mapping (transforming) values inside Result objects.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MapExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MapExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MapExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MapExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for mapping (transforming) values inside Result objects.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MapOnFailureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MapOnFailureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MapOnFailureExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MapOnFailureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for transforming errors in failed Results while leaving successful Results unchanged.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MatchErrorExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MatchErrorExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MatchErrorExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MatchErrorExtensions.yml\" sourcestartlinenumber=\"1\">Pattern matching helpers for discriminating specific error types in Result.\nAllows matching on specific error types (ValidationError, NotFoundError, etc.)\nrather than treating all errors the same.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MatchErrorExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MatchErrorExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MatchErrorExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MatchErrorExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous pattern matching helpers for discriminating specific error types in Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MatchExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MatchExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MatchExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MatchExtensions.yml\" sourcestartlinenumber=\"1\">Pattern matching helpers (Match / Switch) for Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MatchExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MatchExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MatchExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MatchExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous pattern matching helpers for Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Maybe-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Maybe-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Maybe<T>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Maybe-1.yml\" sourcestartlinenumber=\"1\">Represents domain-level optionality — a value that was either provided or intentionally omitted.\nUnlike <xref href=\"System.Nullable%601\" data-throw-if-not-resolved=\"false\"></xref> (value types only) or <code>T?</code> (annotation only for reference types),\n<xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> is a real generic type that works uniformly with both value and reference types\nand composes with <xref href=\"FunctionalDdd.Result%601\" data-throw-if-not-resolved=\"false\"></xref> pipelines.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Maybe.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Maybe.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Maybe",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Maybe.yml\" sourcestartlinenumber=\"1\">Contains static methods to create a <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MaybeExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MaybeExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MaybeExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MaybeExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for converting <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> instances to <xref href=\"FunctionalDdd.Result%601\" data-throw-if-not-resolved=\"false\"></xref>\nobjects and for wrapping values in a <xref href=\"FunctionalDdd.Result%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.MaybeExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.MaybeExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.MaybeExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.MaybeExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for converting <xref href=\"FunctionalDdd.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> instances to <xref href=\"FunctionalDdd.Result%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.NotFoundError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.NotFoundError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.NotFoundError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.NotFoundError.yml\" sourcestartlinenumber=\"1\">Represents a &quot;not found&quot; error when a requested resource does not exist.\nUse this when an entity, record, or resource cannot be located.\nMaps to HTTP 404 Not Found.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.NullableExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.NullableExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.NullableExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.NullableExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for converting nullable values to Result types.\nProvides a convenient way to handle null checking with Railway Oriented Programming.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.NullableExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.NullableExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.NullableExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.NullableExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous extension methods for converting nullable values to Result types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PartialObjectResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PartialObjectResult.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PartialObjectResult",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PartialObjectResult.yml\" sourcestartlinenumber=\"1\">Represents an <xref href=\"Microsoft.AspNetCore.Mvc.ObjectResult\" data-throw-if-not-resolved=\"false\"></xref> that returns HTTP 206 Partial Content with a Content-Range header.\nUsed to indicate that the response contains a subset of the requested resource.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Age.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Age.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.Age",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.Age.yml\" sourcestartlinenumber=\"1\">Age value object with validation for ages 0-150.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.CountryCode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.CountryCode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.CountryCode",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.CountryCode.yml\" sourcestartlinenumber=\"1\">ISO 3166-1 alpha-2 country code value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.CurrencyCode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.CurrencyCode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.CurrencyCode",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.CurrencyCode.yml\" sourcestartlinenumber=\"1\">Represents an ISO 4217 currency code as a value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.EmailAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.EmailAddress.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.EmailAddress",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.EmailAddress.yml\" sourcestartlinenumber=\"1\">Represents an email address value object with RFC 5322-compliant validation.\nEnsures that email addresses are syntactically valid and prevents invalid email data in the domain model.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Hostname.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Hostname.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.Hostname",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.Hostname.yml\" sourcestartlinenumber=\"1\">RFC 1123 compliant hostname value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.IpAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.IpAddress.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.IpAddress",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.IpAddress.yml\" sourcestartlinenumber=\"1\">Represents an IP address (IPv4 or IPv6) as a value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.LanguageCode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.LanguageCode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.LanguageCode",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.LanguageCode.yml\" sourcestartlinenumber=\"1\">ISO 639-1 language code value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Money.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Money.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.Money",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.Money.yml\" sourcestartlinenumber=\"1\">Represents a monetary amount with a currency code.\nProvides type-safe arithmetic operations that prevent mixing different currencies.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.MoneyJsonConverter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.MoneyJsonConverter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.MoneyJsonConverter",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.MoneyJsonConverter.yml\" sourcestartlinenumber=\"1\">JSON converter for Money value objects.\nSerializes Money as {&quot;amount&quot;: 99.99, &quot;currency&quot;: &quot;USD&quot;}.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.ParsableJsonConverter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.ParsableJsonConverter-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.ParsableJsonConverter<T>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.ParsableJsonConverter-1.yml\" sourcestartlinenumber=\"1\">A JSON converter for value objects that implement <xref href=\"System.IParsable%601\" data-throw-if-not-resolved=\"false\"></xref>.\nEnables automatic serialization and deserialization of parsable value objects in ASP.NET Core APIs and System.Text.Json scenarios.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Percentage.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Percentage.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.Percentage",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.Percentage.yml\" sourcestartlinenumber=\"1\">Represents a percentage value object (value between 0 and 100 inclusive).\nEnsures that percentage values are within the valid range for percentage calculations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.PhoneNumber.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.PhoneNumber.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.PhoneNumber",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.PhoneNumber.yml\" sourcestartlinenumber=\"1\">Represents a phone number value object with E.164 format validation.\nEnsures that phone numbers follow international standards for telephony.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTrace.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTrace.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTrace",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTrace.yml\" sourcestartlinenumber=\"1\">Provides OpenTelemetry activity tracing for Primitive Value Objects operations.\nEnables monitoring and diagnostics of value object creation, validation, and parsing activities.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTraceProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTraceProviderBuilderExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTraceProviderBuilderExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.PrimitiveValueObjectTraceProviderBuilderExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for configuring OpenTelemetry tracing for Primitive Value Objects (PVO).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredDecimal-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredDecimal-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.RequiredDecimal<TSelf>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.RequiredDecimal-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed decimal value objects that cannot have the default (zero) value.\nProvides a foundation for monetary amounts, percentages, and other domain concepts represented by decimals.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredEnum-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredEnum-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.RequiredEnum<TSelf>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.RequiredEnum-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed, behavior-rich enumeration value objects.\nEnum value objects are a DDD pattern that replaces C# enums with full-featured classes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredEnumJsonConverter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredEnumJsonConverter-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.RequiredEnumJsonConverter<TRequiredEnum>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.RequiredEnumJsonConverter-1.yml\" sourcestartlinenumber=\"1\">JSON converter for <xref href=\"FunctionalDdd.PrimitiveValueObjects.RequiredEnum%601\" data-throw-if-not-resolved=\"false\"></xref> types.\nSerializes to the string Name and deserializes from string name.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredGuid-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredGuid-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.RequiredGuid<TSelf>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.RequiredGuid-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed GUID value objects that cannot have the default (empty) GUID value.\nProvides a foundation for entity identifiers and other domain concepts represented by GUIDs.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredInt-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredInt-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.RequiredInt<TSelf>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.RequiredInt-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed integer value objects that cannot have the default (zero) value.\nProvides a foundation for entity identifiers, counts, and other domain concepts represented by integers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredString-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.RequiredString-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.RequiredString<TSelf>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.RequiredString-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed string value objects that cannot be null or empty.\nProvides a foundation for domain primitives like names, descriptions, codes, and other textual concepts.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Slug.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Slug.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.Slug",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.Slug.yml\" sourcestartlinenumber=\"1\">URL-safe slug value object (lowercase letters, digits, single hyphens).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Url.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.Url.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects.Url",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.PrimitiveValueObjects.Url.yml\" sourcestartlinenumber=\"1\">Represents a URL value object with format validation.\nEnsures that URLs are valid and well-formed for web and API scenarios.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.PrimitiveValueObjects.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.PrimitiveValueObjects.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.PrimitiveValueObjects",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for configuring OpenTelemetry tracing for Railway Oriented Programming operations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.RailwayTrackAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.RailwayTrackAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.RailwayTrackAttribute",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.RailwayTrackAttribute.yml\" sourcestartlinenumber=\"1\">Indicates which railway track an operation executes on.\nThis metadata can be used by IDE extensions, analyzers, and documentation generators.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.RateLimitError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.RateLimitError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.RateLimitError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.RateLimitError.yml\" sourcestartlinenumber=\"1\">Represents a rate limiting error when too many requests have been made.\nUse this when a client has exceeded their request quota or rate limit.\nMaps to HTTP 429 Too Many Requests.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.RecoverOnFailureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.RecoverOnFailureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.RecoverOnFailureExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.RecoverOnFailureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for recovering from failed results by executing fallback operations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.RecoverOnFailureExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.RecoverOnFailureExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.RecoverOnFailureExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.RecoverOnFailureExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for recovering from failed results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Result-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Result-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Result<TValue>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Result-1.yml\" sourcestartlinenumber=\"1\">Represents either a successful computation (with a value) or a failure (with an <xref href=\"FunctionalDdd.Result%601.Error\" data-throw-if-not-resolved=\"false\"></xref>).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Result.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Result.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Result",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Result.yml\" sourcestartlinenumber=\"1\">Static Combine methods for combining multiple independent Result values without chaining.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ResultDebugExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ResultDebugExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ResultDebugExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ResultDebugExtensions.yml\" sourcestartlinenumber=\"1\">Debug extension methods for inspecting Result values during development.\nThese methods execute only in DEBUG builds and become no-ops in RELEASE builds (with zero overhead).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ResultDebugExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ResultDebugExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ResultDebugExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ResultDebugExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Debug-only async extension methods for inspecting Result values during development.\nThese methods are only available in DEBUG builds and are automatically excluded from RELEASE builds.\nDebug information is written to dedicated Activity spans for OpenTelemetry compatibility.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ResultLinqExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ResultLinqExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ResultLinqExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ResultLinqExtensions.yml\" sourcestartlinenumber=\"1\">Provides LINQ query expression support for Result types, enabling C# query syntax for functional operations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ScalarValueObject-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ScalarValueObject-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ScalarValueObject<TSelf, T>",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ScalarValueObject-2.yml\" sourcestartlinenumber=\"1\">Base class for value objects that wrap a single scalar value.\nProvides a strongly-typed wrapper around primitive types with domain semantics.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ScalarValueValidationEndpointFilter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ScalarValueValidationEndpointFilter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ScalarValueValidationEndpointFilter",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ScalarValueValidationEndpointFilter.yml\" sourcestartlinenumber=\"1\">An endpoint filter that checks for scalar value validation errors collected during JSON deserialization.\nFor Minimal APIs, this filter returns validation problem results when validation errors are detected.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ScalarValueValidationFilter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ScalarValueValidationFilter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ScalarValueValidationFilter",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ScalarValueValidationFilter.yml\" sourcestartlinenumber=\"1\">An action filter that checks for validation errors collected during JSON deserialization\nand validates <xref href=\"FunctionalDdd.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref> route/query parameters.\nReturns a 400 Bad Request response with validation problem details when validation fails.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ScalarValueValidationMiddleware.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ScalarValueValidationMiddleware.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ScalarValueValidationMiddleware",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ScalarValueValidationMiddleware.yml\" sourcestartlinenumber=\"1\">Middleware that creates a validation error collection scope for each request.\nThis enables ValidatingJsonConverter to collect validation errors\nacross the entire request deserialization process.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ServiceCollectionExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ServiceCollectionExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ServiceCollectionExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ServiceCollectionExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for configuring automatic value object validation in ASP.NET Core.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ServiceUnavailableError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ServiceUnavailableError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ServiceUnavailableError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ServiceUnavailableError.yml\" sourcestartlinenumber=\"1\">Represents a temporary service unavailability error.\nUse this when the service is temporarily unable to handle the request due to maintenance or overload.\nMaps to HTTP 503 Service Unavailable.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TapExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TapExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.TapExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.TapExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for executing side effects on successful Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TapExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TapExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.TapExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.TapExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for executing side effects on successful Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TapOnFailureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TapOnFailureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.TapOnFailureExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.TapOnFailureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for executing side effects on failed Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TapOnFailureExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TapOnFailureExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.TapOnFailureExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.TapOnFailureExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for executing side effects on failed Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TrackBehavior.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TrackBehavior.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.TrackBehavior",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.TrackBehavior.yml\" sourcestartlinenumber=\"1\">Defines which railway track an operation runs on in Railway-Oriented Programming.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.TraverseExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.TraverseExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.TraverseExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.TraverseExtensions.yml\" sourcestartlinenumber=\"1\">Transforms a collection of items into a Result containing a collection,\nshort-circuiting on the first failure.\nUseful for processing collections where each item can fail independently.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.UnauthorizedError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.UnauthorizedError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.UnauthorizedError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.UnauthorizedError.yml\" sourcestartlinenumber=\"1\">Represents an authorization error when authentication is required but not provided.\nUse this when a user is not authenticated (not logged in) and must authenticate to access the resource.\nMaps to HTTP 401 Unauthorized.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.UnexpectedError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.UnexpectedError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.UnexpectedError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.UnexpectedError.yml\" sourcestartlinenumber=\"1\">Represents an unexpected system error or exception.\nUse this for infrastructure failures, unhandled exceptions, or system-level errors.\nMaps to HTTP 500 Internal Server Error.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.Unit.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.Unit.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.Unit",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.Unit.yml\" sourcestartlinenumber=\"1\">Represents the absence of a meaningful value, used for operations that have no return value.\nThis is the functional programming equivalent of <code>void</code>, but as a proper type that can be used with generics.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ValidationError.FieldError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ValidationError.FieldError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ValidationError.FieldError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ValidationError.FieldError.yml\" sourcestartlinenumber=\"1\">Represents an error for a specific field, which may have multiple detail messages.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ValidationError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ValidationError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ValidationError",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ValidationError.yml\" sourcestartlinenumber=\"1\">Represents validation errors for one or more fields. Used when input data fails business rules or constraints.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ValidationErrorsContext.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ValidationErrorsContext.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ValidationErrorsContext",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ValidationErrorsContext.yml\" sourcestartlinenumber=\"1\">Provides a context for collecting validation errors during JSON deserialization.\nUses AsyncLocal to maintain thread-safe, request-scoped error collection.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.ValueObject.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.ValueObject.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.ValueObject",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.ValueObject.yml\" sourcestartlinenumber=\"1\">Base class for value objects in Domain-Driven Design.\nA value object represents a descriptive aspect of the domain with no conceptual identity.\nValue objects are immutable, defined by their attributes, and support structural equality.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.WhenExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.WhenExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.WhenExtensions",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.WhenExtensions.yml\" sourcestartlinenumber=\"1\">Conditionally executes an operation based on a predicate, maintaining the railway.\nUseful for executing operations only when certain conditions are met without breaking the Result chain.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.WhenExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.WhenExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd.WhenExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/FunctionalDdd.WhenExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous conditional execution operations for Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FunctionalDdd.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FunctionalDdd.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "FunctionalDdd",
+      "Summary": null
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "api/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "api/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/toc.html"
+        },
+        ".json": {
+          "relative_path": "api/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/BENCHMARKS.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/BENCHMARKS.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/advanced-features.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/advanced-features.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/aggregate-factory-pattern.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/aggregate-factory-pattern.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD001.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD001.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD002.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD002.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD003.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD003.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD004.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD004.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD005.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD005.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD006.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD006.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD007.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD007.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD008.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD008.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD009.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD009.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD010.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD010.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD011.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD011.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD012.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD012.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD013.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD013.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD014.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD014.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD015.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD015.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD016.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD016.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD017.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD017.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/FDDD018.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/FDDD018.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "articles/analyzers/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/toc.html"
+        },
+        ".json": {
+          "relative_path": "articles/analyzers/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/basics.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/basics.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/clean-architecture.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/clean-architecture.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/debugging.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/debugging.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/error-handling.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/error-handling.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/examples.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/examples.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-aspnet.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-aspnet.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-ef.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-ef.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-fluentvalidation.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-fluentvalidation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-http.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-http.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-observability.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-observability.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/intro.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/intro.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/performance.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/performance.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/required-enum.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/required-enum.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/specification-pattern.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/specification-pattern.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "articles/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "articles/toc.html"
+        },
+        ".json": {
+          "relative_path": "articles/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/fddd.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/fddd.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/railway-oriented-programming.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "images/railway-oriented-programming.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}

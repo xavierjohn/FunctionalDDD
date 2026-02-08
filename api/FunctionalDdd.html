@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Namespace FunctionalDdd </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Namespace FunctionalDdd ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd">
+
+  <h1 id="FunctionalDdd" data-uid="FunctionalDdd" class="text-break">Namespace FunctionalDdd</h1>
+  <div class="markdown level0 summary"></div>
+  <div class="markdown level0 conceptual"></div>
+  <div class="markdown level0 remarks"></div>
+
+    <h3 id="classes">
+Classes
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ActionResultExtensions.html">ActionResultExtensions</a></dt>
+      <dd><p>Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.
+These methods bridge Railway Oriented Programming with ASP.NET Core MVC/Web API controllers.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ActionResultExtensionsAsync.html">ActionResultExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses.
+These methods enable clean async/await patterns in controllers while maintaining Railway Oriented Programming benefits.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.AggregateError.html">AggregateError</a></dt>
+      <dd><p>Represents an aggregate of multiple errors that occurred together.
+Use this when multiple independent errors need to be returned as a single failure result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Aggregate-1.html">Aggregate&lt;TId&gt;</a></dt>
+      <dd><p>Base class for aggregate roots in Domain-Driven Design.
+An aggregate is a cluster of domain objects (entities and value objects) that form a consistency boundary.
+The aggregate root is the only entry point for modifications and ensures all invariants within the boundary are maintained.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.BadRequestError.html">BadRequestError</a></dt>
+      <dd><p>Represents a bad request error indicating the request was malformed or syntactically invalid.
+Use this for requests that cannot be processed due to syntax errors, missing required data, or malformed content.
+Maps to HTTP 400 Bad Request.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.BindExtensions.html">BindExtensions</a></dt>
+      <dd><p>Provides extension methods for binding (chaining) operations over Result values.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.BindExtensionsAsync.html">BindExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods for binding (chaining) operations over Result values.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.CombineErrorExtensions.html">CombineErrorExtensions</a></dt>
+      <dd><p>Combine errors into one.
+If both the errors types are <a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a>, the validation errors will be merged.
+Otherwise, the errors will be wrapped into an <a class="xref" href="FunctionalDdd.AggregateError.html">AggregateError</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.CombineExtensions.html">CombineExtensions</a></dt>
+      <dd><p>Combines two or more <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> into one tuple containing all the Results.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.CombineExtensionsAsync.html">CombineExtensionsAsync</a></dt>
+      <dd><p>Combines two or more <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> into one tuple containing all the Results.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ConflictError.html">ConflictError</a></dt>
+      <dd><p>Represents a conflict error indicating the request conflicts with the current state of the resource.
+Use this when an operation cannot be completed due to a conflict with existing data or state.
+Maps to HTTP 409 Conflict.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.DomainError.html">DomainError</a></dt>
+      <dd><p>Represents a domain or business rule violation.
+Use this for errors that occur when domain logic or business rules prevent an operation from completing.
+Maps to HTTP 422 Unprocessable Entity.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.EnsureExtensions.html">EnsureExtensions</a></dt>
+      <dd><p>Provides extension methods for ensuring conditions on Result values.
+If conditions fail, the result is converted to a failure with the specified error.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html">EnsureExtensionsAsync</a></dt>
+      <dd><p>Async Ensure extensions where BOTH input and predicates are async (Task).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Entity-1.html">Entity&lt;TId&gt;</a></dt>
+      <dd><p>Base class for entities in Domain-Driven Design.
+An entity is a domain object defined by its identity rather than its attributes.
+Two entities with different attributes but the same ID are considered equal.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+      <dd><p>Base class for all error types in the functional DDD library.
+Errors represent failure states and contain structured information about what went wrong.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.FluentValidationResultExtensions.html">FluentValidationResultExtensions</a></dt>
+      <dd><p>Provides extension methods to integrate FluentValidation with Railway Oriented Programming Result types.
+Enables seamless conversion of FluentValidation results to Result&lt;T&gt; for functional error handling.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ForbiddenError.html">ForbiddenError</a></dt>
+      <dd><p>Represents a forbidden error when an authenticated user lacks permission to access a resource.
+Use this when the user is authenticated but does not have the required authorization or role.
+Maps to HTTP 403 Forbidden.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.HttpResponseExtensions.html">HttpResponseExtensions</a></dt>
+      <dd><p>Provides extension methods for handling HTTP response messages with Result and Maybe monads.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.HttpResultExtensions.html">HttpResultExtensions</a></dt>
+      <dd><p>Provides extension methods to convert Result types to ASP.NET Core Minimal API <a class="xref" href="FunctionalDdd.IResult.html">IResult</a> responses.
+These methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.HttpResultExtensionsAsync.html">HttpResultExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core Minimal API <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.iresult">IResult</a> responses.
+These methods enable clean async patterns in Minimal API endpoints while maintaining Railway Oriented Programming benefits.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MapExtensions.html">MapExtensions</a></dt>
+      <dd><p>Provides extension methods for mapping (transforming) values inside Result objects.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MapExtensionsAsync.html">MapExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods for mapping (transforming) values inside Result objects.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MapOnFailureExtensions.html">MapOnFailureExtensions</a></dt>
+      <dd><p>Provides extension methods for transforming errors in failed Results while leaving successful Results unchanged.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MatchErrorExtensions.html">MatchErrorExtensions</a></dt>
+      <dd><p>Pattern matching helpers for discriminating specific error types in Result.
+Allows matching on specific error types (ValidationError, NotFoundError, etc.)
+rather than treating all errors the same.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MatchErrorExtensionsAsync.html">MatchErrorExtensionsAsync</a></dt>
+      <dd><p>Asynchronous pattern matching helpers for discriminating specific error types in Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MatchExtensions.html">MatchExtensions</a></dt>
+      <dd><p>Pattern matching helpers (Match / Switch) for Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MatchExtensionsAsync.html">MatchExtensionsAsync</a></dt>
+      <dd><p>Asynchronous pattern matching helpers for Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Maybe.html">Maybe</a></dt>
+      <dd><p>Contains static methods to create a <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a> object.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MaybeExtensions.html">MaybeExtensions</a></dt>
+      <dd><p>Provides extension methods for converting <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a> instances to <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>
+objects and for wrapping values in a <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.MaybeExtensionsAsync.html">MaybeExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods for converting <a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a> instances to <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.NotFoundError.html">NotFoundError</a></dt>
+      <dd><p>Represents a &quot;not found&quot; error when a requested resource does not exist.
+Use this when an entity, record, or resource cannot be located.
+Maps to HTTP 404 Not Found.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.NullableExtensions.html">NullableExtensions</a></dt>
+      <dd><p>Extension methods for converting nullable values to Result types.
+Provides a convenient way to handle null checking with Railway Oriented Programming.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.NullableExtensionsAsync.html">NullableExtensionsAsync</a></dt>
+      <dd><p>Asynchronous extension methods for converting nullable values to Result types.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.PartialObjectResult.html">PartialObjectResult</a></dt>
+      <dd><p>Represents an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.objectresult">ObjectResult</a> that returns HTTP 206 Partial Content with a Content-Range header.
+Used to indicate that the response contains a subset of the requested resource.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions.html">RailwayOrientedProgrammingTraceProviderBuilderExtensions</a></dt>
+      <dd><p>Extension methods for configuring OpenTelemetry tracing for Railway Oriented Programming operations.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.RailwayTrackAttribute.html">RailwayTrackAttribute</a></dt>
+      <dd><p>Indicates which railway track an operation executes on.
+This metadata can be used by IDE extensions, analyzers, and documentation generators.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.RateLimitError.html">RateLimitError</a></dt>
+      <dd><p>Represents a rate limiting error when too many requests have been made.
+Use this when a client has exceeded their request quota or rate limit.
+Maps to HTTP 429 Too Many Requests.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.RecoverOnFailureExtensions.html">RecoverOnFailureExtensions</a></dt>
+      <dd><p>Provides extension methods for recovering from failed results by executing fallback operations.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.RecoverOnFailureExtensionsAsync.html">RecoverOnFailureExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods for recovering from failed results.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ResultDebugExtensions.html">ResultDebugExtensions</a></dt>
+      <dd><p>Debug extension methods for inspecting Result values during development.
+These methods execute only in DEBUG builds and become no-ops in RELEASE builds (with zero overhead).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ResultDebugExtensionsAsync.html">ResultDebugExtensionsAsync</a></dt>
+      <dd><p>Debug-only async extension methods for inspecting Result values during development.
+These methods are only available in DEBUG builds and are automatically excluded from RELEASE builds.
+Debug information is written to dedicated Activity spans for OpenTelemetry compatibility.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ResultLinqExtensions.html">ResultLinqExtensions</a></dt>
+      <dd><p>Provides LINQ query expression support for Result types, enabling C# query syntax for functional operations.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ScalarValueObject-2.html">ScalarValueObject&lt;TSelf, T&gt;</a></dt>
+      <dd><p>Base class for value objects that wrap a single scalar value.
+Provides a strongly-typed wrapper around primitive types with domain semantics.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ScalarValueValidationEndpointFilter.html">ScalarValueValidationEndpointFilter</a></dt>
+      <dd><p>An endpoint filter that checks for scalar value validation errors collected during JSON deserialization.
+For Minimal APIs, this filter returns validation problem results when validation errors are detected.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ScalarValueValidationFilter.html">ScalarValueValidationFilter</a></dt>
+      <dd><p>An action filter that checks for validation errors collected during JSON deserialization
+and validates <a class="xref" href="FunctionalDdd.IScalarValue-2.html">IScalarValue&lt;TSelf, TPrimitive&gt;</a> route/query parameters.
+Returns a 400 Bad Request response with validation problem details when validation fails.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ScalarValueValidationMiddleware.html">ScalarValueValidationMiddleware</a></dt>
+      <dd><p>Middleware that creates a validation error collection scope for each request.
+This enables ValidatingJsonConverter to collect validation errors
+across the entire request deserialization process.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ServiceCollectionExtensions.html">ServiceCollectionExtensions</a></dt>
+      <dd><p>Extension methods for configuring automatic value object validation in ASP.NET Core.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ServiceUnavailableError.html">ServiceUnavailableError</a></dt>
+      <dd><p>Represents a temporary service unavailability error.
+Use this when the service is temporarily unable to handle the request due to maintenance or overload.
+Maps to HTTP 503 Service Unavailable.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.TapExtensions.html">TapExtensions</a></dt>
+      <dd><p>Provides extension methods for executing side effects on successful Results without changing the Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.TapExtensionsAsync.html">TapExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods for executing side effects on successful Results without changing the Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.TapOnFailureExtensions.html">TapOnFailureExtensions</a></dt>
+      <dd><p>Provides extension methods for executing side effects on failed Results without changing the Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.TapOnFailureExtensionsAsync.html">TapOnFailureExtensionsAsync</a></dt>
+      <dd><p>Provides asynchronous extension methods for executing side effects on failed Results without changing the Result.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.TraverseExtensions.html">TraverseExtensions</a></dt>
+      <dd><p>Transforms a collection of items into a Result containing a collection,
+short-circuiting on the first failure.
+Useful for processing collections where each item can fail independently.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.UnauthorizedError.html">UnauthorizedError</a></dt>
+      <dd><p>Represents an authorization error when authentication is required but not provided.
+Use this when a user is not authenticated (not logged in) and must authenticate to access the resource.
+Maps to HTTP 401 Unauthorized.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.UnexpectedError.html">UnexpectedError</a></dt>
+      <dd><p>Represents an unexpected system error or exception.
+Use this for infrastructure failures, unhandled exceptions, or system-level errors.
+Maps to HTTP 500 Internal Server Error.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ValidationError.html">ValidationError</a></dt>
+      <dd><p>Represents validation errors for one or more fields. Used when input data fails business rules or constraints.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ValidationErrorsContext.html">ValidationErrorsContext</a></dt>
+      <dd><p>Provides a context for collecting validation errors during JSON deserialization.
+Uses AsyncLocal to maintain thread-safe, request-scoped error collection.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a></dt>
+      <dd><p>Base class for value objects in Domain-Driven Design.
+A value object represents a descriptive aspect of the domain with no conceptual identity.
+Value objects are immutable, defined by their attributes, and support structural equality.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.WhenExtensions.html">WhenExtensions</a></dt>
+      <dd><p>Conditionally executes an operation based on a predicate, maintaining the railway.
+Useful for executing operations only when certain conditions are met without breaking the Result chain.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.WhenExtensionsAsync.html">WhenExtensionsAsync</a></dt>
+      <dd><p>Asynchronous conditional execution operations for Result.</p>
+</dd>
+    </dl>
+    <h3 id="structs">
+Structs
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a></dt>
+      <dd><p>Represents domain-level optionality — a value that was either provided or intentionally omitted.
+Unlike <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.nullable-1">Nullable&lt;T&gt;</a> (value types only) or <code>T?</code> (annotation only for reference types),
+<a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a> is a real generic type that works uniformly with both value and reference types
+and composes with <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> pipelines.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Result.html">Result</a></dt>
+      <dd><p>Static Combine methods for combining multiple independent Result values without chaining.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a></dt>
+      <dd><p>Represents either a successful computation (with a value) or a failure (with an <a class="xref" href="FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Error">Error</a>).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.Unit.html">Unit</a></dt>
+      <dd><p>Represents the absence of a meaningful value, used for operations that have no return value.
+This is the functional programming equivalent of <code>void</code>, but as a proper type that can be used with generics.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.ValidationError.FieldError.html">ValidationError.FieldError</a></dt>
+      <dd><p>Represents an error for a specific field, which may have multiple detail messages.</p>
+</dd>
+    </dl>
+    <h3 id="interfaces">
+Interfaces
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.IAggregate.html">IAggregate</a></dt>
+      <dd><p>Defines the contract for an aggregate root in Domain-Driven Design.
+An aggregate is a cluster of domain objects that can be treated as a single unit for data changes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.IDomainEvent.html">IDomainEvent</a></dt>
+      <dd><p>Represents a domain event - a record of something significant that happened in the business domain.
+Domain events capture state changes and business occurrences that domain experts care about.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.IResult.html">IResult</a></dt>
+      <dd><p>Non-generic base interface for result types, exposing success/failure state and error information.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.IResult-1.html">IResult&lt;TValue&gt;</a></dt>
+      <dd><p>Generic interface for result types, providing typed access to the success value.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.IScalarValue-2.html">IScalarValue&lt;TSelf, TPrimitive&gt;</a></dt>
+      <dd><p>Interface for scalar value objects that can be created with validation.
+Enables automatic ASP.NET Core model binding and JSON serialization.</p>
+</dd>
+    </dl>
+    <h3 id="enums">
+Enums
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="FunctionalDdd.TrackBehavior.html">TrackBehavior</a></dt>
+      <dd><p>Defines which railway track an operation runs on in Railway-Oriented Programming.</p>
+</dd>
+    </dl>
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

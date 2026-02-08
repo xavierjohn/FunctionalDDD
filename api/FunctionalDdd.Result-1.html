@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Struct Result&lt;TValue&gt; </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Struct Result&lt;TValue&gt; ">
+      
+      <meta name="description" content="Represents either a successful computation (with a value) or a failure (with an ).">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_Result_1.md&amp;value=---%0Auid%3A%20FunctionalDdd.Result%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.Result`1">
+
+
+
+  <h1 id="FunctionalDdd_Result_1" data-uid="FunctionalDdd.Result`1" class="text-break">
+Struct Result&lt;TValue&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L34"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.RailwayOrientedProgramming.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Represents either a successful computation (with a value) or a failure (with an <a class="xref" href="FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_Error">Error</a>).</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public readonly struct Result&lt;TValue&gt; : IResult&lt;TValue&gt;, IResult, IEquatable&lt;Result&lt;TValue&gt;&gt;</code></pre>
+  </div>
+
+
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>Success value type.</p>
+</dd>
+  </dl>
+
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="FunctionalDdd.IResult-1.html">IResult</a>&lt;TValue&gt;</div>
+      <div><a class="xref" href="FunctionalDdd.IResult.html">IResult</a></div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+  <dl class="typelist extensionMethods">
+    <dt>Extension Methods</dt>
+    <dd>
+  <div>
+      <a class="xref" href="FunctionalDdd.BindExtensions.html#FunctionalDdd_BindExtensions_Bind__2_FunctionalDdd_Result___0__System_Func___0_FunctionalDdd_Result___1___">BindExtensions.Bind&lt;TValue, TResult&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Result&lt;TResult&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.BindExtensionsAsync.html#FunctionalDdd_BindExtensionsAsync_BindAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Result___1____">BindExtensionsAsync.BindAsync&lt;TValue, TResult&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&lt;Result&lt;TResult&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.BindExtensionsAsync.html#FunctionalDdd_BindExtensionsAsync_BindAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___1____">BindExtensionsAsync.BindAsync&lt;TValue, TResult&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&lt;Result&lt;TResult&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CombineExtensions.html#FunctionalDdd_CombineExtensions_Combine__1_FunctionalDdd_Result___0__FunctionalDdd_Result_FunctionalDdd_Unit__">CombineExtensions.Combine&lt;T1&gt;(Result&lt;T1&gt;, Result&lt;Unit&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CombineExtensions.html#FunctionalDdd_CombineExtensions_Combine__2_FunctionalDdd_Result___0__FunctionalDdd_Result___1__">CombineExtensions.Combine&lt;T1, T2&gt;(Result&lt;T1&gt;, Result&lt;T2&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CombineExtensionsAsync.html#FunctionalDdd_CombineExtensionsAsync_CombineAsync__2_FunctionalDdd_Result___0__System_Threading_Tasks_Task_FunctionalDdd_Result___1___">CombineExtensionsAsync.CombineAsync&lt;T1, T2&gt;(Result&lt;T1&gt;, Task&lt;Result&lt;T2&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.CombineExtensionsAsync.html#FunctionalDdd_CombineExtensionsAsync_CombineAsync__2_FunctionalDdd_Result___0__System_Threading_Tasks_ValueTask_FunctionalDdd_Result___1___">CombineExtensionsAsync.CombineAsync&lt;T1, T2&gt;(Result&lt;T1&gt;, ValueTask&lt;Result&lt;T2&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensions.html#FunctionalDdd_EnsureExtensions_Ensure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Result___0___">EnsureExtensions.Ensure&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Result&lt;TValue&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensions.html#FunctionalDdd_EnsureExtensions_Ensure__1_FunctionalDdd_Result___0__System_Func_System_Boolean__FunctionalDdd_Error_">EnsureExtensions.Ensure&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;bool&gt;, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensions.html#FunctionalDdd_EnsureExtensions_Ensure__1_FunctionalDdd_Result___0__System_Func___0_FunctionalDdd_Result___0___">EnsureExtensions.Ensure&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Result&lt;TValue&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensions.html#FunctionalDdd_EnsureExtensions_Ensure__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__FunctionalDdd_Error_">EnsureExtensions.Ensure&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, bool&gt;, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensions.html#FunctionalDdd_EnsureExtensions_Ensure__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__System_Func___0_FunctionalDdd_Error__">EnsureExtensions.Ensure&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, bool&gt;, Func&lt;TValue, Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Task&lt;Result&lt;TValue&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_Task_System_Boolean___FunctionalDdd_Error_">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Task&lt;bool&gt;&gt;, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0____">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;ValueTask&lt;Result&lt;TValue&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_ValueTask_System_Boolean___FunctionalDdd_Error_">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;ValueTask&lt;bool&gt;&gt;, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&lt;Result&lt;TValue&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task_System_Boolean___FunctionalDdd_Error_">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&lt;bool&gt;&gt;, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task_System_Boolean___System_Func___0_FunctionalDdd_Error__">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&lt;bool&gt;&gt;, Func&lt;TValue, Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task_System_Boolean___System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Error___">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&lt;bool&gt;&gt;, Func&lt;TValue, Task&lt;Error&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0____">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&lt;Result&lt;TValue&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask_System_Boolean___FunctionalDdd_Error_">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&lt;bool&gt;&gt;, Error)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask_System_Boolean___System_Func___0_FunctionalDdd_Error__">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&lt;bool&gt;&gt;, Func&lt;TValue, Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.EnsureExtensionsAsync.html#FunctionalDdd_EnsureExtensionsAsync_EnsureAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask_System_Boolean___System_Func___0_System_Threading_Tasks_ValueTask_FunctionalDdd_Error___">EnsureExtensionsAsync.EnsureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&lt;bool&gt;&gt;, Func&lt;TValue, ValueTask&lt;Error&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapExtensions.html#FunctionalDdd_MapExtensions_Map__2_FunctionalDdd_Result___0__System_Func___0___1__">MapExtensions.Map&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, TOut&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapExtensionsAsync.html#FunctionalDdd_MapExtensionsAsync_MapAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task___1___">MapExtensionsAsync.MapAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, Task&lt;TOut&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapExtensionsAsync.html#FunctionalDdd_MapExtensionsAsync_MapAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask___1___">MapExtensionsAsync.MapAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, ValueTask&lt;TOut&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapOnFailureExtensions.html#FunctionalDdd_MapOnFailureExtensions_MapOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task_FunctionalDdd_Error___">MapOnFailureExtensions.MapOnFailureAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, Task&lt;Error&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapOnFailureExtensions.html#FunctionalDdd_MapOnFailureExtensions_MapOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_ValueTask_FunctionalDdd_Error___">MapOnFailureExtensions.MapOnFailureAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, ValueTask&lt;Error&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MapOnFailureExtensions.html#FunctionalDdd_MapOnFailureExtensions_MapOnFailure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_FunctionalDdd_Error__">MapOnFailureExtensions.MapOnFailure&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchErrorExtensions.html#FunctionalDdd_MatchErrorExtensions_MatchError__2_FunctionalDdd_Result___0__System_Func___0___1__System_Func_FunctionalDdd_ValidationError___1__System_Func_FunctionalDdd_NotFoundError___1__System_Func_FunctionalDdd_ConflictError___1__System_Func_FunctionalDdd_BadRequestError___1__System_Func_FunctionalDdd_UnauthorizedError___1__System_Func_FunctionalDdd_ForbiddenError___1__System_Func_FunctionalDdd_DomainError___1__System_Func_FunctionalDdd_RateLimitError___1__System_Func_FunctionalDdd_ServiceUnavailableError___1__System_Func_FunctionalDdd_UnexpectedError___1__System_Func_FunctionalDdd_Error___1__">MatchErrorExtensions.MatchError&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, TOut&gt;, Func&lt;ValidationError, TOut&gt;?, Func&lt;NotFoundError, TOut&gt;?, Func&lt;ConflictError, TOut&gt;?, Func&lt;BadRequestError, TOut&gt;?, Func&lt;UnauthorizedError, TOut&gt;?, Func&lt;ForbiddenError, TOut&gt;?, Func&lt;DomainError, TOut&gt;?, Func&lt;RateLimitError, TOut&gt;?, Func&lt;ServiceUnavailableError, TOut&gt;?, Func&lt;UnexpectedError, TOut&gt;?, Func&lt;Error, TOut&gt;?)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchErrorExtensions.html#FunctionalDdd_MatchErrorExtensions_SwitchError__1_FunctionalDdd_Result___0__System_Action___0__System_Action_FunctionalDdd_ValidationError__System_Action_FunctionalDdd_NotFoundError__System_Action_FunctionalDdd_ConflictError__System_Action_FunctionalDdd_BadRequestError__System_Action_FunctionalDdd_UnauthorizedError__System_Action_FunctionalDdd_ForbiddenError__System_Action_FunctionalDdd_DomainError__System_Action_FunctionalDdd_RateLimitError__System_Action_FunctionalDdd_ServiceUnavailableError__System_Action_FunctionalDdd_UnexpectedError__System_Action_FunctionalDdd_Error__">MatchErrorExtensions.SwitchError&lt;TIn&gt;(Result&lt;TIn&gt;, Action&lt;TIn&gt;, Action&lt;ValidationError&gt;?, Action&lt;NotFoundError&gt;?, Action&lt;ConflictError&gt;?, Action&lt;BadRequestError&gt;?, Action&lt;UnauthorizedError&gt;?, Action&lt;ForbiddenError&gt;?, Action&lt;DomainError&gt;?, Action&lt;RateLimitError&gt;?, Action&lt;ServiceUnavailableError&gt;?, Action&lt;UnexpectedError&gt;?, Action&lt;Error&gt;?)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchErrorExtensionsAsync.html#FunctionalDdd_MatchErrorExtensionsAsync_MatchErrorAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_ValidationError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_NotFoundError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_ConflictError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_BadRequestError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_UnauthorizedError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_ForbiddenError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_DomainError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_RateLimitError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_ServiceUnavailableError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_UnexpectedError_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_Error_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Threading_CancellationToken_">MatchErrorExtensionsAsync.MatchErrorAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, CancellationToken, Task&lt;TOut&gt;&gt;, Func&lt;ValidationError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;NotFoundError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;ConflictError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;BadRequestError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;UnauthorizedError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;ForbiddenError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;DomainError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;RateLimitError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;ServiceUnavailableError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;UnexpectedError, CancellationToken, Task&lt;TOut&gt;&gt;?, Func&lt;Error, CancellationToken, Task&lt;TOut&gt;&gt;?, CancellationToken)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchExtensions.html#FunctionalDdd_MatchExtensions_Match__2_FunctionalDdd_Result___0__System_Func___0___1__System_Func_FunctionalDdd_Error___1__">MatchExtensions.Match&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, TOut&gt;, Func&lt;Error, TOut&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchExtensions.html#FunctionalDdd_MatchExtensions_Switch__1_FunctionalDdd_Result___0__System_Action___0__System_Action_FunctionalDdd_Error__">MatchExtensions.Switch&lt;TIn&gt;(Result&lt;TIn&gt;, Action&lt;TIn&gt;, Action&lt;Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_Error_System_Threading_CancellationToken_System_Threading_Tasks_Task___1___System_Threading_CancellationToken_">MatchExtensionsAsync.MatchAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, CancellationToken, Task&lt;TOut&gt;&gt;, Func&lt;Error, CancellationToken, Task&lt;TOut&gt;&gt;, CancellationToken)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task___1___System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task___1___">MatchExtensionsAsync.MatchAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, Task&lt;TOut&gt;&gt;, Func&lt;Error, Task&lt;TOut&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MatchExtensionsAsync.html#FunctionalDdd_MatchExtensionsAsync_MatchAsync__2_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask___1___System_Func_FunctionalDdd_Error_System_Threading_Tasks_ValueTask___1___">MatchExtensionsAsync.MatchAsync&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, ValueTask&lt;TOut&gt;&gt;, Func&lt;Error, ValueTask&lt;TOut&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.MaybeExtensions.html#FunctionalDdd_MaybeExtensions_ToResult__1___0_">MaybeExtensions.ToResult&lt;TValue&gt;(TValue)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensions.html#FunctionalDdd_RecoverOnFailureExtensions_RecoverOnFailure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_FunctionalDdd_Result___0___">RecoverOnFailureExtensions.RecoverOnFailure&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensions.html#FunctionalDdd_RecoverOnFailureExtensions_RecoverOnFailure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Boolean__System_Func_FunctionalDdd_Error_FunctionalDdd_Result___0___">RecoverOnFailureExtensions.RecoverOnFailure&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, bool&gt;, Func&lt;Error, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensions.html#FunctionalDdd_RecoverOnFailureExtensions_RecoverOnFailure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Boolean__System_Func_FunctionalDdd_Result___0___">RecoverOnFailureExtensions.RecoverOnFailure&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, bool&gt;, Func&lt;Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensions.html#FunctionalDdd_RecoverOnFailureExtensions_RecoverOnFailure__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Result___0___">RecoverOnFailureExtensions.RecoverOnFailure&lt;T&gt;(Result&lt;T&gt;, Func&lt;Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensionsAsync.html#FunctionalDdd_RecoverOnFailureExtensionsAsync_RecoverOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Boolean__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">RecoverOnFailureExtensionsAsync.RecoverOnFailureAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, bool&gt;, Func&lt;Error, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensionsAsync.html#FunctionalDdd_RecoverOnFailureExtensionsAsync_RecoverOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Boolean__System_Func_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">RecoverOnFailureExtensionsAsync.RecoverOnFailureAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, bool&gt;, Func&lt;Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensionsAsync.html#FunctionalDdd_RecoverOnFailureExtensionsAsync_RecoverOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">RecoverOnFailureExtensionsAsync.RecoverOnFailureAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Error, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.RecoverOnFailureExtensionsAsync.html#FunctionalDdd_RecoverOnFailureExtensionsAsync_RecoverOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">RecoverOnFailureExtensionsAsync.RecoverOnFailureAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultDebugExtensions.html#FunctionalDdd_ResultDebugExtensions_DebugDetailed__1_FunctionalDdd_Result___0__System_String_">ResultDebugExtensions.DebugDetailed&lt;TValue&gt;(Result&lt;TValue&gt;, string)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultDebugExtensions.html#FunctionalDdd_ResultDebugExtensions_DebugOnFailure__1_FunctionalDdd_Result___0__System_Action_FunctionalDdd_Error__">ResultDebugExtensions.DebugOnFailure&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultDebugExtensions.html#FunctionalDdd_ResultDebugExtensions_DebugOnSuccess__1_FunctionalDdd_Result___0__System_Action___0__">ResultDebugExtensions.DebugOnSuccess&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;TValue&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultDebugExtensions.html#FunctionalDdd_ResultDebugExtensions_DebugWithStack__1_FunctionalDdd_Result___0__System_String_System_Boolean_">ResultDebugExtensions.DebugWithStack&lt;TValue&gt;(Result&lt;TValue&gt;, string, bool)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultDebugExtensions.html#FunctionalDdd_ResultDebugExtensions_Debug__1_FunctionalDdd_Result___0__System_String_">ResultDebugExtensions.Debug&lt;TValue&gt;(Result&lt;TValue&gt;, string)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_SelectMany__3_FunctionalDdd_Result___0__System_Func___0_FunctionalDdd_Result___1___System_Func___0___1___2__">ResultLinqExtensions.SelectMany&lt;TSource, TCollection, TResult&gt;(Result&lt;TSource&gt;, Func&lt;TSource, Result&lt;TCollection&gt;&gt;, Func&lt;TSource, TCollection, TResult&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_Select__2_FunctionalDdd_Result___0__System_Func___0___1__">ResultLinqExtensions.Select&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, Func&lt;TIn, TOut&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.ResultLinqExtensions.html#FunctionalDdd_ResultLinqExtensions_Where__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__">ResultLinqExtensions.Where&lt;TSource&gt;(Result&lt;TSource&gt;, Func&lt;TSource, bool&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapExtensions.html#FunctionalDdd_TapExtensions_Tap__1_FunctionalDdd_Result___0__System_Action_">TapExtensions.Tap&lt;TValue&gt;(Result&lt;TValue&gt;, Action)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapExtensions.html#FunctionalDdd_TapExtensions_Tap__1_FunctionalDdd_Result___0__System_Action___0__">TapExtensions.Tap&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;TValue&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapExtensionsAsync.html#FunctionalDdd_TapExtensionsAsync_TapAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_Task__">TapExtensionsAsync.TapAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Task&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapExtensionsAsync.html#FunctionalDdd_TapExtensionsAsync_TapAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_ValueTask__">TapExtensionsAsync.TapAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;ValueTask&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapExtensionsAsync.html#FunctionalDdd_TapExtensionsAsync_TapAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_Task__">TapExtensionsAsync.TapAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, Task&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapExtensionsAsync.html#FunctionalDdd_TapExtensionsAsync_TapAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Threading_Tasks_ValueTask__">TapExtensionsAsync.TapAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;TValue, ValueTask&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapOnFailureExtensions.html#FunctionalDdd_TapOnFailureExtensions_TapOnFailure__1_FunctionalDdd_Result___0__System_Action_">TapOnFailureExtensions.TapOnFailure&lt;TValue&gt;(Result&lt;TValue&gt;, Action)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapOnFailureExtensions.html#FunctionalDdd_TapOnFailureExtensions_TapOnFailure__1_FunctionalDdd_Result___0__System_Action_FunctionalDdd_Error__">TapOnFailureExtensions.TapOnFailure&lt;TValue&gt;(Result&lt;TValue&gt;, Action&lt;Error&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapOnFailureExtensionsAsync.html#FunctionalDdd_TapOnFailureExtensionsAsync_TapOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_Task__">TapOnFailureExtensionsAsync.TapOnFailureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Error, Task&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapOnFailureExtensionsAsync.html#FunctionalDdd_TapOnFailureExtensionsAsync_TapOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_FunctionalDdd_Error_System_Threading_Tasks_ValueTask__">TapOnFailureExtensionsAsync.TapOnFailureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Error, ValueTask&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapOnFailureExtensionsAsync.html#FunctionalDdd_TapOnFailureExtensionsAsync_TapOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_Task__">TapOnFailureExtensionsAsync.TapOnFailureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;Task&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.TapOnFailureExtensionsAsync.html#FunctionalDdd_TapOnFailureExtensionsAsync_TapOnFailureAsync__1_FunctionalDdd_Result___0__System_Func_System_Threading_Tasks_ValueTask__">TapOnFailureExtensionsAsync.TapOnFailureAsync&lt;TValue&gt;(Result&lt;TValue&gt;, Func&lt;ValueTask&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensions.html#FunctionalDdd_WhenExtensions_Unless__1_FunctionalDdd_Result___0__System_Boolean_System_Func___0_FunctionalDdd_Result___0___">WhenExtensions.Unless&lt;T&gt;(Result&lt;T&gt;, bool, Func&lt;T, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensions.html#FunctionalDdd_WhenExtensions_Unless__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__System_Func___0_FunctionalDdd_Result___0___">WhenExtensions.Unless&lt;T&gt;(Result&lt;T&gt;, Func&lt;T, bool&gt;, Func&lt;T, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensions.html#FunctionalDdd_WhenExtensions_When__1_FunctionalDdd_Result___0__System_Boolean_System_Func___0_FunctionalDdd_Result___0___">WhenExtensions.When&lt;T&gt;(Result&lt;T&gt;, bool, Func&lt;T, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensions.html#FunctionalDdd_WhenExtensions_When__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__System_Func___0_FunctionalDdd_Result___0___">WhenExtensions.When&lt;T&gt;(Result&lt;T&gt;, Func&lt;T, bool&gt;, Func&lt;T, Result&lt;T&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensionsAsync.html#FunctionalDdd_WhenExtensionsAsync_UnlessAsync__1_FunctionalDdd_Result___0__System_Boolean_System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">WhenExtensionsAsync.UnlessAsync&lt;T&gt;(Result&lt;T&gt;, bool, Func&lt;T, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensionsAsync.html#FunctionalDdd_WhenExtensionsAsync_UnlessAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">WhenExtensionsAsync.UnlessAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;T, bool&gt;, Func&lt;T, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensionsAsync.html#FunctionalDdd_WhenExtensionsAsync_WhenAsync__1_FunctionalDdd_Result___0__System_Boolean_System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">WhenExtensionsAsync.WhenAsync&lt;T&gt;(Result&lt;T&gt;, bool, Func&lt;T, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  <div>
+      <a class="xref" href="FunctionalDdd.WhenExtensionsAsync.html#FunctionalDdd_WhenExtensionsAsync_WhenAsync__1_FunctionalDdd_Result___0__System_Func___0_System_Boolean__System_Func___0_System_Threading_Tasks_Task_FunctionalDdd_Result___0____">WhenExtensionsAsync.WhenAsync&lt;T&gt;(Result&lt;T&gt;, Func&lt;T, bool&gt;, Func&lt;T, Task&lt;Result&lt;T&gt;&gt;&gt;)</a>
+  </div>
+  </dd></dl>
+
+
+  <h2 id="FunctionalDdd_Result_1_examples">Examples</h2>
+  <pre><code class="lang-csharp">// Creating results
+Result&lt;User&gt; success = Result.Success(user);
+Result&lt;User&gt; failure = Error.NotFound("User not found");
+
+// Pattern matching
+var message = result switch
+{
+    { IsSuccess: true } =&gt; $"Found user: {result.Value.Name}",
+    { IsFailure: true } =&gt; $"Error: {result.Error.Detail}"
+};
+
+// Chaining operations
+var finalResult = GetUser(id)
+    .Bind(user =&gt; ValidateUser(user))
+    .Map(user =&gt; user.Name);</code></pre>
+
+
+  <h2 id="FunctionalDdd_Result_1_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>Result is the core type for Railway Oriented Programming. It forces explicit handling of both
+success and failure cases, making error handling visible in the type system. Use Result when
+an operation can fail in a predictable way that should be handled by the caller.</p>
+</div>
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="FunctionalDdd_Result_1_Error_" data-uid="FunctionalDdd.Result`1.Error*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_Error" data-uid="FunctionalDdd.Result`1.Error">
+  Error
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L59"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the error if the result is a failure; otherwise throws.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Error Error { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>The error describing why the result failed.</p>
+</dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_1_Error_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Always check <a class="xref" href="FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_IsFailure">IsFailure</a> before accessing this property, or use <a class="xref" href="FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_TryGetError_FunctionalDdd_Error__">TryGetError(out Error)</a> instead.</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a></dt>
+    <dd><p>Thrown when accessing Error on a successful result.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="FunctionalDdd_Result_1_IsFailure_" data-uid="FunctionalDdd.Result`1.IsFailure*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_IsFailure" data-uid="FunctionalDdd.Result`1.IsFailure">
+  IsFailure
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L74"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>True when the result represents failure.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsFailure { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if failed; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_IsSuccess_" data-uid="FunctionalDdd.Result`1.IsSuccess*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_IsSuccess" data-uid="FunctionalDdd.Result`1.IsSuccess">
+  IsSuccess
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L68"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>True when the result represents success.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsSuccess { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if successful; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_Value_" data-uid="FunctionalDdd.Result`1.Value*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_Value" data-uid="FunctionalDdd.Result`1.Value">
+  Value
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L46"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets the underlying value if the result is successful; otherwise throws.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TValue Value { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">TValue</span></dt>
+    <dd><p>The success value.</p>
+</dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_1_Value_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Always check <a class="xref" href="FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_IsSuccess">IsSuccess</a> before accessing this property, or use <a class="xref" href="FunctionalDdd.Result-1.html#FunctionalDdd_Result_1_TryGetValue__0__">TryGetValue(out TValue)</a> instead.</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a></dt>
+    <dd><p>Thrown when accessing Value on a failed result.</p>
+</dd>
+  </dl>
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="FunctionalDdd_Result_1_Deconstruct_" data-uid="FunctionalDdd.Result`1.Deconstruct*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_Deconstruct_System_Boolean___0__FunctionalDdd_Error__" data-uid="FunctionalDdd.Result`1.Deconstruct(System.Boolean@,`0@,FunctionalDdd.Error@)">
+  Deconstruct(out bool, out TValue?, out Error?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L179"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Deconstructs the result into its components for pattern matching.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Deconstruct(out bool isSuccess, out TValue? value, out Error? error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>isSuccess</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the result is successful; otherwise false.</p>
+</dd>
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>The success value if successful; otherwise default.</p>
+</dd>
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>The error if failed; otherwise null.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_1_Deconstruct_System_Boolean___0__FunctionalDdd_Error___examples">Examples</h4>
+  <pre><code class="lang-csharp">var (success, value, error) = GetUser(id);
+if (success)
+    Console.WriteLine($"User: {value.Name}");
+else
+    Console.WriteLine($"Error: {error.Detail}");</code></pre>
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_Equals_" data-uid="FunctionalDdd.Result`1.Equals*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_Equals_FunctionalDdd_Result__0__" data-uid="FunctionalDdd.Result`1.Equals(FunctionalDdd.Result{`0})">
+  Equals(Result&lt;TValue&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L196"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether the specified result is equal to the current result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool Equals(Result&lt;TValue&gt; other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>The result to compare with the current result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the specified result is equal to the current result; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_1_Equals_FunctionalDdd_Result__0___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Two results are equal if they have the same success/failure state and equal values/errors.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Result_1_Equals_" data-uid="FunctionalDdd.Result`1.Equals*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_Equals_System_Object_" data-uid="FunctionalDdd.Result`1.Equals(System.Object)">
+  Equals(object?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L208"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether the specified object is equal to the current result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override bool Equals(object? obj)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>obj</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></dt>
+    <dd><p>The object to compare with the current result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the specified object is a Result and is equal to the current result; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_GetHashCode_" data-uid="FunctionalDdd.Result`1.GetHashCode*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_GetHashCode" data-uid="FunctionalDdd.Result`1.GetHashCode">
+  GetHashCode()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L214"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a hash code for the current result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override int GetHashCode()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>A hash code for the current result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_ToString_" data-uid="FunctionalDdd.Result`1.ToString*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_ToString" data-uid="FunctionalDdd.Result`1.ToString">
+  ToString()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L239"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns a string representation of the result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override string ToString()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>A string in the format &quot;Success(value)&quot; or &quot;Failure(ErrorCode: detail)&quot;.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_TryGetError_" data-uid="FunctionalDdd.Result`1.TryGetError*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_TryGetError_FunctionalDdd_Error__" data-uid="FunctionalDdd.Result`1.TryGetError(FunctionalDdd.Error@)">
+  TryGetError(out Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L152"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Attempts to get the error without throwing.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool TryGetError(out Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>When this method returns true, contains the error; otherwise, null.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the result is a failure; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_1_TryGetError_FunctionalDdd_Error___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This is the recommended safe way to access the error without exception handling.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_Result_1_TryGetValue_" data-uid="FunctionalDdd.Result`1.TryGetValue*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_TryGetValue__0__" data-uid="FunctionalDdd.Result`1.TryGetValue(`0@)">
+  TryGetValue(out TValue)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L132"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Attempts to get the success value without throwing.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool TryGetValue(out TValue value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>When this method returns true, contains the success value; otherwise, the default value.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the result is successful; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_Result_1_TryGetValue__0___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>This is the recommended safe way to access the value without exception handling.
+Similar to the TryParse pattern in .NET.</p>
+</div>
+
+
+
+
+  <h2 class="section" id="operators">Operators
+</h2>
+
+
+  <a id="FunctionalDdd_Result_1_op_Equality_" data-uid="FunctionalDdd.Result`1.op_Equality*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_op_Equality_FunctionalDdd_Result__0__FunctionalDdd_Result__0__" data-uid="FunctionalDdd.Result`1.op_Equality(FunctionalDdd.Result{`0},FunctionalDdd.Result{`0})">
+  operator ==(Result&lt;TValue&gt;, Result&lt;TValue&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L225"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether two results are equal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool operator ==(Result&lt;TValue&gt; left, Result&lt;TValue&gt; right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>The first result to compare.</p>
+</dd>
+    <dt><code>right</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>The second result to compare.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the results are equal; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_op_Implicit_" data-uid="FunctionalDdd.Result`1.op_Implicit*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_op_Implicit_FunctionalDdd_Error__FunctionalDdd_Result__0_" data-uid="FunctionalDdd.Result`1.op_Implicit(FunctionalDdd.Error)~FunctionalDdd.Result{`0}">
+  implicit operator Result&lt;TValue&gt;(Error)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L88"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Implicitly converts an error to a failed result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static implicit operator Result&lt;TValue&gt;(Error error)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>error</code> <a class="xref" href="FunctionalDdd.Error.html">Error</a></dt>
+    <dd><p>The error to wrap in a failed result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A failed result containing the error.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_op_Implicit_" data-uid="FunctionalDdd.Result`1.op_Implicit*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_op_Implicit__0__FunctionalDdd_Result__0_" data-uid="FunctionalDdd.Result`1.op_Implicit(`0)~FunctionalDdd.Result{`0}">
+  implicit operator Result&lt;TValue&gt;(TValue)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L81"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Implicitly converts a value to a successful result.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static implicit operator Result&lt;TValue&gt;(TValue value)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>value</code> <span class="xref">TValue</span></dt>
+    <dd><p>The value to wrap in a success result.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>A successful result containing the value.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="FunctionalDdd_Result_1_op_Inequality_" data-uid="FunctionalDdd.Result`1.op_Inequality*"></a>
+
+  <h3 id="FunctionalDdd_Result_1_op_Inequality_FunctionalDdd_Result__0__FunctionalDdd_Result__0__" data-uid="FunctionalDdd.Result`1.op_Inequality(FunctionalDdd.Result{`0},FunctionalDdd.Result{`0})">
+  operator !=(Result&lt;TValue&gt;, Result&lt;TValue&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L233"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines whether two results are not equal.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool operator !=(Result&lt;TValue&gt; left, Result&lt;TValue&gt; right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>The first result to compare.</p>
+</dd>
+    <dt><code>right</code> <a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;</dt>
+    <dd><p>The second result to compare.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd><p>True if the results are not equal; otherwise false.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/RailwayOrientedProgramming/src/Result/Result{TValue}.cs/#L34" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

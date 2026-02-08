@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class ActionResultExtensionsAsync </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class ActionResultExtensionsAsync ">
+      
+      <meta name="description" content="Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses. These methods enable clean async/await patterns in controllers while maintaining Railway Oriented Programming benefits.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/new/main/apiSpec/new?filename=FunctionalDdd_ActionResultExtensionsAsync.md&amp;value=---%0Auid%3A%20FunctionalDdd.ActionResultExtensionsAsync%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="FunctionalDdd.ActionResultExtensionsAsync">
+
+
+
+  <h1 id="FunctionalDdd_ActionResultExtensionsAsync" data-uid="FunctionalDdd.ActionResultExtensionsAsync" class="text-break">
+Class ActionResultExtensionsAsync  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L46"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="FunctionalDdd.html">FunctionalDdd</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>FunctionalDdd.Asp.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses.
+These methods enable clean async/await patterns in controllers while maintaining Railway Oriented Programming benefits.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class ActionResultExtensionsAsync</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">ActionResultExtensionsAsync</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+  <h2 id="FunctionalDdd_ActionResultExtensionsAsync_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+These extensions are async variants of <a class="xref" href="FunctionalDdd.ActionResultExtensions.html">ActionResultExtensions</a>, designed for use with
+async service methods. They support both <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task&lt;TResult&gt;</a> and <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask&lt;TResult&gt;</a>
+for maximum flexibility and performance.
+</p>
+<p>
+Key benefits:
+<ul><li>Clean async controller code without manual awaiting</li><li>Automatic HTTP status code selection based on error type</li><li>Support for both Task and ValueTask for performance optimization</li><li>Consistent error handling across async operations</li><li>Seamless integration with async Railway Oriented Programming chains</li></ul>
+
+<p>
+Usage pattern in async controllers (with CancellationToken):
+<pre><code class="lang-csharp">public class UsersController : ControllerBase
+{
+    [HttpGet("{id}")]
+    public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(string id, CancellationToken ct) =&gt;
+        UserId.TryCreate(id)
+            .BindAsync(userId =&gt; _userService.GetUserAsync(userId, ct))
+            .MapAsync(user =&gt; new UserDto(user))
+            .ToActionResultAsync(this);
+}</code></pre>
+
+<p>
+<strong>Best Practice:</strong> Always accept a <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a> parameter in async controller 
+methods and pass it through to all async service calls. This enables proper request cancellation, 
+graceful shutdown, and timeout handling.
+</p>
+</div>
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync*"></a>
+
+  <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase)">
+  ToActionResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, ControllerBase)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L111"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a Task-wrapped <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult&lt;TValue&gt;</a> with appropriate HTTP status code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;ActionResult&lt;TValue&gt;&gt; ToActionResultAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, ControllerBase controllerBase)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>The task containing the result object to convert.</p>
+</dd>
+    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
+    <dd><p>The controller context used to create the ActionResult.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A task that represents the asynchronous operation, containing:</p>
+<ul><li>200 OK with value if result is successful (except for Unit)</li><li>204 No Content if result is successful and TValue is Unit</li><li>Appropriate error status code (400-599) based on error type if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type of the value contained in the result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase__examples">Examples</h4>
+  <p>Async GET endpoint with database query and CancellationToken:</p>
+<pre><code class="lang-csharp">[HttpGet("{id}")]
+public Task&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(Guid id, CancellationToken ct) =&gt;
+    UserId.TryCreate(id)
+        .BindAsync(userId =&gt; _repository.GetByIdAsync(userId, ct))
+        .MapAsync(user =&gt; new UserDto(user))
+        .ToActionResultAsync(this);
+
+// Success: 200 OK with UserDto
+// Not found: 404 Not Found with Problem Details</code></pre>
+
+  <p>Async POST endpoint with multiple operations and CancellationToken:</p>
+<pre><code class="lang-csharp">[HttpPost]
+public Task&lt;ActionResult&lt;OrderDto&gt;&gt; CreateOrderAsync(
+    CreateOrderRequest request,
+    CancellationToken ct) =&gt;
+    CustomerId.TryCreate(request.CustomerId)
+        .BindAsync(customerId =&gt; _customerService.GetCustomerAsync(customerId, ct))
+        .BindAsync(customer =&gt; _orderService.CreateOrderAsync(customer, request.Items, ct))
+        .TapAsync(order =&gt; _eventBus.PublishAsync(new OrderCreatedEvent(order.Id), ct))
+        .MapAsync(order =&gt; new OrderDto(order))
+        .ToActionResultAsync(this);
+
+// Success: 200 OK with OrderDto
+// Validation error: 400 Bad Request
+// Customer not found: 404 Not Found</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+This is the primary async method for converting domain results to HTTP responses.
+It awaits the result task and delegates to <a class="xref" href="FunctionalDdd.ActionResultExtensions.html#FunctionalDdd_ActionResultExtensions_ToActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_">ToActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase)</a>.
+</p>
+<p>
+For performance-critical scenarios where the operation frequently completes synchronously,
+consider using the ValueTask overload instead.
+</p>
+<p>
+<strong>CancellationToken Best Practice:</strong> The controller method should accept a 
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a> parameter (ASP.NET Core automatically provides request cancellation)
+and pass it to all async service calls in the chain.
+</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync*"></a>
+
+  <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync``1(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
+  ToActionResultAsync&lt;TValue&gt;(Task&lt;Result&lt;TValue&gt;&gt;, ControllerBase, long, long, long)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L277"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a Task-wrapped <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult&lt;TValue&gt;</a> with support for partial content responses using explicit range values.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;ActionResult&lt;TValue&gt;&gt; ToActionResultAsync&lt;TValue&gt;(this Task&lt;Result&lt;TValue&gt;&gt; resultTask, ControllerBase controllerBase, long from, long to, long totalLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>The task containing the result object to convert.</p>
+</dd>
+    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
+    <dd><p>The controller context used to create the ActionResult.</p>
+</dd>
+    <dt><code>from</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The starting index of the range (inclusive, 0-based).</p>
+</dd>
+    <dt><code>to</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The ending index of the range (inclusive, 0-based).</p>
+</dd>
+    <dt><code>totalLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The total number of items available.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A task that represents the asynchronous operation, containing:</p>
+<ul><li>206 Partial Content with Content-Range header if the range is a subset of the total</li><li>200 OK if the range represents the complete set</li><li>Appropriate error status code if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type of the value contained in the result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64__examples">Examples</h4>
+  <pre><code class="lang-csharp">[HttpGet]
+public async Task&lt;ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt;&gt; GetUsersAsync(
+    [FromQuery] int page = 0,
+    [FromQuery] int pageSize = 25)
+{
+    var from = page * pageSize;
+    var to = from + pageSize - 1;
+
+    var totalCount = await _userService.GetTotalCountAsync();
+
+    return await _userService
+        .GetUsersAsync(from, pageSize)
+        .MapAsync(users =&gt; users.Select(u =&gt; new UserDto(u)))
+        .ToActionResultAsync(this, from, to, totalCount);
+}</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Async variant of <a class="xref" href="FunctionalDdd.ActionResultExtensions.html#FunctionalDdd_ActionResultExtensions_ToActionResult__1_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_">ToActionResult&lt;TValue&gt;(Result&lt;TValue&gt;, ControllerBase, long, long, long)</a>.
+Useful for async paginated queries where range values are computed separately.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync*"></a>
+
+  <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase)">
+  ToActionResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, ControllerBase)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L150"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a ValueTask-wrapped <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult&lt;TValue&gt;</a> with appropriate HTTP status code.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;ActionResult&lt;TValue&gt;&gt; ToActionResultAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, ControllerBase controllerBase)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>The ValueTask containing the result object to convert.</p>
+</dd>
+    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
+    <dd><p>The controller context used to create the ActionResult.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A ValueTask that represents the asynchronous operation, containing:</p>
+<ul><li>200 OK with value if result is successful (except for Unit)</li><li>204 No Content if result is successful and TValue is Unit</li><li>Appropriate error status code based on error type if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type of the value contained in the result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase__examples">Examples</h4>
+  <pre><code class="lang-csharp">[HttpGet("{id}")]
+public ValueTask&lt;ActionResult&lt;UserDto&gt;&gt; GetUserAsync(Guid id) =&gt;
+    UserId.TryCreate(id)
+        .BindAsync(_cacheService.GetUserAsync) // Returns ValueTask
+        .MapAsync(user =&gt; new UserDto(user))
+        .ToActionResultAsync(this);</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+This overload is optimized for scenarios where the async operation frequently completes synchronously
+(e.g., cached results, in-memory operations). ValueTask can reduce allocations in these cases.
+</p>
+<p>
+Use this when your service methods return ValueTask for performance optimization.
+</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync*"></a>
+
+  <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync``1(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Int64,System.Int64,System.Int64)">
+  ToActionResultAsync&lt;TValue&gt;(ValueTask&lt;Result&lt;TValue&gt;&gt;, ControllerBase, long, long, long)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L306"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a ValueTask-wrapped <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult&lt;TValue&gt;</a> with support for partial content responses using explicit range values (ValueTask variant).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;ActionResult&lt;TValue&gt;&gt; ToActionResultAsync&lt;TValue&gt;(this ValueTask&lt;Result&lt;TValue&gt;&gt; resultTask, ControllerBase controllerBase, long from, long to, long totalLength)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>The ValueTask containing the result object to convert.</p>
+</dd>
+    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
+    <dd><p>The controller context used to create the ActionResult.</p>
+</dd>
+    <dt><code>from</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The starting index of the range (inclusive, 0-based).</p>
+</dd>
+    <dt><code>to</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The ending index of the range (inclusive, 0-based).</p>
+</dd>
+    <dt><code>totalLength</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The total number of items available.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TValue&gt;&gt;</dt>
+    <dd><p>A ValueTask that represents the asynchronous operation, containing:</p>
+<ul><li>206 Partial Content with Content-Range header if the range is a subset</li><li>200 OK if the range represents the complete set</li><li>Appropriate error status code if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TValue</code></dt>
+    <dd><p>The type of the value contained in the result.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__1_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Int64_System_Int64_System_Int64__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>ValueTask variant optimized for cached or frequently synchronous pagination scenarios.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync*"></a>
+
+  <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__2_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync``2(System.Threading.Tasks.Task{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
+  ToActionResultAsync&lt;TIn, TOut&gt;(Task&lt;Result&lt;TIn&gt;&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L197"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a Task-wrapped <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult&lt;TValue&gt;</a> with support for partial content responses (Task variant).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Task&lt;ActionResult&lt;TOut&gt;&gt; ToActionResultAsync&lt;TIn, TOut&gt;(this Task&lt;Result&lt;TIn&gt;&gt; resultTask, ControllerBase controllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt; funcRange, Func&lt;TIn, TOut&gt; funcValue)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TIn&gt;&gt;</dt>
+    <dd><p>The task containing the result object to convert.</p>
+</dd>
+    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
+    <dd><p>The controller context used to create the ActionResult.</p>
+</dd>
+    <dt><code>funcRange</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TIn, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.headers.contentrangeheadervalue">ContentRangeHeaderValue</a>&gt;</dt>
+    <dd><p>Function that extracts <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.headers.contentrangeheadervalue">ContentRangeHeaderValue</a> from the input value.</p>
+</dd>
+    <dt><code>funcValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TIn, TOut&gt;</dt>
+    <dd><p>Function that transforms the input value to the output type.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task-1">Task</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TOut&gt;&gt;</dt>
+    <dd><p>A task that represents the asynchronous operation, containing:</p>
+<ul><li>206 Partial Content with Content-Range header if the range is a subset</li><li>200 OK if the range represents the complete set</li><li>Appropriate error status code if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TIn</code></dt>
+    <dd><p>The type of the value contained in the input result.</p>
+</dd>
+    <dt><code>TOut</code></dt>
+    <dd><p>The type of the value in the output ActionResult.</p>
+</dd>
+  </dl>
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__2_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1___examples">Examples</h4>
+  <p>Async paginated endpoint:</p>
+<pre><code class="lang-csharp">[HttpGet]
+public Task&lt;ActionResult&lt;IEnumerable&lt;UserDto&gt;&gt;&gt; GetUsersAsync(
+    [FromQuery] int page = 0,
+    [FromQuery] int pageSize = 25) =&gt;
+    _userService
+        .GetPagedUsersAsync(page, pageSize)
+        .ToActionResultAsync(
+            this,
+            funcRange: result =&gt; new ContentRangeHeaderValue(
+                result.From, result.To, result.TotalCount),
+            funcValue: result =&gt; result.Items.Select(u =&gt; new UserDto(u))
+        );
+
+// Returns 206 Partial Content with range headers for partial pages
+// Returns 200 OK when all items fit in response</code></pre>
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__2_System_Threading_Tasks_Task_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Async variant of <a class="xref" href="FunctionalDdd.ActionResultExtensions.html#FunctionalDdd_ActionResultExtensions_ToActionResult__2_FunctionalDdd_Result___0__Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__">ToActionResult&lt;TIn, TOut&gt;(Result&lt;TIn&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)</a>.
+Useful for async paginated queries.</p>
+</div>
+
+
+
+
+  <a id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync_" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync*"></a>
+
+  <h3 id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__2_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1__" data-uid="FunctionalDdd.ActionResultExtensionsAsync.ToActionResultAsync``2(System.Threading.Tasks.ValueTask{FunctionalDdd.Result{``0}},Microsoft.AspNetCore.Mvc.ControllerBase,System.Func{``0,System.Net.Http.Headers.ContentRangeHeaderValue},System.Func{``0,``1})">
+  ToActionResultAsync&lt;TIn, TOut&gt;(ValueTask&lt;Result&lt;TIn&gt;&gt;, ControllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt;, Func&lt;TIn, TOut&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L227"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Converts a ValueTask-wrapped <a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;TValue&gt;</a> to an <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult&lt;TValue&gt;</a> with support for partial content responses (ValueTask variant).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ValueTask&lt;ActionResult&lt;TOut&gt;&gt; ToActionResultAsync&lt;TIn, TOut&gt;(this ValueTask&lt;Result&lt;TIn&gt;&gt; resultTask, ControllerBase controllerBase, Func&lt;TIn, ContentRangeHeaderValue&gt; funcRange, Func&lt;TIn, TOut&gt; funcValue)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>resultTask</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="FunctionalDdd.Result-1.html">Result</a>&lt;TIn&gt;&gt;</dt>
+    <dd><p>The ValueTask containing the result object to convert.</p>
+</dd>
+    <dt><code>controllerBase</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase">ControllerBase</a></dt>
+    <dd><p>The controller context used to create the ActionResult.</p>
+</dd>
+    <dt><code>funcRange</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TIn, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.headers.contentrangeheadervalue">ContentRangeHeaderValue</a>&gt;</dt>
+    <dd><p>Function that extracts <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.net.http.headers.contentrangeheadervalue">ContentRangeHeaderValue</a> from the input value.</p>
+</dd>
+    <dt><code>funcValue</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;TIn, TOut&gt;</dt>
+    <dd><p>Function that transforms the input value to the output type.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1">ValueTask</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.actionresult-1">ActionResult</a>&lt;TOut&gt;&gt;</dt>
+    <dd><p>A ValueTask that represents the asynchronous operation, containing:</p>
+<ul><li>206 Partial Content with Content-Range header if the range is a subset</li><li>200 OK if the range represents the complete set</li><li>Appropriate error status code if result is failure</li></ul>
+</dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TIn</code></dt>
+    <dd><p>The type of the value contained in the input result.</p>
+</dd>
+    <dt><code>TOut</code></dt>
+    <dd><p>The type of the value in the output ActionResult.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+  <h4 class="section" id="FunctionalDdd_ActionResultExtensionsAsync_ToActionResultAsync__2_System_Threading_Tasks_ValueTask_FunctionalDdd_Result___0___Microsoft_AspNetCore_Mvc_ControllerBase_System_Func___0_System_Net_Http_Headers_ContentRangeHeaderValue__System_Func___0___1___remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>ValueTask variant optimized for scenarios with cached or frequently synchronous results.</p>
+</div>
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/Asp/src/ActionResultExtensionsAsync.cs/#L46" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

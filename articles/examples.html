@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Examples </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Examples ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/examples.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="examples">Examples</h1>
+
+<p>This page provides quick code snippets to get you started. For comprehensive real-world examples, see the <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples">Examples Directory</a>.</p>
+<h2 id="real-world-examples">Real-World Examples</h2>
+<p>The repository includes production-ready examples demonstrating complete systems:</p>
+<h3 id="-e-commerce-order-processing">🛒 <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample">E-Commerce Order Processing</a></h3>
+<p>Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, recovery patterns, and transaction-like behavior.</p>
+<p><strong>Key Concepts</strong>: Aggregate lifecycle, recovery, parallel validation, async workflows</p>
+<h3 id="-banking-transactions">🏦 <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample">Banking Transactions</a></h3>
+<p>Banking system with fraud detection, daily limits, overdraft protection, and interest calculations. Shows security patterns and state machines.</p>
+<p><strong>Key Concepts</strong>: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail</p>
+<h3 id="-web-api-integration">🌐 <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWeb/SampleWebApplication">Web API Integration</a></h3>
+<p>ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.</p>
+<p><strong>Key Concepts</strong>: ToActionResult, ToHttpResult, API integration, HTTP status codes, automatic value object validation</p>
+<p>See the <a href="https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/README.md">Examples README</a> for a complete guide including complexity ratings, learning paths, and common patterns.</p>
+<hr>
+<h2 id="quick-code-snippets">Quick Code Snippets</h2>
+<h3 id="compose-multiple-operations-in-a-single-chain">Compose Multiple Operations in a Single Chain</h3>
+<pre><code class="lang-csharp">await GetCustomerByIdAsync(id, cancellationToken)
+    .ToResultAsync(Error.NotFound($&quot;Customer {id} not found&quot;))
+    .EnsureAsync(customer =&gt; customer.CanBePromoted,
+        Error.Validation(&quot;The customer has the highest status possible&quot;))
+    .TapAsync(customer =&gt; customer.Promote())
+    .TapAsync(async (customer, ct) =&gt; 
+        await EmailGateway.SendPromotionNotificationAsync(customer.Email, ct), 
+        cancellationToken)
+    .MatchAsync(
+        onSuccess: _ =&gt; &quot;Okay&quot;,
+        onFailure: error =&gt; error.Detail
+    );
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>GetCustomerByIdAsync</code> returns a <code>Customer?</code> (nullable)</li>
+<li><code>ToResultAsync</code> converts <code>null</code> to a failure <code>Result</code> with <code>NotFoundError</code></li>
+<li><code>EnsureAsync</code> validates business rules (can the customer be promoted?)</li>
+<li><code>TapAsync</code> executes side effects (promote the customer)</li>
+<li><code>TapAsync</code> sends email notification (side effect - doesn't change the result)</li>
+<li><code>MatchAsync</code> terminates the chain and returns a string</li>
+</ul>
+<h3 id="multi-field-validation-with-combine">Multi-Field Validation with Combine</h3>
+<pre><code class="lang-csharp">EmailAddress.TryCreate(&quot;user@example.com&quot;)
+    .Combine(FirstName.TryCreate(&quot;John&quot;))
+    .Combine(LastName.TryCreate(&quot;Doe&quot;))
+    .Bind((email, firstName, lastName) =&gt;
+        User.Create(email, firstName, lastName));
+</code></pre>
+<p><strong>Key Points</strong>:</p>
+<ul>
+<li><code>Combine</code> validates multiple fields independently</li>
+<li>If <strong>any</strong> fail, all errors are collected (validation errors are merged)</li>
+<li>Tuple destructuring automatically unpacks the three values</li>
+<li>Avoiding primitive obsession prevents parameter confusion</li>
+</ul>
+<h3 id="validation-with-fluentvalidation">Validation with FluentValidation</h3>
+<p>This library integrates with <a href="https://docs.fluentvalidation.net">FluentValidation</a>. Domain validation logic can be reused at the API layer to return <code>BadRequest</code> with detailed validation errors.</p>
+<pre><code class="lang-csharp">public class User : Aggregate&lt;UserId&gt;
+{
+    public FirstName FirstName { get; }
+    public LastName LastName { get; }
+
+    public static Result&lt;User&gt; TryCreate(FirstName firstName, LastName lastName)
+    {
+        var user = new User(firstName, lastName);
+        return Validator.ValidateToResult(user);
+    }
+
+    private User(FirstName firstName, LastName lastName)
+        : base(UserId.NewUnique())
+    {
+        FirstName = firstName;
+        LastName = lastName;
+    }
+
+    // FluentValidation rules
+    private static readonly InlineValidator&lt;User&gt; Validator = new()
+    {
+        v =&gt; v.RuleFor(x =&gt; x.FirstName).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.LastName).NotNull(),
+    };
+}
+</code></pre>
+<p><strong>API Response</strong> when LastName is missing:</p>
+<pre><code class="lang-http">HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json; charset=utf-8
+
+{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.1&quot;,
+  &quot;title&quot;: &quot;One or more validation errors occurred.&quot;,
+  &quot;status&quot;: 400,
+  &quot;traceId&quot;: &quot;00-c86cd9b34ca9435b688ec3a6b905b8e4-5f4c286ce90f99cb-00&quot;,
+  &quot;errors&quot;: {
+    &quot;lastName&quot;: [
+      &quot;Last Name cannot be empty.&quot;
+    ]
+  }
+}
+</code></pre>
+<h3 id="running-parallel-async-operations">Running Parallel Async Operations</h3>
+<p>Execute multiple independent async operations concurrently for better performance:</p>
+<pre><code class="lang-csharp">var result = await Result.ParallelAsync(
+    () =&gt; GetStudentInfoAsync(studentId, cancellationToken),
+    () =&gt; GetStudentGradesAsync(studentId, cancellationToken),
+    () =&gt; GetLibraryBooksAsync(studentId, cancellationToken)
+)
+.WhenAllAsync()
+.BindAsync(
+    (info, grades, books, ct) =&gt; PrepareReportAsync(info, grades, books, ct),
+    cancellationToken
+);
+</code></pre>
+<p><strong>Key Points:</strong></p>
+<ul>
+<li><code>Result.ParallelAsync</code> accepts factory functions that return <code>Task&lt;Result&lt;T&gt;&gt;</code></li>
+<li>All three <code>Get*Async</code> operations run <strong>concurrently</strong> (not sequentially)</li>
+<li><code>.WhenAllAsync()</code> waits for all operations to complete</li>
+<li>Results are automatically destructured into <code>(info, grades, books)</code> tuple</li>
+<li><code>BindAsync</code> processes the combined results with <code>CancellationToken</code> support</li>
+</ul>
+<p><strong>Performance:</strong></p>
+<ul>
+<li><strong>Sequential:</strong> 3 × 50ms = 150ms</li>
+<li><strong>Parallel:</strong> max(50ms, 50ms, 50ms) = ~50ms</li>
+<li><strong>3x faster!</strong></li>
+</ul>
+<h3 id="error-matching-and-handling">Error Matching and Handling</h3>
+<p>Handle different error types with specific logic:</p>
+<pre><code class="lang-csharp">return await ProcessOrderAsync(order, cancellationToken)
+    .MatchErrorAsync(
+        onValidation: err =&gt; 
+            Results.BadRequest(new { 
+                errors = err.FieldErrors.ToDictionary(
+                    f =&gt; f.FieldName, 
+                    f =&gt; f.Details.ToArray()
+                )
+            }),
+        onNotFound: err =&gt; 
+            Results.NotFound(new { message = err.Detail }),
+        onConflict: err =&gt; 
+            Results.Conflict(new { message = err.Detail }),
+        onDomain: err =&gt;
+            Results.UnprocessableEntity(new { message = err.Detail }),
+        onError: err =&gt; 
+            Results.StatusCode(500),  // Fallback for all other errors
+        onSuccess: order =&gt; 
+            Results.Ok(new { orderId = order.Id }),
+        cancellationToken: cancellationToken
+    );
+</code></pre>
+<p><strong>Key Points</strong>:</p>
+<ul>
+<li><code>MatchErrorAsync</code> discriminates between error types</li>
+<li>Each error type can have its own handler</li>
+<li><code>onError</code> provides a fallback for unhandled error types</li>
+<li>Automatically maps to appropriate HTTP status codes</li>
+</ul>
+<h3 id="error-side-effects-with-taperror">Error Side Effects with TapError</h3>
+<p>Execute side effects when errors occur without changing the result:</p>
+<pre><code class="lang-csharp">var result = await ProcessPaymentAsync(order, cancellationToken)
+    .TapAsync(payment =&gt; 
+        _logger.LogInformation(&quot;Payment succeeded: {PaymentId}&quot;, payment.Id))
+    .TapOnFailureAsync(async (error, ct) =&gt; 
+        await _logger.LogErrorAsync(&quot;Payment failed: {Error}&quot;, error.Detail, ct),
+        cancellationToken)
+    .TapOnFailureAsync(async (error, ct) =&gt; 
+        await _notificationService.NotifyAdminAsync(error, ct),
+        cancellationToken);
+</code></pre>
+<p><strong>Key Points</strong>:</p>
+<ul>
+<li><code>TapAsync</code> executes only on <strong>success</strong></li>
+<li><code>TapErrorAsync</code> executes only on <strong>failure</strong></li>
+<li>Side effects don't change the <code>Result</code> value</li>
+<li>Perfect for logging, metrics, and notifications</li>
+</ul>
+<h3 id="error-recovery-with-recoveronfailure">Error Recovery with RecoverOnFailure</h3>
+<p>Provide fallback behavior when specific errors occur:</p>
+<pre><code class="lang-csharp">var result = await GetUserFromCacheAsync(userId, cancellationToken)
+    .RecoverOnFailureAsync(
+        predicate: error =&gt; error is NotFoundError,
+        func: async ct =&gt; await GetUserFromDatabaseAsync(userId, ct),
+        cancellationToken: cancellationToken
+    )
+    .TapAsync(user =&gt; 
+        _logger.LogInformation(&quot;User retrieved from {Source}&quot;, 
+            user.Source == &quot;cache&quot; ? &quot;cache&quot; : &quot;database&quot;));
+</code></pre>
+<p><strong>Key Points</strong>:</p>
+<ul>
+<li><code>RecoverOnFailureAsync</code> provides fallback on specific error types</li>
+<li>Predicate determines which errors trigger recovery</li>
+<li>Useful for retry logic, fallback services, default values</li>
+</ul>
+<h3 id="retry-transient-failures">Retry Transient Failures</h3>
+<p>Automatically retry operations that may fail temporarily:</p>
+<pre><code class="lang-csharp">var result = await RetryExtensions.RetryAsync(
+    operation: async ct =&gt; await CallExternalServiceAsync(ct),
+    maxRetries: 3,
+    initialDelay: TimeSpan.FromMilliseconds(100),
+    shouldRetry: error =&gt; error is ServiceUnavailableError,
+    cancellationToken: cancellationToken
+);
+</code></pre>
+<p><strong>Key Points</strong>:</p>
+<ul>
+<li>Retries up to <code>maxRetries</code> times (3 in this example = 4 total attempts)</li>
+<li>Exponential backoff with <code>initialDelay</code> (100ms, 200ms, 400ms)</li>
+<li><code>shouldRetry</code> predicate controls which errors to retry</li>
+<li>Supports <code>CancellationToken</code> for graceful cancellation</li>
+</ul>
+<h3 id="read-http-response-as-result">Read HTTP Response as Result</h3>
+<p>Convert HTTP responses to <code>Result</code> with proper error handling:</p>
+<h4 id="option-1-handle-notfound-specifically">Option 1: Handle NotFound Specifically</h4>
+<pre><code class="lang-csharp">var result = await _httpClient.GetAsync($&quot;api/person/{id}&quot;, cancellationToken)
+    .HandleNotFoundAsync(Error.NotFound($&quot;Person {id} not found&quot;))
+    .BindAsync(response =&gt; 
+        response.ReadResultMaybeFromJsonAsync&lt;Person&gt;(
+            PersonContext.Default.Person, 
+            cancellationToken))
+    .BindAsync(maybePerson =&gt; 
+        maybePerson.ToResult(Error.NotFound($&quot;Person {id} returned null&quot;)));
+</code></pre>
+<h4 id="option-2-custom-error-handling">Option 2: Custom Error Handling</h4>
+<pre><code class="lang-csharp">async Task&lt;Error&gt; HandleFailure(
+    HttpResponseMessage response, 
+    string personId, 
+    CancellationToken ct)
+{
+    var content = await response.Content.ReadAsStringAsync(ct);
+    _logger.LogError(
+        &quot;Person API failed: {StatusCode}, {Content}, PersonId: {PersonId}&quot;, 
+        response.StatusCode, content, personId);
+    
+    return response.StatusCode switch
+    {
+        HttpStatusCode.NotFound =&gt; Error.NotFound($&quot;Person {personId} not found&quot;),
+        HttpStatusCode.BadRequest =&gt; Error.BadRequest(&quot;Invalid person ID format&quot;),
+        HttpStatusCode.Unauthorized =&gt; Error.Unauthorized(&quot;Authentication required&quot;),
+        _ =&gt; Error.Unexpected($&quot;Unexpected error: {response.StatusCode}&quot;)
+    };
+}
+
+var result = await _httpClient.GetAsync($&quot;api/person/{id}&quot;, cancellationToken)
+    .HandleFailureAsync(HandleFailure, id, cancellationToken)
+    .ReadResultFromJsonAsync&lt;Person&gt;(
+        PersonContext.Default.Person, 
+        cancellationToken);
+</code></pre>
+<p><strong>Key Points</strong>:</p>
+<ul>
+<li><code>HandleNotFoundAsync</code> specifically handles 404 responses</li>
+<li><code>HandleFailureAsync</code> provides custom error handling for all failure status codes</li>
+<li><code>ReadResultMaybeFromJsonAsync</code> returns <code>Result&lt;Maybe&lt;Person&gt;&gt;</code> (handles null JSON)</li>
+<li><code>ReadResultFromJsonAsync</code> returns <code>Result&lt;Person&gt;</code> (fails if JSON is null)</li>
+</ul>
+<h3 id="converting-nullable-to-result">Converting Nullable to Result</h3>
+<p>Convert nullable values to <code>Result</code> for consistent error handling:</p>
+<pre><code class="lang-csharp">// Convert nullable reference type
+User? user = await _repository.GetByIdAsync(userId);
+var userResult = user.ToResult(Error.NotFound($&quot;User {userId} not found&quot;));
+
+// Convert nullable value type
+int? age = GetAge();
+var ageResult = age.ToResult(Error.Validation(&quot;Age is required&quot;));
+
+// Async variant
+var result = await _repository.GetByIdAsync(userId)
+    .ToResultAsync(Error.NotFound($&quot;User {userId} not found&quot;));
+</code></pre>
+<h3 id="exception-handling-with-trytryasync">Exception Handling with Try/TryAsync</h3>
+<p>Safely wrap exception-throwing code:</p>
+<pre><code class="lang-csharp">// Synchronous
+Result&lt;string&gt; LoadFile(string path)
+{
+    return Result.Try(() =&gt; File.ReadAllText(path));
+    // Or with custom error mapping:
+    // return Result.Try(
+    //     () =&gt; File.ReadAllText(path),
+    //     ex =&gt; ex switch
+    //     {
+    //         FileNotFoundException =&gt; Error.NotFound($&quot;File not found: {path}&quot;),
+    //         UnauthorizedAccessException =&gt; Error.Forbidden(&quot;Access denied&quot;),
+    //         _ =&gt; Error.Unexpected(ex.Message)
+    //     }
+    // );
+}
+
+// Asynchronous
+async Task&lt;Result&lt;User&gt;&gt; FetchUserAsync(string url, CancellationToken ct)
+{
+    return await Result.TryAsync(
+        async ct =&gt; await _httpClient.GetFromJsonAsync&lt;User&gt;(url, ct),
+        cancellationToken: ct
+    );
+}
+</code></pre>
+<h3 id="linq-query-syntax">LINQ Query Syntax</h3>
+<p>Use C# query syntax for multi-step operations:</p>
+<pre><code class="lang-csharp">var result = 
+    from user in GetUser(userId)
+    from order in GetLastOrder(user)
+    from payment in ProcessPayment(order)
+    select new OrderConfirmation(user, order, payment);
+
+// Async variant
+var asyncResult = await (
+    from userId in UserId.TryCreate(userIdInput)
+    from user in GetUserAsync(userId)
+    from permissions in GetPermissionsAsync(user.Id)
+    select new UserWithPermissions(user, permissions)
+).ConfigureAwait(false);
+</code></pre>
+<p><strong>Note</strong>: <code>where</code> clauses use a generic &quot;filtered out&quot; error. For domain-specific errors, use <code>Ensure</code> instead.</p>
+<h2 id="common-patterns">Common Patterns</h2>
+<h3 id="1-validation-pipeline">1. Validation Pipeline</h3>
+<pre><code class="lang-csharp">public Result&lt;Order&gt; ProcessOrder(OrderRequest request)
+{
+    return ValidateRequest(request)
+        .Bind(req =&gt; CheckInventory(req.ProductId, req.Quantity))
+        .Bind(product =&gt; ValidatePayment(request.PaymentInfo))
+        .Bind(payment =&gt; CreateOrder(request, payment))
+        .Tap(order =&gt; SendConfirmationEmail(order))
+        .TapOnFailure(error =&gt; LogOrderFailure(error));
+}
+</code></pre>
+<h3 id="2-async-workflow-with-cancellation">2. Async Workflow with Cancellation</h3>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;string&gt;&gt; PromoteCustomerAsync(
+    string customerId, 
+    CancellationToken ct)
+{
+    return await GetCustomerByIdAsync(customerId, ct)
+        .ToResultAsync(Error.NotFound($&quot;Customer {customerId} not found&quot;))
+        .EnsureAsync(customer =&gt; customer.CanBePromoted,
+            Error.Validation(&quot;Customer has highest status&quot;))
+        .TapAsync(async (customer, ct) =&gt; await customer.PromoteAsync(ct), ct)
+        .BindAsync(
+            async (customer, ct) =&gt; 
+                await SendPromotionEmailAsync(customer.Email, ct), 
+            ct);
+}
+</code></pre>
+<h3 id="3-parallel-fraud-detection">3. Parallel Fraud Detection</h3>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Transaction&gt;&gt; ValidateTransactionAsync(
+    Transaction transaction,
+    CancellationToken ct)
+{
+    return await Result.ParallelAsync(
+        () =&gt; CheckBlacklistAsync(transaction.AccountId, ct),
+        () =&gt; CheckVelocityLimitsAsync(transaction, ct),
+        () =&gt; CheckAmountThresholdAsync(transaction, ct),
+        () =&gt; CheckGeolocationAsync(transaction, ct)
+    )
+    .WhenAllAsync()
+    .BindAsync(
+        (check1, check2, check3, check4, ct) =&gt; 
+            ApproveTransactionAsync(transaction, ct),
+        ct
+    );
+}
+</code></pre>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/examples.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

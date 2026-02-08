@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FluentValidation Integration </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FluentValidation Integration ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration-fluentvalidation.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fluentvalidation-integration">FluentValidation Integration</h1>
+
+<p><strong>Level:</strong> Intermediate 📚 | <strong>Time:</strong> 30-40 min | <strong>Prerequisites:</strong> <a href="basics.html">Basics</a></p>
+<p>Integrate FluentValidation with Railway-Oriented Programming using the <strong>FunctionalDdd.FluentValidation</strong> adapter. This package provides seamless conversion from FluentValidation results to <code>Result&lt;T&gt;</code>, enabling you to use FluentValidation's powerful validation framework within your ROP workflows.</p>
+<blockquote>
+<p><strong>Note:</strong> FunctionalDdd.FluentValidation is an <strong>adapter library</strong> that bridges FluentValidation and Railway-Oriented Programming. It does not replace or extend FluentValidation—it simply converts FluentValidation's validation results to <code>Result&lt;T&gt;</code>. For comprehensive FluentValidation documentation, see the <a href="https://docs.fluentvalidation.net/">official FluentValidation docs</a>.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#what-the-adapter-provides">What the Adapter Provides</a></li>
+<li><a href="#basic-usage">Basic Usage</a></li>
+<li><a href="#inline-validators">Inline Validators</a></li>
+<li><a href="#separate-validator-classes">Separate Validator Classes</a></li>
+<li><a href="#async-validation">Async Validation</a></li>
+<li><a href="#dependency-injection">Dependency Injection</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre><code class="lang-bash">dotnet add package FluentValidation
+dotnet add package FunctionalDdd.FluentValidation
+</code></pre>
+<h2 id="what-the-adapter-provides">What the Adapter Provides</h2>
+<p>The <strong>FunctionalDdd.FluentValidation</strong> adapter provides extension methods to convert FluentValidation results to <code>Result&lt;T&gt;</code>:</p>
+<h3 id="core-extension-methods">Core Extension Methods</h3>
+<pre><code class="lang-csharp">// Synchronous validation
+Result&lt;T&gt; ValidateToResult&lt;T&gt;(this IValidator&lt;T&gt; validator, T instance);
+
+// Asynchronous validation
+Task&lt;Result&lt;T&gt;&gt; ValidateToResultAsync&lt;T&gt;(
+    this IValidator&lt;T&gt; validator, 
+    T instance, 
+    CancellationToken ct);
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ul>
+<li>✅ <strong>Success</strong>: Returns <code>Result.Success(instance)</code> with the validated object</li>
+<li>❌ <strong>Failure</strong>: Converts FluentValidation errors to <code>ValidationError</code> with field-level details</li>
+<li>🔄 <strong>Automatic Mapping</strong>: FluentValidation's <code>ValidationFailure</code> → <code>ValidationError.FieldError</code></li>
+</ul>
+<h3 id="conversion-details">Conversion Details</h3>
+<pre><code class="lang-csharp">// FluentValidation result
+var validationResult = validator.Validate(command);
+
+// Manual conversion (what the adapter does internally)
+if (validationResult.IsValid)
+{
+    return Result.Success(command);
+}
+else
+{
+    var fieldErrors = validationResult.Errors
+        .GroupBy(e =&gt; e.PropertyName)
+        .Select(g =&gt; new ValidationError.FieldError(
+            FieldName: g.Key,
+            Details: g.Select(e =&gt; e.ErrorMessage).ToArray()))
+        .ToArray();
+    
+    return Result.Failure&lt;Command&gt;(new ValidationError(fieldErrors));
+}
+
+// Adapter does this automatically
+return validator.ValidateToResult(command);
+</code></pre>
+<h2 id="basic-usage">Basic Usage</h2>
+<h3 id="example-command-validation">Example: Command Validation</h3>
+<pre><code class="lang-csharp">using FluentValidation;
+using FunctionalDdd;
+
+// 1. Define your FluentValidation validator (standard FluentValidation)
+public class CreateUserCommandValidator : AbstractValidator&lt;CreateUserCommand&gt;
+{
+    public CreateUserCommandValidator()
+    {
+        RuleFor(x =&gt; x.Email).NotEmpty().EmailAddress();
+        RuleFor(x =&gt; x.FirstName).NotEmpty().MaximumLength(50);
+        RuleFor(x =&gt; x.LastName).NotEmpty().MaximumLength(50);
+        RuleFor(x =&gt; x.Age).GreaterThanOrEqualTo(18);
+    }
+}
+
+// 2. Use the adapter to convert validation results to Result&lt;T&gt;
+public class UserService
+{
+    private readonly IValidator&lt;CreateUserCommand&gt; _validator;
+
+    public UserService(IValidator&lt;CreateUserCommand&gt; validator)
+    {
+        _validator = validator;
+    }
+
+    public Result&lt;User&gt; CreateUser(CreateUserCommand command)
+    {
+        // ValidateToResult converts FluentValidation results to Result&lt;T&gt;
+        return _validator.ValidateToResult(command)
+            .Bind(validCommand =&gt; User.Create(validCommand))
+            .Tap(user =&gt; _repository.Add(user));
+    }
+}
+</code></pre>
+<p><strong>HTTP Response (validation failure):</strong></p>
+<pre><code class="lang-json">{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7231#section-6.5.1&quot;,
+  &quot;title&quot;: &quot;One or more validation errors occurred.&quot;,
+  &quot;status&quot;: 400,
+  &quot;errors&quot;: {
+    &quot;Email&quot;: [&quot;'Email' must not be empty.&quot;],
+    &quot;Age&quot;: [&quot;'Age' must be greater than or equal to '18'.&quot;]
+  }
+}
+</code></pre>
+<h2 id="inline-validators">Inline Validators</h2>
+<p>Use FluentValidation's <code>InlineValidator</code> for simple validation within aggregates:</p>
+<pre><code class="lang-csharp">using FluentValidation;
+using FunctionalDdd;
+
+public class User : Aggregate&lt;UserId&gt;
+{
+    public FirstName FirstName { get; }
+    public LastName LastName { get; }
+    public EmailAddress Email { get; }
+    public int Age { get; }
+
+    public static Result&lt;User&gt; TryCreate(
+        FirstName firstName, 
+        LastName lastName, 
+        EmailAddress email,
+        int age)
+    {
+        var user = new User(firstName, lastName, email, age);
+        
+        // ValidateToResult converts FluentValidation results to Result&lt;User&gt;
+        return Validator.ValidateToResult(user);
+    }
+
+    private User(
+        FirstName firstName, 
+        LastName lastName, 
+        EmailAddress email, 
+        int age)
+        : base(UserId.NewUnique())
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        Age = age;
+    }
+
+    // Standard FluentValidation InlineValidator
+    private static readonly InlineValidator&lt;User&gt; Validator = new()
+    {
+        v =&gt; v.RuleFor(x =&gt; x.FirstName).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.LastName).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.Email).NotNull(),
+        v =&gt; v.RuleFor(x =&gt; x.Age)
+            .GreaterThanOrEqualTo(18)
+            .WithMessage(&quot;Must be 18 or older&quot;)
+    };
+}
+</code></pre>
+<p><strong>What you get:</strong></p>
+<ul>
+<li>✅ Domain validation stays with the aggregate</li>
+<li>✅ Automatic conversion to <code>Result&lt;T&gt;</code> via the adapter</li>
+<li>✅ FluentValidation's rich rule set (see <a href="https://docs.fluentvalidation.net/">FluentValidation docs</a>)</li>
+<li>✅ Error messages formatted as <code>ValidationError</code></li>
+</ul>
+<h2 id="separate-validator-classes">Separate Validator Classes</h2>
+<p>For complex validation, use standard FluentValidation <code>AbstractValidator</code> classes:</p>
+<pre><code class="lang-csharp">// Standard FluentValidation validator
+public class CreateOrderValidator : AbstractValidator&lt;CreateOrderCommand&gt;
+{
+    public CreateOrderValidator()
+    {
+        RuleFor(x =&gt; x.CustomerId).NotEmpty();
+        RuleFor(x =&gt; x.Items).NotEmpty();
+        RuleForEach(x =&gt; x.Items).SetValidator(new OrderItemValidator());
+        RuleFor(x =&gt; x.ShippingAddress).SetValidator(new AddressValidator());
+        RuleFor(x =&gt; x.TotalAmount).GreaterThan(0);
+    }
+}
+
+// Use the adapter in your service
+public class OrderService : IOrderService
+{
+    private readonly IValidator&lt;CreateOrderCommand&gt; _validator;
+    private readonly IOrderRepository _repository;
+
+    public OrderService(
+        IValidator&lt;CreateOrderCommand&gt; validator,
+        IOrderRepository repository)
+    {
+        _validator = validator;
+        _repository = repository;
+    }
+
+    public Result&lt;Order&gt; CreateOrder(CreateOrderCommand command)
+    {
+        // Adapter converts FluentValidation result to Result&lt;T&gt;
+        return _validator.ValidateToResult(command)
+            .Bind(validCommand =&gt; Order.Create(validCommand))
+            .Tap(order =&gt; _repository.Add(order));
+    }
+}
+</code></pre>
+<blockquote>
+<p><strong>Tip:</strong> For FluentValidation syntax and built-in validators (like <code>NotEmpty()</code>, <code>EmailAddress()</code>, <code>GreaterThan()</code>, etc.), see the <a href="https://docs.fluentvalidation.net/en/latest/built-in-validators.html">official FluentValidation documentation</a>.</p>
+</blockquote>
+<h2 id="async-validation">Async Validation</h2>
+<p>The adapter supports async validation with <code>ValidateToResultAsync</code>:</p>
+<pre><code class="lang-csharp">// Standard FluentValidation async validator
+public class RegisterUserValidator : AbstractValidator&lt;RegisterUserCommand&gt;
+{
+    private readonly IUserRepository _repository;
+
+    public RegisterUserValidator(IUserRepository repository)
+    {
+        _repository = repository;
+
+        RuleFor(x =&gt; x.Email)
+            .NotEmpty()
+            .EmailAddress()
+            .MustAsync(BeUniqueEmailAsync)
+            .WithMessage(&quot;Email is already registered&quot;);
+        
+        RuleFor(x =&gt; x.Username)
+            .NotEmpty()
+            .Length(3, 50)
+            .MustAsync(BeUniqueUsernameAsync)
+            .WithMessage(&quot;Username is already taken&quot;);
+    }
+
+    private async Task&lt;bool&gt; BeUniqueEmailAsync(string email, CancellationToken ct)
+    {
+        var exists = await _repository.ExistsByEmailAsync(email, ct);
+        return !exists;
+    }
+
+    private async Task&lt;bool&gt; BeUniqueUsernameAsync(string username, CancellationToken ct)
+    {
+        var exists = await _repository.ExistsByUsernameAsync(username, ct);
+        return !exists;
+    }
+}
+</code></pre>
+<h3 id="async-usage-with-the-adapter">Async Usage with the Adapter</h3>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;User&gt;&gt; RegisterUserAsync(
+    RegisterUserCommand command,
+    CancellationToken ct)
+{
+    // ValidateToResultAsync converts async FluentValidation results to Result&lt;T&gt;
+    return await _validator.ValidateToResultAsync(command, ct)
+        .BindAsync((validCommand, cancellationToken) =&gt; 
+            User.CreateAsync(validCommand, cancellationToken), ct)
+        .TapAsync(async (user, cancellationToken) =&gt; 
+            await _repository.SaveAsync(user, cancellationToken), ct);
+}
+</code></pre>
+<p><strong>Key Points:</strong></p>
+<ul>
+<li>✅ <code>ValidateToResultAsync</code> is the async adapter method</li>
+<li>✅ Converts async FluentValidation results to <code>Result&lt;T&gt;</code></li>
+<li>✅ Supports <code>CancellationToken</code> propagation</li>
+<li>✅ Works with FluentValidation's <code>MustAsync</code>, <code>CustomAsync</code>, etc.</li>
+</ul>
+<h2 id="dependency-injection">Dependency Injection</h2>
+<p>Register FluentValidation validators with ASP.NET Core DI as normal:</p>
+<pre><code class="lang-csharp">using FluentValidation;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Register all FluentValidation validators from assembly
+builder.Services.AddValidatorsFromAssemblyContaining&lt;Program&gt;();
+
+// Or register specific validators
+builder.Services.AddScoped&lt;IValidator&lt;CreateOrderCommand&gt;, CreateOrderValidator&gt;();
+builder.Services.AddScoped&lt;IValidator&lt;RegisterUserCommand&gt;, RegisterUserValidator&gt;();
+
+// Register your services that use the adapter
+builder.Services.AddScoped&lt;IUserService, UserService&gt;();
+builder.Services.AddScoped&lt;IOrderService, OrderService&gt;();
+
+var app = builder.Build();
+</code></pre>
+<h3 id="inject-validators-into-services">Inject Validators into Services</h3>
+<pre><code class="lang-csharp">public class UserService : IUserService
+{
+    private readonly IValidator&lt;RegisterUserCommand&gt; _registerValidator;
+    private readonly IValidator&lt;UpdateUserCommand&gt; _updateValidator;
+    private readonly IUserRepository _repository;
+
+    public UserService(
+        IValidator&lt;RegisterUserCommand&gt; registerValidator,
+        IValidator&lt;UpdateUserCommand&gt; updateValidator,
+        IUserRepository repository)
+    {
+        _registerValidator = registerValidator;
+        _updateValidator = updateValidator;
+        _repository = repository;
+    }
+
+    public async Task&lt;Result&lt;User&gt;&gt; RegisterAsync(
+        RegisterUserCommand command,
+        CancellationToken ct)
+        // Adapter converts FluentValidation result to Result&lt;T&gt;
+        =&gt; await _registerValidator.ValidateToResultAsync(command, ct)
+            .BindAsync((cmd, cancellationToken) =&gt; 
+                User.CreateAsync(cmd, cancellationToken), ct)
+            .TapAsync(async (user, cancellationToken) =&gt; 
+                await _repository.SaveAsync(user, cancellationToken), ct);
+
+    public async Task&lt;Result&lt;User&gt;&gt; UpdateAsync(
+        UpdateUserCommand command,
+        CancellationToken ct)
+        // Adapter converts FluentValidation result to Result&lt;T&gt;
+        =&gt; await _updateValidator.ValidateToResultAsync(command, ct)
+            .BindAsync(async (cmd, cancellationToken) =&gt; 
+                await _repository.GetByIdAsync(cmd.UserId, cancellationToken), ct)
+            .Bind(user =&gt; user.Update(command))
+            .TapAsync(async (user, cancellationToken) =&gt; 
+                await _repository.SaveAsync(user, cancellationToken), ct);
+}
+</code></pre>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-validate-early-in-the-pipeline">1. Validate Early in the Pipeline</h3>
+<p>Use the adapter at the application service layer to validate before business logic:</p>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Order&gt;&gt; CreateOrderAsync(
+    CreateOrderCommand command,
+    CancellationToken ct)
+{
+    // Validate first with adapter, fail fast
+    return await _validator.ValidateToResultAsync(command, ct)
+        .BindAsync((validCmd, cancellationToken) =&gt; 
+            ProcessOrderAsync(validCmd, cancellationToken), ct);
+}
+</code></pre>
+<h3 id="2-separate-domain-and-application-validation">2. Separate Domain and Application Validation</h3>
+<ul>
+<li><strong>Domain Validators (InlineValidator)</strong>: Use for invariants that must always be true</li>
+<li><strong>Application Validators (AbstractValidator)</strong>: Use for context-specific rules (uniqueness, external dependencies)</li>
+</ul>
+<pre><code class="lang-csharp">// Domain validator - invariants (using adapter)
+private static readonly InlineValidator&lt;EmailAddress&gt; DomainValidator = new()
+{
+    v =&gt; v.RuleFor(x =&gt; x.Value).NotEmpty().EmailAddress()
+};
+
+public static Result&lt;EmailAddress&gt; TryCreate(string value)
+    =&gt; DomainValidator.ValidateToResult(new EmailAddress(value));
+
+// Application validator - context rules (using adapter)
+public class RegisterUserValidator : AbstractValidator&lt;RegisterUserCommand&gt;
+{
+    public RegisterUserValidator(IUserRepository repository)
+    {
+        RuleFor(x =&gt; x.Email)
+            .MustAsync(async (email, ct) =&gt; 
+                !await repository.ExistsByEmailAsync(email, ct))
+            .WithMessage(&quot;Email already registered&quot;);
+    }
+}
+</code></pre>
+<h3 id="3-always-pass-cancellationtoken">3. Always Pass CancellationToken</h3>
+<p>Support graceful cancellation in async validation:</p>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;User&gt;&gt; ProcessAsync(
+    CreateUserCommand command,
+    CancellationToken ct)  // ✅ Accept token
+    =&gt; await _validator.ValidateToResultAsync(command, ct)  // ✅ Pass to adapter
+        .BindAsync((cmd, cancellationToken) =&gt; 
+            User.CreateAsync(cmd, cancellationToken), ct);  // ✅ Pass through
+</code></pre>
+<h3 id="4-leverage-fluentvalidation-features">4. Leverage FluentValidation Features</h3>
+<p>The adapter works with all FluentValidation features:</p>
+<pre><code class="lang-csharp">public class CreatePaymentValidator : AbstractValidator&lt;CreatePaymentCommand&gt;
+{
+    public CreatePaymentValidator()
+    {
+        // Conditional validation
+        When(x =&gt; x.PaymentMethod == PaymentMethod.CreditCard, () =&gt;
+        {
+            RuleFor(x =&gt; x.CreditCardNumber).CreditCard();
+            RuleFor(x =&gt; x.ExpiryDate).GreaterThan(DateTime.UtcNow);
+        });
+
+        // Cascade mode
+        RuleFor(x =&gt; x.Email)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .EmailAddress();
+
+        // Custom validators
+        RuleFor(x =&gt; x.Password).SetValidator(new StrongPasswordValidator());
+    }
+}
+
+// Adapter works seamlessly with all FluentValidation features
+var result = _validator.ValidateToResult(command);
+</code></pre>
+<blockquote>
+<p><strong>Learn More:</strong> For comprehensive FluentValidation documentation on validators, rules, and patterns, see:</p>
+<ul>
+<li><a href="https://docs.fluentvalidation.net/en/latest/built-in-validators.html">Built-in Validators</a></li>
+<li><a href="https://docs.fluentvalidation.net/en/latest/custom-validators.html">Custom Validators</a></li>
+<li><a href="https://docs.fluentvalidation.net/en/latest/async.html">Async Validation</a></li>
+<li><a href="https://docs.fluentvalidation.net/en/latest/conditions.html">Conditional Validation</a></li>
+</ul>
+</blockquote>
+<h2 id="error-format">Error Format</h2>
+<p>The adapter automatically converts FluentValidation errors to <code>ValidationError</code>:</p>
+<pre><code class="lang-csharp">// FluentValidation failure
+var validationResult = validator.Validate(command);
+// Errors: [
+//   { PropertyName: &quot;Email&quot;, ErrorMessage: &quot;'Email' must not be empty.&quot; },
+//   { PropertyName: &quot;Age&quot;, ErrorMessage: &quot;'Age' must be greater than or equal to '18'.&quot; }
+// ]
+</code></pre>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/integration-fluentvalidation.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

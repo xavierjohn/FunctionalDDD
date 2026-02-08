@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD010: Use specific error type instead of base Error class </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD010: Use specific error type instead of base Error class ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD010.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd010-use-specific-error-type-instead-of-base-error-class">FDDD010: Use specific error type instead of base Error class</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Instantiating the base <code>Error</code> class directly instead of using specific error factory methods like <code>Error.Validation()</code>, <code>Error.NotFound()</code>, etc.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p>FunctionalDDD provides specific error types (ValidationError, NotFoundError, UnauthorizedError, etc.) that enable type-safe error handling with <code>MatchError</code>.</p>
+<p>Using the base <code>Error</code> class directly:</p>
+<ul>
+<li>Prevents type-safe pattern matching</li>
+<li>Loses semantic information about the error category</li>
+<li>Makes it harder to handle errors appropriately</li>
+</ul>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<p>Use specific error factory methods:</p>
+<pre><code class="lang-csharp">// ❌ Bad - Base Error class
+return Result.Failure&lt;Customer&gt;(new Error(&quot;ERR001&quot;, &quot;Customer not found&quot;));
+
+// ✅ Good - Specific error type
+return Result.Failure&lt;Customer&gt;(Error.NotFound(&quot;Customer not found&quot;));
+</code></pre>
+<h2 id="available-error-types">Available Error Types</h2>
+<h3 id="validation-errors">Validation Errors</h3>
+<pre><code class="lang-csharp">Error.Validation(&quot;Invalid email format&quot;)
+Error.Validation(&quot;Age must be positive&quot;, fieldName: &quot;age&quot;)
+</code></pre>
+<h3 id="not-found-errors">Not Found Errors</h3>
+<pre><code class="lang-csharp">Error.NotFound(&quot;Customer not found&quot;)
+Error.NotFound($&quot;Order {id} does not exist&quot;)
+</code></pre>
+<h3 id="unauthorized-errors">Unauthorized Errors</h3>
+<pre><code class="lang-csharp">Error.Unauthorized(&quot;Invalid credentials&quot;)
+Error.Unauthorized(&quot;Access denied to resource&quot;)
+</code></pre>
+<h3 id="conflict-errors">Conflict Errors</h3>
+<pre><code class="lang-csharp">Error.Conflict(&quot;Email already exists&quot;)
+Error.Conflict(&quot;Duplicate order number&quot;)
+</code></pre>
+<h3 id="unexpected-errors">Unexpected Errors</h3>
+<pre><code class="lang-csharp">Error.Unexpected(&quot;Database connection failed&quot;)
+Error.Unexpected(&quot;External service unavailable&quot;)
+</code></pre>
+<h2 id="benefits-of-specific-error-types">Benefits of Specific Error Types</h2>
+<h3 id="type-safe-error-handling">Type-Safe Error Handling</h3>
+<pre><code class="lang-csharp">return result.MatchError(
+    onValidationError: ve =&gt; BadRequest(ve.Detail),
+    onNotFoundError: nfe =&gt; NotFound(nfe.Detail),
+    onUnauthorizedError: ue =&gt; Unauthorized(ue.Detail),
+    onConflictError: ce =&gt; Conflict(ce.Detail),
+    onOtherError: e =&gt; StatusCode(500, e.Detail));
+</code></pre>
+<h3 id="clear-semantics">Clear Semantics</h3>
+<pre><code class="lang-csharp">// ❌ Unclear - What kind of error is this?
+Error.Create(&quot;ERR001&quot;, &quot;Operation failed&quot;)
+
+// ✅ Clear - Immediately obvious this is a validation error
+Error.Validation(&quot;Email is required&quot;, &quot;email&quot;)
+</code></pre>
+<h2 id="example">Example</h2>
+<pre><code class="lang-csharp">public class Customer : ValueObject
+{
+    private Customer(EmailAddress email, string name)
+    {
+        Email = email;
+        Name = name;
+    }
+
+    public EmailAddress Email { get; }
+    public string Name { get; }
+
+    public static Result&lt;Customer&gt; Create(string emailStr, string name)
+    {
+        // ❌ Bad - Generic error
+        if (string.IsNullOrWhiteSpace(name))
+            return new Error(&quot;INVALID&quot;, &quot;Name is required&quot;);
+
+        // ✅ Good - Specific validation error
+        if (string.IsNullOrWhiteSpace(name))
+            return Error.Validation(&quot;Name is required&quot;, fieldName: &quot;name&quot;);
+
+        return EmailAddress.TryCreate(emailStr)
+            .Map(email =&gt; new Customer(email, name));
+    }
+}
+</code></pre>
+<h2 id="when-to-suppress-warnings">When to Suppress Warnings</h2>
+<p>This is a suggestion-level diagnostic. Suppress it if:</p>
+<ul>
+<li>You're creating a custom error type that doesn't fit the standard categories</li>
+<li>You're wrapping errors from external libraries</li>
+</ul>
+<p>However, consider creating a custom error type that inherits from Error instead.</p>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD005.html">FDDD005</a> - Consider using MatchError for error type discrimination</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD010.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

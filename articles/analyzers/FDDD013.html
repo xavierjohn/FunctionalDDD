@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD013: Consider using GetValueOrDefault or Match </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD013: Consider using GetValueOrDefault or Match ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD013.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd013-consider-using-getvalueordefault-or-match">FDDD013: Consider using GetValueOrDefault or Match</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Using the ternary operator pattern <code>result.IsSuccess ? result.Value : defaultValue</code> when <code>GetValueOrDefault()</code> or <code>Match()</code> provides a more functional and safer alternative.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p>The pattern <code>result.IsSuccess ? result.Value : defaultValue</code> is verbose and can be replaced with more idiomatic functional methods:</p>
+<ul>
+<li><code>GetValueOrDefault()</code> for simple fallback values</li>
+<li><code>Match()</code> for transformations or side effects</li>
+</ul>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<h3 id="option-1-use-getvalueordefault">Option 1: Use GetValueOrDefault</h3>
+<pre><code class="lang-csharp">// ❌ Verbose - Ternary operator
+var customer = result.IsSuccess ? result.Value : defaultCustomer;
+
+// ✅ Concise - GetValueOrDefault
+var customer = result.GetValueOrDefault(defaultCustomer);
+</code></pre>
+<h3 id="option-2-use-match">Option 2: Use Match</h3>
+<pre><code class="lang-csharp">// ❌ Verbose - Ternary with transformation
+var dto = result.IsSuccess ? result.Value.ToDto() : DefaultDto();
+
+// ✅ Better - Match with transformation
+var dto = result.Match(
+    onSuccess: customer =&gt; customer.ToDto(),
+    onFailure: _ =&gt; DefaultDto());
+</code></pre>
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-simple-fallback">Example 1: Simple Fallback</h3>
+<pre><code class="lang-csharp">// ❌ Ternary
+var email = emailResult.IsSuccess 
+    ? emailResult.Value 
+    : EmailAddress.Create(&quot;noreply@example.com&quot;);
+
+// ✅ GetValueOrDefault
+var email = emailResult.GetValueOrDefault(
+    EmailAddress.Create(&quot;noreply@example.com&quot;));
+</code></pre>
+<h3 id="example-2-fallback-to-default-struct-value">Example 2: Fallback to Default Struct Value</h3>
+<pre><code class="lang-csharp">// ❌ Ternary
+var id = idResult.IsSuccess ? idResult.Value : Guid.Empty;
+
+// ✅ GetValueOrDefault with default
+var id = idResult.GetValueOrDefault();  // Uses default(Guid) = Guid.Empty
+</code></pre>
+<h3 id="example-3-with-transformation">Example 3: With Transformation</h3>
+<pre><code class="lang-csharp">// ❌ Ternary with transformation
+var displayName = nameResult.IsSuccess 
+    ? nameResult.Value.ToString() 
+    : &quot;Unknown&quot;;
+
+// ✅ Match
+var displayName = nameResult.Match(
+    onSuccess: name =&gt; name.ToString(),
+    onFailure: _ =&gt; &quot;Unknown&quot;);
+</code></pre>
+<h3 id="example-4-error-dependent-fallback">Example 4: Error-Dependent Fallback</h3>
+<pre><code class="lang-csharp">// ❌ Can't easily access error details
+var message = result.IsSuccess 
+    ? &quot;Success&quot; 
+    : &quot;Failed&quot;;  // Lost error information
+
+// ✅ Match with error details
+var message = result.Match(
+    onSuccess: _ =&gt; &quot;Success&quot;,
+    onFailure: error =&gt; $&quot;Failed: {error.Detail}&quot;);
+</code></pre>
+<h2 id="getvalueordefault-overloads">GetValueOrDefault Overloads</h2>
+<pre><code class="lang-csharp">// Uses default(T) as fallback
+result.GetValueOrDefault()
+
+// Uses provided value as fallback
+result.GetValueOrDefault(customDefault)
+
+// Uses factory function as fallback (lazily evaluated)
+result.GetValueOrDefault(() =&gt; CreateDefault())
+</code></pre>
+<h2 id="match-variants">Match Variants</h2>
+<pre><code class="lang-csharp">// Match for transformations
+var output = result.Match(
+    onSuccess: value =&gt; TransformValue(value),
+    onFailure: error =&gt; HandleError(error));
+
+// Match for side effects (void return)
+result.Match(
+    onSuccess: value =&gt; Console.WriteLine(value),
+    onFailure: error =&gt; Logger.LogError(error.Detail));
+
+// MatchAsync for async transformations
+var output = await result.MatchAsync(
+    onSuccess: async value =&gt; await TransformAsync(value),
+    onFailure: error =&gt; Task.FromResult(default));
+</code></pre>
+<h2 id="benefits">Benefits</h2>
+<h3 id="null-safety">Null Safety</h3>
+<pre><code class="lang-csharp">// ❌ Ternary - Can accidentally access Value on failure
+var name = result.IsSuccess ? result.Value : defaultName;
+// If you mistype IsFailure, you get an exception!
+
+// ✅ GetValueOrDefault - Can't access Value incorrectly
+var name = result.GetValueOrDefault(defaultName);
+</code></pre>
+<h3 id="functional-composition">Functional Composition</h3>
+<pre><code class="lang-csharp">// ✅ Chainable
+return GetCustomer(id)
+    .Match(
+        onSuccess: customer =&gt; customer.Email,
+        onFailure: _ =&gt; EmailAddress.Create(&quot;noreply@example.com&quot;))
+    .ToString();
+</code></pre>
+<h2 id="when-to-use-ternary">When to Use Ternary</h2>
+<p>Use the ternary operator when:</p>
+<ul>
+<li>You're checking other properties (not just <code>IsSuccess</code>)</li>
+<li>The logic is complex and doesn't fit <code>Match</code></li>
+</ul>
+<pre><code class="lang-csharp">// Ternary appropriate - checking different property
+var count = list.Count &gt; 0 ? list.Count : defaultCount;
+</code></pre>
+<h2 id="when-to-suppress-warnings">When to Suppress Warnings</h2>
+<p>This is a suggestion-level diagnostic. Suppress it if:</p>
+<ul>
+<li>You prefer explicit ternary operators for clarity</li>
+<li>The pattern doesn't fit <code>GetValueOrDefault</code> or <code>Match</code></li>
+<li>You're working with legacy code</li>
+</ul>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD003.html">FDDD003</a> - Unsafe access to Result.Value</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD013.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD012: Consider using Result.Combine </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD012: Consider using Result.Combine ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD012.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd012-consider-using-resultcombine">FDDD012: Consider using Result.Combine</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Manually checking <code>IsSuccess</code> on multiple <code>Result&lt;T&gt;</code> values when <code>Result.Combine()</code> or <code>.Combine()</code> chaining provides a cleaner alternative.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p>When you need to validate multiple inputs and proceed only if all are successful, <code>Combine</code> provides a declarative approach that:</p>
+<ul>
+<li>Automatically collects all validation errors</li>
+<li>Returns success only if all inputs are successful</li>
+<li>Reduces boilerplate code</li>
+</ul>
+<p>Two equivalent syntaxes are available:</p>
+<table>
+<thead>
+<tr>
+<th>Syntax</th>
+<th>Best when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Result.Combine(r1, r2, r3)</code></td>
+<td>You already have results in separate variables</td>
+</tr>
+<tr>
+<td><code>r1.Combine(r2).Combine(r3)</code></td>
+<td>You want to chain inline expressions</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<p>Replace manual checks with <code>Result.Combine()</code>:</p>
+<pre><code class="lang-csharp">// ❌ Verbose - Manual checks
+var emailResult = EmailAddress.TryCreate(dto.Email);
+var phoneResult = PhoneNumber.TryCreate(dto.Phone);
+
+if (emailResult.IsFailure)
+    return emailResult.Error;
+if (phoneResult.IsFailure)
+    return phoneResult.Error;
+
+var customer = Customer.Create(emailResult.Value, phoneResult.Value);
+
+// ✅ Option A - Static Combine (when you have variables)
+var emailResult = EmailAddress.TryCreate(dto.Email);
+var phoneResult = PhoneNumber.TryCreate(dto.Phone);
+
+return Result.Combine(emailResult, phoneResult)
+    .Bind((email, phone) =&gt; Customer.Create(email, phone));
+
+// ✅ Option B - Combine chaining (inline)
+return EmailAddress.TryCreate(dto.Email)
+    .Combine(PhoneNumber.TryCreate(dto.Phone))
+    .Bind((email, phone) =&gt; Customer.Create(email, phone));
+</code></pre>
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-combining-2-results">Example 1: Combining 2 Results</h3>
+<pre><code class="lang-csharp">public Result&lt;Customer&gt; CreateCustomer(CreateCustomerDto dto)
+{
+    return Result.Combine(
+            EmailAddress.TryCreate(dto.Email),
+            Name.TryCreate(dto.Name))
+        .Map((email, name) =&gt; new Customer(email, name));
+}
+</code></pre>
+<h3 id="example-2-combining-3-results">Example 2: Combining 3 Results</h3>
+<pre><code class="lang-csharp">public Result&lt;Address&gt; CreateAddress(AddressDto dto)
+{
+    return Result.Combine(
+            Street.TryCreate(dto.Street),
+            City.TryCreate(dto.City),
+            PostalCode.TryCreate(dto.PostalCode))
+        .Map((street, city, postalCode) =&gt; 
+            new Address(street, city, postalCode));
+}
+</code></pre>
+<h3 id="example-3-combining-up-to-9-results">Example 3: Combining up to 9 Results</h3>
+<pre><code class="lang-csharp">// Both styles support up to 9-element tuples
+return Result.Combine(r1, r2, r3, r4, r5, r6, r7, r8, r9)
+    .Map((v1, v2, v3, v4, v5, v6, v7, v8, v9) =&gt; 
+        CreateEntity(v1, v2, v3, v4, v5, v6, v7, v8, v9));
+</code></pre>
+<h2 id="benefits">Benefits</h2>
+<h3 id="collects-all-errors">Collects All Errors</h3>
+<pre><code class="lang-csharp">// Manual approach - Returns first error only
+var emailResult = EmailAddress.TryCreate(invalidEmail);
+if (emailResult.IsFailure)
+    return emailResult.Error;  // Returns immediately
+
+var phoneResult = PhoneNumber.TryCreate(invalidPhone);
+if (phoneResult.IsFailure)
+    return phoneResult.Error;  // Never reached if email failed
+
+// Result.Combine - Collects all errors
+Result.Combine(
+    EmailAddress.TryCreate(invalidEmail),
+    PhoneNumber.TryCreate(invalidPhone))
+// Returns both errors if both fail!
+</code></pre>
+<h3 id="declarative-intent">Declarative Intent</h3>
+<pre><code class="lang-csharp">// ✅ Clear intent - &quot;combine these validations&quot;
+Result.Combine(
+    ValidateEmail(dto.Email),
+    ValidateAge(dto.Age),
+    ValidateAddress(dto.Address))
+</code></pre>
+<h2 id="when-to-use-manual-checks">When to Use Manual Checks</h2>
+<p>Use manual checks when:</p>
+<ul>
+<li>You need short-circuit behavior (stop at first error)</li>
+<li>You have conditional validation logic</li>
+<li>The results are not independent</li>
+</ul>
+<pre><code class="lang-csharp">// Manual checks appropriate here - conditional logic
+var userResult = GetUser(userId);
+if (userResult.IsFailure)
+    return userResult.Error;
+
+// Only validate permissions if user exists
+var permissionResult = ValidatePermissions(userResult.Value);
+if (permissionResult.IsFailure)
+    return permissionResult.Error;
+</code></pre>
+<h2 id="when-to-suppress-warnings">When to Suppress Warnings</h2>
+<p>This is a suggestion-level diagnostic. Suppress it if:</p>
+<ul>
+<li>You need short-circuit behavior</li>
+<li>You prefer explicit control flow</li>
+<li>You're validating a variable number of items</li>
+</ul>
+<h2 id="related-rules">Related Rules</h2>
+<p>None - this is a suggestion to improve code clarity.</p>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD012.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

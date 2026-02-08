@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Introduction </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Introduction ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/intro.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="introduction">Introduction</h1>
+
+<p>Learn why functional domain modeling with Railway-Oriented Programming makes your code cleaner, safer, and more maintainable.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#why-use-this-library">Why Use This Library?</a></li>
+<li><a href="#functional-programming">Functional Programming</a></li>
+<li><a href="#domain-driven-design">Domain-Driven Design</a></li>
+<li><a href="#error-types">Error Types</a></li>
+<li><a href="#key-features">Key Features</a>
+<ul>
+<li><a href="#reuse-domain-validation-at-the-api-layer">Reuse Domain Validation at the API Layer</a></li>
+<li><a href="#pagination-support">Pagination Support</a></li>
+<li><a href="#avoid-primitive-obsession">Avoid Primitive Obsession</a></li>
+<li><a href="#async--cancellation-support">Async &amp; Cancellation Support</a></li>
+<li><a href="#parallel-execution">Parallel Execution</a></li>
+</ul>
+</li>
+<li><a href="#performance">Performance</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+</ul>
+<h2 id="why-use-this-library">Why Use This Library?</h2>
+<p>Building robust applications requires explicit error handling, type safety, and clean code. This library combines <strong>Railway-Oriented Programming</strong> with <strong>Domain-Driven Design</strong> to achieve all three—without sacrificing performance or readability.</p>
+<pre><code class="lang-mermaid">graph TB
+    subgraph Benefits[&quot;Core Benefits&quot;]
+        A[Railway-Oriented&lt;br/&gt;Programming]
+        B[Domain-Driven&lt;br/&gt;Design]
+        C[Type Safety]
+    end
+    
+    subgraph Results[&quot;What You Get&quot;]
+        D[Explicit Error&lt;br/&gt;Handling]
+        E[Clean Code]
+        F[Maintainable&lt;br/&gt;Applications]
+    end
+    
+    A --&gt; D
+    B --&gt; E
+    C --&gt; D
+    A --&gt; E
+    B --&gt; F
+    C --&gt; F
+    
+    style A fill:#E1F5FF
+    style B fill:#FFF4E1
+    style C fill:#E1FFE1
+    style D fill:#90EE90
+    style E fill:#90EE90
+    style F fill:#90EE90
+</code></pre>
+<h2 id="functional-programming">Functional Programming</h2>
+<p>Railway-Oriented Programming (ROP) is a pattern for explicit error handling that <strong>eliminates nested if-statements</strong> and <strong>makes your code read like a story</strong>.</p>
+<p><strong>The problem with traditional code:</strong></p>
+<ul>
+<li>❌ Scattered error checks interrupt the flow</li>
+<li>❌ Easy to forget a validation step</li>
+<li>❌ Hard to see the &quot;happy path&quot;</li>
+<li>❌ Verbose and repetitive</li>
+</ul>
+<p><strong>Instead of this:</strong></p>
+<pre><code class="lang-csharp">// ❌ Traditional approach - 15+ lines, hard to follow the logic
+var firstName = ValidateFirstName(input.FirstName);
+if (firstName == null) return BadRequest(&quot;Invalid first name&quot;);
+
+var lastName = ValidateLastName(input.LastName);
+if (lastName == null) return BadRequest(&quot;Invalid last name&quot;);
+
+var user = CreateUser(firstName, lastName);
+if (user == null) return BadRequest(&quot;Cannot create user&quot;);
+
+if (_repository.EmailExists(user.Email))
+    return Conflict(&quot;Email exists&quot;);
+
+_repository.Save(user);
+return Ok(user);
+</code></pre>
+<p><strong>You write this:</strong></p>
+<pre><code class="lang-csharp">// ✅ ROP approach - 6 lines that read like English
+return FirstName.TryCreate(input.FirstName)
+    .Combine(LastName.TryCreate(input.LastName))
+    .Bind((first, last) =&gt; User.TryCreate(first, last))
+    .Ensure(user =&gt; !_repository.EmailExists(user.Email), Error.Conflict(&quot;Email exists&quot;))
+    .Tap(user =&gt; _repository.Save(user))
+    .Match(onSuccess: user =&gt; Ok(user), onFailure: error =&gt; BadRequest(error.Detail));
+</code></pre>
+<p><strong>What you gain:</strong></p>
+<ul>
+<li>🎯 <strong>60% less code</strong> - More readable, less to maintain</li>
+<li>📖 <strong>Self-documenting</strong> - Chain reads like a recipe</li>
+<li>🛡️ <strong>Compiler-enforced</strong> - Can't skip error handling</li>
+<li>🔍 <strong>Zero hidden logic</strong> - Every step is visible</li>
+</ul>
+<p>👉 <strong>Learn the fundamentals:</strong> <a href="basics.html">Basics</a> - Complete ROP tutorial with all core operations</p>
+<h2 id="domain-driven-design">Domain-Driven Design</h2>
+<p>Build rich domain models with <strong>Aggregates</strong>, <strong>Entities</strong>, <strong>Value Objects</strong>, and <strong>Enum Value Objects</strong> that enforce business rules and maintain valid state.</p>
+<p><strong>Key DDD building blocks:</strong></p>
+<ul>
+<li><strong>Aggregates</strong> - Consistency boundaries with domain events (e.g., <code>Order</code>, <code>Customer</code>)</li>
+<li><strong>Entities</strong> - Objects with identity that change over time (e.g., <code>User</code>, <code>Product</code>)</li>
+<li><strong>Value Objects</strong> - Immutable objects defined by their values (e.g., <code>EmailAddress</code>, <code>Money</code>)</li>
+<li><strong>Scalar Value Objects</strong> - Single-value wrappers with validation (e.g., <code>FirstName</code>, <code>Age</code>)</li>
+<li><strong>RequiredEnum</strong> - Type-safe enumerations with behavior and state machine support (e.g., <code>OrderState</code>, <code>PaymentStatus</code>)</li>
+</ul>
+<p><strong>Quick example:</strong></p>
+<pre><code class="lang-csharp">// Value object with validation
+public partial class EmailAddress : RequiredString { }
+
+// RequiredEnum - type-safe enumeration (Name auto-derived)
+public partial class OrderState : RequiredEnum&lt;OrderState&gt;
+{
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    
+    private OrderState() { }
+}
+
+// Use in domain entity
+public class User : Entity&lt;UserId&gt;
+{
+    public EmailAddress Email { get; private set; }
+    public FirstName FirstName { get; private set; }
+    
+    public static Result&lt;User&gt; Create(EmailAddress email, FirstName firstName)
+    {
+        var user = new User(email, firstName);
+        return Validator.ValidateToResult(user);
+    }
+}
+</code></pre>
+<p>👉 <strong>See patterns in action:</strong> <a href="clean-architecture.html">Clean Architecture</a> - DDD with ROP in layered applications<br>
+👉 <strong>Integrate validation:</strong> <a href="integration-fluentvalidation.html">FluentValidation Integration</a> - Domain validation patterns</p>
+<h2 id="error-types">Error Types</h2>
+<p>The library provides <strong>11 specialized error types</strong> that automatically map to HTTP status codes, giving you a single source of truth for error handling across your application.</p>
+<pre><code class="lang-mermaid">graph LR
+    DOMAIN[Domain Logic] --&gt; ERROR[Error Types]
+    ERROR --&gt; HTTP[HTTP Responses]
+    ERROR --&gt; LOG[Logging]
+    ERROR --&gt; UI[User Messages]
+    
+    style DOMAIN fill:#E1F5FF
+    style ERROR fill:#FFD700
+    style HTTP fill:#90EE90
+    style LOG fill:#FFE4B5
+    style UI fill:#E1FFE1
+</code></pre>
+<p><strong>Common error types:</strong></p>
+<ul>
+<li><code>ValidationError</code> → 400 Bad Request (with field-level details)</li>
+<li><code>NotFoundError</code> → 404 Not Found</li>
+<li><code>UnauthorizedError</code> → 401 Unauthorized</li>
+<li><code>ConflictError</code> → 409 Conflict</li>
+<li><code>DomainError</code> → 422 Unprocessable Entity</li>
+</ul>
+<p><strong>Example - Discriminated union matching:</strong></p>
+<pre><code class="lang-csharp">return ProcessOrder(order).MatchError(
+    onValidation: err =&gt; BadRequest(err.FieldErrors),
+    onNotFound: err =&gt; NotFound(err.Detail),
+    onConflict: err =&gt; Conflict(err.Detail),
+    onSuccess: order =&gt; Ok(order)
+);
+</code></pre>
+<p>📖 <strong>Complete error catalog:</strong> <a href="error-handling.html">Error Handling</a> - All 11 error types, custom errors, aggregation</p>
+<h2 id="key-features">Key Features</h2>
+<p>The library provides several powerful features that work together to simplify your code:</p>
+<h3 id="reuse-domain-validation-at-the-api-layer">Reuse Domain Validation at the API Layer</h3>
+<p>Domain validation rules automatically translate to HTTP standard error responses. ValidationError becomes BadRequest with detailed errors, NotFoundError becomes HTTP 404. This creates a <strong>single source of truth</strong>, eliminating duplication between domain and API layers.</p>
+<h3 id="pagination-support">Pagination Support</h3>
+<p>Automatic HTTP header management with proper status codes: 200 (OK) for complete results, 206 (Partial Content) for paginated responses per <a href="https://www.rfc-editor.org/rfc/rfc9110#field.content-range">RFC 9110</a>.</p>
+<h3 id="avoid-primitive-obsession">Avoid Primitive Obsession</h3>
+<p>Use strongly-typed value objects instead of primitive types. RequiredString provides type-safe string properties with automatic source generation. Additional value object types are available for common scenarios.</p>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li><strong>Type safety</strong> - Compiler prevents parameter mix-ups</li>
+<li><strong>Self-documenting</strong> - <code>FirstName</code> vs <code>string</code> is clearer</li>
+<li><strong>Validation once</strong> - Create validated objects, use everywhere</li>
+<li><strong>Source generation</strong> - Minimal boilerplate</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-csharp">// ❌ Easy to swap parameters
+Person CreatePerson(string firstName, string lastName);
+
+// ✅ Compiler catches mistakes
+Person CreatePerson(FirstName firstName, LastName lastName);
+</code></pre>
+<p>See <a href="basics.html">Basics</a> to learn how to create type-safe value objects.</p>
+<h3 id="async--cancellation-support">Async &amp; Cancellation Support</h3>
+<p>All async operations support <code>CancellationToken</code> for graceful shutdown and request timeouts:</p>
+<pre><code class="lang-csharp">await GetCustomerByIdAsync(id, cancellationToken)
+   .EnsureAsync(
+      (customer, ct) =&gt; customer.CanBePromotedAsync(ct),
+      Error.Validation(&quot;Cannot promote&quot;),
+      cancellationToken)
+   .TapAsync(
+      async (customer, ct) =&gt; await customer.PromoteAsync(ct),
+      cancellationToken)
+   .MatchAsync(
+      onSuccess: ok =&gt; &quot;Success&quot;, 
+      onFailure: error =&gt; error.Detail,
+      cancellationToken: cancellationToken);
+</code></pre>
+<p>Learn about async patterns in <a href="basics.html#working-with-async-operations">Working with Async Operations</a>.</p>
+<h3 id="parallel-execution">Parallel Execution</h3>
+<p>Fetch data from multiple sources in parallel while maintaining Railway Oriented Programming style:</p>
+<pre><code class="lang-csharp">// Execute multiple async operations in parallel using ParallelAsync
+var result = await GetUserAsync(userId, cancellationToken)
+    .ParallelAsync(GetOrdersAsync(userId, cancellationToken))
+    .ParallelAsync(GetPreferencesAsync(userId, cancellationToken))
+    .WhenAllAsync()
+    .Bind((user, orders, preferences) =&gt; 
+        Result.Success(new UserProfile(user, orders, preferences)));
+</code></pre>
+<p>See <a href="advanced-features.html">Advanced Features</a> for parallel operations, LINQ syntax, and more.</p>
+<h2 id="performance">Performance</h2>
+<p>The library adds only <strong>~11-16 nanoseconds</strong> of overhead compared to imperative code—less than 0.002% of typical I/O operations. You get cleaner, more maintainable code with virtually zero performance cost.</p>
+<p><strong>Typical operation costs:</strong></p>
+<pre><code class="lang-mermaid">%%{init: {'theme':'base'}}%%
+gantt
+    title Operation Time Comparison (Log Scale)
+    dateFormat X
+    axisFormat %s
+    
+    section I/O Operations
+    HTTP Request (10-100ms)    :milestone, 100000000, 0
+    Database Query (1-10ms)    :milestone, 10000000, 0
+    
+    section Library Overhead
+    ROP Overhead (11-16ns)     :milestone, 16, 0
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Time (nanoseconds)</th>
+<th>Relative Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HTTP Request</strong></td>
+<td>10,000,000 - 100,000,000</td>
+<td>625,000x - 6,250,000x</td>
+</tr>
+<tr>
+<td><strong>Database Query</strong></td>
+<td>1,000,000 - 10,000,000</td>
+<td>62,500x - 625,000x</td>
+</tr>
+<tr>
+<td><strong>ROP Overhead</strong></td>
+<td>11 - 16</td>
+<td>1x (baseline)</td>
+</tr>
+</tbody>
+</table>
+<p>The overhead is <strong>negligible</strong> compared to real-world I/O operations. See <a href="performance.html">Performance &amp; Benchmarks</a> for detailed performance analysis.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>Ready to get started? Choose your learning path:</p>
+<pre><code class="lang-mermaid">graph TD
+    START[Choose Your Path]
+    
+    START --&gt; BEG[?? Beginner Path&lt;br/&gt;2-3 hours]
+    START --&gt; INT[?? Intermediate Path&lt;br/&gt;4-6 hours]
+    START --&gt; ADV[?? Advanced Path&lt;br/&gt;2-3 hours]
+    
+    BEG --&gt; B1[Basics]
+    BEG --&gt; B2[Examples]
+    BEG --&gt; B3[ASP.NET Integration]
+    
+    INT --&gt; I1[Error Handling]
+    INT --&gt; I2[Async &amp; Cancellation]
+    INT --&gt; I3[FluentValidation]
+    INT --&gt; I4[Debugging]
+    
+    ADV --&gt; A1[Advanced Features]
+    ADV --&gt; A2[EF Core Integration]
+    ADV --&gt; A3[OpenTelemetry]
+    ADV --&gt; A4[Performance]
+    
+    style BEG fill:#E1F5FF
+    style INT fill:#FFF4E1
+    style ADV fill:#FFE1F5
+    
+    style B1 fill:#90EE90
+    style B2 fill:#90EE90
+    style B3 fill:#90EE90
+    
+    style I1 fill:#FFE4B5
+    style I2 fill:#FFE4B5
+    style I3 fill:#FFE4B5
+    style I4 fill:#FFE4B5
+    
+    style A1 fill:#E1FFE1
+    style A2 fill:#E1FFE1
+    style A3 fill:#E1FFE1
+    style A4 fill:#E1FFE1
+</code></pre>
+<h3 id="-beginner-path-start-here">?? Beginner Path (Start Here!)</h3>
+<p><strong>Time:</strong> 2-3 hours | <strong>Goal:</strong> Understand ROP basics and build your first features</p>
+<ol>
+<li><p>?? <strong><a href="basics.html">Basics</a></strong> - Learn Railway-Oriented Programming fundamentals</p>
+<ul>
+<li>Result type, Combine, Bind, Map, Tap, Match</li>
+<li>Safe error handling patterns</li>
+<li>Complete working examples</li>
+</ul>
+</li>
+<li><p>?? <strong><a href="examples.html">Examples</a></strong> - See real-world patterns and code snippets</p>
+<ul>
+<li>User registration, form validation</li>
+<li>HTTP response handling</li>
+<li>Common patterns library</li>
+</ul>
+</li>
+<li><p>?? <strong><a href="integration-aspnet.html">ASP.NET Core Integration</a></strong> - Connect to your API</p>
+<ul>
+<li>ToActionResult, ToHttpResult</li>
+<li>Automatic error-to-HTTP mapping</li>
+<li>MVC and Minimal API examples</li>
+</ul>
+</li>
+</ol>
+<h3 id="-intermediate-path">?? Intermediate Path</h3>
+<p><strong>Time:</strong> 4-6 hours | <strong>Prerequisites:</strong> Basics | <strong>Goal:</strong> Master error handling and async patterns</p>
+<ol>
+<li><p>?? <strong><a href="error-handling.html">Error Handling</a></strong> - Discriminated unions, error aggregation</p>
+<ul>
+<li>Custom error types</li>
+<li>MatchError patterns</li>
+<li>ValidationError fluent API</li>
+</ul>
+</li>
+<li><p>? <strong><a href="basics.html#working-with-async-operations">Working with Async Operations</a></strong> - CancellationToken patterns, timeouts</p>
+<ul>
+<li>Async operation chains</li>
+<li>Parallel execution</li>
+<li>Timeout and retry patterns</li>
+</ul>
+</li>
+<li><p>? <strong><a href="integration-fluentvalidation.html">FluentValidation Integration</a></strong> - Domain validation</p>
+<ul>
+<li>InlineValidator</li>
+<li>Async validation rules</li>
+<li>Reuse domain validation at API layer</li>
+</ul>
+</li>
+<li><p>?? <strong><a href="debugging.html">Debugging</a></strong> - Tools and techniques for debugging ROP chains</p>
+<ul>
+<li>Built-in debug extensions</li>
+<li>OpenTelemetry tracing</li>
+<li>Common pitfalls and solutions</li>
+</ul>
+</li>
+</ol>
+<h3 id="-advanced-path">?? Advanced Path</h3>
+<p><strong>Time:</strong> 2-3 hours | <strong>Prerequisites:</strong> Intermediate | <strong>Goal:</strong> Expert-level patterns and optimization</p>
+<ol>
+<li><p>?? <strong><a href="advanced-features.html">Advanced Features</a></strong> - LINQ, parallel operations, Maybe type</p>
+<ul>
+<li>LINQ query syntax</li>
+<li>Parallel async operations</li>
+<li>Pattern matching</li>
+<li>Exception capture</li>
+</ul>
+</li>
+<li><p>??? <strong><a href="integration-ef.html">Entity Framework Core</a></strong> - Repository patterns</p>
+<ul>
+<li>Result-based repositories</li>
+<li>Async database operations</li>
+<li>Transaction handling</li>
+</ul>
+</li>
+<li><p>?? <strong><a href="integration-observability.html">OpenTelemetry Integration</a></strong> - Observability</p>
+<ul>
+<li>Automatic ROP tracing</li>
+<li>Distributed tracing</li>
+<li>Performance monitoring</li>
+</ul>
+</li>
+<li><p>? <strong><a href="performance.html">Performance</a></strong> - Optimization and benchmarks</p>
+<ul>
+<li>Performance characteristics</li>
+<li>Benchmarking results</li>
+<li>Optimization tips</li>
+</ul>
+</li>
+</ol>
+<h3 id="-reference-materials-jump-to-as-needed">?? Reference Materials (Jump to as Needed)</h3>
+<ul>
+<li><strong><a href="error-handling.html">Error Handling Reference</a></strong> - Complete error type catalog</li>
+<li><strong><a href="debugging.html">Debugging Guide</a></strong> - Troubleshooting and tools</li>
+<li><strong><a href="performance.html">Performance &amp; Benchmarks</a></strong> - Detailed performance analysis</li>
+<li><strong><a href="integration.html">Integration Guides</a></strong> - ASP.NET, EF Core, FluentValidation, OpenTelemetry</li>
+</ul>
+<hr>
+<h2 id="quick-links-by-experience-level">Quick Links by Experience Level</h2>
+<p><strong>Never used functional programming?</strong> Start with <a href="intro.html">Introduction</a> then <a href="basics.html">Basics</a></p>
+<p><strong>Coming from F# or Haskell?</strong> Jump to <a href="advanced-features.html">Advanced Features</a> and <a href="examples.html">Examples</a></p>
+<p><strong>Need to integrate with existing code?</strong> See <a href="integration.html">Integration</a> and <a href="integration-fluentvalidation.html">FluentValidation</a></p>
+<p><strong>Looking for specific patterns?</strong> Check <a href="examples.html">Examples</a> and <a href="error-handling.html">Error Handling</a></p>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/intro.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

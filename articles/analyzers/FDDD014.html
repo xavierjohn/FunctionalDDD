@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD014: Use async method variant for async lambda </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD014: Use async method variant for async lambda ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD014.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd014-use-async-method-variant-for-async-lambda">FDDD014: Use async method variant for async lambda</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Using a synchronous ROP method (Map, Bind, Tap, Ensure, TapOnFailure) with an async lambda, which results in the async operation not being properly awaited.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p>When you pass an async lambda to a synchronous method like <code>Map</code>, the result type becomes <code>Result&lt;Task&lt;T&gt;&gt;</code> instead of <code>Task&lt;Result&lt;T&gt;&gt;</code>. This means:</p>
+<ul>
+<li>The async operation may not complete before you try to use the result</li>
+<li>The Task is never awaited</li>
+<li>Exceptions in the async operation may be unobserved</li>
+</ul>
+<p>Always use the async variant (<code>MapAsync</code>, <code>BindAsync</code>, etc.) when your lambda is async.</p>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<p>Replace the sync method with its async variant:</p>
+<pre><code class="lang-csharp">// ❌ Bad - Map with async lambda creates Result&lt;Task&lt;T&gt;&gt;
+var result = userResult.Map(async user =&gt; await SendEmailAsync(user));
+
+// ✅ Good - MapAsync properly handles async lambda
+var result = await userResult.MapAsync(async user =&gt; await SendEmailAsync(user));
+</code></pre>
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-async-map">Example 1: Async Map</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Result&lt;Task&lt;EmailResult&gt;&gt; (Task never awaited!)
+var result = emailAddress
+    .Map(async email =&gt; await emailService.SendAsync(email));
+
+// ✅ Good - Task&lt;Result&lt;EmailResult&gt;&gt;
+var result = await emailAddress
+    .MapAsync(async email =&gt; await emailService.SendAsync(email));
+</code></pre>
+<h3 id="example-2-async-bind">Example 2: Async Bind</h3>
+<pre><code class="lang-csharp">// ❌ Bad
+var result = userId
+    .Bind(async id =&gt; await GetUserAsync(id));  // Returns Result&lt;Task&lt;Result&lt;User&gt;&gt;&gt;!
+
+// ✅ Good
+var result = await userId
+    .BindAsync(async id =&gt; await GetUserAsync(id));  // Returns Task&lt;Result&lt;User&gt;&gt;
+</code></pre>
+<h3 id="example-3-async-tap">Example 3: Async Tap</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Side effect may not complete
+var result = order
+    .Tap(async o =&gt; await auditService.LogAsync(o));
+
+// ✅ Good - Side effect is awaited
+var result = await order
+    .TapAsync(async o =&gt; await auditService.LogAsync(o));
+</code></pre>
+<h3 id="example-4-method-group">Example 4: Method Group</h3>
+<pre><code class="lang-csharp">// ❌ Bad - ProcessAsync returns Task
+var result = items.Map(ProcessAsync);
+
+// ✅ Good
+var result = await items.MapAsync(ProcessAsync);
+</code></pre>
+<h2 id="async-method-variants">Async Method Variants</h2>
+<table>
+<thead>
+<tr>
+<th>Sync Method</th>
+<th>Async Variant</th>
+<th>Use When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Map</code></td>
+<td><code>MapAsync</code></td>
+<td>Lambda returns <code>Task&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>Bind</code></td>
+<td><code>BindAsync</code></td>
+<td>Lambda returns <code>Task&lt;Result&lt;T&gt;&gt;</code></td>
+</tr>
+<tr>
+<td><code>Tap</code></td>
+<td><code>TapAsync</code></td>
+<td>Lambda returns <code>Task</code> (side effect)</td>
+</tr>
+<tr>
+<td><code>Ensure</code></td>
+<td><code>EnsureAsync</code></td>
+<td>Predicate returns <code>Task&lt;bool&gt;</code></td>
+</tr>
+<tr>
+<td><code>TapOnFailure</code></td>
+<td><code>TapOnFailureAsync</code></td>
+<td>Lambda returns <code>Task</code> (error handling)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="code-fix">Code Fix</h2>
+<p>The code fix automatically replaces the sync method with its async variant:</p>
+<p><strong>Before:</strong></p>
+<pre><code class="lang-csharp">result.Map(async x =&gt; await ProcessAsync(x))
+</code></pre>
+<p><strong>After:</strong></p>
+<pre><code class="lang-csharp">result.MapAsync(async x =&gt; await ProcessAsync(x))
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> You'll still need to add <code>await</code> to the call chain if not already present.</p>
+</blockquote>
+<h2 id="why-this-matters">Why This Matters</h2>
+<p>When you use <code>Map</code> with an async lambda:</p>
+<pre><code class="lang-csharp">Result&lt;int&gt; number = Result.Success(42);
+var result = number.Map(async n =&gt; await ComputeAsync(n));
+// result is Result&lt;Task&lt;int&gt;&gt;, NOT Task&lt;Result&lt;int&gt;&gt;!
+</code></pre>
+<p>The <code>Task</code> inside the <code>Result</code> is never awaited, leading to:</p>
+<ul>
+<li>Unobserved exceptions</li>
+<li>Operations that don't complete before you use the result</li>
+<li>Confusing debugging experiences</li>
+</ul>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD009.html">FDDD009</a> - Incorrect async Result usage (blocking with .Result/.Wait())</li>
+<li><a href="FDDD002.html">FDDD002</a> - Use Bind instead of Map when lambda returns Result</li>
+</ul>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming">Async/Await Best Practices</a></li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD014.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD015: Don&#39;t throw exceptions in Result chains </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD015: Don&#39;t throw exceptions in Result chains ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD015.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd015-dont-throw-exceptions-in-result-chains">FDDD015: Don't throw exceptions in Result chains</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Using a <code>throw</code> statement or expression inside a lambda passed to <code>Bind</code>, <code>Map</code>, <code>Tap</code>, <code>Ensure</code>, or their async variants.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p>Throwing exceptions inside Result chain lambdas defeats the purpose of Railway Oriented Programming. The whole point of using <code>Result&lt;T&gt;</code> is to represent failures as values on the &quot;failure track&quot; rather than throwing exceptions.</p>
+<p>When you throw inside a Result chain:</p>
+<ul>
+<li>The exception bypasses the normal failure handling</li>
+<li>Error handling becomes unpredictable</li>
+<li>You lose the benefits of composable error handling</li>
+</ul>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<p>Return a <code>Result.Failure&lt;T&gt;()</code> instead of throwing:</p>
+<pre><code class="lang-csharp">// ❌ Bad - Throwing defeats ROP
+result.Bind(x =&gt;
+{
+    if (x &lt; 0) throw new ArgumentException(&quot;Must be positive&quot;);
+    return Result.Success(x);
+});
+
+// ✅ Good - Return failure Result
+result.Bind(x =&gt;
+    x &lt; 0
+        ? Result.Failure&lt;int&gt;(Error.Validation(&quot;Must be positive&quot;, &quot;value&quot;))
+        : Result.Success(x));
+</code></pre>
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-throw-statement-in-bind">Example 1: Throw Statement in Bind</h3>
+<pre><code class="lang-csharp">// ❌ Bad
+var result = customerId
+    .Bind(id =&gt;
+    {
+        if (id == Guid.Empty)
+            throw new ArgumentException(&quot;Invalid customer ID&quot;);
+        return GetCustomer(id);
+    });
+
+// ✅ Good
+var result = customerId
+    .Bind(id =&gt;
+        id == Guid.Empty
+            ? Result.Failure&lt;Customer&gt;(Error.Validation(&quot;Invalid customer ID&quot;, &quot;customerId&quot;))
+            : GetCustomer(id));
+</code></pre>
+<h3 id="example-2-throw-expression-in-ternary">Example 2: Throw Expression in Ternary</h3>
+<pre><code class="lang-csharp">// ❌ Bad
+var result = amount
+    .Map(a =&gt; a &lt; 0 ? throw new InvalidOperationException() : a * 1.1m);
+
+// ✅ Good
+var result = amount
+    .Ensure(a =&gt; a &gt;= 0, Error.Validation(&quot;Amount must be non-negative&quot;))
+    .Map(a =&gt; a * 1.1m);
+</code></pre>
+<h3 id="example-3-throw-in-tap">Example 3: Throw in Tap</h3>
+<pre><code class="lang-csharp">// ❌ Bad
+var result = order
+    .Tap(o =&gt;
+    {
+        if (!o.IsValid)
+            throw new InvalidOperationException(&quot;Invalid order&quot;);
+        logger.LogInformation(&quot;Processing order {Id}&quot;, o.Id);
+    });
+
+// ✅ Good - Use Ensure for validation, Tap for side effects
+var result = order
+    .Ensure(o =&gt; o.IsValid, Error.Validation(&quot;Invalid order&quot;))
+    .Tap(o =&gt; logger.LogInformation(&quot;Processing order {Id}&quot;, o.Id));
+</code></pre>
+<h2 id="why-this-matters">Why This Matters</h2>
+<p>Railway Oriented Programming provides:</p>
+<ul>
+<li><strong>Predictable error handling</strong>: Errors flow through the chain</li>
+<li><strong>Composability</strong>: Chain operations without try/catch</li>
+<li><strong>Explicit failure paths</strong>: Failures are values, not exceptions</li>
+</ul>
+<p>Throwing exceptions breaks all of these benefits.</p>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD002.html">FDDD002</a> - Use Bind instead of Map when lambda returns Result</li>
+<li><a href="FDDD003.html">FDDD003</a> - Unsafe access to Result.Value</li>
+</ul>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="https://fsharpforfunandprofit.com/rop/">Railway Oriented Programming</a></li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD015.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

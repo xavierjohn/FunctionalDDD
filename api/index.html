@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>API Documentation for FunctionalDdd Library </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="API Documentation for FunctionalDdd Library ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/api/index.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="api-documentation-for-functionalddd-library">API Documentation for FunctionalDdd Library</h1>
+
+<p>Welcome to the FunctionalDdd API reference. This library brings Railway-Oriented Programming (ROP) and Domain-Driven Design (DDD) patterns to C#, enabling you to write robust, maintainable code with explicit error handling.</p>
+<h2 id="core-packages">Core Packages</h2>
+<h3 id="railway-oriented-programming">Railway-Oriented Programming</h3>
+<blockquote>
+<p><strong>New to Railway-Oriented Programming?</strong> The concept uses a railway track analogy where operations flow along a success track or switch to an error track. For a gentle introduction to the philosophy, see <a href="https://blog.logrocket.com/what-is-railway-oriented-programming/">this introductory article</a>. Our documentation provides a comprehensive, production-ready C# implementation with type safety, async support, and real-world patterns.</p>
+</blockquote>
+<h4 id="resultt"><a class="xref" href="FunctionalDdd.Result-1.html">Result&lt;T&gt;</a></h4>
+<p>The <code>Result&lt;T&gt;</code> monad represents an operation that can either succeed with a value of type <code>T</code> or fail with an <code>Error</code>. This is the foundation of Railway-Oriented Programming, enabling explicit error handling without exceptions.</p>
+<p><strong>Type Definition:</strong></p>
+<pre><code class="lang-csharp">public readonly struct Result&lt;T&gt;
+{
+    public bool IsSuccess { get; }
+    public bool IsFailure { get; }
+    public T Value { get; }          // Available when IsSuccess is true
+    public Error Error { get; }      // Available when IsFailure is true
+}
+</code></pre>
+<p><strong>Core Operations:</strong></p>
+<ul>
+<li><strong><code>Bind</code></strong> - Chain operations that return Result (railway switching)</li>
+<li><strong><code>Map</code></strong> - Transform success values while preserving errors</li>
+<li><strong><code>Tap</code></strong> - Execute side effects without changing the result (logging, events, notifications)</li>
+<li><strong><code>Ensure</code></strong> - Apply business rule validation</li>
+<li><strong><code>Match</code></strong> - Pattern match on success/failure for final handling</li>
+<li><strong><code>Combine</code></strong> - Aggregate multiple results and collect all errors (parallel validation)</li>
+<li><strong><code>RecoverOnFailure</code></strong> - Provide fallback values on failure</li>
+<li><strong><code>MapError</code></strong> - Transform error types</li>
+<li><strong><code>When</code></strong> - Conditional execution based on predicates</li>
+</ul>
+<p><strong>Common Usage Patterns:</strong></p>
+<p><em>Railway Pattern - Sequential Chaining:</em></p>
+<pre><code class="lang-csharp">var result = UserId.TryCreate(id)
+    .Bind(repository.GetUser)
+    .Map(user =&gt; new UserDto(user))
+    .Tap(dto =&gt; logger.LogInformation(&quot;User retrieved: {Id}&quot;, dto.Id))
+    .Match(
+        onSuccess: dto =&gt; Ok(dto),
+        onFailure: error =&gt; error.ToActionResult(this)
+    );
+</code></pre>
+<p><em>Combine - Parallel Validation (Collects ALL Errors):</em></p>
+<pre><code class="lang-csharp">var result = EmailAddress.TryCreate(email)
+    .Combine(FirstName.TryCreate(firstName))
+    .Combine(LastName.TryCreate(lastName))
+    .Bind((email, first, last) =&gt; User.Create(email, first, last));
+</code></pre>
+<p><em>Tap - Side Effects Without Breaking the Chain:</em></p>
+<pre><code class="lang-csharp">var result = order.Submit()
+    .Tap(o =&gt; logger.LogInformation(&quot;Order {Id} submitted&quot;, o.Id))
+    .Tap(o =&gt; eventBus.Publish(new OrderSubmittedEvent(o.Id)))
+    .Tap(o =&gt; emailService.SendConfirmation(o.CustomerEmail))
+    .Tap(o =&gt; analytics.Track(&quot;OrderSubmitted&quot;, o.Id));
+// Result is still Result&lt;Order&gt; after all Taps
+</code></pre>
+<p><strong>Combine vs Bind:</strong></p>
+<pre><code class="lang-csharp">// Combine: ALL validations run, ALL errors collected
+var result = ProductName.TryCreate(name)      // ❌ Error: &quot;Name too short&quot;
+    .Combine(Price.TryCreate(price))          // ❌ Error: &quot;Price must be positive&quot;
+    .Combine(Quantity.TryCreate(quantity));   // ✅ Success
+// Returns errors for BOTH name AND price
+
+// Bind: Sequential - stops at first error
+var result = ProductName.TryCreate(name)      // ❌ Error: &quot;Name too short&quot;
+    .Bind(n =&gt; Price.TryCreate(price)         // 🚫 Never executed
+        .Bind(p =&gt; Quantity.TryCreate(quantity)));
+// Only returns the name error
+</code></pre>
+<p><strong>Factory Methods:</strong></p>
+<ul>
+<li><code>Result.Success&lt;T&gt;(T value)</code> - Create a successful result</li>
+<li><code>Result.Failure&lt;T&gt;(Error error)</code> - Create a failed result</li>
+</ul>
+<h4 id="using-resultunit-for-void-operations">Using Result&lt;Unit&gt; for Void Operations</h4>
+<p>When an operation doesn't return a value (like Delete or Update commands), use <code>Result&lt;Unit&gt;</code>:</p>
+<p><strong>What is Unit?</strong></p>
+<ul>
+<li><code>Unit</code> is a special type representing &quot;no value&quot;</li>
+<li>Similar to <code>void</code> but can be used as a generic type parameter</li>
+<li><code>Result&lt;Unit&gt;</code> indicates success/failure without a data payload</li>
+</ul>
+<p><strong>Type:</strong></p>
+<pre><code class="lang-csharp">Result&lt;Unit&gt;  // Success or failure, no value
+</code></pre>
+<p><strong>Common Use Cases:</strong></p>
+<ul>
+<li>Delete operations</li>
+<li>Update operations that don't return data</li>
+<li>Void commands</li>
+<li>Operations that modify state</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="lang-csharp">// Void operation that can fail
+public Result&lt;Unit&gt; DeleteUser(UserId id) =&gt;
+    repository.Delete(id)
+        .Tap(() =&gt; eventBus.Publish(new UserDeletedEvent(id)));
+
+// In API controllers, Unit results automatically return 204 No Content
+[HttpDelete(&quot;{id}&quot;)]
+public ActionResult&lt;Unit&gt; DeleteUser(Guid id) =&gt;
+    UserId.TryCreate(id)
+        .Bind(DeleteUserCommand)
+        .ToActionResult(this);  // Returns 204 No Content on success
+</code></pre>
+<p><strong>Factory Methods for Unit Results:</strong></p>
+<ul>
+<li><code>Result.Success()</code> - Create successful unit result</li>
+<li><code>Result.Failure(Error error)</code> - Create failed unit result</li>
+</ul>
+<h4 id="maybet"><a class="xref" href="FunctionalDdd.Maybe-1.html">Maybe&lt;T&gt;</a></h4>
+<p>The <code>Maybe&lt;T&gt;</code> monad represents an optional value that may or may not exist. Use it to eliminate null reference exceptions and make optionality explicit in your type system. Think of it as a type-safe alternative to nullable references.</p>
+<p><strong>Type Definition:</strong></p>
+<pre><code class="lang-csharp">public readonly struct Maybe&lt;T&gt;
+{
+    public bool HasValue { get; }
+    public bool HasNoValue { get; }
+    public T Value { get; }  // Throws if HasNoValue is true
+}
+</code></pre>
+<p><strong>Core Operations:</strong></p>
+<ul>
+<li><strong><code>GetValueOrDefault</code></strong> - Safely extract value with fallback</li>
+<li><strong><code>TryGetValue</code></strong> - Try to get the value (out parameter pattern)</li>
+<li><strong><code>GetValueOrThrow</code></strong> - Get value or throw exception</li>
+<li><strong><code>ToResult</code></strong> - Convert to Result (None becomes an Error)</li>
+<li><strong><code>AsMaybe</code></strong> - Convert from nullable to Maybe</li>
+<li><strong><code>AsNullable</code></strong> - Convert Maybe back to nullable</li>
+</ul>
+<p><strong>Properties:</strong></p>
+<ul>
+<li><strong><code>HasValue</code></strong> - Check if value is present</li>
+<li><strong><code>HasNoValue</code></strong> - Check if value is absent</li>
+<li><strong><code>Value</code></strong> - Get value (throws if absent)</li>
+</ul>
+<p><strong>Common Patterns:</strong></p>
+<pre><code class="lang-csharp">// Repository query (null-safe)
+Maybe&lt;User&gt; FindUserByEmail(EmailAddress email);
+
+// Safe value extraction with fallback
+var user = repository.FindUserByEmail(email);
+var userName = user.HasValue 
+    ? user.Value.FullName 
+    : &quot;Unknown User&quot;;
+
+// Or using GetValueOrDefault
+var userName = repository.FindUserByEmail(email)
+    .GetValueOrDefault(defaultUser)
+    .FullName;
+
+// Convert to Result for further processing
+var result = repository.FindUserByEmail(email)
+    .ToResult(Error.NotFound(&quot;User&quot;, email.Value))
+    .Bind(user =&gt; user.UpdateProfile(newData));
+
+// Try pattern for safe access
+if (repository.FindUserByEmail(email).TryGetValue(out var user))
+{
+    // Use user safely
+    ProcessUser(user);
+}
+</code></pre>
+<p><strong>Factory Methods:</strong></p>
+<ul>
+<li><code>Maybe.From&lt;T&gt;(T value)</code> - Create Maybe from nullable value (null becomes None)</li>
+<li><code>Maybe.None&lt;T&gt;()</code> - Create an empty Maybe</li>
+</ul>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li><strong>Maybe</strong>: When absence is a valid, expected state (e.g., optional config, search results)</li>
+<li><strong>Result</strong>: When you need to communicate <em>why</em> something failed (validation, business rules)</li>
+</ul>
+<h4 id="error-types"><a class="xref" href="FunctionalDdd.Error.html">Error Types</a></h4>
+<p>A hierarchy of error types for representing different failure scenarios:</p>
+<ul>
+<li><code>ValidationError</code> - Input validation failures with field-level details</li>
+<li><code>NotFoundError</code> - Resource not found (404)</li>
+<li><code>UnauthorizedError</code> - Authentication required (401)</li>
+<li><code>ForbiddenError</code> - Insufficient permissions (403)</li>
+<li><code>ConflictError</code> - Resource conflicts (409)</li>
+<li><code>DomainError</code> - Business rule violations (422)</li>
+<li><code>UnexpectedError</code> - Unexpected system errors (500)</li>
+<li><code>ServiceUnavailableError</code> - Service unavailable (503)</li>
+</ul>
+<hr>
+<h2 id="domain-driven-design">Domain-Driven Design</h2>
+<h3 id="aggregate"><a class="xref" href="FunctionalDdd.Aggregate-1.html">Aggregate</a></h3>
+<p>A DDD aggregate is a cluster of domain objects that can be treated as a single unit. An aggregate will have one of its component objects be the aggregate root. Any references from outside the aggregate should only go to the aggregate root. The root can thus ensure the integrity of the aggregate as a whole.</p>
+<p><strong>Key features:</strong> Encapsulation, consistency boundaries, transactional boundaries</p>
+<p><a href="https://martinfowler.com/bliki/DDD_Aggregate.html">Read more about DDD Aggregates</a></p>
+<h3 id="entity"><a class="xref" href="FunctionalDdd.Entity-1.html">Entity</a></h3>
+<p>A domain object that has a unique identity that runs through time and different representations. Two entities with the same identity are considered the same, even if their attributes differ.</p>
+<h3 id="valueobject"><a class="xref" href="FunctionalDdd.ValueObject.html">ValueObject</a></h3>
+<p>A value object is an object that represents a descriptive aspect of the domain with no conceptual identity. It is a small, simple object that encapsulates a concept from your problem domain. Unlike an aggregate, a value object does not have a unique identity and is immutable. Value objects support and enrich the ubiquitous language of your domain.</p>
+<p><strong>Key characteristics:</strong> Immutability, equality by value, no identity</p>
+<hr>
+<h2 id="integration-packages">Integration Packages</h2>
+<h3 id="aspnet-core-integration">ASP.NET Core Integration</h3>
+<h4 id="actionresult-extensions"><a class="xref" href="FunctionalDdd.ActionResultExtensions.html">ActionResult Extensions</a></h4>
+<p>Convert <code>Result&lt;T&gt;</code> to ASP.NET Core action results for MVC controllers.</p>
+<p><strong>Features:</strong> Automatic status code mapping, Problem Details (RFC 7807) format, field-level validation errors</p>
+<h4 id="httpresult-extensions"><a class="xref" href="FunctionalDdd.HttpResultExtensions.html">HttpResult Extensions</a></h4>
+<p>Convert <code>Result&lt;T&gt;</code> to <code>IResult</code> for Minimal API endpoints.</p>
+<p><strong>Features:</strong> Fluent error matching, pagination support, Unit type handling (204 No Content)</p>
+<h3 id="http-client-integration">HTTP Client Integration</h3>
+<h4 id="httpresponseextensions"><a class="xref" href="FunctionalDdd.HttpResponseExtensions.html">HttpResponseExtensions</a></h4>
+<p>Extension methods for <code>HttpResponseMessage</code> that enable functional HTTP communication with Result types.</p>
+<p><strong>Key methods:</strong></p>
+<ul>
+<li><code>HandleNotFound</code> / <code>HandleUnauthorized</code> / <code>HandleForbidden</code> / <code>HandleConflict</code> - Handle specific status codes</li>
+<li><code>HandleClientError</code> / <code>HandleServerError</code> - Handle error ranges (4xx, 5xx)</li>
+<li><code>EnsureSuccess</code> - Functional alternative to <code>EnsureSuccessStatusCode()</code></li>
+<li><code>ReadResultFromJsonAsync</code> - Deserialize JSON to <code>Result&lt;T&gt;</code></li>
+<li><code>ReadResultMaybeFromJsonAsync</code> - Deserialize JSON to <code>Result&lt;Maybe&lt;T&gt;&gt;</code></li>
+</ul>
+<h3 id="fluentvalidation-integration">FluentValidation Integration</h3>
+<h4 id="fluentvalidation-extensions"><a class="xref" href="FunctionalDdd.FluentValidationResultExtensions.html">FluentValidation Extensions</a></h4>
+<p>Convert FluentValidation results to <code>Result&lt;T&gt;</code> for seamless integration with Railway-Oriented Programming.</p>
+<p><strong>Features:</strong> Automatic <code>ValidationError</code> creation, field-level error mapping, async validation support</p>
+<hr>
+<h2 id="common-value-objects">Common Value Objects</h2>
+<h3 id="emailaddress">EmailAddress</h3>
+<p>A validated email address value object. Ensures email format correctness at construction.</p>
+<p><strong>Type:</strong> <code>FunctionalDdd.EmailAddress</code></p>
+<h3 id="requiredstringtself">RequiredString&lt;TSelf&gt;</h3>
+<p>A non-null, non-empty string value object. Prevents primitive obsession for required text fields.</p>
+<p><strong>Type:</strong> <code>FunctionalDdd.RequiredString&lt;TSelf&gt;</code></p>
+<h3 id="requiredguidtself">RequiredGuid&lt;TSelf&gt;</h3>
+<p>A validated GUID value object that cannot be empty (Guid.Empty).</p>
+<p><strong>Type:</strong> <code>FunctionalDdd.RequiredGuid&lt;TSelf&gt;</code></p>
+<h3 id="scalarvalueobjecttself-t">ScalarValueObject&lt;TSelf, T&gt;</h3>
+<p>Base class for creating custom value objects that wrap a single primitive value.</p>
+<p><strong>Type:</strong> <code>FunctionalDdd.ScalarValueObject&lt;TSelf, T&gt;</code></p>
+<p><strong>Common examples:</strong> <code>FirstName</code>, <code>LastName</code>, <code>OrderId</code>, <code>UserId</code>, <code>ProductCode</code></p>
+<hr>
+<h2 id="observability">Observability</h2>
+<h3 id="opentelemetry-tracing">OpenTelemetry Tracing</h3>
+<p>Built-in distributed tracing support for Railway-Oriented Programming operations.</p>
+<p><strong>Type:</strong> <code>FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions</code></p>
+<p><strong>Features:</strong></p>
+<ul>
+<li>Automatic span creation for <code>Bind</code>, <code>Map</code>, <code>Tap</code>, <code>Ensure</code> operations</li>
+<li>Error tracking and status codes</li>
+<li>Trace correlation across async operations</li>
+<li>Integration with Jaeger, Zipkin, Application Insights</li>
+</ul>
+<hr>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><strong>Get Started:</strong> Read the <a href="../articles/intro.html">Introduction</a> guide</li>
+<li><strong>Learn Basics:</strong> Explore <a href="../articles/basics.html">Core Concepts</a></li>
+<li><strong>Integration:</strong> See <a href="../articles/integration-aspnet.html">ASP.NET Core</a>, <a href="../articles/integration-http.html">HTTP Client</a>, and <a href="../articles/integration-fluentvalidation.html">FluentValidation</a> guides</li>
+<li><strong>Examples:</strong> Browse <a href="../articles/examples.html">Real-World Examples</a></li>
+</ul>
+<hr>
+<h2 id="package-reference">Package Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Description</th>
+<th>NuGet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FunctionalDdd.RailwayOrientedProgramming</td>
+<td>Core Result/Maybe types</td>
+<td><a href="https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming"><img src="https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg" alt="NuGet"></a></td>
+</tr>
+<tr>
+<td>FunctionalDdd.Asp</td>
+<td>ASP.NET Core integration</td>
+<td><a href="https://www.nuget.org/packages/FunctionalDdd.Asp"><img src="https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg" alt="NuGet"></a></td>
+</tr>
+<tr>
+<td>FunctionalDdd.Http</td>
+<td>HTTP client extensions</td>
+<td><a href="https://www.nuget.org/packages/FunctionalDdd.Http"><img src="https://img.shields.io/nuget/v/FunctionalDdd.Http.svg" alt="NuGet"></a></td>
+</tr>
+<tr>
+<td>FunctionalDdd.FluentValidation</td>
+<td>FluentValidation integration</td>
+<td><a href="https://www.nuget.org/packages/FunctionalDdd.FluentValidation"><img src="https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg" alt="NuGet"></a></td>
+</tr>
+<tr>
+<td>FunctionalDdd.PrimitiveValueObjects</td>
+<td>Reusable value objects</td>
+<td><a href="https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects"><img src="https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg" alt="NuGet"></a></td>
+</tr>
+<tr>
+<td>FunctionalDdd.DomainDrivenDesign</td>
+<td>DDD building blocks</td>
+<td><a href="https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign"><img src="https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg" alt="NuGet"></a></td>
+</tr>
+</tbody>
+</table>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/api/index.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

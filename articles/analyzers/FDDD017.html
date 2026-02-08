@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>FDDD017: Don&#39;t compare Result or Maybe to null </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="FDDD017: Don&#39;t compare Result or Maybe to null ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD017.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fddd017-dont-compare-result-or-maybe-to-null">FDDD017: Don't compare Result or Maybe to null</h1>
+
+<h2 id="cause">Cause</h2>
+<p>Comparing a <code>Result&lt;T&gt;</code> or <code>Maybe&lt;T&gt;</code> value to <code>null</code> using <code>==</code>, <code>!=</code>, <code>is null</code>, or <code>is not null</code>.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p><code>Result&lt;T&gt;</code> and <code>Maybe&lt;T&gt;</code> are <strong>structs</strong> (value types), not classes. They cannot be null. Comparing them to null:</p>
+<ul>
+<li><strong>Always produces a compile error</strong> (CS0019 or CS9135)</li>
+<li><strong>Indicates a misunderstanding</strong> of how these types work</li>
+<li><strong>Should use proper state checks</strong> instead</li>
+</ul>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<p>Use the appropriate state-checking properties:</p>
+<h3 id="for-result">For Result<t></t></h3>
+<pre><code class="lang-csharp">// ❌ Bad - Result is a struct, can't be null
+if (result == null) { }
+if (result is null) { }
+if (result != null) { }
+if (result is not null) { }
+
+// ✅ Good - Use state properties
+if (result.IsSuccess) { }
+if (result.IsFailure) { }
+</code></pre>
+<h3 id="for-maybe">For Maybe<t></t></h3>
+<pre><code class="lang-csharp">// ❌ Bad - Maybe is a struct, can't be null
+if (maybe == null) { }
+if (maybe is null) { }
+
+// ✅ Good - Use state properties
+if (maybe.HasValue) { }
+if (maybe.HasNoValue) { }
+</code></pre>
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-checking-result-success">Example 1: Checking Result Success</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Compiler error + wrong pattern
+public IActionResult Get(Guid id)
+{
+    var result = GetCustomer(id);
+    if (result == null)  // CS0019: Operator '==' cannot be applied
+        return NotFound();
+    return Ok(result.Value);
+}
+
+// ✅ Good
+public IActionResult Get(Guid id)
+{
+    var result = GetCustomer(id);
+    if (result.IsFailure)
+        return result.Error.ToHttpResult();
+    return Ok(result.Value);
+}
+</code></pre>
+<h3 id="example-2-checking-maybe-value">Example 2: Checking Maybe Value</h3>
+<pre><code class="lang-csharp">// ❌ Bad
+public string GetDisplayName(Maybe&lt;User&gt; maybeUser)
+{
+    if (maybeUser is null)  // Compiler error
+        return &quot;Guest&quot;;
+    return maybeUser.Value.Name;
+}
+
+// ✅ Good
+public string GetDisplayName(Maybe&lt;User&gt; maybeUser)
+{
+    if (maybeUser.HasNoValue)
+        return &quot;Guest&quot;;
+    return maybeUser.Value.Name;
+}
+
+// ✅ Better - Use Match
+public string GetDisplayName(Maybe&lt;User&gt; maybeUser) =&gt;
+    maybeUser.Match(
+        onValue: user =&gt; user.Name,
+        onNoValue: () =&gt; &quot;Guest&quot;);
+</code></pre>
+<h3 id="example-3-pattern-matching">Example 3: Pattern Matching</h3>
+<pre><code class="lang-csharp">// ❌ Bad - Wrong pattern
+var message = result is not null ? &quot;Has value&quot; : &quot;No value&quot;;
+
+// ✅ Good
+var message = result.IsSuccess ? &quot;Success&quot; : &quot;Failure&quot;;
+
+// ✅ Better - Use Match
+var message = result.Match(
+    onSuccess: _ =&gt; &quot;Success&quot;,
+    onFailure: _ =&gt; &quot;Failure&quot;);
+</code></pre>
+<h2 id="why-structs-cant-be-null">Why Structs Can't Be Null</h2>
+<p>In C#, structs are value types that:</p>
+<ul>
+<li>Are stored on the stack (or inline in other objects)</li>
+<li>Always have a value (default is <code>default(T)</code>, not <code>null</code>)</li>
+<li>Cannot be assigned <code>null</code> without using <code>Nullable&lt;T&gt;</code> (<code>T?</code>)</li>
+</ul>
+<p><code>Result&lt;T&gt;</code> and <code>Maybe&lt;T&gt;</code> are intentionally designed as structs to:</p>
+<ul>
+<li>Avoid null reference exceptions</li>
+<li>Provide better performance (no heap allocation)</li>
+<li>Force explicit handling of success/failure states</li>
+</ul>
+<h2 id="related-rules">Related Rules</h2>
+<ul>
+<li><a href="FDDD003.html">FDDD003</a> - Unsafe access to Result.Value</li>
+<li><a href="FDDD006.html">FDDD006</a> - Unsafe access to Maybe.Value</li>
+</ul>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-types">C# Value Types</a></li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/articles/analyzers/FDDD017.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Functional Programming with Domain-Driven Design </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Functional Programming with Domain-Driven Design ">
+      
+      
+      <link rel="icon" href="favicon.ico">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/index.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="index.html">
+            <img id="logo" class="svg" src="/images/fddd.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+
+      <div class="content">
+        <div class="actionbar">
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="functional-programming-with-domain-driven-design">Functional Programming with Domain-Driven Design</h1>
+
+<p><strong>Build robust, type-safe applications</strong> with Railway-Oriented Programming and Domain-Driven Design—combining the best of functional programming with clean architecture principles.</p>
+<pre><code class="lang-mermaid">graph TB
+    subgraph Input[&quot;What You Write&quot;]
+        FP[Functional&lt;br/&gt;Programming]
+        RT[Result Types&lt;br/&gt;Result&amp;lt;T&amp;gt; &amp; Maybe&amp;lt;T&amp;gt;]
+        DDD_IN[Domain-Driven&lt;br/&gt;Design]
+        VO[Value Objects&lt;br/&gt;FirstName, EmailAddress]
+    end
+    
+    subgraph Pattern[&quot;How You Write It&quot;]
+        ROP[Railway-Oriented&lt;br/&gt;Programming]
+        DDD_PAT[Domain-Driven&lt;br/&gt;Design&lt;br/&gt;Patterns]
+    end
+    
+    subgraph Output[&quot;What You Get&quot;]
+        READ[?? Readable Code&lt;br/&gt;&lt;i&gt;60% less boilerplate&lt;/i&gt;]
+        SUCC[? Succinct Code&lt;br/&gt;&lt;i&gt;Reads like English&lt;/i&gt;]
+        SAFE[?? Type-Safe Code&lt;br/&gt;&lt;i&gt;Compiler-enforced&lt;/i&gt;]
+    end
+    
+    FP --&gt; ROP
+    RT --&gt; ROP
+    DDD_IN --&gt; DDD_PAT
+    VO --&gt; DDD_PAT
+    
+    ROP --&gt; READ
+    ROP --&gt; SUCC
+    DDD_PAT --&gt; SAFE
+    
+    style Input fill:#F0F0F0
+    style Pattern fill:#FFE1F5
+    style Output fill:#E8F5E9
+    
+    style FP fill:#E1F5FF
+    style RT fill:#E1F5FF
+    style DDD_IN fill:#FFF4E1
+    style VO fill:#FFF4E1
+    
+    style READ fill:#90EE90
+    style SUCC fill:#90EE90
+    style SAFE fill:#90EE90
+</code></pre>
+<h2 id="why-this-library">Why This Library?</h2>
+<p>Traditional error handling creates <strong>nested if-statements</strong> and <strong>scattered error checks</strong> that make code hard to read and maintain. This library provides a better way: <strong>write less code that reads like English</strong>.</p>
+<h3 id="before-traditional-approach-">Before: Traditional Approach ?</h3>
+<pre><code class="lang-csharp">// 20 lines of repetitive error checking - easy to miss a check!
+var firstName = ValidateFirstName(input.FirstName);
+if (firstName == null) return BadRequest(&quot;Invalid first name&quot;);
+
+var lastName = ValidateLastName(input.LastName);
+if (lastName == null) return BadRequest(&quot;Invalid last name&quot;);
+
+var email = ValidateEmail(input.Email);
+if (email == null) return BadRequest(&quot;Invalid email&quot;);
+
+var user = CreateUser(firstName, lastName, email);
+if (user == null) return BadRequest(&quot;Cannot create user&quot;);
+
+if (!_repository.EmailExists(email))
+{
+    return Conflict(&quot;Email already registered&quot;);
+}
+
+_repository.Save(user);
+_emailService.SendWelcome(user.Email);
+
+return Ok(user);
+</code></pre>
+<h3 id="after-railway-oriented-programming-">After: Railway-Oriented Programming ?</h3>
+<pre><code class="lang-csharp">// 8 lines - reads like a story: validate ? create ? check ? save ? notify
+return FirstName.TryCreate(input.FirstName)
+    .Combine(LastName.TryCreate(input.LastName))
+    .Combine(EmailAddress.TryCreate(input.Email))
+    .Bind((first, last, email) =&gt; User.TryCreate(first, last, email))
+    .Ensure(user =&gt; !_repository.EmailExists(user.Email), Error.Conflict(&quot;Email registered&quot;))
+    .Tap(user =&gt; _repository.Save(user))
+    .Tap(user =&gt; _emailService.SendWelcome(user.Email))
+    .Match(onSuccess: user =&gt; Ok(user), onFailure: error =&gt; BadRequest(error.Detail));
+</code></pre>
+<p><strong>Result:</strong></p>
+<ul>
+<li>🎯 <strong>60% less code</strong> - 8 lines vs 20 lines</li>
+<li>📖 <strong>Reads like English</strong> - &quot;Create name, combine with email, create user, ensure unique, save, notify&quot;</li>
+<li>🔍 <strong>Zero hidden logic</strong> - Every step visible in the chain</li>
+<li>🛡️ <strong>Impossible to forget</strong> - Can't skip error handling steps</li>
+<li>⚡ <strong>Zero performance cost</strong> - Only 11-16 nanoseconds overhead</li>
+</ul>
+<hr>
+<h2 id="core-types">Core Types</h2>
+<h3 id="resultt--success-or-failure">Result&lt;T&gt; — Success or Failure</h3>
+<p>The foundation of Railway-Oriented Programming. A <code>Result&lt;T&gt;</code> represents either a <strong>successful value</strong> or an <strong>error</strong>—never null, never ambiguous.</p>
+<pre><code class="lang-csharp">// Create results
+Result&lt;User&gt; success = user;                           // Implicit conversion
+Result&lt;User&gt; failure = Error.NotFound(&quot;User not found&quot;); // From error
+
+// Safe access
+if (result.TryGetValue(out var user))
+    Console.WriteLine(user.Name);
+
+// Pattern matching
+var message = result.Match(
+    onSuccess: user =&gt; $&quot;Hello, {user.Name}!&quot;,
+    onFailure: error =&gt; $&quot;Error: {error.Detail}&quot;
+);
+</code></pre>
+<h3 id="maybet--optional-values">Maybe&lt;T&gt; — Optional Values</h3>
+<p>Represents a value that <strong>may or may not exist</strong>—eliminating null reference exceptions.</p>
+<pre><code class="lang-csharp">Maybe&lt;string&gt; name = &quot;John&quot;;           // Has value
+Maybe&lt;string&gt; noName = Maybe.None&lt;string&gt;();  // No value
+
+string greeting = name.GetValueOrDefault(&quot;Guest&quot;);  // &quot;John&quot;
+if (name.TryGetValue(out var value))
+    Console.WriteLine(value);
+</code></pre>
+<hr>
+<h2 id="domain-driven-design-building-blocks">Domain-Driven Design Building Blocks</h2>
+<h3 id="value-objects--immutable-validated-types">Value Objects — Immutable, Validated Types</h3>
+<p>Replace primitive strings and ints with <strong>type-safe domain concepts</strong>. The compiler catches mistakes that runtime never would.</p>
+<pre><code class="lang-csharp">// Define once with the source generator
+public partial class FirstName : RequiredString { }
+public partial class LastName : RequiredString { }
+
+// Compiler prevents parameter mix-ups
+CreateUser(lastName, firstName);  // ❌ Compile error!
+CreateUser(firstName, lastName);  // ✅ Correct
+</code></pre>
+<h3 id="entities--identity-based-objects">Entities — Identity-Based Objects</h3>
+<p>Objects with a <strong>unique identity</strong> that persists through state changes.</p>
+<pre><code class="lang-csharp">public class Customer : Entity&lt;CustomerId&gt;
+{
+    public FirstName Name { get; private set; }
+    
+    public Result&lt;Customer&gt; UpdateName(FirstName newName) =&gt;
+        newName.ToResult()
+            .Tap(name =&gt; Name = name)
+            .Map(_ =&gt; this);
+}
+</code></pre>
+<h3 id="aggregates--consistency-boundaries">Aggregates — Consistency Boundaries</h3>
+<p><strong>Cluster related objects</strong> and enforce business rules. Aggregates raise <strong>domain events</strong> to communicate changes.</p>
+<pre><code class="lang-csharp">public class Order : Aggregate&lt;OrderId&gt;
+{
+    public Result&lt;Order&gt; Submit() =&gt;
+        this.ToResult()
+            .Ensure(_ =&gt; Lines.Any(), Error.Validation(&quot;Order must have items&quot;))
+            .Tap(_ =&gt; {
+                Status = OrderStatus.Submitted;
+                DomainEvents.Add(new OrderSubmittedEvent(Id));
+            });
+}
+</code></pre>
+<h3 id="requiredenum--type-safe-enumerations-with-behavior">RequiredEnum — Type-Safe Enumerations with Behavior</h3>
+<p>Replace C# enums with <strong>type-safe enumerations</strong> that encapsulate behavior and prevent invalid values. Name is auto-derived from the field name (pure DDD).</p>
+<pre><code class="lang-csharp">public partial class OrderState : RequiredEnum&lt;OrderState&gt;
+{
+    // Pure domain - Name auto-derived from field name
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    public static readonly OrderState Delivered = new();
+    
+    private OrderState() { }
+}
+
+// Usage - Name is &quot;Draft&quot;, &quot;Confirmed&quot;, etc.
+var result = OrderState.TryCreate(&quot;Draft&quot;);  // Result&lt;OrderState&gt;
+
+if (order.State.Is(OrderState.Draft, OrderState.Confirmed))
+    order.Cancel();
+</code></pre>
+<hr>
+<h2 id="rich-error-types">Rich Error Types</h2>
+<p>Structured errors that map naturally to HTTP status codes and enable <strong>precise error handling</strong>.</p>
+<pre><code class="lang-csharp">// Built-in error types
+Error.Validation(&quot;Email is required&quot;, &quot;email&quot;)  // 400 Bad Request
+Error.NotFound(&quot;User not found&quot;)                // 404 Not Found  
+Error.Conflict(&quot;Email already exists&quot;)          // 409 Conflict
+Error.Unauthorized(&quot;Please login&quot;)              // 401 Unauthorized
+Error.Forbidden(&quot;Access denied&quot;)                // 403 Forbidden
+Error.Domain(&quot;Insufficient balance&quot;)            // 422 Unprocessable
+
+// Pattern match on error types
+result.MatchError(
+    onValidation: err =&gt; BadRequest(err.FieldErrors),
+    onNotFound: err =&gt; NotFound(err.Detail),
+    onConflict: err =&gt; Conflict(err.Detail),
+    onSuccess: order =&gt; Ok(order)
+);
+</code></pre>
+<hr>
+<h2 id="key-operations-at-a-glance">Key Operations at a Glance</h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Track</th>
+<th>Purpose</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bind</strong></td>
+<td>✅ Success</td>
+<td>Chain operations that can fail</td>
+<td><code>.Bind(user =&gt; ValidateAge(user))</code></td>
+</tr>
+<tr>
+<td><strong>Map</strong></td>
+<td>✅ Success</td>
+<td>Transform success values</td>
+<td><code>.Map(user =&gt; user.Name)</code></td>
+</tr>
+<tr>
+<td><strong>Tap</strong></td>
+<td>✅ Success</td>
+<td>Side effects (logging, saving)</td>
+<td><code>.Tap(user =&gt; _repo.Save(user))</code></td>
+</tr>
+<tr>
+<td><strong>TapOnFailure</strong></td>
+<td>❌ Failure</td>
+<td>Side effects on errors</td>
+<td><code>.TapOnFailure(err =&gt; _logger.LogError(err))</code></td>
+</tr>
+<tr>
+<td><strong>MapOnFailure</strong></td>
+<td>❌ Failure</td>
+<td>Transform errors</td>
+<td><code>.MapOnFailure(err =&gt; AddContext(err))</code></td>
+</tr>
+<tr>
+<td><strong>RecoverOnFailure</strong></td>
+<td>❌ Failure</td>
+<td>Recover from errors</td>
+<td><code>.RecoverOnFailure(() =&gt; GetDefault())</code></td>
+</tr>
+<tr>
+<td><strong>Ensure</strong></td>
+<td>✅❌ Both</td>
+<td>Validate conditions</td>
+<td><code>.Ensure(u =&gt; u.Age &gt;= 18, Error.Validation(&quot;Too young&quot;))</code></td>
+</tr>
+<tr>
+<td><strong>Combine</strong></td>
+<td>🔀 Both</td>
+<td>Merge multiple results</td>
+<td><code>.Combine(lastName).Combine(email)</code></td>
+</tr>
+<tr>
+<td><strong>Match</strong></td>
+<td>🔀 Terminal</td>
+<td>Handle success/failure</td>
+<td><code>.Match(onSuccess: Ok, onFailure: BadRequest)</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Track Legend:</strong></p>
+<ul>
+<li>✅ <strong>Success</strong> - Only runs when result is successful</li>
+<li>❌ <strong>Failure</strong> - Only runs when result is a failure</li>
+<li>🔀 <strong>Both/Terminal</strong> - Runs on both tracks or handles both</li>
+</ul>
+<p><strong>Naming Pattern:</strong> Success track operations have <strong>no suffix</strong>. Failure track operations have <strong><code>OnFailure</code> suffix</strong>.</p>
+<p>All operations have <strong>async variants</strong> (<code>BindAsync</code>, <code>MapAsync</code>, <code>TapOnFailureAsync</code>, etc.) for seamless async/await support.</p>
+<hr>
+<h2 id="core-concepts">Core Concepts</h2>
+<h3 id="-functional-programming">?? Functional Programming</h3>
+<p><strong>Pure functions</strong> take inputs and produce outputs without side effects, making code:</p>
+<ul>
+<li><strong>Predictable</strong> - Same inputs always produce same outputs</li>
+<li><strong>Testable</strong> - No hidden dependencies or state</li>
+<li><strong>Composable</strong> - Functions chain together naturally</li>
+</ul>
+<p><strong>Learn more:</strong> <a href="https://enterprisecraftsmanship.com/ps-func">Applying Functional Principles in C# (Pluralsight)</a></p>
+<h3 id="-railway-oriented-programming">?? Railway-Oriented Programming</h3>
+<p><strong>The key insight:</strong> Your code should read like a story, not a maze of if-statements.</p>
+<p>Railway-Oriented Programming uses a <strong>railway track metaphor</strong>: operations flow along the success track, automatically switching to the error track when something fails. <strong>You write what should happen, not what could go wrong.</strong></p>
+<pre><code class="lang-mermaid">graph LR
+    A[Input] --&gt; B{Validate}
+    B --&gt;|Success| C{Transform}
+    B --&gt;|Failure| E[Error Track]
+    C --&gt;|Success| D{Save}
+    C --&gt;|Failure| E
+    D --&gt;|Success| F[Success ?]
+    D --&gt;|Failure| E
+    E --&gt; G[Handle Error]
+    
+    style F fill:#90EE90
+    style E fill:#FFD700
+    style G fill:#FFB6C6
+</code></pre>
+<p><strong>Key benefit:</strong> Code reads top-to-bottom like a recipe:</p>
+<ol>
+<li>Validate input</li>
+<li>Transform data</li>
+<li>Save to database</li>
+<li>Return result</li>
+</ol>
+<p><strong>If any step fails, the rest are skipped automatically.</strong> No <code>if (error) return</code> after every line!</p>
+<h3 id="-domain-driven-design">??? Domain-Driven Design</h3>
+<p>Model your <strong>business domain</strong> with rich types that enforce rules at compile time:</p>
+<ul>
+<li><strong>Value Objects</strong> - Immutable, validated primitives (<code>EmailAddress</code>, <code>Money</code>)</li>
+<li><strong>Entities</strong> - Objects with identity (<code>Customer</code>, <code>Order</code>)</li>
+<li><strong>Aggregates</strong> - Consistency boundaries with domain events</li>
+<li><strong>Enum Value Objects</strong> - Type-safe enumerations with behavior (<code>OrderState</code>, <code>PaymentMethod</code>)</li>
+</ul>
+<p><strong>Learn more:</strong> <a href="https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents">Domain-Driven Design in Practice (Pluralsight)</a></p>
+<hr>
+<h2 id="get-started">Get Started</h2>
+<pre><code class="lang-bash"># Core library - Railway Oriented Programming
+dotnet add package FunctionalDdd.RailwayOrientedProgramming
+
+# Domain-Driven Design - Entities, Aggregates, Value Objects, Enum Value Objects
+dotnet add package FunctionalDdd.DomainDrivenDesign
+
+# ASP.NET Core integration - ToActionResult, ToHttpResult
+dotnet add package FunctionalDdd.Asp
+
+# Value objects with source generator - RequiredString, etc.
+dotnet add package FunctionalDdd.PrimitiveValueObjects
+dotnet add package FunctionalDdd.PrimitiveValueObjectGenerator
+</code></pre>
+<p><strong>Ready to dive deeper?</strong> Check out the <a href="articles/intro.html">Introduction</a> or browse the <a href="api/index.html">API Documentation</a>.</p>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/FunctionalDDD/blob/main/docs/docfx_project/index.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
