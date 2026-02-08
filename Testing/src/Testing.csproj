@@ -11,7 +11,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsAotCompatible>true</IsAotCompatible>
     
-    <PackageId>FunctionalDDD.Testing</PackageId>
+    <PackageId>FunctionalDdd.Testing</PackageId>
     <Description>Testing utilities and assertions for FunctionalDDD - FluentAssertions extensions, test builders, and fake implementations for Railway-Oriented Programming</Description>
     <PackageTags>functional-programming;testing;assertions;fluent-assertions;ddd;railway-oriented-programming;result;maybe;test-utilities</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
