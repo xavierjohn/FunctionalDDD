@@ -94,7 +94,7 @@ public sealed class AsyncLambdaWithSyncMethodAnalyzer : DiagnosticAnalyzer
                 delegateType.DelegateInvokeMethod != null)
             {
                 var returnType = delegateType.DelegateInvokeMethod.ReturnType;
-                if (IsTaskType(returnType))
+                if (returnType.IsAnyTaskType())
                     return true;
             }
         }
@@ -103,20 +103,10 @@ public sealed class AsyncLambdaWithSyncMethodAnalyzer : DiagnosticAnalyzer
         if (expression is IdentifierNameSyntax or MemberAccessExpressionSyntax)
         {
             var symbolInfo = semanticModel.GetSymbolInfo(expression);
-            if (symbolInfo.Symbol is IMethodSymbol method && IsTaskType(method.ReturnType))
+            if (symbolInfo.Symbol is IMethodSymbol method && method.ReturnType.IsAnyTaskType())
                 return true;
         }
 
         return false;
-    }
-
-    private static bool IsTaskType(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol is not INamedTypeSymbol namedType)
-            return false;
-
-        var fullName = namedType.ToDisplayString();
-        return fullName.StartsWith("System.Threading.Tasks.Task", System.StringComparison.Ordinal) ||
-               fullName.StartsWith("System.Threading.Tasks.ValueTask", System.StringComparison.Ordinal);
     }
 }

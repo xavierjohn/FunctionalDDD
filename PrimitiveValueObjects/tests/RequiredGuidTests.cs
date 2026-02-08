@@ -25,6 +25,18 @@ public class RequiredGuidTests
     }
 
     [Fact]
+    public void TryCreate_with_custom_fieldName()
+    {
+        // Act
+        var result = EmployeeId.TryCreate(default(Guid), "myField");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var validation = (ValidationError)result.Error;
+        validation.FieldErrors[0].FieldName.Should().Be("myField");
+    }
+
+    [Fact]
     public void Can_create_RequiredGuid_from_Guid()
     {
         var guid = Guid.NewGuid();
@@ -74,6 +86,7 @@ public class RequiredGuidTests
             {
                 (emp1 == emp2).Should().BeTrue();
                 emp1.Equals(emp2).Should().BeTrue();
+                emp1.GetHashCode().Should().Be(emp2.GetHashCode());
             })
             .IsSuccess.Should().BeTrue();
     }

@@ -234,7 +234,7 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action action)
     {
-        Result<TValue> result = await resultTask;
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
 
@@ -247,7 +247,7 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action<TValue> action)
     {
-        Result<TValue> result = await resultTask;
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
 }

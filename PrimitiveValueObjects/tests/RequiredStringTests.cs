@@ -44,6 +44,7 @@ public class RequiredStringTests
             {
                 (tr1 == tr2).Should().BeTrue();
                 tr1.Equals(tr2).Should().BeTrue();
+                tr1.GetHashCode().Should().Be(tr2.GetHashCode());
             })
             .IsSuccess.Should().BeTrue();
 

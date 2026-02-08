@@ -59,6 +59,20 @@ internal static class TypeSymbolExtensions
     }
 
     /// <summary>
+    /// Checks if the type is Task, Task&lt;T&gt;, ValueTask, or ValueTask&lt;T&gt; from System.Threading.Tasks.
+    /// Unlike <see cref="IsTaskType"/>, this also matches non-generic Task and ValueTask.
+    /// </summary>
+    internal static bool IsAnyTaskType(this ITypeSymbol? typeSymbol)
+    {
+        if (typeSymbol is not INamedTypeSymbol namedType)
+            return false;
+
+        var fullName = namedType.ToDisplayString();
+        return fullName.StartsWith("System.Threading.Tasks.Task", System.StringComparison.Ordinal) ||
+               fullName.StartsWith("System.Threading.Tasks.ValueTask", System.StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Checks if the type is Task&lt;Result&lt;T&gt;&gt; or ValueTask&lt;Result&lt;T&gt;&gt;.
     /// </summary>
     internal static bool IsTaskWrappingResult(this ITypeSymbol? typeSymbol)

@@ -61,7 +61,7 @@ public class ReadResultFromJsonTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Detail.Should().Be("Http Response is in a failed state for value camelcasePerson. Status code: BadGateway");
+        result.Error.Detail.Should().Be("HTTP response is in a failed state for value camelcasePerson. Status code: BadGateway.");
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class ReadResultFromJsonTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<UnexpectedError>();
-        result.Error.Detail.Should().Be("Http Response was null for value camelcasePerson.");
+        result.Error.Detail.Should().Be("HTTP response was null for value camelcasePerson.");
     }
 
     [Theory]

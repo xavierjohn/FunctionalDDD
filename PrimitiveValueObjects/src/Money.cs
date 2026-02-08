@@ -42,10 +42,12 @@ public class Money : ValueObject
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Money) + '.' + nameof(TryCreate));
 
-        var field = fieldName ?? "amount";
+        var field = fieldName is not null
+            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+            : "amount";
 
         if (amount < 0)
-            return Result.Failure<Money>(Error.Validation("Amount cannot be negative", field));
+            return Result.Failure<Money>(Error.Validation("Amount cannot be negative.", field));
 
         return CurrencyCode.TryCreate(currencyCode)
             .Map(currency => new Money(Math.Round(amount, GetDecimalPlaces(currency), MidpointRounding.AwayFromZero), currency));
@@ -79,7 +81,7 @@ public class Money : ValueObject
     {
         if (!Currency.Equals(other.Currency))
             return Result.Failure<Money>(
-                Error.Validation($"Cannot add {other.Currency} to {Currency}", "currency"));
+                Error.Validation($"Cannot add {other.Currency} to {Currency}.", "currency"));
 
         return TryCreate(Amount + other.Amount, Currency);
     }
@@ -91,7 +93,7 @@ public class Money : ValueObject
     {
         if (!Currency.Equals(other.Currency))
             return Result.Failure<Money>(
-                Error.Validation($"Cannot subtract {other.Currency} from {Currency}", "currency"));
+                Error.Validation($"Cannot subtract {other.Currency} from {Currency}.", "currency"));
 
         return TryCreate(Amount - other.Amount, Currency);
     }
@@ -103,7 +105,7 @@ public class Money : ValueObject
     {
         if (multiplier < 0)
             return Result.Failure<Money>(
-                Error.Validation("Multiplier cannot be negative", nameof(multiplier)));
+                Error.Validation("Multiplier cannot be negative.", nameof(multiplier)));
 
         return TryCreate(Amount * multiplier, Currency);
     }
@@ -115,7 +117,7 @@ public class Money : ValueObject
     {
         if (quantity < 0)
             return Result.Failure<Money>(
-                Error.Validation("Quantity cannot be negative", nameof(quantity)));
+                Error.Validation("Quantity cannot be negative.", nameof(quantity)));
 
         return TryCreate(Amount * quantity, Currency);
     }
@@ -127,7 +129,7 @@ public class Money : ValueObject
     {
         if (divisor <= 0)
             return Result.Failure<Money>(
-                Error.Validation("Divisor must be positive", nameof(divisor)));
+                Error.Validation("Divisor must be positive.", nameof(divisor)));
 
         return TryCreate(Amount / divisor, Currency);
     }
@@ -139,7 +141,7 @@ public class Money : ValueObject
     {
         if (divisor <= 0)
             return Result.Failure<Money>(
-                Error.Validation("Divisor must be positive", nameof(divisor)));
+                Error.Validation("Divisor must be positive.", nameof(divisor)));
 
         return TryCreate(Amount / divisor, Currency);
     }
@@ -153,10 +155,10 @@ public class Money : ValueObject
     public Result<Money[]> Allocate(params int[] ratios)
     {
         if (ratios.Length == 0)
-            return Result.Failure<Money[]>(Error.Validation("At least one ratio required", nameof(ratios)));
+            return Result.Failure<Money[]>(Error.Validation("At least one ratio required.", nameof(ratios)));
 
         if (ratios.Any(r => r <= 0))
-            return Result.Failure<Money[]>(Error.Validation("All ratios must be positive", nameof(ratios)));
+            return Result.Failure<Money[]>(Error.Validation("All ratios must be positive.", nameof(ratios)));
 
         var decimalPlaces = GetDecimalPlaces(Currency);
         var multiplier = (decimal)Math.Pow(10, decimalPlaces);

@@ -28,9 +28,14 @@ public static class RecoverOnFailureExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
-        return func();
+        var output = func();
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -45,9 +50,14 @@ public static class RecoverOnFailureExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
-        return func(result.Error);
+        var output = func(result.Error);
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -63,11 +73,19 @@ public static class RecoverOnFailureExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (predicate(result.Error))
-            return func();
+        {
+            var output = func();
+            output.LogActivityStatus();
+            return output;
+        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -84,11 +102,19 @@ public static class RecoverOnFailureExtensions
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (predicate(result.Error))
-            return func(result.Error);
+        {
+            var output = func(result.Error);
+            output.LogActivityStatus();
+            return output;
+        }
 
+        result.LogActivityStatus();
         return result;
     }
 }
@@ -125,7 +151,7 @@ public static class RecoverOnFailureExtensionsAsync
     [RailwayTrack(TrackBehavior.Failure)]
     public static async Task<Result<T>> RecoverOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Result<T>> func)
     {
-        Result<T> result = await resultTask;
+        Result<T> result = await resultTask.ConfigureAwait(false);
         return result.RecoverOnFailure(func);
     }
 
@@ -141,9 +167,14 @@ public static class RecoverOnFailureExtensionsAsync
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
-        return await funcAsync().ConfigureAwait(false);
+        var output = await funcAsync().ConfigureAwait(false);
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -170,7 +201,7 @@ public static class RecoverOnFailureExtensionsAsync
     [RailwayTrack(TrackBehavior.Failure)]
     public static async Task<Result<T>> RecoverOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Error, Result<T>> func)
     {
-        Result<T> result = await resultTask;
+        Result<T> result = await resultTask.ConfigureAwait(false);
         return result.RecoverOnFailure(func);
     }
 
@@ -186,9 +217,14 @@ public static class RecoverOnFailureExtensionsAsync
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
-        return await funcAsync(result.Error).ConfigureAwait(false);
+        var output = await funcAsync(result.Error).ConfigureAwait(false);
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -217,7 +253,7 @@ public static class RecoverOnFailureExtensionsAsync
     [RailwayTrack(TrackBehavior.Failure)]
     public static async Task<Result<T>> RecoverOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Result<T>> func)
     {
-        Result<T> result = await resultTask;
+        Result<T> result = await resultTask.ConfigureAwait(false);
         return result.RecoverOnFailure(predicate, func);
     }
 
@@ -232,7 +268,7 @@ public static class RecoverOnFailureExtensionsAsync
     [RailwayTrack(TrackBehavior.Failure)]
     public static async Task<Result<T>> RecoverOnFailureAsync<T>(this Task<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, Result<T>> func)
     {
-        Result<T> result = await resultTask;
+        Result<T> result = await resultTask.ConfigureAwait(false);
         return result.RecoverOnFailure(predicate, func);
     }
 
@@ -249,11 +285,19 @@ public static class RecoverOnFailureExtensionsAsync
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (predicate(result.Error))
-            return await funcAsync().ConfigureAwait(false);
+        {
+            var output = await funcAsync().ConfigureAwait(false);
+            output.LogActivityStatus();
+            return output;
+        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -270,11 +314,19 @@ public static class RecoverOnFailureExtensionsAsync
     {
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (predicate(result.Error))
-            return await funcAsync(result.Error).ConfigureAwait(false);
+        {
+            var output = await funcAsync(result.Error).ConfigureAwait(false);
+            output.LogActivityStatus();
+            return output;
+        }
 
+        result.LogActivityStatus();
         return result;
     }
 
@@ -337,9 +389,14 @@ public static class RecoverOnFailureExtensionsAsync
         Result<T> result = await resultTask.ConfigureAwait(false);
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
-        return await funcAsync().ConfigureAwait(false);
+        var output = await funcAsync().ConfigureAwait(false);
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -369,9 +426,14 @@ public static class RecoverOnFailureExtensionsAsync
         Result<T> result = await resultTask.ConfigureAwait(false);
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
-        return await funcAsync(result.Error).ConfigureAwait(false);
+        var output = await funcAsync(result.Error).ConfigureAwait(false);
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -418,11 +480,49 @@ public static class RecoverOnFailureExtensionsAsync
         Result<T> result = await resultTask.ConfigureAwait(false);
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
         if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (predicate(result.Error))
-            return await funcAsync().ConfigureAwait(false);
+        {
+            var output = await funcAsync().ConfigureAwait(false);
+            output.LogActivityStatus();
+            return output;
+        }
 
+        result.LogActivityStatus();
+        return result;
+    }
+
+    /// <summary>
+    /// Asynchronously Recovers from a failed result by calling the given async function with the error if the predicate returns true.
+    /// </summary>
+    /// <typeparam name="T">Type of the result value.</typeparam>
+    /// <param name="resultTask">ValueTask containing the result to recover if it's a failure.</param>
+    /// <param name="predicate">The predicate to test the error.</param>
+    /// <param name="funcAsync">The async function that receives the error if the predicate is true.</param>
+    /// <returns>The original result if success or predicate is false; otherwise the result from the recovery function.</returns>
+    [RailwayTrack(TrackBehavior.Failure)]
+    public static async ValueTask<Result<T>> RecoverOnFailureAsync<T>(this ValueTask<Result<T>> resultTask, Func<Error, bool> predicate, Func<Error, ValueTask<Result<T>>> funcAsync)
+    {
+        Result<T> result = await resultTask.ConfigureAwait(false);
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(RecoverOnFailureExtensions.RecoverOnFailure));
+        if (result.IsSuccess)
+        {
+            result.LogActivityStatus();
+            return result;
+        }
+
+        if (predicate(result.Error))
+        {
+            var output = await funcAsync(result.Error).ConfigureAwait(false);
+            output.LogActivityStatus();
+            return output;
+        }
+
+        result.LogActivityStatus();
         return result;
     }
 }

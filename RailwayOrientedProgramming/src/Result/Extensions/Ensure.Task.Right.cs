@@ -1,94 +1,153 @@
 ﻿namespace FunctionalDdd;
 
-using FunctionalDdd;
-
+/// <summary>
+/// Async Ensure extensions where only the RIGHT (predicates) are async (Task), input is sync.
+/// </summary>
 public static partial class EnsureExtensionsAsync
 {
     /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+    /// Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Result<TOk> result, Func<Task<bool>> predicate, Error errorMessage)
+    /// <typeparam name="TValue">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The async predicate to test.</param>
+    /// <param name="error">The error to return if the predicate is false.</param>
+    /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<Task<bool>> predicate, Error error)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (!await predicate().ConfigureAwait(false))
-            return Result.Failure<TOk>(errorMessage);
+            return Result.Failure<TValue>(error);
 
+        result.LogActivityStatus();
         return result;
     }
 
     /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+    /// Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Result<TOk> result, Func<TOk, Task<bool>> predicate, Error errorMessage)
+    /// <typeparam name="TValue">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The async predicate to test the value.</param>
+    /// <param name="error">The error to return if the predicate is false.</param>
+    /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<bool>> predicate, Error error)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (!await predicate(result.Value).ConfigureAwait(false))
-            return Result.Failure<TOk>(errorMessage);
+            return Result.Failure<TValue>(error);
 
+        result.LogActivityStatus();
         return result;
     }
 
     /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+    /// Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Result<TOk> result, Func<TOk, Task<bool>> predicate, Func<TOk, Error> errorPredicate)
+    /// <typeparam name="TValue">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The async predicate to test the value.</param>
+    /// <param name="errorPredicate">The function that generates an error from the value.</param>
+    /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<bool>> predicate, Func<TValue, Error> errorPredicate)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (!await predicate(result.Value).ConfigureAwait(false))
-            return Result.Failure<TOk>(errorPredicate(result.Value));
+            return Result.Failure<TValue>(errorPredicate(result.Value));
 
+        result.LogActivityStatus();
         return result;
     }
 
     /// <summary>
-    ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+    /// Returns a new failure result if the predicate is false. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Result<TOk> result, Func<TOk, Task<bool>> predicate, Func<TOk, Task<Error>> errorPredicate)
+    /// <typeparam name="TValue">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The async predicate to test the value.</param>
+    /// <param name="errorPredicate">The async function that generates an error from the value.</param>
+    /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<bool>> predicate, Func<TValue, Task<Error>> errorPredicate)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         if (!await predicate(result.Value).ConfigureAwait(false))
-            return Result.Failure<TOk>(await errorPredicate(result.Value).ConfigureAwait(false));
+            return Result.Failure<TValue>(await errorPredicate(result.Value).ConfigureAwait(false));
 
+        result.LogActivityStatus();
         return result;
     }
 
     /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
+    /// Returns a new failure result if the predicate result is a failure. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Result<TOk> result, Func<Task<Result<TOk>>> predicate)
+    /// <typeparam name="TValue">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The async predicate function that returns a Result.</param>
+    /// <returns>The original result if both succeed; otherwise a failure.</returns>
+    public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<Task<Result<TValue>>> predicate)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         var predicateResult = await predicate().ConfigureAwait(false);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk>(predicateResult.Error);
+            return Result.Failure<TValue>(predicateResult.Error);
 
+        result.LogActivityStatus();
         return result;
     }
 
     /// <summary>
-    ///     Returns a new failure result if the predicate is a failure result. Otherwise returns the starting result.
+    /// Returns a new failure result if the predicate result is a failure. Otherwise returns the starting result.
     /// </summary>
-    public static async Task<Result<TOk>> EnsureAsync<TOk>(this Result<TOk> result, Func<TOk, Task<Result<TOk>>> predicate)
+    /// <typeparam name="TValue">Type of the result value.</typeparam>
+    /// <param name="result">The result to validate.</param>
+    /// <param name="predicate">The async predicate function that receives the value and returns a Result.</param>
+    /// <returns>The original result if both succeed; otherwise a failure.</returns>
+    public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<Result<TValue>>> predicate)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         if (result.IsFailure)
+        {
+            result.LogActivityStatus();
             return result;
+        }
 
         var predicateResult = await predicate(result.Value).ConfigureAwait(false);
 
         if (predicateResult.IsFailure)
-            return Result.Failure<TOk>(predicateResult.Error);
+            return Result.Failure<TValue>(predicateResult.Error);
 
+        result.LogActivityStatus();
         return result;
     }
 }

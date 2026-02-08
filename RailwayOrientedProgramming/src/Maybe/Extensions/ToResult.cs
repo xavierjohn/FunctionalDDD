@@ -85,7 +85,7 @@ public static partial class MaybeExtensionsAsync
     public static async ValueTask<Result<TValue>> ToResultAsync<TValue>(this ValueTask<Maybe<TValue>> maybeTask, Error error)
         where TValue : notnull
     {
-        Maybe<TValue> maybe = await maybeTask;
+        Maybe<TValue> maybe = await maybeTask.ConfigureAwait(false);
         return maybe.ToResult(error);
     }
 
@@ -115,7 +115,7 @@ public static partial class MaybeExtensionsAsync
     public static async ValueTask<Result<TValue>> ToResultAsync<TValue>(this ValueTask<Maybe<TValue>> maybeTask, Func<Error> ferror)
         where TValue : notnull
     {
-        Maybe<TValue> maybe = await maybeTask;
+        Maybe<TValue> maybe = await maybeTask.ConfigureAwait(false);
         return maybe.ToResult(ferror);
     }
 }

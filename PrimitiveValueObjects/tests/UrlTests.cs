@@ -185,6 +185,7 @@ public class UrlTests
         // Assert
         (a == b).Should().BeTrue();
         a.Equals(b).Should().BeTrue();
+        a.GetHashCode().Should().Be(b.GetHashCode());
     }
 
     [Fact]
@@ -315,5 +316,25 @@ public class UrlTests
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
         validation.FieldErrors[0].FieldName.Should().Be("webhookUrl");
+    }
+
+    [Fact]
+    public void Create_returns_Url_for_valid_value()
+    {
+        // Act
+        var url = Url.Create("https://example.com");
+
+        // Assert
+        url.Value.Should().Be("https://example.com");
+    }
+
+    [Fact]
+    public void Create_throws_for_invalid_value()
+    {
+        // Act
+        Action act = () => Url.Create("not-a-url");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
     }
 }

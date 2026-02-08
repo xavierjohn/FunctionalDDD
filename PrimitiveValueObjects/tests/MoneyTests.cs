@@ -31,7 +31,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Amount cannot be negative");
+        validation.FieldErrors[0].Details[0].Should().Be("Amount cannot be negative.");
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class MoneyTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create Money: Amount cannot be negative");
+            .WithMessage("Failed to create Money: Amount cannot be negative.");
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Cannot add EUR to USD");
+        validation.FieldErrors[0].Details[0].Should().Be("Cannot add EUR to USD.");
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Amount cannot be negative");
+        validation.FieldErrors[0].Details[0].Should().Be("Amount cannot be negative.");
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Cannot subtract GBP from USD");
+        validation.FieldErrors[0].Details[0].Should().Be("Cannot subtract GBP from USD.");
     }
 
     [Fact]
@@ -216,11 +216,11 @@ public class MoneyTests
         // Assert
         resultDecimal.IsFailure.Should().BeTrue();
         var validation = (ValidationError)resultDecimal.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Multiplier cannot be negative");
+        validation.FieldErrors[0].Details[0].Should().Be("Multiplier cannot be negative.");
 
         resultInt.IsFailure.Should().BeTrue();
         var validationInt = (ValidationError)resultInt.Error;
-        validationInt.FieldErrors[0].Details[0].Should().Be("Quantity cannot be negative");
+        validationInt.FieldErrors[0].Details[0].Should().Be("Quantity cannot be negative.");
     }
 
     [Fact]
@@ -263,7 +263,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Divisor must be positive");
+        validation.FieldErrors[0].Details[0].Should().Be("Divisor must be positive.");
     }
 
     [Fact]
@@ -278,7 +278,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("Divisor must be positive");
+        validation.FieldErrors[0].Details[0].Should().Be("Divisor must be positive.");
     }
 
     #endregion
@@ -332,7 +332,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("At least one ratio required");
+        validation.FieldErrors[0].Details[0].Should().Be("At least one ratio required.");
     }
 
     [Fact]
@@ -347,7 +347,7 @@ public class MoneyTests
         // Assert
         result.IsFailure.Should().BeTrue();
         var validation = (ValidationError)result.Error;
-        validation.FieldErrors[0].Details[0].Should().Be("All ratios must be positive");
+        validation.FieldErrors[0].Details[0].Should().Be("All ratios must be positive.");
     }
 
     #endregion
@@ -434,6 +434,7 @@ public class MoneyTests
         // Assert
         (a == b).Should().BeTrue();
         a.Equals(b).Should().BeTrue();
+        a.GetHashCode().Should().Be(b.GetHashCode());
     }
 
     [Fact]
@@ -518,7 +519,7 @@ public class MoneyTests
 
         // Assert
         act.Should().Throw<JsonException>()
-            .WithMessage("Currency is required");
+            .WithMessage("Currency is required.");
     }
 
     #endregion

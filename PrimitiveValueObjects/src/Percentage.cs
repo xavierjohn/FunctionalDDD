@@ -201,7 +201,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     /// <summary>
     /// Explicitly converts a decimal to a <see cref="Percentage"/>.
     /// </summary>
-    public static explicit operator Percentage(decimal value) => TryCreate(value).Value;
+    public static explicit operator Percentage(decimal value) => Create(value);
 
     /// <summary>
     /// Returns a string representation of the percentage with a % suffix.

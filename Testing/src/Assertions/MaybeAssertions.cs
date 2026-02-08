@@ -47,7 +47,7 @@ public class MaybeAssertions<T> : ReferenceTypeAssertions<Maybe<T>, MaybeAsserti
         Execute.Assertion
             .BecauseOf(because, becauseArgs)
             .ForCondition(Subject.HasValue)
-            .FailWith("Expected {context:maybe} to have a value{reason}, but it was None.");
+            .FailWith("Expected {context:maybe} to have a value{reason}, but it was None");
 
         return new AndWhichConstraint<MaybeAssertions<T>, T>(this, Subject.Value);
     }

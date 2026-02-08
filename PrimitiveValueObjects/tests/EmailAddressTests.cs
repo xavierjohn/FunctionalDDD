@@ -156,4 +156,85 @@ public class EmailAddressTests
         "John Doe <example@email.com>",
         "CAT…123@email.com"
     ];
+
+    [Fact]
+    public void Create_returns_EmailAddress_for_valid_value()
+    {
+        // Act
+        var email = EmailAddress.Create("xavier@somewhere.com");
+
+        // Assert
+        email.Value.Should().Be("xavier@somewhere.com");
+    }
+
+    [Fact]
+    public void Create_throws_for_invalid_value()
+    {
+        // Act
+        Action act = () => EmailAddress.Create("invalid");
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Cannot_create_EmailAddress_from_null()
+    {
+        // Act
+        var result = EmailAddress.TryCreate(null);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
+    }
+
+    [Fact]
+    public void TryCreate_uses_custom_fieldName()
+    {
+        // Act
+        var result = EmailAddress.TryCreate("invalid", "school email");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        var validation = (ValidationError)result.Error;
+        validation.FieldErrors[0].FieldName.Should().Be("school email");
+    }
+
+    [Fact]
+    public void Two_EmailAddress_with_same_value_should_be_equal()
+    {
+        // Arrange
+        var a = EmailAddress.TryCreate("xavier@somewhere.com").Value;
+        var b = EmailAddress.TryCreate("xavier@somewhere.com").Value;
+
+        // Assert
+        (a == b).Should().BeTrue();
+        a.Equals(b).Should().BeTrue();
+        a.GetHashCode().Should().Be(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Two_EmailAddress_with_different_value_should_not_be_equal()
+    {
+        // Arrange
+        var a = EmailAddress.TryCreate("xavier@somewhere.com").Value;
+        var b = EmailAddress.TryCreate("other@somewhere.com").Value;
+
+        // Assert
+        (a != b).Should().BeTrue();
+        a.Equals(b).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Can_implicitly_cast_to_string()
+    {
+        // Arrange
+        EmailAddress email = EmailAddress.TryCreate("xavier@somewhere.com").Value;
+
+        // Act
+        string stringValue = email;
+
+        // Assert
+        stringValue.Should().Be("xavier@somewhere.com");
+    }
 }

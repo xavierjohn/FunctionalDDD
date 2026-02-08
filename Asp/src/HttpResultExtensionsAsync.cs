@@ -139,7 +139,7 @@ public static class HttpResultExtensionsAsync
     /// </example>
     public static async Task<Microsoft.AspNetCore.Http.IResult> ToHttpResultAsync<TValue>(this Task<Result<TValue>> resultTask)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.ToHttpResult();
     }
 
@@ -192,7 +192,7 @@ public static class HttpResultExtensionsAsync
     /// </example>
     public static async ValueTask<Microsoft.AspNetCore.Http.IResult> ToHttpResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.ToHttpResult();
     }
 }

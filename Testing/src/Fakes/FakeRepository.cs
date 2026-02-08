@@ -1,6 +1,6 @@
 ﻿namespace FunctionalDdd.Testing.Fakes;
 
-using FunctionalDdd;  // Add explicit using for DomainEvent
+using FunctionalDdd;
 
 /// <summary>
 /// In-memory fake repository for testing aggregates.
@@ -61,6 +61,7 @@ public class FakeRepository<TAggregate, TId>
         var id = aggregate.Id;
         _store[id] = aggregate;
         _publishedEvents.AddRange(aggregate.UncommittedEvents());
+        aggregate.AcceptChanges();
         return Task.FromResult(Result.Success(new Unit()));
     }
 

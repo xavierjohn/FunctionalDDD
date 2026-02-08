@@ -30,20 +30,28 @@ public sealed class EmptyErrorMessageAnalyzer : DiagnosticAnalyzer
     {
         var invocation = (InvocationExpressionSyntax)context.Node;
 
-        // Check for Error.Validation(...), Error.NotFound(...), etc.
-        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
-            return;
+        string? methodName;
 
-        var methodName = memberAccess.Name.Identifier.Text;
+        // Check for Error.Validation(...), Error.NotFound(...), etc.
+        // Also handles type aliases like: using E = FunctionalDdd.Error; E.Validation(...)
+        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            methodName = memberAccess.Name.Identifier.Text;
+        }
+        // Check for using static FunctionalDdd.Error; Validation(...)
+        else if (invocation.Expression is IdentifierNameSyntax identifierName)
+        {
+            methodName = identifierName.Identifier.Text;
+        }
+        else
+        {
+            return;
+        }
+
         if (!ErrorFactoryMethods.Contains(methodName))
             return;
 
-        // Check if it's accessing the Error type
-        if (memberAccess.Expression is not IdentifierNameSyntax identifier ||
-            identifier.Identifier.Text != "Error")
-            return;
-
-        // Verify it's from FunctionalDdd
+        // Verify it's from FunctionalDdd via semantic model
         var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
             return;
