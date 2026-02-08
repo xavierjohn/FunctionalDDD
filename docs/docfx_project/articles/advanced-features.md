@@ -155,7 +155,7 @@ var result = await Result.ParallelAsync(
     () => GetOrdersAsync(userId, cancellationToken),
     () => GetPreferencesAsync(userId, cancellationToken)
 )
-.AwaitAsync()
+.WhenAllAsync()
 .BindAsync((user, orders, preferences, ct) => 
     CreateDashboard(user, orders, preferences, ct),
     cancellationToken
@@ -165,7 +165,7 @@ var result = await Result.ParallelAsync(
 **How it works:**
 1. `Result.ParallelAsync` accepts factory functions (`Func<Task<Result<T>>>`)
 2. All operations **start immediately** and run **concurrently**
-3. `.AwaitAsync()` waits for all operations to complete
+3. `.WhenAllAsync()` waits for all operations to complete
 4. Returns `Result<(T1, T2, T3)>` tuple containing all values
 5. If any operation fails, returns combined errors
 6. Tuple is automatically destructured in `BindAsync`
@@ -181,7 +181,7 @@ var result = await Result.ParallelAsync(
     () => CheckInventoryAsync(productId, ct),
     () => ValidatePaymentAsync(paymentId, ct)
 )
-.AwaitAsync()  // Wait for Stage 1 to complete
+.WhenAllAsync()  // Wait for Stage 1 to complete
 
 // Stage 2: Use results from Stage 1 to run fraud & shipping in parallel
 .BindAsync((user, inventory, payment, ct) =>
@@ -189,7 +189,7 @@ var result = await Result.ParallelAsync(
         () => RunFraudDetectionAsync(user, payment, inventory, ct),
         () => CalculateShippingAsync(address, inventory, ct)
     )
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((fraudCheck, shipping, ct2) =>
         Result.Success(new CheckoutResult(user, inventory, payment, fraudCheck, shipping))
     ),
@@ -217,7 +217,7 @@ public async Task<Result<Transaction>> ProcessTransactionAsync(
         () => CheckAmountThresholdAsync(transaction, ct),
         () => CheckGeolocationAsync(transaction, ct)
     )
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((check1, check2, check3, check4, ct) => 
         ApproveTransactionAsync(transaction, ct), 
         ct
@@ -240,7 +240,7 @@ var result = await Result.ParallelAsync(
     () => GetUserAsync(userId, ct),           // ✅ Success
     () => GetOrdersAsync(userId, ct),          // ❌ Fails (user has no orders)
     () => GetPreferencesAsync(userId, ct)      // ✅ Success
-).AwaitAsync();
+).WhenAllAsync();
 
 // result.IsFailure == true
 // result.Error contains the "no orders" error
@@ -252,7 +252,7 @@ var result = await Result.ParallelAsync(
     () => ValidateEmailAsync("invalid"),       // ❌ ValidationError
     () => ValidatePhoneAsync("bad"),           // ❌ ValidationError
     () => ValidateAgeAsync(-5)                 // ❌ ValidationError
-).AwaitAsync();
+).WhenAllAsync();
 
 // result.Error is ValidationError with all 3 field errors combined
 ```
@@ -279,7 +279,7 @@ var result = await Result.ParallelAsync(
     () => GetUserAsync(userId, ct),
     () => GetOrdersAsync(userId, ct),
     () => GetPreferencesAsync(userId, ct)
-).AwaitAsync();
+).WhenAllAsync();
 
 // Total time: ~50ms (all run concurrently)
 // 3x faster!
@@ -301,7 +301,7 @@ var result = await Result.ParallelAsync(
 ### Best Practices
 
 1. **Use factory functions** - Ensures operations don't start until `ParallelAsync` is called
-2. **Always call `.AwaitAsync()`** - Waits for all operations to complete
+2. **Always call `.WhenAllAsync()`** - Waits for all operations to complete
 3. **Short-circuit on failure** - If one fails, others may still complete but result will be failure
 4. **Combine errors intelligently** - ValidationErrors merge field errors, different types create AggregateError
 5. **Pass CancellationToken** - Allows graceful cancellation of all operations

@@ -18,7 +18,7 @@ public class ParallelAsyncTests : TestBase
         var result = await Result.ParallelAsync(
             () => CreateDelayedSuccessTask(1, 10),
             () => CreateDelayedSuccessTask(2, 20)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -32,7 +32,7 @@ public class ParallelAsyncTests : TestBase
         var result = await Result.ParallelAsync(
             () => CreateDelayedFailureTask<int>(Error.Validation("First failed"), 10),
             () => CreateDelayedSuccessTask(2, 20)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -47,7 +47,7 @@ public class ParallelAsyncTests : TestBase
         var result = await Result.ParallelAsync(
             () => CreateDelayedSuccessTask("text", 10),
             () => CreateDelayedSuccessTask(42, 20)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -66,7 +66,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(1, 10),
             () => CreateDelayedSuccessTask(2, 20),
             () => CreateDelayedSuccessTask(3, 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -81,7 +81,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedFailureTask<int>(Error.Validation("First failed"), 10),
             () => CreateDelayedSuccessTask(2, 20),
             () => CreateDelayedSuccessTask(3, 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -97,7 +97,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(1, 10),
             () => CreateDelayedFailureTask<int>(Error.NotFound("Second not found"), 20),
             () => CreateDelayedSuccessTask(3, 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -113,7 +113,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(1, 10),
             () => CreateDelayedSuccessTask(2, 20),
             () => CreateDelayedFailureTask<int>(Error.Forbidden("Third forbidden"), 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -129,7 +129,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedFailureTask<int>(Error.Validation("First invalid", "field1"), 10),
             () => CreateDelayedFailureTask<int>(Error.Validation("Second invalid", "field2"), 20),
             () => CreateDelayedFailureTask<int>(Error.Validation("Third invalid", "field3"), 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -149,7 +149,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedFailureTask<int>(Error.Validation("Validation error"), 10),
             () => CreateDelayedFailureTask<int>(Error.NotFound("Not found"), 20),
             () => CreateDelayedSuccessTask(3, 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -171,7 +171,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(1, 50),
             () => CreateDelayedSuccessTask(2, 50),
             () => CreateDelayedSuccessTask(3, 50)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         stopwatch.Stop();
 
@@ -190,7 +190,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask("text", 10),
             () => CreateDelayedSuccessTask(42, 20),
             () => CreateDelayedSuccessTask(true, 15)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -209,7 +209,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(20, 20),
             () => CreateDelayedSuccessTask(30, 15)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
         .BindAsync((a, b, c) => Result.Success(a + b + c));
 
         // Assert
@@ -226,7 +226,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(2, 20),
             () => CreateDelayedSuccessTask(3, 15)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
         .MapAsync(tuple => $"{tuple.Item1}-{tuple.Item2}-{tuple.Item3}");
 
         // Assert
@@ -246,7 +246,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedFailureTask<int>(Error.Unexpected("Task failed"), 20),
             () => CreateDelayedSuccessTask(30, 15)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
         .BindAsync((a, b, c) =>
         {
             bindCalled = true;
@@ -272,7 +272,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(2, 20),
             () => CreateDelayedSuccessTask(3, 15),
             () => CreateDelayedSuccessTask(4, 25)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -288,7 +288,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(2, 20),
             () => CreateDelayedFailureTask<int>(Error.Conflict("Conflict occurred"), 15),
             () => CreateDelayedSuccessTask(4, 25)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -305,7 +305,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(3, 15),
             () => CreateDelayedSuccessTask(4, 25),
             () => CreateDelayedSuccessTask(5, 30)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -323,7 +323,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(4, 25),
             () => CreateDelayedSuccessTask(5, 30),
             () => CreateDelayedSuccessTask(6, 35)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -342,7 +342,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(5, 30),
             () => CreateDelayedSuccessTask(6, 35),
             () => CreateDelayedSuccessTask(7, 40)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -362,7 +362,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(6, 35),
             () => CreateDelayedSuccessTask(7, 40),
             () => CreateDelayedSuccessTask(8, 45)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -383,7 +383,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(7, 40),
             () => CreateDelayedSuccessTask(8, 45),
             () => CreateDelayedSuccessTask(9, 50)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeSuccess();
@@ -404,7 +404,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(7, 40),
             () => CreateDelayedFailureTask<int>(Error.Validation("Error 8"), 45),
             () => CreateDelayedSuccessTask(9, 50)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -427,7 +427,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask(orders, 40),
             () => CreateDelayedSuccessTask("Dark Mode", 20)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
         .MapAsync(data => new
         {
             Profile = data.Item1,
@@ -450,7 +450,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedFailureTask<string>(Error.Validation("Invalid email format", "email"), 10),
             () => CreateDelayedFailureTask<string>(Error.Validation("Invalid phone number", "phone"), 15),
             () => CreateDelayedFailureTask<int>(Error.Validation("Age must be 18+", "age"), 20)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert
         result.Should().BeFailure();
@@ -467,7 +467,7 @@ public class ParallelAsyncTests : TestBase
             () => CreateDelayedSuccessTask("Clear", 25),
             () => CreateDelayedSuccessTask("Normal", 30),
             () => CreateDelayedFailureTask<string>(Error.Forbidden("Suspicious location detected"), 20)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - Should fail if any check fails
         result.Should().BeFailure();

@@ -1,128 +1,176 @@
 ﻿namespace Example.Tests;
 
-using System.Diagnostics;
 using FunctionalDdd;
 using Xunit;
 
 /// <summary>
-/// Examples demonstrating parallel execution of async Result operations using Result.ParallelAsync.
-/// These operations start simultaneously and complete efficiently.
+/// Examples demonstrating parallel execution of async Result operations
+/// and chaining with Bind, Map, and Tap on the resulting tuple.
 /// </summary>
 public class ParallelExamples : IClassFixture<TraceFixture>
 {
+    #region Tuple syntax — fetch in parallel, then chain with Map
+
     [Fact]
-    public async Task ParallelExecution_Success_Example()
+    public async Task TupleSyntax_ParallelFetch_ThenMap_BuildsDashboard()
     {
-        var orderId = "12345";
+        // Fetch user data in parallel using the concise tuple syntax,
+        // then Map the 3-element tuple into a single Dashboard object.
+        var userId = "user-123";
+
+        var result = await (
+            FetchUserProfileAsync(userId),
+            FetchUserOrdersAsync(userId),
+            FetchUserPreferencesAsync(userId)
+        )
+        .WhenAllAsync()
+        .MapAsync((profile, orders, prefs) =>
+            new Dashboard(profile, orders, prefs));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Profile.Should().Be("Profile for user-123");
+        result.Value.Orders.Should().Be("Orders for user-123");
+        result.Value.Preferences.Should().Be("Preferences for user-123");
+    }
+
+    #endregion
+
+    #region Tuple syntax — fetch in parallel, Tap for logging, then Bind
+
+    [Fact]
+    public async Task TupleSyntax_ParallelFetch_TapThenBind_ProcessesOrder()
+    {
+        // Fetch order data in parallel, Tap to log, then Bind to process.
+        var orderId = "order-42";
+        var logged = false;
+
+        var result = await (
+            CheckInventoryAsync(orderId),
+            ValidatePaymentAsync(orderId),
+            CalculateShippingAsync(orderId)
+        )
+        .WhenAllAsync()
+        .TapAsync((inventory, payment, shipping) => logged = true)
+        .BindAsync(CreateOrderSummaryAsync);
+
+        result.IsSuccess.Should().BeTrue();
+        logged.Should().BeTrue("Tap should execute on the success path");
+        result.Value.Should().Contain("order-42");
+    }
+
+    #endregion
+
+    #region Tuple syntax — one failure short-circuits Bind and Tap
+
+    [Fact]
+    public async Task TupleSyntax_OneFailure_SkipsBindAndTap()
+    {
+        // When one parallel operation fails, subsequent Tap and Bind are skipped.
+        var orderId = "invalid-payment";
+        var tapInvoked = false;
+        var bindInvoked = false;
+
+        var result = await (
+            CheckInventoryAsync(orderId),
+            ValidatePaymentAsync(orderId), // This will fail
+            CalculateShippingAsync(orderId)
+        )
+        .WhenAllAsync()
+        .TapAsync((inventory, payment, shipping) => tapInvoked = true)
+        .BindAsync((inventory, payment, shipping) =>
+        {
+            bindInvoked = true;
+            return CreateOrderSummaryAsync(inventory, payment, shipping);
+        });
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Detail.Should().Contain("Invalid payment");
+        tapInvoked.Should().BeFalse("Tap should not execute on the failure path");
+        bindInvoked.Should().BeFalse("Bind should not execute on the failure path");
+    }
+
+    #endregion
+
+    #region ParallelAsync — explicit factory syntax with chaining
+
+    [Fact]
+    public async Task ParallelAsync_WithBind_TransformsToSummary()
+    {
+        // ParallelAsync uses factory functions for explicit parallel intent,
+        // then Bind transforms the tuple into a new Result type.
+        var orderId = "order-99";
+
         var result = await Result.ParallelAsync(
             () => CheckInventoryAsync(orderId),
             () => ValidatePaymentAsync(orderId),
             () => CalculateShippingAsync(orderId)
-        ).AwaitAsync();
+        )
+        .WhenAllAsync()
+        .BindAsync(CreateOrderSummaryAsync);
 
         result.IsSuccess.Should().BeTrue();
-        var (inventory, payment, shipping) = result.Value;
-        inventory.Should().Be("Inventory OK");
-        payment.Should().Be("Payment OK");
-        shipping.Should().Be("Shipping OK");
+        result.Value.Should().Contain("order-99");
     }
 
-    [Fact]
-    public async Task ParallelExecution_OneFailure_ReturnsError()
-    {
-        var orderId = "invalid-payment"; // Invalid payment order ID
+    #endregion
 
-        var result = await Result.ParallelAsync(
-            () => CheckInventoryAsync(orderId),
-            () => ValidatePaymentAsync(orderId), // This will fail
-            () => CalculateShippingAsync(orderId)
-        ).AwaitAsync();
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<ValidationError>();
-        result.Error.Detail.Should().Contain("Invalid payment");
-    }
+    #region Full pipeline — parallel fetch → Tap → Map → Bind
 
     [Fact]
-    public async Task ParallelExecution_ThreeTasks_CompletesFaster()
+    public async Task FullPipeline_ParallelFetch_Tap_Map_Bind()
     {
-        var userId = "user-123";
+        // A realistic pipeline that fetches data in parallel, logs via Tap,
+        // maps the tuple into a domain object, then binds to a final operation.
+        var userId = "user-456";
 
-        var result = await Result.ParallelAsync(
-            () => FetchUserProfileAsync(userId),
-            () => FetchUserPreferencesAsync(userId),
-            () => FetchUserStatsAsync(userId)
-        ).AwaitAsync();
+        var result = await (
+            FetchUserProfileAsync(userId),
+            FetchUserOrdersAsync(userId)
+        )
+        .WhenAllAsync()
+        .TapAsync((profile, orders) => { /* Side effect: audit log, metrics, etc. */ })
+        .MapAsync((profile, orders) =>
+            new Dashboard(profile, orders, "default-prefs"))
+        .BindAsync(SaveDashboardAsync);
 
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Contain("Saved dashboard for user-456");
     }
 
-    [Fact]
-    public async Task ParallelExecution_FiveTasks_Example()
-    {
-        var studentId = "student-123";
+    #endregion
 
-        var result = await Result.ParallelAsync(
-            () => FetchStudentInfoAsync(studentId),
-            () => FetchStudentGradesAsync(studentId),
-            () => FetchStudentAttendanceAsync(studentId),
-            () => FetchLibraryBooksAsync(studentId),
-            () => FetchExtracurricularActivitiesAsync(studentId)
-        ).AwaitAsync();
+    // ----- Domain types -----
 
-        result.IsSuccess.Should().BeTrue();
-        var (info, grades, attendance, books, activities) = result.Value;
-        info.Should().NotBeNullOrEmpty();
-        grades.Should().NotBeNullOrEmpty();
-        attendance.Should().NotBeNullOrEmpty();
-        books.Should().NotBeNullOrEmpty();
-        activities.Should().NotBeNullOrEmpty();
-    }
+    private record Dashboard(string Profile, string Orders, string Preferences);
 
-    // ----- Helper Methods -----
+    // ----- Helper methods -----
 
     private static Task<Result<string>> CheckInventoryAsync(string orderId) =>
-        Task.FromResult(Result.Success("Inventory OK"));
+        Task.FromResult(Result.Success($"Inventory OK for {orderId}"));
 
     private static Task<Result<string>> ValidatePaymentAsync(string orderId)
     {
         if (orderId == "invalid-payment")
             return Task.FromResult(Result.Failure<string>(Error.Validation("Invalid payment")));
 
-        return Task.FromResult(Result.Success("Payment OK"));
+        return Task.FromResult(Result.Success($"Payment OK for {orderId}"));
     }
 
     private static Task<Result<string>> CalculateShippingAsync(string orderId) =>
-        Task.FromResult(Result.Success("Shipping OK"));
+        Task.FromResult(Result.Success($"Shipping OK for {orderId}"));
 
     private static Task<Result<string>> FetchUserProfileAsync(string userId) =>
         Task.FromResult(Result.Success($"Profile for {userId}"));
 
+    private static Task<Result<string>> FetchUserOrdersAsync(string userId) =>
+        Task.FromResult(Result.Success($"Orders for {userId}"));
+
     private static Task<Result<string>> FetchUserPreferencesAsync(string userId) =>
         Task.FromResult(Result.Success($"Preferences for {userId}"));
 
-    private static Task<Result<string>> FetchUserStatsAsync(string userId) =>
-        Task.FromResult(Result.Success($"Stats for {userId}"));
+    private static Task<Result<string>> CreateOrderSummaryAsync(string inventory, string payment, string shipping) =>
+        Task.FromResult(Result.Success($"Order summary: {inventory}, {payment}, {shipping}"));
 
-    private static Task<Result<string>> FetchStudentInfoAsync(string studentId) =>
-        Task.FromResult(Result.Success($"Student info for {studentId}"));
-
-    private static Task<Result<string>> FetchStudentGradesAsync(string studentId) =>
-        Task.FromResult(Result.Success($"Grades for {studentId}"));
-
-    private static Task<Result<string>> FetchStudentAttendanceAsync(string studentId) =>
-        Task.FromResult(Result.Success($"Attendance for {studentId}"));
-
-    private static Task<Result<string>> FetchLibraryBooksAsync(string studentId) =>
-        Task.FromResult(Result.Success($"Books for {studentId}"));
-
-    private static Task<Result<string>> FetchExtracurricularActivitiesAsync(string studentId) =>
-        Task.FromResult(Result.Success($"Activities for {studentId}"));
-
-    private static async Task<Result<string>> BuildUserDashboardAsync((string profile, string preferences, string orders) data)
-    {
-        await Task.Delay(10);
-        var userId = data.profile.Split(' ')[2];
-        return Result.Success($"Dashboard for {userId} with {data.preferences} and {data.orders}");
-    }
+    private static Task<Result<string>> SaveDashboardAsync(Dashboard dashboard) =>
+        Task.FromResult(Result.Success($"Saved dashboard for {dashboard.Profile.Split(' ').Last()}"));
 }

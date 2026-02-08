@@ -564,7 +564,7 @@ var prefs = await GetPreferencesAsync(id);  // 100ms
 var result = await GetUserAsync(id)
     .ParallelAsync(GetOrdersAsync(id))
     .ParallelAsync(GetPreferencesAsync(id))
-    .AwaitAsync();  // All 3 run concurrently
+    .WhenAllAsync();  // All 3 run concurrently
 ```
 
 **Key insight**: The ROP overhead (16ns) is **0.000016%** of a 100ms database query. Focus on optimizing I/O, not ROP chains.

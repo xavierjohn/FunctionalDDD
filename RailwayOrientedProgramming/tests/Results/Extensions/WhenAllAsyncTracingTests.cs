@@ -5,15 +5,15 @@ using FunctionalDdd.Testing;
 using RailwayOrientedProgramming.Tests.Helpers;
 
 /// <summary>
-/// Tests for Activity tracing in AwaitAsync operations.
-/// Verifies that AwaitAsync creates proper distributed tracing spans for observability.
+/// Tests for Activity tracing in WhenAllAsync operations.
+/// Verifies that WhenAllAsync creates proper distributed tracing spans for observability.
 /// </summary>
-public class AwaitAsyncTracingTests : TestBase
+public class WhenAllAsyncTracingTests : TestBase
 {
     #region Activity Creation Tests
 
     [Fact]
-    public async Task AwaitAsync_2Tuple_CreatesActivity_WithCorrectName()
+    public async Task WhenAllAsync_2Tuple_CreatesActivity_WithCorrectName()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -21,15 +21,15 @@ public class AwaitAsyncTracingTests : TestBase
         var task2 = Task.FromResult(Result.Success(2));
 
         // Act
-        await (task1, task2).AwaitAsync();
+        await (task1, task2).WhenAllAsync();
 
         // Assert
-        var activity = activityTest.AssertActivityCaptured("AwaitAsync");
-        activity.DisplayName.Should().Be("AwaitAsync");
+        var activity = activityTest.AssertActivityCaptured("WhenAllAsync");
+        activity.DisplayName.Should().Be("WhenAllAsync");
     }
 
     [Fact]
-    public async Task AwaitAsync_3Tuple_CreatesActivity_WithCorrectName()
+    public async Task WhenAllAsync_3Tuple_CreatesActivity_WithCorrectName()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -38,15 +38,15 @@ public class AwaitAsyncTracingTests : TestBase
         var task3 = Task.FromResult(Result.Success(3));
 
         // Act
-        await (task1, task2, task3).AwaitAsync();
+        await (task1, task2, task3).WhenAllAsync();
 
         // Assert
-        var activity = activityTest.AssertActivityCaptured("AwaitAsync");
-        activity.DisplayName.Should().Be("AwaitAsync");
+        var activity = activityTest.AssertActivityCaptured("WhenAllAsync");
+        activity.DisplayName.Should().Be("WhenAllAsync");
     }
 
     [Fact]
-    public async Task AwaitAsync_9Tuple_CreatesActivity_WithCorrectName()
+    public async Task WhenAllAsync_9Tuple_CreatesActivity_WithCorrectName()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -61,11 +61,11 @@ public class AwaitAsyncTracingTests : TestBase
         var task9 = Task.FromResult(Result.Success(9));
 
         // Act
-        await (task1, task2, task3, task4, task5, task6, task7, task8, task9).AwaitAsync();
+        await (task1, task2, task3, task4, task5, task6, task7, task8, task9).WhenAllAsync();
 
         // Assert
-        var activity = activityTest.AssertActivityCaptured("AwaitAsync");
-        activity.DisplayName.Should().Be("AwaitAsync");
+        var activity = activityTest.AssertActivityCaptured("WhenAllAsync");
+        activity.DisplayName.Should().Be("WhenAllAsync");
     }
 
     #endregion
@@ -73,7 +73,7 @@ public class AwaitAsyncTracingTests : TestBase
     #region Activity Status Tests - Success
 
     [Fact]
-    public async Task AwaitAsync_2Tuple_AllSuccess_LogsOkStatus()
+    public async Task WhenAllAsync_2Tuple_AllSuccess_LogsOkStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -81,14 +81,14 @@ public class AwaitAsyncTracingTests : TestBase
         var task2 = Task.FromResult(Result.Success(2));
 
         // Act
-        await (task1, task2).AwaitAsync();
+        await (task1, task2).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Ok);
     }
 
     [Fact]
-    public async Task AwaitAsync_3Tuple_AllSuccess_LogsOkStatus()
+    public async Task WhenAllAsync_3Tuple_AllSuccess_LogsOkStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -97,14 +97,14 @@ public class AwaitAsyncTracingTests : TestBase
         var task3 = Task.FromResult(Result.Success(3));
 
         // Act
-        await (task1, task2, task3).AwaitAsync();
+        await (task1, task2, task3).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Ok);
     }
 
     [Fact]
-    public async Task AwaitAsync_9Tuple_AllSuccess_LogsOkStatus()
+    public async Task WhenAllAsync_9Tuple_AllSuccess_LogsOkStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -119,10 +119,10 @@ public class AwaitAsyncTracingTests : TestBase
         var task9 = Task.FromResult(Result.Success(9));
 
         // Act
-        await (task1, task2, task3, task4, task5, task6, task7, task8, task9).AwaitAsync();
+        await (task1, task2, task3, task4, task5, task6, task7, task8, task9).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Ok);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Ok);
     }
 
     #endregion
@@ -130,7 +130,7 @@ public class AwaitAsyncTracingTests : TestBase
     #region Activity Status Tests - Failure
 
     [Fact]
-    public async Task AwaitAsync_2Tuple_FirstFails_LogsErrorStatus()
+    public async Task WhenAllAsync_2Tuple_FirstFails_LogsErrorStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -138,14 +138,14 @@ public class AwaitAsyncTracingTests : TestBase
         var task2 = Task.FromResult(Result.Success(2));
 
         // Act
-        await (task1, task2).AwaitAsync();
+        await (task1, task2).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Error);
     }
 
     [Fact]
-    public async Task AwaitAsync_3Tuple_OneFails_LogsErrorStatus()
+    public async Task WhenAllAsync_3Tuple_OneFails_LogsErrorStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -154,14 +154,14 @@ public class AwaitAsyncTracingTests : TestBase
         var task3 = Task.FromResult(Result.Success(3));
 
         // Act
-        await (task1, task2, task3).AwaitAsync();
+        await (task1, task2, task3).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Error);
     }
 
     [Fact]
-    public async Task AwaitAsync_3Tuple_AllFail_LogsErrorStatus()
+    public async Task WhenAllAsync_3Tuple_AllFail_LogsErrorStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -170,14 +170,14 @@ public class AwaitAsyncTracingTests : TestBase
         var task3 = Task.FromResult(Result.Failure<int>(Error.Validation("Error 3")));
 
         // Act
-        await (task1, task2, task3).AwaitAsync();
+        await (task1, task2, task3).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Error);
     }
 
     [Fact]
-    public async Task AwaitAsync_9Tuple_MultipleFail_LogsErrorStatus()
+    public async Task WhenAllAsync_9Tuple_MultipleFail_LogsErrorStatus()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -192,10 +192,10 @@ public class AwaitAsyncTracingTests : TestBase
         var task9 = Task.FromResult(Result.Success(9));
 
         // Act
-        await (task1, task2, task3, task4, task5, task6, task7, task8, task9).AwaitAsync();
+        await (task1, task2, task3, task4, task5, task6, task7, task8, task9).WhenAllAsync();
 
         // Assert
-        activityTest.AssertActivityCapturedWithStatus("AwaitAsync", ActivityStatusCode.Error);
+        activityTest.AssertActivityCapturedWithStatus("WhenAllAsync", ActivityStatusCode.Error);
     }
 
     #endregion
@@ -203,7 +203,7 @@ public class AwaitAsyncTracingTests : TestBase
     #region Chaining Tests
 
     [Fact]
-    public async Task AwaitAsync_3Tuple_ChainedWithBind_CreatesMultipleActivities()
+    public async Task WhenAllAsync_3Tuple_ChainedWithBind_CreatesMultipleActivities()
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
@@ -213,12 +213,12 @@ public class AwaitAsyncTracingTests : TestBase
 
         // Act
         await (task1, task2, task3)
-            .AwaitAsync()
+            .WhenAllAsync()
             .BindAsync((a, b, c) => Result.Success(a + b + c));
 
         // Assert
-        // Should have both AwaitAsync and Bind activities
-        activityTest.AssertActivityCaptured("AwaitAsync", 1);
+        // Should have both WhenAllAsync and Bind activities
+        activityTest.AssertActivityCaptured("WhenAllAsync", 1);
         activityTest.AssertActivityCaptured("Bind", 1);
     }
 

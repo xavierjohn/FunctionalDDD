@@ -139,7 +139,7 @@ var result = await Result.ParallelAsync(
     () => GetStudentGradesAsync(studentId),
     () => GetLibraryBooksAsync(studentId)
 )
-.AwaitAsync()
+.WhenAllAsync()
 .BindAsync((info, grades, books) => 
     PrepareReport(info, grades, books));
 ```

@@ -251,7 +251,7 @@ Multiple order lines validated concurrently for performance:
 var result = await GetStudentInfoAsync(customerId, ct)
     .ParallelAsync(GetOrderHistoryAsync(customerId, ct))
     .ParallelAsync(GetPaymentMethodsAsync(customerId, ct))
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((info, orders, methods) => 
         CreateCustomerProfile(info, orders, methods));
 ```
@@ -362,7 +362,7 @@ flowchart LR
 | **🔒 Type Safety** | Compiler prevents mistakes | Value objects vs primitives |
 | **✅ Testability** | Each component tests independently | Pure functions, no hidden state |
 | **📡 Domain Events** | Event-driven architecture | `UncommittedEvents()`, `AcceptChanges()` |
-| **⚡ Performance** | Parallel operations where safe | `ParallelAsync`, `AwaitAsync` |
+| **⚡ Performance** | Parallel operations where safe | `ParallelAsync`, `WhenAllAsync` |
 
 ---
 

@@ -561,7 +561,7 @@ Run multiple async operations in parallel and combine their results:
 var result = await GetStudentInfoAsync(studentId)
     .ParallelAsync(GetStudentGradesAsync(studentId))
     .ParallelAsync(GetLibraryBooksAsync(studentId))
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((info, grades, books) => 
         PrepareReport(info, grades, books));
 ```
