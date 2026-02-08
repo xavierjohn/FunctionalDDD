@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
     <Description>
-      Using the library's classes, it is possible to create Aggregate, Entity, and ValueObject classes. These classes can be validated using Fluent Validation to ensure that all domain properties are in a valid state. For simple ValueObjects with a single value, ScalarValueObject can be used. If the only requirement for a ValueObject is that the value is not null or empty, RequiredString can be utilized.
+      Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles. Create Aggregate, Entity, and ValueObject classes with Result-based validation. For simple value objects with a single value, ScalarValueObject can be used. For strongly-typed primitives, see FunctionalDdd.PrimitiveValueObjects.
     </Description>
     <PackageTags>ddd;domain-driven-design;aggregate;entity;value-object;domain-events;tactical-patterns</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
@@ -10,7 +10,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\NUGET_README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   
   <ItemGroup>

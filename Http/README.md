@@ -1,5 +1,7 @@
 ﻿# FunctionalDdd.Http
 
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http)
+
 Fluent HTTP client extensions for Railway Oriented Programming — handle status codes, deserialize JSON, and compose error handling with `Result<T>` and `Maybe<T>`.
 
 ## Features
