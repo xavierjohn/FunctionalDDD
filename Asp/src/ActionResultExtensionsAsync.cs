@@ -110,7 +110,7 @@ public static class ActionResultExtensionsAsync
     /// </example>
     public static async Task<ActionResult<TValue>> ToActionResultAsync<TValue>(this Task<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
-        Result<TValue> result = await resultTask;
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase);
     }
 
@@ -149,7 +149,7 @@ public static class ActionResultExtensionsAsync
     /// </example>
     public static async ValueTask<ActionResult<TValue>> ToActionResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, ControllerBase controllerBase)
     {
-        Result<TValue> result = await resultTask;
+        Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase);
     }
 
@@ -200,7 +200,7 @@ public static class ActionResultExtensionsAsync
         Func<TIn, ContentRangeHeaderValue> funcRange,
         Func<TIn, TOut> funcValue)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase, funcRange, funcValue);
     }
 
@@ -230,7 +230,7 @@ public static class ActionResultExtensionsAsync
     Func<TIn, ContentRangeHeaderValue> funcRange,
     Func<TIn, TOut> funcValue)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase, funcRange, funcValue);
     }
 
@@ -279,7 +279,7 @@ public static class ActionResultExtensionsAsync
         ControllerBase controllerBase,
         long from, long to, long totalLength)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase, from, to, totalLength);
     }
 
@@ -308,7 +308,7 @@ public static class ActionResultExtensionsAsync
         ControllerBase controllerBase,
         long from, long to, long totalLength)
     {
-        var result = await resultTask;
+        var result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase, from, to, totalLength);
     }
 }

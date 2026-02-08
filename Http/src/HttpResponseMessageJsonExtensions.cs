@@ -61,7 +61,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         NotFoundError notFoundError)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.HandleNotFound(notFoundError);
     }
 
@@ -91,7 +91,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         UnauthorizedError unauthorizedError)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.HandleUnauthorized(unauthorizedError);
     }
 
@@ -121,7 +121,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         ForbiddenError forbiddenError)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.HandleForbidden(forbiddenError);
     }
 
@@ -151,7 +151,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         ConflictError conflictError)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.HandleConflict(conflictError);
     }
 
@@ -194,7 +194,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         Func<HttpStatusCode, Error> errorFactory)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.HandleClientError(errorFactory);
     }
 
@@ -221,7 +221,7 @@ public static partial class HttpResponseExtensions
         Func<HttpStatusCode, Error> errorFactory)
     {
         var statusCode = (int)response.StatusCode;
-        if (statusCode >= 500)
+        if (statusCode is >= 500 and < 600)
             return Result.Failure<HttpResponseMessage>(errorFactory(response.StatusCode));
 
         return Result.Success(response);
@@ -237,7 +237,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         Func<HttpStatusCode, Error> errorFactory)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.HandleServerError(errorFactory);
     }
 
@@ -267,7 +267,7 @@ public static partial class HttpResponseExtensions
         if (!response.IsSuccessStatusCode)
         {
             var error = errorFactory?.Invoke(response.StatusCode)
-                ?? Error.Unexpected($"HTTP request failed with status code {response.StatusCode}");
+                ?? Error.Unexpected($"HTTP request failed with status code {response.StatusCode}.");
             return Result.Failure<HttpResponseMessage>(error);
         }
 
@@ -285,7 +285,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         Func<HttpStatusCode, Error>? errorFactory = null)
     {
-        var response = await responseTask;
+        var response = await responseTask.ConfigureAwait(false);
         return response.EnsureSuccess(errorFactory);
     }
 
@@ -306,7 +306,7 @@ public static partial class HttpResponseExtensions
     {
         if (!response.IsSuccessStatusCode)
         {
-            var error = await callbackFailedStatusCode(response, context, cancellationToken);
+            var error = await callbackFailedStatusCode(response, context, cancellationToken).ConfigureAwait(false);
             return Result.Failure<HttpResponseMessage>(error);
         }
 
@@ -328,8 +328,8 @@ public static partial class HttpResponseExtensions
         TContext context,
         CancellationToken cancellationToken)
     {
-        var response = await responseTask;
-        return await response.HandleFailureAsync(callbackFailedStatusCode, context, cancellationToken);
+        var response = await responseTask.ConfigureAwait(false);
+        return await response.HandleFailureAsync(callbackFailedStatusCode, context, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -346,7 +346,7 @@ public static partial class HttpResponseExtensions
         CancellationToken cancellationToken)
         where TValue : notnull
         => await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken)
-            .BindAsync(maybe => maybe.HasValue ? Result.Success(maybe.Value) : Result.Failure<TValue>(Error.Unexpected($"Http Response was null for value {typeof(TValue).Name}.")));
+            .BindAsync(maybe => maybe.HasValue ? Result.Success(maybe.Value) : Result.Failure<TValue>(Error.Unexpected($"HTTP response was null for value {typeof(TValue).Name}."))).ConfigureAwait(false);
 
     /// <summary>
     /// Reads the HTTP response content as JSON and deserializes it to the specified type asynchronously.
@@ -362,8 +362,8 @@ public static partial class HttpResponseExtensions
         CancellationToken cancellationToken)
         where TValue : notnull
     {
-        var response = await responseTask;
-        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
+        var response = await responseTask.ConfigureAwait(false);
+        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -379,7 +379,7 @@ public static partial class HttpResponseExtensions
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
         where TValue : notnull
-        => await response.BindAsync(response => response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken));
+        => await response.BindAsync(r => r.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken)).ConfigureAwait(false);
 
     /// <summary>
     /// Reads the HTTP response content as JSON and deserializes it to the specified type using the Result monad asynchronously.
@@ -395,8 +395,8 @@ public static partial class HttpResponseExtensions
         CancellationToken cancellationToken)
         where TValue : notnull
     {
-        var response = await responseTask;
-        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
+        var response = await responseTask.ConfigureAwait(false);
+        return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -414,10 +414,10 @@ public static partial class HttpResponseExtensions
         where TValue : notnull
     {
         if (response.IsSuccessStatusCode == false)
-            return Result.Failure<Maybe<TValue>>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
+            return Result.Failure<Maybe<TValue>>(Error.Unexpected($"HTTP response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}."));
 
         var value = await response
-            .Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
+            .Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken).ConfigureAwait(false);
 
         return Result.Success(value is null ? Maybe.None<TValue>() : Maybe.From(value));
     }
@@ -436,8 +436,8 @@ public static partial class HttpResponseExtensions
         CancellationToken cancellationToken)
         where TValue : notnull
     {
-        var response = await responseTask;
-        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken);
+        var response = await responseTask.ConfigureAwait(false);
+        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -453,7 +453,7 @@ public static partial class HttpResponseExtensions
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
         where TValue : notnull
-        => await response.BindAsync(response => response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken));
+        => await response.BindAsync(r => r.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken)).ConfigureAwait(false);
 
     /// <summary>
     /// Reads the HTTP response content as JSON and deserializes it to the specified type using the Maybe monad and the Result monad asynchronously.
@@ -469,7 +469,7 @@ public static partial class HttpResponseExtensions
         CancellationToken cancellationToken)
         where TValue : notnull
     {
-        var response = await responseTask;
-        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken);
+        var response = await responseTask.ConfigureAwait(false);
+        return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken).ConfigureAwait(false);
     }
 }
