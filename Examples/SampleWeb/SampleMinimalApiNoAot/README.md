@@ -58,7 +58,7 @@ app.UseScalarValueValidation();
 app.MapPost("/users/register", (RegisterUserDto dto) =>
     User.TryCreate(dto.FirstName, dto.LastName, dto.Email, dto.Password)
         .ToHttpResult())
-    .WithValueObjectValidation();
+    .WithScalarValueValidation();
 ```
 
 ## Running the Sample
@@ -180,47 +180,6 @@ The **only difference** is:
 
 **Runtime behavior is identical!**
 
-## Why This Matters
-
-Many libraries force you to choose between:
-- ❌ Use our source generator OR don't use the library at all
-- ❌ Accept significant performance penalties for reflection
-- ❌ Write boilerplate configuration code
-
-FunctionalDDD.Asp gives you **flexibility**:
-- ✅ Works immediately with zero configuration (reflection)
-- ✅ Opt into source generator only when you need AOT
-- ✅ No code changes required when migrating
-- ✅ Negligible performance difference for most apps
-
-## Migration Path
-
-Start with reflection (this example) → Add generator when needed:
-
-1. **Start here** (SampleMinimalApiNoAot)
-   ```xml
-   <!-- No generator reference -->
-   <ProjectReference Include="..\..\Asp\src\Asp.csproj" />
-   ```
-
-2. **Add generator when deploying to AOT** (SampleMinimalApi)
-   ```xml
-   <!-- Add generator reference -->
-   <ProjectReference Include="..\..\Asp\src\Asp.csproj" />
-   <ProjectReference Include="..\..\Asp\generator\AspSourceGenerator.csproj"
-                     OutputItemType="Analyzer"
-                     ReferenceOutputAssembly="false" />
-   ```
-
-3. **Add JsonSerializerContext** (only for AOT)
-```csharp
-[GenerateScalarValueConverters]
-[JsonSerializable(typeof(RegisterUserDto))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext { }
-```
-
-Your endpoint code **stays the same** - no changes required!
-
 ## Related Documentation
 
 - **[Asp/docs/REFLECTION-FALLBACK.md](../../Asp/docs/REFLECTION-FALLBACK.md)** - Comprehensive guide to reflection fallback
@@ -228,12 +187,4 @@ Your endpoint code **stays the same** - no changes required!
 - **[Asp/generator/README.md](../../Asp/generator/README.md)** - Source generator documentation
 - **[SampleMinimalApi](../SampleMinimalApi/README.md)** - AOT version with source generator
 
-## Conclusion
 
-This example proves that **FunctionalDDD.Asp is designed for flexibility**:
-- Use reflection for simplicity (this example)
-- Add source generator only when you need AOT
-- No functionality trade-offs - both approaches work identically
-- Minimal performance difference - reflection overhead is negligible
-
-**Start simple with reflection, optimize with AOT when needed!**

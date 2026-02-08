@@ -1,22 +1,17 @@
 ﻿# FunctionalDdd.Http
 
-HTTP client extensions for Railway Oriented Programming with Result and Maybe monads.
-
-## Overview
-
-This library provides fluent extension methods for working with `HttpResponseMessage` in a functional style, integrating seamlessly with the Railway Oriented Programming patterns from `FunctionalDdd.RailwayOrientedProgramming`.
+Fluent HTTP client extensions for Railway Oriented Programming — handle status codes, deserialize JSON, and compose error handling with `Result<T>` and `Maybe<T>`.
 
 ## Features
 
-- **Specific Status Code Handling**: Handle 401 Unauthorized, 403 Forbidden, 409 Conflict
-- **Range-based Error Handling**: Handle all 4xx client errors or 5xx server errors at once
-- **EnsureSuccess**: Functional alternative to `EnsureSuccessStatusCode()` that returns Result
-- **Error Handling for HTTP Status Codes**: Handle specific status codes (404 Not Found) functionally
+- **Status Code Handlers**: 401, 403, 404, 409 mapped to typed errors
+- **Range Handlers**: Catch all 4xx or 5xx codes at once
+- **EnsureSuccess**: Functional alternative to `EnsureSuccessStatusCode()`
 - **Custom Error Handling**: Flexible callbacks for failed HTTP responses
-- **JSON Deserialization**: Native support for deserializing to `Result<T>` and `Maybe<T>`
-- **Fluent Composition**: Chain HTTP operations with Railway Oriented Programming patterns
-- **Async-First**: All methods support asynchronous workflows with proper cancellation token support
-- **AOT Compatible**: Fully compatible with Native AOT compilation
+- **JSON Deserialization**: Deserialize to `Result<T>` and `Maybe<T>`
+- **Fluent Composition**: Chain HTTP operations with ROP patterns
+- **Async-First**: Proper `CancellationToken` support throughout
+- **AOT Compatible**: Native AOT and trimming safe
 
 ## Installation
 
@@ -52,9 +47,9 @@ var result = await httpClient.PostAsync("api/admin/users", content, ct)
     .ReadResultFromJsonAsync(UserJsonContext.Default.User, ct);
 
 // Each handler only intercepts its specific status code
-// - 401 ? UnauthorizedError
-// - 403 ? ForbiddenError
-// - 409 ? ConflictError
+// - 401 → UnauthorizedError
+// - 403 → ForbiddenError
+// - 409 → ConflictError
 // - Other codes pass through to next handler
 ```
 
@@ -67,9 +62,9 @@ var result = await httpClient.GetAsync("api/data", ct)
     .HandleServerErrorAsync(code => Error.ServiceUnavailable($"Server error: {code}"))
     .ReadResultFromJsonAsync(DataJsonContext.Default.Data, ct);
 
-// Client errors (400-499) ? Custom error via factory
-// Server errors (500+) ? Custom error via factory
-// Success codes ? Continue to JSON deserialization
+// Client errors (400-499) → Custom error via factory
+// Server errors (500+) → Custom error via factory
+// Success codes → Continue to JSON deserialization
 ```
 
 ### Ensure Success Status
@@ -344,7 +339,3 @@ This library follows these design principles:
 ## License
 
 MIT
-
-## Contributing
-
-Contributions are welcome! Please see the main repository for contribution guidelines.

@@ -74,7 +74,7 @@ User registration system with automatic value object validation and FluentValida
 
 **Key Features**:
 - User aggregate with 7 value objects (FirstName, LastName, EmailAddress, PhoneNumber, Age, CountryCode, Url)
-- Automatic value object validation via `AddScalarValueObjectValidation()`
+- Automatic value object validation via `AddScalarValueValidation()`
 - Password complexity requirements via FluentValidation
 - Business rules (e.g., minimum age 18)
 - Demonstrates both manual (`Result.Combine`) and automatic validation
@@ -412,7 +412,7 @@ Domain rules are explicit and enforced:
 - [Railway Oriented Programming README](../RailwayOrientedProgramming/README.md)
 - [DDD Basics](../docs/docfx_project/articles/basics.md)
 - [API Integration Guide](../Asp/README.md)
-- [Value Objects Guide](../CommonValueObjects/README.md)
+- [Value Objects Guide](../PrimitiveValueObjects/README.md)
 
 ## Contributing Examples
 
