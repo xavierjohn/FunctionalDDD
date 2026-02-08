@@ -1,6 +1,7 @@
 ﻿namespace FunctionalDdd;
 
 using System;
+using System.Diagnostics;
 
 /// <summary>
 /// Provides extension methods for ensuring conditions on Result values.
@@ -11,6 +12,7 @@ using System;
 /// to failures if the validation fails. This is useful for enforcing business rules and constraints
 /// in a functional pipeline without breaking the railway pattern.
 /// </remarks>
+[DebuggerStepThrough]
 public static class EnsureExtensions
 {
     /// <summary>

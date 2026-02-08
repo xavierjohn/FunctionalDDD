@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 /// <summary>
 /// Pattern matching helpers (Match / Switch) for Result.
 /// </summary>
+[DebuggerStepThrough]
 public static class MatchExtensions
 {
     /// <summary>
@@ -58,6 +59,7 @@ public static class MatchExtensions
 /// <summary>
 /// Asynchronous pattern matching helpers for Result.
 /// </summary>
+[DebuggerStepThrough]
 public static class MatchExtensionsAsync
 {
     /// <summary>

@@ -25,6 +25,7 @@ using System.Diagnostics;
 ///     );
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class WhenExtensions
 {
     /// <summary>
@@ -158,6 +159,7 @@ public static class WhenExtensions
 /// <remarks>
 /// Users should capture CancellationToken in their lambda closures when cancellation support is needed.
 /// </remarks>
+[DebuggerStepThrough]
 public static class WhenExtensionsAsync
 {
     /// <summary>

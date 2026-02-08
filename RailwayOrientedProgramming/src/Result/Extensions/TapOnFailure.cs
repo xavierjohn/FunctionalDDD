@@ -23,6 +23,7 @@ using System.Diagnostics;
 ///     .TapOnFailure(() => _metrics.IncrementCounter("user.get.failed"));
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static partial class TapOnFailureExtensions
 {
     /// <summary>
@@ -81,6 +82,7 @@ public static partial class TapOnFailureExtensions
 /// All operations run on the <b>failure track</b> - they only execute when the Result has failed.
 /// </para>
 /// </remarks>
+[DebuggerStepThrough]
 public static partial class TapOnFailureExtensionsAsync
 {
     /// <summary>

@@ -24,6 +24,7 @@ using System.Diagnostics;
 /// // If all succeed, returns Success with IEnumerable of all results
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class TraverseExtensions
 {
     /// <summary>

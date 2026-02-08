@@ -1,230 +1,117 @@
 # Debugging Railway Oriented Programming
 
-One of the challenges with functional programming and chained operations is debugging. When a chain fails, it can be difficult to determine which step caused the failure. This guide provides strategies and techniques to effectively debug ROP code.
+Chained functional pipelines can be hard to debug. This guide covers the built-in debugger support, stepping behavior, debug extensions, and practical strategies for diagnosing failures in ROP chains.
 
-## Understanding the Railway Track
+## Debugger Display
 
-Railway Oriented Programming creates a chain of operations where:
-- **Success Track**: Operations continue flowing through the chain
-- **Failure Track**: Once an error occurs, the chain short-circuits and subsequent operations are skipped
+The library's core types have `[DebuggerDisplay]` and `[DebuggerTypeProxy]` attributes so that
+hovering over a variable or inspecting it in the Watch/Locals window shows meaningful information
+instead of raw struct fields.
 
-When debugging, understand that **only the first failure in a chain matters** — everything after that failure is bypassed.
+### Result\<T\>
 
-## Common Debugging Challenges
-
-### 1. Which Step Failed?
-
-**Problem**: A long chain fails, but you don't know which operation caused the failure.
-
-```csharp
-// Which of these 5 operations failed?
-var result = await GetUserAsync(id)
-    .ToResultAsync(Error.NotFound("User not found"))
-    .EnsureAsync(u => u.IsActive, Error.Validation("User inactive"))
-    .BindAsync(u => GetOrdersAsync(u.Id))
-    .EnsureAsync(orders => orders.Any(), Error.NotFound("No orders"))
-    .MapAsync(orders => orders.Sum(o => o.Total));
+```
+Display:  Success, Value = John, Error = <none>
+          Failure, Value = <null>, Error = validation.error
 ```
 
-**Solution 1**: Use `Tap` or `TapError` to add logging at each step:
+Expanding a `Result<T>` in the debugger shows a structured proxy view:
 
-```csharp
-var result = await GetUserAsync(id)
-    .Tap(u => _logger.LogDebug("Found user: {UserId}", u.Id))
-    .ToResultAsync(Error.NotFound("User not found"))
-    .TapError(err => _logger.LogWarning("Failed to find user: {Error}", err))
-    .EnsureAsync(u => u.IsActive, Error.Validation("User inactive"))
-    .Tap(u => _logger.LogDebug("User {UserId} is active", u.Id))
-    .TapError(err => _logger.LogWarning("User validation failed: {Error}", err))
-    .BindAsync(u => GetOrdersAsync(u.Id))
-    .Tap(orders => _logger.LogDebug("Found {Count} orders", orders.Count))
-    .TapError(err => _logger.LogWarning("Failed to get orders: {Error}", err))
-    .EnsureAsync(orders => orders.Any(), Error.NotFound("No orders"))
-    .MapAsync(orders => orders.Sum(o => o.Total))
-    .Tap(total => _logger.LogDebug("Calculated total: {Total}", total));
+| Success | Failure |
+|---------|---------|
+| `Value` — the wrapped value | `Error` — the `Error` object |
+| | `Code` — e.g. `"validation.error"` |
+| | `Detail` — e.g. `"Email is invalid"` |
+| | `ErrorType` — e.g. `"ValidationError"` |
+| | `Instance` — optional correlation ID |
+
+### Error
+
+```
+Display:  Email address is not valid.
 ```
 
-**Solution 2**: Break the chain into smaller, named steps:
+The base `Error` type shows its `Detail` property directly.
 
-```csharp
-var userResult = await GetUserAsync(id)
-    .ToResultAsync(Error.NotFound("User not found"));
-    
-if (userResult.IsFailure)
-{
-    _logger.LogWarning("GetUser failed: {Error}", userResult.Error);
-    return userResult.Error;
-}
+### ValidationError
 
-var activeUserResult = userResult
-    .Ensure(u => u.IsActive, Error.Validation("User inactive"));
-    
-if (activeUserResult.IsFailure)
-{
-    _logger.LogWarning("User validation failed: {Error}", activeUserResult.Error);
-    return activeUserResult.Error;
-}
-
-var ordersResult = await GetOrdersAsync(activeUserResult.Value.Id);
-if (ordersResult.IsFailure) return ordersResult.Error;
+```
+Display:  Validation: 2 field(s) — Email address is not valid; First name is required.
 ```
 
-**Solution 3**: Use descriptive error messages with context:
+Expanding shows each field as a structured entry:
 
-```csharp
-var result = await GetUserAsync(id)
-    .ToResultAsync(Error.NotFound($"User {userId} not found in database"))
-    .EnsureAsync(u => u.IsActive, 
-        Error.Validation($"User {userId} account is inactive since {u.DeactivatedAt}"))
-    .BindAsync(u => GetOrdersAsync(u.Id))
-    .EnsureAsync(orders => orders.Any(), 
-        Error.NotFound($"No orders found for user {userId}"))
-    .MapAsync(orders => orders.Sum(o => o.Total));
-
-// When this fails, the error message tells you exactly where it failed
+```
+▶ email: Email address is not valid
+▶ firstName: First name is required
 ```
 
-### 2. Inspecting Values Mid-Chain
+Each field entry expands to its `Details` array of individual error messages.
 
-**Problem**: You want to see what value is flowing through the chain at a specific point.
+### AggregateError
 
-**Solution 1**: Use `Tap` with a breakpoint:
-
-```csharp
-var result = await GetUserAsync(id)
-    .Tap(user => 
-    {
-        // Set breakpoint here to inspect 'user'
-        var debug = new { user.Id, user.Name, user.Email };
-        _logger.LogDebug("User state: {@User}", debug);
-    })
-    .BindAsync(u => ProcessUserAsync(u));
+```
+Display:  Aggregate: 3 error(s)
 ```
 
-**Solution 2**: Use `Tap` to capture values for assertions in tests:
+Expanding shows each contained error with its type:
 
-```csharp
-[Fact]
-public async Task Should_Process_Valid_User()
-{
-    User? capturedUser = null;
-    
-    var result = await GetUserAsync("123")
-        .Tap(user => capturedUser = user)  // Capture the value
-        .BindAsync(u => ProcessUserAsync(u));
-    
-    Assert.NotNull(capturedUser);
-    Assert.Equal("123", capturedUser.Id);
-    result.IsSuccess.Should().BeTrue();
-}
+```
+▶ ValidationError: Email is invalid
+▶ NotFoundError: User 123 not found
+▶ ConflictError: Order already exists
 ```
 
-### 3. Async Debugging
+### Maybe\<T\>
 
-**Problem**: Async chains are harder to step through in the debugger.
-
-**Solution**: Break up long async chains into named variables:
-
-```csharp
-// Instead of one long chain
-var result = await GetUserAsync(id)
-    .BindAsync(u => GetOrdersAsync(u.Id))
-    .MapAsync(orders => ProcessOrders(orders));
-
-// Break it up — set breakpoints on each line
-var userResult = await GetUserAsync(id);
-if (userResult.IsFailure) return userResult.Error;
-
-var ordersResult = await GetOrdersAsync(userResult.Value.Id);
-if (ordersResult.IsFailure) return ordersResult.Error;
-
-var processed = ordersResult.Map(orders => ProcessOrders(orders));
-return processed;
+```
+Display:  Some(hello)
+          None
 ```
 
-### 4. Testing Individual Steps
+## Stepping Through ROP Chains
 
-**Problem**: A complex chain makes it hard to test individual operations.
+All ROP extension methods (`Bind`, `Map`, `Ensure`, `Tap`, `Match`, `Combine`, `When`,
+`Traverse`, `MapOnFailure`, `TapOnFailure`, `RecoverOnFailure`, and their async variants)
+are marked with `[DebuggerStepThrough]`.
 
-**Solution**: Extract operations into testable methods:
-
-```csharp
-// Instead of inline operations
-public Result<User> ValidateAndProcessUser(string id)
-{
-    return GetUser(id)
-        .Ensure(u => u.IsActive, Error.Validation("Inactive"))
-        .Ensure(u => u.Email.Contains('@'), Error.Validation("Invalid email"))
-        .Tap(u => u.LastLoginAt = DateTime.UtcNow);
-}
-
-// Extract testable pieces
-public Result<User> GetActiveUser(string id) =>
-    GetUser(id)
-        .Ensure(u => u.IsActive, Error.Validation("User is inactive"));
-
-public Result<User> ValidateUserEmail(User user) =>
-    user.Email.Contains('@')
-        ? Result.Success(user)
-        : Error.Validation("Invalid email format");
-
-// Compose and test separately
-public Result<User> ValidateAndProcessUser(string id) =>
-    GetActiveUser(id)
-        .Bind(ValidateUserEmail)
-        .Tap(UpdateLastLogin);
-```
-
-### 5. Combine Errors Are Aggregated
-
-**Problem**: When using `Combine`, all errors are collected. Understanding which operations failed requires inspecting the error type.
-
-**Solution**: Use `TapError` to log errors, handling both `AggregateError` (mixed error types) and `ValidationError` (merged validations):
+With **"Just My Code"** enabled (the default in Visual Studio), pressing **F11 (Step Into)** on a
+chained call like `.Bind(user => CreateOrder(user))` skips the library plumbing and lands
+directly inside your lambda. This makes stepping through a pipeline feel natural:
 
 ```csharp
-var result = GetUserAsync(userId)
-    .ToResultAsync(Error.NotFound($"User {userId} not found"))
-    .Combine(FetchUserSettingsAsync(userId))
-    .Combine(EmailAddress.TryCreate(email))
-    .TapError(error => 
-    {
-        if (error is AggregateError aggregated)
-        {
-            foreach (var err in aggregated.Errors)
-                _logger.LogWarning("Operation failed: {ErrorType} - {Code} - {Detail}", 
-                    err.GetType().Name, err.Code, err.Detail);
-        }
-        else if (error is ValidationError validation)
-        {
-            foreach (var fieldError in validation.FieldErrors)
-                _logger.LogWarning("Validation failed for {Field}: {Details}", 
-                    fieldError.FieldName, string.Join(", ", fieldError.Details));
-        }
-        else
-        {
-            _logger.LogWarning("Operation failed: {Detail}", error.Detail);
-        }
-    });
+var result = GetUser(id)          // F11 → steps into GetUser
+    .Ensure(u => u.IsActive, …)   // F11 → steps into the lambda (u => u.IsActive)
+    .Bind(u => CreateOrder(u))    // F11 → steps into CreateOrder
+    .Map(o => o.Total);           // F11 → steps into the lambda (o => o.Total)
 ```
 
-## Debugging Tools & Techniques
+The `Debug` extension methods (`Debug`, `DebugDetailed`, `DebugOnSuccess`, `DebugOnFailure`)
+are **not** marked `[DebuggerStepThrough]` — you can step into them to inspect values.
 
-### Conditional Breakpoints
+> **Tip:** If you need to step into the library code itself (for example, to diagnose
+> an issue with error aggregation in `Combine`), disable "Just My Code" temporarily via
+> **Debug → Options → Debugging → General → Enable Just My Code**.
 
-Set conditional breakpoints in `Tap` operations:
+## Debug Extension Methods
 
-```csharp
-var result = ProcessUsers(users)
-    .Tap(user => 
-    {
-        if (user.Id == "problem-id")
-            _logger.LogDebug("Processing problem user: {@User}", user);
-    });
-```
+The library includes `Debug` extension methods that execute only in **DEBUG** builds and become
+zero-cost no-ops in RELEASE builds. Debug information is emitted as OpenTelemetry `Activity`
+spans, making it visible in .NET Aspire, Application Insights, Jaeger, and similar tools.
 
-### Built-in Debug Extension Methods
+### Quick reference
 
-The library includes `Debug` extension methods that are only compiled in DEBUG builds:
+| Method | What it does |
+|--------|-------------|
+| `.Debug("label")` | Logs status + value/error as Activity tags |
+| `.DebugDetailed("label")` | Same as `Debug` plus error type, `ValidationError` fields, `AggregateError` contents |
+| `.DebugWithStack("label")` | Same as `Debug` plus up to 10 stack frames |
+| `.DebugOnSuccess(v => …)` | Runs a custom action (only on success) |
+| `.DebugOnFailure(err => …)` | Runs a custom action (only on failure) |
+
+All methods have `Task` and `ValueTask` async variants (`DebugAsync`, `DebugDetailedAsync`, etc.).
+
+### Example
 
 ```csharp
 var result = GetUser(id)
@@ -233,84 +120,175 @@ var result = GetUser(id)
     .Debug("After Ensure")
     .Bind(ProcessUser)
     .DebugDetailed("Final result");
+```
 
-// Custom debug actions
+```csharp
+// Custom actions
 var result = GetUser(id)
-    .DebugOnSuccess(user => Console.WriteLine($"User: {user.Id}, Email: {user.Email}"))
-    .DebugOnFailure(error => Console.WriteLine($"Error: {error.GetType().Name} - {error.Detail}"));
+    .DebugOnSuccess(user => Console.WriteLine($"User: {user.Id}"))
+    .DebugOnFailure(error => Console.WriteLine($"Error: {error.Code} - {error.Detail}"));
+```
 
-// Async variants
+```csharp
+// Async chains
 var result = await GetUserAsync(id)
     .DebugAsync("After GetUser")
     .BindAsync(u => GetOrdersAsync(u.Id))
     .DebugDetailedAsync("After GetOrders");
 ```
 
-**Note:** These methods are automatically excluded from RELEASE builds — no performance impact in production.
+## Diagnosing Chain Failures
 
-### Logging Extensions
+### Which step failed?
 
-Create a logging policy for your ROP chains:
+**Use `Tap` / `TapOnFailure` to add logging at each step:**
 
 ```csharp
-public static class ResultLoggingExtensions
-{
-    public static Result<T> LogOnFailure<T>(
-        this Result<T> result, ILogger logger, string operation)
+var result = await GetUserAsync(id)
+    .TapAsync(u => _logger.LogDebug("Found user: {Id}", u.Id))
+    .EnsureAsync(u => u.IsActive, Error.Validation("User inactive"))
+    .TapOnFailureAsync(err => _logger.LogWarning("Validation failed: {Error}", err.Detail))
+    .BindAsync(u => GetOrdersAsync(u.Id))
+    .TapAsync(orders => _logger.LogDebug("Found {Count} orders", orders.Count))
+    .MapAsync(orders => orders.Sum(o => o.Total));
+```
+
+**Use descriptive error messages with context:**
+
+```csharp
+var result = await GetUserAsync(id)
+    .ToResultAsync(Error.NotFound($"User {id} not found"))
+    .EnsureAsync(u => u.IsActive, Error.Validation("User account is inactive", "isActive"))
+    .BindAsync(u => GetOrdersAsync(u.Id))
+    .EnsureAsync(orders => orders.Any(), Error.NotFound($"No orders for user {id}"));
+```
+
+**Break the chain into named variables for breakpoints:**
+
+```csharp
+var userResult = await GetUserAsync(id)
+    .ToResultAsync(Error.NotFound("User not found"));
+
+var activeResult = userResult
+    .Ensure(u => u.IsActive, Error.Validation("Inactive"));
+
+var ordersResult = await activeResult
+    .BindAsync(u => GetOrdersAsync(u.Id));
+```
+
+### Inspecting values mid-chain
+
+Use `Tap` with a breakpoint inside the lambda — the debugger will stop there because
+`Tap` is `[DebuggerStepThrough]` but your lambda is not:
+
+```csharp
+var result = await GetUserAsync(id)
+    .TapAsync(user =>
     {
-        return result.TapError(error => 
-            logger.LogWarning("Operation {Operation} failed: {ErrorCode} - {Message}",
-                operation, error.Code, error.Detail));
-    }
-}
-
-// Usage
-var result = await GetUserAsync(id)
-    .LogOnFailure(_logger, "GetUser")
-    .BindAsync(u => GetOrdersAsync(u.Id))
-    .LogOnFailure(_logger, "GetOrders");
+        // Set breakpoint here — inspect 'user' in Locals/Watch
+        _ = user;
+    })
+    .BindAsync(u => ProcessUserAsync(u));
 ```
 
-### OpenTelemetry Tracing
+### Combine error inspection
 
-Enable distributed tracing for ROP operations:
+`Combine` aggregates all errors. The debugger proxy makes inspection easy —
+expand the error to see if it's a `ValidationError` (merged fields) or an
+`AggregateError` (mixed types). You can also log them:
 
 ```csharp
-services.AddOpenTelemetryTracing(builder =>
-{
-    builder
-        .AddRailwayOrientedProgrammingInstrumentation()
-        .AddOtlpExporter();
-});
-
-// Operations are automatically traced
-var result = await GetUserAsync(id)
-    .BindAsync(u => GetOrdersAsync(u.Id))
-    .MapAsync(orders => ProcessOrders(orders));
+var result = EmailAddress.TryCreate(email)
+    .Combine(FirstName.TryCreate(firstName))
+    .Combine(LastName.TryCreate(lastName))
+    .TapOnFailure(error =>
+    {
+        if (error is AggregateError agg)
+            foreach (var err in agg.Errors)
+                _logger.LogWarning("{Type}: {Detail}", err.GetType().Name, err.Detail);
+        else if (error is ValidationError val)
+            foreach (var field in val.FieldErrors)
+                _logger.LogWarning("{Field}: {Details}", field.FieldName, string.Join(", ", field.Details));
+        else
+            _logger.LogWarning("{Detail}", error.Detail);
+    });
 ```
 
-### Result Inspection in Tests
+## OpenTelemetry Tracing
 
-Use FluentAssertions for readable test assertions:
+Every ROP extension method creates an `Activity` span automatically. Enable tracing
+to see the full pipeline as a distributed trace:
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("Functional DDD ROP")
+        .AddOtlpExporter());
+```
+
+Each span records the method name, result status (`Ok` / `Error`), and error code on failure.
+This gives you a waterfall view of the entire pipeline in your tracing dashboard.
+
+## Testing Strategies
+
+### Capture values with Tap
+
+```csharp
+[Fact]
+public async Task Should_Process_Valid_User()
+{
+    User? captured = null;
+
+    var result = await GetUserAsync("123")
+        .TapAsync(user => captured = user)
+        .BindAsync(ProcessUserAsync);
+
+    captured.Should().NotBeNull();
+    captured!.Id.Should().Be("123");
+    result.IsSuccess.Should().BeTrue();
+}
+```
+
+### Assert on error types
 
 ```csharp
 [Fact]
 public void Should_Fail_With_Validation_Error()
 {
     var result = ProcessOrder(invalidOrder);
-    
+
     result.IsFailure.Should().BeTrue();
     result.Error.Should().BeOfType<ValidationError>();
     result.Error.Detail.Should().Contain("invalid quantity");
 }
 ```
 
-## Debugging Checklist
+### Extract and test individual steps
 
-1. ✅ Use descriptive error messages with context (IDs, parameters)
-2. ✅ Add `Tap`/`TapError` calls at key decision points
-3. ✅ Break complex chains into named methods for better stack traces
-4. ✅ Test each operation independently before composing
-5. ✅ Use structured logging with correlation IDs
-6. ✅ Include `fieldName` in validation errors
-7. ✅ Use built-in `Debug` extensions during development
+```csharp
+// Compose from testable pieces
+public Result<User> GetActiveUser(string id) =>
+    GetUser(id)
+        .Ensure(u => u.IsActive, Error.Validation("User is inactive"));
+
+public Result<User> ValidateEmail(User user) =>
+    user.Email.Value.Contains('@')
+        ? Result.Success(user)
+        : Result.Failure<User>(Error.Validation("Invalid email", "email"));
+
+// Compose
+public Result<User> ValidateAndProcess(string id) =>
+    GetActiveUser(id)
+        .Bind(ValidateEmail)
+        .Tap(UpdateLastLogin);
+```
+
+## Checklist
+
+1. Hover over `Result<T>` in the debugger — the display and proxy show value or error details
+2. Press F11 on `.Bind()` / `.Map()` / `.Ensure()` — it steps directly into your lambda
+3. Insert `.Debug("label")` calls during development — they vanish in Release builds
+4. Use `Tap` / `TapOnFailure` to add logging without breaking the chain
+5. Include `fieldName` in validation errors for clear diagnostics
+6. Break long chains into named variables when you need breakpoints on each step
+7. Enable OpenTelemetry tracing to see the pipeline as a distributed trace

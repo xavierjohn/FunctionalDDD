@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Provides extension methods for mapping (transforming) values inside Result objects.
 /// </summary>
@@ -9,6 +11,7 @@
 /// return a Result - they return a plain value that gets automatically wrapped in a success Result.
 /// If the input Result is a failure, the Map function is skipped and the failure is propagated.
 /// </remarks>
+[DebuggerStepThrough]
 public static partial class MapExtensions
 {
     /// <summary>
@@ -33,6 +36,7 @@ public static partial class MapExtensions
 /// <summary>
 /// Provides asynchronous extension methods for mapping (transforming) values inside Result objects.
 /// </summary>
+[DebuggerStepThrough]
 public static partial class MapExtensionsAsync
 {
     /// <summary>

@@ -63,6 +63,7 @@ using System.Threading.Tasks;
 ///     );
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class MatchTupleExtensions
 {
 <# for (int tupleSize = MinTupleSize; tupleSize <= MaxTupleSize; tupleSize++) { 
@@ -194,6 +195,7 @@ public static class MatchTupleExtensions
 ///     );
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class MatchTupleExtensionsAsync
 {
 <# for (int tupleSize = MinTupleSize; tupleSize <= MaxTupleSize; tupleSize++) { 

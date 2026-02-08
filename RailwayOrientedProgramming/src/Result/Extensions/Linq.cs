@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Provides LINQ query expression support for Result types, enabling C# query syntax for functional operations.
 /// </summary>
@@ -33,6 +35,7 @@
 ///             .Map(email => new User(firstName, lastName, email))));
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class ResultLinqExtensions
 {
     /// <summary>

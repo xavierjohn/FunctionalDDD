@@ -79,6 +79,7 @@ using System.Diagnostics;
 /// );
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static partial class WhenAllExtensionsAsync
 {
     /// <summary>

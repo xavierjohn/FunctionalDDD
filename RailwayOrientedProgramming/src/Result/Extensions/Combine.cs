@@ -1,8 +1,11 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Combines two or more <see cref="Result{TValue}"/> into one tuple containing all the Results.
 /// </summary>
+[DebuggerStepThrough]
 public static partial class CombineExtensions
 {
     /// <summary>
@@ -44,6 +47,7 @@ public static partial class CombineExtensions
 /// <summary>
 /// Combines two or more <see cref="Result{TValue}"/> into one tuple containing all the Results.
 /// </summary>
+[DebuggerStepThrough]
 public static partial class CombineExtensionsAsync
 {
     #region Task-based overloads
