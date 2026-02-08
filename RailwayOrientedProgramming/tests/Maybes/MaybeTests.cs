@@ -7,7 +7,7 @@ public class MaybeTests
     [Fact]
     public void Can_create_a_nullable_maybe()
     {
-        Maybe<MyClass> maybe = null;
+        Maybe<MyClass> maybe = default;
 
         maybe.HasValue.Should().BeFalse();
         maybe.HasNoValue.Should().BeTrue();
@@ -25,7 +25,7 @@ public class MaybeTests
     [Fact]
     public void Nullable_maybe_is_same_as_maybe_none()
     {
-        Maybe<MyClass> nullableMaybe = null;
+        Maybe<MyClass> nullableMaybe = default;
         var maybeNone = Maybe.None<MyClass>();
 
         nullableMaybe.Should().Be(maybeNone);
@@ -34,7 +34,7 @@ public class MaybeTests
     [Fact]
     public void Cannot_access_Value_if_none()
     {
-        Maybe<MyClass> maybe = null;
+        Maybe<MyClass> maybe = default;
 
         Action action = () =>
         {
@@ -59,7 +59,7 @@ public class MaybeTests
     [Fact]
     public void ToString_returns_Empty_String_for_no_value()
     {
-        Maybe<MyClass> maybe = null;
+        Maybe<MyClass> maybe = default;
 
         var str = maybe.ToString();
 
@@ -186,7 +186,7 @@ public class MaybeTests
     [Fact]
     public void Maybe_class_null_is_none()
     {
-        Maybe<MyClass> maybe = null;
+        Maybe<MyClass> maybe = default;
 
         maybe.HasValue.Should().BeFalse();
         maybe.HasNoValue.Should().BeTrue();

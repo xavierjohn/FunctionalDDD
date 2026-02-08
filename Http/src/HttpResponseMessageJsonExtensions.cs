@@ -344,6 +344,7 @@ public static partial class HttpResponseExtensions
         this HttpResponseMessage response,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
         => await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken)
             .BindAsync(maybe => maybe.HasValue ? Result.Success(maybe.Value) : Result.Failure<TValue>(Error.Unexpected($"Http Response was null for value {typeof(TValue).Name}.")));
 
@@ -359,6 +360,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
     {
         var response = await responseTask;
         return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
@@ -376,6 +378,7 @@ public static partial class HttpResponseExtensions
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
         => await response.BindAsync(response => response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken));
 
     /// <summary>
@@ -390,6 +393,7 @@ public static partial class HttpResponseExtensions
         this Task<Result<HttpResponseMessage>> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
     {
         var response = await responseTask;
         return await response.ReadResultFromJsonAsync(jsonTypeInfo, cancellationToken);
@@ -407,6 +411,7 @@ public static partial class HttpResponseExtensions
         this HttpResponseMessage response,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
     {
         if (response.IsSuccessStatusCode == false)
             return Result.Failure<Maybe<TValue>>(Error.Unexpected($"Http Response is in a failed state for value {typeof(TValue).Name}. Status code: {response.StatusCode}"));
@@ -429,6 +434,7 @@ public static partial class HttpResponseExtensions
         this Task<HttpResponseMessage> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
     {
         var response = await responseTask;
         return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken);
@@ -446,6 +452,7 @@ public static partial class HttpResponseExtensions
         this Result<HttpResponseMessage> response,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
         => await response.BindAsync(response => response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken));
 
     /// <summary>
@@ -460,6 +467,7 @@ public static partial class HttpResponseExtensions
         this Task<Result<HttpResponseMessage>> responseTask,
         JsonTypeInfo<TValue> jsonTypeInfo,
         CancellationToken cancellationToken)
+        where TValue : notnull
     {
         var response = await responseTask;
         return await response.ReadResultMaybeFromJsonAsync(jsonTypeInfo, cancellationToken);

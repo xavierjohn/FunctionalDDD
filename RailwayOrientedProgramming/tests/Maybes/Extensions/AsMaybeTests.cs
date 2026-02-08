@@ -25,7 +25,7 @@ public class AsMaybeTests : TestBase
     [Fact]
     public void Class_maybe_conversion_none()
     {
-        Maybe<T> maybeT = null;
+        Maybe<T> maybeT = default;
         maybeT.HasValue.Should().BeFalse();
     }
 
