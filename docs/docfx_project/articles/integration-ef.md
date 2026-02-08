@@ -86,11 +86,11 @@ graph TB
 ```csharp
 public interface IUserRepository
 {
-    // ? Returns Maybe - domain decides if absence is good/bad
+    // 🔍 Returns Maybe - domain decides if absence is good/bad
     Task<Maybe<User>> GetByEmailAsync(EmailAddress email, CancellationToken ct);
     Task<Maybe<User>> GetByIdAsync(UserId id, CancellationToken ct);
     
-    // ? Simple existence check
+    // 🔍 Simple existence check
     Task<bool> ExistsByEmailAsync(EmailAddress email, CancellationToken ct);
 }
 
@@ -105,7 +105,7 @@ public class UserRepository : IUserRepository
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email, ct);
         
-        return Maybe.From(user);  // ? Neutral - just presence/absence
+        return Maybe.From(user);  // ✅ Neutral - just presence/absence
     }
 
     public async Task<bool> ExistsByEmailAsync(
@@ -165,14 +165,14 @@ public async Task<Result<Unit>> CheckEmailAvailabilityAsync(
 }
 ```
 
-### ? Use Result<T> for Commands
+### ✅ Use Result<T> for Commands
 
 **When the operation can fail due to infrastructure:**
 
 ```csharp
 public interface IUserRepository
 {
-    // ? Returns Result - can fail due to DB constraints, concurrency, etc.
+    // 🔑 Returns Result - can fail due to DB constraints, concurrency, etc.
     Task<Result<Unit>> SaveAsync(User user, CancellationToken ct);
     Task<Result<Unit>> DeleteAsync(UserId id, CancellationToken ct);
 }
@@ -530,7 +530,7 @@ public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
     {
         return Error.Domain("Cannot save user due to referential integrity");
     }
-    // ?? Don't catch generic Exception - let infrastructure failures propagate
+    // ⚠️ Don't catch generic Exception - let infrastructure failures propagate
 }
 
 public async Task<Result<Unit>> DeleteAsync(UserId id, CancellationToken ct)
@@ -551,14 +551,14 @@ public async Task<Result<Unit>> DeleteAsync(UserId id, CancellationToken ct)
     {
         return Error.Domain("Cannot delete user with active orders");
     }
-    // ?? Let unexpected failures (connection issues, etc.) propagate
+    // ⚠️ Let unexpected failures (connection issues, etc.) propagate
 }
 ```
 
 ### ❌ Don't Catch Unexpected Failures
 
 ```csharp
-// ? Bad - catches ALL exceptions, even unexpected ones
+// ❌ Bad - catches ALL exceptions, even unexpected ones
 public async Task<Result<User>> SaveAsync(User user, CancellationToken ct)
 {
     try
@@ -567,14 +567,14 @@ public async Task<Result<User>> SaveAsync(User user, CancellationToken ct)
         await _context.SaveChangesAsync(ct);
         return Result.Success(user);
     }
-    catch (Exception ex)  // ? Too broad - hides infrastructure problems
+    catch (Exception ex)  // ❌ Too broad - hides infrastructure problems
     {
         _logger.LogError(ex, "Failed to save user");
         return Error.Unexpected("Failed to save user");
     }
 }
 
-// ? Good - only catches expected failures
+// ✅ Good - only catches expected failures
 public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
 {
     try

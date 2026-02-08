@@ -69,14 +69,14 @@ var result = order.Submit()
 **Combine vs Bind:**
 ```csharp
 // Combine: ALL validations run, ALL errors collected
-var result = ProductName.TryCreate(name)      // ? Error: "Name too short"
-    .Combine(Price.TryCreate(price))          // ? Error: "Price must be positive"
-    .Combine(Quantity.TryCreate(quantity));   // ? Success
+var result = ProductName.TryCreate(name)      // ❌ Error: "Name too short"
+    .Combine(Price.TryCreate(price))          // ❌ Error: "Price must be positive"
+    .Combine(Quantity.TryCreate(quantity));   // ✅ Success
 // Returns errors for BOTH name AND price
 
 // Bind: Sequential - stops at first error
-var result = ProductName.TryCreate(name)      // ? Error: "Name too short"
-    .Bind(n => Price.TryCreate(price)         // ?? Never executed
+var result = ProductName.TryCreate(name)      // ❌ Error: "Name too short"
+    .Bind(n => Price.TryCreate(price)         // 🚫 Never executed
         .Bind(p => Quantity.TryCreate(quantity)));
 // Only returns the name error
 ```
