@@ -91,6 +91,7 @@ public class CurrencyCodeTests
         // Assert
         (a == b).Should().BeTrue();
         a.Equals(b).Should().BeTrue();
+        a.GetHashCode().Should().Be(b.GetHashCode());
     }
 
     [Fact]

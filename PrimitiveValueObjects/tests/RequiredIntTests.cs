@@ -68,6 +68,7 @@ public class RequiredIntTests
             {
                 (t1 == t2).Should().BeTrue();
                 t1.Equals(t2).Should().BeTrue();
+                t1.GetHashCode().Should().Be(t2.GetHashCode());
             })
             .IsSuccess.Should().BeTrue();
 
