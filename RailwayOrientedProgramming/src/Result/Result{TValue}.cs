@@ -32,6 +32,7 @@ using System.Diagnostics;
 /// </code>
 /// </example>
 [DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure\"}, Value = {(_value is null ? \"<null>\" : _value)}, Error = {(_error is null ? \"<none>\" : _error.Code)}")]
+[DebuggerTypeProxy(typeof(ResultDebugView<>))]
 public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>
 {
     /// <summary>

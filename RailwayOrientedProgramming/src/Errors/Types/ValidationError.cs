@@ -1,6 +1,7 @@
 ﻿namespace FunctionalDdd;
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 /// <summary>
 /// Represents validation errors for one or more fields. Used when input data fails business rules or constraints.
@@ -30,6 +31,8 @@ using System.Collections.Immutable;
 ///     .And("password", "Must contain a special character");
 /// </code>
 /// </example>
+[DebuggerDisplay("Validation: {FieldErrors.Length} field(s) — {Detail}")]
+[DebuggerTypeProxy(typeof(ValidationErrorDebugView))]
 public sealed class ValidationError : Error, IEquatable<ValidationError>
 {
     /// <summary>
