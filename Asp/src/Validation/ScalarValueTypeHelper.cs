@@ -138,4 +138,50 @@ internal static class ScalarValueTypeHelper
             [fieldName] = [failure.Error.Detail]
         };
     }
+
+    /// <summary>
+    /// Checks if the given type is <see cref="Maybe{T}"/> where T implements <see cref="IScalarValue{TSelf, TPrimitive}"/>.
+    /// </summary>
+    /// <param name="type">The type to check.</param>
+    /// <returns>True if the type is Maybe wrapping a scalar value object, false otherwise.</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Inner type of Maybe<T> is preserved by JSON serialization infrastructure")]
+    public static bool IsMaybeScalarValue(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+
+        var innerType = GetMaybeInnerType(type);
+        return innerType is not null && IsScalarValue(innerType);
+    }
+
+    /// <summary>
+    /// Gets the inner type T from <see cref="Maybe{T}"/>, or null if the type is not a Maybe.
+    /// </summary>
+    /// <param name="type">The type to check.</param>
+    /// <returns>The inner type T, or null if the type is not <see cref="Maybe{T}"/>.</returns>
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
+    [UnconditionalSuppressMessage("Trimming", "IL2063", Justification = "Generic type arguments of Maybe<T> are preserved by JSON serialization infrastructure")]
+    public static Type? GetMaybeInnerType(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+
+        if (!type.IsGenericType)
+            return null;
+
+        if (type.GetGenericTypeDefinition() != typeof(Maybe<>))
+            return null;
+
+        return type.GetGenericArguments()[0];
+    }
+
+    /// <summary>
+    /// Gets the primitive type from <see cref="Maybe{T}"/> where T implements <see cref="IScalarValue{TSelf, TPrimitive}"/>.
+    /// </summary>
+    /// <param name="type">The Maybe type to inspect.</param>
+    /// <returns>The primitive type, or null if the type is not a Maybe wrapping a scalar value.</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Value object types are preserved by JSON serialization infrastructure")]
+    public static Type? GetMaybePrimitiveType(Type type)
+    {
+        var innerType = GetMaybeInnerType(type);
+        return innerType is null ? null : GetPrimitiveType(innerType);
+    }
 }

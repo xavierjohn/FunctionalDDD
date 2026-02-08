@@ -1,32 +1,32 @@
-﻿namespace FunctionalDdd.Asp.ModelBinding;
+namespace FunctionalDdd.Asp.ModelBinding;
 
 using FunctionalDdd;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 /// <summary>
-/// Model binder for scalar value types.
-/// Validates scalar values during model binding by calling TryCreate.
+/// Model binder for <see cref="Maybe{TValue}"/> parameters where <typeparamref name="TValue"/>
+/// implements <see cref="IScalarValue{TSelf, TPrimitive}"/>.
+/// Binds optional route, query, form, and header parameters to <see cref="Maybe{TValue}"/>.
 /// </summary>
 /// <typeparam name="TValue">The scalar value type.</typeparam>
 /// <typeparam name="TPrimitive">The underlying primitive type.</typeparam>
 /// <remarks>
 /// <para>
-/// This binder is automatically used for any type that implements 
-/// <see cref="IScalarValue{TSelf, TPrimitive}"/>. It intercepts model binding
-/// and calls the static <c>TryCreate</c> method to create validated scalar values.
+/// Unlike <see cref="ScalarValueModelBinder{TValue, TPrimitive}"/> which leaves absent parameters
+/// unbound (relying on ASP.NET Core's default handling), this binder explicitly produces:
 /// </para>
-/// <para>
-/// Validation errors are added to <see cref="ModelStateDictionary"/>, which integrates
-/// with ASP.NET Core's standard validation infrastructure. When used with
-/// <c>[ApiController]</c>, invalid requests automatically return 400 Bad Request.
-/// </para>
+/// <list type="bullet">
+/// <item>Parameter absent → <c>Maybe.None&lt;TValue&gt;()</c> — success, value not provided</item>
+/// <item>Parameter present, valid → <c>Maybe.From(validatedValue)</c> — success with value</item>
+/// <item>Parameter present, invalid → validation error in ModelState</item>
+/// </list>
 /// </remarks>
-public class ScalarValueModelBinder<TValue, TPrimitive> : IModelBinder
+public class MaybeModelBinder<TValue, TPrimitive> : IModelBinder
     where TValue : IScalarValue<TValue, TPrimitive>
     where TPrimitive : IComparable
 {
     /// <summary>
-    /// Attempts to bind a model from the value provider.
+    /// Attempts to bind a <see cref="Maybe{TValue}"/> from the value provider.
     /// </summary>
     /// <param name="bindingContext">The binding context.</param>
     /// <returns>A completed task.</returns>
@@ -37,12 +37,24 @@ public class ScalarValueModelBinder<TValue, TPrimitive> : IModelBinder
         var modelName = bindingContext.ModelName;
         var valueProviderResult = bindingContext.ValueProvider.GetValue(modelName);
 
+        // Parameter not provided → Maybe.None (not an error)
         if (valueProviderResult == ValueProviderResult.None)
+        {
+            bindingContext.Result = ModelBindingResult.Success(Maybe.None<TValue>());
             return Task.CompletedTask;
+        }
 
         bindingContext.ModelState.SetModelValue(modelName, valueProviderResult);
 
         var rawValue = valueProviderResult.FirstValue;
+
+        // Empty string for optional parameter → Maybe.None
+        if (string.IsNullOrEmpty(rawValue))
+        {
+            bindingContext.Result = ModelBindingResult.Success(Maybe.None<TValue>());
+            return Task.CompletedTask;
+        }
+
         var parseResult = PrimitiveConverter.ConvertToPrimitive<TPrimitive>(rawValue);
 
         if (parseResult.IsFailure)
@@ -54,13 +66,12 @@ public class ScalarValueModelBinder<TValue, TPrimitive> : IModelBinder
 
         var primitiveValue = parseResult.Value;
 
-        // Call TryCreate directly - no reflection needed due to static abstract interface
-        // Pass the model name so validation errors have the correct field name
+        // Call TryCreate directly — no reflection needed due to static abstract interface
         var result = TValue.TryCreate(primitiveValue, modelName);
 
         if (result.IsSuccess)
         {
-            bindingContext.Result = ModelBindingResult.Success(result.Value);
+            bindingContext.Result = ModelBindingResult.Success(Maybe.From(result.Value));
         }
         else
         {

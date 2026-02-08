@@ -1,5 +1,7 @@
 ﻿# FunctionalDdd.Testing
 
+[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing)
+
 Testing utilities and FluentAssertions extensions for **FunctionalDdd** - Write expressive, maintainable tests for Railway-Oriented Programming patterns.
 
 ## Installation
@@ -192,7 +194,7 @@ public class UserServiceTests
 | Manual repository setup with mocks | `new FakeRepository<User, UserId>()` |
 
 **Advantages:**
-- ✂️ **60% Less Code** - More concise assertions
+- ✂️ **Less Code** - More concise assertions
 - 💬 **Better Error Messages** - Detailed failure descriptions
 - 💡 **IntelliSense Guided** - Discover test patterns through IDE
 - 📖 **Readable Tests** - Tests read like specifications
@@ -200,8 +202,8 @@ public class UserServiceTests
 
 ## Related Packages
 
-- **FunctionalDDD.RailwayOrientedProgramming** - Core Result/Maybe types
-- **FunctionalDDD.DomainDrivenDesign** - DDD building blocks
+- **FunctionalDdd.RailwayOrientedProgramming** - Core Result/Maybe types
+- **FunctionalDdd.DomainDrivenDesign** - DDD building blocks
 
 ## License
 

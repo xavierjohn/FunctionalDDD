@@ -70,7 +70,7 @@ UserId.TryParse(string?, IFormatProvider?, out...)       // bool
 
 - **.NET Standard 2.0** compatible (source generators must target netstandard2.0)
 - **C# 9.0+** for partial class support
-- Requires `FunctionalDDD.CommonValueObjects` package
+- Requires `FunctionalDdd.PrimitiveValueObjects` package
 
 ## How It Works
 
@@ -97,7 +97,7 @@ Error messages use the class name (e.g., "Product Name" from "ProductName").
 
 This is a **source generator** - it runs at compile-time and generates C# code. The generated code is visible in:
 
-- **Visual Studio:** Project ? Dependencies ? Analyzers ? FunctionalDdd.CommonValueObjectGenerator
+- **Visual Studio:** Project → Dependencies → Analyzers → FunctionalDdd.PrimitiveValueObjectGenerator
 - **Output:** `obj/Debug/net10.0/generated/`
 
 ## Resources

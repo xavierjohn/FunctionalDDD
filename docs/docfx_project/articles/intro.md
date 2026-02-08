@@ -55,14 +55,14 @@ graph TB
 Railway-Oriented Programming (ROP) is a pattern for explicit error handling that **eliminates nested if-statements** and **makes your code read like a story**.
 
 **The problem with traditional code:**
-- ? Scattered error checks interrupt the flow
-- ? Easy to forget a validation step
-- ? Hard to see the "happy path"
-- ? Verbose and repetitive
+- ❌ Scattered error checks interrupt the flow
+- ❌ Easy to forget a validation step
+- ❌ Hard to see the "happy path"
+- ❌ Verbose and repetitive
 
 **Instead of this:**
 ```csharp
-// ? Traditional approach - 15+ lines, hard to follow the logic
+// ❌ Traditional approach - 15+ lines, hard to follow the logic
 var firstName = ValidateFirstName(input.FirstName);
 if (firstName == null) return BadRequest("Invalid first name");
 
@@ -81,7 +81,7 @@ return Ok(user);
 
 **You write this:**
 ```csharp
-// ? ROP approach - 6 lines that read like English
+// ✅ ROP approach - 6 lines that read like English
 return FirstName.TryCreate(input.FirstName)
     .Combine(LastName.TryCreate(input.LastName))
     .Bind((first, last) => User.TryCreate(first, last))
@@ -91,12 +91,12 @@ return FirstName.TryCreate(input.FirstName)
 ```
 
 **What you gain:**
-- ?? **60% less code** - More readable, less to maintain
-- ?? **Self-documenting** - Chain reads like a recipe
-- ?? **Compiler-enforced** - Can't skip error handling
-- ? **Zero hidden logic** - Every step is visible
+- 🎯 **60% less code** - More readable, less to maintain
+- 📖 **Self-documenting** - Chain reads like a recipe
+- 🛡️ **Compiler-enforced** - Can't skip error handling
+- 🔍 **Zero hidden logic** - Every step is visible
 
-?? **Learn the fundamentals:** [Basics](basics.md) - Complete ROP tutorial with all core operations
+👉 **Learn the fundamentals:** [Basics](basics.md) - Complete ROP tutorial with all core operations
 
 ## Domain-Driven Design
 
@@ -138,8 +138,8 @@ public class User : Entity<UserId>
 }
 ```
 
-?? **See patterns in action:** [Clean Architecture](clean-architecture.md) - DDD with ROP in layered applications  
-?? **Integrate validation:** [FluentValidation Integration](integration-fluentvalidation.md) - Domain validation patterns
+👉 **See patterns in action:** [Clean Architecture](clean-architecture.md) - DDD with ROP in layered applications  
+👉 **Integrate validation:** [FluentValidation Integration](integration-fluentvalidation.md) - Domain validation patterns
 
 ## Error Types
 
@@ -160,11 +160,11 @@ graph LR
 ```
 
 **Common error types:**
-- `ValidationError` ? 400 Bad Request (with field-level details)
-- `NotFoundError` ? 404 Not Found
-- `UnauthorizedError` ? 401 Unauthorized
-- `ConflictError` ? 409 Conflict
-- `DomainError` ? 422 Unprocessable Entity
+- `ValidationError` → 400 Bad Request (with field-level details)
+- `NotFoundError` → 404 Not Found
+- `UnauthorizedError` → 401 Unauthorized
+- `ConflictError` → 409 Conflict
+- `DomainError` → 422 Unprocessable Entity
 
 **Example - Discriminated union matching:**
 ```csharp
@@ -176,7 +176,7 @@ return ProcessOrder(order).MatchError(
 );
 ```
 
-?? **Complete error catalog:** [Error Handling](error-handling.md) - All 11 error types, custom errors, aggregation
+📖 **Complete error catalog:** [Error Handling](error-handling.md) - All 11 error types, custom errors, aggregation
 
 ## Key Features
 
@@ -202,10 +202,10 @@ Use strongly-typed value objects instead of primitive types. RequiredString prov
 
 **Example:**
 ```csharp
-// ? Easy to swap parameters
+// ❌ Easy to swap parameters
 Person CreatePerson(string firstName, string lastName);
 
-// ? Compiler catches mistakes
+// ✅ Compiler catches mistakes
 Person CreatePerson(FirstName firstName, LastName lastName);
 ```
 

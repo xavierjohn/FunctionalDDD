@@ -401,10 +401,86 @@ git checkout main -- .
 
 ---
 
+## Maybe<T> `notnull` Constraint
+
+### Breaking Change
+
+`Maybe<T>` now has a `where T : notnull` constraint, preventing it from wrapping nullable types. This makes `Maybe<T>` a proper domain-level optionality type — you use `Maybe<T>` instead of `T?`, not alongside it.
+
+### What Changed
+
+```csharp
+// v2.x — allowed
+Maybe<string?> name;        // Compiled
+Maybe<int?> count;           // Compiled
+
+// v3.0 — compiler errors
+Maybe<string?> name;         // ❌ CS8714: notnull constraint
+Maybe<int?> count;            // ❌ CS8714: notnull constraint
+```
+
+### New API Methods
+
+| Method | Purpose | Example |
+|--------|---------|---------|
+| `Map<TResult>` | Transform inner value | `maybe.Map(url => url.Value)` → `Maybe<string>` |
+| `Match<TResult>` | Pattern match | `maybe.Match(url => url.Value, () => "none")` → `string` |
+| Implicit operator | Natural assignment | `Maybe<Url> m = url;` |
+
+### How to Migrate
+
+**1. Remove nullable wrappers**
+
+```csharp
+// v2.x
+Maybe<string?> nickname;
+
+// v3.0
+Maybe<string> nickname;
+```
+
+**2. Replace `null` assignments with `default`**
+
+```csharp
+// v2.x
+Maybe<Url> website = null;
+
+// v3.0
+Maybe<Url> website = default;      // Maybe.None
+Maybe<Url> website = Maybe.None<Url>();  // Explicit
+```
+
+**3. Use `Maybe<T>` for optional properties instead of `T?`**
+
+```csharp
+// v2.x — nullable value object
+public Url? Website { get; init; }
+
+// v3.0 — domain-level optionality
+public Maybe<Url> Website { get; init; }
+```
+
+**4. ASP.NET Core DTOs — automatic support**
+
+`Maybe<T>` properties in DTOs are automatically handled by the JSON converter and model binder when `AddScalarValueValidation()` is configured:
+
+```csharp
+public record RegisterUserDto
+{
+    public FirstName FirstName { get; init; } = null!;        // Required
+    public EmailAddress Email { get; init; } = null!;          // Required
+    public Maybe<Url> Website { get; init; }                   // Optional — null in JSON → Maybe.None
+}
+```
+
+---
+
 ## Summary Checklist
 
 - [ ] Update NuGet package to v3.0
 - [ ] Run find & replace for all 6 renamed methods
+- [ ] Migrate `Maybe<T?>` to `Maybe<T>` (remove nullable wrappers)
+- [ ] Replace `Url? Website` with `Maybe<Url> Website` in DTOs
 - [ ] Compile solution and fix any errors
 - [ ] Update test method names
 - [ ] Run all tests

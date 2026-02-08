@@ -106,6 +106,72 @@ Accept: application/json
     "notes": "Initial draft order"
 }
 
+###############################################################################
+# Maybe<T> — Optional Value Object in JSON Body
+# The "assignedTo" field uses Maybe<FirstName> for domain-level optionality.
+# - Omitted or null → Maybe.None (no error, field not required)
+# - Present & valid → Maybe with value (auto-validated as FirstName)
+# - Present & invalid → 400 Bad Request (validation error)
+###############################################################################
+
+### Update Order - With AssignedTo (200 OK)
+# "assignedTo" present and valid → Maybe<FirstName> with value
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Confirmed",
+    "assignedTo": "Alice",
+    "notes": "Assigned to Alice for processing"
+}
+
+### Update Order - AssignedTo Omitted (200 OK)
+# "assignedTo" not present in JSON → Maybe.None (not an error)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Shipped",
+    "notes": "No agent assigned — field omitted entirely"
+}
+
+### Update Order - AssignedTo Null (200 OK)
+# "assignedTo" explicitly set to null → Maybe.None (not an error)
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Delivered",
+    "assignedTo": null,
+    "notes": "No agent assigned — field explicitly null"
+}
+
+### Update Order - AssignedTo Invalid (400 Bad Request)
+# "assignedTo" present but empty string → FirstName validation fails
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "Draft",
+    "assignedTo": "",
+    "notes": "Empty assignedTo should fail validation"
+}
+
+### Update Order - Both State and AssignedTo Invalid (400 Bad Request)
+# Both fields invalid → errors collected for both
+POST {{host}}/orders/update
+Content-Type: application/json
+Accept: application/json
+
+{
+    "state": "InvalidState",
+    "assignedTo": ""
+}
+
 ### Update Order - Confirmed (200 OK)
 POST {{host}}/orders/update
 Content-Type: application/json

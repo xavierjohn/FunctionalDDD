@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Maybe<T> — First-Class Domain-Level Optionality
+
+`Maybe<T>` now has a `notnull` constraint and new transformation methods, making it a proper domain-level optionality type:
+
+- **`notnull` constraint** — `Maybe<T> where T : notnull` prevents wrapping nullable types
+- **`Map<TResult>`** — Transform the inner value: `maybe.Map(url => url.Value)` returns `Maybe<string>`
+- **`Match<TResult>`** — Pattern match: `maybe.Match(url => url.Value, () => "none")`
+- **Implicit operator** — `Maybe<Url> m = url;` works naturally
+
+#### ASP.NET Core Maybe<T> Integration
+
+Full support for optional value object properties in DTOs:
+
+- **`MaybeScalarValueJsonConverter<TValue,TPrimitive>`** — JSON deserialization: `null` → `Maybe.None`, valid → `Maybe.From(validated)`, invalid → validation error collected
+- **`MaybeScalarValueJsonConverterFactory`** — Auto-discovers `Maybe<T>` properties on DTOs
+- **`MaybeModelBinder<TValue,TPrimitive>`** — MVC model binding: absent/empty → `Maybe.None`, valid → `Maybe.From(result)`, invalid → ModelState error
+- **`MaybeSuppressChildValidationMetadataProvider`** — Prevents MVC from requiring child properties on `Maybe<T>` (fixes MVC crash)
+- **`ScalarValueTypeHelper`** additions — `IsMaybeScalarValue()`, `GetMaybeInnerType()`, `GetMaybePrimitiveType()`
+- **SampleWeb apps** updated — `Maybe<Url> Website` on User/RegisterUserDto, `Maybe<FirstName> AssignedTo` on UpdateOrderDto
+
+### Changed
+
+- `Maybe<T>` now requires `where T : notnull` — see [Migration Guide](MIGRATION_v3.md#maybe-notnull-constraint) for details
+
+---
+
 #### FunctionalDDD.Analyzers - NEW Package! 🎉
 
 A comprehensive suite of 18 Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:

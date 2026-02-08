@@ -35,7 +35,7 @@ app.MapGet("/", () => Results.Ok(new WelcomeResponse(
         Users: new UserEndpoints(
             Register: "POST /users/register - Register user with manual validation (Result.Combine)",
             RegisterCreated: "POST /users/registerCreated - Register user returning 201 Created",
-            RegisterAutoValidation: "POST /users/RegisterWithAutoValidation - Register with automatic value object validation",
+            RegisterAutoValidation: "POST /users/RegisterWithAutoValidation - Register with auto-validation (Maybe<Url> for optional website)",
             Errors: [
                 "GET /users/notfound/{id} - Returns 404 Not Found",
                 "GET /users/conflict/{id} - Returns 409 Conflict",

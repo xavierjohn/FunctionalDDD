@@ -91,7 +91,7 @@ For most applications, the reflection overhead is **negligible**:
 
 The library **automatically uses reflection** when:
 
-1. **No `[GenerateValueObjectConverters]` attribute** is found on any `JsonSerializerContext`
+1. **No `[GenerateScalarValueConverters]` attribute** is found on any `JsonSerializerContext`
 2. **Source generator not referenced** in the project
 3. **Running on standard .NET runtime** (not Native AOT)
 
@@ -105,7 +105,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation();  // ← Uses reflection automatically
+    .AddScalarValueValidation();  // ← Uses reflection automatically
 
 var app = builder.Build();
 app.MapControllers();
@@ -180,7 +180,7 @@ Content-Type: application/json
 Perfect for **prototyping** and **small applications**:
 
 ```csharp
-builder.Services.AddValueObjectValidation();
+builder.Services.AddScalarValueValidation();
 // ← Uses reflection, works immediately
 ```
 
@@ -197,7 +197,7 @@ When ready for **production** or **Native AOT**:
 
 2. Add attribute to your `JsonSerializerContext`:
    ```csharp
-   [GenerateValueObjectConverters]  // ← Add this line
+   [GenerateScalarValueConverters]  // ← Add this line
    [JsonSerializable(typeof(MyDto))]
    public partial class AppJsonSerializerContext : JsonSerializerContext
    {
@@ -216,7 +216,7 @@ You can check at runtime which path is being used:
 var options = app.Services.GetRequiredService<IOptions<JsonOptions>>().Value;
 var hasGeneratedContext = options.SerializerOptions.TypeInfoResolver
     is JsonSerializerContext context
-    && context.GetType().GetCustomAttributes(typeof(GenerateValueObjectConvertersAttribute), false).Any();
+    && context.GetType().GetCustomAttributes(typeof(GenerateScalarValueConvertersAttribute), false).Any();
 
 if (hasGeneratedContext)
     Console.WriteLine("Using source-generated converters (AOT-compatible)");
@@ -229,7 +229,7 @@ else
 ### "My value objects aren't being validated!"
 
 **Check:**
-1. Is `AddScalarValueObjectValidation()` or `AddValueObjectValidation()` called?
+1. Is `AddScalarValueValidation()` or `AddScalarValueValidationForMinimalApi()` called?
 2. Does your value object implement `IScalarValue<TSelf, TPrimitive>`?
 3. Is the `TryCreate` method signature correct?
 
@@ -247,7 +247,7 @@ else
 
 **Check:**
 1. Is generator referenced with `OutputItemType="Analyzer"`?
-2. Does any `JsonSerializerContext` have `[GenerateValueObjectConverters]`?
+2. Does any `JsonSerializerContext` have `[GenerateScalarValueConverters]`?
 3. Try `dotnet clean` and rebuild
 
 ## Summary

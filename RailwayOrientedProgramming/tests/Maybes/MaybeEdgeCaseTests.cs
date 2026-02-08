@@ -570,6 +570,111 @@ public class MaybeEdgeCaseTests
 
     #endregion
 
+    #region Map
+
+    [Fact]
+    public void Map_OnMaybeWithValue_ShouldReturnTransformedValue()
+    {
+        // Arrange
+        Maybe<string> maybe = "hello";
+
+        // Act
+        var result = maybe.Map(v => v.ToUpperInvariant());
+
+        // Assert
+        result.HasValue.Should().BeTrue();
+        result.Value.Should().Be("HELLO");
+    }
+
+    [Fact]
+    public void Map_OnMaybeWithoutValue_ShouldReturnNone()
+    {
+        // Arrange
+        Maybe<string> maybe = Maybe.None<string>();
+
+        // Act
+        var result = maybe.Map(v => v.ToUpperInvariant());
+
+        // Assert
+        result.HasNoValue.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Map_OnMaybeWithValue_ShouldTransformType()
+    {
+        // Arrange
+        Maybe<string> maybe = "42";
+
+        // Act
+        var result = maybe.Map(int.Parse);
+
+        // Assert
+        result.HasValue.Should().BeTrue();
+        result.Value.Should().Be(42);
+    }
+
+    #endregion
+
+    #region Match
+
+    [Fact]
+    public void Match_OnMaybeWithValue_ShouldCallSome()
+    {
+        // Arrange
+        Maybe<string> maybe = "hello";
+
+        // Act
+        var result = maybe.Match(v => $"Got: {v}", () => "Nothing");
+
+        // Assert
+        result.Should().Be("Got: hello");
+    }
+
+    [Fact]
+    public void Match_OnMaybeWithoutValue_ShouldCallNone()
+    {
+        // Arrange
+        Maybe<string> maybe = Maybe.None<string>();
+
+        // Act
+        var result = maybe.Match(v => $"Got: {v}", () => "Nothing");
+
+        // Assert
+        result.Should().Be("Nothing");
+    }
+
+    [Fact]
+    public void Match_OnMaybeWithValue_ShouldNotCallNone()
+    {
+        // Arrange
+        Maybe<int> maybe = 42;
+        var noneCalled = false;
+
+        // Act
+        var result = maybe.Match(v => v * 2, () => { noneCalled = true; return -1; });
+
+        // Assert
+        result.Should().Be(84);
+        noneCalled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Match_OnMaybeWithoutValue_ShouldNotCallSome()
+    {
+        // Arrange
+        Maybe<int> maybe = Maybe.None<int>();
+        var someCalled = false;
+
+        // Act
+        var result = maybe.Match(v => { someCalled = true; return v; }, () => -1);
+
+        // Assert
+        result.Should().Be(-1);
+        someCalled.Should().BeFalse();
+    }
+
+    #endregion
+
     #region Maybe.None Edge Cases
 
     [Fact]

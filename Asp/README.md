@@ -7,7 +7,8 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
 1. **Automatic Scalar Value Validation** - Property-aware error messages with comprehensive error collection
 2. **Result-to-HTTP Conversion** - Seamless `Result<T>` to HTTP response mapping
 3. **Model Binding** - Automatic binding from route/query/form/headers
-4. **Native AOT Support** - Optional source generator for zero-reflection overhead
+4. **Optional Value Objects** - `Maybe<T>` support for JSON, model binding, and MVC validation
+5. **Native AOT Support** - Optional source generator for zero-reflection overhead
 
 ## Table of Contents
 
@@ -17,6 +18,7 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
   - [MVC Controllers](#mvc-controllers)
   - [Minimal APIs](#minimal-apis)
   - [Model Binding](#model-binding)
+  - [Optional Value Objects with Maybe<T>](#optional-value-objects-with-maybet)
   - [Native AOT](#native-aot-support)
 - [Result Conversion](#result-conversion)
   - [MVC Controllers](#result-conversion-mvc)
@@ -222,6 +224,71 @@ The generator automatically:
 - Enables Native AOT with `<PublishAot>true</PublishAot>`
 
 **Note:** The source generator is **optional**. Without it, the library uses reflection (works for standard .NET). See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for details.
+
+### Optional Value Objects with Maybe<T>
+
+Use `Maybe<T>` for optional value object properties in DTOs. No additional setup is needed — `AddScalarValueValidation()` automatically registers the JSON converter, model binder, and validation suppression for `Maybe<T>` properties.
+
+#### JSON Deserialization
+
+| JSON Value | Result |
+|-----------|--------|
+| `null` or absent | `Maybe.None` (no error) |
+| Valid value | `Maybe.From(validated)` |
+| Invalid value | Validation error collected |
+
+```csharp
+public record RegisterUserDto
+{
+    public FirstName FirstName { get; init; } = null!;   // Required
+    public EmailAddress Email { get; init; } = null!;     // Required
+    public Maybe<Url> Website { get; init; }              // Optional
+}
+```
+
+**Request with optional value:**
+```json
+{ "firstName": "Jane", "email": "jane@example.com", "website": "https://jane.dev" }
+```
+→ `Website` = `Maybe.From(Url)` ✅
+
+**Request without optional value:**
+```json
+{ "firstName": "Jane", "email": "jane@example.com", "website": null }
+```
+→ `Website` = `Maybe.None` ✅
+
+**Request with invalid optional value:**
+```json
+{ "firstName": "Jane", "email": "jane@example.com", "website": "not-a-url" }
+```
+→ 400 with `"Website": ["Url is not valid."]` ✅
+
+#### MVC Model Binding
+
+`Maybe<T>` properties bind from route, query, form, and header sources:
+
+| Source Value | Result |
+|-------------|--------|
+| Absent / empty | `Maybe.None` (success) |
+| Valid | `Maybe.From(result)` |
+| Invalid | ModelState error |
+
+```csharp
+[HttpPut("{orderId}")]
+public IActionResult Update(OrderId orderId, [FromBody] UpdateOrderDto dto)
+{
+    // dto.AssignedTo is Maybe<FirstName>
+    // Absent → Maybe.None, valid → Maybe.From(name), invalid → 400
+    return Ok();
+}
+```
+
+#### MVC Validation Suppression
+
+`MaybeSuppressChildValidationMetadataProvider` prevents MVC from requiring child properties on `Maybe<T>` structs. This is registered automatically by `AddScalarValueValidation()`.
+
+Without it, MVC's `HasValidators` check would throw a `NullReferenceException` when encountering a `Maybe<T>` with no value, because `Maybe<T>` is a struct whose `Value` property returns `default` when `HasNoValue` is true.
 
 ## Result Conversion
 

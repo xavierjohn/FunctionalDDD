@@ -17,11 +17,7 @@ dotnet add package FunctionalDdd.DomainDrivenDesign
 Objects with unique identity. Equality based on ID.
 
 ```csharp
-public class CustomerId : ScalarValueObject<Guid>
-{
-    private CustomerId(Guid value) : base(value) { }
-    public static CustomerId NewUnique() => new(Guid.NewGuid());
-}
+public partial class CustomerId : RequiredGuid<CustomerId> { }
 
 public class Customer : Entity<CustomerId>
 {
@@ -206,22 +202,31 @@ public class Address : ValueObject { }          // Value-based
 ```csharp
 public class Order : Aggregate<OrderId>
 {
-    // ? Include: OrderLine (part of aggregate)
-    // ? Exclude: Customer, Shipment (reference by ID)
+    // ✅ Include: OrderLine (part of aggregate)
+    // ❌ Exclude: Customer, Shipment (reference by ID)
     public CustomerId CustomerId { get; }
 }
 ```
 
 **3. Reference other aggregates by ID**
 ```csharp
-// ? Good
+// ✅ Good
 public CustomerId CustomerId { get; }
 
-// ? Avoid
+// ❌ Avoid
 public Customer Customer { get; }
 ```
 
-**4. Enforce invariants in aggregate root**
+**4. Use `Maybe<T>` for optional properties**
+```csharp
+// ✅ Good — domain-level optionality
+public Maybe<Url> Website { get; }
+
+// ❌ Avoid — nullable reference
+public Url? Website { get; }
+```
+
+**5. Enforce invariants in aggregate root**
 ```csharp
 public Result<Order> AddLine(...) =>
     this.ToResult()
@@ -230,33 +235,33 @@ public Result<Order> AddLine(...) =>
         .Tap(_ => _lines.Add(...));
 ```
 
-**5. Use domain events for side effects**
+**6. Use domain events for side effects**
 ```csharp
-// ? Good - domain event
+// ✅ Good - domain event
 DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
 
-// ? Avoid - direct coupling
+// ❌ Avoid - direct coupling
 _emailService.SendConfirmation();
 ```
 
-**6. Validate using Result types**
+**7. Validate using Result types**
 ```csharp
-// ? Good
+// ✅ Good
 public Result<Order> Cancel(string reason) =>
 this.ToResult()
     .Ensure(_ => Status == OrderStatus.Draft, ...);
 
-// ? Avoid
+// ❌ Avoid
 if (Status != OrderStatus.Draft)
     throw new InvalidOperationException(...);
 ```
 
-**7. Make value objects immutable**
+**8. Make value objects immutable**
 ```csharp
-// ? Good
+// ✅ Good
 public decimal Amount { get; }  // No setter
 
-// ? Avoid
+// ❌ Avoid
 public decimal Amount { get; set; }
 ```
 

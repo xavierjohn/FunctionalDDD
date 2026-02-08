@@ -516,7 +516,239 @@ public class ScalarValueTypeHelperTests
 
     #endregion
 
+    #region IsMaybeScalarValue Tests
+
+    [Fact]
+    public void IsMaybeScalarValue_MaybeValidVO_ReturnsTrue()
+    {
+        // Act
+        var result = ScalarValueTypeHelper.IsMaybeScalarValue(typeof(Maybe<ValidVO>));
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsMaybeScalarValue_MaybeInterfaceOnly_ReturnsTrue()
+    {
+        // Act
+        var result = ScalarValueTypeHelper.IsMaybeScalarValue(typeof(Maybe<InterfaceOnly>));
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsMaybeScalarValue_MaybeString_ReturnsFalse()
+    {
+        // Act
+        var result = ScalarValueTypeHelper.IsMaybeScalarValue(typeof(Maybe<string>));
+
+        // Assert
+        result.Should().BeFalse("string is not a scalar value object");
+    }
+
+    [Fact]
+    public void IsMaybeScalarValue_DirectValueObject_ReturnsFalse()
+    {
+        // Act
+        var result = ScalarValueTypeHelper.IsMaybeScalarValue(typeof(ValidVO));
+
+        // Assert
+        result.Should().BeFalse("direct value objects are not Maybe<T>");
+    }
+
+    [Fact]
+    public void IsMaybeScalarValue_PlainInt_ReturnsFalse()
+    {
+        // Act
+        var result = ScalarValueTypeHelper.IsMaybeScalarValue(typeof(int));
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMaybeScalarValue_Null_ThrowsArgumentNullException()
+    {
+        // Act
+        var act = () => ScalarValueTypeHelper.IsMaybeScalarValue(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    #endregion
+
+    #region GetMaybeInnerType Tests
+
+    [Fact]
+    public void GetMaybeInnerType_MaybeValidVO_ReturnsValidVO()
+    {
+        // Act
+        var innerType = ScalarValueTypeHelper.GetMaybeInnerType(typeof(Maybe<ValidVO>));
+
+        // Assert
+        innerType.Should().Be<ValidVO>();
+    }
+
+    [Fact]
+    public void GetMaybeInnerType_MaybeString_ReturnsString()
+    {
+        // Act
+        var innerType = ScalarValueTypeHelper.GetMaybeInnerType(typeof(Maybe<string>));
+
+        // Assert
+        innerType.Should().Be<string>("GetMaybeInnerType returns the inner type regardless of IScalarValue");
+    }
+
+    [Fact]
+    public void GetMaybeInnerType_DirectType_ReturnsNull()
+    {
+        // Act
+        var innerType = ScalarValueTypeHelper.GetMaybeInnerType(typeof(ValidVO));
+
+        // Assert
+        innerType.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetMaybeInnerType_NonGenericType_ReturnsNull()
+    {
+        // Act
+        var innerType = ScalarValueTypeHelper.GetMaybeInnerType(typeof(string));
+
+        // Assert
+        innerType.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetMaybeInnerType_Null_ThrowsArgumentNullException()
+    {
+        // Act
+        var act = () => ScalarValueTypeHelper.GetMaybeInnerType(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    #endregion
+
+    #region GetMaybePrimitiveType Tests
+
+    [Fact]
+    public void GetMaybePrimitiveType_MaybeValidVO_ReturnsString()
+    {
+        // Act
+        var primitiveType = ScalarValueTypeHelper.GetMaybePrimitiveType(typeof(Maybe<ValidVO>));
+
+        // Assert
+        primitiveType.Should().Be<string>();
+    }
+
+    [Fact]
+    public void GetMaybePrimitiveType_MaybeInterfaceOnly_ReturnsInt()
+    {
+        // Act
+        var primitiveType = ScalarValueTypeHelper.GetMaybePrimitiveType(typeof(Maybe<InterfaceOnly>));
+
+        // Assert
+        primitiveType.Should().Be<int>();
+    }
+
+    [Fact]
+    public void GetMaybePrimitiveType_MaybeGenericVO_ReturnsCorrectType()
+    {
+        // Act
+        var primitiveType = ScalarValueTypeHelper.GetMaybePrimitiveType(typeof(Maybe<GenericVO<decimal>>));
+
+        // Assert
+        primitiveType.Should().Be<decimal>();
+    }
+
+    [Fact]
+    public void GetMaybePrimitiveType_MaybeString_ReturnsNull()
+    {
+        // Act
+        var primitiveType = ScalarValueTypeHelper.GetMaybePrimitiveType(typeof(Maybe<string>));
+
+        // Assert
+        primitiveType.Should().BeNull("string is not a scalar value object");
+    }
+
+    [Fact]
+    public void GetMaybePrimitiveType_DirectType_ReturnsNull()
+    {
+        // Act
+        var primitiveType = ScalarValueTypeHelper.GetMaybePrimitiveType(typeof(ValidVO));
+
+        // Assert
+        primitiveType.Should().BeNull("not a Maybe type");
+    }
+
+    #endregion
+
+    #region CreateGenericInstance — Maybe Converter
+
+    [Fact]
+    public void CreateGenericInstance_MaybeJsonConverter_CreatesInstance()
+    {
+        // Act
+        var converter = ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
+            typeof(MaybeScalarValueJsonConverter<,>),
+            typeof(ValidVO),
+            typeof(string));
+
+        // Assert
+        converter.Should().NotBeNull();
+        converter.Should().BeOfType<MaybeScalarValueJsonConverter<ValidVO, string>>();
+    }
+
+    [Fact]
+    public void CreateGenericInstance_MaybeModelBinder_CreatesInstance()
+    {
+        // Act
+        var binder = ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+            typeof(MaybeModelBinder<,>),
+            typeof(ValidVO),
+            typeof(string));
+
+        // Assert
+        binder.Should().NotBeNull();
+        binder.Should().BeOfType<MaybeModelBinder<ValidVO, string>>();
+    }
+
+    #endregion
+
     #region Integration Tests
+
+    [Fact]
+    public void FullWorkflow_Maybe_DetectAndCreateConverter()
+    {
+        // Arrange
+        var maybeType = typeof(Maybe<ValidVO>);
+
+        // Act & Assert — full Maybe workflow
+        // 1. Check if it's a Maybe wrapping a scalar value
+        ScalarValueTypeHelper.IsMaybeScalarValue(maybeType).Should().BeTrue();
+
+        // 2. Get the inner type
+        var innerType = ScalarValueTypeHelper.GetMaybeInnerType(maybeType);
+        innerType.Should().Be<ValidVO>();
+
+        // 3. Get the primitive type
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(innerType!);
+        primitiveType.Should().Be<string>();
+
+        // 4. Create Maybe converter
+        var converter = ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
+            typeof(MaybeScalarValueJsonConverter<,>),
+            innerType!,
+            primitiveType!);
+
+        converter.Should().NotBeNull();
+        converter.Should().BeOfType<MaybeScalarValueJsonConverter<ValidVO, string>>();
+    }
 
     [Fact]
     public void FullWorkflow_DetectAndCreateConverter()

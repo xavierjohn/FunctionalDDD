@@ -6,12 +6,14 @@ using FunctionalDdd.Asp.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 /// <summary>
-/// Detects scalar value types and provides model binders for them.
+/// Detects scalar value types and <see cref="Maybe{T}"/> wrapping scalar value types,
+/// and provides model binders for them.
 /// </summary>
 /// <remarks>
 /// <para>
 /// This provider checks if a model type implements <see cref="IScalarValue{TSelf, TPrimitive}"/>
-/// and creates an appropriate <see cref="ScalarValueModelBinder{TValue, TPrimitive}"/> for it.
+/// or is <see cref="Maybe{T}"/> where T implements <see cref="IScalarValue{TSelf, TPrimitive}"/>,
+/// and creates appropriate model binders.
 /// </para>
 /// <para>
 /// Register this provider using <c>AddScalarValueValidation()</c> extension method
@@ -29,7 +31,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 public class ScalarValueModelBinderProvider : IModelBinderProvider
 {
     /// <summary>
-    /// Returns a model binder for scalar value types, or null for other types.
+    /// Returns a model binder for scalar value types or <see cref="Maybe{T}"/> wrapping
+    /// scalar value types, or null for other types.
     /// </summary>
     /// <param name="context">The model binder provider context.</param>
     /// <returns>A model binder for the type, or null if not applicable.</returns>
@@ -46,6 +49,21 @@ public class ScalarValueModelBinderProvider : IModelBinderProvider
         ArgumentNullException.ThrowIfNull(context);
 
         var modelType = context.Metadata.ModelType;
+
+        // Check for Maybe<TValue> where TValue : IScalarValue
+        var maybeInnerType = ScalarValueTypeHelper.GetMaybeInnerType(modelType);
+        if (maybeInnerType is not null)
+        {
+            var maybePrimitiveType = ScalarValueTypeHelper.GetPrimitiveType(maybeInnerType);
+            return maybePrimitiveType is null
+                ? null
+                : ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+                    typeof(MaybeModelBinder<,>),
+                    maybeInnerType,
+                    maybePrimitiveType);
+        }
+
+        // Check for direct IScalarValue types
         var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(modelType);
 
         return primitiveType is null

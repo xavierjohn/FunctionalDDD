@@ -46,8 +46,8 @@ public class EqualityTests
     [Fact]
     public void Two_empty_maybes_are_equal()
     {
-        Maybe<MyClass> maybe1 = null;
-        Maybe<MyClass> maybe2 = null;
+        Maybe<MyClass> maybe1 = default;
+        Maybe<MyClass> maybe2 = default;
 
         var equals1 = maybe1.Equals(maybe2);
         var equals2 = ((object)maybe1).Equals(maybe2);
@@ -66,7 +66,7 @@ public class EqualityTests
     public void Two_maybes_are_not_equal_if_one_of_them_empty()
     {
         Maybe<MyClass> maybe1 = new MyClass();
-        Maybe<MyClass> maybe2 = null;
+        Maybe<MyClass> maybe2 = default;
 
         var equals1 = maybe1.Equals(maybe2);
         var equals2 = ((object)maybe1).Equals(maybe2);
@@ -165,9 +165,9 @@ public class EqualityTests
     [Fact]
     public void Compare_with_null_value()
     {
-        Maybe<MyClass> maybe = null;
+        Maybe<MyClass> maybe = default;
 
-        var result = maybe == null!;
+        var result = maybe == Maybe.None<MyClass>();
 
         result.Should().BeTrue();
     }

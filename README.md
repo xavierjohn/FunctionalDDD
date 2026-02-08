@@ -10,19 +10,19 @@
 [![GitHub Stars](https://img.shields.io/github/stars/xavierjohn/FunctionalDDD?style=social)](https://github.com/xavierjohn/FunctionalDDD/stargazers)
 [![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://xavierjohn.github.io/FunctionalDDD/)
 
-> **Write 60% less code that reads like English** using Railway-Oriented Programming and Domain-Driven Design
+> **Write less code that reads like English** using Railway-Oriented Programming and Domain-Driven Design
 
 Transform error-prone imperative code into readable, succinct functional pipelines—with zero performance overhead.
 
 ```csharp
-// ? Before: 20 lines of nested error checking
+// ❌ Before: 20 lines of nested error checking
 var firstName = ValidateFirstName(input.FirstName);
 if (firstName == null) return BadRequest("Invalid first name");
 var lastName = ValidateLastName(input.LastName);
 if (lastName == null) return BadRequest("Invalid last name");
 // ... 15 more lines of repetitive checks
 
-// ? After: 8 lines that read like a story
+// ✅ After: 8 lines that read like a story
 return FirstName.TryCreate(input.FirstName)
     .Combine(LastName.TryCreate(input.LastName))
     .Combine(EmailAddress.TryCreate(input.Email))
@@ -34,11 +34,11 @@ return FirstName.TryCreate(input.FirstName)
 ```
 
 **Key Benefits:**
-- ?? **60% less boilerplate** - Write less, understand more
-- ?? **Self-documenting** - Code reads like English: "Create ? Validate ? Save ? Notify"
-- ?? **Compiler-enforced** - Impossible to skip error handling
-- ? **Zero overhead** - Only 11-16ns (0.002% of I/O operations)
-- ? **Production-ready** - Type-safe, testable, maintainable
+- ✂️ **Less boilerplate** - Write less, understand more
+- 🎯 **Self-documenting** - Code reads like English: "Create → Validate → Save → Notify"
+- 🔒 **Compiler-enforced** - Impossible to skip error handling
+- ⚡ **Zero overhead** - Only 11-16ns (0.002% of I/O operations)
+- ✅ **Production-ready** - Type-safe, testable, maintainable
 
 ---
 
@@ -64,12 +64,12 @@ Traditional error handling in C# creates verbose, error-prone code with nested i
 Railway-Oriented Programming (ROP) treats your code like railway tracks—operations flow along the success track or automatically switch to the error track. **You write what should happen, not what could go wrong.**
 
 **Real-World Impact:**
-- ? **Teams report 40-60% reduction** in error-handling boilerplate
-- ? **Bugs caught at compile-time** instead of runtime
-- ? **New developers understand code faster** thanks to readable chains
-- ? **Zero performance penalty** - same speed as imperative code
+- ✅ **Dramatic reduction** in error-handling boilerplate
+- ✅ **Bugs caught at compile-time** instead of runtime
+- ✅ **New developers understand code faster** thanks to readable chains
+- ✅ **Zero performance penalty** — same speed as imperative code
 
-?? **[Read the full introduction](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)**
+📖 **[Read the full introduction](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)**
 
 ---
 
@@ -113,18 +113,16 @@ var result = await GetUserAsync(userId)
     .TapAsync(user => SendEmailAsync(user.Email));
 ```
 
-#### ?? [Quick Start Guide](Examples/QUICKSTART.md)
+#### 🚀 [Quick Start Guide](Examples/QUICKSTART.md)
 
 
-?? **Next Steps**: Browse the [Examples](#examples) section or explore the [complete documentation](https://xavierjohn.github.io/FunctionalDDD/)
-
-?? **Need help debugging?** Check out the [Debugging ROP Chains guide](https://xavierjohn.github.io/FunctionalDDD/articles/debugging.html)
+👉 **Next Steps**: Browse the [Examples](#examples) section or explore the [complete documentation](https://xavierjohn.github.io/FunctionalDDD/)
 
 ---
 
 ## Key Features
 
-### ?? Railway-Oriented Programming
+### 🚂 Railway-Oriented Programming
 Chain operations that automatically handle success/failure paths—no more nested if-statements.
 
 ```csharp
@@ -135,18 +133,18 @@ return GetUserAsync(id)
     .MatchAsync(user => Ok(user), error => NotFound(error.Detail));
 ```
 
-### ?? Type-Safe Value Objects
+### 🎯 Type-Safe Value Objects
 Prevent primitive obsession and parameter mix-ups with strongly-typed domain objects.
 
 ```csharp
-// ? Compiler catches this mistake
+// ✅ Compiler catches this mistake
 CreateUser(lastName, firstName);  // Error: Wrong parameter types!
 
-// ? This compiles but has a bug
+// ❌ This compiles but has a bug
 CreateUser(lastNameString, firstNameString);  // Swapped, but compiler can't tell
 ```
 
-### ? Discriminated Error Matching
+### ✨ Discriminated Error Matching
 Pattern match on specific error types for precise error handling.
 
 ```csharp
@@ -158,7 +156,7 @@ return ProcessOrder(order).MatchError(
 );
 ```
 
-### ? Async & Parallel Operations
+### ⚡ Async & Parallel Operations
 Full support for async/await and parallel execution.
 
 ```csharp
@@ -169,7 +167,7 @@ var result = await GetUserAsync(id)
     .MapAsync((user, orders, prefs) => new UserProfile(user, orders, prefs));
 ```
 
-### ?? Built-in Tracing
+### 🔍 Built-in Tracing
 OpenTelemetry integration for automatic distributed tracing.
 
 ```csharp
@@ -179,59 +177,7 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter());
 ```
 
-?? **[View all features](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)**
-
----
-
-## Overview
-
-Functional programming, railway-oriented programming, and domain-driven design combine to create robust, reliable software.
-
-### ?? Functional Programming
-**Pure functions** take inputs and produce outputs without side effects, making code **predictable, testable, and composable**.
-
-?? [Applying Functional Principles in C# (Pluralsight)](https://enterprisecraftsmanship.com/ps-func)
-
-### ?? Railway-Oriented Programming
-Handle errors using a **railway track metaphor**: operations flow along the success track or automatically switch to the error track. This makes error handling **explicit and visual**.
-
-**Key insight:** *Write what should happen, not what could go wrong.*
-
-### ??? Domain-Driven Design
-Focus on understanding the problem domain and creating an accurate model. Use **Aggregates**, **Entities**, and **Value Objects** to enforce business rules and maintain valid state.
-
-?? [Domain-Driven Design in Practice (Pluralsight)](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)
-
-### Why They Work Together
-
-```
-Pure Functions          Clear business logic
-     +                        ?
-Railway-Oriented    ?   Explicit error handling
-     +                        ?
-Type Safety         ?   Compiler-enforced correctness
-     +                        ?
-Domain Model        ?   Business rule enforcement
-     =                        ?
-Robust, Maintainable Software
-```
-
----
-
-## What's New
-
-**Recent enhancements:**
-- ?? **NEW: RequiredEnum** - Type-safe enumerations with behavior, state machine support, and JSON serialization. Prevents invalid values unlike C# enums. Source-generated `IScalarValue` support for ASP.NET Core auto-validation.
-- ?? **NEW: Roslyn Analyzers** - 14 compile-time diagnostics to enforce ROP best practices and prevent common mistakes with Result/Maybe types
-- ? **ASP.NET Core Auto-Validation** - Value objects automatically validate in requests (route params, query strings, JSON bodies) via `AddScalarValueObjectValidation()`
-- ?? **11 New Value Objects** - Ready-to-use: `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, plus `RequiredInt`/`RequiredDecimal`
-- ? **Discriminated Error Matching** - Pattern match on specific error types (ValidationError, NotFoundError, etc.) using `MatchError`
-- ? **Tuple Destructuring** - Automatically destructure tuples in Match/Switch for cleaner code
-- ?? **Enhanced Documentation** - [Complete documentation site](https://xavierjohn.github.io/FunctionalDDD/) with tutorials, examples, and API reference
-- ? **Performance Optimizations** - Reduced allocation and improved throughput
-- ?? **OpenTelemetry Tracing** - Built-in distributed tracing support
-
-?? **[View changelog](CHANGELOG.md)**
+📖 **[View all features](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)**
 
 ---
 
@@ -239,21 +185,21 @@ Robust, Maintainable Software
 
 | Package | Version | Description | Documentation |
 |---------|---------|-------------|---------------|
-| **[RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) | Core Result/Maybe types, error handling, async support | [?? Docs](RailwayOrientedProgramming/README.md) |
-| **[Asp](https://www.nuget.org/packages/FunctionalDdd.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp) | Convert Result ? HTTP responses (MVC & Minimal API) | [?? Docs](Asp/README.md) |
-| **[Http](https://www.nuget.org/packages/FunctionalDdd.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http) | HTTP client extensions for Result/Maybe with status code handling | [?? Docs](Http/README.md) |
-| **[FluentValidation](https://www.nuget.org/packages/FunctionalDdd.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation) | Integrate FluentValidation with ROP | [?? Docs](FluentValidation/README.md) |
-| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [?? Docs](PrimitiveValueObjects/README.md) |
-| **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [?? Docs](PrimitiveValueObjects/generator/README.md) |
-| **[Analyzers](https://www.nuget.org/packages/FunctionalDdd.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDdd.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [?? Docs](Analyzers/README.md) |
-| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [?? Docs](DomainDrivenDesign/README.md) |
-| **[Testing](https://www.nuget.org/packages/FunctionalDdd.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing) | FluentAssertions extensions, test builders, fakes | [?? Docs](Testing/README.md) |
+| **[RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) | Core Result/Maybe types, error handling, async support | [📖 Docs](RailwayOrientedProgramming/README.md) |
+| **[Asp](https://www.nuget.org/packages/FunctionalDdd.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp) | Convert Result → HTTP responses, Maybe<T> support (MVC & Minimal API) | [📖 Docs](Asp/README.md) |
+| **[Http](https://www.nuget.org/packages/FunctionalDdd.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Http/README.md) |
+| **[FluentValidation](https://www.nuget.org/packages/FunctionalDdd.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
+| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](PrimitiveValueObjects/README.md) |
+| **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
+| **[Analyzers](https://www.nuget.org/packages/FunctionalDdd.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDdd.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [📖 Docs](Analyzers/README.md) |
+| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
+| **[Testing](https://www.nuget.org/packages/FunctionalDdd.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
 
 ---
 
 ## Performance
 
-### ? Negligible Overhead, Maximum Clarity
+### ⚡ Negligible Overhead, Maximum Clarity
 
 Comprehensive benchmarks on **.NET 10** show ROP adds only **11-16 nanoseconds** of overhead—less than **0.002%** of typical I/O operations.
 
@@ -268,15 +214,15 @@ Comprehensive benchmarks on **.NET 10** show ROP adds only **11-16 nanoseconds**
 ```
 Database Query: 1,000,000 ns (1 ms)
 ROP Overhead:          16 ns
-                       ?
+                       ↑
             0.0016% of DB query time
 ```
 
 **The overhead is 1/62,500th of a single database query!**
 
-? Same memory usage as imperative code  
-? Single-digit to low double-digit nanosecond operations  
-?? **[View detailed benchmarks](BENCHMARKS.md)**
+✅ Same memory usage as imperative code  
+⚡ Single-digit to low double-digit nanosecond operations  
+📊 **[View detailed benchmarks](BENCHMARKS.md)**
 
 Run benchmarks yourself:
 ```bash
@@ -287,21 +233,21 @@ dotnet run --project Benchmark/Benchmark.csproj -c Release
 
 ## Documentation
 
-?? **[Complete Documentation Site](https://xavierjohn.github.io/FunctionalDDD/)**
+📚 **[Complete Documentation Site](https://xavierjohn.github.io/FunctionalDDD/)**
 
 ### Learning Paths
 
-**?? Beginner** (2-3 hours)
+**🎓 Beginner** (2-3 hours)
 - [Introduction](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html) - Why use ROP?
 - [Basics Tutorial](https://xavierjohn.github.io/FunctionalDDD/articles/basics.html) - Core concepts
 - [Examples](https://xavierjohn.github.io/FunctionalDDD/articles/examples.html) - Real-world patterns
 
-**?? Integration** (1-2 hours)
+**💼 Integration** (1-2 hours)
 - [ASP.NET Core](https://xavierjohn.github.io/FunctionalDDD/articles/integration-aspnet.html)
 - [FluentValidation](https://xavierjohn.github.io/FunctionalDDD/articles/integration-fluentvalidation.html)
 - [Entity Framework Core](https://xavierjohn.github.io/FunctionalDDD/articles/integration-ef.html)
 
-**?? Advanced** (3-4 hours)
+**🚀 Advanced** (3-4 hours)
 - [Clean Architecture](https://xavierjohn.github.io/FunctionalDDD/articles/clean-architecture.html) - CQRS patterns
 - [Advanced Features](https://xavierjohn.github.io/FunctionalDDD/articles/advanced-features.html) - LINQ, parallelization
 - [Error Handling](https://xavierjohn.github.io/FunctionalDDD/articles/error-handling.html) - Custom errors, aggregation
@@ -449,7 +395,24 @@ public class User : Aggregate<UserId>
 
 </details>
 
-?? **[Browse all examples](Examples/)** | ?? **[Complete documentation](https://xavierjohn.github.io/FunctionalDDD/articles/examples.html)**
+📁 **[Browse all examples](Examples/)** | 📖 **[Complete documentation](https://xavierjohn.github.io/FunctionalDDD/articles/examples.html)**
+
+---
+
+## What's New
+
+**Recent enhancements:**
+- 🎯 **Maybe<T> Domain Optionality** — `notnull` constraint, `Map`, `Match` methods, full ASP.NET Core integration (JSON converter, model binder, MVC validation suppression)
+- 🎯 **RequiredEnum** — Type-safe enumerations with behavior, state machine support, and JSON serialization
+- 🔍 **Roslyn Analyzers** — 14 compile-time diagnostics to enforce ROP best practices
+- ✨ **ASP.NET Core Auto-Validation** — Value objects automatically validate in requests via `AddScalarValueValidation()`
+- 🎯 **11 New Value Objects** — `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, `RequiredInt`, `RequiredDecimal`
+- ✨ **Discriminated Error Matching** — Pattern match on specific error types using `MatchError`
+- ✨ **Tuple Destructuring** — Destructure tuples in Match/Switch for cleaner code
+- ⚡ **Performance Optimizations** — Reduced allocation and improved throughput
+- 🔍 **OpenTelemetry Tracing** — Built-in distributed tracing support
+
+📖 **[View changelog](CHANGELOG.md)**
 
 ---
 
@@ -466,10 +429,10 @@ Contributions are welcome! This project follows standard GitHub workflow:
 ### Guidelines
 
 Please ensure:
-- ? All tests pass (`dotnet test`)
-- ? Code follows existing style conventions
-- ? New features include tests and documentation
-- ? Commit messages are clear and descriptive
+- ✅ All tests pass (`dotnet test`)
+- ✅ Code follows existing style conventions
+- ✅ New features include tests and documentation
+- ✅ Commit messages are clear and descriptive
 
 For major changes, please open an issue first to discuss what you would like to change.
 
@@ -489,23 +452,23 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## Community & Support
 
-- ?? **[Documentation](https://xavierjohn.github.io/FunctionalDDD/)**
-- ?? **[Discussions](https://github.com/xavierjohn/FunctionalDDD/discussions)** - Ask questions, share ideas
-- ?? **[Issues](https://github.com/xavierjohn/FunctionalDDD/issues)** - Report bugs or request features
-- ? **[Star this repo](https://github.com/xavierjohn/FunctionalDDD)** if you find it useful!
+- 📖 **[Documentation](https://xavierjohn.github.io/FunctionalDDD/)**
+- 💬 **[Discussions](https://github.com/xavierjohn/FunctionalDDD/discussions)** - Ask questions, share ideas
+- 🐛 **[Issues](https://github.com/xavierjohn/FunctionalDDD/issues)** - Report bugs or request features
+- ⭐ **[Star this repo](https://github.com/xavierjohn/FunctionalDDD)** if you find it useful!
 
 ### Learning Resources
 
-- ?? **[YouTube: Functional DDD Explanation](https://youtu.be/45yk2nuRjj8?t=682)** - Third-party video explaining the library concepts
-- ?? **[Pluralsight: Applying Functional Principles in C#](https://enterprisecraftsmanship.com/ps-func)**
-- ?? **[Pluralsight: Domain-Driven Design in Practice](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)**
+- 🎥 **[YouTube: Functional DDD Explanation](https://youtu.be/45yk2nuRjj8?t=682)** - Third-party video explaining the library concepts
+- 📚 **[Pluralsight: Applying Functional Principles in C#](https://enterprisecraftsmanship.com/ps-func)**
+- 📚 **[Pluralsight: Domain-Driven Design in Practice](https://app.pluralsight.com/library/courses/domain-driven-design-in-practice/table-of-contents)**
 
 ---
 
 <div align="center">
 
-**[? Back to Top](#functional-domain-driven-design)**
+**[⬆ Back to Top](#functional-domain-driven-design)**
 
-Made with ?? by the FunctionalDDD community
+Made with ❤️ by the FunctionalDDD community
 
 </div>

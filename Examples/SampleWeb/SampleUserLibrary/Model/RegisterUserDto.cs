@@ -42,9 +42,11 @@ public record RegisterUserDto
     public CountryCode Country { get; init; } = null!;
 
     /// <summary>
-    /// User's website URL (optional, automatically validated - must be valid HTTP/HTTPS URL).
+    /// User's website URL (optional — uses Maybe&lt;Url&gt; for domain-level optionality).
+    /// When omitted or null in JSON, deserializes as Maybe.None (no error).
+    /// When present, automatically validated as a valid HTTP/HTTPS URL.
     /// </summary>
-    public Url? Website { get; init; }
+    public Maybe<Url> Website { get; init; }
 
     /// <summary>
     /// User's password (plain string - not a value object as it shouldn't be stored in domain).

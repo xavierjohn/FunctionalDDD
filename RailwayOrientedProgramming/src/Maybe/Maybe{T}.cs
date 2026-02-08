@@ -3,24 +3,33 @@
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
-/// Represents an optional value that may or may not exist. Similar to <see cref="Nullable{T}"/> but works with both value and reference types.
-/// Use this type to make optionality explicit in your domain model and avoid null reference exceptions.
+/// Represents domain-level optionality — a value that was either provided or intentionally omitted.
+/// Unlike <see cref="Nullable{T}"/> (value types only) or <c>T?</c> (annotation only for reference types),
+/// <see cref="Maybe{T}"/> is a real generic type that works uniformly with both value and reference types
+/// and composes with <see cref="Result{T}"/> pipelines.
 /// </summary>
 /// <typeparam name="T">The type of the optional value. Must be a non-null type.</typeparam>
 /// <example>
 /// <code>
 /// // Create a Maybe with a value
-/// Maybe&lt;string&gt; name = "John";
+/// Maybe&lt;string&gt; name = Maybe.From("John");
 /// if (name.HasValue) Console.WriteLine(name.Value);
-/// 
+///
 /// // Create an empty Maybe
 /// Maybe&lt;string&gt; noName = Maybe.None&lt;string&gt;();
 /// string result = noName.GetValueOrDefault("Default");
+///
+/// // Transform optional values
+/// Maybe&lt;string&gt; upper = name.Map(v =&gt; v.ToUpper());
+///
+/// // Consume with pattern matching
+/// string display = name.Match(v =&gt; $"Hello, {v}!", () =&gt; "Hello, stranger!");
 /// </code>
 /// </example>
 public readonly struct Maybe<T> :
     IEquatable<T>,
     IEquatable<Maybe<T>>
+    where T : notnull
 {
     private readonly bool _isValueSet;
     private readonly T? _value;
@@ -102,16 +111,42 @@ public readonly struct Maybe<T> :
     internal Maybe(T? value)
     {
         _isValueSet = value is not null;
-        _value = value!;
+        _value = value;
     }
+
+    /// <summary>
+    /// Transforms the value inside a <see cref="Maybe{T}"/> using the specified function.
+    /// If no value is present, returns <see cref="Maybe.None{TResult}()"/>.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the transformed value.</typeparam>
+    /// <param name="selector">The function to apply to the value.</param>
+    /// <returns>A Maybe containing the transformed value, or None if this instance has no value.</returns>
+    public Maybe<TResult> Map<TResult>(Func<T, TResult> selector)
+        where TResult : notnull
+    {
+        if (_isValueSet)
+            return new Maybe<TResult>(selector(_value!));
+
+        return default;
+    }
+
+    /// <summary>
+    /// Pattern matches on the Maybe, calling <paramref name="some"/> if a value is present
+    /// or <paramref name="none"/> if no value is present.
+    /// </summary>
+    /// <typeparam name="TResult">The return type of the match.</typeparam>
+    /// <param name="some">The function to call when a value is present.</param>
+    /// <param name="none">The function to call when no value is present.</param>
+    /// <returns>The result of the matched function.</returns>
+    public TResult Match<TResult>(Func<T, TResult> some, Func<TResult> none) =>
+        _isValueSet ? some(_value!) : none();
 
     /// <summary>
     /// Implicitly converts a value of type <typeparamref name="T"/> to a <see cref="Maybe{T}"/>.
     /// </summary>
-    /// <param name="value">The value to wrap. If null, creates an empty Maybe.</param>
-    /// <returns>A Maybe containing the value, or an empty Maybe if value is null.</returns>
-    public static implicit operator Maybe<T>(T? value) =>
-        value is Maybe<T> maybe ? maybe : new(value);
+    /// <param name="value">The value to wrap.</param>
+    /// <returns>A Maybe containing the value.</returns>
+    public static implicit operator Maybe<T>(T value) => new(value);
 
     /// <summary>
     /// Determines whether a <see cref="Maybe{T}"/> equals a value of type <typeparamref name="T"/>.

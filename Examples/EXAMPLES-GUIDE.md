@@ -130,6 +130,7 @@ Shared library with value objects used by all examples.
 | **Model Binding** | ⚠️ JSON only | ⚠️ JSON only | ✅ All sources |
 | **Action Filters** | ⚠️ Endpoint filters | ⚠️ Endpoint filters | ✅ Action filters |
 | **Native AOT** | ❌ | ✅ | ❌ |
+| **Maybe<T> Optional Props** | ✅ | ✅ | ✅ |
 | **Startup Overhead** | +50μs | 0μs | +50μs |
 
 ## Decision Tree
@@ -213,13 +214,13 @@ For 99% of applications, the 50μs startup difference is negligible.
 
 ### From NoAot → AOT
 1. Add generator reference to .csproj
-2. Add `[GenerateValueObjectConverters]` to JsonSerializerContext
+2. Add `[GenerateScalarValueConverters]` to JsonSerializerContext
 3. Add `<PublishAot>true</PublishAot>`
 4. **No endpoint code changes needed!**
 
 ### From AOT → NoAot
 1. Remove generator reference from .csproj
-2. Remove `[GenerateValueObjectConverters]` attribute
+2. Remove `[GenerateScalarValueConverters]` attribute
 3. Remove `<PublishAot>true</PublishAot>`
 4. **No endpoint code changes needed!**
 

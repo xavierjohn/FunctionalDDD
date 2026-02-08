@@ -92,7 +92,14 @@ public static class ServiceCollectionExtensions
             options.Filters.Add<ScalarValueValidationFilter>());
 
         builder.AddMvcOptions(options =>
-            options.ModelBinderProviders.Insert(0, new ScalarValueModelBinderProvider()));
+        {
+            options.ModelBinderProviders.Insert(0, new ScalarValueModelBinderProvider());
+
+            // Prevent MVC's ValidationVisitor from recursing into Maybe<T> properties.
+            // Without this, accessing Maybe<T>.Value via reflection throws when HasNoValue.
+            options.ModelMetadataDetailsProviders.Add(
+                new MaybeSuppressChildValidationMetadataProvider());
+        });
 
         // Configure [ApiController] to not automatically return 400 for invalid ModelState
         // This allows our ScalarValueValidationFilter to handle validation errors properly
@@ -118,8 +125,9 @@ public static class ServiceCollectionExtensions
 #pragma warning restore IL2026, IL3050
         options.TypeInfoResolver = existingResolver.WithAddedModifier(ModifyTypeInfo);
 
-        // Also add the factory for direct serialization scenarios
+        // Add factories for direct serialization scenarios
         options.Converters.Add(new ValidatingJsonConverterFactory());
+        options.Converters.Add(new MaybeScalarValueJsonConverterFactory());
     }
 
     /// <summary>
@@ -133,23 +141,35 @@ public static class ServiceCollectionExtensions
 
         foreach (var property in typeInfo.Properties)
         {
-            // Check if it's a value object (IScalarValue<TSelf, T>)
+            var propertyType = property.PropertyType;
+
+            // Check for Maybe<TValue> where TValue : IScalarValue<TValue, TPrimitive>
+            if (ScalarValueTypeHelper.IsMaybeScalarValue(propertyType))
+            {
+                var innerConverter = CreateMaybeConverter(propertyType);
+                if (innerConverter is null)
+                    continue;
+
+                var wrappedConverter = CreatePropertyNameAwareConverter(innerConverter, property.Name, propertyType);
+                if (wrappedConverter is not null)
+                    property.CustomConverter = wrappedConverter;
+
+                continue;
+            }
+
+            // Check if it's a direct value object (IScalarValue<TSelf, T>)
             if (!IsScalarValueProperty(property))
                 continue;
 
-            var propertyType = property.PropertyType;
-
             // Create a validating converter for this value object
-            var innerConverter = CreateValidatingConverter(propertyType);
-            if (innerConverter is null)
+            var innerScalarConverter = CreateValidatingConverter(propertyType);
+            if (innerScalarConverter is null)
                 continue;
 
             // Wrap it with property name awareness
-            var wrappedConverter = CreatePropertyNameAwareConverter(innerConverter, property.Name, propertyType);
-            if (wrappedConverter is not null)
-            {
-                property.CustomConverter = wrappedConverter;
-            }
+            var wrappedScalarConverter = CreatePropertyNameAwareConverter(innerScalarConverter, property.Name, propertyType);
+            if (wrappedScalarConverter is not null)
+                property.CustomConverter = wrappedScalarConverter;
         }
     }
 
@@ -166,6 +186,22 @@ public static class ServiceCollectionExtensions
             : ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
                 typeof(ValidatingJsonConverter<,>),
                 valueType,
+                primitiveType);
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Value object types are preserved by JSON serialization infrastructure")]
+    private static JsonConverter? CreateMaybeConverter(Type maybeType)
+    {
+        var innerType = ScalarValueTypeHelper.GetMaybeInnerType(maybeType);
+        if (innerType is null)
+            return null;
+
+        var primitiveType = ScalarValueTypeHelper.GetPrimitiveType(innerType);
+        return primitiveType is null
+            ? null
+            : ScalarValueTypeHelper.CreateGenericInstance<JsonConverter>(
+                typeof(MaybeScalarValueJsonConverter<,>),
+                innerType,
                 primitiveType);
     }
 

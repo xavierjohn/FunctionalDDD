@@ -91,11 +91,11 @@ return FirstName.TryCreate(input.FirstName)
 ```
 
 **Result:** 
-- ?? **60% less code** - 8 lines vs 20 lines
-- ?? **Reads like English** - "Create name, combine with email, create user, ensure unique, save, notify"
-- ? **Zero hidden logic** - Every step visible in the chain
-- ?? **Impossible to forget** - Can't skip error handling steps
-- ? **Zero performance cost** - Only 11-16 nanoseconds overhead
+- 🎯 **60% less code** - 8 lines vs 20 lines
+- 📖 **Reads like English** - "Create name, combine with email, create user, ensure unique, save, notify"
+- 🔍 **Zero hidden logic** - Every step visible in the chain
+- 🛡️ **Impossible to forget** - Can't skip error handling steps
+- ⚡ **Zero performance cost** - Only 11-16 nanoseconds overhead
 
 ---
 
@@ -148,8 +148,8 @@ public partial class FirstName : RequiredString { }
 public partial class LastName : RequiredString { }
 
 // Compiler prevents parameter mix-ups
-CreateUser(lastName, firstName);  // ? Compile error!
-CreateUser(firstName, lastName);  // ? Correct
+CreateUser(lastName, firstName);  // ❌ Compile error!
+CreateUser(firstName, lastName);  // ✅ Correct
 ```
 
 ### Entities — Identity-Based Objects
@@ -238,20 +238,20 @@ result.MatchError(
 
 | Operation | Track | Purpose | Example |
 |-----------|-------|---------|---------|
-| **Bind** | ?? Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
-| **Map** | ?? Success | Transform success values | `.Map(user => user.Name)` |
-| **Tap** | ?? Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
-| **TapOnFailure** | ?? Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
-| **MapOnFailure** | ?? Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
-| **RecoverOnFailure** | ?? Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
-| **Ensure** | ????? | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
-| **Combine** | ? Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
-| **Match** | ? Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
+| **Bind** | ✅ Success | Chain operations that can fail | `.Bind(user => ValidateAge(user))` |
+| **Map** | ✅ Success | Transform success values | `.Map(user => user.Name)` |
+| **Tap** | ✅ Success | Side effects (logging, saving) | `.Tap(user => _repo.Save(user))` |
+| **TapOnFailure** | ❌ Failure | Side effects on errors | `.TapOnFailure(err => _logger.LogError(err))` |
+| **MapOnFailure** | ❌ Failure | Transform errors | `.MapOnFailure(err => AddContext(err))` |
+| **RecoverOnFailure** | ❌ Failure | Recover from errors | `.RecoverOnFailure(() => GetDefault())` |
+| **Ensure** | ✅❌ Both | Validate conditions | `.Ensure(u => u.Age >= 18, Error.Validation("Too young"))` |
+| **Combine** | 🔀 Both | Merge multiple results | `.Combine(lastName).Combine(email)` |
+| **Match** | 🔀 Terminal | Handle success/failure | `.Match(onSuccess: Ok, onFailure: BadRequest)` |
 
 **Track Legend:**
-- ?? **Success** - Only runs when result is successful
-- ?? **Failure** - Only runs when result is a failure  
-- ? **Both/Terminal** - Runs on both tracks or handles both
+- ✅ **Success** - Only runs when result is successful
+- ❌ **Failure** - Only runs when result is a failure  
+- 🔀 **Both/Terminal** - Runs on both tracks or handles both
 
 **Naming Pattern:** Success track operations have **no suffix**. Failure track operations have **`OnFailure` suffix**.
 

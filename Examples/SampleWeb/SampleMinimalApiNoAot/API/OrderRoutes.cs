@@ -43,6 +43,7 @@ public static class OrderRoutes
                 newState = dto.State.Name,
                 canModify = dto.State.CanModify,
                 canCancel = dto.State.CanCancel,
+                assignedTo = dto.AssignedTo.Match(name => name.Value, () => (string?)null),
                 notes = dto.Notes,
                 message = "Order state updated successfully!"
             }))

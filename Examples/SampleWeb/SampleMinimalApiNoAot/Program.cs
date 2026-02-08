@@ -39,7 +39,7 @@ app.MapGet("/", () => Results.Ok(new
         {
             register = "POST /users/register - Register user with manual validation (Result.Combine)",
             registerCreated = "POST /users/registerCreated - Register user returning 201 Created",
-            registerAutoValidation = "POST /users/RegisterWithAutoValidation - Register with automatic value object validation",
+            registerAutoValidation = "POST /users/RegisterWithAutoValidation - Register with auto-validation (Maybe<Url> for optional website)",
             errors = new string[]
             {
                 "GET /users/notfound/{id} - Returns 404 Not Found",
@@ -53,7 +53,7 @@ app.MapGet("/", () => Results.Ok(new
         {
             getStates = "GET /orders/states - Get all order states (RequiredEnum demo)",
             getStateByName = "GET /orders/states/{state} - Get state by name (model binding)",
-            updateOrder = "POST /orders/update - Update order with RequiredEnum in JSON body",
+            updateOrder = "POST /orders/update - Update order with RequiredEnum and optional Maybe assignedTo",
             createOrder = "POST /orders/create - Create order with multiple value objects",
             filterOrders = "GET /orders/filter?state=Draft - Filter orders by state (query string)"
         }

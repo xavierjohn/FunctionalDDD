@@ -31,7 +31,7 @@ public class MaybeOptionalTests
         int? nullInt = null;
 
         // Act - Return a non-nullable wrapper type
-        var result = Maybe.Optional<int?, WrappedInt>(nullInt, num => Result.Success(new WrappedInt(num!.Value * 2)));
+        var result = Maybe.Optional<int, WrappedInt>(nullInt, num => Result.Success(new WrappedInt(num * 2)));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -45,7 +45,7 @@ public class MaybeOptionalTests
         Guid? nullGuid = null;
 
         // Act
-        var result = Maybe.Optional<Guid?, string>(nullGuid, g => Result.Success(g!.Value.ToString()));
+        var result = Maybe.Optional<Guid, string>(nullGuid, g => Result.Success(g.ToString()));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -78,7 +78,7 @@ public class MaybeOptionalTests
         int? value = 21;
 
         // Act - Return a non-nullable wrapper type
-        var result = Maybe.Optional<int?, WrappedInt>(value, num => Result.Success(new WrappedInt(num!.Value * 2)));
+        var result = Maybe.Optional<int, WrappedInt>(value, num => Result.Success(new WrappedInt(num * 2)));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -94,7 +94,7 @@ public class MaybeOptionalTests
         Guid? value = guid;
 
         // Act
-        var result = Maybe.Optional<Guid?, string>(value, g => Result.Success(g!.Value.ToString()));
+        var result = Maybe.Optional<Guid, string>(value, g => Result.Success(g.ToString()));
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -129,9 +129,9 @@ public class MaybeOptionalTests
         var expectedError = Error.Validation("Value must be positive", "number");
 
         // Act
-        var result = Maybe.Optional<int?, WrappedInt>(value, num =>
-            num!.Value > 0
-                ? Result.Success(new WrappedInt(num.Value))
+        var result = Maybe.Optional<int, WrappedInt>(value, num =>
+            num > 0
+                ? Result.Success(new WrappedInt(num))
                 : Result.Failure<WrappedInt>(expectedError));
 
         // Assert
@@ -286,10 +286,10 @@ public class MaybeOptionalTests
         var functionInvoked = false;
 
         // Act
-        var result = Maybe.Optional<Guid?, string>(defaultGuid, g =>
+        var result = Maybe.Optional<Guid, string>(defaultGuid, g =>
         {
             functionInvoked = true;
-            return Result.Success(g!.Value.ToString());
+            return Result.Success(g.ToString());
         });
 
         // Assert
@@ -305,10 +305,10 @@ public class MaybeOptionalTests
         var functionInvoked = false;
 
         // Act
-        var result = Maybe.Optional<int?, WrappedInt>(zero, num =>
+        var result = Maybe.Optional<int, WrappedInt>(zero, num =>
         {
             functionInvoked = true;
-            return Result.Success(new WrappedInt(num!.Value));
+            return Result.Success(new WrappedInt(num));
         });
 
         // Assert

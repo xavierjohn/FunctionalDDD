@@ -104,7 +104,7 @@ Run the same tests against all three ports to verify they produce identical resu
 
 ```csharp
 // Uses source generator for compile-time JSON serialization
-[GenerateValueObjectConverters]
+[GenerateScalarValueConverters]
 public partial class AppJsonSerializerContext : JsonSerializerContext { }
 
 // Zero reflection overhead
@@ -118,8 +118,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 ```csharp
 // Uses reflection fallback - no source generator needed
-builder.Services.AddScalarValueObjectValidationForMinimalApi();
-app.UseValueObjectValidation();
+builder.Services.AddScalarValueValidationForMinimalApi();
+app.UseScalarValueValidation();
 
 // Just works - simplest setup!
 ```
@@ -132,7 +132,7 @@ app.UseValueObjectValidation();
 // Full MVC with controllers
 builder.Services
     .AddControllers()
-    .AddScalarValueObjectValidation();
+    .AddScalarValueValidation();
 
 // Swagger UI available at /swagger
 builder.Services.AddEndpointsApiExplorer();
