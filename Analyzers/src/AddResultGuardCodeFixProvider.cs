@@ -175,13 +175,8 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         // Replace the old block with the new one
         var newRoot = root.ReplaceNode(containingBlock, newBlock);
 
-        // Format the document to fix indentation
-        var formattedRoot = Microsoft.CodeAnalysis.Formatting.Formatter.Format(
-            newRoot,
-            Microsoft.CodeAnalysis.Formatting.Formatter.Annotation,
-            document.Project.Solution.Workspace,
-            cancellationToken: cancellationToken);
-        return document.WithSyntaxRoot(formattedRoot);
+        // Nodes already have Formatter.Annotation — the host IDE handles formatting
+        return document.WithSyntaxRoot(newRoot);
     }
 
     // Get the base identifier from an expression (e.g., "result" from "result.Error")

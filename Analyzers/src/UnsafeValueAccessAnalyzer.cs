@@ -82,19 +82,19 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "IsFailure", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetValue") ||
-        IsInsideMatchOrSwitch(memberAccess);
+        IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByFailureCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
         IsGuardedByCheck(memberAccess, semanticModel, "IsFailure", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetError") ||
-        IsInsideMatchOrSwitch(memberAccess);
+        IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByHasValueCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
         IsGuardedByCheck(memberAccess, semanticModel, "HasValue", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "HasNoValue", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetValue") ||
-        IsInsideMatchOrSwitch(memberAccess);
+        IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByCheck(
         MemberAccessExpressionSyntax memberAccess,
@@ -240,32 +240,34 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool IsInsideMatchOrSwitch(MemberAccessExpressionSyntax memberAccess)
+    private static bool IsInsideMatchOrSwitch(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel)
     {
         // Look for usage inside Match, MatchError, Switch, or SwitchError lambda
         var current = memberAccess.Parent;
         while (current != null)
         {
-            if (current is InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess })
+            if (current is InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } invocation)
             {
                 var methodName = methodAccess.Name.Identifier.Text;
                 if (methodName is "Match" or "MatchAsync" or "MatchError" or "MatchErrorAsync" or
                     "Switch" or "SwitchAsync" or "SwitchError" or "SwitchErrorAsync")
                 {
-                    return true;
+                    if (IsFunctionalDddExtensionMethod(invocation, semanticModel))
+                        return true;
                 }
             }
 
             // Also allow inside lambdas passed to Bind, Map, Tap, etc.
             // since these are within the success track
-            if (current is LambdaExpressionSyntax { Parent: ArgumentSyntax { Parent.Parent: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax parentMethodAccess } } })
+            if (current is LambdaExpressionSyntax { Parent: ArgumentSyntax { Parent.Parent: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax parentMethodAccess } parentInvocation } })
             {
                 var parentMethodName = parentMethodAccess.Name.Identifier.Text;
                 // These methods are only called on success, so accessing .Value is safe
                 if (parentMethodName is "Bind" or "BindAsync" or "Map" or "MapAsync" or
                     "Tap" or "TapAsync" or "Ensure" or "EnsureAsync")
                 {
-                    return true;
+                    if (IsFunctionalDddExtensionMethod(parentInvocation, semanticModel))
+                        return true;
                 }
             }
 
@@ -273,5 +275,17 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         }
 
         return false;
+    }
+
+    private static bool IsFunctionalDddExtensionMethod(InvocationExpressionSyntax invocation, SemanticModel semanticModel)
+    {
+        var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+        if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
+            return false;
+
+        if (!methodSymbol.IsExtensionMethod)
+            return false;
+
+        return methodSymbol.ContainingType?.ContainingNamespace?.ToDisplayString() == "FunctionalDdd";
     }
 }
