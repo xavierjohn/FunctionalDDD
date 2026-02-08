@@ -235,7 +235,7 @@ public async Task<Result<Dashboard>> GetDashboardAsync(string userId, Cancellati
     return await userTask
         .ParallelAsync(ordersTask)
         .ParallelAsync(preferencesTask)
-        .AwaitAsync()
+        .WhenAllAsync()
         .MapAsync((user, orders, preferencesAsync) => new Dashboard(
             user,
             orders,

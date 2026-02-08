@@ -165,7 +165,7 @@ Full support for async/await and parallel execution.
 var result = await GetUserAsync(id)
     .ParallelAsync(GetOrdersAsync(id))
     .ParallelAsync(GetPreferencesAsync(id))
-    .AwaitAsync()
+    .WhenAllAsync()
     .MapAsync((user, orders, prefs) => new UserProfile(user, orders, prefs));
 ```
 
@@ -378,7 +378,7 @@ public async Task<IResult> ProcessOrderAsync(int orderId)
 var result = await GetUserAsync(userId)
     .ParallelAsync(GetOrdersAsync(userId))
     .ParallelAsync(GetPreferencesAsync(userId))
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync(
         (user, orders, preferences) =>
             CreateProfileAsync(user, orders, preferences),

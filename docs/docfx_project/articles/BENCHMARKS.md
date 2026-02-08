@@ -1,4 +1,4 @@
-# Performance Benchmarks
+﻿# Performance Benchmarks
 
 This document provides detailed performance analysis of the FunctionalDDD library using [BenchmarkDotNet](https://benchmarkdotnet.org/).
 
@@ -289,7 +289,7 @@ Testing asynchronous operation performance.
 await GetStudentAsync(studentId)
     .ParallelAsync(GetGradesAsync(studentId))
     .ParallelAsync(GetAttendanceAsync(studentId))
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((student, grades, attendance) => 
         GenerateReportAsync(student, grades, attendance));
 ```

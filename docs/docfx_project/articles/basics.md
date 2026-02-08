@@ -526,7 +526,7 @@ var result = await Result.ParallelAsync(
     () => GetStudentGradesAsync(studentId, cancellationToken),
     () => GetLibraryBooksAsync(studentId, cancellationToken)
 )
-.AwaitAsync()
+.WhenAllAsync()
 .BindAsync((info, grades, books, ct) => 
     PrepareReportAsync(info, grades, books, ct),
     cancellationToken
@@ -536,7 +536,7 @@ var result = await Result.ParallelAsync(
 **Key Points:**
 - `Result.ParallelAsync` takes factory functions (`Func<Task<Result<T>>>`)
 - All operations start **immediately** and run in **parallel**
-- `.AwaitAsync()` waits for all to complete and returns tuple result
+- `.WhenAllAsync()` waits for all to complete and returns tuple result
 - If any operation fails, the result contains the combined errors
 - Results are automatically destructured for the next operation
 

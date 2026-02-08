@@ -129,7 +129,7 @@ var result = await Result.ParallelAsync(
     () => GetStudentGradesAsync(studentId, cancellationToken),
     () => GetLibraryBooksAsync(studentId, cancellationToken)
 )
-.AwaitAsync()
+.WhenAllAsync()
 .BindAsync(
     (info, grades, books, ct) => PrepareReportAsync(info, grades, books, ct),
     cancellationToken
@@ -139,7 +139,7 @@ var result = await Result.ParallelAsync(
 **Key Points:**
 - `Result.ParallelAsync` accepts factory functions that return `Task<Result<T>>`
 - All three `Get*Async` operations run **concurrently** (not sequentially)
-- `.AwaitAsync()` waits for all operations to complete
+- `.WhenAllAsync()` waits for all operations to complete
 - Results are automatically destructured into `(info, grades, books)` tuple
 - `BindAsync` processes the combined results with `CancellationToken` support
 
@@ -416,7 +416,7 @@ public async Task<Result<Transaction>> ValidateTransactionAsync(
         () => CheckAmountThresholdAsync(transaction, ct),
         () => CheckGeolocationAsync(transaction, ct)
     )
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync(
         (check1, check2, check3, check4, ct) => 
             ApproveTransactionAsync(transaction, ct),

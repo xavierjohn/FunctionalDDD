@@ -31,7 +31,7 @@ var result = await Result.ParallelAsync(
     () => CheckInventoryAsync(productId),
     () => ValidatePaymentAsync(paymentId)
 )
-.AwaitAsync()  // ✅ Wait for Stage 1 to complete
+.WhenAllAsync()  // ✅ Wait for Stage 1 to complete
 
 // Stage 2: Now we have (user, inventory, payment)
 .BindAsync((user, inventory, payment) =>
@@ -39,7 +39,7 @@ var result = await Result.ParallelAsync(
         () => RunFraudDetectionAsync(user, payment, inventory),
         () => CalculateShippingWithWeightAsync(address, inventory)
     )
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((fraudCheck, shipping) =>
         Result.Success(new CheckoutResult(
             user, 
@@ -80,7 +80,7 @@ var result = await Result.ParallelAsync(
     () => CheckInventoryAsync(productId),
     () => ValidatePaymentAsync(paymentId)
 )
-.AwaitAsync()
+.WhenAllAsync()
 
 .BindAsync((user, inventory, payment) =>  // ❌ Never executes
 {
@@ -129,21 +129,21 @@ var result = await Result.ParallelAsync(
     () => FetchUserAsync(userId),
     () => CheckInventoryAsync(productId)
 )
-.AwaitAsync()  // Stage 1 done
+.WhenAllAsync()  // Stage 1 done
 
 .BindAsync((user, inventory) =>
     Result.ParallelAsync(
         () => ValidatePaymentAsync(paymentId),
         () => RunFraudDetectionAsync(user, payment, inventory)
     )
-    .AwaitAsync()  // Stage 2 done
+    .WhenAllAsync()  // Stage 2 done
     
     .BindAsync((payment, fraudCheck) =>
         Result.ParallelAsync(
             () => CalculateShippingAsync(address, inventory),
             () => ReserveInventoryAsync(inventory)
         )
-        .AwaitAsync()  // Stage 3 done
+        .WhenAllAsync()  // Stage 3 done
         
         .BindAsync((shipping, reservation) =>
             Result.Success(new OrderConfirmation(/*...*/))
@@ -223,7 +223,7 @@ Stage 3: Notification Service + Analytics Service (need order result)
 - Stages have **circular dependencies** (redesign workflow)
 
 ### Performance Tips
-1. **Minimize stages** - Each stage adds ~10ms overhead for AwaitAsync
+1. **Minimize stages** - Each stage adds ~10ms overhead for WhenAllAsync
 2. **Balance parallelism** - Aim for 2-4 operations per stage
 3. **Short-circuit early** - Put validation in Stage 1
 4. **Profile in production** - Measure actual latencies
@@ -257,10 +257,10 @@ Stage 3: Notification Service + Analytics Service (need order result)
 ### ❌ Mistake 1: Over-Nesting
 ```csharp
 // Too many stages (hard to read)
-Stage1.AwaitAsync()
-  .BindAsync(s1 => Stage2.AwaitAsync()
-    .BindAsync(s2 => Stage3.AwaitAsync()
-      .BindAsync(s3 => Stage4.AwaitAsync()
+Stage1.WhenAllAsync()
+  .BindAsync(s1 => Stage2.WhenAllAsync()
+    .BindAsync(s2 => Stage3.WhenAllAsync()
+      .BindAsync(s3 => Stage4.WhenAllAsync()
         .BindAsync(s4 => /*...*/)))) // 😵 Pyramid of doom
 ```
 
@@ -289,7 +289,7 @@ var result = await Result.ParallelAsync(
     () => FetchUserAsync(userId),
     () => CheckInventoryAsync(productId),
     () => ValidatePaymentAsync(paymentId)
-).AwaitAsync();
+).WhenAllAsync();
 ```
 
 ### ❌ Mistake 3: Ignoring Dependencies
@@ -309,7 +309,7 @@ Stage 2: RunFraudDetection(user, payment) // ✅ Both available
 
 ### Add Logging Between Stages
 ```csharp
-.AwaitAsync()
+.WhenAllAsync()
 .TapAsync(results => _logger.LogInformation("Stage 1 complete: {Results}", results))
 .BindAsync((user, inventory, payment) => 
     Result.ParallelAsync(/*...*/))
@@ -318,23 +318,23 @@ Stage 2: RunFraudDetection(user, payment) // ✅ Both available
 ### Track Execution Times
 ```csharp
 var sw = Stopwatch.StartNew();
-var stage1 = await StageOne().AwaitAsync();
+var stage1 = await StageOne().WhenAllAsync();
 _logger.LogInformation("Stage 1: {Ms}ms", sw.ElapsedMilliseconds);
 
 sw.Restart();
-var stage2 = await StageTwo(stage1).AwaitAsync();
+var stage2 = await StageTwo(stage1).WhenAllAsync();
 _logger.LogInformation("Stage 2: {Ms}ms", sw.ElapsedMilliseconds);
 ```
 
 ### Use Descriptive Variable Names
 ```csharp
 // ❌ Bad
-var r1 = await stage1.AwaitAsync();
-var r2 = await stage2(r1.Value).AwaitAsync();
+var r1 = await stage1.WhenAllAsync();
+var r2 = await stage2(r1.Value).WhenAllAsync();
 
 // ✅ Good
-var coreData = await FetchCoreDataInParallel().AwaitAsync();
-var validationResults = await ValidateInParallel(coreData.Value).AwaitAsync();
+var coreData = await FetchCoreDataInParallel().WhenAllAsync();
+var validationResults = await ValidateInParallel(coreData.Value).WhenAllAsync();
 ```
 
 ## Summary

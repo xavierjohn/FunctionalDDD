@@ -524,7 +524,7 @@ The RailwayOrientedProgramming library uses **T4 templates** to generate tuple o
 | `BindTs.g.tt` | `BindTs.g.cs` | Bind operations for tuple Results |
 | `MatchTupleTs.g.tt` | `MatchTupleTs.g.cs` | Match operations for tuple Results |
 | `CombineTs.g.tt` | `CombineTs.g.cs` | Combine operations for multiple Results |
-| `AwaitTs.g.tt` | `AwaitTs.g.cs` | Await operations for parallel Results |
+| `WhenAllTs.g.tt` | `WhenAllTs.g.cs` | WhenAll operations for parallel Results |
 | `ParallelAsyncs.g.tt` | `ParallelAsyncs.g.cs` | Parallel async operations |
 
 ### Testing Strategy
@@ -919,6 +919,30 @@ public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, 
 - The child activity is different from `Activity.Current`
 - Result constructor sets `Activity.Current`, not the child activity
 - Therefore, ROP methods must explicitly set their child activity status using `result.LogActivityStatus()` or `activity?.SetStatus(...)`
+
+## File Encoding
+
+All files in this repository **must** be saved as **UTF-8 with BOM** (byte order mark / signature).
+
+When writing files from PowerShell, always use `System.Text.UTF8Encoding($true)`:
+
+```powershell
+$utf8Bom = New-Object System.Text.UTF8Encoding $true
+[System.IO.File]::WriteAllText($path, $content, $utf8Bom)
+```
+
+**⚠️ Do NOT use `Set-Content`** — it re-encodes content and corrupts multi-byte characters (emoji, arrows, special symbols):
+
+```powershell
+# ❌ Corrupts emoji and special characters
+Set-Content $path -Value $content -NoNewline
+
+# ✅ Preserves all characters
+$utf8Bom = New-Object System.Text.UTF8Encoding $true
+$content = [System.IO.File]::ReadAllText($path, $utf8Bom)
+# ... modify $content ...
+[System.IO.File]::WriteAllText($path, $content, $utf8Bom)
+```
 
 ## PowerShell Command Usage
 

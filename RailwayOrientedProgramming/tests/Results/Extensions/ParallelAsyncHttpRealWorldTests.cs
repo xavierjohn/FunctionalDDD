@@ -45,7 +45,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => ValidatePaymentAsync(request.PaymentMethodId),
             () => CalculateShippingAsync(request.ShippingAddress)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
         .BindAsync((user, inventory, payment, shipping) =>
             Result.Success(new CheckoutResult(user, inventory, payment, shipping))
         );
@@ -75,7 +75,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync(request.ProductId),
             () => ValidatePaymentAsync(request.PaymentMethodId),
             () => CalculateShippingAsync(request.ShippingAddress)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - should fail with NotFoundError (permanent failure)
         result.Should().BeFailure();
@@ -96,7 +96,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync(outOfStockProductId),  // This returns conflict error
             () => ValidatePaymentAsync(request.PaymentMethodId),
             () => CalculateShippingAsync(request.ShippingAddress)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - should fail with ConflictError (permanent business rule violation)
         result.Should().BeFailure();
@@ -117,7 +117,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync(request.ProductId),
             () => ValidatePaymentAsync(invalidPaymentId),  // This returns validation error
             () => CalculateShippingAsync(request.ShippingAddress)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - should fail with ValidationError (permanent business rule)
         result.Should().BeFailure();
@@ -137,7 +137,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync("prod-out-of-stock"), // ConflictError
             () => ValidatePaymentAsync("pm-expired"),       // ValidationError
             () => CalculateShippingAsync(request.ShippingAddress)  // Success
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - should aggregate different error types
         result.Should().BeFailure();
@@ -189,7 +189,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
                     }),
             () => ValidatePaymentAsync(request.PaymentMethodId),
             () => CalculateShippingAsync(request.ShippingAddress)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - should succeed after retry
         result.Should().BeSuccess();
@@ -304,7 +304,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => TrackedTask("inventory"),
             () => TrackedTask("payment"),
             () => TrackedTask("shipping")
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         // Assert - verify tasks started concurrently, not sequentially
         result.Should().BeSuccess();
@@ -342,7 +342,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync(request.ProductId),
             () => ValidatePaymentAsync(request.PaymentMethodId)
         )
-        .AwaitAsync()  // ✅ Wait for Stage 1 to complete
+        .WhenAllAsync()  // ✅ Wait for Stage 1 to complete
 
         // Stage 2: Now we have (user, inventory, payment) - run fraud & shipping in parallel
         .BindAsync((user, inventory, payment) =>
@@ -350,7 +350,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
                 () => RunFraudDetectionAsync(user, payment, inventory),  // Uses all 3 results
                 () => CalculateShippingWithWeightAsync(request.ShippingAddress, inventory)  // Uses inventory
             )
-            .AwaitAsync()
+            .WhenAllAsync()
             .BindAsync((fraudCheck, shipping) =>
                 Result.Success(new
                 {
@@ -387,7 +387,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync(request.ProductId),
             () => ValidatePaymentAsync(request.PaymentMethodId)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
 
         // Stage 2 should NOT execute because Stage 1 failed
         .BindAsync((user, inventory, payment) =>
@@ -396,7 +396,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             return Result.ParallelAsync(
                 () => RunFraudDetectionAsync(user, payment, inventory),
                 () => CalculateShippingWithWeightAsync(request.ShippingAddress, inventory)
-            ).AwaitAsync();
+            ).WhenAllAsync();
         });
 
         // Assert - Stage 1 failed, Stage 2 never ran
@@ -419,7 +419,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync("prod-expensive"),
             () => ValidatePaymentAsync(request.PaymentMethodId)
         )
-        .AwaitAsync()
+        .WhenAllAsync()
 
         // Stage 2: Fraud detection will fail
         .BindAsync((user, inventory, payment) =>
@@ -427,7 +427,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
                 () => RunFraudDetectionAsync(user, payment, inventory),  // ❌ Will fail (fraud)
                 () => CalculateShippingWithWeightAsync(request.ShippingAddress, inventory)
             )
-            .AwaitAsync()
+            .WhenAllAsync()
         );
 
         // Assert - Stage 2 fraud check failed
@@ -455,21 +455,21 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => FetchUserAsync(userId),
             () => CheckInventoryAsync(productId)
         )
-        .AwaitAsync()  // Stage 1 complete
+        .WhenAllAsync()  // Stage 1 complete
 
         .BindAsync((user, inventory) =>
             Result.ParallelAsync(
                 () => ValidatePaymentAsync(paymentId),
                 () => RunFraudDetectionAsync(user, new PaymentResponse(paymentId, true), inventory)
             )
-            .AwaitAsync()  // Stage 2 complete
+            .WhenAllAsync()  // Stage 2 complete
 
             .BindAsync((payment, fraudCheck) =>
                 Result.ParallelAsync(
                     () => CalculateShippingWithWeightAsync(address, inventory),
                     () => ReserveInventoryAsync(inventory)
                 )
-                .AwaitAsync()  // Stage 3 complete
+                .WhenAllAsync()  // Stage 3 complete
 
                 .BindAsync((shipping, reservation) =>
                     Result.Success(new
@@ -504,14 +504,14 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CheckInventoryAsync("prod-456"),     // 50ms
             () => ValidatePaymentAsync("pm-789")       // 50ms
         )
-        .AwaitAsync()  // Stage 1: ~50ms (parallel)
+        .WhenAllAsync()  // Stage 1: ~50ms (parallel)
 
         .BindAsync((user, inventory, payment) =>
             Result.ParallelAsync(
                 () => RunFraudDetectionAsync(user, payment, inventory),  // 30ms
                 () => CalculateShippingWithWeightAsync("123 Main St", inventory)  // 40ms
             )
-            .AwaitAsync()  // Stage 2: ~40ms (parallel)
+            .WhenAllAsync()  // Stage 2: ~40ms (parallel)
         );
 
         stopwatch.Stop();

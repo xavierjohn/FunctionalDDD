@@ -250,7 +250,7 @@ Concurrent validation for performance and security:
 ```csharp
 var result = await ValidateFromAccountAsync(fromAccount, amount, ct)
     .ParallelAsync(ValidateToAccountAsync(toAccount, amount, ct))
-    .AwaitAsync()
+    .WhenAllAsync()
     .BindAsync((fromValid, toValid) => 
         ProcessTransferAsync(fromAccount, toAccount, amount, ct), ct);
 ```

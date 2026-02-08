@@ -83,7 +83,7 @@ public class BankingWorkflow
         var validationResult = await Result.ParallelAsync(
             () => _fraudDetection.AnalyzeTransactionAsync(fromAccount, amount, "transfer-out", cancellationToken),
             () => _fraudDetection.AnalyzeTransactionAsync(toAccount, amount, "transfer-in", cancellationToken)
-        ).AwaitAsync();
+        ).WhenAllAsync();
 
         if (validationResult.IsFailure)
             return validationResult.Error;

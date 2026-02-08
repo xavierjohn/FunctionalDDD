@@ -40,7 +40,7 @@ public readonly partial struct Result
 <# for(var j = 1; j <= i; j++) { #>
     /// <param name="taskFactory<#= j #>">Factory function that creates and starts the <#= GetOrdinalName(j) #> task.</param>
 <# } #>
-    /// <returns>A tuple of <#= i #> tasks that can be awaited using AwaitAsync.</returns>
+    /// <returns>A tuple of <#= i #> tasks that can be awaited using WhenAllAsync.</returns>
     /// <remarks>
     /// <para>
     /// This method invokes all factory functions immediately to start all tasks in parallel.
@@ -55,7 +55,7 @@ public readonly partial struct Result
     /// <code>
     /// var result = await Result.ParallelAsync(
     ///     <#= factoryExample #>
-    /// ).AwaitAsync();
+    /// ).WhenAllAsync();
     /// </code>
     /// </example>
     public static <#= returnType #> ParallelAsync<<#= typeParams #>>(

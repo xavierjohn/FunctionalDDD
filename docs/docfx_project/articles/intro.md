@@ -241,7 +241,7 @@ Fetch data from multiple sources in parallel while maintaining Railway Oriented 
 var result = await GetUserAsync(userId, cancellationToken)
     .ParallelAsync(GetOrdersAsync(userId, cancellationToken))
     .ParallelAsync(GetPreferencesAsync(userId, cancellationToken))
-    .AwaitAsync()
+    .WhenAllAsync()
     .Bind((user, orders, preferences) => 
         Result.Success(new UserProfile(user, orders, preferences)));
 ```
