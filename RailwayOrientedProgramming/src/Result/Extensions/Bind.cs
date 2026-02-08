@@ -30,7 +30,9 @@ public static partial class BindExtensions
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
-        return func(result.Value);
+        var output = func(result.Value);
+        output.LogActivityStatus();
+        return output;
     }
 }
 
@@ -54,7 +56,9 @@ public static partial class BindExtensionsAsync
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
 
-        return await func(result.Value).ConfigureAwait(false);
+        var output = await func(result.Value).ConfigureAwait(false);
+        output.LogActivityStatus();
+        return output;
     }
 
     /// <summary>
@@ -121,11 +125,14 @@ public static partial class BindExtensionsAsync
     /// <param name="result">The result to bind.</param>
     /// <param name="valueTask">The async function to call if the result is successful.</param>
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
-    public static ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, ValueTask<Result<TResult>>> valueTask)
+    public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, ValueTask<Result<TResult>>> valueTask)
     {
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
-            return Result.Failure<TResult>(result.Error).AsCompletedValueTask();
+            return Result.Failure<TResult>(result.Error);
 
-        return valueTask(result.Value);
+        var output = await valueTask(result.Value).ConfigureAwait(false);
+        output.LogActivityStatus();
+        return output;
     }
 }

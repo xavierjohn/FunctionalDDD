@@ -79,13 +79,13 @@ public static class NullableExtensionsAsync
     /// </summary>
     /// <typeparam name="T">The underlying value type.</typeparam>
     /// <param name="nullableTask">The task returning a nullable value.</param>
-    /// <param name="errors">The error to return if the value is null.</param>
+    /// <param name="error">The error to return if the value is null.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is a success Result if the value is not null; otherwise a failure Result.</returns>
-    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
+    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error error)
         where T : struct
     {
         var nullable = await nullableTask.ConfigureAwait(false);
-        return nullable.ToResult(errors);
+        return nullable.ToResult(error);
     }
 
     /// <summary>
@@ -93,13 +93,13 @@ public static class NullableExtensionsAsync
     /// </summary>
     /// <typeparam name="T">The reference type.</typeparam>
     /// <param name="nullableTask">The task returning a potentially null object.</param>
-    /// <param name="errors">The error to return if the object is null.</param>
+    /// <param name="error">The error to return if the object is null.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is a success Result if the object is not null; otherwise a failure Result.</returns>
-    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error errors)
+    public static async Task<Result<T>> ToResultAsync<T>(this Task<T?> nullableTask, Error error)
     where T : class
     {
         var nullable = await nullableTask.ConfigureAwait(false);
-        return nullable.ToResult(errors);
+        return nullable.ToResult(error);
     }
 
     /// <summary>
@@ -107,13 +107,13 @@ public static class NullableExtensionsAsync
     /// </summary>
     /// <typeparam name="T">The underlying value type.</typeparam>
     /// <param name="nullableTask">The ValueTask returning a nullable value.</param>
-    /// <param name="errors">The error to return if the value is null.</param>
+    /// <param name="error">The error to return if the value is null.</param>
     /// <returns>A ValueTask that represents the asynchronous operation. The task result is a success Result if the value is not null; otherwise a failure Result.</returns>
-    public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
+    public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error error)
         where T : struct
     {
         var nullable = await nullableTask.ConfigureAwait(false);
-        return nullable.ToResult(errors);
+        return nullable.ToResult(error);
     }
 
     /// <summary>
@@ -121,12 +121,12 @@ public static class NullableExtensionsAsync
     /// </summary>
     /// <typeparam name="T">The reference type.</typeparam>
     /// <param name="nullableTask">The ValueTask returning a potentially null object.</param>
-    /// <param name="errors">The error to return if the object is null.</param>
+    /// <param name="error">The error to return if the object is null.</param>
     /// <returns>A ValueTask that represents the asynchronous operation. The task result is a success Result if the object is not null; otherwise a failure Result.</returns>
-    public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error errors)
+    public static async ValueTask<Result<T>> ToResultAsync<T>(this ValueTask<T?> nullableTask, Error error)
         where T : class
     {
         var nullable = await nullableTask.ConfigureAwait(false);
-        return nullable.ToResult(errors);
+        return nullable.ToResult(error);
     }
 }

@@ -49,7 +49,7 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity("map");
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(MapExtensions.Map));
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
@@ -98,7 +98,7 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, ValueTask<TOut>> func)
     {
-        using var activity = RopTrace.ActivitySource.StartActivity("map");
+        using var activity = RopTrace.ActivitySource.StartActivity(nameof(MapExtensions.Map));
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
 
