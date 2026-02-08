@@ -92,7 +92,14 @@ public static class ServiceCollectionExtensions
             options.Filters.Add<ScalarValueValidationFilter>());
 
         builder.AddMvcOptions(options =>
-            options.ModelBinderProviders.Insert(0, new ScalarValueModelBinderProvider()));
+        {
+            options.ModelBinderProviders.Insert(0, new ScalarValueModelBinderProvider());
+
+            // Prevent MVC's ValidationVisitor from recursing into Maybe<T> properties.
+            // Without this, accessing Maybe<T>.Value via reflection throws when HasNoValue.
+            options.ModelMetadataDetailsProviders.Add(
+                new MaybeSuppressChildValidationMetadataProvider());
+        });
 
         // Configure [ApiController] to not automatically return 400 for invalid ModelState
         // This allows our ScalarValueValidationFilter to handle validation errors properly

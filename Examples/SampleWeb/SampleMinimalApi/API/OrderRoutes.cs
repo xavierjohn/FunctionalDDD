@@ -39,6 +39,7 @@ public static class OrderRoutes
                 dto.State.Name,
                 dto.State.CanModify,
                 dto.State.CanCancel,
+                dto.AssignedTo.Match(name => name.Value, () => (string?)null),
                 dto.Notes,
                 "Order state updated successfully!"
             )))
@@ -82,7 +83,7 @@ public static class OrderRoutes
 public record OrderStateInfo(string Name, int Value, bool CanModify, bool CanCancel);
 public record OrderStatesResponse(OrderStateInfo[] States);
 public record OrderStateDetailResponse(string Name, int Value, bool CanModify, bool CanCancel, string Message);
-public record UpdateOrderResponse(string NewState, bool CanModify, bool CanCancel, string? Notes, string Message);
+public record UpdateOrderResponse(string NewState, bool CanModify, bool CanCancel, string? AssignedTo, string? Notes, string Message);
 public record CustomerInfo(string FirstName, string LastName, string Email);
 public record CreateOrderResponse(CustomerInfo Customer, OrderStateInfo State, string Message);
 public record FilterOrdersResponse(string? FilterState, bool? CanModify, string Message);

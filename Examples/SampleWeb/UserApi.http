@@ -86,10 +86,15 @@ Accept: application/json
 ###############################################################################
 # Automatic Value Object Validation
 # No manual Result.Combine() - validation happens during model binding!
+# 
+# Website uses Maybe<Url> — domain-level optionality:
+# - Omitted or null → Maybe.None (no error, field is truly optional)
+# - Present & valid → Maybe with Url value (auto-validated)
+# - Present & invalid → 400 Bad Request (validation error)
 ###############################################################################
 
-### Auto-Validation - Success (200 OK)
-# All 7 value objects are automatically validated during model binding
+### Auto-Validation - Success with Website (200 OK)
+# All 7 value objects auto-validated. Website uses Maybe<Url>.
 POST {{host}}/users/RegisterWithAutoValidation
 Content-Type: application/json
 
@@ -101,6 +106,37 @@ Content-Type: application/json
     "age": 28,
     "country": "US",
     "website": "https://xavier.com",
+    "password": "Secure!Pass123"
+}
+
+### Auto-Validation - Success without Website (200 OK)
+# Website omitted entirely → Maybe.None<Url> (not an error)
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "password": "Secure!Pass123"
+}
+
+### Auto-Validation - Website Null (200 OK)
+# Website explicitly null → Maybe.None<Url> (not an error)
+POST {{host}}/users/RegisterWithAutoValidation
+Content-Type: application/json
+
+{
+    "firstName": "Xavier",
+    "lastName": "John",
+    "email": "xavier@example.com",
+    "phone": "+14155551234",
+    "age": 28,
+    "country": "US",
+    "website": null,
     "password": "Secure!Pass123"
 }
 

@@ -12,7 +12,7 @@ public class User : Aggregate<UserId>
     public PhoneNumber Phone { get; }
     public Age Age { get; }
     public CountryCode Country { get; }
-    public Url? Website { get; }
+    public Maybe<Url> Website { get; }
     public string Password { get; }
 
     public static Result<User> TryCreate(
@@ -23,7 +23,7 @@ public class User : Aggregate<UserId>
         Age age,
         CountryCode country,
         string password,
-        Url? website = null)
+        Maybe<Url> website = default)
     {
         var user = new User(firstName, lastName, email, phone, age, country, password, website);
         var validator = new UserValidator();
@@ -38,7 +38,7 @@ public class User : Aggregate<UserId>
         Age age,
         CountryCode country,
         string password,
-        Url? website)
+        Maybe<Url> website)
         : base(UserId.NewUniqueV4())
     {
         FirstName = firstName;
