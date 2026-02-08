@@ -221,7 +221,16 @@ public CustomerId CustomerId { get; }
 public Customer Customer { get; }
 ```
 
-**4. Enforce invariants in aggregate root**
+**4. Use `Maybe<T>` for optional properties**
+```csharp
+// ✅ Good — domain-level optionality
+public Maybe<Url> Website { get; }
+
+// ❌ Avoid — nullable reference
+public Url? Website { get; }
+```
+
+**5. Enforce invariants in aggregate root**
 ```csharp
 public Result<Order> AddLine(...) =>
     this.ToResult()
@@ -230,7 +239,7 @@ public Result<Order> AddLine(...) =>
         .Tap(_ => _lines.Add(...));
 ```
 
-**5. Use domain events for side effects**
+**6. Use domain events for side effects**
 ```csharp
 // ? Good - domain event
 DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
@@ -239,7 +248,7 @@ DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
 _emailService.SendConfirmation();
 ```
 
-**6. Validate using Result types**
+**7. Validate using Result types**
 ```csharp
 // ? Good
 public Result<Order> Cancel(string reason) =>
@@ -251,7 +260,7 @@ if (Status != OrderStatus.Draft)
     throw new InvalidOperationException(...);
 ```
 
-**7. Make value objects immutable**
+**8. Make value objects immutable**
 ```csharp
 // ? Good
 public decimal Amount { get; }  // No setter

@@ -124,6 +124,28 @@ if (some.HasValue)
 string result = none.GetValueOrDefault("default"); // "default"
 ```
 
+**Transformations:**
+
+```csharp
+// Map — transform the inner value (returns Maybe<TResult>)
+Maybe<string> name = Maybe.From("hello");
+Maybe<int> length = name.Map(s => s.Length);        // Maybe.From(5)
+
+Maybe<string> empty = Maybe.None<string>();
+Maybe<int> noLength = empty.Map(s => s.Length);     // Maybe.None
+
+// Match — pattern match to extract a value
+string greeting = name.Match(
+    s => $"Hi, {s}!",       // HasValue
+    () => "No name");        // HasNoValue
+// → "Hi, hello!"
+
+string fallback = empty.Match(
+    s => $"Hi, {s}!",
+    () => "No name");
+// → "No name"
+```
+
 ### Error Types
 
 The library provides several built-in error types, each with a specific purpose and default HTTP status code mapping:

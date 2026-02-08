@@ -130,6 +130,7 @@ Shared library with value objects used by all examples.
 | **Model Binding** | ⚠️ JSON only | ⚠️ JSON only | ✅ All sources |
 | **Action Filters** | ⚠️ Endpoint filters | ⚠️ Endpoint filters | ✅ Action filters |
 | **Native AOT** | ❌ | ✅ | ❌ |
+| **Maybe<T> Optional Props** | ✅ | ✅ | ✅ |
 | **Startup Overhead** | +50μs | 0μs | +50μs |
 
 ## Decision Tree

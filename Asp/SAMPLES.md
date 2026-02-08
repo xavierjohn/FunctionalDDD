@@ -28,6 +28,7 @@ This document provides detailed examples and advanced patterns for using the ASP
   - [Batch Operations](#batch-operations)
   - [Conditional Processing](#conditional-processing)
   - [Side Effects with Tap](#side-effects-with-tap)
+- [Optional Value Objects with Maybe<T>](#optional-value-objects-with-maybet)
 
 ## MVC Controllers
 
@@ -1107,3 +1108,97 @@ public async Task<ActionResult<Product>> UpdateProductAsync(
             }
         })
         .ToActionResultAsync(this);
+
+## Optional Value Objects with Maybe<T>
+
+### DTOs with Optional Properties
+
+Use `Maybe<T>` for optional value object properties instead of `T?`:
+
+```csharp
+public record RegisterUserDto
+{
+    public FirstName FirstName { get; init; } = null!;   // Required
+    public LastName LastName { get; init; } = null!;      // Required
+    public EmailAddress Email { get; init; } = null!;     // Required
+    public Maybe<Url> Website { get; init; }              // Optional
+}
+
+public record UpdateOrderDto
+{
+    public Maybe<FirstName> AssignedTo { get; init; }     // Optional
+}
+```
+
+### JSON Behavior
+
+```json
+// All required + optional present
+{ "firstName": "Jane", "lastName": "Doe", "email": "jane@example.com", "website": "https://jane.dev" }
+// → Website = Maybe.From(Url("https://jane.dev"))
+
+// Required only, optional null
+{ "firstName": "Jane", "lastName": "Doe", "email": "jane@example.com", "website": null }
+// → Website = Maybe.None
+
+// Required only, optional absent
+{ "firstName": "Jane", "lastName": "Doe", "email": "jane@example.com" }
+// → Website = Maybe.None
+
+// Invalid optional value
+{ "firstName": "Jane", "lastName": "Doe", "email": "jane@example.com", "website": "not-valid" }
+// → 400 Bad Request with errors: { "Website": ["Url is not valid."] }
+```
+
+### Using Maybe<T> in Domain Logic
+
+```csharp
+[HttpPost]
+public ActionResult<User> Register(RegisterUserDto dto)
+{
+    // dto properties are already validated by AddScalarValueValidation()
+    return User.TryCreate(dto.FirstName, dto.LastName, dto.Email, dto.Website)
+        .Tap(user => _repository.Add(user))
+        .ToActionResult(this);
+}
+```
+
+In the domain aggregate:
+
+```csharp
+public class User : Aggregate<UserId>
+{
+    public FirstName FirstName { get; }
+    public LastName LastName { get; }
+    public EmailAddress Email { get; }
+    public Maybe<Url> Website { get; }
+
+    public static Result<User> TryCreate(
+        FirstName firstName, LastName lastName,
+        EmailAddress email, Maybe<Url> website = default)
+    {
+        // website defaults to Maybe.None if not provided
+        return new User(UserId.NewUniqueV7(), firstName, lastName, email, website)
+            .ToResult();
+    }
+}
+```
+
+### Map and Match on Maybe
+
+```csharp
+// Transform optional value
+Maybe<Url> website = Maybe.From(Url.Create("https://example.com"));
+Maybe<string> urlString = website.Map(url => url.Value);
+// → Maybe.From("https://example.com")
+
+Maybe<Url> none = Maybe.None<Url>();
+Maybe<string> noneString = none.Map(url => url.Value);
+// → Maybe.None
+
+// Pattern match
+string display = website.Match(
+    url => $"Visit: {url.Value}",
+    () => "No website");
+// → "Visit: https://example.com"
+```

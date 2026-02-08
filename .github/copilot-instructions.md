@@ -110,7 +110,7 @@ When both `Task<T>` and `ValueTask<T>` overloads exist, use explicit constructor
 ### Core Types
 
 - **`Result<TValue>`**: Success (with value) or failure (with error)
-- **`Maybe<T>`**: Optional value that may or may not exist
+- **`Maybe<T>`**: Domain-level optionality (`where T : notnull`). Supports `Map<TResult>`, `Match<TResult>`, `GetValueOrDefault`, `TryGetValue`, implicit operator. Use `Maybe<T>` instead of `T?` for optional value objects in DTOs (e.g., `Maybe<Url> Website`). ASP.NET Core integration: `MaybeScalarValueJsonConverter`, `MaybeModelBinder`, `MaybeSuppressChildValidationMetadataProvider` — all registered automatically by `AddScalarValueValidation()`.
 - **`Error`**: Base error type (Validation, NotFound, Unauthorized, etc.)
 
 ### Key Methods

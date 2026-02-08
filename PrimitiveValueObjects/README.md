@@ -313,7 +313,7 @@ public record CreateUserDto
     public PhoneNumber Phone { get; init; } = null!;
     public Age Age { get; init; } = null!;
     public CountryCode Country { get; init; } = null!;
-    public Url? Website { get; init; } // Optional
+    public Maybe<Url> Website { get; init; } // Optional — null in JSON → Maybe.None
 }
 
 // 4. Controllers get automatic validation - no manual Result.Combine needed!
@@ -331,7 +331,7 @@ public class UsersController : ControllerBase
         // - Phone: E.164 format
         // - Age: 0-150 range
         // - Country: ISO 3166-1 alpha-2 code
-        // - Website: valid HTTP/HTTPS URL (optional)
+        // - Website: valid HTTP/HTTPS URL (optional, Maybe<Url>)
         
         var user = new User(dto.FirstName, dto.Email, dto.Phone, dto.Age, dto.Country);
         return Ok(user);
