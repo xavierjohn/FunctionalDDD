@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Represents an aggregate of multiple errors that occurred together.
 /// Use this when multiple independent errors need to be returned as a single failure result.
@@ -25,6 +27,8 @@
 /// var aggregateError = new AggregateError(errors);
 /// </code>
 /// </example>
+[DebuggerDisplay("Aggregate: {Errors.Count} error(s)")]
+[DebuggerTypeProxy(typeof(AggregateErrorDebugView))]
 public sealed class AggregateError : Error
 {
     /// <summary>

@@ -1,5 +1,6 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
@@ -26,6 +27,7 @@ using System.Diagnostics.CodeAnalysis;
 /// string display = name.Match(v =&gt; $"Hello, {v}!", () =&gt; "Hello, stranger!");
 /// </code>
 /// </example>
+[DebuggerDisplay("{_isValueSet ? \"Some(\" + _value + \")\": \"None\"}")]
 public readonly struct Maybe<T> :
     IEquatable<T>,
     IEquatable<Maybe<T>>
