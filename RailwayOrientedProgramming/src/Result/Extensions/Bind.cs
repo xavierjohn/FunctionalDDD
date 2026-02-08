@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Provides extension methods for binding (chaining) operations over Result values.
 /// </summary>
@@ -9,6 +11,7 @@
 /// If the input Result is a success, the bind function is called with the value.
 /// If the input Result is a failure, the bind function is skipped and the failure is propagated.
 /// </remarks>
+[DebuggerStepThrough]
 public static partial class BindExtensions
 {
     /// <summary>
@@ -34,6 +37,7 @@ public static partial class BindExtensions
 /// <summary>
 /// Provides asynchronous extension methods for binding (chaining) operations over Result values.
 /// </summary>
+[DebuggerStepThrough]
 public static partial class BindExtensionsAsync
 {
     /// <summary>

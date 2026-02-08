@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 ///     Returns a new failure result if the predicate is false. Otherwise returns the starting result.
 /// </summary>
@@ -15,6 +17,7 @@
 /// );
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static partial class EnsureExtensionsAsync
 {
     /// <summary>

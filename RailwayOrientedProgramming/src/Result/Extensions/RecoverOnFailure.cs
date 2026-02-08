@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Provides extension methods for recovering from failed results by executing fallback operations.
 /// </summary>
@@ -11,6 +13,7 @@
 /// Recovery allows you to provide alternative paths when a Result fails, similar to try-catch recovery logic
 /// but in a functional style. This is useful for implementing fallback strategies, default values, or error recovery.
 /// </remarks>
+[DebuggerStepThrough]
 public static class RecoverOnFailureExtensions
 {
     /// <summary>
@@ -109,6 +112,7 @@ public static class RecoverOnFailureExtensions
 ///     .RecoverOnFailureAsync(error => GetFromCacheAsync(id, ct));
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class RecoverOnFailureExtensionsAsync
 {
     /// <summary>

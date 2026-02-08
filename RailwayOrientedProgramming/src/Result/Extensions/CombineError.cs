@@ -1,10 +1,13 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Combine errors into one.
 /// If both the errors types are <see cref="ValidationError"/>, the validation errors will be merged.
 /// Otherwise, the errors will be wrapped into an <see cref="AggregateError"/>.
 /// </summary>
+[DebuggerStepThrough]
 public static class CombineErrorExtensions
 {
     /// <summary>

@@ -1,5 +1,7 @@
 ﻿namespace FunctionalDdd;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Extension methods for converting nullable values to Result types.
 /// Provides a convenient way to handle null checking with Railway Oriented Programming.
@@ -24,6 +26,7 @@
 ///     .Ensure(u => u.IsActive, Error.Domain("User is inactive"));
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class NullableExtensions
 {
     /// <summary>
@@ -68,6 +71,7 @@ public static class NullableExtensions
 /// These extensions allow you to convert tasks or value tasks returning potentially null values
 /// into Result types in an async context.
 /// </remarks>
+[DebuggerStepThrough]
 public static class NullableExtensionsAsync
 {
     /// <summary>

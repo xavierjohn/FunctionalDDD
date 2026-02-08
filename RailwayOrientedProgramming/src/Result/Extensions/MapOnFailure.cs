@@ -37,6 +37,7 @@ using System.Threading.Tasks;
 ///     .MapOnFailureAsync(err => TransformErrorAsync(err, ct));
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static class MapOnFailureExtensions
 {
     /// <summary>

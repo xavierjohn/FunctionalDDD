@@ -19,6 +19,7 @@ using System.Diagnostics;
 ///     .Tap(() => _metrics.IncrementCounter("user.validated"));
 /// </code>
 /// </example>
+[DebuggerStepThrough]
 public static partial class TapExtensions
 {
     /// <summary>
@@ -59,6 +60,7 @@ public static partial class TapExtensions
 /// <summary>
 /// Provides asynchronous extension methods for executing side effects on successful Results without changing the Result.
 /// </summary>
+[DebuggerStepThrough]
 public static partial class TapExtensionsAsync
 {
     // Task<Result<TValue>> overloads with Action

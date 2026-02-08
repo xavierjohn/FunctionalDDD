@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 /// Allows matching on specific error types (ValidationError, NotFoundError, etc.) 
 /// rather than treating all errors the same.
 /// </summary>
+[DebuggerStepThrough]
 public static class MatchErrorExtensions
 {
     /// <summary>
@@ -185,6 +186,7 @@ public static class MatchErrorExtensions
 /// <summary>
 /// Asynchronous pattern matching helpers for discriminating specific error types in Result.
 /// </summary>
+[DebuggerStepThrough]
 public static class MatchErrorExtensionsAsync
 {
     /// <summary>
