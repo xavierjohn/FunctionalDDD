@@ -12,6 +12,6 @@ internal class DerivedAddress : Address
         foreach (var s in base.GetEqualityComponents())
             yield return s;
 
-        yield return City;
+        yield return Country;
     }
 }

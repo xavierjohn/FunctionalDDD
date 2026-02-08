@@ -34,7 +34,7 @@ public class ValueObjectTests
     public void Derived_value_objects_are_not_equal()
     {
         var address = new Address("Street", "City");
-        var derivedAddress = new DerivedAddress("Country", "Street", "City");
+        var derivedAddress = new DerivedAddress("Street", "City", "Country");
 
         address.Equals(derivedAddress).Should().BeFalse();
         derivedAddress.Equals(address).Should().BeFalse();
