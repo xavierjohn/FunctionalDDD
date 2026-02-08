@@ -2,443 +2,210 @@
 
 ## Project Overview
 
-This is a functional programming library for .NET that implements Railway Oriented Programming (ROP) patterns, Domain-Driven Design (DDD) primitives, and value objects.
-
-**Target Frameworks:**
-- .NET 10
+Functional programming library for .NET 10 implementing Railway Oriented Programming (ROP), Domain-Driven Design (DDD) primitives, and value objects.
 
 ## Naming Conventions
 
-### Package and Namespace Naming
+This project uses `FunctionalDdd` (lowercase 'dd') per Microsoft's .NET naming guidelines for 3+ letter acronyms.
 
-**IMPORTANT:** This project uses `FunctionalDdd` (lowercase 'dd') following Microsoft's .NET naming guidelines for 3+ letter acronyms.
+| Context | Correct | Incorrect |
+|---------|---------|-----------|
+| Packages / Namespaces | `FunctionalDdd.RailwayOrientedProgramming` | `FunctionalDDD.RailwayOrientedProgramming` |
+| Using statements | `using FunctionalDdd;` | `using FunctionalDDD;` |
+| Assembly names | `FunctionalDdd.*` | `FunctionalDDD.*` |
 
-✅ **Correct (Technical):**
-- Package names: `FunctionalDdd.RailwayOrientedProgramming`, `FunctionalDdd.Asp`, etc.
-- Namespaces: `FunctionalDdd`, `FunctionalDdd.PrimitiveValueObjects`
-- Using statements: `using FunctionalDdd;`
-- Assembly names: `FunctionalDdd.*`
-- Installation: `dotnet add package FunctionalDdd.PackageName`
-
-⚠️ **Acceptable (Branding/Marketing):**
-- Prose/documentation: "FunctionalDDD" or "Functional DDD" when discussing the library conceptually
-- GitHub repository: `FunctionalDDD` (repository URL)
-- Comments for clarity: `// FunctionalDDD handles this...`
-
-❌ **Incorrect (Code/Technical):**
-- Package names: `FunctionalDDD.RailwayOrientedProgramming` ❌
-- Namespaces: `FunctionalDDD` ❌
-- Using statements: `using FunctionalDDD;` ❌
-
-**Rationale:** Microsoft's naming guidelines specify that acronyms of 3+ characters should use PascalCase (e.g., `Xml`, `Html`, `Json`), not all uppercase. We follow this for consistency with the .NET ecosystem.
+"FunctionalDDD" or "Functional DDD" is acceptable in prose, documentation, and the GitHub repository name.
 
 ## Value Object Creation Patterns
 
-All value objects provide two factory methods for creation:
+All value objects provide two factory methods:
 
-### `TryCreate` - Returns `Result<T>`
-
-Use when failure is expected and should be handled gracefully:
+| Method | Returns | Use When |
+|--------|---------|----------|
+| `TryCreate` | `Result<T>` | Failure is expected (API input, user validation) |
+| `Create` | `T` (throws on failure) | Values are known-valid (tests, constants, config) |
 
 ```csharp
-// ✅ Use in API endpoints, user input validation
+//  TryCreate — handle errors gracefully
 var result = Money.TryCreate(amount, currencyCode);
 if (result.IsFailure)
-    return result.Error; // Handle the error
+    return result.Error;
 
-var money = result.Value;
-```
-
-### `Create` - Throws Exception
-
-Use when values are known to be valid (failure is exceptional):
-
-```csharp
-// ✅ Use in tests
+//  Create — failure is exceptional
 var testMoney = Money.Create(100.00m, "USD");
 
-// ✅ Use with constants or configuration
-var defaultCurrency = CurrencyCode.Create("USD");
-
-// ✅ Use when building from other validated value objects
-var total = Money.Create(item1.Amount + item2.Amount, "USD");
-```
-
-**⚠️ Don't use `.Value` on TryCreate in production code:**
-```csharp
-// ❌ Bad - Can throw NullReferenceException with unclear message
+//  Don't use .Value on TryCreate in production
 var money = Money.TryCreate(amount, currency).Value;
-
-// ✅ Good - Clear intent, better error message
-var money = Money.Create(amount, currency);
-
-// ✅ Or handle the error
-var result = Money.TryCreate(amount, currency);
-if (result.IsFailure) 
-    return result.ToHttpResult();
 ```
 
 ### Implementation Details
 
-**The `Create` method is automatically provided:**
-- ✅ All scalar value objects inherit base `Create(T value)` from `ScalarValueObject<TSelf, T>` base class  
-- ✅ Default implementation calls `TryCreate` and throws `InvalidOperationException` on failure
-- ✅ Can be overridden if custom behavior is needed (e.g., multi-parameter signatures like `Money.Create(amount, currency)`)
+- All scalar value objects inherit `Create(T value)` from `ScalarValueObject<TSelf, T>`, which calls `TryCreate` and throws `InvalidOperationException` on failure
+- Source-generated types (`RequiredGuid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`) auto-generate `Create()` overloads mirroring each `TryCreate()` overload
+- The FDDD007 analyzer suggests `Create()` instead of `TryCreate().Value`
+- Override `Create` for multi-parameter signatures (e.g., `Money.Create(amount, currency)`)
 
-**For source-generated value objects (`RequiredGuid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`):**
-- ✅ **Generator creates `Create()` methods that mirror each `TryCreate()` overload**
-- ✅ **Avoids ambiguity by removing optional parameters and nullable overloads**
-- ✅ **Works perfectly with FDDD007 analyzer** (suggests using `Create()` instead of `TryCreate().Value`)
+**Generated Create overloads:**
 
-**Generated Create methods per type:**
+| Type | Overloads |
+|------|-----------|
+| `RequiredGuid` | `Create(Guid)`, `Create(string)`, `NewUniqueV4()`, `NewUniqueV7()` |
+| `RequiredString` | `Create(string?, string? fieldName)` |
+| `RequiredInt` / `RequiredDecimal` | `Create(int/decimal)`, `Create(string)` |
+
+**Custom value objects** inherit `Create` automatically:
 
 ```csharp
-// RequiredGuid
-public static MenuItemId Create(Guid value);         // Hides base Create(T)
-public static MenuItemId Create(string stringValue); // Parse from string
-public static MenuItemId NewUniqueV4();              // Version 4 (random) GUID
-public static MenuItemId NewUniqueV7();              // Version 7 (time-ordered) GUID
-
-// RequiredString  
-public static FirstName Create(string? value, string? fieldName = null); // Keeps fieldName for validation
-
-// RequiredInt / RequiredDecimal
-public static Quantity Create(int value);            // Hides base Create(T)
-public static Quantity Create(string stringValue);   // Parse from string
-```
-
-**Example usage:**
-```csharp
-// ✅ Direct value - calls Create(Guid)
-var menuId = MenuItemId.Create(Guid.Parse("2F45ACF9-..."));
-
-// ✅ Parse from string - calls Create(string)  
-var menuId = MenuItemId.Create("2F45ACF9-...");
-
-// ✅ No ambiguity - compiler knows which overload to use
-var quantity = Quantity.Create(42);       // Create(int)
-var quantity = Quantity.Create("42");     // Create(string)
-```
-
-**Custom value objects:**
-```csharp
-// ✅ Inherits Create automatically
-public class Temperature : ScalarValueObject<Temperature, decimal>, 
+public class Temperature : ScalarValueObject<Temperature, decimal>,
     IScalarValue<Temperature, decimal>
 {
     private Temperature(decimal value) : base(value) { }
-    
+
     public static Result<Temperature> TryCreate(decimal value, string? fieldName = null) =>
         value.ToResult()
             .Ensure(v => v >= -273.15m, Error.Validation("Below absolute zero", fieldName ?? "temperature"))
             .Map(v => new Temperature(v));
-    
-    // Create is inherited from base class - no need to implement!
-}
 
-// Usage
-var temp = Temperature.Create(98.6m); // ✅ Works automatically
+    // Create is inherited from base class — no need to implement!
+}
 ```
 
-**Multi-parameter Create methods:**
+**Multi-parameter Create** — override explicitly when TryCreate has multiple required parameters:
+
 ```csharp
-// For value objects with complex creation (like Money with amount + currency)
-public class Money : ValueObject
+public static Money Create(decimal amount, string currencyCode)
 {
-    // TryCreate with multiple parameters
-    public static Result<Money> TryCreate(decimal amount, string currencyCode, string? fieldName = null)
-    { /* ... */ }
-    
-    // Explicit Create for multi-parameter signature
-    public static Money Create(decimal amount, string currencyCode)
-    {
-        var result = TryCreate(amount, currencyCode);
-        if (result.IsFailure)
-            throw new InvalidOperationException($"Failed to create Money: {result.Error.Detail}");
-        
-        return result.Value;
-    }
+    var result = TryCreate(amount, currencyCode);
+    if (result.IsFailure)
+        throw new InvalidOperationException($"Failed to create Money: {result.Error.Detail}");
+    return result.Value;
 }
 ```
 
-## Test File Organization Rules
+## Code Style
 
-### Async Extension Test Organization
+### General Rules
 
-For async extension methods (Ensure, Bind, Map, Tap, etc.), tests are organized based on which parts are async:
-
-**Terminology:**
-- **Left** = The input/source (e.g., `Task<Result<T>>`, `ValueTask<Result<T>>`, or `Result<T>`)
-- **Right** = The predicates/functions passed as parameters (e.g., `Func<Task<bool>>`, `Func<ValueTask<Result>>`, etc.)
-
-### File Naming Convention
-
-```
-[MethodName]Tests.[AsyncType].cs        - Both left AND right are async
-[MethodName]Tests.[AsyncType].Left.cs   - Only left is async (input)
-[MethodName]Tests.[AsyncType].Right.cs  - Only right is async (predicates/functions)
-```
-
-**Examples:**
-- `EnsureTests.Task.cs` - Both input and predicates use Task
-- `EnsureTests.Task.Left.cs` - Input is Task, predicates are sync
-- `EnsureTests.Task.Right.cs` - Input is sync, predicates use Task
-- `EnsureTests.ValueTask.cs` - Both input and predicates use ValueTask
-- `EnsureTests.ValueTask.Left.cs` - Input is ValueTask, predicates are sync
-- `EnsureTests.ValueTask.Right.cs` - Input is sync, predicates use ValueTask
-
-### Organization Rules by Pattern
-
-#### 1. **Both Async** (e.g., `EnsureTests.ValueTask.cs`)
-- **Input:** `ValueTask<Result<TOk>>`
-- **Predicates:** `ValueTask<bool>`, `Func<ValueTask<Result>>`, etc.
-- **Source file:** `Ensure.ValueTask.cs`
-- **When to use:** When the extension extends an async input with async predicates
-
-```csharp
-// Example: Goes in EnsureTests.ValueTask.cs
-var result = await ValueTask.FromResult(Result.Success("test"))
-    .EnsureAsync(
-        value => ValueTask.FromResult(value.Length > 0),  // Right is async
-        Error.Validation("Empty"));
-```
-
-#### 2. **Left Async Only** (e.g., `EnsureTests.ValueTask.Left.cs`)
-- **Input:** `ValueTask<Result<TOk>>`
-- **Predicates:** Sync `bool`, sync `Result<>`, etc.
-- **Source file:** `Ensure.ValueTask.Left.cs`
-- **When to use:** When the extension extends an async input with sync predicates
-
-```csharp
-// Example: Goes in EnsureTests.ValueTask.Left.cs
-var result = await ValueTask.FromResult(Result.Success("test"))
-    .EnsureAsync(
-        value => value.Length > 0,  // Right is sync
-        Error.Validation("Empty"));
-```
-
-#### 3. **Right Async Only** (e.g., `EnsureTests.ValueTask.Right.cs`)
-- **Input:** `Result<TOk>` (sync)
-- **Predicates:** `ValueTask<bool>`, `Func<ValueTask<Result<>>>`, etc.
-- **Source file:** `Ensure.ValueTask.Right.cs`
-- **When to use:** When the extension extends a sync input with async predicates
-
-```csharp
-// Example: Goes in EnsureTests.ValueTask.Right.cs
-var result = await Result.Success("test")
-    .EnsureAsync(
-        value => ValueTask.FromResult(value.Length > 0),  // Right is async
-        Error.Validation("Empty"));
-```
-
-### Pattern Applies To All Async Extensions
-
-This organizational pattern applies to all async extension methods:
-
-- ✅ **Ensure** - Validation extensions
-- ✅ **Bind** - Transformation/binding extensions
-- ✅ **Map** - Mapping extensions
-- ✅ **Tap** - Side-effect extensions
-- ✅ **Match** - Pattern matching extensions
-- ✅ **Combine** - Combination extensions
-- ✅ And any other async extension methods
-
-**Examples:**
-```
-BindTests.Task.cs, BindTests.Task.Left.cs, BindTests.Task.Right.cs
-MapTests.Task.cs, MapTests.Task.Left.cs, MapTests.Task.Right.cs
-TapTests.ValueTask.cs, TapTests.ValueTask.Left.cs, TapTests.ValueTask.Right.cs
-```
-
-## Test Coverage Requirements
-
-All async extension test files should include comprehensive coverage:
-
-### Required Test Scenarios
-
-- ✅ **Success path + valid predicate** → returns success
-- ✅ **Success path + failing predicate** → returns failure
-- ✅ **Failure path** → predicate/function not invoked, returns original failure
-- ✅ **Error factories** (sync and async where applicable)
-- ✅ **Result-returning predicates** (where applicable)
-- ✅ **Edge cases:**
-  - Nullable types
-  - Complex types (records, classes)
-  - Empty/null values
-- ✅ **Chained operations** - Multiple extensions in sequence
-- ✅ **Early exit behavior** - Verify functions aren't called on failure
-- ✅ **Exception handling** - Verify exceptions propagate correctly
-- ✅ **Integration scenarios** - Mixing different extension types
-
-### Test Method Naming Convention
-
-```
-[MethodName]_[Variant]_[Scenario]_[Expectation]
-```
-
-**Examples:**
-```csharp
-EnsureAsync_ValueTask_Bool_StaticError_SuccessResult_PredicateTrue_ReturnsSuccess
-EnsureAsync_Right_Result_WithParam_FailureResult_PredicateNotInvoked_ReturnsOriginalFailure
-BindAsync_Task_Left_SuccessResult_FunctionReturnsSuccess_ReturnsNewValue
-MapAsync_ValueTask_Right_FailureResult_MapperNotInvoked_ReturnsOriginalError
-```
-
-**Components:**
-1. **MethodName**: `EnsureAsync`, `BindAsync`, `MapAsync`, etc.
-2. **Variant**: `ValueTask`, `Task`, `ValueTask_Left`, `Task_Right`, etc.
-3. **Scenario**: What's being tested (e.g., `Bool_StaticError`, `Result_WithParam`)
-4. **Expectation**: Expected outcome (e.g., `ReturnsSuccess`, `PredicateNotInvoked`)
-
-## Code Style Guidelines
-
-### Single-Line Statements
-
-Omit braces for single-line statements to improve readability and reduce vertical space:
-
-```csharp
-// ✅ Preferred - no braces for single statement
-if (result.IsSuccess)
-    action(result.Value);
-
-if (value is null)
-    return Error.Validation("Value cannot be null");
-
-// ❌ Avoid - unnecessary braces
-if (result.IsSuccess)
-{
-    action(result.Value);
-}
-```
-
-**Note:** Use braces when the statement is complex or spans multiple lines for clarity.
+- Omit braces for single-line `if`/`return` statements
+- Use `char` overloads for single-character `Contains()` (CA1847): `value.Contains('-')` not `value.Contains("-")`
+- Use collection expressions for FluentAssertions: `.Should().Equal([1, 2, 3])`
+- Use `ConfigureAwait(false)` in library code (source files), never in test code
+- Prefer `ValueTask<T>` for high-frequency, potentially synchronous operations; `Task<T>` for I/O-bound
+- Avoid allocations in hot paths; consider `readonly struct` for value types
 
 ### Avoid Task/ValueTask Ambiguities
 
-When both `Task<T>` and `ValueTask<T>` overloads exist, explicitly use constructors:
+When both `Task<T>` and `ValueTask<T>` overloads exist, use explicit constructors:
 
 ```csharp
 // ❌ Ambiguous
-await result.EnsureAsync(
-    value => Task.FromResult(value.Length > 0),  // Could be Task or ValueTask
-    Error.Validation("Empty"));
-
-// ✅ Explicit
-await result.EnsureAsync(
-    value => new ValueTask<bool>(value.Length > 0),
-    Error.Validation("Empty"));
-```
-
-### Code Analysis Compliance
-
-- ✅ **CA1847**: Use `char` overloads for `Contains()` when searching single characters
-
-```csharp
-// ❌ CA1847 violation
-value.Contains("-")
-
-// ✅ Correct
-value.Contains('-')
-```
-
-- ✅ **Collection Expressions**: Use collection expressions for FluentAssertions
-
-```csharp
-// ❌ Old style
-executionOrder.Should().Equal(1, 2, 3);
-
-// ✅ Collection expression
-executionOrder.Should().Equal([1, 2, 3]);
-```
-
-### Async/Await Best Practices
-
-- ✅ Always use `ConfigureAwait(false)` in library code (source files)
-- ✅ Don't use `ConfigureAwait` in test code
-- ✅ Use `ValueTask<T>` for high-performance scenarios
-- ✅ Use `Task<T>` for general async operations
-
-### Test Organization
-
-Each test file should be organized with regions:
-
-```csharp
-public class Ensure_ValueTask_Tests
-{
-    #region EnsureAsync with ValueTask<bool> predicate and static Error
-    // Tests here...
-    #endregion
-
-    #region EnsureAsync with ValueTask<bool> predicate and Error factory
-    // Tests here...
-    #endregion
-
-    #region Edge Cases and Integration Tests
-    // Tests here...
-    #endregion
-
-    private record TestData(string Name, int Value);  // Helper types at bottom
-}
-```
-
-## Railway Oriented Programming (ROP) Patterns
-
-### Core Concepts
-
-- **Result<TValue>**: Represents either success (with a value) or failure (with an error)
-- **Maybe<T>**: Represents an optional value that may or may not exist
-- **Error**: Base type for all errors (Validation, NotFound, Unauthorized, etc.)
-
-### Key Methods
-
-- **Bind**: Transform the value inside a Result (flatMap)
-- **Map**: Transform the value while preserving the Result wrapper
-- **Ensure**: Add validation to a Result
-- **Tap**: Perform side effects without changing the Result
-- **Match**: Pattern match on success/failure
-- **Combine**: Combine multiple Results
-
-### Testing Philosophy
-
-Tests should verify:
-1. **Railway track behavior**: Once on the failure track, stay there
-2. **Early exit**: Don't execute functions if already failed
-3. **Value preservation**: Original values preserved through transformations
-4. **Error propagation**: Errors flow through the pipeline unchanged
-
-## Common Pitfalls to Avoid
-
-### ❌ Don't Test Both Variants in One File
-
-```csharp
-// ❌ Wrong: Testing both Task.Left and Task in same file
-public class EnsureTests_Task
-{
-    // Mix of left-async and both-async tests - confusing!
-}
-```
-
-```csharp
-// ✅ Correct: Separate files
-public class Ensure_Task_Tests { }           // Both async
-public class Ensure_Task_Left_Tests { }      // Left async only
-public class Ensure_Task_Right_Tests { }     // Right async only
-```
-
-### ❌ Don't Use Ambiguous Async Constructors
-
-```csharp
-// ❌ Ambiguous between Task and ValueTask
 .EnsureAsync(v => Task.FromResult(v > 0), error)
 
 // ✅ Explicit
 .EnsureAsync(v => new ValueTask<bool>(v > 0), error)
 ```
 
-### ❌ Don't Skip Early Exit Tests
+## Railway Oriented Programming (ROP)
+
+### Core Types
+
+- **`Result<TValue>`**: Success (with value) or failure (with error)
+- **`Maybe<T>`**: Optional value that may or may not exist
+- **`Error`**: Base error type (Validation, NotFound, Unauthorized, etc.)
+
+### Key Methods
+
+| Method | Purpose |
+|--------|---------|
+| **Bind** | Transform value inside Result (flatMap) |
+| **Map** | Transform value, preserve Result wrapper |
+| **Ensure** | Add validation to a Result |
+| **Tap** | Side effects without changing Result |
+| **Match** | Pattern match on success/failure |
+| **Combine** | Combine multiple Results |
+
+### Testing Philosophy
+
+1. **Railway track behavior**: Once on failure track, stay there
+2. **Early exit**: Don't execute functions if already failed
+3. **Value preservation**: Original values preserved through transformations
+4. **Error propagation**: Errors flow through pipeline unchanged
+
+## Test Organization
+
+### Async Extension File Naming
+
+Tests are organized by which parts are async:
+
+- **Left** = input/source (`Task<Result<T>>`, `ValueTask<Result<T>>`)
+- **Right** = predicates/functions passed as parameters
+
+| Pattern | File Name | Input | Predicates |
+|---------|-----------|-------|------------|
+| Both async | `[Method]Tests.[Type].cs` | async | async |
+| Left only | `[Method]Tests.[Type].Left.cs` | async | sync |
+| Right only | `[Method]Tests.[Type].Right.cs` | sync | async |
+
+Applies to: Ensure, Bind, Map, Tap, Match, Combine, and all other async extensions.
 
 ```csharp
-// ✅ Always verify functions aren't called on failure
+// Both async → EnsureTests.ValueTask.cs
+await ValueTask.FromResult(Result.Success("test"))
+    .EnsureAsync(v => ValueTask.FromResult(v.Length > 0), Error.Validation("Empty"));
+
+// Left only → EnsureTests.ValueTask.Left.cs
+await ValueTask.FromResult(Result.Success("test"))
+    .EnsureAsync(v => v.Length > 0, Error.Validation("Empty"));
+
+// Right only → EnsureTests.ValueTask.Right.cs
+await Result.Success("test")
+    .EnsureAsync(v => ValueTask.FromResult(v.Length > 0), Error.Validation("Empty"));
+```
+
+**Quick decision tree:** Is the input async? → Left. Are predicates async? → Right. Both? → Base (no suffix).
+
+### Test Class Structure
+
+- **One variant per file** — don't mix Left/Right/Both in the same file
+- Organize with `#region` blocks by overload variant
+- Place helper types (records, classes) at the bottom
+
+```csharp
+/// <summary>
+/// Tests for Ensure.ValueTask.cs where BOTH input and predicates are async.
+/// </summary>
+public class Ensure_ValueTask_Tests
+{
+    #region EnsureAsync with ValueTask<bool> predicate and static Error
+    // Tests...
+    #endregion
+
+    #region Edge Cases and Integration Tests
+    // Tests...
+    #endregion
+
+    private record TestData(string Name, int Value);
+}
+```
+
+### Test Method Naming
+
+Format: `[Method]_[Variant]_[Scenario]_[Expectation]`
+
+Example: `EnsureAsync_ValueTask_Bool_StaticError_SuccessResult_PredicateTrue_ReturnsSuccess`
+
+### Required Test Coverage
+
+- Success path + valid predicate → returns success
+- Success path + failing predicate → returns failure
+- Failure path → predicate not invoked, original failure returned
+- Error factories (sync and async where applicable)
+- Result-returning predicates (where applicable)
+- Edge cases: nullable types, complex types, empty/null values
+- Chained operations, early exit verification, exception propagation
+
+```csharp
+// ✅ Always verify early exit
 var predicateInvoked = false;
 var result = await Result.Failure<int>(error)
     .EnsureAsync(v => { predicateInvoked = true; return v > 0; }, error);
@@ -448,29 +215,22 @@ predicateInvoked.Should().BeFalse("predicate should not be invoked for failed re
 
 ## File Location Guidelines
 
-### Source Files
-- **Core ROP**: `RailwayOrientedProgramming/src/Result/Extensions/`
-- **Value Objects**: `PrimitiveValueObjects/src/`
-- **DDD**: `DomainDrivenDesign/src/`
-- **ASP.NET Integration**: `Asp/src/`
-- **HTTP Extensions**: `Http/src/`
-
-### Test Files
-- **ROP Tests**: `RailwayOrientedProgramming/tests/Results/Extensions/`
-- **Value Object Tests**: `PrimitiveValueObjects/tests/`
-- **DDD Tests**: `DomainDrivenDesign/tests/`
-- **ASP.NET Tests**: `Asp/tests/`
-- **HTTP Tests**: `Http/tests/`
+| Area | Source | Tests |
+|------|--------|-------|
+| Core ROP | `RailwayOrientedProgramming/src/Result/Extensions/` | `RailwayOrientedProgramming/tests/Results/Extensions/` |
+| Value Objects | `PrimitiveValueObjects/src/` | `PrimitiveValueObjects/tests/` |
+| DDD | `DomainDrivenDesign/src/` | `DomainDrivenDesign/tests/` |
+| ASP.NET | `Asp/src/` | `Asp/tests/` |
+| HTTP | `Http/src/` | `Http/tests/` |
 
 ## Documentation Standards
 
-### XML Documentation
-
-All public APIs should have XML documentation:
+- All public APIs must have XML doc comments (`<summary>`, `<param>`, `<returns>`)
+- Test classes should have `<summary>` explaining what source file and async variant they cover
 
 ```csharp
 /// <summary>
-/// Returns a new failure result if the predicate is false. Otherwise returns the starting result.
+/// Returns a new failure result if the predicate is false.
 /// </summary>
 /// <param name="result">The source result.</param>
 /// <param name="predicate">The predicate to evaluate.</param>
@@ -480,472 +240,137 @@ public static async ValueTask<Result<TOk>> EnsureAsync<TOk>(
     this ValueTask<Result<TOk>> result,
     Func<TOk, ValueTask<bool>> predicate,
     Error error)
-{
-    // Implementation...
-}
 ```
-
-### Test Documentation
-
-Add XML summary to test classes explaining what they test:
-
-```csharp
-/// <summary>
-/// Tests for Ensure.ValueTask.cs where BOTH input and predicates are async.
-/// - Input: ValueTask&lt;Result&lt;TOk&gt;&gt; (left is async)
-/// - Predicates: ValueTask&lt;bool&gt;, ValueTask&lt;Result&lt;&gt;&gt; (right is async)
-/// </summary>
-public class Ensure_ValueTask_Tests
-{
-    // Tests...
-}
-```
-
-## Performance Considerations
-
-- ✅ Use `ValueTask<T>` for high-frequency, potentially synchronous operations
-- ✅ Use `Task<T>` for I/O-bound operations
-- ✅ Avoid allocations in hot paths
-- ✅ Use `ConfigureAwait(false)` in library code (not test code)
-- ✅ Consider `readonly struct` for value types
 
 ## T4 Template Testing Strategy
 
-### Overview
-
-The RailwayOrientedProgramming library uses **T4 templates** to generate tuple overloads (2-tuple through 9-tuple) for extension methods. Since all tuple sizes are generated from the same template with identical logic, **testing every permutation is unnecessary**.
+T4 templates generate 2-tuple through 9-tuple overloads with identical logic. **Test the 2-tuple comprehensively; validate other sizes with minimal tests.**
 
 ### T4-Generated Files
 
-| Template File | Generated Source | Purpose |
-|--------------|------------------|---------|
-| `TapTs.g.tt` | `TapTs.g.cs` | Tap operations for tuple Results |
-| `TapOnFailureTs.g.tt` | `TapOnFailureTs.g.cs` | TapOnFailure operations for tuple Results |
-| `BindTs.g.tt` | `BindTs.g.cs` | Bind operations for tuple Results |
-| `MatchTupleTs.g.tt` | `MatchTupleTs.g.cs` | Match operations for tuple Results |
-| `CombineTs.g.tt` | `CombineTs.g.cs` | Combine operations for multiple Results |
-| `WhenAllTs.g.tt` | `WhenAllTs.g.cs` | WhenAll operations for parallel Results |
+| Template | Generated Source | Purpose |
+|----------|-----------------|---------|
+| `TapTs.g.tt` | `TapTs.g.cs` | Tap for tuple Results |
+| `TapOnFailureTs.g.tt` | `TapOnFailureTs.g.cs` | TapOnFailure for tuple Results |
+| `BindTs.g.tt` | `BindTs.g.cs` | Bind for tuple Results |
+| `MatchTupleTs.g.tt` | `MatchTupleTs.g.cs` | Match for tuple Results |
+| `CombineTs.g.tt` | `CombineTs.g.cs` | Combine for multiple Results |
+| `MapTs.g.tt` | `MapTs.g.cs` | Map for tuple Results |
+| `WhenAllTs.g.tt` | `WhenAllTs.g.cs` | WhenAll for parallel Results |
 | `ParallelAsyncs.g.tt` | `ParallelAsyncs.g.cs` | Parallel async operations |
 
-### Testing Strategy
+### Test File Naming for T4 Code
 
-**Test the 2-tuple comprehensively, validate other sizes work correctly.**
+| Source File | Test File |
+|-------------|-----------|
+| `TapTs.g.cs` | `TapTupleTests.cs` |
+| `TapOnFailureTs.g.cs` | `TapOnFailureTupleTests.cs` |
+| `BindTs.g.cs` | `BindTsTests.cs` |
+| `MapTs.g.cs` | `MapTsTests.cs` |
+| `MatchTupleTs.g.cs` | (tracing tests) |
+| `ParallelAsyncs.g.cs` | `ParallelAsyncTests.cs` |
 
-```csharp
-/// <summary>
-/// Functional tests for Tap operations on tuple results generated by TapTs.g.tt.
-/// 
-/// Since all tuple sizes (2-9) are generated from the same T4 template, we test the 2-tuple
-/// permutation comprehensively and validate other sizes work correctly.
-/// </summary>
-public class TapTupleTests : TestBase
-{
-    #region 2-Tuple Tap Tests (Comprehensive Coverage)
-    
-    [Fact]
-    public void Tap_2Tuple_Success_ExecutesAction() { /* ... */ }
-    
-    [Fact]
-    public void Tap_2Tuple_Failure_DoesNotExecute() { /* ... */ }
-    
-    [Fact]
-    public void Tap_2Tuple_Success_DestructuresTuple() { /* ... */ }
-    
-    // ... comprehensive tests for 2-tuple ...
-    
-    #endregion
+### What to Test
 
-    #region Other Tuple Sizes (Validation Tests)
-    
-    // Simple validation that larger tuples work - not comprehensive
-    [Fact]
-    public void Tap_3Tuple_Success_ExecutesAction() { /* ... */ }
-    
-    [Fact]
-    public void Tap_9Tuple_Success_ExecutesAction() { /* ... */ }
-    
-    [Fact]
-    public void Tap_9Tuple_Failure_DoesNotExecute() { /* ... */ }
-    
-    #endregion
-}
-```
+| Scope | Coverage |
+|-------|----------|
+| **2-tuple** | Comprehensive: success/failure paths, destructuring, chaining, async variants, different types, real-world scenarios |
+| **3-tuple, 9-tuple** | Validation only: one success test, one failure test for largest size |
+| **Other sizes** | None — template guarantees consistency |
 
-### Test File Naming for T4-Generated Code
-
-| Source File | Test File | Description |
-|-------------|-----------|-------------|
-| `TapTs.g.cs` | `TapTupleTests.cs` | Tuple Tap tests |
-| `TapOnFailureTs.g.cs` | `TapOnFailureTupleTests.cs` | Tuple TapOnFailure tests |
-| `BindTs.g.cs` | `BindTsTests.cs` | Tuple Bind tests |
-| `MatchTupleTs.g.cs` | (tracing tests) | Tuple Match tests |
-| `ParallelAsyncs.g.cs` | `ParallelAsyncTests.cs` | Parallel async tests |
-
-### Coverage Expectations
-
-**Expected coverage for T4-generated code is ~12-35%** because:
-- Templates generate 8 tuple sizes (2-9)
-- We comprehensively test only 1-2 sizes
-- Each size represents ~12.5% of the generated code
-- Comprehensive 2-tuple + validation tests for 3,9-tuple ≈ 25-35% coverage
-
-**This is intentional and correct!** Don't try to achieve 100% coverage on T4-generated code.
-
-### What to Test for T4-Generated Code
-
-#### ✅ DO Test (2-tuple comprehensively)
-
-- Success path executes action/function
-- Failure path skips action/function
-- Tuple destructuring works correctly
-- Original result is preserved
-- Chained operations execute in order
-- Different types work (string, int, bool, etc.)
-- Async variants (Task, ValueTask)
-- Real-world scenarios
-
-#### ✅ DO Test (Other sizes - validation only)
-
-- Success path works (one test per size)
-- Failure path works (one test for largest size)
-
-#### ❌ DON'T Test
-
-- Every async variant for every tuple size
-- Every error type for every tuple size
-- Edge cases for every tuple size
-
-### Example Test Structure
-
-```csharp
-public class TapOnFailureTupleTests : TestBase
-{
-    #region 2-Tuple TapOnFailure Tests (Comprehensive Coverage)
-    
-    // ~15-20 comprehensive tests for 2-tuple
-    // Cover all async variants, error types, scenarios
-    
-    #endregion
-
-    #region 2-Tuple Async Tests
-    
-    // Async variants for 2-tuple
-    
-    #endregion
-
-    #region Other Tuple Sizes (Validation Tests)
-    
-    // 1 test per size (3-9) just to validate generation
-    
-    #endregion
-
-    #region Real-World Scenarios
-    
-    // Integration tests using 2 or 3 tuple
-    
-    #endregion
-}
-```
+**Expected coverage: ~12–35%.** This is intentional. Don't aim for 100% on T4-generated code.
 
 ### Modifying T4 Templates
 
-When modifying a T4 template:
-
-1. **Run the template** to regenerate the `.g.cs` file
-2. **Update 2-tuple tests** if the pattern changed
-3. **Verify one larger tuple** still works (e.g., 5-tuple or 9-tuple)
-4. **Don't add tests for every tuple size** - the template ensures consistency
-
-## Questions?
-
-When in doubt about test organization:
-1. Ask: "Is the **input** async?" → If yes, it's a "Left" variant
-2. Ask: "Are the **predicates/functions** async?" → If yes, it's a "Right" variant
-3. Both? → Base variant (no Left/Right suffix)
-4. Neither? → Not an async extension test
-
-**Quick Reference:**
-- Both async = `[Method]Tests.[Type].cs`
-- Left async = `[Method]Tests.[Type].Left.cs`
-- Right async = `[Method]Tests.[Type].Right.cs`
+1. Run the template to regenerate `.g.cs`
+2. Update 2-tuple tests if the pattern changed
+3. Verify one larger tuple still works (5-tuple or 9-tuple)
 
 ## Activity Tracing and OpenTelemetry
 
-### Setting Activity Status Correctly
+### Core Rules
 
-When working with OpenTelemetry `Activity` tracing, **always use the local `activity` variable** returned by `StartActivity()`, not `Activity.Current`:
+| Rule | Correct Pattern | Why |
+|------|----------------|-----|
+| Setting activity status | `activity?.SetStatus(...)` (local variable) | `Activity.Current` has race conditions in concurrent scenarios |
+| Test isolation | `AsyncLocal<ActivitySource?>` with inject/reset | Per-context isolation, parallel-safe, no `[Collection]` needed |
+| Test helpers | Unique `ActivitySource` per test + `ActivityListener` | Isolated activity capture per test instance |
 
-```csharp
-// ❌ WRONG - Race condition prone
-using var activity = ActivitySource.StartActivity("Operation");
-Activity.Current?.SetStatus(ActivityStatusCode.Ok);  // Don't use Activity.Current!;
+### Activity Status: TryCreate vs ROP Methods
 
-// ✅ CORRECT - Thread-safe and reliable  
-using var activity = ActivitySource.StartActivity("Operation");
-activity?.SetStatus(ActivityStatusCode.Ok);  // Use the local variable
-```
+| Context | Manual status needed? | Reason |
+|---------|----------------------|--------|
+| Value object `TryCreate` | **No** | Activity is root → becomes `Activity.Current` → Result constructor sets it automatically |
+| ROP extensions (Bind, Tap, Map) | **Yes** — call `result.LogActivityStatus()` | Creates child activity ≠ `Activity.Current`; Result constructor sets parent, not child |
 
-**Why this matters:**
-- `Activity.Current` is a static thread-local property that may not reference the activity you just created
-- In concurrent scenarios, `Activity.Current` can be null or reference a different activity
-- Using the local `activity` variable ensures you're always operating on the correct activity instance
-- This prevents race conditions in both production and test environments
-
-**Important: The Result constructor sets `Activity.Current`, not the local activity variable!**
-
-### Test Isolation with AsyncLocal
-
-When testing code that uses `ActivitySource`, use **`AsyncLocal<ActivitySource?>`** for proper test isolation:
+The `Result<T>` constructor automatically sets `Activity.Current` status:
 
 ```csharp
-// Production code - use AsyncLocal for test injection
-public static class PrimitiveValueObjectTrace
-{
-    private static readonly ActivitySource _defaultActivitySource = new("Functional DDD PVO", "1.0.0");
-    
-    // AsyncLocal provides isolation across async boundaries and parallel tests
-    private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
-    
-    public static ActivitySource ActivitySource => _testActivitySource.Value ?? _defaultActivitySource;
-    
-    internal static void SetTestActivitySource(ActivitySource testSource) 
-        => _testActivitySource.Value = testSource;
-    
-    internal static void ResetTestActivitySource() 
-        => _testActivitySource.Value = null;
-}
-```
-
-**Why AsyncLocal is better than static fields:**
-- ✅ **Isolation**: Each async context gets its own value
-- ✅ **Thread-safe**: No race conditions with parallel tests
-- ✅ **Async-aware**: Works across async/await boundaries
-- ✅ **Parallel execution**: Tests can run in parallel without interference
-- ✅ **No xUnit collections needed**: No need for `[Collection]` attributes
-
-#### Activity Test Helper Pattern
-
-Create test helpers that manage ActivitySource lifecycle:
-
-```csharp
-public sealed class PvoActivityTestHelper : IDisposable
-{
-    private readonly ActivitySource _testActivitySource;
-    private readonly ActivityListener _listener;
-    private readonly List<Activity> _capturedActivities = [];
-
-    public PvoActivityTestHelper()
-    {
-        // Create unique ActivitySource per test instance
-        _testActivitySource = new ActivitySource($"Test-PVO-{Guid.NewGuid():N}");
-        
-        // Configure listener to capture activities
-        _listener = new ActivityListener
-        {
-            ShouldListenTo = source => source == _testActivitySource,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => 
-                ActivitySamplingResult.AllDataAndRecorded,
-            ActivityStopped = activity =>
-            {
-                lock (_capturedActivities)
-                {
-                    _capturedActivities.Add(activity);
-                }
-            }
-        };
-        
-        ActivitySource.AddActivityListener(_listener);
-        
-        // Inject test source into AsyncLocal (isolated per test context)
-        PrimitiveValueObjectTrace.SetTestActivitySource(_testActivitySource);
-    }
-
-    public bool WaitForActivityCount(int expectedCount, TimeSpan? timeout = null)
-    {
-        var maxWait = timeout ?? TimeSpan.FromSeconds(2);
-        return SpinWait.SpinUntil(() => ActivityCount >= expectedCount, maxWait);
-    }
-
-    public void Dispose()
-    {
-        // Reset AsyncLocal for this context
-        PrimitiveValueObjectTrace.ResetTestActivitySource();
-        _listener.Dispose();
-        _testActivitySource.Dispose();
-    }
-}
-```
-
-#### Using in Tests
-
-```csharp
-// No [Collection] attribute needed - AsyncLocal provides isolation!
-public class PvoTracingExtensionsTests : IDisposable
-{
-    private readonly PvoActivityTestHelper _activityHelper = new();
-
-    [Fact]
-    public void EmailAddress_ValidationFailure_SetsErrorStatus()
-    {
-        // Act
-        var emailResult = EmailAddress.TryCreate("invalid-email");
-
-        // Assert
-        _activityHelper.WaitForActivityCount(1).Should().BeTrue();
-        var activities = _activityHelper.CapturedActivities;
-        activities.Should().ContainSingle();
-        var activity = activities[0];
-        activity.Status.Should().Be(ActivityStatusCode.Error);
-    }
-
-    public void Dispose() => _activityHelper.Dispose();
-}
-
-// Other test classes can run in parallel - no interference!
-public class EmailAddressTests
-{
-    [Fact]
-    public void Can_create_valid_email()
-    {
-        var result = EmailAddress.TryCreate("test@example.com");
-        result.IsSuccess.Should().BeTrue();
-    }
-}
-```
-
-### Summary: Activity Tracing Best Practices
-
-| Scenario | Correct Pattern | Why |
-|----------|----------------|-----|
-| **Setting activity status** | `activity?.SetStatus(...)` | Avoids `Activity.Current` race conditions |
-| **Test isolation** | `AsyncLocal<ActivitySource?>` | Provides per-context isolation, works with async and parallel execution |
-| **Test helpers** | Unique source + inject/reset pattern | Ensures each test has isolated tracing |
-| **Production code** | Use local `activity` variable | Thread-safe and reliable |
-
-**Key Advantages of AsyncLocal:**
-- ✅ **No `[Collection]` attributes needed** - Tests run in parallel by default
-- ✅ **True isolation** - Each test context gets its own ActivitySource
-- ✅ **Async-aware** - Works correctly across async/await boundaries
-- ✅ **Faster tests** - No forced sequential execution
-- ✅ **Simpler code** - No need to manage test collections
-
-### IMPORTANT: Result Constructor Automatically Sets Activity Status
-
-**The `Result<T>` constructor automatically sets `Activity.Current` status, but ROP extension methods create their own child activities!**
-
-```csharp
-// Result<T> constructor implementation:
 internal Result(bool isFailure, TValue? ok, Error? error)
 {
-    // ... validation code ...
-    
-    // ✅ AUTOMATIC: Sets Activity.Current status
+    // ... validation ...
     Activity.Current?.SetStatus(IsFailure ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
-    
     if (IsFailure && Activity.Current is { } act && error is not null)
-    {
         act.SetTag("result.error.code", error.Code);
-    }
 }
-
-// Implicit operator also triggers Result constructor:
-public static implicit operator Result<TValue>(TValue value) => Result.Success(value);
 ```
 
-**Activity status handling in different scenarios:**
-
-### ✅ Value Object Factory Methods (TryCreate)
-
-Value object `TryCreate` methods don't need manual activity status setting because:
-1. No parent activity exists when TryCreate is called
-2. The `using var activity` creates the root activity that becomes `Activity.Current`
-3. Result constructor sets `Activity.Current` status (which is our activity)
+**TryCreate** — no manual status needed (activity IS `Activity.Current`):
 
 ```csharp
-// ✅ CORRECT - No manual status setting needed
 public static Result<EmailAddress> TryCreate(string? value, string? fieldName = null)
 {
     using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("EmailAddress.TryCreate");
-    // At this point: Activity.Current == activity (no parent activity exists)
-    
     if (value is not null && EmailRegEx().IsMatch(value))
-    {
-        // ✅ Implicit conversion → Result.Success → Result constructor sets Activity.Current
-        // Since Activity.Current == activity, our activity gets the status
-        return new EmailAddress(value);
-    }
-
-    // ✅ Result.Failure → Result constructor sets Activity.Current (which is our activity)
+        return new EmailAddress(value);  // Result constructor sets Activity.Current (== activity)
     return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", field));
 }
 ```
 
-**Why it works:** When there's no parent activity, the activity we create becomes `Activity.Current`. The Result constructor sets `Activity.Current` status, which is our activity.
-
-### ⚠️ ROP Extension Methods (Bind, Tap, Map, etc.)
-
-ROP extension methods create **child activities** and must explicitly set their own activity status:
+**ROP extensions** — must explicitly set child activity status:
 
 ```csharp
-// ✅ CORRECT - Explicitly sets activity status for the Tap operation
 public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
 {
     using var activity = RopTrace.ActivitySource.StartActivity();  // Child activity
     if (result.IsSuccess)
         action(result.Value);
-
-    result.LogActivityStatus();  // ✅ Sets the child activity status
+    result.LogActivityStatus();  // ✅ Must set explicitly — child ≠ Activity.Current
     return result;
 }
+```
 
-// ✅ CORRECT - Sets activity status on early return
-public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> func)
+### Test Isolation Pattern
+
+Use `AsyncLocal<ActivitySource?>` for parallel-safe test isolation without `[Collection]` attributes:
+
+```csharp
+public static class PrimitiveValueObjectTrace
 {
-    using var activity = RopTrace.ActivitySource.StartActivity();
-    if (result.IsFailure)
-    {
-        result.LogActivityStatus();  // ✅ Must set child activity status before returning
-        return Result.Failure<TResult>(result.Error);
-    }
+    private static readonly ActivitySource _defaultActivitySource = new("Functional DDD PVO", "1.0.0");
+    private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
 
-    var newResult = func(result.Value);
-    newResult.LogActivityStatus();  // ✅ Set status for the new result too
+    public static ActivitySource ActivitySource => _testActivitySource.Value ?? _defaultActivitySource;
+    internal static void SetTestActivitySource(ActivitySource s) => _testActivitySource.Value = s;
+    internal static void ResetTestActivitySource() => _testActivitySource.Value = null;
 }
 ```
 
-**Why ROP methods need manual status:**
-- ROP methods create **child activities** with `StartActivity()`
-- A parent activity already exists (from the calling code)
-- The child activity is different from `Activity.Current`
-- Result constructor sets `Activity.Current`, not the child activity
-- Therefore, ROP methods must explicitly set their child activity status using `result.LogActivityStatus()` or `activity?.SetStatus(...)`
+Test helper pattern: create a unique `ActivitySource` per test instance, inject via `SetTestActivitySource`, capture activities via `ActivityListener`, and reset in `Dispose()`. See `PvoActivityTestHelper` for the full implementation.
 
-## File Encoding
+## File Encoding & PowerShell
 
-All files in this repository **must** be saved as **UTF-8 with BOM** (byte order mark / signature).
-
-When writing files from PowerShell, always use `System.Text.UTF8Encoding($true)`:
+All files must be **UTF-8 with BOM**.
 
 ```powershell
+# ✅ Correct — preserves all characters
 $utf8Bom = New-Object System.Text.UTF8Encoding $true
 [System.IO.File]::WriteAllText($path, $content, $utf8Bom)
-```
 
-**⚠️ Do NOT use `Set-Content`** — it re-encodes content and corrupts multi-byte characters (emoji, arrows, special symbols):
-
-```powershell
-# ❌ Corrupts emoji and special characters
+# ❌ NEVER use Set-Content — corrupts emoji, arrows, special symbols
 Set-Content $path -Value $content -NoNewline
-
-# ✅ Preserves all characters
-$utf8Bom = New-Object System.Text.UTF8Encoding $true
-$content = [System.IO.File]::ReadAllText($path, $utf8Bom)
-# ... modify $content ...
-[System.IO.File]::WriteAllText($path, $content, $utf8Bom)
 ```
-
-## PowerShell Command Usage
 
 When running PowerShell commands in the terminal:
-- Avoid long or complex scripts as they tend to get stuck or timeout.
-- Use smaller, targeted file edits with the `replace_string_in_file` tool instead of large PowerShell scripts for file manipulation.
+- Avoid long or complex scripts — they tend to get stuck or timeout
+- Use smaller, targeted file edits with the `replace_string_in_file` tool instead of large PowerShell scripts for file manipulation
