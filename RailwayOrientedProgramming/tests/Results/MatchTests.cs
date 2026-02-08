@@ -149,18 +149,17 @@ public class MatchTests
         var result = Result.Success(42);
 
         // Act
-        var output = await result.MatchAsync(
-            onSuccess: async value =>
-            {
-                await Task.Delay(1);
-                return $"Value: {value}";
-            },
-            onFailure: async err =>
-            {
-                await Task.Delay(1);
-                return $"Error: {err.Detail}";
-            }
-        );
+        Func<int, Task<string>> onSuccess = async value =>
+        {
+            await Task.Delay(1);
+            return $"Value: {value}";
+        };
+        Func<Error, Task<string>> onFailure = async err =>
+        {
+            await Task.Delay(1);
+            return $"Error: {err.Detail}";
+        };
+        var output = await result.MatchAsync(onSuccess, onFailure);
 
         // Assert
         output.Should().Be("Value: 42");
@@ -173,18 +172,17 @@ public class MatchTests
         var result = Result.Failure<int>(Error.NotFound("Not found"));
 
         // Act
-        var output = await result.MatchAsync(
-            onSuccess: async value =>
-            {
-                await Task.Delay(1);
-                return $"Value: {value}";
-            },
-            onFailure: async err =>
-            {
-                await Task.Delay(1);
-                return $"Error: {err.Detail}";
-            }
-        );
+        Func<int, Task<string>> onSuccess = async value =>
+        {
+            await Task.Delay(1);
+            return $"Value: {value}";
+        };
+        Func<Error, Task<string>> onFailure = async err =>
+        {
+            await Task.Delay(1);
+            return $"Error: {err.Detail}";
+        };
+        var output = await result.MatchAsync(onSuccess, onFailure);
 
         // Assert
         output.Should().Be("Error: Not found");

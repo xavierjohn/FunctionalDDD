@@ -139,9 +139,10 @@ if (emailResult.IsFailure) return emailResult.Error;
 var nameResult = FirstName.TryCreate(input.Name);
 if (nameResult.IsFailure) return nameResult.Error;
 
-// ✅ Use Combine to collect ALL errors
-var result = EmailAddress.TryCreate(input.Email)
-    .Combine(FirstName.TryCreate(input.Name))
+// ✅ Use Result.Combine to collect ALL errors
+var result = Result.Combine(
+        EmailAddress.TryCreate(input.Email),
+        FirstName.TryCreate(input.Name))
     .Bind((email, name) => User.Create(email, name));
 // Returns all validation errors at once
 ```

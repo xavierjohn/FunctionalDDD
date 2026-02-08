@@ -173,11 +173,11 @@ public static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor UseResultCombine = new(
         id: "FDDD012",
         title: "Consider using Result.Combine",
-        messageFormat: "Consider using Result.Combine() for combining multiple Results instead of manual checks",
+        messageFormat: "Consider using Result.Combine() or .Combine() chaining for combining multiple Results instead of manual checks",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "When combining multiple Result<T> values, Result.Combine() provides a cleaner and more maintainable approach " +
+        description: "When combining multiple Result<T> values, Result.Combine() or .Combine() chaining provides a cleaner and more maintainable approach " +
                      "than manually checking IsSuccess on each result.",
         helpLinkUri: HelpLinkBase + "FDDD012");
 
@@ -264,4 +264,18 @@ public static class DiagnosticDescriptors
         description: "When using LINQ on collections of Result<T> or Maybe<T>, filter by IsSuccess/HasValue first, " +
                      "or use methods like Select with Match to safely extract values.",
         helpLinkUri: HelpLinkBase + "FDDD018");
+
+    /// <summary>
+    /// FDDD019: Combine chain exceeds maximum supported tuple size.
+    /// </summary>
+    public static readonly DiagnosticDescriptor CombineChainTooLong = new(
+        id: "FDDD019",
+        title: "Combine chain exceeds maximum supported tuple size",
+        messageFormat: "Combine chain produces a {0}-element tuple, but the maximum supported is 9. Group related validations into sub-objects.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Combine supports up to 9 elements. Downstream methods (Bind, Map, Tap, Match) also only support tuples up to 9 elements. " +
+                     "Group related fields into intermediate value objects or sub-results, then combine those groups.",
+        helpLinkUri: HelpLinkBase + "FDDD019");
 }

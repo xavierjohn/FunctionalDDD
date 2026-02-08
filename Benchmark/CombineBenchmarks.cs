@@ -178,7 +178,7 @@ public class CombineBenchmarks
             .CombineAsync(_successInt2)
             .CombineAsync(Result.Success(200));
 
-        return result.Map(tuple => tuple.Item1.Item1 + tuple.Item1.Item2 + tuple.Item2);
+        return result.Map(tuple => tuple.Item1 + tuple.Item2 + tuple.Item3);
     }
 
     [Benchmark]

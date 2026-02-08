@@ -24,8 +24,8 @@ using System.Diagnostics;
      Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"tasks.Item{i}")));
   }
   
-  void WriteTaskItemResult(int n) {
-     Write(String.Join(", ", Enumerable.Range(2, n - 1).Select(i => $"tasks.Item{i}.Result")));
+  void WriteTaskItemResults(int n) {
+     Write(String.Join(", ", Enumerable.Range(1, n).Select(i => $"tasks.Item{i}.Result")));
   }
 #>
 
@@ -119,7 +119,7 @@ public static partial class AwaitExtensionsAsync
        activity?.SetTag("parallel.task_count", 2);
        
        await Task.WhenAll(tasks.Item1, tasks.Item2);
-       var result = tasks.Item1.Result.Combine(tasks.Item2.Result);
+       var result = Result.Combine(tasks.Item1.Result, tasks.Item2.Result);
        
        result.LogActivityStatus();
        return result;
@@ -177,7 +177,7 @@ public static partial class AwaitExtensionsAsync
         activity?.SetTag("parallel.task_count", <#= i #>);
         
         await Task.WhenAll(<# WriteTaskItem(i); #>);
-        var result = tasks.Item1.Result.Combine(<# WriteTaskItemResult(i); #>);
+        var result = Result.Combine(<# WriteTaskItemResults(i); #>);
         
         result.LogActivityStatus();
         return result;

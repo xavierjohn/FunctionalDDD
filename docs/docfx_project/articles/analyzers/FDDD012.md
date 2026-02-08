@@ -2,14 +2,21 @@
 
 ## Cause
 
-Manually checking `IsSuccess` on multiple `Result<T>` values when `Result.Combine()` provides a cleaner alternative.
+Manually checking `IsSuccess` on multiple `Result<T>` values when `Result.Combine()` or `.Combine()` chaining provides a cleaner alternative.
 
 ## Rule Description
 
-When you need to validate multiple inputs and proceed only if all are successful, `Result.Combine()` provides a declarative approach that:
+When you need to validate multiple inputs and proceed only if all are successful, `Combine` provides a declarative approach that:
 - Automatically collects all validation errors
 - Returns success only if all inputs are successful
 - Reduces boilerplate code
+
+Two equivalent syntaxes are available:
+
+| Syntax | Best when |
+|--------|----------|
+| `Result.Combine(r1, r2, r3)` | You already have results in separate variables |
+| `r1.Combine(r2).Combine(r3)` | You want to chain inline expressions |
 
 ## How to Fix Violations
 
@@ -27,10 +34,16 @@ if (phoneResult.IsFailure)
 
 var customer = Customer.Create(emailResult.Value, phoneResult.Value);
 
-// ✅ Concise - Result.Combine
-return Result.Combine(
-        EmailAddress.TryCreate(dto.Email),
-        PhoneNumber.TryCreate(dto.Phone))
+// ✅ Option A - Static Combine (when you have variables)
+var emailResult = EmailAddress.TryCreate(dto.Email);
+var phoneResult = PhoneNumber.TryCreate(dto.Phone);
+
+return Result.Combine(emailResult, phoneResult)
+    .Bind((email, phone) => Customer.Create(email, phone));
+
+// ✅ Option B - Combine chaining (inline)
+return EmailAddress.TryCreate(dto.Email)
+    .Combine(PhoneNumber.TryCreate(dto.Phone))
     .Bind((email, phone) => Customer.Create(email, phone));
 ```
 
@@ -65,7 +78,7 @@ public Result<Address> CreateAddress(AddressDto dto)
 ### Example 3: Combining up to 9 Results
 
 ```csharp
-// Result.Combine supports 2-9 tuple combinations
+// Both styles support up to 9-element tuples
 return Result.Combine(r1, r2, r3, r4, r5, r6, r7, r8, r9)
     .Map((v1, v2, v3, v4, v5, v6, v7, v8, v9) => 
         CreateEntity(v1, v2, v3, v4, v5, v6, v7, v8, v9));
@@ -85,7 +98,7 @@ var phoneResult = PhoneNumber.TryCreate(invalidPhone);
 if (phoneResult.IsFailure)
     return phoneResult.Error;  // Never reached if email failed
 
-// Result.Combine - Can collect all errors
+// Result.Combine - Collects all errors
 Result.Combine(
     EmailAddress.TryCreate(invalidEmail),
     PhoneNumber.TryCreate(invalidPhone))

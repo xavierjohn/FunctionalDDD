@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Operations;
 
 /// <summary>
 /// Analyzer that detects manual combination of multiple Result.IsSuccess checks
-/// and suggests using Result.Combine() instead.
+/// and suggests using Result.Combine() or .Combine() chaining instead.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class UseResultCombineAnalyzer : DiagnosticAnalyzer

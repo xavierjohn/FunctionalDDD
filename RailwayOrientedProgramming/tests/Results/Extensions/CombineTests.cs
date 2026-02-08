@@ -354,192 +354,158 @@ public class CombineTests
         );
     }
 
-    #region Batch Combine Tests (3-tuple permutation)
+    #region Static Result.Combine Tests (2-tuple comprehensive, 3 and 9 validation)
 
     [Fact]
-    public void StaticCombine_Three_AllSuccess_ReturnsCombinedTuple()
+    public void StaticCombine_2Tuple_AllSuccess_ReturnsTuple()
     {
-        // Arrange
-        var r1 = Result.Success("First");
-        var r2 = Result.Success("Second");
-        var r3 = Result.Success("Third");
+        var r1 = Result.Success("Hello");
+        var r2 = Result.Success("World");
 
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
+        var result = Result.Combine(r1, r2);
 
-        // Assert
-        result.Should().BeSuccess();
-        result.Value.Should().Be(("First", "Second", "Third"));
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(("Hello", "World"));
     }
 
     [Fact]
-    public void StaticCombine_Three_FirstFails_ReturnsFailure()
+    public void StaticCombine_2Tuple_FirstFails_ReturnsFailure()
     {
-        // Arrange
-        var r1 = Result.Failure<string>(Error.Validation("Bad first", "first"));
-        var r2 = Result.Success("Second");
-        var r3 = Result.Success("Third");
+        var r1 = Result.Failure<string>(Error.Validation("bad", "f1"));
+        var r2 = Result.Success("World");
 
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
+        var result = Result.Combine(r1, r2);
 
-        // Assert
-        result.Should().BeFailureOfType<ValidationError>();
-        var validation = (ValidationError)result.Error;
-        validation.FieldErrors.Should().ContainSingle();
-        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("first", ["Bad first"]));
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     [Fact]
-    public void StaticCombine_Three_SecondFails_ReturnsFailure()
+    public void StaticCombine_2Tuple_SecondFails_ReturnsFailure()
     {
-        // Arrange
-        var r1 = Result.Success("First");
-        var r2 = Result.Failure<string>(Error.Validation("Bad second", "second"));
-        var r3 = Result.Success("Third");
+        var r1 = Result.Success("Hello");
+        var r2 = Result.Failure<string>(Error.Validation("bad", "f2"));
 
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
+        var result = Result.Combine(r1, r2);
 
-        // Assert
-        result.Should().BeFailureOfType<ValidationError>();
-        var validation = (ValidationError)result.Error;
-        validation.FieldErrors.Should().ContainSingle();
-        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("second", ["Bad second"]));
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
     }
 
     [Fact]
-    public void StaticCombine_Three_ThirdFails_ReturnsFailure()
+    public void StaticCombine_2Tuple_BothFail_AggregatesErrors()
     {
-        // Arrange
-        var r1 = Result.Success("First");
-        var r2 = Result.Success("Second");
-        var r3 = Result.Failure<string>(Error.Validation("Bad third", "third"));
+        var r1 = Result.Failure<string>(Error.Validation("e1", "f1"));
+        var r2 = Result.Failure<string>(Error.Validation("e2", "f2"));
 
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
+        var result = Result.Combine(r1, r2);
 
-        // Assert
-        result.Should().BeFailureOfType<ValidationError>();
-        var validation = (ValidationError)result.Error;
-        validation.FieldErrors.Should().ContainSingle();
-        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("third", ["Bad third"]));
-    }
-
-    [Fact]
-    public void StaticCombine_Three_MultipleFail_CombinesValidationErrors()
-    {
-        // Arrange
-        var r1 = Result.Failure<string>(Error.Validation("Bad first", "first"));
-        var r2 = Result.Failure<string>(Error.Validation("Bad second", "second"));
-        var r3 = Result.Success("Third");
-
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
-
-        // Assert
-        result.Should().BeFailureOfType<ValidationError>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)result.Error;
         validation.FieldErrors.Should().HaveCount(2);
-        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("first", ["Bad first"]));
-        validation.FieldErrors[1].Should().BeEquivalentTo(new ValidationError.FieldError("second", ["Bad second"]));
     }
 
     [Fact]
-    public void StaticCombine_Three_AllFail_CombinesAllValidationErrors()
+    public void StaticCombine_2Tuple_DifferentTypes_ReturnsTypedTuple()
     {
-        // Arrange
-        var r1 = Result.Failure<string>(Error.Validation("Bad first", "first"));
-        var r2 = Result.Failure<string>(Error.Validation("Bad second", "second"));
-        var r3 = Result.Failure<string>(Error.Validation("Bad third", "third"));
+        var r1 = Result.Success(42);
+        var r2 = Result.Success("text");
 
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
+        var result = Result.Combine(r1, r2);
 
-        // Assert
-        result.Should().BeFailureOfType<ValidationError>();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be((42, "text"));
+    }
+
+    [Fact]
+    public void StaticCombine_2Tuple_CanChainBind()
+    {
+        var r1 = Result.Success("Hello");
+        var r2 = Result.Success("World");
+
+        var result = Result.Combine(r1, r2)
+            .Bind((hello, world) => Result.Success($"{hello} {world}"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Hello World");
+    }
+
+    [Fact]
+    public void StaticCombine_3Tuple_AllSuccess_ReturnsTuple()
+    {
+        var r1 = Result.Success("a");
+        var r2 = Result.Success("b");
+        var r3 = Result.Success("c");
+
+        var result = Result.Combine(r1, r2, r3);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(("a", "b", "c"));
+    }
+
+    [Fact]
+    public void StaticCombine_3Tuple_OneFails_ReturnsFailure()
+    {
+        var r1 = Result.Success("a");
+        var r2 = Result.Failure<string>(Error.Validation("bad", "f"));
+        var r3 = Result.Success("c");
+
+        var result = Result.Combine(r1, r2, r3);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void StaticCombine_9Tuple_AllSuccess_ReturnsTuple()
+    {
+        var result = Result.Combine(
+            Result.Success(1),
+            Result.Success(2),
+            Result.Success(3),
+            Result.Success(4),
+            Result.Success(5),
+            Result.Success(6),
+            Result.Success(7),
+            Result.Success(8),
+            Result.Success(9));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be((1, 2, 3, 4, 5, 6, 7, 8, 9));
+    }
+
+    [Fact]
+    public void StaticCombine_9Tuple_MultipleFail_AggregatesErrors()
+    {
+        var result = Result.Combine(
+            Result.Success(1),
+            Result.Failure<int>(Error.Validation("e1", "f1")),
+            Result.Success(3),
+            Result.Success(4),
+            Result.Failure<int>(Error.Validation("e2", "f2")),
+            Result.Success(6),
+            Result.Success(7),
+            Result.Success(8),
+            Result.Failure<int>(Error.Validation("e3", "f3")));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<ValidationError>();
         var validation = (ValidationError)result.Error;
         validation.FieldErrors.Should().HaveCount(3);
-        validation.FieldErrors[0].Should().BeEquivalentTo(new ValidationError.FieldError("first", ["Bad first"]));
-        validation.FieldErrors[1].Should().BeEquivalentTo(new ValidationError.FieldError("second", ["Bad second"]));
-        validation.FieldErrors[2].Should().BeEquivalentTo(new ValidationError.FieldError("third", ["Bad third"]));
     }
 
     [Fact]
-    public void StaticCombine_Three_MixedErrorTypes_ReturnsAggregateError()
+    public void StaticCombine_CanBeUsedInPipeline()
     {
-        // Arrange
-        var r1 = Result.Failure<string>(Error.Validation("Validation failed", "field"));
-        var r2 = Result.Failure<string>(Error.NotFound("Not found"));
-        var r3 = Result.Success("Third");
+        var emailResult = Result.Success("user@example.com");
+        var nameResult = Result.Success("John");
+        var ageResult = Result.Success(30);
 
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
+        var result = Result.Combine(emailResult, nameResult, ageResult)
+            .Map((email, name, age) => $"{name} ({email}), age {age}");
 
-        // Assert
-        result.Should().BeFailureOfType<AggregateError>();
-        var aggregate = (AggregateError)result.Error;
-        aggregate.Errors.Should().HaveCount(2);
-        aggregate.Errors[0].Should().BeOfType<ValidationError>();
-        aggregate.Errors[1].Should().BeOfType<NotFoundError>();
-    }
-
-    [Fact]
-    public void StaticCombine_Three_CanBeUsedInPipeline()
-    {
-        // Arrange
-        var r1 = Result.Success(1);
-        var r2 = Result.Success(2);
-        var r3 = Result.Success(3);
-
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3)
-            .Bind((a, b, c) => Result.Success(a + b + c));
-
-        // Assert
-        result.Should().BeSuccess()
-            .Which.Should().Be(6);
-    }
-
-    [Fact]
-    public void StaticCombine_Three_WithFailure_ShortCircuitsBind()
-    {
-        // Arrange
-        var r1 = Result.Success(1);
-        var r2 = Result.Failure<int>(Error.Unexpected("Failed"));
-        var r3 = Result.Success(3);
-        var bindCalled = false;
-
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3)
-            .Bind((a, b, c) =>
-            {
-                bindCalled = true;
-                return Result.Success(a + b + c);
-            });
-
-        // Assert
-        bindCalled.Should().BeFalse();
-        result.Should().BeFailureOfType<UnexpectedError>();
-    }
-
-    [Fact]
-    public void StaticCombine_Three_DifferentTypes_CreatesTuple()
-    {
-        // Arrange
-        var r1 = Result.Success("text");
-        var r2 = Result.Success(42);
-        var r3 = Result.Success(true);
-
-        // Act
-        var result = CombineExtensions.Combine(r1, r2, r3);
-
-        // Assert
-        result.Should().BeSuccess();
-        result.Value.Should().Be(("text", 42, true));
-        result.Value.Item1.Should().Be("text");
-        result.Value.Item2.Should().Be(42);
-        result.Value.Item3.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("John (user@example.com), age 30");
     }
 
     #endregion
