@@ -1,4 +1,4 @@
-# Trellis.Stateless
+﻿# Trellis.Stateless
 
 Wraps the [Stateless](https://github.com/dotnet-state-machine/stateless) library's `Fire()` method to return `Result<TState>` instead of throwing on invalid transitions.
 
