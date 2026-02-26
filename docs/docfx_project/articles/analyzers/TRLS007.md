@@ -1,4 +1,4 @@
-﻿# FDDD007: Use Create instead of TryCreate().Value
+﻿# TRLS007: Use Create instead of TryCreate().Value
 
 ## Cause
 
@@ -119,4 +119,4 @@ The `Create()` version includes the actual validation error details!
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value

@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 
 /// <summary>
-/// Helper for creating code fix tests with FunctionalDDD references.
+/// Helper for creating code fix tests with Trellis references.
 /// </summary>
 public static class CodeFixTestHelper
 {
@@ -28,8 +28,8 @@ public static class CodeFixTestHelper
             ReferenceAssemblies = ReferenceAssemblies.Net.Net80
         };
 
-        AddFunctionalDddStubSource(test.TestState);
-        AddFunctionalDddStubSource(test.FixedState);
+        AddTrellisStubSource(test.TestState);
+        AddTrellisStubSource(test.FixedState);
         test.ExpectedDiagnostics.AddRange(expectedDiagnostics);
         return test;
     }
@@ -56,8 +56,8 @@ public static class CodeFixTestHelper
     public static DiagnosticResult Diagnostic(DiagnosticDescriptor descriptor) =>
         new DiagnosticResult(descriptor);
 
-    private static void AddFunctionalDddStubSource(SolutionState state) =>
-        state.Sources.Add(("FunctionalDddStubs.cs", FunctionalDddStubSource));
+    private static void AddTrellisStubSource(SolutionState state) =>
+        state.Sources.Add(("TrellisStubs.cs", TrellisStubSource));
 
     private static readonly string[] LineSeparators = ["\r\n", "\r", "\n"];
 
@@ -83,12 +83,12 @@ public static class CodeFixTestHelper
     }
 
     /// <summary>
-    /// Stub source code for FunctionalDdd types used in code fix tests.
+    /// Stub source code for Trellis types used in code fix tests.
     /// </summary>
-    private const string FunctionalDddStubSource = """
-        #pragma warning disable FDDD003 // Unsafe Result.Value access
-        #pragma warning disable FDDD004 // Unsafe Result.Error access
-        #pragma warning disable FDDD006 // Unsafe Maybe.Value access
+    private const string TrellisStubSource = """
+        #pragma warning disable TRLS003 // Unsafe Result.Value access
+        #pragma warning disable TRLS004 // Unsafe Result.Error access
+        #pragma warning disable TRLS006 // Unsafe Maybe.Value access
         namespace Trellis
         {
             using System;
@@ -253,8 +253,8 @@ public static class CodeFixTestHelper
                 public void NotBeNull() { }
             }
         }
-        #pragma warning restore FDDD003
-        #pragma warning restore FDDD004
-        #pragma warning restore FDDD006
+        #pragma warning restore TRLS003
+        #pragma warning restore TRLS004
+        #pragma warning restore TRLS006
         """;
 }

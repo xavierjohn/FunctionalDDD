@@ -1,4 +1,4 @@
-﻿# FDDD005: Consider using MatchError for error type discrimination
+﻿# TRLS005: Consider using MatchError for error type discrimination
 
 ## Cause
 
@@ -72,5 +72,5 @@ This is a suggestion-level diagnostic (Info severity). Suppress it if:
 
 ## Related Rules
 
-- [FDDD004](FDDD004.md) - Unsafe access to Result.Error
-- [FDDD011](FDDD011.md) - Use specific error type instead of base Error class
+- [TRLS004](TRLS004.md) - Unsafe access to Result.Error
+- [TRLS011](TRLS011.md) - Use specific error type instead of base Error class

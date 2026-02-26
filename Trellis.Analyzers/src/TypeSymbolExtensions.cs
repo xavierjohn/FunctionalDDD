@@ -1,28 +1,28 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using Microsoft.CodeAnalysis;
 
 /// <summary>
-/// Shared extension methods for type symbol analysis across FunctionalDDD analyzers.
+/// Shared extension methods for type symbol analysis across Trellis analyzers.
 /// </summary>
 internal static class TypeSymbolExtensions
 {
     /// <summary>
-    /// Checks if the type is Result&lt;T&gt; from FunctionalDdd namespace.
+    /// Checks if the type is Result&lt;T&gt; from Trellis namespace.
     /// </summary>
     internal static bool IsResultType(this ITypeSymbol? typeSymbol) =>
         typeSymbol is INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } namedType &&
         namedType.ContainingNamespace?.ToDisplayString() == "Trellis";
 
     /// <summary>
-    /// Checks if the type is Maybe&lt;T&gt; from FunctionalDdd namespace.
+    /// Checks if the type is Maybe&lt;T&gt; from Trellis namespace.
     /// </summary>
     internal static bool IsMaybeType(this ITypeSymbol? typeSymbol) =>
         typeSymbol is INamedTypeSymbol { Name: "Maybe", TypeArguments.Length: 1 } namedType &&
         namedType.ContainingNamespace?.ToDisplayString() == "Trellis";
 
     /// <summary>
-    /// Checks if the type is Error or a derived error type from FunctionalDdd namespace.
+    /// Checks if the type is Error or a derived error type from Trellis namespace.
     /// </summary>
     internal static bool IsErrorOrDerivedType(this ITypeSymbol? typeSymbol)
     {
@@ -103,7 +103,7 @@ internal static class TypeSymbolExtensions
         if (!isTaskType)
             return false;
 
-        // Check if the type argument is Result<T> from FunctionalDdd
+        // Check if the type argument is Result<T> from Trellis
         var typeArgument = namedType.TypeArguments[0];
         if (typeArgument is INamedTypeSymbol { Name: "Result", TypeArguments.Length: 1 } resultType &&
             resultType.ContainingNamespace?.ToDisplayString() == "Trellis")

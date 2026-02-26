@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -44,12 +44,12 @@ public sealed class AsyncLambdaWithSyncMethodAnalyzer : DiagnosticAnalyzer
         if (!SyncToAsyncMethods.TryGetValue(methodName, out var asyncVariant))
             return;
 
-        // Verify it's from FunctionalDdd
+        // Verify it's from Trellis
         var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
             return;
 
-        if (!IsFunctionalDddMethod(methodSymbol))
+        if (!IsTrellisMethod(methodSymbol))
             return;
 
         // Check if any argument is an async lambda
@@ -69,7 +69,7 @@ public sealed class AsyncLambdaWithSyncMethodAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static bool IsFunctionalDddMethod(IMethodSymbol methodSymbol)
+    private static bool IsTrellisMethod(IMethodSymbol methodSymbol)
     {
         if (!methodSymbol.IsExtensionMethod)
             return false;

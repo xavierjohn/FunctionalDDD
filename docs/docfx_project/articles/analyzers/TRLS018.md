@@ -1,4 +1,4 @@
-﻿# FDDD018: Unsafe access to Value in LINQ expression
+﻿# TRLS018: Unsafe access to Value in LINQ expression
 
 ## Cause
 
@@ -134,8 +134,8 @@ var values = maybes.Where(m => m.HasValue).Select(m => m.Value);
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
-- [FDDD006](FDDD006.md) - Unsafe access to Maybe.Value
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value
+- [TRLS006](TRLS006.md) - Unsafe access to Maybe.Value
 
 ## See Also
 

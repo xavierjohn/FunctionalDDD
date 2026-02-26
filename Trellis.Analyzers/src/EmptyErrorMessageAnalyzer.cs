@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -51,7 +51,7 @@ public sealed class EmptyErrorMessageAnalyzer : DiagnosticAnalyzer
         if (!ErrorFactoryMethods.Contains(methodName))
             return;
 
-        // Verify it's from FunctionalDdd via semantic model
+        // Verify it's from Trellis via semantic model
         var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
             return;

@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -64,12 +64,12 @@ public sealed class ThrowInResultChainAnalyzer : DiagnosticAnalyzer
         if (!ResultChainMethods.Contains(methodName))
             return;
 
-        // Verify it's from FunctionalDdd
+        // Verify it's from Trellis
         var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
             return;
 
-        if (!IsFunctionalDddMethod(methodSymbol))
+        if (!IsTrellisMethod(methodSymbol))
             return;
 
         var diagnostic = Diagnostic.Create(
@@ -80,7 +80,7 @@ public sealed class ThrowInResultChainAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(diagnostic);
     }
 
-    private static bool IsFunctionalDddMethod(IMethodSymbol methodSymbol)
+    private static bool IsTrellisMethod(IMethodSymbol methodSymbol)
     {
         if (!methodSymbol.IsExtensionMethod)
             return false;

@@ -1,4 +1,4 @@
-﻿# FDDD013: Consider using GetValueOrDefault or Match
+﻿# TRLS013: Consider using GetValueOrDefault or Match
 
 ## Cause
 
@@ -163,4 +163,4 @@ This is a suggestion-level diagnostic. Suppress it if:
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value

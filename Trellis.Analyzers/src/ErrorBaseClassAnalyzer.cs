@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -50,9 +50,9 @@ public sealed class ErrorBaseClassAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    // Check if type is the Error base class from FunctionalDdd (not a derived type)
+    // Check if type is the Error base class from Trellis (not a derived type)
     private static bool IsErrorBaseClass(ITypeSymbol typeSymbol) =>
-        // Check if it's exactly the Error class from FunctionalDdd namespace
+        // Check if it's exactly the Error class from Trellis namespace
         // The base Error class is just "Error", derived types have different names
         // (ValidationError, NotFoundError, etc.)
         typeSymbol.Name == "Error" &&

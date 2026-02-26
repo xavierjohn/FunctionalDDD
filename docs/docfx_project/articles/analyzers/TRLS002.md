@@ -1,4 +1,4 @@
-﻿# FDDD002: Use Bind instead of Map when lambda returns Result
+﻿# TRLS002: Use Bind instead of Map when lambda returns Result
 
 ## Cause
 
@@ -56,4 +56,4 @@ Do not suppress this warning. If you actually need `Result<Result<T>>` (extremel
 
 ## Related Rules
 
-- [FDDD008](FDDD008.md) - Result is double-wrapped
+- [TRLS008](TRLS008.md) - Result is double-wrapped

@@ -1,4 +1,4 @@
-﻿# FDDD015: Don't throw exceptions in Result chains
+﻿# TRLS015: Don't throw exceptions in Result chains
 
 ## Cause
 
@@ -96,8 +96,8 @@ Throwing exceptions breaks all of these benefits.
 
 ## Related Rules
 
-- [FDDD002](FDDD002.md) - Use Bind instead of Map when lambda returns Result
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
+- [TRLS002](TRLS002.md) - Use Bind instead of Map when lambda returns Result
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value
 
 ## See Also
 

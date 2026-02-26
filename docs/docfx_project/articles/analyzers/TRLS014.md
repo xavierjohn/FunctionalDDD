@@ -1,4 +1,4 @@
-﻿# FDDD014: Use async method variant for async lambda
+﻿# TRLS014: Use async method variant for async lambda
 
 ## Cause
 
@@ -117,8 +117,8 @@ The `Task` inside the `Result` is never awaited, leading to:
 
 ## Related Rules
 
-- [FDDD009](FDDD009.md) - Incorrect async Result usage (blocking with .Result/.Wait())
-- [FDDD002](FDDD002.md) - Use Bind instead of Map when lambda returns Result
+- [TRLS009](TRLS009.md) - Incorrect async Result usage (blocking with .Result/.Wait())
+- [TRLS002](TRLS002.md) - Use Bind instead of Map when lambda returns Result
 
 ## See Also
 

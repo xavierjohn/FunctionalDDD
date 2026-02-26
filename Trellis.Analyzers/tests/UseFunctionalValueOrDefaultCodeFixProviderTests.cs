@@ -1,9 +1,9 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Xunit;
 
 /// <summary>
-/// Tests for UseFunctionalValueOrDefaultCodeFixProvider (FDDD013).
+/// Tests for UseFunctionalValueOrDefaultCodeFixProvider (TRLS013).
 /// Verifies that ternary operators are correctly replaced with GetValueOrDefault() or Match().
 /// </summary>
 public class UseFunctionalValueOrDefaultCodeFixProviderTests

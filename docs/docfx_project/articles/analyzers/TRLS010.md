@@ -1,4 +1,4 @@
-﻿# FDDD010: Use specific error type instead of base Error class
+﻿# TRLS010: Use specific error type instead of base Error class
 
 ## Cause
 
@@ -120,4 +120,4 @@ However, consider creating a custom error type that inherits from Error instead.
 
 ## Related Rules
 
-- [FDDD005](FDDD005.md) - Consider using MatchError for error type discrimination
+- [TRLS005](TRLS005.md) - Consider using MatchError for error type discrimination

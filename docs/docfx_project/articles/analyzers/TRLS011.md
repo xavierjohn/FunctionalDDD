@@ -1,4 +1,4 @@
-﻿# FDDD011: Maybe is double-wrapped
+﻿# TRLS011: Maybe is double-wrapped
 
 ## Cause
 
@@ -82,4 +82,4 @@ Do not suppress this warning. If you have `Maybe<Maybe<T>>`, restructure your co
 
 ## Related Rules
 
-- [FDDD008](FDDD008.md) - Result is double-wrapped
+- [TRLS008](TRLS008.md) - Result is double-wrapped
