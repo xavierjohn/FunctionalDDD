@@ -1,9 +1,9 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Xunit;
 
 /// <summary>
-/// Tests for EmptyErrorMessageAnalyzer (FDDD016).
+/// Tests for EmptyErrorMessageAnalyzer (TRLS016).
 /// Verifies that empty or missing error messages are detected.
 /// </summary>
 public class EmptyErrorMessageAnalyzerTests

@@ -1,4 +1,4 @@
-﻿# FDDD001: Result return value is not handled
+﻿# TRLS001: Result return value is not handled
 
 ## Cause
 
@@ -52,5 +52,5 @@ _ = customer.UpdateEmail(newEmail); // Explicit discard
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
-- [FDDD004](FDDD004.md) - Unsafe access to Result.Error
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value
+- [TRLS004](TRLS004.md) - Unsafe access to Result.Error

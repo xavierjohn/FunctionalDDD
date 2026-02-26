@@ -1,9 +1,9 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Xunit;
 
 /// <summary>
-/// Tests for UseBindInsteadOfMapCodeFixProvider (FDDD002).
+/// Tests for UseBindInsteadOfMapCodeFixProvider (TRLS002).
 /// Verifies that Map is correctly replaced with Bind when the lambda returns a Result.
 /// </summary>
 public class UseBindInsteadOfMapCodeFixProviderTests

@@ -1,4 +1,4 @@
-﻿# FDDD003: Unsafe access to Result.Value
+﻿# TRLS003: Unsafe access to Result.Value
 
 ## Cause
 
@@ -89,9 +89,9 @@ This warning can be suppressed in test code where you're explicitly testing succ
 public void Should_CreateValidCustomer()
 {
     var result = Customer.Create("test@example.com");
-    #pragma warning disable FDDD003
+    #pragma warning disable TRLS003
     var customer = result.Value; // Safe in test - we're verifying success
-    #pragma warning restore FDDD003
+    #pragma warning restore TRLS003
     customer.Email.Should().Be("test@example.com");
 }
 ```
@@ -100,11 +100,11 @@ However, even in tests, using `Match` or checking `IsSuccess` is preferred.
 
 ## Special Behavior
 
-**Note:** This diagnostic is suppressed for invocation patterns like `TryCreate().Value`. Those are handled by [FDDD007](FDDD007.md) instead, which suggests using `Create()` for better error messages.
+**Note:** This diagnostic is suppressed for invocation patterns like `TryCreate().Value`. Those are handled by [TRLS007](TRLS007.md) instead, which suggests using `Create()` for better error messages.
 
 ## Related Rules
 
-- [FDDD004](FDDD004.md) - Unsafe access to Result.Error
-- [FDDD006](FDDD006.md) - Unsafe access to Maybe.Value
-- [FDDD007](FDDD007.md) - Use Create instead of TryCreate().Value
-- [FDDD014](FDDD014.md) - Use GetValueOrDefault or Match instead of ternary
+- [TRLS004](TRLS004.md) - Unsafe access to Result.Error
+- [TRLS006](TRLS006.md) - Unsafe access to Maybe.Value
+- [TRLS007](TRLS007.md) - Use Create instead of TryCreate().Value
+- [TRLS014](TRLS014.md) - Use GetValueOrDefault or Match instead of ternary

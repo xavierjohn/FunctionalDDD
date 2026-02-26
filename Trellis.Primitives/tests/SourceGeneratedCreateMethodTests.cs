@@ -267,13 +267,13 @@ public class SourceGeneratedCreateMethodTests
 
     #endregion
 
-    #region Integration Tests - FDDD007 Compatibility
+    #region Integration Tests - TRLS007 Compatibility
 
     [Fact]
     public void Create_CanBeUsedInsteadOfTryCreateValue_ForAllTypes()
     {
         // This test verifies that Create() methods work as drop-in replacements
-        // for TryCreate().Value pattern (what FDDD007 analyzer suggests)
+        // for TryCreate().Value pattern (what TRLS007 analyzer suggests)
 
         // Arrange & Act & Assert - All should succeed
         var employeeId = EmployeeId.Create(Guid.NewGuid());

@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using System.Composition;
@@ -51,9 +51,9 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         // Determine the guard type based on diagnostic ID
         var (title, guardProperty) = diagnostic.Id switch
         {
-            "FDDD003" => (TitleValue, "IsSuccess"),   // Result.Value
-            "FDDD004" => (TitleError, "IsFailure"),   // Result.Error
-            "FDDD006" => (TitleMaybe, "HasValue"),    // Maybe.Value
+            "TRLS003" => (TitleValue, "IsSuccess"),   // Result.Value
+            "TRLS004" => (TitleError, "IsFailure"),   // Result.Error
+            "TRLS006" => (TitleMaybe, "HasValue"),    // Maybe.Value
             _ => ((string?)null, (string?)null)
         };
 
@@ -91,7 +91,7 @@ public sealed class AddResultGuardCodeFixProvider : CodeFixProvider
         // Get the expression being accessed (e.g., "result" from "result.Error")
         var resultExpression = memberAccess.Expression;
 
-        // Don't offer guard fix for TryCreate().Value pattern - that's handled by FDDD007
+        // Don't offer guard fix for TryCreate().Value pattern - that's handled by TRLS007
         if (resultExpression is InvocationExpressionSyntax)
             return document;
 

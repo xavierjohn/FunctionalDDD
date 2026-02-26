@@ -1,9 +1,9 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Xunit;
 
 /// <summary>
-/// Tests for UseCreateInsteadOfTryCreateValueCodeFixProvider (FDDD007).
+/// Tests for UseCreateInsteadOfTryCreateValueCodeFixProvider (TRLS007).
 /// Verifies that TryCreate().Value is correctly replaced with Create().
 /// </summary>
 public class UseCreateInsteadOfTryCreateValueCodeFixProviderTests

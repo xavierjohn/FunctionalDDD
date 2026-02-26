@@ -1,4 +1,4 @@
-﻿# FDDD008: Result is double-wrapped
+﻿# TRLS008: Result is double-wrapped
 
 ## Cause
 
@@ -64,5 +64,5 @@ If you have a legitimate case (extremely rare), restructure your code to use `Bi
 
 ## Related Rules
 
-- [FDDD002](FDDD002.md) - Use Bind instead of Map when lambda returns Result
-- [FDDD012](FDDD012.md) - Maybe is double-wrapped
+- [TRLS002](TRLS002.md) - Use Bind instead of Map when lambda returns Result
+- [TRLS012](TRLS012.md) - Maybe is double-wrapped

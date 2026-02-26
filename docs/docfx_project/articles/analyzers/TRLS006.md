@@ -1,4 +1,4 @@
-﻿# FDDD006: Unsafe access to Maybe.Value
+﻿# TRLS006: Unsafe access to Maybe.Value
 
 ## Cause
 
@@ -78,9 +78,9 @@ public void Should_FindExistingCustomer()
 {
     var maybe = repository.FindById(customerId);
     maybe.HasValue.Should().BeTrue();
-    #pragma warning disable FDDD006
+    #pragma warning disable TRLS006
     maybe.Value.Name.Should().Be("John");
-    #pragma warning restore FDDD006
+    #pragma warning restore TRLS006
 }
 ```
 
@@ -102,4 +102,4 @@ public Result<Customer> FindCustomer(Guid id)
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value

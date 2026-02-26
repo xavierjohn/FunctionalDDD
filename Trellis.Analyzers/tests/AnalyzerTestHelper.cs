@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 
 /// <summary>
-/// Helper for creating analyzer tests with FunctionalDDD references.
+/// Helper for creating analyzer tests with Trellis references.
 /// </summary>
 public static class AnalyzerTestHelper
 {
@@ -22,7 +22,7 @@ public static class AnalyzerTestHelper
             ReferenceAssemblies = ReferenceAssemblies.Net.Net80
         };
 
-        AddFunctionalDddStubSource(test);
+        AddTrellisStubSource(test);
         return test;
     }
 
@@ -40,16 +40,16 @@ public static class AnalyzerTestHelper
             ReferenceAssemblies = ReferenceAssemblies.Net.Net80
         };
 
-        AddFunctionalDddStubSource(test);
+        AddTrellisStubSource(test);
         test.ExpectedDiagnostics.AddRange(expectedDiagnostics);
         return test;
     }
 
-    private static void AddFunctionalDddStubSource<TAnalyzer>(CSharpAnalyzerTest<TAnalyzer, DefaultVerifier> test)
+    private static void AddTrellisStubSource<TAnalyzer>(CSharpAnalyzerTest<TAnalyzer, DefaultVerifier> test)
         where TAnalyzer : DiagnosticAnalyzer, new() =>
-        // Add stub source code for FunctionalDdd types instead of referencing the actual assembly
+        // Add stub source code for Trellis types instead of referencing the actual assembly
         // This avoids framework version conflicts and makes tests self-contained
-        test.TestState.Sources.Add(("FunctionalDddStubs.cs", FunctionalDddStubSource));
+        test.TestState.Sources.Add(("TrellisStubs.cs", TrellisStubSource));
 
     private static string WrapInNamespace(string source) =>
         $$"""
@@ -70,9 +70,9 @@ public static class AnalyzerTestHelper
         new DiagnosticResult(descriptor);
 
     /// <summary>
-    /// Stub source code for FunctionalDdd types used in analyzer tests.
+    /// Stub source code for Trellis types used in analyzer tests.
     /// </summary>
-    private const string FunctionalDddStubSource = """
+    private const string TrellisStubSource = """
         namespace Trellis
         {
             using System;

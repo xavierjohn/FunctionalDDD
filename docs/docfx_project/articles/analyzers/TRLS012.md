@@ -1,4 +1,4 @@
-﻿# FDDD012: Consider using Result.Combine
+﻿# TRLS012: Consider using Result.Combine
 
 ## Cause
 

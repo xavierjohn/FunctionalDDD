@@ -1,9 +1,9 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Xunit;
 
 /// <summary>
-/// Tests for UnsafeValueInLinqAnalyzer (FDDD018).
+/// Tests for UnsafeValueInLinqAnalyzer (TRLS018).
 /// Verifies that .Value access in LINQ without prior filter is detected.
 /// </summary>
 public class UnsafeValueInLinqAnalyzerTests

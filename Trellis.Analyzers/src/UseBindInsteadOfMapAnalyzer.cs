@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -38,13 +38,13 @@ public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
         if (!MapMethodNames.Contains(methodName))
             return;
 
-        // Get the method symbol to verify it's from FunctionalDdd
+        // Get the method symbol to verify it's from Trellis
         var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
             return;
 
-        // Check if it's an extension method from FunctionalDdd
-        if (!IsFunctionalDddExtensionMethod(methodSymbol))
+        // Check if it's an extension method from Trellis
+        if (!IsTrellisExtensionMethod(methodSymbol))
             return;
 
         // Check if the lambda argument returns a Result type
@@ -78,7 +78,7 @@ public sealed class UseBindInsteadOfMapAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static bool IsFunctionalDddExtensionMethod(IMethodSymbol methodSymbol)
+    private static bool IsTrellisExtensionMethod(IMethodSymbol methodSymbol)
     {
         if (!methodSymbol.IsExtensionMethod)
             return false;

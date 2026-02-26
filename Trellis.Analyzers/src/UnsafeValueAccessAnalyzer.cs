@@ -1,4 +1,4 @@
-namespace Trellis.Analyzers;
+﻿namespace Trellis.Analyzers;
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -48,7 +48,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         {
             if (memberName == "Value" && !IsGuardedBySuccessCheck(memberAccess, context.SemanticModel))
             {
-                // Skip invocation patterns like TryCreate().Value - they're handled by FDDD007
+                // Skip invocation patterns like TryCreate().Value - they're handled by TRLS007
                 if (memberAccess.Expression is InvocationExpressionSyntax)
                     return;
 
@@ -252,7 +252,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
                 if (methodName is "Match" or "MatchAsync" or "MatchError" or "MatchErrorAsync" or
                     "Switch" or "SwitchAsync" or "SwitchError" or "SwitchErrorAsync")
                 {
-                    if (IsFunctionalDddExtensionMethod(invocation, semanticModel))
+                    if (IsTrellisExtensionMethod(invocation, semanticModel))
                         return true;
                 }
             }
@@ -266,7 +266,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
                 if (parentMethodName is "Bind" or "BindAsync" or "Map" or "MapAsync" or
                     "Tap" or "TapAsync" or "Ensure" or "EnsureAsync")
                 {
-                    if (IsFunctionalDddExtensionMethod(parentInvocation, semanticModel))
+                    if (IsTrellisExtensionMethod(parentInvocation, semanticModel))
                         return true;
                 }
             }
@@ -277,7 +277,7 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool IsFunctionalDddExtensionMethod(InvocationExpressionSyntax invocation, SemanticModel semanticModel)
+    private static bool IsTrellisExtensionMethod(InvocationExpressionSyntax invocation, SemanticModel semanticModel)
     {
         var symbolInfo = semanticModel.GetSymbolInfo(invocation);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)

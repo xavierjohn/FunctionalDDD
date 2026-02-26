@@ -1,4 +1,4 @@
-namespace SourceGenerator;
+﻿namespace SourceGenerator;
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -230,7 +230,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor(
-                        id: "FDDD001",
+                        id: "TRLS001",
                         title: "Unsupported base type for RequiredPartialClassGenerator",
                         messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal, RequiredEnum.",
                         category: "SourceGenerator",

@@ -1,4 +1,4 @@
-﻿# FDDD004: Unsafe access to Result.Error
+﻿# TRLS004: Unsafe access to Result.Error
 
 ## Cause
 
@@ -73,13 +73,13 @@ public void Should_FailWithInvalidEmail()
 {
     var result = Customer.Create("invalid-email");
     result.IsFailure.Should().BeTrue();
-    #pragma warning disable FDDD004
+    #pragma warning disable TRLS004
     result.Error.Should().BeOfType<ValidationError>();
-    #pragma warning restore FDDD004
+    #pragma warning restore TRLS004
 }
 ```
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
-- [FDDD005](FDDD005.md) - Consider using MatchError for error type discrimination
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value
+- [TRLS005](TRLS005.md) - Consider using MatchError for error type discrimination

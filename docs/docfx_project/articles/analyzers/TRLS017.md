@@ -1,4 +1,4 @@
-﻿# FDDD017: Don't compare Result or Maybe to null
+﻿# TRLS017: Don't compare Result or Maybe to null
 
 ## Cause
 
@@ -121,8 +121,8 @@ In C#, structs are value types that:
 
 ## Related Rules
 
-- [FDDD003](FDDD003.md) - Unsafe access to Result.Value
-- [FDDD006](FDDD006.md) - Unsafe access to Maybe.Value
+- [TRLS003](TRLS003.md) - Unsafe access to Result.Value
+- [TRLS006](TRLS006.md) - Unsafe access to Maybe.Value
 
 ## See Also
 

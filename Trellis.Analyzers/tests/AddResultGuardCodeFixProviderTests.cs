@@ -1,15 +1,15 @@
-namespace Trellis.Analyzers.Tests;
+﻿namespace Trellis.Analyzers.Tests;
 
 using Xunit;
 
 /// <summary>
-/// Tests for AddResultGuardCodeFixProvider (FDDD003, FDDD004, FDDD006).
+/// Tests for AddResultGuardCodeFixProvider (TRLS003, TRLS004, TRLS006).
 /// Verifies that unsafe Result.Value, Result.Error, and Maybe.Value access
 /// is correctly wrapped with appropriate guard statements.
 /// </summary>
 public class AddResultGuardCodeFixProviderTests
 {
-    #region FDDD003 - Result.Value Access Tests
+    #region TRLS003 - Result.Value Access Tests
 
     [Fact]
     public async Task ResultValue_SingleStatement_AddsIsSuccessGuard()
@@ -317,7 +317,7 @@ public class AddResultGuardCodeFixProviderTests
 
     #endregion
 
-    #region FDDD004 - Result.Error Access Tests
+    #region TRLS004 - Result.Error Access Tests
 
     [Fact]
     public async Task ResultError_SingleStatement_AddsIsFailureGuard()
@@ -435,7 +435,7 @@ public class AddResultGuardCodeFixProviderTests
 
     #endregion
 
-    #region FDDD006 - Maybe.Value Access Tests
+    #region TRLS006 - Maybe.Value Access Tests
 
     [Fact]
     public async Task MaybeValue_SingleStatement_AddsHasValueGuard()

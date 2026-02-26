@@ -1,4 +1,4 @@
-﻿# FDDD016: Error message should not be empty
+﻿# TRLS016: Error message should not be empty
 
 ## Cause
 
@@ -104,7 +104,7 @@ if (string.IsNullOrEmpty(lastName))
 
 ## Related Rules
 
-- [FDDD010](FDDD010.md) - Use specific error type instead of base Error class
+- [TRLS010](TRLS010.md) - Use specific error type instead of base Error class
 
 ## See Also
 
