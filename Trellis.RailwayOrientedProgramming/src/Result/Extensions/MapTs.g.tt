@@ -1,4 +1,4 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
@@ -11,7 +11,7 @@
 //   Any changes made manually to this file will be lost when the template is regenerated.
 // </auto-generated>
 
-namespace FunctionalDdd;
+namespace Trellis;
 
 /// <summary>
 /// Provides Map extension methods for Result types containing tuples (2-9 elements).

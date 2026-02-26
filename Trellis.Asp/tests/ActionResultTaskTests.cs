@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+namespace Asp.Tests;
 
 using System.Collections.Immutable;
 using System.Net.Http.Headers;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 public class ActionResultTaskTests
 {

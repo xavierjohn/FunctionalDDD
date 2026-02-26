@@ -2,7 +2,7 @@ namespace Benchmark;
 
 using BenchmarkDotNet.Attributes;
 using Trellis;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Benchmarks for Error type testing error creation, combining, and type checking.

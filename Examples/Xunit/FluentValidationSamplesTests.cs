@@ -5,7 +5,7 @@ using FluentValidation;
 using Trellis;
 using Trellis.PrimitiveValueObjects;
 using Xunit;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Comprehensive tests validating all examples from FluentValidation\SAMPLES.md

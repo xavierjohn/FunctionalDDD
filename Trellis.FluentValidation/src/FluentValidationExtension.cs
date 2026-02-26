@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using FluentValidation;
 using FluentValidation.Results;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Provides extension methods to integrate FluentValidation with Railway Oriented Programming Result types.

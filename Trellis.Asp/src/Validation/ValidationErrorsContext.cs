@@ -1,7 +1,7 @@
 namespace Trellis;
 
 using System.Collections.Immutable;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Provides a context for collecting validation errors during JSON deserialization.

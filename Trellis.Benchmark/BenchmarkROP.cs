@@ -4,7 +4,7 @@ using BenchmarkDotNet.Attributes;
 using Trellis;
 using Trellis.PrimitiveValueObjects;
 using SampleUserLibrary;
-using static FunctionalDdd.EnsureExtensions;
+using static Trellis.EnsureExtensions;
 
 /// <summary>
 /// Benchmark ROP vs If.

@@ -33,12 +33,12 @@ public sealed class EmptyErrorMessageAnalyzer : DiagnosticAnalyzer
         string? methodName;
 
         // Check for Error.Validation(...), Error.NotFound(...), etc.
-        // Also handles type aliases like: using E = FunctionalDdd.Error; E.Validation(...)
+        // Also handles type aliases like: using E = Trellis.Error; E.Validation(...)
         if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
         {
             methodName = memberAccess.Name.Identifier.Text;
         }
-        // Check for using static FunctionalDdd.Error; Validation(...)
+        // Check for using static Trellis.Error; Validation(...)
         else if (invocation.Expression is IdentifierNameSyntax identifierName)
         {
             methodName = identifierName.Identifier.Text;

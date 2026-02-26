@@ -25,7 +25,7 @@ public interface IResult
     /// <summary>
     /// Gets the error information if this is a failure result.
     /// </summary>
-    /// <value>An <see cref="FunctionalDdd.Error"/> instance describing the failure.</value>
+    /// <value>An <see cref="Trellis.Error"/> instance describing the failure.</value>
     /// <exception cref="InvalidOperationException">Thrown when accessed on a successful result.</exception>
     Error Error { get; }
 #pragma warning restore CA1716 // Identifiers should not match keywords

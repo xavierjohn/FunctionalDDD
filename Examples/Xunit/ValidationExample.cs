@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using Trellis;
 using Trellis.PrimitiveValueObjects;
 using static EnsureExtensions;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 public class ValidationExample
 {

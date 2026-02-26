@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>14.0</LangVersion>
-    <AssemblyName>FunctionalDdd.Testing</AssemblyName>
-    <RootNamespace>FunctionalDdd.Testing</RootNamespace>
+    <AssemblyName>Trellis.Testing</AssemblyName>
+    <RootNamespace>Trellis.Testing</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>true</IsPackable>

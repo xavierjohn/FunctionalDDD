@@ -1,7 +1,7 @@
-﻿namespace RailwayOrientedProgramming.Tests;
+namespace RailwayOrientedProgramming.Tests;
 
 using Xunit;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 public class ErrorTests
 {

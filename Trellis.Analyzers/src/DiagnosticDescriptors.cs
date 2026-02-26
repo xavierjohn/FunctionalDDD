@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis;
 public static class DiagnosticDescriptors
 {
     private const string Category = "Trellis";
-    private const string HelpLinkBase = "https://xavierjohn.github.io/FunctionalDDD/analyzers/";
+    private const string HelpLinkBase = "https://xavierjohn.github.io/Trellis/analyzers/";
 
     /// <summary>
     /// FDDD001: Result return value is not handled.

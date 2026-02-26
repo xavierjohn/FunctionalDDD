@@ -53,7 +53,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 public class ScalarValueJsonConverterGenerator : IIncrementalGenerator
 {
     private const string GenerateAttributeName = "GenerateScalarValueConvertersAttribute";
-    private const string GenerateAttributeFullName = "FunctionalDdd.GenerateScalarValueConvertersAttribute";
+    private const string GenerateAttributeFullName = "Trellis.GenerateScalarValueConvertersAttribute";
     private const string ScalarValueInterfaceName = "IScalarValue";
 
     /// <summary>
@@ -155,8 +155,8 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
                     var name = attribute.Name.ToString();
                     if (name is "GenerateScalarValueConverters" or
                         "GenerateScalarValueConvertersAttribute" or
-                        "FunctionalDdd.GenerateScalarValueConverters" or
-                        "FunctionalDdd.GenerateScalarValueConvertersAttribute")
+                        "Trellis.GenerateScalarValueConverters" or
+                        "Trellis.GenerateScalarValueConvertersAttribute")
                     {
                         return true;
                     }

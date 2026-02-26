@@ -1,7 +1,7 @@
-﻿namespace RailwayOrientedProgramming.Tests.Errors;
+namespace RailwayOrientedProgramming.Tests.Errors;
 
 using Xunit;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Tests for error combining, merging, and edge case scenarios.

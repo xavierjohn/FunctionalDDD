@@ -20,7 +20,7 @@
 //   Any changes made manually to this file will be lost when the template is regenerated.
 // </auto-generated>
 
-namespace FunctionalDdd;
+namespace Trellis;
 
 using System.Diagnostics;
 using System.Threading.Tasks;

@@ -2,7 +2,7 @@ namespace Trellis;
 
 using System.Collections.Immutable;
 using System.Diagnostics;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Base class for all error types in the functional DDD library.
