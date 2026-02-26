@@ -21,7 +21,7 @@ public class TraceFixture : IDisposable
     {
         var builder = Sdk.CreateTracerProviderBuilder()
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("FunctionDddExample"))
-            .AddRailwayOrientedProgrammingInstrumentation()
+            .AddResultsInstrumentation()
             .AddSource(ActivitySourceName)
             .AddOtlpExporter();
 

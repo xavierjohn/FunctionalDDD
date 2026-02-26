@@ -319,7 +319,7 @@ Enable distributed tracing to automatically trace your ROP chains:
 // Startup configuration (Program.cs or Startup.cs)
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerBuilder => tracerBuilder
-        .AddRailwayOrientedProgrammingInstrumentation()  // Built-in ROP instrumentation!
+        .AddResultsInstrumentation()  // Built-in ROP instrumentation!
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddOtlpExporter());  // Or .AddConsoleExporter() for development

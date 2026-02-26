@@ -299,7 +299,7 @@ Base class for creating custom value objects that wrap a single primitive value.
 
 Built-in distributed tracing support for Railway-Oriented Programming operations.
 
-**Type:** `FunctionalDdd.RailwayOrientedProgrammingTraceProviderBuilderExtensions`
+**Type:** `FunctionalDdd.ResultsTraceProviderBuilderExtensions`
 
 **Features:**
 - Automatic span creation for `Bind`, `Map`, `Tap`, `Ensure` operations
