@@ -135,11 +135,12 @@ public static class HttpResultExtensions
     /// </summary>
     /// <param name="error">The domain error to convert.</param>
     /// <returns>
-    /// An IResult with Problem Details (RFC 7807) response containing:
+    /// An IResult with Problem Details (RFC 7807) response. The HTTP status code is resolved
+    /// from <see cref="TrellisAspOptions"/> (configured via <c>AddTrellisAsp</c>). The default mappings are:
     /// <list type="table">
     ///     <listheader>
     ///         <term>Domain Error Type</term>
-    ///         <description>HTTP Status Code</description>
+    ///         <description>Default HTTP Status Code</description>
     ///     </listheader>
     ///     <item>
     ///         <term><see cref="ValidationError"/></term>
@@ -188,6 +189,17 @@ public static class HttpResultExtensions
     /// </list>
     /// </returns>
     /// <remarks>
+    /// <para>
+    /// Status codes are resolved via <see cref="TrellisAspOptions"/>, which is configured by
+    /// calling <c>AddTrellisAsp</c> at startup. Any mapping can be overridden:
+    /// <code>
+    /// builder.Services.AddTrellisAsp(options =>
+    /// {
+    ///     options.MapError&lt;DomainError&gt;(StatusCodes.Status400BadRequest);
+    /// });
+    /// </code>
+    /// If <c>AddTrellisAsp</c> is not called, the default mappings shown above are used.
+    /// </para>
     /// <para>
     /// All responses use Problem Details format (RFC 7807) which provides a standard way to
     /// communicate errors in HTTP APIs. The format includes:
@@ -256,28 +268,17 @@ public static class HttpResultExtensions
     /// </example>
     public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Error error)
     {
+        var statusCode = TrellisAspOptions.Instance.GetStatusCode(error);
+
         if (error is ValidationError validationError)
         {
             Dictionary<string, string[]> errors = validationError.FieldErrors
                 .GroupBy(x => x.FieldName)
                 .ToDictionary(x => x.Key, x => x.SelectMany(y => y.Details).ToArray());
 
-            return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance);
+            return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance, statusCode);
         }
 
-        var status = error switch
-        {
-            NotFoundError => StatusCodes.Status404NotFound,
-            BadRequestError => StatusCodes.Status400BadRequest,
-            ConflictError => StatusCodes.Status409Conflict,
-            UnauthorizedError => StatusCodes.Status401Unauthorized,
-            ForbiddenError => StatusCodes.Status403Forbidden,
-            DomainError => StatusCodes.Status422UnprocessableEntity,
-            RateLimitError => StatusCodes.Status429TooManyRequests,
-            UnexpectedError => StatusCodes.Status500InternalServerError,
-            ServiceUnavailableError => StatusCodes.Status503ServiceUnavailable,
-            _ => StatusCodes.Status500InternalServerError
-        };
-        return Results.Problem(error.Detail, error.Instance, status);
+        return Results.Problem(error.Detail, error.Instance, statusCode);
     }
 }

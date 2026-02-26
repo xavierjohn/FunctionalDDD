@@ -128,11 +128,12 @@ public static class ActionResultExtensions
     /// <param name="error">The domain error to convert.</param>
     /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
     /// <returns>
-    /// An ActionResult with Problem Details (RFC 7807) response containing:
+    /// An ActionResult with Problem Details (RFC 7807) response. The HTTP status code is resolved
+    /// from <see cref="TrellisAspOptions"/> (configured via <c>AddTrellisAsp</c>). The default mappings are:
     /// <list type="table">
     ///     <listheader>
     ///         <term>Domain Error Type</term>
-    ///         <description>HTTP Status Code</description>
+    ///         <description>Default HTTP Status Code</description>
     ///     </listheader>
     ///     <item>
     ///         <term><see cref="ValidationError"/></term>
@@ -182,6 +183,17 @@ public static class ActionResultExtensions
     /// </returns>
     /// <remarks>
     /// <para>
+    /// Status codes are resolved via <see cref="TrellisAspOptions"/>, which is configured by
+    /// calling <c>AddTrellisAsp</c> at startup. Any mapping can be overridden:
+    /// <code>
+    /// builder.Services.AddTrellisAsp(options =>
+    /// {
+    ///     options.MapError&lt;DomainError&gt;(StatusCodes.Status400BadRequest);
+    /// });
+    /// </code>
+    /// If <c>AddTrellisAsp</c> is not called, the default mappings shown above are used.
+    /// </para>
+    /// <para>
     /// All responses use Problem Details format (RFC 7807) which provides a standard way to
     /// communicate errors in HTTP APIs. The format includes:
     /// <list type="bullet">
@@ -214,20 +226,14 @@ public static class ActionResultExtensions
     /// </code>
     /// </example>
     public static ActionResult<TValue> ToActionResult<TValue>(this Error error, ControllerBase controllerBase)
-    => error switch
     {
-        NotFoundError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status404NotFound),
-        ValidationError validation => ValidationErrors<TValue>(string.IsNullOrEmpty(error.Detail) ? null : error.Detail, validation, error.Instance, controllerBase),
-        BadRequestError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status400BadRequest),
-        ConflictError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status409Conflict),
-        UnauthorizedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status401Unauthorized),
-        ForbiddenError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status403Forbidden),
-        DomainError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status422UnprocessableEntity),
-        RateLimitError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status429TooManyRequests),
-        UnexpectedError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError),
-        ServiceUnavailableError => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status503ServiceUnavailable),
-        _ => (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, StatusCodes.Status500InternalServerError)
-    };
+        var statusCode = TrellisAspOptions.Instance.GetStatusCode(error);
+
+        if (error is ValidationError validation)
+            return ValidationErrors<TValue>(string.IsNullOrEmpty(error.Detail) ? null : error.Detail, validation, error.Instance, controllerBase, statusCode);
+
+        return (ActionResult<TValue>)controllerBase.Problem(error.Detail, error.Instance, statusCode);
+    }
 
     /// <summary>
     /// Converts a <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> with support for partial content responses (HTTP 206).
@@ -387,13 +393,16 @@ public static class ActionResultExtensions
         return error.ToActionResult<TOut>(controllerBase);
     }
 
-    private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase)
+    private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase, int statusCode)
     {
         ModelStateDictionary modelState = new();
         foreach (var error in validation.FieldErrors)
             foreach (var detailError in error.Details)
                 modelState.AddModelError(error.FieldName, detailError);
 
-        return controllerBase.ValidationProblem(detail, instance, modelStateDictionary: modelState);
+        // Pass null when statusCode matches the ValidationProblem default (400)
+        // to preserve standard ControllerBase.ValidationProblem behavior.
+        int? effectiveStatusCode = statusCode == StatusCodes.Status400BadRequest ? null : statusCode;
+        return controllerBase.ValidationProblem(detail, instance, effectiveStatusCode, modelStateDictionary: modelState);
     }
 }
