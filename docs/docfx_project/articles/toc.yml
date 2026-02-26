@@ -48,8 +48,6 @@
   items:
   - name: Aggregate Factory Pattern
     href: aggregate-factory-pattern.md
-  - name: Specification Pattern Alternative
-    href: specification-pattern.md
   - name: RequiredEnum
     href: required-enum.md
 - name: Analyzers
