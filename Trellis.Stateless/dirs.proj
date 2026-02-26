@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+    <ItemGroup Label="source">
+        <ProjectReference Include="src\Trellis.Stateless.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="test">
+        <ProjectReference Include="tests\Trellis.Stateless.Tests.csproj" />
+    </ItemGroup>
+
+</Project>
