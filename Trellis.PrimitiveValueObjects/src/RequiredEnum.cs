@@ -160,7 +160,19 @@ public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccess
     /// Gets the auto-generated integer value for persistence.
     /// This is an infrastructure concern - values are assigned based on declaration order (0, 1, 2, ...).
     /// </summary>
-    public int Value { get; private set; }
+    /// <remarks>
+    /// Value is lazily initialized on first access to avoid chicken-and-egg issues
+    /// with static field initialization order.
+    /// </remarks>
+    public int Value => _value ?? InitializeValue();
+
+    private int? _value;
+
+    private int InitializeValue()
+    {
+        _ = GetCache(); // Populates _value
+        return _value!.Value;
+    }
 
     /// <summary>
     /// Initializes a new instance. The Name is auto-derived from the field name.
@@ -250,7 +262,7 @@ public abstract class RequiredEnum<[DynamicallyAccessedMembers(DynamicallyAccess
             {
                 // Auto-derive Name from field name and assign Value
                 member._name = field.Name;
-                member.Value = index++;
+                member._value = index++;
                 yield return member;
             }
         }
