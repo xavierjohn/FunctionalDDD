@@ -1,6 +1,6 @@
 ﻿# Performance Benchmarks
 
-This document provides detailed performance analysis of the FunctionalDDD library using [BenchmarkDotNet](https://benchmarkdotnet.org/).
+This document provides detailed performance analysis of the Trellis library using [BenchmarkDotNet](https://benchmarkdotnet.org/).
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ This document provides detailed performance analysis of the FunctionalDDD librar
 
 ## Overview
 
-The FunctionalDDD library is designed with performance in mind. All benchmarks are run using BenchmarkDotNet with memory diagnostics enabled to track both execution time and memory allocations.
+The Trellis library is designed with performance in mind. All benchmarks are run using BenchmarkDotNet with memory diagnostics enabled to track both execution time and memory allocations.
 
 **Test Environment:**
 - **.NET Version**: 10.0
@@ -389,13 +389,13 @@ dotnet run --project Benchmark/Benchmark.csproj -c Release -- --filter *ROP* --m
 
 ## Conclusion
 
-The FunctionalDDD library provides **negligible performance overhead** while offering significant improvements in:
+The Trellis library provides **negligible performance overhead** while offering significant improvements in:
 - **Code clarity** - Railway-oriented style is more readable
 - **Error handling** - Explicit error propagation and aggregation
 - **Testability** - Pure functions are easier to test
 - **Maintainability** - Composable operations reduce complexity
 
-The **~11-16 nanosecond overhead** (measured on .NET 10.0.1) is **insignificant** compared to typical application operations (database, HTTP, file I/O), making FunctionalDDD an excellent choice for building robust, maintainable applications without sacrificing performance.
+The **~11-16 nanosecond overhead** (measured on .NET 10.0.1) is **insignificant** compared to typical application operations (database, HTTP, file I/O), making Trellis an excellent choice for building robust, maintainable applications without sacrificing performance.
 
 **Performance Summary by Operation:**
 - **Map**: 4.6-48 ns (transformations)

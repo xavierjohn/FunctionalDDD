@@ -3,7 +3,7 @@
 This guide covers error types, discriminated matching, and transformation patterns in Railway Oriented Programming.
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 using System.Collections.Immutable;
 ```
 

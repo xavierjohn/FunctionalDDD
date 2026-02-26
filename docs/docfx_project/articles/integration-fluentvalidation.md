@@ -2,9 +2,9 @@
 
 **Level:** Intermediate 📚 | **Time:** 30-40 min | **Prerequisites:** [Basics](basics.md)
 
-Integrate FluentValidation with Railway-Oriented Programming using the **FunctionalDdd.FluentValidation** adapter. This package provides seamless conversion from FluentValidation results to `Result<T>`, enabling you to use FluentValidation's powerful validation framework within your ROP workflows.
+Integrate FluentValidation with Railway-Oriented Programming using the **Trellis.FluentValidation** adapter. This package provides seamless conversion from FluentValidation results to `Result<T>`, enabling you to use FluentValidation's powerful validation framework within your ROP workflows.
 
-> **Note:** FunctionalDdd.FluentValidation is an **adapter library** that bridges FluentValidation and Railway-Oriented Programming. It does not replace or extend FluentValidation—it simply converts FluentValidation's validation results to `Result<T>`. For comprehensive FluentValidation documentation, see the [official FluentValidation docs](https://docs.fluentvalidation.net/).
+> **Note:** Trellis.FluentValidation is an **adapter library** that bridges FluentValidation and Railway-Oriented Programming. It does not replace or extend FluentValidation—it simply converts FluentValidation's validation results to `Result<T>`. For comprehensive FluentValidation documentation, see the [official FluentValidation docs](https://docs.fluentvalidation.net/).
 
 ## Table of Contents
 
@@ -21,12 +21,12 @@ Integrate FluentValidation with Railway-Oriented Programming using the **Functio
 
 ```bash
 dotnet add package FluentValidation
-dotnet add package FunctionalDdd.FluentValidation
+dotnet add package Trellis.FluentValidation
 ```
 
 ## What the Adapter Provides
 
-The **FunctionalDdd.FluentValidation** adapter provides extension methods to convert FluentValidation results to `Result<T>`:
+The **Trellis.FluentValidation** adapter provides extension methods to convert FluentValidation results to `Result<T>`:
 
 ### Core Extension Methods
 
@@ -79,7 +79,7 @@ return validator.ValidateToResult(command);
 
 ```csharp
 using FluentValidation;
-using FunctionalDdd;
+using Trellis;
 
 // 1. Define your FluentValidation validator (standard FluentValidation)
 public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
@@ -132,7 +132,7 @@ Use FluentValidation's `InlineValidator` for simple validation within aggregates
 
 ```csharp
 using FluentValidation;
-using FunctionalDdd;
+using Trellis;
 
 public class User : Aggregate<UserId>
 {

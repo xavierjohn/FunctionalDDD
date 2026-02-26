@@ -248,7 +248,7 @@ public class UserRepository : IUserRepository
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using FunctionalDdd;
+using Trellis;
 
 public interface IUserRepository
 {
@@ -822,7 +822,7 @@ Configure strongly-typed value objects (`RequiredGuid`, `RequiredUlid`, `Require
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.Primitives;
 
 public class AppDbContext : DbContext
 {
@@ -953,7 +953,7 @@ var orders = await context.Orders
 
 ### Complete Example
 
-See the [EF Core Example](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
+See the [EF Core Example](https://github.com/xavierjohn/Trellis/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
 
 - `RequiredUlid<T>` for time-ordered identifiers (`OrderId`, `CustomerId`)
 - `RequiredGuid<T>` for traditional identifiers (`ProductId`)

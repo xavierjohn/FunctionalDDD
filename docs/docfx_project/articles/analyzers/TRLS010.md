@@ -6,7 +6,7 @@ Instantiating the base `Error` class directly instead of using specific error fa
 
 ## Rule Description
 
-FunctionalDDD provides specific error types (ValidationError, NotFoundError, UnauthorizedError, etc.) that enable type-safe error handling with `MatchError`.
+Trellis provides specific error types (ValidationError, NotFoundError, UnauthorizedError, etc.) that enable type-safe error handling with `MatchError`.
 
 Using the base `Error` class directly:
 - Prevents type-safe pattern matching

@@ -144,7 +144,7 @@ builder.Services.AddOpenTelemetry()
 ```json
 {
   "OpenTelemetry": {
-    "ServiceName": "FunctionalDddApi",
+    "ServiceName": "TrellisApi",
     "Endpoint": "https://otel-collector.example.com:4317"
   }
 }

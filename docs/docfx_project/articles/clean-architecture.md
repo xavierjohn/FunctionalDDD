@@ -1,4 +1,4 @@
-# Architecture Patterns with Functional DDD
+# Architecture Patterns with Trellis
 
 **Level:** Intermediate to Advanced 📚→🚀 | **Time:** 30-60 min | **Prerequisites:** [Basics](basics.md), [Error Handling](error-handling.md)
 

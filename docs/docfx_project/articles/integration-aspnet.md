@@ -2,7 +2,7 @@
 
 **Level:** Intermediate | **Time:** 20-30 min | **Prerequisites:** [Basics](basics.md)
 
-Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalDdd.Asp** package. This package provides extension methods to convert `Result<T>` to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.
+Integrate Railway-Oriented Programming with ASP.NET Core using the **Trellis.Asp** package. This package provides extension methods to convert `Result<T>` to HTTP responses with automatic error-to-status-code mapping and Problem Details (RFC 7807) support.
 
 > **Note:** This guide focuses on **ASP.NET Core integration only**. For validation, see [FluentValidation Integration](integration-fluentvalidation.md). For data access, see [Entity Framework Core Integration](integration-ef.md).
 
@@ -21,12 +21,36 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **FunctionalD
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.Asp
+dotnet add package Trellis.Asp
 ```
+
+## Configuration
+
+### Default Setup
+
+Register Trellis ASP.NET Core services with default error-to-status-code mappings:
+
+```csharp
+builder.Services.AddTrellisAsp();
+```
+
+### Custom Error Mappings
+
+Override any default mapping:
+
+```csharp
+builder.Services.AddTrellisAsp(options =>
+{
+    options.MapError<DomainError>(StatusCodes.Status400BadRequest); // override 422 → 400
+    options.MapError<ConflictError>(StatusCodes.Status422UnprocessableEntity); // override 409 → 422
+});
+```
+
+Teams that accept the defaults don't need to configure anything — `AddTrellisAsp()` with no options uses the standard mappings.
 
 ## What the Package Provides
 
-The **FunctionalDdd.Asp** package provides extension methods to convert `Result<T>` to HTTP responses:
+The **Trellis.Asp** package provides extension methods to convert `Result<T>` to HTTP responses:
 
 ### Core Extension Methods
 
@@ -57,7 +81,7 @@ Task<IResult> ToHttpResultAsync<T>(this Task<Result<T>> resultTask);
 
 ## Scalar Value Auto-Validation
 
-The **FunctionalDdd.Asp** package provides automatic validation for any type implementing `IScalarValue<TSelf, TPrimitive>`. This includes DDD value objects (like `ScalarValueObject<T>`) as well as custom implementations. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
+The **Trellis.Asp** package provides automatic validation for any type implementing `IScalarValue<TSelf, TPrimitive>`. This includes DDD value objects (like `ScalarValueObject<T>`) as well as custom implementations. This eliminates the need for manual `Result.Combine()` calls in controllers and works seamlessly with ASP.NET Core's model binding.
 
 ### Setup
 
@@ -80,7 +104,7 @@ app.Run();
 Types implementing `IScalarValue` are automatically validated during model binding:
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 
 // Define custom value objects (source generator adds IScalarValue automatically)
 public partial class FirstName : RequiredString<FirstName> { }
@@ -225,7 +249,7 @@ Use `ToActionResult` to convert `Result<T>` to `ActionResult<T>`:
 ### Simple Example
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -286,7 +310,7 @@ public class UsersController : ControllerBase
 Use `ToHttpResult` for Minimal API endpoints:
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 
 var builder = WebApplication.CreateBuilder(args);
 

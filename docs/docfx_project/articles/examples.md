@@ -1,27 +1,27 @@
 ﻿# Examples
 
-This page provides quick code snippets to get you started. For comprehensive real-world examples, see the [Examples Directory](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples).
+This page provides quick code snippets to get you started. For comprehensive real-world examples, see the [Examples Directory](https://github.com/xavierjohn/Trellis/tree/main/Examples).
 
 ## Real-World Examples
 
 The repository includes production-ready examples demonstrating complete systems:
 
-### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample)
+### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/Trellis/tree/main/Examples/EcommerceExample)
 Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, recovery patterns, and transaction-like behavior.
 
 **Key Concepts**: Aggregate lifecycle, recovery, parallel validation, async workflows
 
-### 🏦 [Banking Transactions](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample)
+### 🏦 [Banking Transactions](https://github.com/xavierjohn/Trellis/tree/main/Examples/BankingExample)
 Banking system with fraud detection, daily limits, overdraft protection, and interest calculations. Shows security patterns and state machines.
 
 **Key Concepts**: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail
 
-### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWeb/SampleWebApplication)
+### 🌐 [Web API Integration](https://github.com/xavierjohn/Trellis/tree/main/Examples/SampleWeb/SampleWebApplication)
 ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.
 
 **Key Concepts**: ToActionResult, ToHttpResult, API integration, HTTP status codes, automatic value object validation
 
-See the [Examples README](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/README.md) for a complete guide including complexity ratings, learning paths, and common patterns.
+See the [Examples README](https://github.com/xavierjohn/Trellis/tree/main/Examples/README.md) for a complete guide including complexity ratings, learning paths, and common patterns.
 
 ---
 
