@@ -1,6 +1,6 @@
-﻿using System.Text.Json.Serialization;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using System.Text.Json.Serialization;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApi.API;

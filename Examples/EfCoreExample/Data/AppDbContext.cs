@@ -1,10 +1,10 @@
-﻿namespace EfCoreExample.Data;
+namespace EfCoreExample.Data;
 
 using System.Globalization;
 using EfCoreExample.Entities;
 using EfCoreExample.Enums;
 using EfCoreExample.ValueObjects;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

@@ -1,5 +1,5 @@
-﻿using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApiNoAot.API;

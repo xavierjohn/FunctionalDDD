@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // EF Core Example with FunctionalDDD Primitive Value Objects
 // =============================================================================
 // This example demonstrates seamless integration of strongly-typed value objects
@@ -21,7 +21,7 @@ using System.Text;
 using EfCoreExample.Data;
 using EfCoreExample.Entities;
 using EfCoreExample.Enums;
-using FunctionalDdd;
+using Trellis;
 using Microsoft.EntityFrameworkCore;
 
 // Enable UTF-8 output for Unicode characters (emojis, box-drawing, etc.)

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Benchmark</AssemblyName>
+    <RootNamespace>Benchmark</RootNamespace>
+    <IsPackable>false</IsPackable>
+    
+    <!-- Benchmark projects don't need AOT/Trim compatibility or XML docs -->
+    <EnableAotAnalyzer>false</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Trellis.PrimitiveValueObjects\generator\Trellis.PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Trellis.PrimitiveValueObjects\src\Trellis.PrimitiveValueObjects.csproj" />
+    <ProjectReference Include="..\Examples\SampleWeb\SampleUserLibrary\SampleUserLibrary.csproj" />
+  </ItemGroup>
+</Project>

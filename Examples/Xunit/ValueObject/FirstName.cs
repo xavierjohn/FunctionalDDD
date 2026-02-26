@@ -1,7 +1,7 @@
-﻿namespace Example;
+namespace Example;
 
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 internal partial class FirstName : RequiredString<FirstName>
 {

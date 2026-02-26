@@ -1,6 +1,6 @@
-﻿namespace Example.Tests;
+namespace Example.Tests;
 
-using FunctionalDdd;
+using Trellis;
 using Xunit;
 
 /// <summary>

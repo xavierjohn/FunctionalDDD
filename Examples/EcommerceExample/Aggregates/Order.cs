@@ -1,10 +1,10 @@
-﻿namespace EcommerceExample.Aggregates;
+namespace EcommerceExample.Aggregates;
 
 using EcommerceExample.Entities;
 using EcommerceExample.Events;
 using EcommerceExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Represents the status of an order in the system.

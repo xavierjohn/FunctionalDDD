@@ -1,7 +1,7 @@
-﻿namespace EfCoreExample.Entities;
+namespace EfCoreExample.Entities;
 
 using EfCoreExample.ValueObjects;
-using FunctionalDdd;
+using Trellis;
 
 /// <summary>
 /// Product entity with strongly-typed ID (GUID) and validated name.

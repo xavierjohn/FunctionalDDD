@@ -1,6 +1,6 @@
-﻿namespace SampleUserLibrary;
+namespace SampleUserLibrary;
 
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.PrimitiveValueObjects;
 
 public partial class FirstName : RequiredString<FirstName>
 {

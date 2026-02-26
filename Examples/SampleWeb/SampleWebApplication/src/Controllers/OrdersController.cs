@@ -1,6 +1,6 @@
-﻿namespace SampleWebApplication.Controllers;
+namespace SampleWebApplication.Controllers;
 
-using FunctionalDdd;
+using Trellis;
 using Microsoft.AspNetCore.Mvc;
 using SampleUserLibrary;
 

@@ -1,6 +1,6 @@
-﻿namespace SampleUserLibrary;
+namespace SampleUserLibrary;
 
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// A generic name value object that can be used for any name field.

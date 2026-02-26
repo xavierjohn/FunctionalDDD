@@ -1,8 +1,8 @@
-﻿namespace SampleWebApplication.Controllers;
+namespace SampleWebApplication.Controllers;
 
 using System.Globalization;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using SampleUserLibrary;
 

@@ -1,6 +1,6 @@
-﻿namespace SampleMinimalApi.API;
+namespace SampleMinimalApi.API;
 
-using FunctionalDdd;
+using Trellis;
 using SampleUserLibrary;
 
 public static class OrderRoutes
