@@ -1,10 +1,10 @@
 ﻿# Integration
 
-Integrate FunctionalDDD with popular .NET frameworks and tools for building production-ready applications with Railway-Oriented Programming.
+Integrate Trellis with popular .NET frameworks and tools for building production-ready applications with Railway-Oriented Programming.
 
 ## Overview
 
-This section provides comprehensive guides for integrating the FunctionalDDD library with:
+This section provides comprehensive guides for integrating the Trellis library with:
 
 - **ASP.NET Core** - MVC Controllers and Minimal API
 - **HTTP Client** - HttpClient extensions for Result/Maybe patterns
@@ -122,13 +122,13 @@ Enable distributed tracing and monitoring:
 
 ```bash
 # ASP.NET Core integration
-dotnet add package FunctionalDdd.Asp
+dotnet add package Trellis.Asp
 
 # HttpClient integration
-dotnet add package FunctionalDdd.Http
+dotnet add package Trellis.Http
 
 # FluentValidation integration
-dotnet add package FunctionalDdd.FluentValidation
+dotnet add package Trellis.FluentValidation
 dotnet add package FluentValidation
 
 # For OpenTelemetry tracing
@@ -140,7 +140,7 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 ### 2. Configure Services (Program.cs)
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 using FluentValidation;
 using OpenTelemetry.Trace;
 using Mediator;
@@ -174,8 +174,8 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracerBuilder =>
     {
         tracerBuilder
-            .AddFunctionalDddRopInstrumentation()
-            .AddFunctionalDddCvoInstrumentation()
+            .AddResultsInstrumentation()
+            .AddPrimitiveValueObjectInstrumentation()
             .AddAspNetCoreInstrumentation()
             .AddEntityFrameworkCoreInstrumentation()
             .AddOtlpExporter();
@@ -222,24 +222,24 @@ Here's how all the integrations work together:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      API Layer (ASP.NET Core)                │
-│  Controllers/Endpoints → ToActionResult/ToHttpResult         │
+│                      API Layer (ASP.NET Core)               │
+│  Controllers/Endpoints → ToActionResult/ToHttpResult        │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────┼────────────────────────────────────┐
-│                   Application Layer (Mediator)               │
+│                   Application Layer (Mediator)              │
 │  Commands/Queries → FluentValidation → Result<T>            │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────┼────────────────────────────────────┐
-│                      Domain Layer                            │
-│  Aggregates, Value Objects, Business Rules                   │
+│                      Domain Layer                           │
+│  Aggregates, Value Objects, Business Rules                  │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────┼────────────────────────────────────┐
-│              Infrastructure Layer (EF Core)                  │
-│  Repositories → Result<T> (no exceptions)                    │
-└──────────────────────────────────────────────────────────────┘
+│              Infrastructure Layer (EF Core)                 │
+│  Repositories → Result<T> (no exceptions)                   │
+└─────────────────────────────────────────────────────────────┘
 
                   All layers traced with OpenTelemetry
 ```
@@ -305,7 +305,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracerBuilder =>
     {
         tracerBuilder
-            .AddFunctionalDddRopInstrumentation()
+            .AddResultsInstrumentation()
             .AddOtlpExporter();
     });
 ```

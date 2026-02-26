@@ -25,7 +25,7 @@ public class Product : Aggregate<ProductId>
     // ✅ Pattern 3: TryCreate for NEW aggregates (generates ID)
     public static Result<Product> TryCreate(...) =>
         // ... validation ...
-        .Map(() => new Product(ProductId.NewUnique(), ...));
+        .Map(() => new Product(ProductId.NewUniqueV7(), ...));
 
     // ✅ Pattern 4: TryCreateExisting for EXISTING aggregates (accepts ID)
     public static Result<Product> TryCreateExisting(ProductId id, ...) =>
@@ -133,7 +133,7 @@ public Result<Product> DeserializeProduct(ProductData data) =>
 // ❌ BAD: Can't load existing products!
 public static Result<Product> TryCreate(string name, ...) =>
     // ...
-    .Map(() => new Product(ProductId.NewUnique(), ...));  // Always new ID!
+    .Map(() => new Product(ProductId.NewUniqueV7(), ...));  // Always new ID!
 
 // Problem 1: Can't load from database
 var existingProduct = Product.TryCreate(dbData.Name, ...);  // ❌ Creates NEW ID!
@@ -150,7 +150,7 @@ var product = Product.TryCreate(...);  // ❌ Generates random ID, can't use tes
 
 // For creating NEW products
 public static Result<Product> TryCreate(string name, ...) =>
-    .Map(() => new Product(ProductId.NewUnique(), ...));  // ✅ New ID
+    .Map(() => new Product(ProductId.NewUniqueV7(), ...));  // ✅ New ID
 
 // For EXISTING products
 public static Result<Product> TryCreateExisting(ProductId id, string name, ...) =>

@@ -1,6 +1,6 @@
-﻿# API Documentation for FunctionalDdd Library
+﻿# API Documentation for Trellis
 
-Welcome to the FunctionalDdd API reference. This library brings Railway-Oriented Programming (ROP) and Domain-Driven Design (DDD) patterns to C#, enabling you to write robust, maintainable code with explicit error handling.
+Welcome to the Trellis API reference. Trellis combines Railway-Oriented Programming (ROP) with Domain-Driven Design (DDD) to provide structured building blocks for enterprise software in C#.
 
 ## Core Packages
 
@@ -8,7 +8,7 @@ Welcome to the FunctionalDdd API reference. This library brings Railway-Oriented
 
 > **New to Railway-Oriented Programming?** The concept uses a railway track analogy where operations flow along a success track or switch to an error track. For a gentle introduction to the philosophy, see [this introductory article](https://blog.logrocket.com/what-is-railway-oriented-programming/). Our documentation provides a comprehensive, production-ready C# implementation with type safety, async support, and real-world patterns.
 
-#### [Result&lt;T&gt;](xref:FunctionalDdd.Result`1)
+#### [Result&lt;T&gt;](xref:Trellis.Result`1)
 
 The `Result<T>` monad represents an operation that can either succeed with a value of type `T` or fail with an `Error`. This is the foundation of Railway-Oriented Programming, enabling explicit error handling without exceptions.
 
@@ -124,7 +124,7 @@ public ActionResult<Unit> DeleteUser(Guid id) =>
 - `Result.Success()` - Create successful unit result
 - `Result.Failure(Error error)` - Create failed unit result
 
-#### [Maybe&lt;T&gt;](xref:FunctionalDdd.Maybe`1)
+#### [Maybe&lt;T&gt;](xref:Trellis.Maybe`1)
 
 The `Maybe<T>` monad represents an optional value that may or may not exist. Use it to eliminate null reference exceptions and make optionality explicit in your type system. Think of it as a type-safe alternative to nullable references.
 
@@ -188,7 +188,7 @@ if (repository.FindUserByEmail(email).TryGetValue(out var user))
 - **Maybe**: When absence is a valid, expected state (e.g., optional config, search results)
 - **Result**: When you need to communicate *why* something failed (validation, business rules)
 
-#### [Error Types](xref:FunctionalDdd.Error)
+#### [Error Types](xref:Trellis.Error)
 
 A hierarchy of error types for representing different failure scenarios:
 - `ValidationError` - Input validation failures with field-level details
@@ -204,7 +204,7 @@ A hierarchy of error types for representing different failure scenarios:
 
 ## Domain-Driven Design
 
-### [Aggregate](xref:FunctionalDdd.Aggregate`1)
+### [Aggregate](xref:Trellis.Aggregate`1)
 
 A DDD aggregate is a cluster of domain objects that can be treated as a single unit. An aggregate will have one of its component objects be the aggregate root. Any references from outside the aggregate should only go to the aggregate root. The root can thus ensure the integrity of the aggregate as a whole.
 
@@ -212,11 +212,11 @@ A DDD aggregate is a cluster of domain objects that can be treated as a single u
 
 [Read more about DDD Aggregates](https://martinfowler.com/bliki/DDD_Aggregate.html)
 
-### [Entity](xref:FunctionalDdd.Entity`1)
+### [Entity](xref:Trellis.Entity`1)
 
 A domain object that has a unique identity that runs through time and different representations. Two entities with the same identity are considered the same, even if their attributes differ.
 
-### [ValueObject](xref:FunctionalDdd.ValueObject)
+### [ValueObject](xref:Trellis.ValueObject)
 
 A value object is an object that represents a descriptive aspect of the domain with no conceptual identity. It is a small, simple object that encapsulates a concept from your problem domain. Unlike an aggregate, a value object does not have a unique identity and is immutable. Value objects support and enrich the ubiquitous language of your domain.
 
@@ -228,13 +228,13 @@ A value object is an object that represents a descriptive aspect of the domain w
 
 ### ASP.NET Core Integration
 
-#### [ActionResult Extensions](xref:FunctionalDdd.ActionResultExtensions)
+#### [ActionResult Extensions](xref:Trellis.ActionResultExtensions)
 
 Convert `Result<T>` to ASP.NET Core action results for MVC controllers.
 
 **Features:** Automatic status code mapping, Problem Details (RFC 7807) format, field-level validation errors
 
-#### [HttpResult Extensions](xref:FunctionalDdd.HttpResultExtensions)
+#### [HttpResult Extensions](xref:Trellis.HttpResultExtensions)
 
 Convert `Result<T>` to `IResult` for Minimal API endpoints.
 
@@ -242,7 +242,7 @@ Convert `Result<T>` to `IResult` for Minimal API endpoints.
 
 ### HTTP Client Integration
 
-#### [HttpResponseExtensions](xref:FunctionalDdd.HttpResponseExtensions)
+#### [HttpResponseExtensions](xref:Trellis.HttpResponseExtensions)
 
 Extension methods for `HttpResponseMessage` that enable functional HTTP communication with Result types.
 
@@ -255,7 +255,7 @@ Extension methods for `HttpResponseMessage` that enable functional HTTP communic
 
 ### FluentValidation Integration
 
-#### [FluentValidation Extensions](xref:FunctionalDdd.FluentValidationResultExtensions)
+#### [FluentValidation Extensions](xref:Trellis.FluentValidationResultExtensions)
 
 Convert FluentValidation results to `Result<T>` for seamless integration with Railway-Oriented Programming.
 
@@ -269,25 +269,25 @@ Convert FluentValidation results to `Result<T>` for seamless integration with Ra
 
 A validated email address value object. Ensures email format correctness at construction.
 
-**Type:** `FunctionalDdd.EmailAddress`
+**Type:** `Trellis.EmailAddress`
 
 ### RequiredString&lt;TSelf&gt;
 
 A non-null, non-empty string value object. Prevents primitive obsession for required text fields.
 
-**Type:** `FunctionalDdd.RequiredString<TSelf>`
+**Type:** `Trellis.RequiredString<TSelf>`
 
 ### RequiredGuid&lt;TSelf&gt;
 
 A validated GUID value object that cannot be empty (Guid.Empty).
 
-**Type:** `FunctionalDdd.RequiredGuid<TSelf>`
+**Type:** `Trellis.RequiredGuid<TSelf>`
 
 ### ScalarValueObject&lt;TSelf, T&gt;
 
 Base class for creating custom value objects that wrap a single primitive value.
 
-**Type:** `FunctionalDdd.ScalarValueObject<TSelf, T>`
+**Type:** `Trellis.ScalarValueObject<TSelf, T>`
 
 **Common examples:** `FirstName`, `LastName`, `OrderId`, `UserId`, `ProductCode`
 
@@ -299,7 +299,7 @@ Base class for creating custom value objects that wrap a single primitive value.
 
 Built-in distributed tracing support for Railway-Oriented Programming operations.
 
-**Type:** `FunctionalDdd.ResultsTraceProviderBuilderExtensions`
+**Type:** `Trellis.ResultsTraceProviderBuilderExtensions`
 
 **Features:**
 - Automatic span creation for `Bind`, `Map`, `Tap`, `Ensure` operations
@@ -322,9 +322,11 @@ Built-in distributed tracing support for Railway-Oriented Programming operations
 
 | Package | Description | NuGet |
 |---------|-------------|-------|
-| FunctionalDdd.RailwayOrientedProgramming | Core Result/Maybe types | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) |
-| FunctionalDdd.Asp | ASP.NET Core integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp) |
-| FunctionalDdd.Http | HTTP client extensions | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http) |
-| FunctionalDdd.FluentValidation | FluentValidation integration | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation) |
-| FunctionalDdd.PrimitiveValueObjects | Reusable value objects | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) |
-| FunctionalDdd.DomainDrivenDesign | DDD building blocks | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) |
+| Trellis.Results | Core Result/Maybe types | [![NuGet](https://img.shields.io/nuget/v/Trellis.Results.svg)](https://www.nuget.org/packages/Trellis.Results) |
+| Trellis.Asp | ASP.NET Core integration | [![NuGet](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp) |
+| Trellis.Http | HTTP client extensions | [![NuGet](https://img.shields.io/nuget/v/Trellis.Http.svg)](https://www.nuget.org/packages/Trellis.Http) |
+| Trellis.FluentValidation | FluentValidation integration | [![NuGet](https://img.shields.io/nuget/v/Trellis.FluentValidation.svg)](https://www.nuget.org/packages/Trellis.FluentValidation) |
+| Trellis.Primitives | Reusable value objects | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives) |
+| Trellis.DomainDrivenDesign | DDD building blocks | [![NuGet](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) |
+| Trellis.Analyzers | Roslyn analyzers | [![NuGet](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers) |
+| Trellis.Testing | Test helpers & assertions | [![NuGet](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing) |

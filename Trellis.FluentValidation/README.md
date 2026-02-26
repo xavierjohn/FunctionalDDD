@@ -1,8 +1,8 @@
 ﻿# Fluent Validation Extension
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.FluentValidation.svg)](https://www.nuget.org/packages/Trellis.FluentValidation)
 
-This library seamlessly integrates [FluentValidation](https://docs.fluentvalidation.net) with Railway Oriented Programming, converting FluentValidation errors into FunctionalDdd `ValidationError` objects.
+This library seamlessly integrates [FluentValidation](https://docs.fluentvalidation.net) with Railway Oriented Programming, converting FluentValidation errors into Trellis `ValidationError` objects.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ This library seamlessly integrates [FluentValidation](https://docs.fluentvalidat
 Install both packages via NuGet:
 
 ```bash
-dotnet add package FunctionalDdd.FluentValidation
+dotnet add package Trellis.FluentValidation
 dotnet add package FluentValidation
 ```
 
@@ -71,7 +71,7 @@ public partial class User : Aggregate<UserId>
     }
 
     private User(FirstName firstName, LastName lastName, EmailAddress email, int age)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV7())
     {
         FirstName = firstName;
         LastName = lastName;
@@ -175,5 +175,5 @@ public class User
 
 - [SAMPLES.md](SAMPLES.md) - Comprehensive examples and advanced patterns
 - [FluentValidation Documentation](https://docs.fluentvalidation.net) - Official FluentValidation docs
-- [Railway Oriented Programming](../RailwayOrientedProgramming/README.md) - Core Result<T> concepts
-- [Domain-Driven Design](../DomainDrivenDesign/README.md) - Entity and value object patterns
+- [Railway Oriented Programming](../Trellis.Results/README.md) - Core Result<T> concepts
+- [Domain-Driven Design](../Trellis.DomainDrivenDesign/README.md) - Entity and value object patterns

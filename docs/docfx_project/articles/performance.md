@@ -1,4 +1,4 @@
-# Performance
+﻿# Performance
 
 This guide covers performance characteristics, benchmarks, and optimization techniques.
 
@@ -303,7 +303,7 @@ dotnet add package BenchmarkDotNet
 ```csharp
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using FunctionalDdd;
+using Trellis;
 
 [MemoryDiagnoser]
 [ShortRunJob]
@@ -347,8 +347,8 @@ dotnet run -c Release --project YourBenchmarkProject
 ### View Full Project Benchmarks
 
 ```bash
-cd FunctionalDDD
-dotnet run --project Benchmark/Benchmark.csproj -c Release
+cd Trellis
+dotnet run --project Trellis.Benchmark/Trellis.Benchmark.csproj -c Release
 ```
 
 ## Performance FAQs

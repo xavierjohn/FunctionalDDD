@@ -1,6 +1,6 @@
-# FunctionalDdd.Asp — ASP.NET Core Extensions
+# Trellis.Asp — ASP.NET Core Extensions
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp)
 
 Comprehensive ASP.NET Core integration for functional domain-driven design, providing:
 
@@ -13,7 +13,7 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.Asp
+dotnet add package Trellis.Asp
 ```
 
 ## Scalar Value Validation
@@ -182,7 +182,7 @@ public record RegisterUserDto
 For Native AOT applications, add the source generator package:
 
 ```bash
-dotnet add package FunctionalDdd.AspSourceGenerator
+dotnet add package Trellis.AspSourceGenerator
 ```
 
 ```csharp
@@ -286,11 +286,11 @@ public static Result<Name> TryCreate(string? value, string? fieldName = null)
 
 ## Related Packages
 
-- [FunctionalDdd.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) — Core `Result<T>` type
-- [FunctionalDdd.PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) — Base value object types
-- [FunctionalDdd.DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) — Entity and aggregate patterns
-- [FunctionalDdd.AspSourceGenerator](https://www.nuget.org/packages/FunctionalDdd.AspSourceGenerator) — AOT source generator
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — Base value object types
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — Entity and aggregate patterns
+- [Trellis.AspSourceGenerator](https://www.nuget.org/packages/Trellis.AspSourceGenerator) — AOT source generator
 
 ## License
 
-MIT — see [LICENSE](https://github.com/xavierjohn/FunctionalDDD/blob/main/LICENSE) for details.
+MIT — see [LICENSE](https://github.com/xavierjohn/Trellis/blob/main/LICENSE) for details.

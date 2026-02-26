@@ -1,27 +1,27 @@
 ﻿# Examples
 
-This page provides quick code snippets to get you started. For comprehensive real-world examples, see the [Examples Directory](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples).
+This page provides quick code snippets to get you started. For comprehensive real-world examples, see the [Examples Directory](https://github.com/xavierjohn/Trellis/tree/main/Examples).
 
 ## Real-World Examples
 
 The repository includes production-ready examples demonstrating complete systems:
 
-### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EcommerceExample)
+### 🛒 [E-Commerce Order Processing](https://github.com/xavierjohn/Trellis/tree/main/Examples/EcommerceExample)
 Complete order processing with payment, inventory management, and email notifications. Demonstrates complex workflows, recovery patterns, and transaction-like behavior.
 
 **Key Concepts**: Aggregate lifecycle, recovery, parallel validation, async workflows
 
-### 🏦 [Banking Transactions](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/BankingExample)
+### 🏦 [Banking Transactions](https://github.com/xavierjohn/Trellis/tree/main/Examples/BankingExample)
 Banking system with fraud detection, daily limits, overdraft protection, and interest calculations. Shows security patterns and state machines.
 
 **Key Concepts**: Fraud detection, parallel fraud checks, MFA, account freeze, audit trail
 
-### 🌐 [Web API Integration](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/SampleWeb/SampleWebApplication)
+### 🌐 [Web API Integration](https://github.com/xavierjohn/Trellis/tree/main/Examples/SampleWeb/SampleWebApplication)
 ASP.NET Core MVC and Minimal API examples with automatic error-to-HTTP status mapping.
 
 **Key Concepts**: ToActionResult, ToHttpResult, API integration, HTTP status codes, automatic value object validation
 
-See the [Examples README](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/README.md) for a complete guide including complexity ratings, learning paths, and common patterns.
+See the [Examples README](https://github.com/xavierjohn/Trellis/tree/main/Examples/README.md) for a complete guide including complexity ratings, learning paths, and common patterns.
 
 ---
 
@@ -85,7 +85,7 @@ public class User : Aggregate<UserId>
     }
 
     private User(FirstName firstName, LastName lastName)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV7())
     {
         FirstName = firstName;
         LastName = lastName;
@@ -200,7 +200,7 @@ var result = await ProcessPaymentAsync(order, cancellationToken)
 
 **Key Points**:
 - `TapAsync` executes only on **success**
-- `TapErrorAsync` executes only on **failure**
+- `TapOnFailureAsync` executes only on **failure**
 - Side effects don't change the `Result` value
 - Perfect for logging, metrics, and notifications
 
@@ -227,23 +227,26 @@ var result = await GetUserFromCacheAsync(userId, cancellationToken)
 
 ### Retry Transient Failures
 
-Automatically retry operations that may fail temporarily:
+For retry logic, use [the .NET resilience library](https://learn.microsoft.com/en-us/dotnet/core/resilience/) — Trellis handles functional error flow, the resilience library handles transient fault tolerance:
 
 ```csharp
-var result = await RetryExtensions.RetryAsync(
-    operation: async ct => await CallExternalServiceAsync(ct),
-    maxRetries: 3,
-    initialDelay: TimeSpan.FromMilliseconds(100),
-    shouldRetry: error => error is ServiceUnavailableError,
-    cancellationToken: cancellationToken
-);
+// Configure HttpClient with the .NET resilience library
+services.AddHttpClient<IOrderService, OrderService>()
+    .AddStandardResilienceHandler();
+
+// Then use Trellis for functional error handling
+public async Task<Result<Order>> GetOrderAsync(string orderId, CancellationToken ct)
+{
+    return await _httpClient.GetAsync($"api/orders/{orderId}", ct)  // Resilience library handles retries
+        .HandleNotFoundAsync(Error.NotFound("Order", orderId))       // Trellis handles errors
+        .ReadResultFromJsonAsync(OrderJsonContext.Default.Order, ct);
+}
 ```
 
 **Key Points**:
-- Retries up to `maxRetries` times (3 in this example = 4 total attempts)
-- Exponential backoff with `initialDelay` (100ms, 200ms, 400ms)
-- `shouldRetry` predicate controls which errors to retry
-- Supports `CancellationToken` for graceful cancellation
+- Use the .NET resilience library for retry, circuit breaker, and timeout policies
+- Use Trellis for functional error handling and composition
+- They complement each other — resilience wraps the HTTP layer, Trellis wraps the result
 
 ### Read HTTP Response as Result
 

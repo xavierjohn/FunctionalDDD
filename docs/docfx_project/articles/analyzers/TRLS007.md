@@ -104,7 +104,7 @@ var customer = Customer.Create(name, email);
 **Using `TryCreate().Value` (bad):**
 ```
 Unhandled exception: System.InvalidOperationException: Result is in failure state.
-   at FunctionalDdd.Result`1.get_Value()
+   at Trellis.Result`1.get_Value()
    at MyApp.CreateCustomer()
 ```
 

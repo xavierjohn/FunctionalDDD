@@ -1,6 +1,6 @@
 ﻿# EF Core Example
 
-This example demonstrates seamless integration of FunctionalDDD primitive value objects with Entity Framework Core using an in-memory database.
+This example demonstrates seamless integration of Trellis primitive value objects with Entity Framework Core using an in-memory database.
 
 ## Features Demonstrated
 
@@ -101,7 +101,7 @@ public static Result<Customer> TryCreate(string? name, string? email) =>
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  EF Core Example with FunctionalDDD Primitive Value Objects      ║
+║  EF Core Example with Trellis Primitive Value Objects      ║
 ╚══════════════════════════════════════════════════════════════════╝
 
 📦 Creating Products...
@@ -132,6 +132,6 @@ public static Result<Customer> TryCreate(string? name, string? email) =>
 
 ## Related Documentation
 
-- [Primitive Value Objects README](../../PrimitiveValueObjects/README.md)
+- [Primitive Value Objects README](../../Trellis.Primitives/README.md)
 - [EF Core Integration Guide](../../docs/docfx_project/articles/integration-ef.md)
 - [Railway-Oriented Programming Basics](../../docs/docfx_project/articles/basics.md)

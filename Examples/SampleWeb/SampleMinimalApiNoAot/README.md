@@ -1,6 +1,6 @@
 ﻿# SampleMinimalApiNoAot - Reflection Fallback Example
 
-This example demonstrates that **FunctionalDDD.Asp works perfectly without source generation**, using automatic reflection fallback for standard .NET applications.
+This example demonstrates that **Trellis.Asp works perfectly without source generation**, using automatic reflection fallback for standard .NET applications.
 
 ## What This Example Proves
 
@@ -38,7 +38,7 @@ SampleMinimalApiNoAot/
 
 ### 1. Add Package
 ```bash
-dotnet add package FunctionalDdd.Asp
+dotnet add package Trellis.Asp
 ```
 
 ### 2. Configure Services
@@ -182,9 +182,9 @@ The **only difference** is:
 
 ## Related Documentation
 
-- **[Asp/docs/REFLECTION-FALLBACK.md](../../Asp/docs/REFLECTION-FALLBACK.md)** - Comprehensive guide to reflection fallback
-- **[Asp/README.md](../../Asp/README.md)** - Main library documentation
-- **[Asp/generator/README.md](../../Asp/generator/README.md)** - Source generator documentation
+- **[Asp/docs/REFLECTION-FALLBACK.md](../../Trellis.Asp/docs/REFLECTION-FALLBACK.md)** - Comprehensive guide to reflection fallback
+- **[Asp/README.md](../../Trellis.Asp/README.md)** - Main library documentation
+- **[Asp/generator/README.md](../../Trellis.Asp/generator/README.md)** - Source generator documentation
 - **[SampleMinimalApi](../SampleMinimalApi/README.md)** - AOT version with source generator
 
 

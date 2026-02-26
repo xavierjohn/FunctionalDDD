@@ -39,8 +39,8 @@ var state = OrderState.Draft;  // state.Name == "Draft"
 Use `partial` to enable source generation. The Name is automatically derived from the field name — pure domain, no strings needed:
 
 ```csharp
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.Primitives;
 
 public partial class PaymentMethod : RequiredEnum<PaymentMethod>
 {

@@ -1,13 +1,13 @@
 # Domain Driven Design
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)
 
 Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles.
 
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.DomainDrivenDesign
+dotnet add package Trellis.DomainDrivenDesign
 ```
 
 ## Quick Start
@@ -31,7 +31,7 @@ public class Customer : Entity<CustomerId>
     public static Result<Customer> TryCreate(string name) =>
         name.ToResult()
             .Ensure(n => !string.IsNullOrWhiteSpace(n), Error.Validation("Name required"))
-            .Map(n => new Customer(CustomerId.NewUnique(), n));
+            .Map(n => new Customer(CustomerId.NewUniqueV7(), n));
 }
 ```
 
@@ -86,7 +86,7 @@ public class Order : Aggregate<OrderId>
     }
     
     public static Result<Order> TryCreate(CustomerId customerId) =>
-        new Order(OrderId.NewUnique(), customerId).ToResult();
+        new Order(OrderId.NewUniqueV7(), customerId).ToResult();
     
     public Result<Order> AddLine(ProductId productId, string name, Money price, int qty) =>
         this.ToResult()
@@ -134,10 +134,10 @@ if (order.IsSuccess)
 
 ## Related Packages
 
-- [FunctionalDdd.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) — Core `Result<T>` type
-- [FunctionalDdd.PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) — RequiredString, RequiredGuid, EmailAddress, and more
-- [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) — ASP.NET Core integration
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — RequiredString, RequiredGuid, EmailAddress, and more
+- [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) — ASP.NET Core integration
 
 ## License
 
-MIT — see [LICENSE](https://github.com/xavierjohn/FunctionalDDD/blob/main/LICENSE) for details.
+MIT — see [LICENSE](https://github.com/xavierjohn/Trellis/blob/main/LICENSE) for details.

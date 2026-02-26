@@ -1,13 +1,27 @@
-﻿- name: Introduction
-  href: intro.md
-- name: Basics
-  href: basics.md
-- name: Examples
-  href: examples.md
-- name: Core Concepts
+﻿- name: Getting Started
   items:
-  - name: Result Type
-    href: basics.md#resulttvalue-type
+  - name: Introduction
+    href: intro.md
+  - name: Basics
+    href: basics.md
+  - name: Examples
+    href: examples.md
+- name: Building Blocks
+  items:
+  - name: Value Objects
+    items:
+    - name: RequiredEnum
+      href: required-enum.md
+  - name: Aggregates & Entities
+    items:
+    - name: Aggregate Factory Pattern
+      href: aggregate-factory-pattern.md
+  - name: Specifications
+    href: specifications.md
+  - name: State Machines
+    href: state-machines.md
+- name: Pipelines
+  items:
   - name: Core Operations
     items:
     - name: Combine (Validate Multiple)
@@ -26,7 +40,9 @@
       href: basics.md#match---unwrap-the-result
   - name: Error Handling
     href: error-handling.md
-- name: Integration
+  - name: Advanced Features
+    href: advanced-features.md
+- name: Integration Guides
   items:
   - name: Overview
     href: integration.md
@@ -44,19 +60,19 @@
   items:
   - name: Clean Architecture Example
     href: clean-architecture.md
-- name: Design Patterns
+- name: AI & Automation
   items:
-  - name: Aggregate Factory Pattern
-    href: aggregate-factory-pattern.md
-  - name: RequiredEnum
-    href: required-enum.md
-- name: Analyzers
-  href: analyzers/toc.yml
-- name: Advanced
+  - name: Trellis for AI Code Generation
+    href: ai-code-generation.md
+- name: Reference
   items:
-  - name: Advanced Features
-    href: advanced-features.md
+  - name: Analyzer Rules
+    href: analyzers/toc.yml
   - name: Debugging
     href: debugging.md
-  - name: Performance
+  - name: Performance & Benchmarks
     href: performance.md
+  - name: Benchmarks Data
+    href: BENCHMARKS.md
+  - name: Migration from FunctionalDDD
+    href: migration.md

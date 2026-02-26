@@ -7,7 +7,7 @@ This example demonstrates the new automatic validation feature for scalar value 
 Add one line to your `Program.cs`:
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 
 var builder = WebApplication.CreateBuilder(args);
 

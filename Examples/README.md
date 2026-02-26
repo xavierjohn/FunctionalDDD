@@ -1,6 +1,6 @@
 ﻿# Real-World Examples
 
-This directory contains comprehensive real-world examples demonstrating how to use the FunctionalDDD library in production scenarios. Each example showcases Railway Oriented Programming (ROP), Domain-Driven Design (DDD), and functional programming patterns.
+This directory contains comprehensive real-world examples demonstrating how to use the Trellis library in production scenarios. Each example showcases Railway Oriented Programming (ROP), Domain-Driven Design (DDD), and functional programming patterns.
 
 ## 🚀 Quick Start
 
@@ -409,10 +409,10 @@ Domain rules are explicit and enforced:
 
 ## Additional Resources
 
-- [Railway Oriented Programming README](../RailwayOrientedProgramming/README.md)
+- [Railway Oriented Programming README](../Trellis.Results/README.md)
 - [DDD Basics](../docs/docfx_project/articles/basics.md)
-- [API Integration Guide](../Asp/README.md)
-- [Value Objects Guide](../PrimitiveValueObjects/README.md)
+- [API Integration Guide](../Trellis.Asp/README.md)
+- [Value Objects Guide](../Trellis.Primitives/README.md)
 
 ## Contributing Examples
 

@@ -6,7 +6,7 @@ Learn how to use HttpClient with Railway-Oriented Programming for functional HTT
 
 ## Overview
 
-The `FunctionalDdd.Http` package provides extension methods for `HttpResponseMessage` that integrate seamlessly with Railway-Oriented Programming patterns. Instead of dealing with exceptions and manual status code checks, you get clean, composable operations that return `Result<T>`.
+The `Trellis.Http` package provides extension methods for `HttpResponseMessage` that integrate seamlessly with Railway-Oriented Programming patterns. Instead of dealing with exceptions and manual status code checks, you get clean, composable operations that return `Result<T>`.
 
 **What you'll learn:**
 - ✅ Handle specific HTTP status codes (401, 403, 404, 409) functionally
@@ -18,7 +18,7 @@ The `FunctionalDdd.Http` package provides extension methods for `HttpResponseMes
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.Http
+dotnet add package Trellis.Http
 ```
 
 ## Quick Start
@@ -26,7 +26,7 @@ dotnet add package FunctionalDdd.Http
 ### Basic JSON Deserialization
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 using System.Net.Http.Json;
 
 // Define your JSON context for AOT compatibility
@@ -340,29 +340,20 @@ var result = await _httpClient.PostAsJsonAsync("api/orders", order, ct)
 
 ### 5. Combine with Retry Policies
 
-Use Polly for retry logic (don't reinvent it):
+Use [the .NET resilience library](https://learn.microsoft.com/en-us/dotnet/core/resilience/) for retry logic (don't reinvent it):
 
 ```csharp
-using Polly;
-using Polly.Extensions.Http;
+using Microsoft.Extensions.Http.Resilience;
 
-// Configure HttpClient with Polly
+// Configure HttpClient with the .NET resilience library
 services.AddHttpClient<IOrderService, OrderService>()
-    .AddPolicyHandler(GetRetryPolicy());
+    .AddStandardResilienceHandler();
 
-static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-{
-    return HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .WaitAndRetryAsync(3, retryAttempt => 
-            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-}
-
-// Then use FunctionalDDD for functional error handling
+// Then use Trellis for functional error handling
 public async Task<Result<Order>> GetOrderAsync(string orderId, CancellationToken ct)
 {
-    return await _httpClient.GetAsync($"api/orders/{orderId}", ct)  // Polly handles retries
-        .HandleNotFoundAsync(Error.NotFound("Order", orderId))  // FunctionalDDD handles errors
+    return await _httpClient.GetAsync($"api/orders/{orderId}", ct)  // Resilience library handles retries
+        .HandleNotFoundAsync(Error.NotFound("Order", orderId))  // Trellis handles errors
         .ReadResultFromJsonAsync(OrderJsonContext.Default.Order, ct);
 }
 ```
@@ -372,7 +363,7 @@ public async Task<Result<Order>> GetOrderAsync(string orderId, CancellationToken
 Here's a complete service that demonstrates all HTTP integration patterns:
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
@@ -550,5 +541,5 @@ public async Task<Result<User>> GetUserAsync(string userId, CancellationToken ct
 ## API Reference
 
 For complete API documentation, see:
-- [Package README](https://www.nuget.org/packages/FunctionalDdd.Http)
+- [Package README](https://www.nuget.org/packages/Trellis.Http)
 - Browse the API reference in the documentation site

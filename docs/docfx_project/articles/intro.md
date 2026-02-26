@@ -1,10 +1,10 @@
 ﻿# Introduction
 
-Learn why functional domain modeling with Railway-Oriented Programming makes your code cleaner, safer, and more maintainable.
+Learn why Trellis makes your code cleaner, safer, and more maintainable with Railway-Oriented Programming and Domain-Driven Design.
 
 ## Table of Contents
 
-- [Why Use This Library?](#why-use-this-library)
+- [Why Trellis?](#why-trellis)
 - [Functional Programming](#functional-programming)
 - [Domain-Driven Design](#domain-driven-design)
 - [Error Types](#error-types)
@@ -12,14 +12,17 @@ Learn why functional domain modeling with Railway-Oriented Programming makes you
   - [Reuse Domain Validation at the API Layer](#reuse-domain-validation-at-the-api-layer)
   - [Pagination Support](#pagination-support)
   - [Avoid Primitive Obsession](#avoid-primitive-obsession)
+  - [AI-Ready Patterns](#ai-ready-patterns)
   - [Async & Cancellation Support](#async--cancellation-support)
   - [Parallel Execution](#parallel-execution)
 - [Performance](#performance)
 - [Next Steps](#next-steps)
 
-## Why Use This Library?
+## Why Trellis?
 
-Building robust applications requires explicit error handling, type safety, and clean code. This library combines **Railway-Oriented Programming** with **Domain-Driven Design** to achieve all three—without sacrificing performance or readability.
+Building robust applications requires explicit error handling, type safety, and clean code. Trellis combines **Railway-Oriented Programming** with **Domain-Driven Design** to achieve all three — without sacrificing performance or readability.
+
+Trellis is designed so that both humans and AI can produce correct, maintainable, enterprise-grade code by following the structure the framework provides.
 
 ```mermaid
 graph TB
@@ -143,7 +146,7 @@ public class User : Entity<UserId>
 
 ## Error Types
 
-The library provides **11 specialized error types** that automatically map to HTTP status codes, giving you a single source of truth for error handling across your application.
+Trellis provides **10 specialized error types** that automatically map to HTTP status codes, giving you a single source of truth for error handling across your application. Any mapping can be overridden via `AddTrellisAsp()`.
 
 ```mermaid
 graph LR
@@ -176,11 +179,11 @@ return ProcessOrder(order).MatchError(
 );
 ```
 
-📖 **Complete error catalog:** [Error Handling](error-handling.md) - All 11 error types, custom errors, aggregation
+📖 **Complete error catalog:** [Error Handling](error-handling.md) - All 10 error types, custom errors, aggregation
 
 ## Key Features
 
-The library provides several powerful features that work together to simplify your code:
+Trellis provides several powerful features that work together to simplify your code:
 
 ### Reuse Domain Validation at the API Layer
 
@@ -210,6 +213,20 @@ Person CreatePerson(FirstName firstName, LastName lastName);
 ```
 
 See [Basics](basics.md) to learn how to create type-safe value objects.
+
+### AI-Ready Patterns
+
+Trellis's structured patterns make it uniquely suited for AI-driven development workflows. The type system and compiler enforce correctness — it is impossible to skip error handling, construct invalid domain objects, or make illegal state transitions.
+
+When a specification says "An Order has an OrderId and a status that transitions from Draft → Submitted → Shipped," Trellis provides a direct mapping:
+
+- **OrderId** → `RequiredGuid`-derived value object
+- **Order** → `Aggregate<OrderId>` with domain events
+- **Status transitions** → State machine returning `Result<Order>`
+
+The AI doesn't need to invent patterns. It follows the structure Trellis provides.
+
+See [Trellis for AI Code Generation](ai-code-generation.md) for details on spec-to-code mapping.
 
 ### Async & Cancellation Support
 

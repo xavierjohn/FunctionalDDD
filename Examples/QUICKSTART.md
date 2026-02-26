@@ -257,11 +257,11 @@ if (invalid) throw new Exception(); // Use Result.Failure instead
 1. **Read the README**: Start with [Examples README](./README.md) for full overview
 2. **Pick a Learning Path**: Follow the [Complexity Guide](./README.md#complexity-guide)
 3. **Run Examples**: Execute example code and experiment
-4. **Read the Docs**: Check [Railway Oriented Programming](../RailwayOrientedProgramming/README.md)
+4. **Read the Docs**: Check [Railway Oriented Programming](../Trellis.Results/README.md)
 
 ## Need Help?
 
 - **Concepts**: Read [The Basics](../docs/docfx_project/articles/basics.md)
-- **API Reference**: See [Railway Oriented Programming README](../RailwayOrientedProgramming/README.md)
-- **Integration**: Check [ASP.NET Integration](../Asp/README.md)
+- **API Reference**: See [Railway Oriented Programming README](../Trellis.Results/README.md)
+- **Integration**: Check [ASP.NET Integration](../Trellis.Asp/README.md)
 - **Issues**: Open a GitHub issue

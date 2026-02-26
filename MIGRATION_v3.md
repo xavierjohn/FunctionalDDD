@@ -2,7 +2,7 @@
 
 ## Breaking Changes Summary
 
-FunctionalDDD v3.0 introduces clearer naming for failure track operations to make Railway-Oriented Programming more explicit and easier to learn. All **failure track operations** now have an `OnFailure` suffix.
+FunctionalDDD v3.0 (now Trellis) introduces clearer naming for failure track operations to make Railway-Oriented Programming more explicit and easier to learn. All **failure track operations** now have an `OnFailure` suffix.
 
 **Success track operations remain unchanged** - this is NOT a complete rewrite, just clearer naming for error handling.
 
@@ -395,9 +395,9 @@ git checkout main -- .
 
 ## Getting Help
 
-- **Documentation:** [https://xavierjohn.github.io/FunctionalDDD/](https://xavierjohn.github.io/FunctionalDDD/)
-- **Issues:** [https://github.com/xavierjohn/FunctionalDDD/issues](https://github.com/xavierjohn/FunctionalDDD/issues)
-- **Discussions:** [https://github.com/xavierjohn/FunctionalDDD/discussions](https://github.com/xavierjohn/FunctionalDDD/discussions)
+- **Documentation:** [https://xavierjohn.github.io/Trellis/](https://xavierjohn.github.io/Trellis/)
+- **Issues:** [https://github.com/xavierjohn/Trellis/issues](https://github.com/xavierjohn/Trellis/issues)
+- **Discussions:** [https://github.com/xavierjohn/Trellis/discussions](https://github.com/xavierjohn/Trellis/discussions)
 
 ---
 
@@ -485,6 +485,6 @@ public record RegisterUserDto
 - [ ] Update test method names
 - [ ] Run all tests
 - [ ] Update any documentation/comments in your code
-- [ ] Commit changes with message: "Migrate to FunctionalDDD v3.0"
+- [ ] Commit changes with message: "Migrate to Trellis v3.0"
 
 **Estimated migration time:** 5-15 minutes for most projects (depending on size)

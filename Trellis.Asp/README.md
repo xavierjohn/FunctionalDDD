@@ -1,6 +1,6 @@
-﻿# FunctionalDdd.Asp - ASP.NET Core Extensions
+﻿# Trellis.Asp - ASP.NET Core Extensions
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp)
 
 Comprehensive ASP.NET Core integration for functional domain-driven design, providing:
 
@@ -29,7 +29,7 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.Asp
+dotnet add package Trellis.Asp
 ```
 
 ## Scalar Value Validation
@@ -480,9 +480,9 @@ See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for comprehensive
 - **[docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md)** - AOT vs reflection comparison
 - **[generator/README.md](generator/README.md)** - Source generator details
 - **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
-- **[Railway Oriented Programming](../RailwayOrientedProgramming/README.md)** - Core `Result<T>` concepts
-- **[Domain-Driven Design](../DomainDrivenDesign/README.md)** - Entity and value object patterns
-- **[PrimitiveValueObjects](../PrimitiveValueObjects/README.md)** - Base value object types
+- **[Railway Oriented Programming](../Trellis.Results/README.md)** - Core `Result<T>` concepts
+- **[Domain-Driven Design](../Trellis.DomainDrivenDesign/README.md)** - Entity and value object patterns
+- **[Primitives](../Trellis.Primitives/README.md)** - Base value object types
 
 ## Examples
 
@@ -493,4 +493,4 @@ See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for comprehensive
 
 ## License
 
-Part of the FunctionalDDD library. See [LICENSE](../LICENSE) for details.
+Part of the Trellis library. See [LICENSE](../LICENSE) for details.

@@ -1,6 +1,6 @@
 # Primitive Value Objects
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives)
 
 Infrastructure and ready-to-use implementations for primitive value objects with source code generation, eliminating boilerplate code and primitive obsession in domain-driven design applications.
 
@@ -9,13 +9,13 @@ Infrastructure and ready-to-use implementations for primitive value objects with
 Install both packages via NuGet:
 
 ```bash
-dotnet add package FunctionalDdd.PrimitiveValueObjects
-dotnet add package FunctionalDdd.PrimitiveValueObjectGenerator
+dotnet add package Trellis.Primitives
+dotnet add package Trellis.Primitives.Generator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDdd.PrimitiveValueObjects` — Base classes and **11 ready-to-use value objects**
-- `FunctionalDdd.PrimitiveValueObjectGenerator` — Source generator for `Required*` derivatives
+- `Trellis.Primitives` — Base classes and **11 ready-to-use value objects**
+- `Trellis.Primitives.Generator` — Source generator for `Required*` derivatives
 
 ## Quick Start
 
@@ -48,7 +48,7 @@ public partial class EmployeeId : RequiredGuid<EmployeeId>
 {
 }
 
-var employeeId = EmployeeId.NewUnique();
+var employeeId = EmployeeId.NewUniqueV7();
 var result = EmployeeId.TryCreate(guid);
 var result2 = EmployeeId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
 ```
@@ -126,7 +126,7 @@ public IActionResult Create(CreateUserDto dto)
 }
 ```
 
-See [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) for full ASP.NET Core integration.
+See [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) for full ASP.NET Core integration.
 
 ## Generated Code Features
 
@@ -147,11 +147,11 @@ See [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) for fu
 
 ## Related Packages
 
-- [FunctionalDdd.PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) — Source generator (required companion)
-- [FunctionalDdd.RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) — Core `Result<T>` type
-- [FunctionalDdd.DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) — Entity and aggregate patterns
-- [FunctionalDdd.Asp](https://www.nuget.org/packages/FunctionalDdd.Asp) — ASP.NET Core integration
+- [Trellis.Primitives.Generator](https://www.nuget.org/packages/Trellis.Primitives.Generator) — Source generator (required companion)
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — Entity and aggregate patterns
+- [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) — ASP.NET Core integration
 
 ## License
 
-MIT — see [LICENSE](https://github.com/xavierjohn/FunctionalDDD/blob/main/LICENSE) for details.
+MIT — see [LICENSE](https://github.com/xavierjohn/Trellis/blob/main/LICENSE) for details.

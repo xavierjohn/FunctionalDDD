@@ -1,6 +1,6 @@
-﻿# FunctionalDdd.PrimitiveValueObjectGenerator
+﻿# Trellis.Primitives.Generator
 
-[![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)
+[![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.Generator.svg)](https://www.nuget.org/packages/Trellis.Primitives.Generator)
 
 **Roslyn source generator** for creating strongly-typed value objects with automatic validation and IParsable support.
 
@@ -17,7 +17,8 @@ public partial class OrderId : RequiredGuid
 // Generator creates:
 // - TryCreate(Guid?) method returning Result<OrderId>
 // - TryCreate(string?) method returning Result<OrderId>
-// - NewUnique() method for new GUIDs
+// - NewUniqueV4() method for new GUIDs
+// - NewUniqueV7() method for time-ordered GUIDs
 // - Parse(string, IFormatProvider?) method (IParsable)
 // - TryParse(string?, IFormatProvider?, out OrderId) method (IParsable)
 // - Explicit cast operator from Guid
@@ -26,20 +27,20 @@ public partial class OrderId : RequiredGuid
 
 ## Installation
 
-This package is included automatically when you install `FunctionalDdd.PrimitiveValueObjects`:
+This package is included automatically when you install `Trellis.Primitives`:
 
 ```bash
-dotnet add package FunctionalDdd.PrimitiveValueObjects
+dotnet add package Trellis.Primitives
 ```
 
 **Note:** Both packages are required - the main package provides base classes, this generator creates the implementations.
 
 ## Generated API
 
-### For RequiredString Classes
+### For RequiredString<TSelf> Classes
 
 ```csharp
-public partial class ProductName : RequiredString
+public partial class ProductName : RequiredString<ProductName>
 {
 }
 
@@ -50,15 +51,16 @@ ProductName.TryParse(string?, IFormatProvider?, out...)  // bool
 (ProductName)"ABC"                                       // Explicit cast
 ```
 
-### For RequiredGuid Classes
+### For RequiredGuid<TSelf> Classes
 
 ```csharp
-public partial class UserId : RequiredGuid
+public partial class UserId : RequiredGuid<UserId>
 {
 }
 
 // Generated members:
-UserId.NewUnique()                                       // New GUID
+UserId.NewUniqueV4()                                    // New random GUID
+UserId.NewUniqueV7()                                    // New time-ordered GUID
 UserId.TryCreate(Guid?)                                  // Result<UserId>
 UserId.TryCreate(string?)                                // Result<UserId>
 UserId.Parse(string, IFormatProvider?)                   // UserId (throws)
@@ -70,11 +72,11 @@ UserId.TryParse(string?, IFormatProvider?, out...)       // bool
 
 - **.NET Standard 2.0** compatible (source generators must target netstandard2.0)
 - **C# 9.0+** for partial class support
-- Requires `FunctionalDdd.PrimitiveValueObjects` package
+- Requires `Trellis.Primitives` package
 
 ## How It Works
 
-1. Analyzes your code for partial classes inheriting from `RequiredString` or `RequiredGuid`
+1. Analyzes your code for partial classes inheriting from `RequiredString<TSelf>` or `RequiredGuid<TSelf>`
 2. Generates implementation code at compile-time
 3. Code appears in IntelliSense automatically
 4. No runtime reflection - all compile-time
@@ -97,7 +99,7 @@ Error messages use the class name (e.g., "Product Name" from "ProductName").
 
 This is a **source generator** - it runs at compile-time and generates C# code. The generated code is visible in:
 
-- **Visual Studio:** Project → Dependencies → Analyzers → FunctionalDdd.PrimitiveValueObjectGenerator
+- **Visual Studio:** Project → Dependencies → Analyzers → Trellis.Primitives.Generator
 - **Output:** `obj/Debug/net10.0/generated/`
 
 ## Resources
@@ -105,7 +107,7 @@ This is a **source generator** - it runs at compile-time and generates C# code. 
 - [Main Library Documentation](../../README.md)
 - [Value Objects Guide](../README.md)
 - [Complete Examples](../SAMPLES.md)
-- [GitHub Repository](https://github.com/xavierjohn/FunctionalDDD)
+- [GitHub Repository](https://github.com/xavierjohn/Trellis)
 
 ## License
 

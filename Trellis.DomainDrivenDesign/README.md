@@ -1,13 +1,13 @@
-﻿# Domain Driven Design
+﻿# Trellis.DomainDrivenDesign
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)
 
 Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles.
 
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.DomainDrivenDesign
+dotnet add package Trellis.DomainDrivenDesign
 ```
 
 ## Quick Start
@@ -31,7 +31,7 @@ public class Customer : Entity<CustomerId>
     public static Result<Customer> TryCreate(string name) =>
         name.ToResult()
             .Ensure(n => !string.IsNullOrWhiteSpace(n), Error.Validation("Name required"))
-            .Map(n => new Customer(CustomerId.NewUnique(), n));
+            .Map(n => new Customer(CustomerId.NewUniqueV7(), n));
 }
 ```
 
@@ -71,7 +71,7 @@ public class Money : ValueObject
 
 ### RequiredEnum
 
-Type-safe enumerations with behavior have moved to the **PrimitiveValueObjects** package as `RequiredEnum<T>`. Unlike C# enums, RequiredEnum prevents invalid values and can encapsulate domain logic. Name is auto-derived from the field name (pure DDD). The source generator automatically adds `IScalarValue<TSelf, string>` support, JSON serialization, and ASP.NET Core model binding.
+Type-safe enumerations with behavior have moved to the **Trellis.Primitives** package as `RequiredEnum<T>`. Unlike C# enums, RequiredEnum prevents invalid values and can encapsulate domain logic. Name is auto-derived from the field name (pure DDD). The source generator automatically adds `IScalarValue<TSelf, string>` support, JSON serialization, and ASP.NET Core model binding.
 
 ```csharp
 // Use 'partial' to enable source generation (IScalarValue, JSON, model binding)
@@ -110,7 +110,7 @@ order.State.TryTransitionTo(OrderState.Confirmed)
     .Tap(newState => order.State = newState);
 ```
 
-See **[PrimitiveValueObjects README](../PrimitiveValueObjects/README.md)** for full documentation.
+See **[Primitives README](../Trellis.Primitives/README.md)** for full documentation.
 
 ### Aggregate
 
@@ -138,7 +138,7 @@ public class Order : Aggregate<OrderId>
     }
     
     public static Result<Order> TryCreate(CustomerId customerId) =>
-        new Order(OrderId.NewUnique(), customerId).ToResult();
+        new Order(OrderId.NewUniqueV7(), customerId).ToResult();
     
     public Result<Order> AddLine(ProductId productId, string name, Money price, int qty) =>
         this.ToResult()
@@ -284,7 +284,7 @@ public decimal Amount { get; set; }
 - Implicit conversion to `T`
 
 ### RequiredEnum<T>
-- Type-safe enumeration with behavior (moved to PrimitiveValueObjects)
+- Type-safe enumeration with behavior (moved to Trellis.Primitives)
 - Prevents invalid values (unlike C# enums)
 - Name-only constructor (Value auto-generated for persistence)
 - Supports state machine patterns
@@ -304,9 +304,9 @@ public decimal Amount { get; set; }
 ## Resources
 
 - **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
-- **[Main Documentation](https://github.com/xavierjohn/FunctionalDDD)** - Full repository documentation
-- **[Railway Oriented Programming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** - Result type and functional patterns
-- **[Primitive Value Objects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** - RequiredString, RequiredGuid, RequiredEnum, EmailAddress
+- **[Main Documentation](https://github.com/xavierjohn/Trellis)** - Full repository documentation
+- **[Railway Oriented Programming](https://www.nuget.org/packages/Trellis.Results)** - Result type and functional patterns
+- **[Primitive Value Objects](https://www.nuget.org/packages/Trellis.Primitives)** - RequiredString, RequiredGuid, RequiredEnum, EmailAddress
 - **[Ardalis.SmartEnum](https://github.com/ardalis/SmartEnum)** - Inspiration for RequiredEnum pattern
 
 ## License

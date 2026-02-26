@@ -248,7 +248,7 @@ public class UserRepository : IUserRepository
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using FunctionalDdd;
+using Trellis;
 
 public interface IUserRepository
 {
@@ -688,53 +688,42 @@ app.UseExceptionHandler(errorApp =>
 For transient failures (connection issues, timeouts), use a retry policy instead of catching exceptions:
 
 ```csharp
-// Using Polly for retry logic
+// Using the .NET resilience library for retry logic
+// Configure in Program.cs:
+//   builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//       options.UseSqlServer(connectionString,
+//           sqlOptions => sqlOptions.EnableRetryOnFailure(
+//               maxRetryCount: 3,
+//               maxRetryDelay: TimeSpan.FromSeconds(30),
+//               errorNumbersToAdd: null)));
+
 public class UserRepository : IUserRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly IAsyncPolicy _retryPolicy;
 
     public UserRepository(ApplicationDbContext context)
     {
         _context = context;
-        
-        // Retry transient failures (connection issues, timeouts)
-        _retryPolicy = Policy
-            .Handle<DbUpdateException>(ex => IsTransientFailure(ex))
-            .Or<TimeoutException>()
-            .WaitAndRetryAsync(3, retryAttempt => 
-                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 
     public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
     {
-        return await _retryPolicy.ExecuteAsync(async () =>
+        try
         {
-            try
-            {
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync(ct);
-                return Result.Success();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Error.Conflict("User was modified by another process");
-            }
-            catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
-            {
-                return Error.Conflict("User with this email already exists");
-            }
-            // Transient failures will be retried by Polly
-            // Non-transient failures will propagate as exceptions
-        });
-    }
-
-    private static bool IsTransientFailure(DbUpdateException ex)
-    {
-        // SQL Server transient error codes
-        var sqlErrorCodes = new[] { -1, -2, 1205, 49918, 49919, 49920, 4060, 40197, 40501, 40613, 49918, 49919, 49920 };
-        // Check if it's a transient SQL error
-        return false; // Implement based on your database provider
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync(ct);  // EF Core handles transient retries
+            return Result.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Error.Conflict("User was modified by another process");
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+        {
+            return Error.Conflict("User with this email already exists");
+        }
+        // Transient failures are retried by EF Core's EnableRetryOnFailure
+        // Non-transient failures propagate as exceptions
     }
 
     private static bool IsDuplicateKeyException(DbUpdateException ex)
@@ -822,7 +811,7 @@ Configure strongly-typed value objects (`RequiredGuid`, `RequiredUlid`, `Require
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.Primitives;
 
 public class AppDbContext : DbContext
 {
@@ -953,7 +942,7 @@ var orders = await context.Orders
 
 ### Complete Example
 
-See the [EF Core Example](https://github.com/xavierjohn/FunctionalDDD/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
+See the [EF Core Example](https://github.com/xavierjohn/Trellis/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
 
 - `RequiredUlid<T>` for time-ordered identifiers (`OrderId`, `CustomerId`)
 - `RequiredGuid<T>` for traditional identifiers (`ProductId`)

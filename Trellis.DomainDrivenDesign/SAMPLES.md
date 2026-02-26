@@ -1,6 +1,6 @@
 # Domain-Driven Design - Comprehensive Examples
 
-This document provides detailed examples and patterns for using the FunctionalDDD.DomainDrivenDesign library.
+This document provides detailed examples and patterns for using the Trellis.DomainDrivenDesign library.
 
 ## Table of Contents
 
@@ -59,7 +59,7 @@ public class Customer : Entity<CustomerId>
         name.ToResult()
             .Ensure(n => !string.IsNullOrWhiteSpace(n), 
                    Error.Validation("Name cannot be empty"))
-            .Map(n => new Customer(CustomerId.NewUnique(), n, email));
+            .Map(n => new Customer(CustomerId.NewUniqueV7(), n, email));
     
     public Result<Customer> UpdateName(string newName) =>
         newName.ToResult()
@@ -352,7 +352,7 @@ public class Order : Aggregate<OrderId>
     
     public static Result<Order> TryCreate(CustomerId customerId) =>
         customerId.ToResult()
-            .Map(cid => new Order(OrderId.NewUnique(), cid));
+            .Map(cid => new Order(OrderId.NewUniqueV7(), cid));
     
     public Result<Order> AddLine(ProductId productId, string productName, Money price, int quantity) =>
         this.ToResult()
