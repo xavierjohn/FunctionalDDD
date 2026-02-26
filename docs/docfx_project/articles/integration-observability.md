@@ -12,7 +12,7 @@ Enable distributed tracing and monitoring for Railway-Oriented Programming opera
 
 Enable distributed tracing for Railway Oriented Programming operations and Value Objects.
 
-> **Important:** Auto-instrumentation (`AddRailwayOrientedProgrammingInstrumentation()`) traces **every** `Result<T>` operation and can create significant noise in production. It's recommended to **manually instrument** critical paths and use auto-instrumentation only for development/debugging.
+> **Important:** Auto-instrumentation (`AddResultsInstrumentation()`) traces **every** `Result<T>` operation and can create significant noise in production. It's recommended to **manually instrument** critical paths and use auto-instrumentation only for development/debugging.
 
 ### Installation
 
@@ -88,7 +88,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
     {
         tracerProviderBuilder
-            .AddRailwayOrientedProgrammingInstrumentation()      // ⚠️ Traces EVERY Result<T> operation
+            .AddResultsInstrumentation()      // ⚠️ Traces EVERY Result<T> operation
             .AddPrimitiveValueObjectInstrumentation()      // ⚠️ Traces EVERY value object creation
             .AddConsoleExporter();  // Console output for debugging
     });

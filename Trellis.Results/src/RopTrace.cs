@@ -26,7 +26,7 @@ using System.Reflection;
 /// </para>
 /// <para>
 /// To enable tracing in your application, register the activity source with your
-/// OpenTelemetry configuration using <see cref="RailwayOrientedProgrammingTraceProviderBuilderExtensions.AddRailwayOrientedProgrammingInstrumentation"/>.
+/// OpenTelemetry configuration using <see cref="ResultsTraceProviderBuilderExtensions.AddResultsInstrumentation"/>.
 /// </para>
 /// </remarks>
 /// <example>
@@ -37,7 +37,7 @@ using System.Reflection;
 /// builder.Services.AddOpenTelemetry()
 ///     .WithTracing(tracerProviderBuilder =>
 ///         tracerProviderBuilder
-///             .AddRailwayOrientedProgrammingInstrumentation()  // Adds ROP activity source
+///             .AddResultsInstrumentation()  // Adds ROP activity source
 ///             .AddAspNetCoreInstrumentation()
 ///             .AddHttpClientInstrumentation()
 ///             .AddConsoleExporter());
@@ -52,7 +52,7 @@ using System.Reflection;
 ///         .ToHttpResult());
 /// </code>
 /// </example>
-/// <seealso cref="RailwayOrientedProgrammingTraceProviderBuilderExtensions"/>
+/// <seealso cref="ResultsTraceProviderBuilderExtensions"/>
 internal static class RopTrace
 {
     /// <summary>
@@ -68,7 +68,7 @@ internal static class RopTrace
     /// <remarks>
     /// This name is used to identify traces from this library in observability platforms.
     /// Register this name when configuring OpenTelemetry tracing using
-    /// <see cref="RailwayOrientedProgrammingTraceProviderBuilderExtensions.AddRailwayOrientedProgrammingInstrumentation"/>.
+    /// <see cref="ResultsTraceProviderBuilderExtensions.AddResultsInstrumentation"/>.
     /// </remarks>
     internal static readonly string ActivitySourceName = "Functional DDD ROP";
 
@@ -97,7 +97,7 @@ internal static class RopTrace
     /// To enable tracing, add this source to your OpenTelemetry configuration:
     /// <code>
     /// builder.Services.AddOpenTelemetry()
-    ///     .WithTracing(b => b.AddRailwayOrientedProgrammingInstrumentation());
+    ///     .WithTracing(b => b.AddResultsInstrumentation());
     /// </code>
     /// </para>
     /// <para>
