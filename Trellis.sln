@@ -17,14 +17,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		version.json = version.json
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trellis.PrimitiveValueObjects", "Trellis.PrimitiveValueObjects", "{AEEADF3F-954E-44CA-8345-E024CC04F405}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trellis.Primitives", "Trellis.Primitives", "{AEEADF3F-954E-44CA-8345-E024CC04F405}"
 	ProjectSection(SolutionItems) = preProject
-		Trellis.PrimitiveValueObjects\SAMPLES.md = Trellis.PrimitiveValueObjects\SAMPLES.md
+		Trellis.Primitives\SAMPLES.md = Trellis.Primitives\SAMPLES.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveValueObjects", "Trellis.PrimitiveValueObjects\src\Trellis.PrimitiveValueObjects.csproj", "{82A9A3D7-E871-416E-8B5F-67B0425EC073}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Primitives", "Trellis.Primitives\src\Trellis.Primitives.csproj", "{82A9A3D7-E871-416E-8B5F-67B0425EC073}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveValueObjects.Tests", "Trellis.PrimitiveValueObjects\tests\Trellis.PrimitiveValueObjects.Tests.csproj", "{52131D0C-76B1-4CA2-86D6-6C10DD9355A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Primitives.Tests", "Trellis.Primitives\tests\Trellis.Primitives.Tests.csproj", "{52131D0C-76B1-4CA2-86D6-6C10DD9355A5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{BD9AFC47-1336-443C-9EBE-3CF52A128194}"
 EndProject
@@ -43,13 +43,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asp", "Trellis.Asp\src\Trel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Tests", "Examples\Xunit\Example.Tests.csproj", "{191EC05C-A865-4396-90FB-7A7D19FF148C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimitiveValueObjectGenerator", "Trellis.PrimitiveValueObjects\generator\Trellis.PrimitiveValueObjectGenerator.csproj", "{005FE94C-477D-4B76-A4E5-C229D79F3D71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Primitives.Generator", "Trellis.Primitives\generator\Trellis.Primitives.Generator.csproj", "{005FE94C-477D-4B76-A4E5-C229D79F3D71}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trellis.RailwayOrientedProgramming", "Trellis.RailwayOrientedProgramming", "{3DD76AB1-746D-47AC-B86D-8EC376CD238B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trellis.Results", "Trellis.Results", "{3DD76AB1-746D-47AC-B86D-8EC376CD238B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RailwayOrientedProgramming", "Trellis.RailwayOrientedProgramming\src\Trellis.RailwayOrientedProgramming.csproj", "{8DD45CA4-7182-4310-B023-3FD6801655B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Results", "Trellis.Results\src\Trellis.Results.csproj", "{8DD45CA4-7182-4310-B023-3FD6801655B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RailwayOrientedProgramming.Tests", "Trellis.RailwayOrientedProgramming\tests\Trellis.RailwayOrientedProgramming.Tests.csproj", "{49C37DF6-D4D1-44A1-8E5A-8C5C9B24ACF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Results.Tests", "Trellis.Results\tests\Trellis.Results.Tests.csproj", "{49C37DF6-D4D1-44A1-8E5A-8C5C9B24ACF3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trellis.DomainDrivenDesign", "Trellis.DomainDrivenDesign", "{828D4C8B-EE27-4ECD-8C89-8D4FD7E67BD6}"
 	ProjectSection(SolutionItems) = preProject

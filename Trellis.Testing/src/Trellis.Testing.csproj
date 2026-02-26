@@ -11,14 +11,14 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsAotCompatible>true</IsAotCompatible>
     
-    <PackageId>FunctionalDdd.Testing</PackageId>
-    <Description>Testing utilities and assertions for FunctionalDDD - FluentAssertions extensions, test builders, and fake implementations for Railway-Oriented Programming</Description>
-    <PackageTags>functional-programming;testing;assertions;fluent-assertions;ddd;railway-oriented-programming;result;maybe;test-utilities</PackageTags>
+    <PackageId>Trellis.Testing</PackageId>
+    <Description>Testing utilities and assertions for Trellis - FluentAssertions extensions, test builders, and fake implementations for Railway-Oriented Programming</Description>
+    <PackageTags>trellis;functional-programming;testing;assertions;fluent-assertions;ddd;railway-oriented-programming;result;maybe;test-utilities</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Trellis.RailwayOrientedProgramming\src\Trellis.RailwayOrientedProgramming.csproj" />
+    <ProjectReference Include="..\..\Trellis.Results\src\Trellis.Results.csproj" />
     <ProjectReference Include="..\..\Trellis.DomainDrivenDesign\src\Trellis.DomainDrivenDesign.csproj" />
   </ItemGroup>
 

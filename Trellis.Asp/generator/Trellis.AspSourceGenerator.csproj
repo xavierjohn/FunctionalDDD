@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Source code generator for automatic JSON serializer context generation for IScalarValueObject types. Generates AOT-compatible JSON converters and [JsonSerializable] attributes at compile time, eliminating runtime reflection. Part of the FunctionalDDD.Asp library.</Description>
-    <PackageTags>source-generator;roslyn;code-generation;value-objects;json-serialization;aot;native-aot;ddd;asp.net-core</PackageTags>
+    <Description>Source code generator for automatic JSON serializer context generation for IScalarValueObject types. Generates AOT-compatible JSON converters and [JsonSerializable] attributes at compile time, eliminating runtime reflection. Part of the Trellis.Asp library.</Description>
+    <PackageTags>trellis;source-generator;roslyn;code-generation;value-objects;json-serialization;aot;native-aot;ddd;asp.net-core</PackageTags>
   </PropertyGroup>
   <PropertyGroup>
     <!-- Source generators must target netstandard 2.0 -->

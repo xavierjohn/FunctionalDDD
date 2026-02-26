@@ -2,9 +2,9 @@
   <PropertyGroup>
     <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
     <Description>
-      Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles. Create Aggregate, Entity, and ValueObject classes with Result-based validation. For simple value objects with a single value, ScalarValueObject can be used. For strongly-typed primitives, see FunctionalDdd.PrimitiveValueObjects.
+      Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles. Create Aggregate, Entity, and ValueObject classes with Result-based validation. For simple value objects with a single value, ScalarValueObject can be used. For strongly-typed primitives, see Trellis.Primitives.
     </Description>
-    <PackageTags>ddd;domain-driven-design;aggregate;entity;value-object;domain-events;tactical-patterns</PackageTags>
+    <PackageTags>trellis;ddd;domain-driven-design;aggregate;entity;value-object;domain-events;tactical-patterns</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
@@ -14,6 +14,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\Trellis.RailwayOrientedProgramming\src\Trellis.RailwayOrientedProgramming.csproj" />
+    <ProjectReference Include="..\..\Trellis.Results\src\Trellis.Results.csproj" />
   </ItemGroup>
 </Project>

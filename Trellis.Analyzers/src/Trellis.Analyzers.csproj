@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
   <PackageReadmeFile>README.md</PackageReadmeFile>
-  <Description>Roslyn analyzers for FunctionalDDD library. Enforces proper Result and Maybe handling patterns at compile time.</Description>
-  <PackageTags>roslyn;analyzers;functional;ddd;result;maybe;railway-oriented-programming</PackageTags>
+  <Description>Roslyn analyzers for Trellis library. Enforces proper Result and Maybe handling patterns at compile time.</Description>
+  <PackageTags>trellis;roslyn;analyzers;functional;ddd;result;maybe;railway-oriented-programming</PackageTags>
 </PropertyGroup>
 
   <PropertyGroup>

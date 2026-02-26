@@ -2,7 +2,7 @@
   <PropertyGroup>
     <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
     <Description>These extension methods are used to convert the ROP Result object to ActionResult. If the Result is in a failed state, it returns the corresponding HTTP error code.</Description>
-    <PackageTags>aspnetcore;mvc;minimal-api;web-api;railway-oriented;result;http;error-handling</PackageTags>
+    <PackageTags>trellis;aspnetcore;mvc;minimal-api;web-api;railway-oriented;result;http;error-handling</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
@@ -12,6 +12,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyModel" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Trellis.RailwayOrientedProgramming\src\Trellis.RailwayOrientedProgramming.csproj" />
+    <ProjectReference Include="..\..\Trellis.Results\src\Trellis.Results.csproj" />
   </ItemGroup>
 </Project>

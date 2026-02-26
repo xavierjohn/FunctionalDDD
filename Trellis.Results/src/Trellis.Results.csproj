@@ -5,7 +5,7 @@
       Railway Oriented Programming is a coding concept that involves using a library's built-in functions to control program execution flow based on success or error track.
       By doing so, functional code can be written that allows for chaining of functions without the need for error checking.
   </Description>
-    <PackageTags>functional-programming;railway-oriented;result;monad;error-handling;maybe;csharp;dotnet;rop</PackageTags>
+    <PackageTags>trellis;functional-programming;railway-oriented;result;monad;error-handling;maybe;csharp;dotnet;rop</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
