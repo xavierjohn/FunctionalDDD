@@ -1,7 +1,7 @@
-﻿namespace SpecificationExample.Domain;
+namespace SpecificationExample.Domain;
 
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Strongly-typed Product ID.

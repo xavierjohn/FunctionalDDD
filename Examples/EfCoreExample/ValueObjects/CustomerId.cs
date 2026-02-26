@@ -1,6 +1,6 @@
-﻿namespace EfCoreExample.ValueObjects;
+namespace EfCoreExample.ValueObjects;
 
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Strongly-typed Customer identifier using GUID.

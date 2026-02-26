@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Trellis.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Trellis.Testing" />
+  </ItemGroup>
+
+</Project>

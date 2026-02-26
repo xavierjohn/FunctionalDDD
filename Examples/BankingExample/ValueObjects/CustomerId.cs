@@ -1,7 +1,7 @@
-﻿namespace BankingExample.ValueObjects;
+namespace BankingExample.ValueObjects;
 
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 public partial class CustomerId : RequiredGuid<CustomerId>
 {

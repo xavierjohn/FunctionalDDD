@@ -1,7 +1,7 @@
-﻿namespace EcommerceExample.ValueObjects;
+namespace EcommerceExample.ValueObjects;
 
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 public partial class OrderId : RequiredGuid<OrderId>
 {

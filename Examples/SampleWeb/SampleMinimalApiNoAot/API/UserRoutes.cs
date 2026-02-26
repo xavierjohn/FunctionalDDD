@@ -1,8 +1,8 @@
-﻿namespace SampleMinimalApiNoAot.API;
+namespace SampleMinimalApiNoAot.API;
 
 using System.Globalization;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using SampleUserLibrary;
 
 public static class UserRoutes

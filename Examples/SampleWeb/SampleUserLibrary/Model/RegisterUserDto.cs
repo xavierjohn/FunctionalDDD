@@ -1,7 +1,7 @@
-﻿namespace SampleUserLibrary;
+namespace SampleUserLibrary;
 
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// User registration DTO with automatic validation via value objects.

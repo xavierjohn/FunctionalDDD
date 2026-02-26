@@ -1,12 +1,12 @@
-﻿namespace EcommerceExample.Workflows;
+namespace EcommerceExample.Workflows;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.Entities;
 using EcommerceExample.Events;
 using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Demonstrates a complete order processing workflow using Railway Oriented Programming.

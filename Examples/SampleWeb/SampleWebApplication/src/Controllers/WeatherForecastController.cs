@@ -1,10 +1,10 @@
-﻿namespace SampleWebApplication.Controllers;
+namespace SampleWebApplication.Controllers;
 
 using System.Collections.Immutable;
 using System.Net.Http.Headers;
-using FunctionalDdd;
+using Trellis;
 using Microsoft.AspNetCore.Mvc;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 [ApiController]
 [Produces("application/json")]

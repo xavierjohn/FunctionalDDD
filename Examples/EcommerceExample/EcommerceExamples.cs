@@ -1,9 +1,9 @@
-﻿using EcommerceExample.Aggregates;
+using EcommerceExample.Aggregates;
 using EcommerceExample.Services;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 namespace EcommerceExample;
 

@@ -1,11 +1,11 @@
-﻿namespace Example.Tests;
+namespace Example.Tests;
 
 using System.Collections.Immutable;
 using FluentValidation;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using Xunit;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 /// <summary>
 /// Comprehensive tests validating all examples from FluentValidation\SAMPLES.md

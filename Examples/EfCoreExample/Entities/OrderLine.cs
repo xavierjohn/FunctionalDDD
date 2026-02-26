@@ -1,7 +1,7 @@
-﻿namespace EfCoreExample.Entities;
+namespace EfCoreExample.Entities;
 
 using EfCoreExample.ValueObjects;
-using FunctionalDdd;
+using Trellis;
 
 /// <summary>
 /// Order line entity representing a product in an order.

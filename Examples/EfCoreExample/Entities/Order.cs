@@ -1,8 +1,8 @@
-﻿namespace EfCoreExample.Entities;
+namespace EfCoreExample.Entities;
 
 using EfCoreExample.Enums;
 using EfCoreExample.ValueObjects;
-using FunctionalDdd;
+using Trellis;
 
 /// <summary>
 /// Order aggregate using RequiredEnum for state management.

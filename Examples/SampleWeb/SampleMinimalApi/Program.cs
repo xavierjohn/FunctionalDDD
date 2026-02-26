@@ -1,6 +1,6 @@
-﻿using System.Text.Json.Serialization;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using System.Text.Json.Serialization;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApi.API;
@@ -69,8 +69,8 @@ public record UserEndpoints(string Register, string RegisterCreated, string Regi
 [JsonSerializable(typeof(RegisterWithNameDto))]
 [JsonSerializable(typeof(SharedNameTypeResponse))]
 [JsonSerializable(typeof(User))]
-[JsonSerializable(typeof(FunctionalDdd.PrimitiveValueObjects.Money))]
-[JsonSerializable(typeof(FunctionalDdd.PrimitiveValueObjects.Money[]))]
+[JsonSerializable(typeof(Trellis.PrimitiveValueObjects.Money))]
+[JsonSerializable(typeof(Trellis.PrimitiveValueObjects.Money[]))]
 [JsonSerializable(typeof(SampleMinimalApi.API.MoneyDto))]
 [JsonSerializable(typeof(SampleMinimalApi.API.CreateMoneyRequest))]
 [JsonSerializable(typeof(SampleMinimalApi.API.MoneyOperationRequest))]

@@ -1,8 +1,8 @@
-﻿namespace EcommerceExample.Entities;
+namespace EcommerceExample.Entities;
 
 using EcommerceExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Represents a line item in an order.

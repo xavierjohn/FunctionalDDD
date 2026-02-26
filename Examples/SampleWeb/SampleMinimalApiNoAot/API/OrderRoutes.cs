@@ -1,6 +1,6 @@
-﻿namespace SampleMinimalApiNoAot.API;
+namespace SampleMinimalApiNoAot.API;
 
-using FunctionalDdd;
+using Trellis;
 using SampleUserLibrary;
 
 public static class OrderRoutes

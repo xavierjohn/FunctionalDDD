@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\RailwayOrientedProgramming\src\RailwayOrientedProgramming.csproj" />
-    <ProjectReference Include="..\..\DomainDrivenDesign\src\DomainDrivenDesign.csproj" />
-    <ProjectReference Include="..\..\PrimitiveValueObjects\generator\PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\..\PrimitiveValueObjects\src\PrimitiveValueObjects.csproj" />
+    <ProjectReference Include="..\..\Trellis.RailwayOrientedProgramming\src\Trellis.RailwayOrientedProgramming.csproj" />
+    <ProjectReference Include="..\..\Trellis.DomainDrivenDesign\src\Trellis.DomainDrivenDesign.csproj" />
+    <ProjectReference Include="..\..\Trellis.PrimitiveValueObjects\generator\Trellis.PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\Trellis.PrimitiveValueObjects\src\Trellis.PrimitiveValueObjects.csproj" />
   </ItemGroup>
 
 </Project>

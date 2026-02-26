@@ -1,8 +1,8 @@
-﻿namespace EcommerceExample.Services;
+namespace EcommerceExample.Services;
 
 using EcommerceExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Manages product inventory with stock validation.

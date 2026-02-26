@@ -1,10 +1,10 @@
-﻿namespace BankingExample.Aggregates;
+namespace BankingExample.Aggregates;
 
 using BankingExample.Entities;
 using BankingExample.Events;
 using BankingExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 public enum AccountStatus
 {

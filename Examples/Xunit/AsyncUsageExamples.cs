@@ -1,7 +1,7 @@
-﻿namespace Example.Tests;
+namespace Example.Tests;
 
 using System.Diagnostics;
-using FunctionalDdd;
+using Trellis;
 using Xunit;
 
 public class AsyncUsageExamples : IClassFixture<TraceFixture>

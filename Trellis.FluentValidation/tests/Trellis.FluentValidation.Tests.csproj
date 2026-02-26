@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Trellis.PrimitiveValueObjects\generator\Trellis.PrimitiveValueObjectGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\Trellis.PrimitiveValueObjects\src\Trellis.PrimitiveValueObjects.csproj" />
+    <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
+    <ProjectReference Include="..\src\Trellis.FluentValidation.csproj" />
+  </ItemGroup>
+
+</Project>

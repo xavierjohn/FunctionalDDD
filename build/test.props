@@ -11,7 +11,7 @@
   <ItemGroup>
     <Using Include="FluentAssertions" />
     <Using Include="Xunit" />
-    <Using Include="FunctionalDdd" />
+    <Using Include="Trellis" />
   </ItemGroup>
 
   <ItemGroup>

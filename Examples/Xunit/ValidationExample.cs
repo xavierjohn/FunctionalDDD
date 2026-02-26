@@ -1,10 +1,10 @@
-﻿namespace Example;
+namespace Example;
 
 using System.Collections.Immutable;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using static EnsureExtensions;
-using static FunctionalDdd.ValidationError;
+using static Trellis.ValidationError;
 
 public class ValidationExample
 {

@@ -1,9 +1,9 @@
-﻿namespace BankingExample.Events;
+namespace BankingExample.Events;
 
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Raised when a new bank account is opened.

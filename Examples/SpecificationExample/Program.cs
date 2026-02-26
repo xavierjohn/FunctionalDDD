@@ -1,5 +1,5 @@
-﻿using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 using Microsoft.EntityFrameworkCore;
 using SpecificationExample.Domain;
 using SpecificationExample.Infrastructure;

@@ -1,7 +1,7 @@
-﻿namespace SpecificationExample.Specifications;
+namespace SpecificationExample.Specifications;
 
 using Ardalis.Specification;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis.PrimitiveValueObjects;
 using SpecificationExample.Domain;
 
 /// <summary>

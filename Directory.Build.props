@@ -24,8 +24,8 @@
   
   <PropertyGroup Label="nuget">
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/xavierjohn/FunctionalDDD.git</RepositoryUrl>
-    <PackageProjectUrl>https://xavierjohn.github.io/FunctionalDDD/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/xavierjohn/Trellis.git</RepositoryUrl>
+    <PackageProjectUrl>https://xavierjohn.github.io/Trellis/</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -50,8 +50,8 @@
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(IsTestProject)' == 'false' ">
-    <RootNamespace>FunctionalDdd</RootNamespace>
-    <AssemblyName>FunctionalDdd.$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>Trellis</RootNamespace>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <DebugType>embedded</DebugType>

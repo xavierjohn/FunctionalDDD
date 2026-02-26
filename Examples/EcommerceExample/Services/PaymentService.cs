@@ -1,9 +1,9 @@
-﻿namespace EcommerceExample.Services;
+namespace EcommerceExample.Services;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Simulates a payment gateway service.

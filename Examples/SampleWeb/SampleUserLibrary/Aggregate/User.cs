@@ -1,8 +1,8 @@
-﻿namespace SampleUserLibrary;
+namespace SampleUserLibrary;
 
 using FluentValidation;
-using FunctionalDdd;
-using FunctionalDdd.PrimitiveValueObjects;
+using Trellis;
+using Trellis.PrimitiveValueObjects;
 
 public class User : Aggregate<UserId>
 {
