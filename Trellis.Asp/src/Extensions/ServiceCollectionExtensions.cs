@@ -370,4 +370,53 @@ public static class ServiceCollectionExtensions
     /// </example>
     public static RouteHandlerBuilder WithScalarValueValidation(this RouteHandlerBuilder builder) =>
         builder.AddEndpointFilter<ScalarValueValidationEndpointFilter>();
+
+    /// <summary>
+    /// Registers Trellis ASP.NET Core integration with default error-to-HTTP-status-code mappings.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method uses the default error-to-status-code mappings. Most teams can use this
+    /// zero-configuration overload. Call the overload accepting <see cref="Action{TrellisAspOptions}"/>
+    /// to customize specific mappings.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddTrellisAsp();
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddTrellisAsp(this IServiceCollection services)
+        => services.AddTrellisAsp(_ => { });
+
+    /// <summary>
+    /// Registers Trellis ASP.NET Core integration with custom error-to-HTTP-status-code mappings.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">An action to configure error-to-HTTP-status-code mappings.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// Default mappings are applied first. The <paramref name="configure"/> action can override
+    /// any mapping using <see cref="TrellisAspOptions.MapError{TError}"/>.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddTrellisAsp(options =>
+    /// {
+    ///     options.MapError&lt;DomainError&gt;(StatusCodes.Status400BadRequest);
+    /// });
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddTrellisAsp(this IServiceCollection services, Action<TrellisAspOptions> configure)
+    {
+        var options = new TrellisAspOptions();
+        configure(options);
+        TrellisAspOptions.SetInstance(options);
+        services.AddSingleton(options);
+        return services;
+    }
 }

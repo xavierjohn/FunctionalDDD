@@ -256,28 +256,17 @@ public static class HttpResultExtensions
     /// </example>
     public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Error error)
     {
+        var statusCode = TrellisAspOptions.Instance.GetStatusCode(error);
+
         if (error is ValidationError validationError)
         {
             Dictionary<string, string[]> errors = validationError.FieldErrors
                 .GroupBy(x => x.FieldName)
                 .ToDictionary(x => x.Key, x => x.SelectMany(y => y.Details).ToArray());
 
-            return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance);
+            return Results.ValidationProblem(errors, validationError.Detail, validationError.Instance, statusCode);
         }
 
-        var status = error switch
-        {
-            NotFoundError => StatusCodes.Status404NotFound,
-            BadRequestError => StatusCodes.Status400BadRequest,
-            ConflictError => StatusCodes.Status409Conflict,
-            UnauthorizedError => StatusCodes.Status401Unauthorized,
-            ForbiddenError => StatusCodes.Status403Forbidden,
-            DomainError => StatusCodes.Status422UnprocessableEntity,
-            RateLimitError => StatusCodes.Status429TooManyRequests,
-            UnexpectedError => StatusCodes.Status500InternalServerError,
-            ServiceUnavailableError => StatusCodes.Status503ServiceUnavailable,
-            _ => StatusCodes.Status500InternalServerError
-        };
-        return Results.Problem(error.Detail, error.Instance, status);
+        return Results.Problem(error.Detail, error.Instance, statusCode);
     }
 }
