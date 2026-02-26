@@ -7,7 +7,7 @@
   <RootNamespace>Trellis</RootNamespace>
   <PackageReadmeFile>README.md</PackageReadmeFile>
   <Description>Result pattern integration for Ardalis.Specification - adds Result-returning extensions for seamless Railway Oriented Programming with the specification pattern.</Description>
-  <PackageTags>ardalis;specification;specification-pattern;result;railway-oriented-programming;ddd;domain-driven-design</PackageTags>
+  <PackageTags>trellis;ardalis;specification;specification-pattern;result;railway-oriented-programming;ddd;domain-driven-design</PackageTags>
 </PropertyGroup>
 
 <ItemGroup>

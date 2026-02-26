@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <PackageId>Trellis.Primitives</PackageId>
     <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
     <Description>
       Infrastructure and ready-to-use implementations for primitive value objects in Domain-Driven Design. Includes base classes (RequiredString, RequiredGuid) with source generation, plus EmailAddress with RFC 5322 validation. Eliminates primitive obsession with strongly-typed domain primitives.
     </Description>
-    <PackageTags>value-objects;source-generation;required-string;required-guid;email;ddd;strongly-typed;domain-primitives;primitive-obsession</PackageTags>
+    <PackageTags>trellis;value-objects;source-generation;required-string;required-guid;email;ddd;strongly-typed;domain-primitives;primitive-obsession</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>

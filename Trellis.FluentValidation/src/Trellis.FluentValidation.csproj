@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Convert fluent validation errors to FunctionalDdd Validation errors.</Description>
-    <PackageTags>validation;fluentvalidation;railway-oriented;result;error-handling;ddd</PackageTags>
+    <Description>Convert fluent validation errors to Trellis Validation errors.</Description>
+    <PackageTags>trellis;validation;fluentvalidation;railway-oriented;result;error-handling;ddd</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
