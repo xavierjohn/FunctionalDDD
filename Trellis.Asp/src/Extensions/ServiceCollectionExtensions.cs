@@ -413,6 +413,7 @@ public static class ServiceCollectionExtensions
     /// </example>
     public static IServiceCollection AddTrellisAsp(this IServiceCollection services, Action<TrellisAspOptions> configure)
     {
+        ArgumentNullException.ThrowIfNull(configure);
         var options = new TrellisAspOptions();
         configure(options);
         TrellisAspOptions.SetInstance(options);

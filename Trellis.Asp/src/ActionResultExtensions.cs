@@ -128,11 +128,12 @@ public static class ActionResultExtensions
     /// <param name="error">The domain error to convert.</param>
     /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
     /// <returns>
-    /// An ActionResult with Problem Details (RFC 7807) response containing:
+    /// An ActionResult with Problem Details (RFC 7807) response. The HTTP status code is resolved
+    /// from <see cref="TrellisAspOptions"/> (configured via <c>AddTrellisAsp</c>). The default mappings are:
     /// <list type="table">
     ///     <listheader>
     ///         <term>Domain Error Type</term>
-    ///         <description>HTTP Status Code</description>
+    ///         <description>Default HTTP Status Code</description>
     ///     </listheader>
     ///     <item>
     ///         <term><see cref="ValidationError"/></term>
@@ -181,6 +182,17 @@ public static class ActionResultExtensions
     /// </list>
     /// </returns>
     /// <remarks>
+    /// <para>
+    /// Status codes are resolved via <see cref="TrellisAspOptions"/>, which is configured by
+    /// calling <c>AddTrellisAsp</c> at startup. Any mapping can be overridden:
+    /// <code>
+    /// builder.Services.AddTrellisAsp(options =>
+    /// {
+    ///     options.MapError&lt;DomainError&gt;(StatusCodes.Status400BadRequest);
+    /// });
+    /// </code>
+    /// If <c>AddTrellisAsp</c> is not called, the default mappings shown above are used.
+    /// </para>
     /// <para>
     /// All responses use Problem Details format (RFC 7807) which provides a standard way to
     /// communicate errors in HTTP APIs. The format includes:
