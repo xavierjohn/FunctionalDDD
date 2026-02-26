@@ -1,6 +1,6 @@
-﻿# Primitive Value Objects
+﻿# Trellis.Primitives — Primitive Value Objects
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives)
 
 This library provides infrastructure and ready-to-use implementations for primitive value objects with source code generation, eliminating boilerplate code and primitive obsession in domain-driven design applications.
 
@@ -24,13 +24,13 @@ This library provides infrastructure and ready-to-use implementations for primit
 Install both packages via NuGet:
 
 ```bash
-dotnet add package FunctionalDdd.PrimitiveValueObjects
-dotnet add package FunctionalDdd.PrimitiveValueObjectGenerator
+dotnet add package Trellis.Primitives
+dotnet add package Trellis.Primitives.Generator
 ```
 
 **Important:** Both packages are required:
-- `FunctionalDdd.PrimitiveValueObjects` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
-- `FunctionalDdd.PrimitiveValueObjectGenerator` - Source generator that creates implementations for `Required*` base class derivatives
+- `Trellis.Primitives` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
+- `Trellis.Primitives.Generator` - Source generator that creates implementations for `Required*` base class derivatives
 
 ## Quick Start
 
@@ -80,7 +80,8 @@ public partial class EmployeeId : RequiredGuid<EmployeeId>
 
 // The source generator automatically creates:
 // - IScalarValue<EmployeeId, Guid> interface implementation
-// - NewUnique() -> EmployeeId
+// - NewUniqueV4() -> EmployeeId
+// - NewUniqueV7() -> EmployeeId (time-ordered)
 // - TryCreate(Guid) -> Result<EmployeeId> (required by IScalarValue)
 // - TryCreate(Guid?, string? fieldName = null) -> Result<EmployeeId>
 // - TryCreate(string?, string? fieldName = null) -> Result<EmployeeId>
@@ -88,7 +89,7 @@ public partial class EmployeeId : RequiredGuid<EmployeeId>
 // - TryParse(string?, IFormatProvider?, out EmployeeId) -> bool
 // - explicit operator EmployeeId(Guid)
 
-var employeeId = EmployeeId.NewUnique(); // Create new GUID
+var employeeId = EmployeeId.NewUniqueV7(); // Create new time-ordered GUID
 var result = EmployeeId.TryCreate(guid);
 var result2 = EmployeeId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
 
@@ -365,7 +366,7 @@ This library provides both **base classes** for creating custom value objects an
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
 | **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValue, IParsable, ASP.NET validation |
-| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValue, NewUnique(), ASP.NET validation |
+| **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValue, NewUniqueV4()/V7(), ASP.NET validation |
 | **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValue, IParsable, ASP.NET validation |
 | **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValue, IParsable, ASP.NET validation |
 
@@ -424,5 +425,5 @@ Primitive value objects wrap single primitive types (`string`, `Guid`, etc.) to 
 ## Resources
 
 - [SAMPLES.md](SAMPLES.md) - Comprehensive examples and patterns
-- [Railway Oriented Programming](../RailwayOrientedProgramming/README.md) - Core Result<T> concepts
-- [Domain-Driven Design](../DomainDrivenDesign/README.md) - Entity and value object patterns
+- [Railway Oriented Programming](../Trellis.Results/README.md) - Core Result<T> concepts
+- [Domain-Driven Design](../Trellis.DomainDrivenDesign/README.md) - Entity and value object patterns

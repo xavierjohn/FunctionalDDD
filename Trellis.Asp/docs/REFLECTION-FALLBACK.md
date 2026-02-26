@@ -1,6 +1,6 @@
 ﻿# Reflection Fallback for Value Object Validation
 
-The FunctionalDDD.Asp library provides **automatic fallback to reflection** when the source generator is not available. This means you can use value object validation without any source generator reference in standard .NET applications.
+The Trellis.Asp library provides **automatic fallback to reflection** when the source generator is not available. This means you can use value object validation without any source generator reference in standard .NET applications.
 
 ## Two Validation Paths
 
@@ -99,7 +99,7 @@ The library **automatically uses reflection** when:
 
 ```csharp
 // Program.cs
-using FunctionalDdd;
+using Trellis;
 
 var builder = WebApplication.CreateBuilder(args);
 

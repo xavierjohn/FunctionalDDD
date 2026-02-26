@@ -158,7 +158,7 @@ public class User : Aggregate<UserId>
         LastName lastName, 
         EmailAddress email, 
         int age)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV7())
     {
         FirstName = firstName;
         LastName = lastName;

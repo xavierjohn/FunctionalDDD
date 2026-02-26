@@ -1,10 +1,10 @@
-﻿# FunctionalDDD Examples Guide
+﻿# Trellis Examples Guide
 
-This directory contains working examples demonstrating different aspects of the FunctionalDDD library.
+This directory contains working examples demonstrating different aspects of the Trellis library.
 
 ## Quick Start - Which Example Should I Use?
 
-### 🎯 New to FunctionalDDD? **Start here!**
+### 🎯 New to Trellis? **Start here!**
 
 **[SampleMinimalApiNoAot](SampleWeb/SampleMinimalApiNoAot/)** - Simplest setup with reflection fallback
 - ✅ No source generator required
@@ -251,9 +251,9 @@ Each example includes:
 - **.http file** - Request/response examples
 
 ### Additional Resources
-- **[Asp/README.md](../Asp/README.md)** - Main library documentation
-- **[Asp/docs/REFLECTION-FALLBACK.md](../Asp/docs/REFLECTION-FALLBACK.md)** - Reflection vs AOT deep dive
-- **[Asp/generator/README.md](../Asp/generator/README.md)** - Source generator details
+- **[Asp/README.md](../Trellis.Asp/README.md)** - Main library documentation
+- **[Asp/docs/REFLECTION-FALLBACK.md](../Trellis.Asp/docs/REFLECTION-FALLBACK.md)** - Reflection vs AOT deep dive
+- **[Asp/generator/README.md](../Trellis.Asp/generator/README.md)** - Source generator details
 
 ## FAQ
 
@@ -273,7 +273,7 @@ Each example includes:
 **A: Both are identical** - the difference is only in startup/first-request time.
 
 ### Q: Should I use Minimal APIs or MVC?
-**A: Your choice!** Both work great with FunctionalDDD.
+**A: Your choice!** Both work great with Trellis.
 
 ### Q: Can I use this in production without the source generator?
 **A: Absolutely!** The reflection fallback is production-ready.
@@ -283,14 +283,14 @@ Each example includes:
 1. **Start:** [SampleMinimalApiNoAot](SampleMinimalApiNoAot/) - Learn the basics
 2. **Explore:** [SampleWebApplication](SampleWebApplication/) - See MVC integration
 3. **Advanced:** [SampleMinimalApi](SampleMinimalApi/) - Understand AOT deployment
-4. **Deep dive:** [Asp/docs/REFLECTION-FALLBACK.md](../Asp/docs/REFLECTION-FALLBACK.md)
+4. **Deep dive:** [Asp/docs/REFLECTION-FALLBACK.md](../Trellis.Asp/docs/REFLECTION-FALLBACK.md)
 
 ## Contributing
 
 Found an issue or want to add an example?
-- Open an issue at [github.com/anthropics/claude-code/issues](https://github.com/anthropics/claude-code/issues)
+- Open an issue at [github.com/xavierjohn/Trellis/issues](https://github.com/xavierjohn/Trellis/issues)
 - Examples should be simple, focused, and well-documented
 
 ## License
 
-Part of the FunctionalDDD library. See [LICENSE](../LICENSE) for details.
+Part of the Trellis library. See [LICENSE](../LICENSE) for details.

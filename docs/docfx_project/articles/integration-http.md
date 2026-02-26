@@ -340,28 +340,19 @@ var result = await _httpClient.PostAsJsonAsync("api/orders", order, ct)
 
 ### 5. Combine with Retry Policies
 
-Use Polly for retry logic (don't reinvent it):
+Use [the .NET resilience library](https://learn.microsoft.com/en-us/dotnet/core/resilience/) for retry logic (don't reinvent it):
 
 ```csharp
-using Polly;
-using Polly.Extensions.Http;
+using Microsoft.Extensions.Http.Resilience;
 
-// Configure HttpClient with Polly
+// Configure HttpClient with the .NET resilience library
 services.AddHttpClient<IOrderService, OrderService>()
-    .AddPolicyHandler(GetRetryPolicy());
-
-static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-{
-    return HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .WaitAndRetryAsync(3, retryAttempt => 
-            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-}
+    .AddStandardResilienceHandler();
 
 // Then use Trellis for functional error handling
 public async Task<Result<Order>> GetOrderAsync(string orderId, CancellationToken ct)
 {
-    return await _httpClient.GetAsync($"api/orders/{orderId}", ct)  // Polly handles retries
+    return await _httpClient.GetAsync($"api/orders/{orderId}", ct)  // Resilience library handles retries
         .HandleNotFoundAsync(Error.NotFound("Order", orderId))  // Trellis handles errors
         .ReadResultFromJsonAsync(OrderJsonContext.Default.Order, ct);
 }

@@ -1,6 +1,6 @@
 ﻿# Mermaid Diagrams for Documentation
 
-This document contains reusable Mermaid diagram scripts for the FunctionalDDD documentation. All diagrams use the ````mermaid` code fence and are compatible with DocFX, GitHub, and mermaid.live.
+This document contains reusable Mermaid diagram scripts for the Trellis documentation. All diagrams use the ````mermaid` code fence and are compatible with DocFX, GitHub, and mermaid.live.
 
 ## Table of Contents
 

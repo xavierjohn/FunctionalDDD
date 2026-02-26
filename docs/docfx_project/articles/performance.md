@@ -348,7 +348,7 @@ dotnet run -c Release --project YourBenchmarkProject
 
 ```bash
 cd Trellis
-dotnet run --project Benchmark/Benchmark.csproj -c Release
+dotnet run --project Trellis.Benchmark/Trellis.Benchmark.csproj -c Release
 ```
 
 ## Performance FAQs

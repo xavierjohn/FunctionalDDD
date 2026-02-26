@@ -30,16 +30,16 @@ The Trellis library is designed with performance in mind. All benchmarks are run
 
 ## Key Findings
 
-### ? **Minimal Overhead**
+### Minimal Overhead
 Railway-oriented programming adds **~11-16 nanoseconds** overhead compared to imperative style (measured on .NET 10), which is negligible in real-world applications (~12-13% overhead).
 
-### ? **Consistent Memory Usage**
+### Consistent Memory Usage
 Both ROP and imperative styles allocate the same amount of memory for equivalent operations, showing no additional allocation overhead from the abstraction.
 
-### ?? **Success Path Optimizations**
+### Success Path Optimizations
 Success path operations are highly optimized with minimal allocations and fast execution times. Most operations (Map, Tap, Bind) allocate zero bytes on success paths.
 
-### ?? **Error Path Efficiency**
+### Error Path Efficiency
 Error paths are also efficient, with proper error aggregation not causing significant performance degradation. Failure paths often have identical or better performance than success paths due to short-circuit optimizations.
 
 ## Benchmark Results

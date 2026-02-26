@@ -1,6 +1,6 @@
 # Fluent Validation Extension - Comprehensive Examples
 
-This document provides detailed examples and advanced patterns for integrating FluentValidation with Railway Oriented Programming in FunctionalDDD.
+This document provides detailed examples and advanced patterns for integrating FluentValidation with Railway Oriented Programming in Trellis.
 
 ## Table of Contents
 
@@ -1042,7 +1042,7 @@ public class DimensionsValidator : AbstractValidator<Dimensions>
         RuleFor(x => x)
             .Must(d => d.Length * d.Width * d.Height <= 1000000)
             .WithMessage(x => 
-                $"Product volume {x.Length * x.Width * x.Height}cm³ exceeds maximum of 1,000,000cm³");
+                $"Product volume {x.Length * x.Width * x.Height}cmï¿½ exceeds maximum of 1,000,000cmï¿½");
     }
 }
 ```

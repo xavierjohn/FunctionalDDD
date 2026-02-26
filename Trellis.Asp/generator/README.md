@@ -1,4 +1,4 @@
-﻿# FunctionalDdd.Asp Source Generator
+﻿# Trellis.Asp Source Generator
 
 A Roslyn source generator that automatically creates AOT-compatible JSON converters and serializer context entries for types implementing `IScalarValue<TSelf, TPrimitive>`.
 
@@ -18,7 +18,7 @@ A Roslyn source generator that automatically creates AOT-compatible JSON convert
 
 ```csharp
 using System.Text.Json.Serialization;
-using FunctionalDdd;
+using Trellis;
 
 [GenerateScalarValueConverters]
 [JsonSerializable(typeof(MyDto))]
@@ -58,7 +58,7 @@ var options = new JsonSerializerOptions
 {
     TypeInfoResolver = AppJsonSerializerContext.Default
 };
-options.Converters.Add(new FunctionalDdd.Generated.GeneratedScalarValueConverterFactory());
+options.Converters.Add(new Trellis.Generated.GeneratedScalarValueConverterFactory());
 ```
 
 ## Benefits Over Runtime Reflection

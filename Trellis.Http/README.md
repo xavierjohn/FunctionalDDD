@@ -1,6 +1,6 @@
-﻿# FunctionalDdd.Http
+﻿# Trellis.Http
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Http.svg)](https://www.nuget.org/packages/Trellis.Http)
 
 Fluent HTTP client extensions for Railway Oriented Programming — handle status codes, deserialize JSON, and compose error handling with `Result<T>` and `Maybe<T>`.
 
@@ -18,7 +18,7 @@ Fluent HTTP client extensions for Railway Oriented Programming — handle status
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.Http
+dotnet add package Trellis.Http
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ dotnet add package FunctionalDdd.Http
 ### Basic Error Handling
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 
 // Handle 404 Not Found
 var result = await httpClient.GetAsync($"api/users/{userId}", ct)
@@ -331,12 +331,12 @@ This library follows these design principles:
 2. **Dependency Inversion**: Infrastructure depends on core abstractions, not vice versa
 3. **Composability**: All methods integrate with Railway Oriented Programming patterns
 4. **Explicit Error Handling**: No hidden exceptions; all errors are represented in the type system
-5. **No Polly Overlap**: Focused on status code handling, not resilience patterns (use Polly for retry/circuit breaker)
+5. **No Resilience Overlap**: Focused on status code handling, not resilience patterns (use the .NET resilience library for retry/circuit breaker)
 
 ## Related Packages
 
-- **FunctionalDdd.RailwayOrientedProgramming**: Core Result and Maybe monads
-- **FunctionalDdd.Asp**: ASP.NET Core integration (converts Result to ActionResult/IResult)
+- **Trellis.Results**: Core Result and Maybe monads
+- **Trellis.Asp**: ASP.NET Core integration (converts Result to ActionResult/IResult)
 
 ## License
 

@@ -1,6 +1,6 @@
 ﻿# Changelog
 
-All notable changes to the FunctionalDDD project will be documented in this file.
+All notable changes to the Trellis project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -35,7 +35,7 @@ Full support for optional value object properties in DTOs:
 
 ---
 
-#### FunctionalDDD.Analyzers - NEW Package! 🎉
+#### Trellis.Analyzers - NEW Package! 🎉
 
 A comprehensive suite of 18 Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:
 
@@ -69,7 +69,7 @@ A comprehensive suite of 18 Roslyn analyzers to enforce Railway Oriented Program
 
 **Installation:**
 ```bash
-dotnet add package FunctionalDdd.Analyzers
+dotnet add package Trellis.Analyzers
 ```
 
 **Documentation:** [Analyzer Documentation](Analyzers/src/README.md)
@@ -79,4 +79,4 @@ dotnet add package FunctionalDdd.Analyzers
 ## Previous Releases
 
 
-[Unreleased]: https://github.com/xavierjohn/FunctionalDDD/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/xavierjohn/Trellis/compare/v1.0.0...HEAD

@@ -1,14 +1,14 @@
-﻿# Functional Domain Driven Design
+﻿# Trellis
 
-[![Build](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/FunctionalDDD/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/xavierjohn/FunctionalDDD/branch/main/graph/badge.svg)](https://codecov.io/gh/xavierjohn/FunctionalDDD)
-[![NuGet](https://img.shields.io/nuget/v/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/FunctionalDDD.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDDD.RailwayOrientedProgramming)
+[![Build](https://github.com/xavierjohn/Trellis/actions/workflows/build.yml/badge.svg)](https://github.com/xavierjohn/Trellis/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/xavierjohn/Trellis/branch/main/graph/badge.svg)](https://codecov.io/gh/xavierjohn/Trellis)
+[![NuGet](https://img.shields.io/nuget/v/Trellis.Results.svg)](https://www.nuget.org/packages/Trellis.Results)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Trellis.Results.svg)](https://www.nuget.org/packages/Trellis.Results)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/download)
 [![C#](https://img.shields.io/badge/C%23-14.0-blue.svg)](https://docs.microsoft.com/en-us/dotnet/csharp/)
-[![GitHub Stars](https://img.shields.io/github/stars/xavierjohn/FunctionalDDD?style=social)](https://github.com/xavierjohn/FunctionalDDD/stargazers)
-[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://xavierjohn.github.io/FunctionalDDD/)
+[![GitHub Stars](https://img.shields.io/github/stars/xavierjohn/Trellis?style=social)](https://github.com/xavierjohn/Trellis/stargazers)
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://xavierjohn.github.io/Trellis/)
 
 > **Write less code that reads like English** using Railway-Oriented Programming and Domain-Driven Design
 
@@ -69,7 +69,7 @@ Railway-Oriented Programming (ROP) treats your code like railway tracks—operat
 - ✅ **New developers understand code faster** thanks to readable chains
 - ✅ **Zero performance penalty** — same speed as imperative code
 
-📖 **[Read the full introduction](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)**
+📖 **[Read the full introduction](https://xavierjohn.github.io/Trellis/articles/intro.html)**
 
 ---
 
@@ -80,19 +80,19 @@ Railway-Oriented Programming (ROP) treats your code like railway tracks—operat
 Install the core railway-oriented programming package:
 
 ```bash
-dotnet add package FunctionalDdd.RailwayOrientedProgramming
+dotnet add package Trellis.Results
 ```
 
 For ASP.NET Core integration:
 
 ```bash
-dotnet add package FunctionalDdd.Asp
+dotnet add package Trellis.Asp
 ```
 
 ### Basic Usage
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 
 // Create a Result with validation
 var emailResult = EmailAddress.TryCreate("user@example.com")
@@ -116,7 +116,7 @@ var result = await GetUserAsync(userId)
 #### 🚀 [Quick Start Guide](Examples/QUICKSTART.md)
 
 
-👉 **Next Steps**: Browse the [Examples](#examples) section or explore the [complete documentation](https://xavierjohn.github.io/FunctionalDDD/)
+👉 **Next Steps**: Browse the [Examples](#examples) section or explore the [complete documentation](https://xavierjohn.github.io/Trellis/)
 
 ---
 
@@ -177,7 +177,7 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter());
 ```
 
-📖 **[View all features](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html)**
+📖 **[View all features](https://xavierjohn.github.io/Trellis/articles/intro.html)**
 
 ---
 
@@ -185,15 +185,15 @@ builder.Services.AddOpenTelemetry()
 
 | Package | Version | Description | Documentation |
 |---------|---------|-------------|---------------|
-| **[RailwayOrientedProgramming](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming) | Core Result/Maybe types, error handling, async support | [📖 Docs](RailwayOrientedProgramming/README.md) |
-| **[Asp](https://www.nuget.org/packages/FunctionalDdd.Asp)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Asp.svg)](https://www.nuget.org/packages/FunctionalDdd.Asp) | Convert Result → HTTP responses, Maybe<T> support (MVC & Minimal API) | [📖 Docs](Asp/README.md) |
-| **[Http](https://www.nuget.org/packages/FunctionalDdd.Http)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Http.svg)](https://www.nuget.org/packages/FunctionalDdd.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Http/README.md) |
-| **[FluentValidation](https://www.nuget.org/packages/FunctionalDdd.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.FluentValidation.svg)](https://www.nuget.org/packages/FunctionalDdd.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](FluentValidation/README.md) |
-| **[PrimitiveValueObjects](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjects.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjects) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](PrimitiveValueObjects/README.md) |
-| **[PrimitiveValueObjectGenerator](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.PrimitiveValueObjectGenerator.svg)](https://www.nuget.org/packages/FunctionalDdd.PrimitiveValueObjectGenerator) | Source generator for value object boilerplate | [📖 Docs](PrimitiveValueObjects/generator/README.md) |
-| **[Analyzers](https://www.nuget.org/packages/FunctionalDdd.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Analyzers.svg)](https://www.nuget.org/packages/FunctionalDdd.Analyzers) | **NEW!** Roslyn analyzers for compile-time ROP safety (14 rules) | [📖 Docs](Analyzers/README.md) |
-| **[DomainDrivenDesign](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.DomainDrivenDesign.svg)](https://www.nuget.org/packages/FunctionalDdd.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](DomainDrivenDesign/README.md) |
-| **[Testing](https://www.nuget.org/packages/FunctionalDdd.Testing)** | [![NuGet](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Testing/README.md) |
+| **[Results](https://www.nuget.org/packages/Trellis.Results)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Results.svg)](https://www.nuget.org/packages/Trellis.Results) | Core Result/Maybe types, error handling, async support | [📖 Docs](Trellis.Results/README.md) |
+| **[Asp](https://www.nuget.org/packages/Trellis.Asp)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp) | Convert Result → HTTP responses, Maybe<T> support (MVC & Minimal API) | [📖 Docs](Trellis.Asp/README.md) |
+| **[Http](https://www.nuget.org/packages/Trellis.Http)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Http.svg)](https://www.nuget.org/packages/Trellis.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Trellis.Http/README.md) |
+| **[FluentValidation](https://www.nuget.org/packages/Trellis.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.FluentValidation.svg)](https://www.nuget.org/packages/Trellis.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](Trellis.FluentValidation/README.md) |
+| **[Primitives](https://www.nuget.org/packages/Trellis.Primitives)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](Trellis.Primitives/README.md) |
+| **[Primitives.Generator](https://www.nuget.org/packages/Trellis.Primitives.Generator)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.Generator.svg)](https://www.nuget.org/packages/Trellis.Primitives.Generator) | Source generator for value object boilerplate | [📖 Docs](Trellis.Primitives/generator/README.md) |
+| **[Analyzers](https://www.nuget.org/packages/Trellis.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers) | Roslyn analyzers for compile-time ROP safety (18 rules) | [📖 Docs](Trellis.Analyzers/README.md) |
+| **[DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](Trellis.DomainDrivenDesign/README.md) |
+| **[Testing](https://www.nuget.org/packages/Trellis.Testing)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Trellis.Testing/README.md) |
 
 ---
 
@@ -226,36 +226,36 @@ ROP Overhead:          16 ns
 
 Run benchmarks yourself:
 ```bash
-dotnet run --project Benchmark/Benchmark.csproj -c Release
+dotnet run --project Trellis.Benchmark/Trellis.Benchmark.csproj -c Release
 ```
 
 ---
 
 ## Documentation
 
-📚 **[Complete Documentation Site](https://xavierjohn.github.io/FunctionalDDD/)**
+📚 **[Complete Documentation Site](https://xavierjohn.github.io/Trellis/)**
 
 ### Learning Paths
 
 **🎓 Beginner** (2-3 hours)
-- [Introduction](https://xavierjohn.github.io/FunctionalDDD/articles/intro.html) - Why use ROP?
-- [Basics Tutorial](https://xavierjohn.github.io/FunctionalDDD/articles/basics.html) - Core concepts
-- [Examples](https://xavierjohn.github.io/FunctionalDDD/articles/examples.html) - Real-world patterns
+- [Introduction](https://xavierjohn.github.io/Trellis/articles/intro.html) - Why use ROP?
+- [Basics Tutorial](https://xavierjohn.github.io/Trellis/articles/basics.html) - Core concepts
+- [Examples](https://xavierjohn.github.io/Trellis/articles/examples.html) - Real-world patterns
 
 **💼 Integration** (1-2 hours)
-- [ASP.NET Core](https://xavierjohn.github.io/FunctionalDDD/articles/integration-aspnet.html)
-- [FluentValidation](https://xavierjohn.github.io/FunctionalDDD/articles/integration-fluentvalidation.html)
-- [Entity Framework Core](https://xavierjohn.github.io/FunctionalDDD/articles/integration-ef.html)
+- [ASP.NET Core](https://xavierjohn.github.io/Trellis/articles/integration-aspnet.html)
+- [FluentValidation](https://xavierjohn.github.io/Trellis/articles/integration-fluentvalidation.html)
+- [Entity Framework Core](https://xavierjohn.github.io/Trellis/articles/integration-ef.html)
 
 **🚀 Advanced** (3-4 hours)
-- [Clean Architecture](https://xavierjohn.github.io/FunctionalDDD/articles/clean-architecture.html) - CQRS patterns
-- [Advanced Features](https://xavierjohn.github.io/FunctionalDDD/articles/advanced-features.html) - LINQ, parallelization
-- [Error Handling](https://xavierjohn.github.io/FunctionalDDD/articles/error-handling.html) - Custom errors, aggregation
+- [Clean Architecture](https://xavierjohn.github.io/Trellis/articles/clean-architecture.html) - CQRS patterns
+- [Advanced Features](https://xavierjohn.github.io/Trellis/articles/advanced-features.html) - LINQ, parallelization
+- [Error Handling](https://xavierjohn.github.io/Trellis/articles/error-handling.html) - Custom errors, aggregation
 
 ### Quick References
-- [Debugging Guide](https://xavierjohn.github.io/FunctionalDDD/articles/debugging.html)
-- [Performance Tips](https://xavierjohn.github.io/FunctionalDDD/articles/performance.html)
-- [API Reference](https://xavierjohn.github.io/FunctionalDDD/api/)
+- [Debugging Guide](https://xavierjohn.github.io/Trellis/articles/debugging.html)
+- [Performance Tips](https://xavierjohn.github.io/Trellis/articles/performance.html)
+- [API Reference](https://xavierjohn.github.io/Trellis/api/)
 
 ---
 
@@ -395,7 +395,7 @@ public class User : Aggregate<UserId>
 
 </details>
 
-📁 **[Browse all examples](Examples/)** | 📖 **[Complete documentation](https://xavierjohn.github.io/FunctionalDDD/articles/examples.html)**
+📁 **[Browse all examples](Examples/)** | 📖 **[Complete documentation](https://xavierjohn.github.io/Trellis/articles/examples.html)**
 
 ---
 
@@ -404,7 +404,7 @@ public class User : Aggregate<UserId>
 **Recent enhancements:**
 - 🎯 **Maybe<T> Domain Optionality** — `notnull` constraint, `Map`, `Match` methods, full ASP.NET Core integration (JSON converter, model binder, MVC validation suppression)
 - 🎯 **RequiredEnum** — Type-safe enumerations with behavior, state machine support, and JSON serialization
-- 🔍 **Roslyn Analyzers** — 14 compile-time diagnostics to enforce ROP best practices
+- 🔍 **Roslyn Analyzers** — 18 compile-time diagnostics to enforce ROP best practices
 - ✨ **ASP.NET Core Auto-Validation** — Value objects automatically validate in requests via `AddScalarValueValidation()`
 - 🎯 **11 New Value Objects** — `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, `RequiredInt`, `RequiredDecimal`
 - ✨ **Discriminated Error Matching** — Pattern match on specific error types using `MatchError`
@@ -452,10 +452,10 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## Community & Support
 
-- 📖 **[Documentation](https://xavierjohn.github.io/FunctionalDDD/)**
-- 💬 **[Discussions](https://github.com/xavierjohn/FunctionalDDD/discussions)** - Ask questions, share ideas
-- 🐛 **[Issues](https://github.com/xavierjohn/FunctionalDDD/issues)** - Report bugs or request features
-- ⭐ **[Star this repo](https://github.com/xavierjohn/FunctionalDDD)** if you find it useful!
+- 📖 **[Documentation](https://xavierjohn.github.io/Trellis/)**
+- 💬 **[Discussions](https://github.com/xavierjohn/Trellis/discussions)** - Ask questions, share ideas
+- 🐛 **[Issues](https://github.com/xavierjohn/Trellis/issues)** - Report bugs or request features
+- ⭐ **[Star this repo](https://github.com/xavierjohn/Trellis)** if you find it useful!
 
 ### Learning Resources
 
@@ -467,8 +467,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**[⬆ Back to Top](#functional-domain-driven-design)**
+**[⬆ Back to Top](#trellis)**
 
-Made with ❤️ by the FunctionalDDD community
+Made with ❤️ by the Trellis community
 
 </div>

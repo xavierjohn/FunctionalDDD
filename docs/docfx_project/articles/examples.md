@@ -85,7 +85,7 @@ public class User : Aggregate<UserId>
     }
 
     private User(FirstName firstName, LastName lastName)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV7())
     {
         FirstName = firstName;
         LastName = lastName;
@@ -200,7 +200,7 @@ var result = await ProcessPaymentAsync(order, cancellationToken)
 
 **Key Points**:
 - `TapAsync` executes only on **success**
-- `TapErrorAsync` executes only on **failure**
+- `TapOnFailureAsync` executes only on **failure**
 - Side effects don't change the `Result` value
 - Perfect for logging, metrics, and notifications
 
@@ -227,23 +227,26 @@ var result = await GetUserFromCacheAsync(userId, cancellationToken)
 
 ### Retry Transient Failures
 
-Automatically retry operations that may fail temporarily:
+For retry logic, use [the .NET resilience library](https://learn.microsoft.com/en-us/dotnet/core/resilience/) — Trellis handles functional error flow, the resilience library handles transient fault tolerance:
 
 ```csharp
-var result = await RetryExtensions.RetryAsync(
-    operation: async ct => await CallExternalServiceAsync(ct),
-    maxRetries: 3,
-    initialDelay: TimeSpan.FromMilliseconds(100),
-    shouldRetry: error => error is ServiceUnavailableError,
-    cancellationToken: cancellationToken
-);
+// Configure HttpClient with the .NET resilience library
+services.AddHttpClient<IOrderService, OrderService>()
+    .AddStandardResilienceHandler();
+
+// Then use Trellis for functional error handling
+public async Task<Result<Order>> GetOrderAsync(string orderId, CancellationToken ct)
+{
+    return await _httpClient.GetAsync($"api/orders/{orderId}", ct)  // Resilience library handles retries
+        .HandleNotFoundAsync(Error.NotFound("Order", orderId))       // Trellis handles errors
+        .ReadResultFromJsonAsync(OrderJsonContext.Default.Order, ct);
+}
 ```
 
 **Key Points**:
-- Retries up to `maxRetries` times (3 in this example = 4 total attempts)
-- Exponential backoff with `initialDelay` (100ms, 200ms, 400ms)
-- `shouldRetry` predicate controls which errors to retry
-- Supports `CancellationToken` for graceful cancellation
+- Use the .NET resilience library for retry, circuit breaker, and timeout policies
+- Use Trellis for functional error handling and composition
+- They complement each other — resilience wraps the HTTP layer, Trellis wraps the result
 
 ### Read HTTP Response as Result
 

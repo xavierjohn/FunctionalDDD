@@ -1,13 +1,13 @@
-﻿# FunctionalDdd.Testing
+﻿# Trellis.Testing
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.Testing.svg)](https://www.nuget.org/packages/FunctionalDdd.Testing)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing)
 
-Testing utilities and FluentAssertions extensions for **FunctionalDdd** - Write expressive, maintainable tests for Railway-Oriented Programming patterns.
+Testing utilities and FluentAssertions extensions for **Trellis** - Write expressive, maintainable tests for Railway-Oriented Programming patterns.
 
 ## Installation
 
 ```bash
-dotnet add package FunctionalDdd.Testing
+dotnet add package Trellis.Testing
 ```
 
 ## Features
@@ -23,7 +23,7 @@ dotnet add package FunctionalDdd.Testing
 ### Result Assertions
 
 ```csharp
-using FunctionalDdd.Testing;
+using Trellis.Testing;
 
 [Fact]
 public void Should_Return_Success()
@@ -202,8 +202,8 @@ public class UserServiceTests
 
 ## Related Packages
 
-- **FunctionalDdd.RailwayOrientedProgramming** - Core Result/Maybe types
-- **FunctionalDdd.DomainDrivenDesign** - DDD building blocks
+- **Trellis.Results** - Core Result/Maybe types
+- **Trellis.DomainDrivenDesign** - DDD building blocks
 
 ## License
 

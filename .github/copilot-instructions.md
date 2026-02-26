@@ -1,4 +1,4 @@
-﻿# GitHub Copilot Instructions for FunctionalDdd
+﻿# GitHub Copilot Instructions for Trellis
 
 ## Project Overview
 
@@ -6,15 +6,15 @@ Functional programming library for .NET 10 implementing Railway Oriented Program
 
 ## Naming Conventions
 
-This project uses `FunctionalDdd` (lowercase 'dd') per Microsoft's .NET naming guidelines for 3+ letter acronyms.
+This project uses `Trellis` as the package and namespace prefix.
 
 | Context | Correct | Incorrect |
 |---------|---------|-----------|
-| Packages / Namespaces | `FunctionalDdd.RailwayOrientedProgramming` | `FunctionalDDD.RailwayOrientedProgramming` |
-| Using statements | `using FunctionalDdd;` | `using FunctionalDDD;` |
-| Assembly names | `FunctionalDdd.*` | `FunctionalDDD.*` |
+| Packages / Namespaces | `Trellis.Results` | `FunctionalDdd.RailwayOrientedProgramming` |
+| Using statements | `using Trellis;` | `using FunctionalDdd;` |
+| Assembly names | `Trellis.*` | `FunctionalDdd.*` |
 
-"FunctionalDDD" or "Functional DDD" is acceptable in prose, documentation, and the GitHub repository name.
+"Trellis" is used everywhere — packages, namespaces, documentation, and the GitHub repository name.
 
 ## Value Object Creation Patterns
 
@@ -217,11 +217,11 @@ predicateInvoked.Should().BeFalse("predicate should not be invoked for failed re
 
 | Area | Source | Tests |
 |------|--------|-------|
-| Core ROP | `RailwayOrientedProgramming/src/Result/Extensions/` | `RailwayOrientedProgramming/tests/Results/Extensions/` |
-| Value Objects | `PrimitiveValueObjects/src/` | `PrimitiveValueObjects/tests/` |
-| DDD | `DomainDrivenDesign/src/` | `DomainDrivenDesign/tests/` |
-| ASP.NET | `Asp/src/` | `Asp/tests/` |
-| HTTP | `Http/src/` | `Http/tests/` |
+| Core ROP | `Trellis.Results/src/Result/Extensions/` | `Trellis.Results/tests/Results/Extensions/` |
+| Value Objects | `Trellis.Primitives/src/` | `Trellis.Primitives/tests/` |
+| DDD | `Trellis.DomainDrivenDesign/src/` | `Trellis.DomainDrivenDesign/tests/` |
+| ASP.NET | `Trellis.Asp/src/` | `Trellis.Asp/tests/` |
+| HTTP | `Trellis.Http/src/` | `Trellis.Http/tests/` |
 
 ## Documentation Standards
 

@@ -202,7 +202,7 @@ public class User : Aggregate<UserId>
     }
 
     private User(FirstName firstName, LastName lastName, EmailAddress email, string password)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV7())
     {
         FirstName = firstName;
         LastName = lastName;
@@ -496,7 +496,7 @@ public class User : Aggregate<UserId>
         EmailAddress email,
         FirstName firstName,
         LastName lastName)
-        : base(UserId.NewUnique())
+        : base(UserId.NewUniqueV7())
     {
         Email = email;
         FirstName = firstName;
@@ -613,11 +613,7 @@ public class UserRepository : IUserRepository
         {
             return Error.Conflict("Email already in use");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving user");
-            return Error.Unexpected("Failed to save user");
-        }
+        // Let unexpected failures (connection issues, etc.) propagate as exceptions
     }
 
     private static bool IsDuplicateKey(DbUpdateException ex)

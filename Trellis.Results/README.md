@@ -1,6 +1,6 @@
-﻿# Railway Oriented Programming
+﻿# Trellis.Results — Railway Oriented Programming
 
-[![NuGet Package](https://img.shields.io/nuget/v/FunctionalDdd.RailwayOrientedProgramming.svg)](https://www.nuget.org/packages/FunctionalDdd.RailwayOrientedProgramming)
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.Results.svg)](https://www.nuget.org/packages/Trellis.Results)
 
 Railway Oriented Programming (ROP) is a functional approach to error handling that treats your code like a railway track. Operations either succeed (staying on the success track) or fail (switching to the error track). This library provides the core types and extension methods to implement ROP in C#.
 
@@ -34,7 +34,7 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
 Install via NuGet:
 
 ```bash
-dotnet add package FunctionalDdd.RailwayOrientedProgramming
+dotnet add package Trellis.Results
 ```
 
 ## Core Concepts
@@ -61,7 +61,7 @@ public readonly struct Result<TValue>
 **Basic Usage:**
 
 ```csharp
-using FunctionalDdd;
+using Trellis;
 
 // Success result
 Result<int> success = Result.Success(42);
