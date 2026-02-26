@@ -10,6 +10,6 @@
     <None Include="../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Trellis.RailwayOrientedProgramming\src\Trellis.RailwayOrientedProgramming.csproj" />
+    <ProjectReference Include="..\..\Trellis.Results\src\Trellis.Results.csproj" />
   </ItemGroup>
 </Project>

@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.Build.Traversal">
     <ItemGroup Label="source">
-        <ProjectReference Include="src\CommonValueObjects.csproj" />
-        <ProjectReference Include="generator\CommonValueObjectGenerator.csproj" />
+        <ProjectReference Include="src\Trellis.Primitives.csproj" />
+        <ProjectReference Include="generator\Trellis.Primitives.Generator.csproj" />
     </ItemGroup>
 
     <ItemGroup Label="test">
-        <ProjectReference Include="tests\CommonValueObjects.Tests.csproj" />
+        <ProjectReference Include="tests\Trellis.Primitives.Tests.csproj" />
     </ItemGroup>
 
 </Project>

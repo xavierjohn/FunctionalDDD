@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		<ProjectReference Include="..\src\Trellis.RailwayOrientedProgramming.csproj" />
+		<ProjectReference Include="..\src\Trellis.Results.csproj" />
 		<ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
 	</ItemGroup>
 
