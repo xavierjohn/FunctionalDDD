@@ -111,6 +111,7 @@ Build rich domain models with **Aggregates**, **Entities**, **Value Objects**, a
 - **Value Objects** - Immutable objects defined by their values (e.g., `EmailAddress`, `Money`)
 - **Scalar Value Objects** - Single-value wrappers with validation (e.g., `FirstName`, `Age`)
 - **RequiredEnum** - Type-safe enumerations with behavior and state machine support (e.g., `OrderState`, `PaymentStatus`)
+- **Specifications** - Composable business rules as expression trees (e.g., `OverdueOrderSpec`, `HighValueOrderSpec`)
 
 **Quick example:**
 ```csharp

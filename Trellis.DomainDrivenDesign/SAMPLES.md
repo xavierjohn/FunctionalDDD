@@ -18,6 +18,11 @@ This document provides detailed examples and patterns for using the Trellis.Doma
 - [Integration Patterns](#integration-patterns)
   - [Service Layer](#service-layer)
   - [Multiple Results with Tuple Destructuring](#multiple-results-with-tuple-destructuring)
+- [Specification Pattern](#specification-pattern)
+  - [Basic Specification](#basic-specification)
+  - [Composing Specifications](#composing-specifications)
+  - [IQueryable Integration](#iqueryable-integration)
+  - [Repository Pattern with Specifications](#repository-pattern-with-specifications)
 
 ---
 
@@ -842,6 +847,164 @@ public class UnitOfWork : IUnitOfWork
 
 ---
 
+## Specification Pattern
+
+Encapsulate business rules as composable, storage-agnostic expression trees that can be evaluated in-memory or translated to SQL by EF Core.
+
+### Basic Specification
+
+Define a specification by inheriting from `Specification<T>` and overriding `ToExpression()`:
+
+```csharp
+public class OverdueOrderSpec(DateTimeOffset now) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.Status == OrderStatus.Submitted
+              && order.SubmittedAt < now.AddDays(-30);
+}
+
+public class HighValueOrderSpec(decimal threshold) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.TotalAmount > threshold;
+}
+
+public class CustomerOrderSpec(CustomerId customerId) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.CustomerId == customerId;
+}
+
+public class CancellableOrderSpec : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.Status == OrderStatus.Draft
+              || order.Status == OrderStatus.Submitted;
+}
+```
+
+Evaluate against an in-memory instance:
+
+```csharp
+var spec = new HighValueOrderSpec(500m);
+
+if (spec.IsSatisfiedBy(order))
+    Console.WriteLine("High-value order!");
+```
+
+### Composing Specifications
+
+Combine specifications using `And`, `Or`, and `Not`:
+
+```csharp
+// Overdue AND high-value orders
+var urgentHighValue = new OverdueOrderSpec(now)
+    .And(new HighValueOrderSpec(500m));
+
+// Orders that are either overdue OR high-value
+var overdueOrExpensive = new OverdueOrderSpec(now)
+    .Or(new HighValueOrderSpec(1000m));
+
+// Orders that are NOT cancellable
+var notCancellable = new CancellableOrderSpec().Not();
+
+// Complex composition: overdue high-value orders for a specific customer
+var spec = new OverdueOrderSpec(now)
+    .And(new HighValueOrderSpec(500m))
+    .And(new CustomerOrderSpec(customerId));
+
+// Filter in-memory collections
+var matchingOrders = orders.Where(spec.IsSatisfiedBy).ToList();
+```
+
+Specifications are immutable — composition always returns a new specification:
+
+```csharp
+var overdue = new OverdueOrderSpec(now);
+var highValue = new HighValueOrderSpec(500m);
+var combined = overdue.And(highValue);
+
+// Original specifications are unchanged
+assert overdue != combined;
+assert highValue != combined;
+```
+
+### IQueryable Integration
+
+Specifications convert implicitly to `Expression<Func<T, bool>>` for seamless LINQ integration:
+
+```csharp
+var spec = new OverdueOrderSpec(now).And(new HighValueOrderSpec(500m));
+
+// Implicit conversion — expression tree translates to SQL
+var orders = await dbContext.Orders
+    .Where(spec)  // implicit operator converts Specification<T> to Expression
+    .OrderByDescending(o => o.TotalAmount)
+    .ToListAsync(ct);
+
+// Explicit conversion also works
+var expression = spec.ToExpression();
+var orders2 = await dbContext.Orders
+    .Where(expression)
+    .ToListAsync(ct);
+```
+
+### Repository Pattern with Specifications
+
+Define a repository interface that accepts specifications:
+
+```csharp
+public interface IOrderRepository
+{
+    Task<IReadOnlyList<Order>> ListAsync(Specification<Order> spec, CancellationToken ct);
+    Task<int> CountAsync(Specification<Order> spec, CancellationToken ct);
+    Task<bool> AnyAsync(Specification<Order> spec, CancellationToken ct);
+}
+
+public class OrderRepository : IOrderRepository
+{
+    private readonly AppDbContext _db;
+
+    public OrderRepository(AppDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<Order>> ListAsync(
+        Specification<Order> spec, CancellationToken ct) =>
+        await _db.Orders.Where(spec).ToListAsync(ct);
+
+    public async Task<int> CountAsync(
+        Specification<Order> spec, CancellationToken ct) =>
+        await _db.Orders.Where(spec).CountAsync(ct);
+
+    public async Task<bool> AnyAsync(
+        Specification<Order> spec, CancellationToken ct) =>
+        await _db.Orders.Where(spec).AnyAsync(ct);
+}
+```
+
+Use in application code:
+
+```csharp
+public class OrderService
+{
+    private readonly IOrderRepository _repo;
+
+    public async Task<IReadOnlyList<Order>> GetUrgentOrdersAsync(
+        decimal valueThreshold, CancellationToken ct)
+    {
+        var spec = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+            .And(new HighValueOrderSpec(valueThreshold));
+
+        return await _repo.ListAsync(spec, ct);
+    }
+
+    public async Task<int> CountCustomerOrdersAsync(
+        CustomerId customerId, CancellationToken ct) =>
+        await _repo.CountAsync(new CustomerOrderSpec(customerId), ct);
+}
+```
+
+---
+
 ## Summary
 
 These examples demonstrate:
@@ -850,6 +1013,7 @@ These examples demonstrate:
 - ✅ **Value object immutability** and equality
 - ✅ **Aggregate boundaries** and consistency
 - ✅ **Domain events** for loose coupling
+- ✅ **Specification pattern** for composable business rules
 - ✅ **Railway Oriented Programming** integration
 - ✅ **Rich domain models** with behavior
 - ✅ **Repository patterns** with event publishing
