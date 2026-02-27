@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Trellis for AI Code Generation | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Trellis for AI Code Generation | Trellis ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/ai-code-generation.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="trellis-for-ai-code-generation">Trellis for AI Code Generation</h1>
+
+<p><strong>Level:</strong> Overview | <strong>Time:</strong> 15-20 min</p>
+<p>Trellis is designed so that both humans and AI can produce correct, maintainable, enterprise-grade code by following the structure the framework provides. This article explains how domain specifications map to Trellis constructs and why the framework is uniquely suited for AI-driven development.</p>
+<h2 id="the-problem-with-ai-generated-enterprise-code">The Problem with AI-Generated Enterprise Code</h2>
+<p>Traditional C# enterprise code gives AI no guardrails:</p>
+<ul>
+<li><strong>Nested if-statements</strong> obscure business logic and make errors easy to miss</li>
+<li><strong>Primitive obsession</strong> (using <code>string</code> for email, <code>int</code> for order ID) lets bugs through that the compiler should catch</li>
+<li><strong>Inconsistent error handling</strong> — some code throws, some returns null, some returns error codes</li>
+<li><strong>State transitions enforced by convention</strong>, not by the type system</li>
+</ul>
+<p>AI generating this style of code can produce code that compiles but silently does the wrong thing.</p>
+<h2 id="how-trellis-solves-this">How Trellis Solves This</h2>
+<p>Trellis's building blocks <strong>constrain what is possible to write</strong>. An AI (or a junior developer) cannot produce invalid code because the framework prevents it. The compiler is the guardrail.</p>
+<h3 id="make-illegal-states-unrepresentable">Make Illegal States Unrepresentable</h3>
+<pre><code class="lang-csharp">// ❌ AI can generate this — compiles, but the email might be invalid
+public class User
+{
+    public string Email { get; set; }  // Could be anything
+    public string FirstName { get; set; }  // Could be null or empty
+}
+
+// ✅ Trellis — if a value object exists, it's valid
+public class User : Aggregate&lt;UserId&gt;
+{
+    public EmailAddress Email { get; private set; }  // Always valid
+    public FirstName FirstName { get; private set; }  // Always non-empty
+}
+</code></pre>
+<h3 id="errors-are-values-not-exceptions">Errors Are Values, Not Exceptions</h3>
+<pre><code class="lang-csharp">// ❌ AI might forget to catch exceptions
+var user = await _repository.GetUserAsync(id);  // Throws? Returns null? Who knows?
+
+// ✅ Trellis — the type system forces error handling
+Result&lt;User&gt; result = await _repository.GetUserAsync(id);
+// Can't access the value without handling the error case
+</code></pre>
+<h3 id="code-reads-like-english">Code Reads Like English</h3>
+<pre><code class="lang-csharp">// Application layer — pure business logic chain
+public async Task&lt;Result&lt;User&gt;&gt; CreateUserAsync(
+    string firstName, string lastName, string email, CancellationToken ct)
+    =&gt; FirstName.TryCreate(firstName)
+        .Combine(LastName.TryCreate(lastName))
+        .Combine(EmailAddress.TryCreate(email))
+        .Bind((first, last, email) =&gt; User.TryCreate(first, last, email))
+        .Ensure(user =&gt; !_repository.EmailExists(user.Email), Error.Conflict(&quot;Email exists&quot;))
+        .Tap(user =&gt; _repository.Save(user))
+        .Tap(user =&gt; _emailService.SendWelcome(user.Email));
+
+// API layer — one line to convert Result to HTTP response
+[HttpPost]
+public async Task&lt;ActionResult&lt;UserResponse&gt;&gt; CreateUser(
+    CreateUserRequest request, CancellationToken ct)
+    =&gt; await _userService.CreateUserAsync(
+        request.FirstName, request.LastName, request.Email, ct)
+        .ToActionResult(this);
+</code></pre>
+<h2 id="spec-to-code-mapping">Spec-to-Code Mapping</h2>
+<p>When a specification says:</p>
+<blockquote>
+<p>&quot;An Order has an OrderId, a Customer, line items, and a status. The status transitions from Draft → Submitted → Approved → Shipped. An order can be cancelled from any state except Shipped.&quot;</p>
+</blockquote>
+<p>Trellis provides a direct, mechanical mapping:</p>
+<table>
+<thead>
+<tr>
+<th>Specification Concept</th>
+<th>Trellis Construct</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OrderId</strong></td>
+<td><code>RequiredGuid</code>-derived value object</td>
+<td><code>public partial class OrderId : RequiredGuid&lt;OrderId&gt; { }</code></td>
+</tr>
+<tr>
+<td><strong>Customer</strong></td>
+<td>Aggregate reference via typed ID</td>
+<td><code>public CustomerId CustomerId { get; }</code></td>
+</tr>
+<tr>
+<td><strong>Order</strong></td>
+<td><code>Aggregate&lt;OrderId&gt;</code> with domain events</td>
+<td><code>public class Order : Aggregate&lt;OrderId&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Status transitions</strong></td>
+<td>State machine returning <code>Result&lt;Order&gt;</code></td>
+<td><code>Fire(OrderTrigger.Submit)</code> returns <code>Result&lt;Order&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Line items</strong></td>
+<td>Collection of <code>Entity&lt;LineItemId&gt;</code></td>
+<td><code>public IReadOnlyList&lt;LineItem&gt; Lines { get; }</code></td>
+</tr>
+<tr>
+<td><strong>&quot;Can be cancelled except from Shipped&quot;</strong></td>
+<td>Guard clause on the Cancel trigger</td>
+<td><code>stateMachine.Configure(Shipped).Ignore(Cancel)</code></td>
+</tr>
+<tr>
+<td><strong>&quot;Display all overdue orders over $500 in the West region&quot;</strong></td>
+<td>Composable <code>Specification&lt;Order&gt;</code></td>
+<td><code>OverdueOrderSpec().And(OrderValueExceedsSpec(500m)).And(CustomerInRegionSpec(&quot;West&quot;))</code></td>
+</tr>
+</tbody>
+</table>
+<p>The AI doesn't need to invent patterns. It follows the structure Trellis provides.</p>
+<h2 id="the-workflow">The Workflow</h2>
+<ol>
+<li><strong>A human writes a specification</strong> describing business requirements in plain language, using ubiquitous language from the domain.</li>
+<li><strong>An AI consumes that specification</strong> and produces enterprise software using Trellis as the structural foundation.</li>
+<li><strong>The terms in the ubiquitous language map directly</strong> to Trellis constructs — aggregates, value objects, entities, domain events, and state machines.</li>
+<li><strong>The type system and compiler enforce correctness</strong> — it is impossible to skip error handling, construct invalid domain objects, or make illegal state transitions.</li>
+<li><strong>When requirements change</strong>, the human updates the specification and the AI modifies the code. Trellis's structure ensures changes propagate correctly — new error cases must be handled, new states must be accounted for, new validation rules are enforced at compile time.</li>
+</ol>
+<h2 id="why-trellis-for-ai">Why Trellis for AI?</h2>
+<h3 id="compiler-as-guardrail">Compiler as Guardrail</h3>
+<p>Trellis provides 19 Roslyn analyzers that catch incorrect usage at compile time. When AI generates code that doesn't follow the patterns, the compiler flags it immediately. See <a href="analyzers/index.html">Analyzer Rules</a> for the complete list.</p>
+<h3 id="mechanical-mapping">Mechanical Mapping</h3>
+<p>Every domain concept has a single, obvious Trellis construct. There is no ambiguity about which pattern to use:</p>
+<ul>
+<li>Business entity with identity → <code>Entity&lt;TId&gt;</code> or <code>Aggregate&lt;TId&gt;</code></li>
+<li>Validated value → Value object with <code>TryCreate</code>/<code>Create</code></li>
+<li>Optional value → <code>Maybe&lt;T&gt;</code></li>
+<li>Operation that can fail → Returns <code>Result&lt;T&gt;</code></li>
+<li>Business rule → <code>Ensure</code> or <code>Specification&lt;T&gt;</code></li>
+<li>Side effect → <code>Tap</code></li>
+<li>Error → Discriminated error type (<code>Error.Validation</code>, <code>Error.NotFound</code>, etc.)</li>
+</ul>
+<h3 id="evolving-specifications">Evolving Specifications</h3>
+<p>When requirements change, the type system guides the update:</p>
+<ul>
+<li><strong>New error case added</strong> → Compiler error: all <code>MatchError</code> calls must handle the new case</li>
+<li><strong>New state added to state machine</strong> → Compiler error: transitions must be defined</li>
+<li><strong>New required field on aggregate</strong> → Compiler error: constructors and factories must be updated</li>
+<li><strong>New validation rule</strong> → Add an <code>Ensure</code> step; existing pipeline structure unchanged</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><a href="intro.html">Introduction</a> — Core concepts and why Trellis exists</li>
+<li><a href="basics.html">Basics</a> — Learn the ROP operations</li>
+<li><a href="clean-architecture.html">Clean Architecture</a> — Full architecture patterns</li>
+<li><a href="examples.html">Examples</a> — Real-world code samples</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/ai-code-generation.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

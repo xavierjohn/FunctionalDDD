@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Migration from FunctionalDDD | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Migration from FunctionalDDD | Trellis ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/migration.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="migration-from-functionalddd">Migration from FunctionalDDD</h1>
+
+<p><strong>Time:</strong> 15-30 min | <strong>Prerequisites:</strong> Existing project using <code>FunctionalDdd.*</code> packages</p>
+<p>This guide covers migrating from the <code>FunctionalDdd.*</code> NuGet packages to the renamed <code>Trellis.*</code> packages. No API changes — all types, methods, and behaviors remain identical.</p>
+<h2 id="package-mapping">Package Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Old Package</th>
+<th>New Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FunctionalDdd.RailwayOrientedProgramming</code></td>
+<td><code>Trellis.Results</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.DomainDrivenDesign</code></td>
+<td><code>Trellis.DomainDrivenDesign</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.PrimitiveValueObjects</code></td>
+<td><code>Trellis.Primitives</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.PrimitiveValueObjectGenerator</code></td>
+<td><code>Trellis.Primitives.Generator</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.Asp</code></td>
+<td><code>Trellis.Asp</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.Http</code></td>
+<td><code>Trellis.Http</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.FluentValidation</code></td>
+<td><code>Trellis.FluentValidation</code></td>
+</tr>
+<tr>
+<td><code>FunctionalDdd.ArdalisSpecification</code></td>
+<td>Removed (replaced by native <code>Specification&lt;T&gt;</code> in <code>Trellis.DomainDrivenDesign</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>New packages with no previous equivalent:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Trellis.Analyzers</code></td>
+<td>19 Roslyn analyzers enforcing ROP best practices</td>
+</tr>
+<tr>
+<td><code>Trellis.Testing</code></td>
+<td>FluentAssertions extensions, test builders, fakes</td>
+</tr>
+<tr>
+<td><code>Trellis.Stateless</code></td>
+<td>Wraps Stateless state machine Fire() to return Result&lt;T&gt;</td>
+</tr>
+</tbody>
+</table>
+<h2 id="step-by-step-migration">Step-by-Step Migration</h2>
+<h3 id="1-update-package-references">1. Update Package References</h3>
+<p>If you use <code>Directory.Packages.props</code> (recommended), update it in one place:</p>
+<pre><code class="lang-xml">&lt;!-- Before --&gt;
+&lt;PackageVersion Include=&quot;FunctionalDdd.RailwayOrientedProgramming&quot; Version=&quot;2.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;FunctionalDdd.DomainDrivenDesign&quot; Version=&quot;2.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;FunctionalDdd.Asp&quot; Version=&quot;2.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;FunctionalDdd.PrimitiveValueObjects&quot; Version=&quot;2.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;FunctionalDdd.PrimitiveValueObjectGenerator&quot; Version=&quot;2.x.x&quot; /&gt;
+
+&lt;!-- After --&gt;
+&lt;PackageVersion Include=&quot;Trellis.Results&quot; Version=&quot;3.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;Trellis.DomainDrivenDesign&quot; Version=&quot;3.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;Trellis.Asp&quot; Version=&quot;3.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;Trellis.Primitives&quot; Version=&quot;3.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;Trellis.Primitives.Generator&quot; Version=&quot;3.x.x&quot; /&gt;
+&lt;PackageVersion Include=&quot;Trellis.Analyzers&quot; Version=&quot;3.x.x&quot; /&gt;
+</code></pre>
+<p>Otherwise, update each <code>.csproj</code> file individually.</p>
+<h3 id="2-update-using-statements">2. Update Using Statements</h3>
+<p>Global find-and-replace in source files:</p>
+<table>
+<thead>
+<tr>
+<th>Find</th>
+<th>Replace</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>using FunctionalDdd;</code></td>
+<td><code>using Trellis;</code></td>
+</tr>
+<tr>
+<td><code>using FunctionalDdd.PrimitiveValueObjects;</code></td>
+<td><code>using Trellis;</code></td>
+</tr>
+</tbody>
+</table>
+<p>All types are now in the <code>Trellis</code> namespace.</p>
+<h3 id="3-update-opentelemetry-method-names">3. Update OpenTelemetry Method Names</h3>
+<p>If you use auto-instrumentation:</p>
+<table>
+<thead>
+<tr>
+<th>Find</th>
+<th>Replace</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.AddFunctionalDddRopInstrumentation()</code></td>
+<td><code>.AddResultsInstrumentation()</code></td>
+</tr>
+<tr>
+<td><code>.AddFunctionalDddCvoInstrumentation()</code></td>
+<td><code>.AddPrimitiveValueObjectInstrumentation()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-build-and-test">4. Build and Test</h3>
+<pre><code class="lang-bash">dotnet build
+dotnet test
+</code></pre>
+<p>The compiler and Trellis.Analyzers will flag any issues. All types, methods, and behaviors remain identical — only the namespace and package names have changed.</p>
+<h2 id="no-api-changes">No API Changes</h2>
+<p>All public APIs are identical between FunctionalDdd v2 and Trellis v3:</p>
+<ul>
+<li><code>Result&lt;T&gt;</code>, <code>Maybe&lt;T&gt;</code>, all error types — unchanged</li>
+<li><code>Bind</code>, <code>Map</code>, <code>Tap</code>, <code>Ensure</code>, <code>Match</code>, <code>Combine</code> — unchanged</li>
+<li><code>Aggregate&lt;T&gt;</code>, <code>Entity&lt;T&gt;</code>, <code>ValueObject</code> — unchanged</li>
+<li><code>RequiredString</code>, <code>RequiredGuid</code>, <code>RequiredInt</code>, <code>RequiredDecimal</code> — unchanged</li>
+<li><code>ToActionResult()</code>, <code>ToHttpResult()</code> — unchanged</li>
+<li>All async extensions — unchanged</li>
+</ul>
+<h2 id="deprecation-notice">Deprecation Notice</h2>
+<p>The old <code>FunctionalDdd.*</code> NuGet packages will be deprecated (not unlisted) with a pointer to the corresponding <code>Trellis.*</code> package. Existing code using the old packages will continue to work, but no new features or bug fixes will be applied to the old packages.</p>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/migration.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
