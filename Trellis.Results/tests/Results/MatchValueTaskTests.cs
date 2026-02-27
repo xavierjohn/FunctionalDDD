@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results;
+﻿namespace Trellis.Results.Tests;
 
 /// <summary>
 /// Tests for Match/Switch ValueTask extension methods.

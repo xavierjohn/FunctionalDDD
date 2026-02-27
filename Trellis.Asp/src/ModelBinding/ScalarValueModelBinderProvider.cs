@@ -1,9 +1,9 @@
-namespace Trellis.Asp.ModelBinding;
+﻿namespace Trellis.Asp.ModelBinding;
 
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Trellis;
 using Trellis.Asp.Validation;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 /// <summary>
 /// Detects scalar value types and <see cref="Maybe{T}"/> wrapping scalar value types,

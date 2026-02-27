@@ -1,6 +1,6 @@
-﻿namespace FluentValidationExt.Tests;
+﻿namespace Trellis.FluentValidation.Tests;
 
-using FluentValidation;
+using global::FluentValidation;
 
 public class ZipCode : ScalarValueObject<ZipCode, string>, IScalarValue<ZipCode, string>
 {

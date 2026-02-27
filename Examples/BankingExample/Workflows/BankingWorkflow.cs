@@ -1,3 +1,5 @@
+﻿using Trellis.Primitives;
+
 namespace BankingExample.Workflows;
 
 using BankingExample.Aggregates;
@@ -5,7 +7,6 @@ using BankingExample.Events;
 using BankingExample.Services;
 using BankingExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Orchestrates banking operations with fraud detection, validation, and domain event publishing.

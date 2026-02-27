@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 /// <summary>
 /// Provides internal string manipulation extension methods for the PrimitiveValueObjects library.

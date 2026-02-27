@@ -1,9 +1,8 @@
-namespace PrimitiveValueObjects.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using System;
 using System.Globalization;
 using System.Text.Json;
-using Trellis.PrimitiveValueObjects;
 using Xunit;
 
 public partial class EmployeeId : RequiredGuid<EmployeeId>

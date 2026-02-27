@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;

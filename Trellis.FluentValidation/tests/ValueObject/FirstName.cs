@@ -1,7 +1,6 @@
-namespace FluentValidationExt.Tests;
+﻿namespace Trellis.FluentValidation.Tests;
 
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 internal partial class FirstName : RequiredString<FirstName>
 {

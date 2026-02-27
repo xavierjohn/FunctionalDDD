@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjectGenerator;
+﻿namespace Trellis.PrimitiveValueObjectGenerator;
 
 /// <summary>
 /// Represents metadata about a partial class that requires source generation for value object functionality.

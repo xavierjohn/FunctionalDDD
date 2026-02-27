@@ -1,4 +1,4 @@
-namespace EfCoreExample.Entities;
+﻿namespace EfCoreExample.Entities;
 
 using EfCoreExample.Enums;
 using EfCoreExample.ValueObjects;

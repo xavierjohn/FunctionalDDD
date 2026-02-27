@@ -1,10 +1,11 @@
+﻿using Trellis.Primitives;
+
 namespace EcommerceExample.Aggregates;
 
 using EcommerceExample.Entities;
 using EcommerceExample.Events;
 using EcommerceExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Represents the status of an order in the system.

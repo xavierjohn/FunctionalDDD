@@ -1,6 +1,7 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using Microsoft.AspNetCore.Http;
+using Trellis;
 
 /// <summary>
 /// An endpoint filter that checks for scalar value validation errors collected during JSON deserialization.
@@ -13,7 +14,7 @@ using Microsoft.AspNetCore.Http;
 /// </para>
 /// <para>
 /// Unlike the MVC <see cref="ScalarValueValidationFilter"/>, this filter is designed for Minimal APIs
-/// and returns <see cref="IResult"/> instead of manipulating ModelStateDictionary.
+/// and returns <see cref="Microsoft.AspNetCore.Http.IResult"/> instead of manipulating ModelStateDictionary.
 /// </para>
 /// </remarks>
 /// <example>

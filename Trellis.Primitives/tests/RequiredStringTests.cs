@@ -1,8 +1,7 @@
-namespace PrimitiveValueObjects.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using System.Globalization;
 using System.Text.Json;
-using Trellis.PrimitiveValueObjects;
 
 public partial class TrackingId : RequiredString<TrackingId>
 {

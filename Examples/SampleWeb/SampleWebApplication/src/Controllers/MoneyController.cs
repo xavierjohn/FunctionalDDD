@@ -1,8 +1,10 @@
+﻿using Trellis.Asp;
+using Trellis.Primitives;
+
 namespace SampleWebApplication.Controllers;
 
-using Trellis;
-using Trellis.PrimitiveValueObjects;
 using Microsoft.AspNetCore.Mvc;
+using Trellis;
 
 [ApiController]
 [Route("[controller]")]

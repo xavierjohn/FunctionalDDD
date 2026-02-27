@@ -1,12 +1,12 @@
-namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using System;
 using FluentAssertions;
-using Trellis;
-using Trellis.Asp.Validation;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Trellis;
+using Trellis.Asp.Validation;
 using Xunit;
 
 /// <summary>

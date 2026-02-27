@@ -1,8 +1,9 @@
+﻿using Trellis.Primitives;
+
 namespace EcommerceExample.Entities;
 
 using EcommerceExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Represents a line item in an order.

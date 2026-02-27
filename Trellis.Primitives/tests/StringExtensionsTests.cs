@@ -1,7 +1,6 @@
-namespace PrimitiveValueObjects.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using FluentAssertions;
-using Trellis.PrimitiveValueObjects;
 using Xunit;
 
 public class StringExtensionsTests

@@ -1,4 +1,4 @@
-namespace Trellis;
+﻿namespace Trellis;
 
 internal static class ValueTaskExtensions
 {

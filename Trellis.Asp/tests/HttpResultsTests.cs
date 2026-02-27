@@ -1,8 +1,8 @@
-namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
-using Trellis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Trellis;
 using Xunit;
 
 public class HttpResultsTests
@@ -295,4 +295,74 @@ public class HttpResultsTests
         problemResult.ProblemDetails.Instance.Should().Be("payment-service");
         problemResult.ProblemDetails.Status.Should().Be(StatusCodes.Status503ServiceUnavailable);
     }
+
+    #region Custom Options
+
+    [Fact]
+    public void ToHttpResult_with_custom_options_uses_overridden_mapping()
+    {
+        // Arrange
+        var options = new TrellisAspOptions();
+        options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+        var result = Result.Failure<string>(Error.Domain("Business rule"));
+
+        // Act
+        var response = result.ToHttpResult(options);
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public void ToHttpResult_without_options_uses_defaults()
+    {
+        // Arrange
+        var result = Result.Failure<string>(Error.Domain("Business rule"));
+
+        // Act
+        var response = result.ToHttpResult();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    [Fact]
+    public void ToHttpResult_Error_with_custom_options_uses_overridden_mapping()
+    {
+        // Arrange
+        var options = new TrellisAspOptions();
+        options.MapError<ConflictError>(StatusCodes.Status422UnprocessableEntity);
+        var error = Error.Conflict("Already exists");
+
+        // Act
+        var response = error.ToHttpResult(options);
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    [Fact]
+    public void ToHttpResult_custom_options_do_not_affect_unmapped_errors()
+    {
+        // Arrange — override DomainError only
+        var options = new TrellisAspOptions();
+        options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+        var result = Result.Failure<string>(Error.NotFound("Missing"));
+
+        // Act
+        var response = result.ToHttpResult(options);
+
+        // Assert — NotFound still uses default 404
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status404NotFound);
+    }
+
+    #endregion
 }

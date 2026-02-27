@@ -1,8 +1,8 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Trellis;
 using Xunit;
 
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.Linq;
+namespace Trellis.Results.Tests.Results.Extensions.Linq;
 
 public class LinqTests : TestBase
 {

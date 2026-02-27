@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// ISO 3166-1 alpha-2 country code value object.

@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.WhenTests;
+﻿namespace Trellis.Results.Tests.Results.Extensions.WhenTests;
 
 using System.Threading.Tasks;
 using Trellis.Testing;

@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests;
+﻿namespace Trellis.Results.Tests;
 
 internal static class TaskExtensions
 {

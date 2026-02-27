@@ -1,6 +1,6 @@
-namespace EfCoreExample.ValueObjects;
+﻿using Trellis;
 
-using Trellis.PrimitiveValueObjects;
+namespace EfCoreExample.ValueObjects;
 
 /// <summary>
 /// Strongly-typed Product name that cannot be null, empty, or whitespace.

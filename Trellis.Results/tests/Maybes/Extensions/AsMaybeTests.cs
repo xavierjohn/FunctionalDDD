@@ -1,7 +1,7 @@
-namespace RailwayOrientedProgramming.Tests.Maybes.Extensions;
+﻿namespace Trellis.Results.Tests.Maybes.Extensions;
 
 using Trellis;
-using RailwayOrientedProgramming.Tests.Results;
+using Trellis.Results.Tests.Results;
 
 public class AsMaybeTests : TestBase
 {

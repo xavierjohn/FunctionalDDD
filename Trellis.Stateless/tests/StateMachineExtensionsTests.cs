@@ -1,4 +1,4 @@
-namespace Trellis.Stateless.Tests;
+﻿namespace Trellis.Stateless.Tests;
 
 using global::Stateless;
 

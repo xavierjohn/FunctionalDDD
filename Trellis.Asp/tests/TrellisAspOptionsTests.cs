@@ -1,4 +1,4 @@
-namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -207,6 +207,31 @@ public class TrellisAspOptionsTests
             options.MapError<DomainError>(StatusCodes.Status400BadRequest));
 
         services.Should().ContainSingle(d => d.ServiceType == typeof(TrellisAspOptions));
+    }
+
+    [Fact]
+    public void AddTrellisAsp_resolved_options_reflect_configured_overrides()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisAsp(options =>
+            options.MapError<DomainError>(StatusCodes.Status400BadRequest));
+
+        var provider = services.BuildServiceProvider();
+        var resolved = provider.GetRequiredService<TrellisAspOptions>();
+
+        resolved.GetStatusCode(Error.Domain("test")).Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public void AddTrellisAsp_no_args_resolved_options_use_defaults()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisAsp();
+
+        var provider = services.BuildServiceProvider();
+        var resolved = provider.GetRequiredService<TrellisAspOptions>();
+
+        resolved.GetStatusCode(Error.Domain("test")).Should().Be(StatusCodes.Status422UnprocessableEntity);
     }
 
     #endregion

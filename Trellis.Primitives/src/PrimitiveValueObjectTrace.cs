@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 using System.Diagnostics;
 using System.Reflection;
+using Trellis.Primitives;
 
 /// <summary>
 /// Provides OpenTelemetry activity tracing for Primitive Value Objects operations.

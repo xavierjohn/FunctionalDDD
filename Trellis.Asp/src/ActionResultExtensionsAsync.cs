@@ -1,7 +1,8 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
+using Trellis;
 
 /// <summary>
 /// Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses.

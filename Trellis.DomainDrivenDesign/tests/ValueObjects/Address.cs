@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.ValueObjects;
+﻿namespace Trellis.DomainDrivenDesign.Tests.ValueObjects;
 
 internal class Address : ValueObject
 {

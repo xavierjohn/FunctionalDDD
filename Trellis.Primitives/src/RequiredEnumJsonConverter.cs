@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;

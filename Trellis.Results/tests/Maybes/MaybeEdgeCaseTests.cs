@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Maybes;
+﻿namespace Trellis.Results.Tests.Maybes;
 
 using Xunit;
 

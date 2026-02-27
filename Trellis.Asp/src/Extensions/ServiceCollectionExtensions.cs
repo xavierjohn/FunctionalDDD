@@ -1,15 +1,16 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Trellis.Asp.ModelBinding;
-using Trellis.Asp.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Trellis;
+using Trellis.Asp.ModelBinding;
+using Trellis.Asp.Validation;
 using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;
 
 /// <summary>
@@ -416,7 +417,6 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configure);
         var options = new TrellisAspOptions();
         configure(options);
-        TrellisAspOptions.SetInstance(options);
         services.AddSingleton(options);
         return services;
     }

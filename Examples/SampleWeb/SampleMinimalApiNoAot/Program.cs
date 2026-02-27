@@ -1,9 +1,9 @@
-using Trellis;
-using Trellis.PrimitiveValueObjects;
-using OpenTelemetry.Resources;
+﻿using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApiNoAot.API;
 using SampleUserLibrary;
+using Trellis;
+using Trellis.Asp;
 
 var builder = WebApplication.CreateBuilder(args);
 

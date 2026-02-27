@@ -1,8 +1,9 @@
-﻿namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 
@@ -328,6 +329,75 @@ public class ActionResultTests
         var okResult = response.Result.As<OkObjectResult>();
         okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
         okResult.Value.Should().Be("Transformed");
+    }
+
+    #endregion
+
+    #region Custom Options via DI
+
+    [Fact]
+    public void ToActionResult_uses_custom_options_from_DI()
+    {
+        // Arrange
+        var options = new TrellisAspOptions();
+        options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+        var controller = CreateControllerWithOptions(options);
+        var result = Result.Failure<string>(Error.Domain("Business rule"));
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert
+        response.Result.Should().BeOfType<ObjectResult>();
+        response.Result.As<ObjectResult>().StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public void ToActionResult_falls_back_to_defaults_when_no_DI()
+    {
+        // Arrange — mock controller with no HttpContext (null-safe fallback)
+        var controller = new Mock<ControllerBase> { CallBase = true }.Object;
+        var result = Result.Failure<string>(Error.Domain("Business rule"));
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert — DomainError defaults to 422
+        response.Result.Should().BeOfType<ObjectResult>();
+        response.Result.As<ObjectResult>().StatusCode.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    [Fact]
+    public void ToActionResult_custom_options_do_not_affect_unmapped_errors()
+    {
+        // Arrange — override DomainError only
+        var options = new TrellisAspOptions();
+        options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+        var controller = CreateControllerWithOptions(options);
+        var result = Result.Failure<string>(Error.NotFound("Missing"));
+
+        // Act
+        var response = result.ToActionResult(controller);
+
+        // Assert — NotFound still uses default 404
+        response.Result.Should().BeOfType<ObjectResult>();
+        response.Result.As<ObjectResult>().StatusCode.Should().Be(StatusCodes.Status404NotFound);
+    }
+
+    private static ControllerBase CreateControllerWithOptions(TrellisAspOptions options)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(options);
+        services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.ProblemDetailsFactory,
+            Microsoft.AspNetCore.Mvc.Infrastructure.DefaultProblemDetailsFactory>();
+        services.AddSingleton(Microsoft.Extensions.Options.Options.Create(new Microsoft.AspNetCore.Http.Json.JsonOptions()));
+        services.AddSingleton(Microsoft.Extensions.Options.Options.Create(new ApiBehaviorOptions()));
+        var provider = services.BuildServiceProvider();
+
+        var httpContext = new DefaultHttpContext { RequestServices = provider };
+        var controllerMock = new Mock<ControllerBase> { CallBase = true };
+        controllerMock.Object.ControllerContext = new ControllerContext { HttpContext = httpContext };
+        return controllerMock.Object;
     }
 
     #endregion

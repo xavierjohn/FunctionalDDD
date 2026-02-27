@@ -1,10 +1,10 @@
-using System.Text.Json.Serialization;
-using Trellis;
-using Trellis.PrimitiveValueObjects;
+﻿using System.Text.Json.Serialization;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleMinimalApi.API;
 using SampleUserLibrary;
+using Trellis;
+using Trellis.Asp;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -69,8 +69,8 @@ public record UserEndpoints(string Register, string RegisterCreated, string Regi
 [JsonSerializable(typeof(RegisterWithNameDto))]
 [JsonSerializable(typeof(SharedNameTypeResponse))]
 [JsonSerializable(typeof(User))]
-[JsonSerializable(typeof(Trellis.PrimitiveValueObjects.Money))]
-[JsonSerializable(typeof(Trellis.PrimitiveValueObjects.Money[]))]
+[JsonSerializable(typeof(Trellis.Primitives.Money))]
+[JsonSerializable(typeof(Trellis.Primitives.Money[]))]
 [JsonSerializable(typeof(SampleMinimalApi.API.MoneyDto))]
 [JsonSerializable(typeof(SampleMinimalApi.API.CreateMoneyRequest))]
 [JsonSerializable(typeof(SampleMinimalApi.API.MoneyOperationRequest))]

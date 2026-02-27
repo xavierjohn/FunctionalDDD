@@ -1,7 +1,9 @@
+﻿using Trellis.Asp;
+
 namespace SampleMinimalApi.API;
 
-using Trellis;
 using SampleUserLibrary;
+using Trellis;
 
 public static class OrderRoutes
 {

@@ -1,8 +1,8 @@
-namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
-using Trellis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Trellis;
 using Xunit;
 
 public class HttpResultTaskTests
@@ -93,4 +93,40 @@ public class HttpResultTaskTests
         var problemResult = response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
         problemResult.ProblemDetails.Status.Should().Be(StatusCodes.Status409Conflict);
     }
+
+    #region Custom Options
+
+    [Fact]
+    public async Task ToHttpResultAsync_Task_with_custom_options_uses_overridden_mapping()
+    {
+        // Arrange
+        var options = new TrellisAspOptions();
+        options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+        var resultTask = Task.FromResult(Result.Failure<string>(Error.Domain("Business rule")));
+
+        // Act
+        var response = await resultTask.ToHttpResultAsync(options);
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public async Task ToHttpResultAsync_Task_without_options_uses_defaults()
+    {
+        // Arrange
+        var resultTask = Task.FromResult(Result.Failure<string>(Error.Domain("Business rule")));
+
+        // Act
+        var response = await resultTask.ToHttpResultAsync();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    #endregion
 }

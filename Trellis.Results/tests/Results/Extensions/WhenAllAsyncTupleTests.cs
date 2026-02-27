@@ -1,9 +1,9 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Trellis;
 using Trellis.Testing;
 using Xunit;
 
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.Await;
+namespace Trellis.Results.Tests.Results.Extensions.Await;
 
 /// <summary>
 /// Tests for T4-generated WhenAllAsync tuple overloads (WhenAllTs.g.tt).

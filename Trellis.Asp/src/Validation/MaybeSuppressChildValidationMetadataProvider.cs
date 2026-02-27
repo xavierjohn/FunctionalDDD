@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Validation;
+﻿namespace Trellis.Asp.Validation;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;

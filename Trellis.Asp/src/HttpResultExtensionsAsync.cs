@@ -1,4 +1,6 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
+
+using Trellis;
 
 /// <summary>
 /// Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core Minimal API <see cref="Microsoft.AspNetCore.Http.IResult"/> responses.
@@ -46,6 +48,7 @@ public static class HttpResultExtensionsAsync
     /// </summary>
     /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
     /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
     /// <returns>
     /// A task that represents the asynchronous operation, containing:
     /// <list type="bullet">
@@ -57,7 +60,7 @@ public static class HttpResultExtensionsAsync
     /// <remarks>
     /// <para>
     /// This is the primary async method for converting domain results to HTTP responses in Minimal APIs.
-    /// It awaits the result task and delegates to <see cref="HttpResultExtensions.ToHttpResult{TValue}(Result{TValue})"/>.
+    /// It awaits the result task and delegates to <see cref="HttpResultExtensions.ToHttpResult{TValue}(Result{TValue}, TrellisAspOptions)"/>.
     /// </para>
     /// <para>
     /// For performance-critical scenarios where the operation frequently completes synchronously,
@@ -137,10 +140,10 @@ public static class HttpResultExtensionsAsync
     /// // payment failures, or successful processing
     /// </code>
     /// </example>
-    public static async Task<Microsoft.AspNetCore.Http.IResult> ToHttpResultAsync<TValue>(this Task<Result<TValue>> resultTask)
+    public static async Task<Microsoft.AspNetCore.Http.IResult> ToHttpResultAsync<TValue>(this Task<Result<TValue>> resultTask, TrellisAspOptions? options = null)
     {
         var result = await resultTask.ConfigureAwait(false);
-        return result.ToHttpResult();
+        return result.ToHttpResult(options);
     }
 
     /// <summary>
@@ -148,6 +151,7 @@ public static class HttpResultExtensionsAsync
     /// </summary>
     /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
     /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
     /// <returns>
     /// A ValueTask that represents the asynchronous operation, containing:
     /// <list type="bullet">
@@ -190,9 +194,9 @@ public static class HttpResultExtensionsAsync
     /// // Reduced allocations for high-throughput scenarios
     /// </code>
     /// </example>
-    public static async ValueTask<Microsoft.AspNetCore.Http.IResult> ToHttpResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask)
+    public static async ValueTask<Microsoft.AspNetCore.Http.IResult> ToHttpResultAsync<TValue>(this ValueTask<Result<TValue>> resultTask, TrellisAspOptions? options = null)
     {
         var result = await resultTask.ConfigureAwait(false);
-        return result.ToHttpResult();
+        return result.ToHttpResult(options);
     }
 }

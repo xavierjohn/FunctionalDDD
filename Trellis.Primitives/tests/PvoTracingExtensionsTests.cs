@@ -1,10 +1,10 @@
-namespace PrimitiveValueObjects.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using System.Diagnostics;
-using Trellis.PrimitiveValueObjects;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
-using PrimitiveValueObjects.Tests.Helpers;
+using Trellis.Primitives;
+using Trellis.Primitives.Tests.Helpers;
 using Xunit;
 
 /// <summary>

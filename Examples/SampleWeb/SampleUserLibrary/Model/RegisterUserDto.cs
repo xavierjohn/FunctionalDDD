@@ -1,7 +1,8 @@
+﻿using Trellis.Primitives;
+
 namespace SampleUserLibrary;
 
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// User registration DTO with automatic validation via value objects.

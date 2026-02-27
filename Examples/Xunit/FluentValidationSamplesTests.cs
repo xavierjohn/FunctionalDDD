@@ -1,9 +1,10 @@
+﻿using Trellis.FluentValidation;
+
 namespace Example.Tests;
 
 using System.Collections.Immutable;
 using FluentValidation;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 using Xunit;
 using static Trellis.ValidationError;
 

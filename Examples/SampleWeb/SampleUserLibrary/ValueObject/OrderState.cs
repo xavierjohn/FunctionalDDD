@@ -1,6 +1,6 @@
-namespace SampleUserLibrary;
+﻿using Trellis;
 
-using Trellis.PrimitiveValueObjects;
+namespace SampleUserLibrary;
 
 /// <summary>
 /// Enum value object for order state demonstrating RequiredEnum with ASP.NET Core.

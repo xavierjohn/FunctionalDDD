@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// Represents a percentage value object (value between 0 and 100 inclusive).

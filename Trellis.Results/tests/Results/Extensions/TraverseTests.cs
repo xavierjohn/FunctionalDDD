@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions.Traverse;
+﻿namespace Trellis.Results.Tests.Results.Extensions.Traverse;
 
 using System.Globalization;
 using Trellis.Testing;

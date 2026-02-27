@@ -1,6 +1,7 @@
-﻿namespace Trellis;
+﻿namespace Trellis.Stateless;
 
-using Stateless;
+using global::Stateless;
+using Trellis;
 
 /// <summary>
 /// Provides extension methods for <see cref="StateMachine{TState, TTrigger}"/> that return

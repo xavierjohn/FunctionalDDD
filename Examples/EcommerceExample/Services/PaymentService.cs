@@ -1,9 +1,10 @@
+﻿using Trellis.Primitives;
+
 namespace EcommerceExample.Services;
 
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Simulates a payment gateway service.

@@ -1,4 +1,4 @@
-namespace Trellis.Testing.Tests.Builders;
+﻿namespace Trellis.Testing.Tests.Builders;
 
 using Trellis.Testing.Builders;
 

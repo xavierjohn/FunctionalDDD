@@ -1,4 +1,4 @@
-namespace DomainDrivenDesign.Tests.Aggregates;
+﻿namespace Trellis.DomainDrivenDesign.Tests.Aggregates;
 
 using Trellis;
 

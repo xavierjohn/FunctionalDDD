@@ -1,9 +1,10 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using Microsoft.AspNetCore.Http;
+using Trellis;
 
 /// <summary>
-/// Provides extension methods to convert Result types to ASP.NET Core Minimal API <see cref="IResult"/> responses.
+/// Provides extension methods to convert Result types to ASP.NET Core Minimal API <see cref="Microsoft.AspNetCore.Http.IResult"/> responses.
 /// These methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.
 /// </summary>
 /// <remarks>
@@ -37,10 +38,11 @@ using Microsoft.AspNetCore.Http;
 public static class HttpResultExtensions
 {
     /// <summary>
-    /// Converts a <see cref="Result{TValue}"/> to an <see cref="IResult"/> with appropriate HTTP status code.
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> with appropriate HTTP status code.
     /// </summary>
     /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
     /// <param name="result">The result object to convert.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
     /// <returns>
     /// <list type="bullet">
     /// <item>200 OK with value if result is successful (except for Unit)</item>
@@ -116,7 +118,7 @@ public static class HttpResultExtensions
     ///         .ToHttpResultAsync());
     /// </code>
     /// </example>
-    public static Microsoft.AspNetCore.Http.IResult ToHttpResult<TValue>(this Result<TValue> result)
+    public static Microsoft.AspNetCore.Http.IResult ToHttpResult<TValue>(this Result<TValue> result, TrellisAspOptions? options = null)
     {
         if (result.IsSuccess)
         {
@@ -127,13 +129,14 @@ public static class HttpResultExtensions
             return Results.Ok(result.Value);
         }
 
-        return result.Error.ToHttpResult();
+        return result.Error.ToHttpResult(options);
     }
 
     /// <summary>
-    /// Converts a domain <see cref="Error"/> to an <see cref="IResult"/> with appropriate HTTP status code and Problem Details format.
+    /// Converts a domain <see cref="Error"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> with appropriate HTTP status code and Problem Details format.
     /// </summary>
     /// <param name="error">The domain error to convert.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
     /// <returns>
     /// An IResult with Problem Details (RFC 7807) response. The HTTP status code is resolved
     /// from <see cref="TrellisAspOptions"/> (configured via <c>AddTrellisAsp</c>). The default mappings are:
@@ -266,9 +269,9 @@ public static class HttpResultExtensions
     /// // Error automatically mapped to 404 Not Found with Problem Details
     /// </code>
     /// </example>
-    public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Error error)
+    public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Error error, TrellisAspOptions? options = null)
     {
-        var statusCode = TrellisAspOptions.Instance.GetStatusCode(error);
+        var statusCode = (options ?? TrellisAspOptions.Default).GetStatusCode(error);
 
         if (error is ValidationError validationError)
         {

@@ -1,6 +1,7 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Collections.Immutable;
+using Trellis;
 using static Trellis.ValidationError;
 
 /// <summary>

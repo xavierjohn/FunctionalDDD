@@ -1,6 +1,6 @@
-namespace SampleUserLibrary;
+﻿using Trellis;
 
-using Trellis.PrimitiveValueObjects;
+namespace SampleUserLibrary;
 
 public partial class FirstName : RequiredString<FirstName>
 {
