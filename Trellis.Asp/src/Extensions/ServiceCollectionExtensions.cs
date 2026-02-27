@@ -417,7 +417,6 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configure);
         var options = new TrellisAspOptions();
         configure(options);
-        TrellisAspOptions.SetInstance(options);
         services.AddSingleton(options);
         return services;
     }

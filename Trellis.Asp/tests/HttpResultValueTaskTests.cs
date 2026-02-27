@@ -85,4 +85,40 @@ public class HttpResultValueTaskTests
         problemResult.ContentType.Should().Be("application/problem+json");
         problemResult.ProblemDetails.Should().BeEquivalentTo(expected);
     }
+
+    #region Custom Options
+
+    [Fact]
+    public async Task ToHttpResultAsync_ValueTask_with_custom_options_uses_overridden_mapping()
+    {
+        // Arrange
+        var options = new TrellisAspOptions();
+        options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+        var resultTask = ValueTask.FromResult(Result.Failure<string>(Error.Domain("Business rule")));
+
+        // Act
+        var response = await resultTask.ToHttpResultAsync(options);
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public async Task ToHttpResultAsync_ValueTask_without_options_uses_defaults()
+    {
+        // Arrange
+        var resultTask = ValueTask.FromResult(Result.Failure<string>(Error.Domain("Business rule")));
+
+        // Act
+        var response = await resultTask.ToHttpResultAsync();
+
+        // Assert
+        response.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>();
+        response.As<Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult>()
+            .ProblemDetails.Status.Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    #endregion
 }

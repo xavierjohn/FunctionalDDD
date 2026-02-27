@@ -49,7 +49,7 @@ using Trellis;
 /// </example>
 public sealed class TrellisAspOptions
 {
-    internal static TrellisAspOptions Instance { get; private set; } = new();
+    internal static TrellisAspOptions Default { get; } = new();
 
     private readonly Dictionary<Type, int> _errorMappings = new()
     {
@@ -100,6 +100,4 @@ public sealed class TrellisAspOptions
         return StatusCodes.Status500InternalServerError;
     }
 
-    internal static void SetInstance(TrellisAspOptions options) =>
-        Instance = options ?? throw new ArgumentNullException(nameof(options));
 }

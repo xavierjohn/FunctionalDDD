@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
 using Trellis;
 
 /// <summary>
@@ -228,7 +229,9 @@ public static class ActionResultExtensions
     /// </example>
     public static ActionResult<TValue> ToActionResult<TValue>(this Error error, ControllerBase controllerBase)
     {
-        var statusCode = TrellisAspOptions.Instance.GetStatusCode(error);
+        var options = controllerBase.HttpContext?.RequestServices?.GetService<TrellisAspOptions>()
+                      ?? TrellisAspOptions.Default;
+        var statusCode = options.GetStatusCode(error);
 
         if (error is ValidationError validation)
             return ValidationErrors<TValue>(string.IsNullOrEmpty(error.Detail) ? null : error.Detail, validation, error.Instance, controllerBase, statusCode);

@@ -209,5 +209,30 @@ public class TrellisAspOptionsTests
         services.Should().ContainSingle(d => d.ServiceType == typeof(TrellisAspOptions));
     }
 
+    [Fact]
+    public void AddTrellisAsp_resolved_options_reflect_configured_overrides()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisAsp(options =>
+            options.MapError<DomainError>(StatusCodes.Status400BadRequest));
+
+        var provider = services.BuildServiceProvider();
+        var resolved = provider.GetRequiredService<TrellisAspOptions>();
+
+        resolved.GetStatusCode(Error.Domain("test")).Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public void AddTrellisAsp_no_args_resolved_options_use_defaults()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisAsp();
+
+        var provider = services.BuildServiceProvider();
+        var resolved = provider.GetRequiredService<TrellisAspOptions>();
+
+        resolved.GetStatusCode(Error.Domain("test")).Should().Be(StatusCodes.Status422UnprocessableEntity);
+    }
+
     #endregion
 }
