@@ -1,4 +1,4 @@
-﻿# Trellis
+﻿# <img src="images/icon.png" alt="Trellis logo" width="48" style="vertical-align: middle; margin-right: 8px;" /> Trellis
 
 > **Structured building blocks for AI-driven enterprise software**
 
