@@ -21,7 +21,7 @@ New packages with no previous equivalent:
 
 | Package | Purpose |
 |---------|---------|
-| `Trellis.Analyzers` | 18 Roslyn analyzers enforcing ROP best practices |
+| `Trellis.Analyzers` | 19 Roslyn analyzers enforcing ROP best practices |
 | `Trellis.Testing` | FluentAssertions extensions, test builders, fakes |
 | `Trellis.Stateless` | Wraps Stateless state machine Fire() to return Result\<T\> |
 

@@ -55,7 +55,7 @@ return FirstName.TryCreate(input.FirstName)
 - **Aggregates and entities** — DDD building blocks with domain events and consistency boundaries. [Learn more](articles/aggregate-factory-pattern.md)
 - **10 discriminated error types** — `ValidationError`, `NotFoundError`, `ConflictError`, etc. Map automatically to HTTP status codes. [Learn more](articles/error-handling.md)
 - **9 pipeline operations** — `Bind`, `Map`, `Tap`, `Ensure`, `Combine`, `Match`, and more. All with async variants. [Learn more](articles/basics.md)
-- **18 Roslyn analyzers** — catch unsafe `.Value` access, forgotten results, and anti-patterns at compile time. [Learn more](articles/analyzers/index.md)
+- **19 Roslyn analyzers** — catch unsafe `.Value` access, forgotten results, and anti-patterns at compile time. [Learn more](articles/analyzers/index.md)
 - **State machine integration** — `FireResult()` returns `Result<T>` instead of throwing. [Learn more](articles/state-machines.md)
 - **AI-ready patterns** — structured building blocks that AI can generate correctly. [Learn more](articles/ai-code-generation.md)
 
@@ -99,7 +99,7 @@ See the [Introduction](articles/intro.md) for a full walkthrough, or jump to [Ba
 | `Trellis.DomainDrivenDesign` | Aggregate, Entity, ValueObject, Domain Events |
 | `Trellis.Primitives` | RequiredString, RequiredGuid, RequiredInt, RequiredDecimal + 11 ready-to-use value objects |
 | `Trellis.Primitives.Generator` | Source generator for value object boilerplate |
-| `Trellis.Analyzers` | 18 Roslyn analyzers enforcing ROP best practices at compile time |
+| `Trellis.Analyzers` | 19 Roslyn analyzers enforcing ROP best practices at compile time |
 
 ### Integration
 

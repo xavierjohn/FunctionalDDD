@@ -4,8 +4,7 @@ This example demonstrates seamless integration of Trellis primitive value object
 
 ## Features Demonstrated
 
-- **RequiredUlid** - Time-ordered, lexicographically sortable identifiers (`OrderId`, `CustomerId`)
-- **RequiredGuid** - Traditional GUID identifiers (`ProductId`)
+- **RequiredGuid** - Strongly-typed GUID identifiers (`OrderId`, `CustomerId`, `ProductId`)
 - **RequiredString** - Non-empty string validation (`ProductName`, `CustomerName`)
 - **EmailAddress** - RFC 5322 email validation
 - **EF Core Value Converters** - Seamless database persistence
@@ -25,13 +24,15 @@ EfCoreExample/
 ├── Data/
 │   └── AppDbContext.cs     # EF Core configuration with value converters
 ├── Entities/
-│   ├── Customer.cs         # Customer entity with ULID ID
+│   ├── Customer.cs         # Customer entity with GUID ID
 │   ├── Product.cs          # Product entity with GUID ID
-│   ├── Order.cs            # Order aggregate with ULID ID
+│   ├── Order.cs            # Order aggregate with GUID ID
 │   └── OrderLine.cs        # Order line entity
+├── Enums/
+│   └── OrderState.cs       # RequiredEnum<OrderState>
 └── ValueObjects/
-    ├── OrderId.cs          # RequiredUlid<OrderId>
-    ├── CustomerId.cs       # RequiredUlid<CustomerId>
+    ├── OrderId.cs          # RequiredGuid<OrderId>
+    ├── CustomerId.cs       # RequiredGuid<CustomerId>
     ├── ProductId.cs        # RequiredGuid<ProductId>
     ├── ProductName.cs      # RequiredString<ProductName>
     └── CustomerName.cs     # RequiredString<CustomerName>
@@ -42,10 +43,9 @@ EfCoreExample/
 ### Defining Value Objects
 
 ```csharp
-// ULID-based identifier (time-ordered, sortable)
-public partial class OrderId : RequiredUlid<OrderId> { }
-
-// GUID-based identifier (traditional)
+// GUID-based identifiers
+public partial class OrderId : RequiredGuid<OrderId> { }
+public partial class CustomerId : RequiredGuid<CustomerId> { }
 public partial class ProductId : RequiredGuid<ProductId> { }
 
 // Non-empty string
@@ -55,12 +55,11 @@ public partial class CustomerName : RequiredString<CustomerName> { }
 ### EF Core Value Converters
 
 ```csharp
-// RequiredUlid -> string (26-char Crockford Base32)
+// RequiredGuid -> Guid
 builder.Property(o => o.Id)
     .HasConversion(
-        id => id.Value.ToString(),
-        str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-    .HasMaxLength(26);
+        id => id.Value,
+        guid => OrderId.Create(guid));
 
 // RequiredGuid -> Guid
 builder.Property(p => p.Id)
@@ -83,25 +82,27 @@ public static Result<Customer> TryCreate(string? name, string? email) =>
     CustomerName.TryCreate(name, nameof(name))
         .Combine(EmailAddress.TryCreate(email, nameof(email)))
         .Map((customerName, emailAddress) => new Customer(
-            CustomerId.NewUnique(),
+            CustomerId.NewUniqueV7(),
             customerName,
             emailAddress));
 ```
 
-### ULID Benefits for Database IDs
+### GUID V7 Benefits for Database IDs
 
-| Feature | ULID | GUID |
-|---------|------|------|
+Using `NewUniqueV7()` generates time-ordered GUIDs that provide natural chronological ordering and better index performance compared to random GUIDs.
+
+| Feature | GUID V7 | GUID V4 |
+|---------|---------|----------|
 | **Index Performance** | ✅ Sequential (better) | ❌ Random (fragmentation) |
 | **Natural Ordering** | ✅ By creation time | ❌ Random |
-| **Format** | 26 chars (URL-safe) | 36 chars (with dashes) |
+| **Format** | 36 chars (standard GUID) | 36 chars (standard GUID) |
 | **Query Ordering** | `ORDER BY Id` = chronological | Requires separate timestamp |
 
 ## Sample Output
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  EF Core Example with Trellis Primitive Value Objects      ║
+║  EF Core Example with Trellis Primitive Value Objects            ║
 ╚══════════════════════════════════════════════════════════════════╝
 
 📦 Creating Products...
@@ -110,9 +111,8 @@ public static Result<Customer> TryCreate(string? name, string? email) =>
 
 👤 Creating Customer...
   ✓ Created: John Doe
-             ID: 01KFW56SWA55Q98FB07AABA4SY
+             ID: 019505a3-b1e0-7c6a-8b4d-2f1a3e5c7d9f
              Email: john.doe@example.com
-             Note: ULID naturally encodes creation time!
 
 🔒 Demonstrating Validation...
   ✗ Validation failed: Email address is not valid.
@@ -120,14 +120,8 @@ public static Result<Customer> TryCreate(string? name, string? email) =>
 
 🛒 Creating Order...
   ✓ Order Created and Confirmed!
-             Order ID: 01KFW56SWNXZ4B0C66KF8MZW6Y
+             Order ID: 019505a3-b1e1-7d2b-9c5e-3a2b4f6d8e0a
              Total: $5,649.94
-
-📊 Demonstrating ULID Ordering (Time-based Sortability)...
-  Orders sorted by ULID (natural chronological order):
-    01KFW56SWNXZ4B0C66KF8MZW6Y - Created: 03:22:54.229
-    01KFW56T0K5PR7XXPRWN1F4YTY - Created: 03:22:54.355
-    01KFW56T13K8C30G4A1A726SXT - Created: 03:22:54.371
 ```
 
 ## Related Documentation

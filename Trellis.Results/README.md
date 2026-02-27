@@ -11,13 +11,13 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
   - [Result Type](#result-type)
   - [Maybe Type](#maybe-type)
   - [Error Types](#error-types)
-- [Getting Started](#getting-started)
+- [Quick Start](#quick-start)
 - [Core Operations](#core-operations)
   - [Bind](#bind)
   - [Map](#map)
   - [Tap](#tap)
   - [Ensure](#ensure)
-  - [RecoverOnFailure](#RecoverOnFailure)
+  - [RecoverOnFailure](#recoveronfailure)
   - [Combine](#combine)
 - [Advanced Features](#advanced-features)
   - [LINQ Query Syntax](#linq-query-syntax)
@@ -28,6 +28,7 @@ Railway Oriented Programming (ROP) is a functional approach to error handling th
 - [Common Patterns](#common-patterns)
 - [Debugging](#debugging)
 - [Best Practices](#best-practices)
+- [Related Packages](#related-packages)
 
 ## Installation
 
@@ -221,7 +222,7 @@ var notFound = Error.NotFound("Resource not found");
 var aggregate = validation.Combine(notFound); // AggregateError with 2 errors
 ```
 
-## Getting Started
+## Quick Start
 
 Here's a simple example demonstrating the power of Railway Oriented Programming:
 
@@ -591,7 +592,7 @@ Transform errors while preserving success values:
 Result<int> GetUserPoints(string userId) { /* ... */ }
 
 var apiResult = GetUserPoints(userId)
-    .MapError(err => Error.NotFound($"Points for user {userId} not found"));
+    .MapOnFailure(err => Error.NotFound($"Points for user {userId} not found"));
 
 // Success values pass through unchanged
 // Failure errors are replaced with the new error
@@ -609,7 +610,7 @@ public Result<Order> ProcessOrder(OrderRequest request)
         .Bind(product => ValidatePayment(request.PaymentInfo))
         .Bind(payment => CreateOrder(request, payment))
         .Tap(order => SendConfirmationEmail(order))
-        .TapError(error => LogOrderFailure(error));
+        .TapOnFailure(error => LogOrderFailure(error));
 }
 ```
 
@@ -664,13 +665,13 @@ public async Task<Result<string>> PromoteCustomerAsync(string customerId)
 
 Debugging ROP chains can be tricky — when a chain fails, it's not always obvious which step caused it. Key techniques:
 
-- **`Tap` / `TapError`** — Add logging at each step without changing the result
+- **`Tap` / `TapOnFailure`** — Add logging at each step without changing the result
 - **Break up chains** — Assign intermediate results to named variables for breakpoints
 - **Descriptive errors** — Include IDs and context: `Error.NotFound($"User {userId} not found")`
 - **Debug extensions** — Use `.Debug("label")` in development (excluded from RELEASE builds)
 - **OpenTelemetry** — Built-in activity tracing for distributed debugging
 
-📖 **[Full Debugging Guide](DEBUGGING.md)** — Comprehensive strategies, code samples, and checklist.
+**[Full Debugging Guide](DEBUGGING.md)** — Comprehensive strategies, code samples, and checklist.
 
 ## Best Practices
 
@@ -706,3 +707,16 @@ Debugging ROP chains can be tricky — when a chain fails, it's not always obvio
        .BindAsync(user => GetOrderAsync(user.Id, ct))
        .TapAsync(order => LogOrderAsync(order, ct));
    ```
+
+## Related Packages
+
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — Type-safe value objects (EmailAddress, Money, etc.)
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — Aggregate, Entity, ValueObject
+- [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) — ASP.NET Core integration (Result → HTTP responses)
+- [Trellis.Http](https://www.nuget.org/packages/Trellis.Http) — HttpClient → Result\<T\> extensions
+- [Trellis.Analyzers](https://www.nuget.org/packages/Trellis.Analyzers) — 19 Roslyn analyzers enforcing ROP best practices
+- [Trellis.Testing](https://www.nuget.org/packages/Trellis.Testing) — FluentAssertions extensions for Result\<T\>
+
+## License
+
+MIT — see [LICENSE](../LICENSE) for details.
