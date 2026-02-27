@@ -24,7 +24,7 @@ The single namespace for all structural types. These have zero dependencies beyo
 |-------------|------------------------------|
 | Trellis.Results | `Result<T>`, `Maybe<T>`, `Error`, and all extension methods: `Bind`, `Tap`, `Match`, `Combine`, `Ensure`, `Map` |
 | Trellis.DomainDrivenDesign | `Aggregate<T>`, `Entity<T>`, `ValueObject`, `Specification<T>` |
-| Trellis.Primitives | `RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal` base classes |
+| Trellis.Primitives | `RequiredString`, `RequiredGuid`, `RequiredInt`, `RequiredDecimal`, `RequiredEnum` base classes |
 
 ### `Trellis.Primitives` — Opinionated Ready-to-Use Value Objects
 

@@ -1,4 +1,4 @@
-﻿# Fluent Validation Extension
+﻿# Trellis.FluentValidation — FluentValidation Integration
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.FluentValidation.svg)](https://www.nuget.org/packages/Trellis.FluentValidation)
 
@@ -13,7 +13,8 @@ This library seamlessly integrates [FluentValidation](https://docs.fluentvalidat
   - [Separate Validator Class](#separate-validator-class)
 - [Core Concepts](#core-concepts)
 - [Best Practices](#best-practices)
-- [Resources](#resources)
+- [Related Packages](#related-packages)
+- [License](#license)
 
 ## Installation
 
@@ -143,7 +144,7 @@ public class User
 | Feature | Use Case | Example |
 |---------|----------|----------|
 | **Sync Validation** | Simple validation rules | `Validator.ValidateToResult(user)` |
-| **Async Validation** | Database/API checks | `await Validator.ValidateToResultAsync(user, ct)` |
+| **Async Validation** | Database/API checks | `await Validator.ValidateToResultAsync(user, cancellationToken: ct)` |
 | **Combine Integration** | Multi-step validation | `Email.TryCreate().Combine(Name.TryCreate()).Bind(...)` |
 | **Conditional Rules** | Context-dependent validation | `RuleFor(x => x.Address).When(x => x.NeedsShipping)` |
 | **Custom Messages** | Property-specific errors | `WithMessage(x => $"Value {x.Price} invalid")` |
@@ -171,9 +172,12 @@ public class User
 7. **Combine FluentValidation with ROP**  
    Use FluentValidation for structure/format, ROP Ensure for business rules.
 
-## Resources
+## Related Packages
 
-- [SAMPLES.md](SAMPLES.md) - Comprehensive examples and advanced patterns
-- [FluentValidation Documentation](https://docs.fluentvalidation.net) - Official FluentValidation docs
-- [Railway Oriented Programming](../Trellis.Results/README.md) - Core Result<T> concepts
-- [Domain-Driven Design](../Trellis.DomainDrivenDesign/README.md) - Entity and value object patterns
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — Entity and aggregate patterns
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — Type-safe value objects
+
+## License
+
+MIT — see [LICENSE](../LICENSE) for details.

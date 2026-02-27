@@ -10,14 +10,16 @@ This library provides infrastructure and ready-to-use implementations for primit
 - [Quick Start](#quick-start)
 - [RequiredString](#requiredstring)
 - [RequiredGuid](#requiredguid)
-- [RequiredUlid](#requiredulid)
 - [RequiredInt and RequiredDecimal](#requiredint-and-requireddecimal)
+- [RequiredEnum](#requiredenum)
 - [EmailAddress](#emailaddress)
 - [Additional Value Objects](#additional-value-objects)
+- [Money](#money)
 - [ASP.NET Core Integration](#aspnet-core-integration)
 - [Core Concepts](#core-concepts)
 - [Best Practices](#best-practices)
-- [Resources](#resources)
+- [Related Packages](#related-packages)
+- [License](#license)
 
 ## Installation
 
@@ -29,7 +31,7 @@ dotnet add package Trellis.Primitives.Generator
 ```
 
 **Important:** Both packages are required:
-- `Trellis.Primitives` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal`) and **11 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`)
+- `Trellis.Primitives` - Provides base classes (`RequiredString`, `RequiredGuid`, `RequiredInt`, `RequiredDecimal`, `RequiredEnum`) and **12 ready-to-use value objects** (`EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, `Money`)
 - `Trellis.Primitives.Generator` - Source generator that creates implementations for `Required*` base class derivatives
 
 ## Quick Start
@@ -71,7 +73,7 @@ var trackingId = (TrackingId)"TRK-12345";
 
 ### RequiredGuid
 
-Create strongly-typed GUID value objects:
+Create strongly-typed GUID value objects. Use `NewUniqueV7()` for time-ordered, sortable identifiers — GUID V7 provides the same benefits as ULIDs (sequential, timestamp-embedded) while using the standard `System.Guid` type.
 
 ```csharp
 public partial class EmployeeId : RequiredGuid<EmployeeId>
@@ -103,49 +105,6 @@ var parsed = EmployeeId.Parse("550e8400-e29b-41d4-a716-446655440000", null);
 var employeeId = (EmployeeId)Guid.NewGuid();
 ```
 
-### RequiredUlid
-
-Create strongly-typed ULID value objects for time-ordered, lexicographically sortable identifiers:
-
-```csharp
-public partial class OrderId : RequiredUlid<OrderId>
-{
-}
-
-// The source generator automatically creates:
-// - IScalarValue<OrderId, Ulid> interface implementation
-// - NewUnique() -> OrderId (generates new time-ordered ULID)
-// - TryCreate(Ulid) -> Result<OrderId> (required by IScalarValue)
-// - TryCreate(Ulid?, string? fieldName = null) -> Result<OrderId>
-// - TryCreate(string?, string? fieldName = null) -> Result<OrderId>
-// - Parse(string, IFormatProvider?) -> OrderId
-// - TryParse(string?, IFormatProvider?, out OrderId) -> bool
-// - explicit operator OrderId(Ulid)
-
-var orderId = OrderId.NewUnique(); // Create new time-ordered ULID
-var result = OrderId.TryCreate(ulid);
-var result2 = OrderId.TryCreate("01ARZ3NDEKTSV4RRFFQ69G5FAV");
-
-// With custom field name for validation errors
-var result3 = OrderId.TryCreate(input, "order.id");
-
-// Supports IParsable<T>
-var parsed = OrderId.Parse("01ARZ3NDEKTSV4RRFFQ69G5FAV", null);
-
-// Explicit cast operator (throws on failure)
-var orderId = (OrderId)Ulid.NewUlid();
-```
-
-**Why use ULID over GUID?**
-
-| Feature | ULID | GUID |
-|---------|------|------|
-| **Sortable** | ✅ Lexicographically sortable by creation time | ❌ Random order |
-| **Time-based** | ✅ First 48 bits encode millisecond timestamp | ❌ No time component |
-| **Format** | 26-char Crockford Base32 (URL-safe) | 36-char with dashes |
-| **Database Performance** | ✅ Better index performance (sequential) | ❌ Random distribution |
-| **Use Case** | Event sourcing, distributed systems, logs | Legacy systems, existing APIs |
-
 ### RequiredInt and RequiredDecimal
 
 Create strongly-typed numeric value objects:
@@ -161,6 +120,37 @@ var price = Price.TryCreate(99.99m);
 // Validates non-zero values
 var invalid = Quantity.TryCreate(0);
 // Returns: Error.Validation("Quantity cannot be empty.", "quantity")
+```
+
+### RequiredEnum
+
+Create type-safe enumeration value objects that replace C# enums with full-featured classes:
+
+```csharp
+public partial class OrderState : RequiredEnum<OrderState>
+{
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+    public static readonly OrderState Delivered = new();
+    public static readonly OrderState Cancelled = new();
+}
+
+// Members are discovered via reflection, Name and Value are auto-generated
+Console.WriteLine(OrderState.Draft.Name);  // "Draft"
+Console.WriteLine(OrderState.Draft.Value); // 0
+
+// Create from string
+var result = OrderState.TryCreate("Confirmed");
+// result.Value == OrderState.Confirmed
+
+// Helper methods
+OrderState.Confirmed.Is(OrderState.Confirmed);    // true
+OrderState.Confirmed.IsNot(OrderState.Cancelled);  // true
+
+// Invalid values are impossible
+var invalid = OrderState.TryCreate("Unknown");
+// Returns: Error.Validation("Invalid OrderState value: Unknown", "orderState")
 ```
 
 ### EmailAddress
@@ -292,6 +282,31 @@ var tooOld = Age.TryCreate(200);
 // Error: "Age is unrealistically high."
 ```
 
+#### Money
+
+Monetary amounts with currency code and type-safe arithmetic:
+
+```csharp
+var price = Money.TryCreate(99.99m, "USD");
+if (price.IsSuccess)
+{
+    Console.WriteLine(price.Value.Amount);    // 99.99
+    Console.WriteLine(price.Value.Currency);  // USD
+}
+
+// Arithmetic operations enforce currency matching
+var total = price.Value.Add(Money.Create(10.00m, "USD"));
+// Returns: Result<Money> with 109.99 USD
+
+// Mixing currencies returns an error
+var invalid = price.Value.Add(Money.Create(10.00m, "EUR"));
+// Returns: Error — currency mismatch
+
+// Negative amounts are rejected
+var negative = Money.TryCreate(-5.00m, "USD");
+// Returns: Error.Validation("Amount cannot be negative.", "amount")
+```
+
 ### ASP.NET Core Integration
 
 Value objects implementing `IScalarValue` work seamlessly with ASP.NET Core for automatic validation:
@@ -350,11 +365,11 @@ public class UsersController : ControllerBase
 ```
 
 **Benefits:**
-- ✅ No manual `Result.Combine()` calls in controllers
-- ✅ Works with route parameters, query strings, form data, and JSON bodies
-- ✅ Validation errors automatically flow into `ModelState`
-- ✅ Standard ASP.NET Core validation infrastructure
-- ✅ Works with `[ApiController]` attribute for automatic 400 responses
+- No manual `Result.Combine()` calls in controllers
+- Works with route parameters, query strings, form data, and JSON bodies
+- Validation errors automatically flow into `ModelState`
+- Standard ASP.NET Core validation infrastructure
+- Works with `[ApiController]` attribute for automatic 400 responses
 
 ## Core Concepts
 
@@ -369,6 +384,7 @@ This library provides both **base classes** for creating custom value objects an
 | **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValue, NewUniqueV4()/V7(), ASP.NET validation |
 | **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValue, IParsable, ASP.NET validation |
 | **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValue, IParsable, ASP.NET validation |
+| **RequiredEnum** | Enum value object | Type-safe enumerations | Source generation, behavior, state machines, JSON serialization |
 
 #### Ready-to-Use Value Objects
 | Value Object | Purpose | Validation Rules | Example |
@@ -384,6 +400,7 @@ This library provides both **base classes** for creating custom value objects an
 | **CountryCode** | Country codes | ISO 3166-1 alpha-2 | `US`, `GB`, `FR` |
 | **LanguageCode** | Language codes | ISO 639-1 alpha-2 | `en`, `es`, `fr` |
 | **Age** | Age values | 0-150 range | `42` |
+| **Money** | Monetary amounts | Non-negative amount + ISO 4217 currency | `99.99 USD` |
 
 **What are Primitive Value Objects?**
 
@@ -422,8 +439,13 @@ Primitive value objects wrap single primitive types (`string`, `Guid`, etc.) to 
 6. **Prefer specific types over primitives**  
    `EmployeeId` is more expressive than `Guid` or `string` - eliminates primitive obsession.
 
-## Resources
+## Related Packages
 
-- [SAMPLES.md](SAMPLES.md) - Comprehensive examples and patterns
-- [Railway Oriented Programming](../Trellis.Results/README.md) - Core Result<T> concepts
-- [Domain-Driven Design](../Trellis.DomainDrivenDesign/README.md) - Entity and value object patterns
+- [Trellis.Primitives.Generator](https://www.nuget.org/packages/Trellis.Primitives.Generator) — Source generator (required companion)
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — Entity and aggregate patterns
+- [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) — ASP.NET Core integration
+
+## License
+
+MIT — see [LICENSE](../LICENSE) for details.

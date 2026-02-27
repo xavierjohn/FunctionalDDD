@@ -1,8 +1,17 @@
-﻿# Trellis.DomainDrivenDesign
+﻿# Trellis.DomainDrivenDesign — Domain-Driven Design
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)
 
 Building blocks for implementing Domain-Driven Design tactical patterns in C# with functional programming principles.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Best Practices](#best-practices)
+- [Related Packages](#related-packages)
+- [License](#license)
 
 ## Installation
 
@@ -190,81 +199,6 @@ if (order.IsSuccess)
 }
 ```
 
-## Best Practices
-
-**1. Use entities when identity matters**
-```csharp
-public class Customer : Entity<CustomerId> { } // Identity-based
-public class Address : ValueObject { }          // Value-based
-```
-
-**2. Keep aggregates small**
-```csharp
-public class Order : Aggregate<OrderId>
-{
-    // ✅ Include: OrderLine (part of aggregate)
-    // ❌ Exclude: Customer, Shipment (reference by ID)
-    public CustomerId CustomerId { get; }
-}
-```
-
-**3. Reference other aggregates by ID**
-```csharp
-// ✅ Good
-public CustomerId CustomerId { get; }
-
-// ❌ Avoid
-public Customer Customer { get; }
-```
-
-**4. Use `Maybe<T>` for optional properties**
-```csharp
-// ✅ Good — domain-level optionality
-public Maybe<Url> Website { get; }
-
-// ❌ Avoid — nullable reference
-public Url? Website { get; }
-```
-
-**5. Enforce invariants in aggregate root**
-```csharp
-public Result<Order> AddLine(...) =>
-    this.ToResult()
-        .Ensure(_ => Status == OrderStatus.Draft, ...)
-        .Ensure(_ => quantity > 0, ...)
-        .Tap(_ => _lines.Add(...));
-```
-
-**6. Use domain events for side effects**
-```csharp
-// ✅ Good - domain event
-DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
-
-// ❌ Avoid - direct coupling
-_emailService.SendConfirmation();
-```
-
-**7. Validate using Result types**
-```csharp
-// ✅ Good
-public Result<Order> Cancel(string reason) =>
-this.ToResult()
-    .Ensure(_ => Status == OrderStatus.Draft, ...);
-
-// ❌ Avoid
-if (Status != OrderStatus.Draft)
-    throw new InvalidOperationException(...);
-```
-
-**8. Make value objects immutable**
-```csharp
-// ✅ Good
-public decimal Amount { get; }  // No setter
-
-// ❌ Avoid
-public decimal Amount { get; set; }
-```
-
 ## Core Concepts
 
 ### Entity<TId>
@@ -278,7 +212,7 @@ public decimal Amount { get; set; }
 - Equality based on all properties
 - Override `GetEqualityComponents()`
 
-### ScalarValueObject<T>
+### ScalarValueObject<TSelf, T>
 - Wraps single value
 - Type safety for primitives
 - Implicit conversion to `T`
@@ -301,14 +235,87 @@ public decimal Amount { get; set; }
 - Use records for immutability
 - Publish after persistence
 
-## Resources
+## Best Practices
 
-- **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
-- **[Main Documentation](https://github.com/xavierjohn/Trellis)** - Full repository documentation
-- **[Railway Oriented Programming](https://www.nuget.org/packages/Trellis.Results)** - Result type and functional patterns
-- **[Primitive Value Objects](https://www.nuget.org/packages/Trellis.Primitives)** - RequiredString, RequiredGuid, RequiredEnum, EmailAddress
-- **[Ardalis.SmartEnum](https://github.com/ardalis/SmartEnum)** - Inspiration for RequiredEnum pattern
+**1. Use entities when identity matters**
+```csharp
+public class Customer : Entity<CustomerId> { } // Identity-based
+public class Address : ValueObject { }          // Value-based
+```
+
+**2. Keep aggregates small**
+```csharp
+public class Order : Aggregate<OrderId>
+{
+    // Include: OrderLine (part of aggregate)
+    // Exclude: Customer, Shipment (reference by ID)
+    public CustomerId CustomerId { get; }
+}
+```
+
+**3. Reference other aggregates by ID**
+```csharp
+// Good
+public CustomerId CustomerId { get; }
+
+// Avoid
+public Customer Customer { get; }
+```
+
+**4. Use `Maybe<T>` for optional properties**
+```csharp
+// Good — domain-level optionality
+public Maybe<Url> Website { get; }
+
+// Avoid — nullable reference
+public Url? Website { get; }
+```
+
+**5. Enforce invariants in aggregate root**
+```csharp
+public Result<Order> AddLine(...) =>
+    this.ToResult()
+        .Ensure(_ => Status == OrderStatus.Draft, ...)
+        .Ensure(_ => quantity > 0, ...)
+        .Tap(_ => _lines.Add(...));
+```
+
+**6. Use domain events for side effects**
+```csharp
+// Good - domain event
+DomainEvents.Add(new OrderSubmitted(Id, Total, DateTime.UtcNow));
+
+// Avoid - direct coupling
+_emailService.SendConfirmation();
+```
+
+**7. Validate using Result types**
+```csharp
+// Good
+public Result<Order> Cancel(string reason) =>
+this.ToResult()
+    .Ensure(_ => Status == OrderStatus.Draft, ...);
+
+// Avoid
+if (Status != OrderStatus.Draft)
+    throw new InvalidOperationException(...);
+```
+
+**8. Make value objects immutable**
+```csharp
+// Good
+public decimal Amount { get; }  // No setter
+
+// Avoid
+public decimal Amount { get; set; }
+```
+
+## Related Packages
+
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — RequiredString, RequiredGuid, RequiredEnum, EmailAddress
+- [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) — ASP.NET Core integration
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT — see [LICENSE](../LICENSE) for details.

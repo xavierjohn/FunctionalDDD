@@ -1,4 +1,4 @@
-# Trellis.Asp — ASP.NET Core Extensions
+# ASP.NET Core Extensions
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp)
 
@@ -20,7 +20,7 @@ dotnet add package Trellis.Asp
 
 Automatically validate types implementing `IScalarValue<TSelf, TPrimitive>` during JSON deserialization and model binding with property-aware error messages.
 
-> **Note:** This includes DDD value objects (like `ScalarValueObject<T>`) as well as any custom implementations of `IScalarValue`.
+> **Note:** This includes DDD value objects (like `ScalarValueObject<TSelf, T>`) as well as any custom implementations of `IScalarValue`.
 
 ### Quick Start
 
@@ -118,10 +118,10 @@ app.MapControllers();
 app.Run();
 ```
 
-- ✅ JSON deserialization with validation
-- ✅ Model binding from route/query/form/headers
-- ✅ Automatic 400 responses via `ScalarValueValidationFilter`
-- ✅ Integrates with `[ApiController]` attribute
+- JSON deserialization with validation
+- Model binding from route/query/form/headers
+- Automatic 400 responses via `ScalarValueValidationFilter`
+- Integrates with `[ApiController]` attribute
 
 ### Minimal APIs
 
@@ -137,8 +137,8 @@ app.MapPost("/users", (RegisterUserDto dto) => ...)
 app.Run();
 ```
 
-- ✅ JSON deserialization with validation
-- ✅ Endpoint filter for automatic 400 responses
+- JSON deserialization with validation
+- Endpoint filter for automatic 400 responses
 
 ### Model Binding
 
@@ -231,6 +231,7 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
 | Success | 200 OK | Success with content |
 | Success (Unit) | 204 No Content | Success without content |
 | ValidationError | 400 Bad Request | Validation errors with details |
+| BadRequestError | 400 Bad Request | General bad request |
 | UnauthorizedError | 401 Unauthorized | Authentication required |
 | ForbiddenError | 403 Forbidden | Access denied |
 | NotFoundError | 404 Not Found | Resource not found |
@@ -239,6 +240,19 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
 | RateLimitError | 429 Too Many Requests | Rate limit exceeded |
 | UnexpectedError | 500 Internal Server Error | Unexpected error |
 | ServiceUnavailableError | 503 Service Unavailable | Service unavailable |
+
+### Custom Error Mappings
+
+Customize how domain errors map to HTTP status codes:
+
+```csharp
+builder.Services.AddTrellisAsp(options =>
+{
+    options.MapError<DomainError>(StatusCodes.Status400BadRequest);
+});
+```
+
+Default mappings are applied automatically. `AddTrellisAsp` is optional — only needed to override specific mappings.
 
 ## Property-Aware Error Messages
 
@@ -271,8 +285,8 @@ public static Result<Name> TryCreate(string? value, string? fieldName = null)
 |---------|-----------|------------------|
 | **Setup** | Simple (no generator) | Requires analyzer reference |
 | **Performance** | ~50μs overhead at startup | Zero overhead |
-| **AOT Support** | ❌ No | ✅ Yes |
-| **Trimming** | ⚠️ May break | ✅ Safe |
+| **AOT Support** | No | Yes |
+| **Trimming** | May break | Safe |
 | **Use Case** | Prototyping, standard .NET | Production, Native AOT |
 
 ## Best Practices

@@ -189,9 +189,9 @@ builder.Services.AddOpenTelemetry()
 | **[Asp](https://www.nuget.org/packages/Trellis.Asp)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp) | Convert Result → HTTP responses, Maybe<T> support (MVC & Minimal API) | [📖 Docs](Trellis.Asp/README.md) |
 | **[Http](https://www.nuget.org/packages/Trellis.Http)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Http.svg)](https://www.nuget.org/packages/Trellis.Http) | HTTP client extensions for Result/Maybe with status code handling | [📖 Docs](Trellis.Http/README.md) |
 | **[FluentValidation](https://www.nuget.org/packages/Trellis.FluentValidation)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.FluentValidation.svg)](https://www.nuget.org/packages/Trellis.FluentValidation) | Integrate FluentValidation with ROP | [📖 Docs](Trellis.FluentValidation/README.md) |
-| **[Primitives](https://www.nuget.org/packages/Trellis.Primitives)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives) | Base classes (RequiredString, RequiredGuid, RequiredUlid, RequiredInt, RequiredDecimal) + 11 ready-to-use VOs | [📖 Docs](Trellis.Primitives/README.md) |
+| **[Primitives](https://www.nuget.org/packages/Trellis.Primitives)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives) | Base classes (RequiredString, RequiredGuid, RequiredInt, RequiredDecimal, RequiredEnum) + 12 ready-to-use VOs | [📖 Docs](Trellis.Primitives/README.md) |
 | **[Primitives.Generator](https://www.nuget.org/packages/Trellis.Primitives.Generator)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.Generator.svg)](https://www.nuget.org/packages/Trellis.Primitives.Generator) | Source generator for value object boilerplate | [📖 Docs](Trellis.Primitives/generator/README.md) |
-| **[Analyzers](https://www.nuget.org/packages/Trellis.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers) | Roslyn analyzers for compile-time ROP safety (18 rules) | [📖 Docs](Trellis.Analyzers/README.md) |
+| **[Analyzers](https://www.nuget.org/packages/Trellis.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers) | Roslyn analyzers for compile-time ROP safety (19 rules) | [📖 Docs](Trellis.Analyzers/README.md) |
 | **[DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](Trellis.DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/Trellis.Testing)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Trellis.Testing/README.md) |
 
@@ -404,9 +404,9 @@ public class User : Aggregate<UserId>
 **Recent enhancements:**
 - 🎯 **Maybe<T> Domain Optionality** — `notnull` constraint, `Map`, `Match` methods, full ASP.NET Core integration (JSON converter, model binder, MVC validation suppression)
 - 🎯 **RequiredEnum** — Type-safe enumerations with behavior, state machine support, and JSON serialization
-- 🔍 **Roslyn Analyzers** — 18 compile-time diagnostics to enforce ROP best practices
+- 🔍 **Roslyn Analyzers** — 19 compile-time diagnostics to enforce ROP best practices
 - ✨ **ASP.NET Core Auto-Validation** — Value objects automatically validate in requests via `AddScalarValueValidation()`
-- 🎯 **11 New Value Objects** — `Url`, `PhoneNumber`, `Percentage`, `Currency`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, `RequiredInt`, `RequiredDecimal`
+- 🎯 **12 Ready-to-Use Value Objects** — `EmailAddress`, `Url`, `PhoneNumber`, `Percentage`, `CurrencyCode`, `IpAddress`, `Hostname`, `Slug`, `CountryCode`, `LanguageCode`, `Age`, `Money`
 - ✨ **Discriminated Error Matching** — Pattern match on specific error types using `MatchError`
 - ✨ **Tuple Destructuring** — Destructure tuples in Match/Switch for cleaner code
 - ⚡ **Performance Optimizations** — Reduced allocation and improved throughput

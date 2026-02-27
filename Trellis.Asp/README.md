@@ -1,4 +1,4 @@
-﻿# Trellis.Asp - ASP.NET Core Extensions
+﻿# Trellis.Asp — ASP.NET Core Extensions
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp)
 
@@ -24,7 +24,10 @@ Comprehensive ASP.NET Core integration for functional domain-driven design, prov
   - [MVC Controllers](#result-conversion-mvc)
   - [Minimal APIs](#result-conversion-minimal-api)
 - [Advanced Topics](#advanced-topics)
-- [Resources](#resources)
+- [Best Practices](#best-practices)
+- [Examples](#examples)
+- [Related Packages](#related-packages)
+- [License](#license)
 
 ## Installation
 
@@ -139,10 +142,10 @@ app.Run();
 ```
 
 **Features:**
-- ✅ JSON deserialization with validation
-- ✅ Model binding from route/query/form/headers
-- ✅ Automatic 400 responses via `ScalarValueValidationFilter`
-- ✅ Integrates with `[ApiController]` attribute
+- JSON deserialization with validation
+- Model binding from route/query/form/headers
+- Automatic 400 responses via `ScalarValueValidationFilter`
+- Integrates with `[ApiController]` attribute
 
 ### Minimal APIs
 
@@ -161,9 +164,9 @@ app.Run();
 ```
 
 **Features:**
-- ✅ JSON deserialization with validation
-- ✅ Endpoint filter for automatic 400 responses
-- ⚠️ No automatic model binding (use JSON body)
+- JSON deserialization with validation
+- Endpoint filter for automatic 400 responses
+- No automatic model binding (use JSON body)
 
 ### Model Binding
 
@@ -250,19 +253,19 @@ public record RegisterUserDto
 ```json
 { "firstName": "Jane", "email": "jane@example.com", "website": "https://jane.dev" }
 ```
-→ `Website` = `Maybe.From(Url)` ✅
+→ `Website` = `Maybe.From(Url)`
 
 **Request without optional value:**
 ```json
 { "firstName": "Jane", "email": "jane@example.com", "website": null }
 ```
-→ `Website` = `Maybe.None` ✅
+→ `Website` = `Maybe.None`
 
 **Request with invalid optional value:**
 ```json
 { "firstName": "Jane", "email": "jane@example.com", "website": "not-a-url" }
 ```
-→ 400 with `"Website": ["Url is not valid."]` ✅
+→ 400 with `"Website": ["Url is not valid."]`
 
 #### MVC Model Binding
 
@@ -446,8 +449,8 @@ app.MapPost("/users", (RegisterUserDto dto, HttpContext httpContext) =>
 |---------|-----------|------------------|
 | **Setup** | Simple (no generator) | Requires analyzer reference |
 | **Performance** | ~50μs overhead at startup | Zero overhead |
-| **AOT Support** | ❌ No | ✅ Yes |
-| **Trimming** | ⚠️ May break | ✅ Safe |
+| **AOT Support** | No | Yes |
+| **Trimming** | May break | Safe |
 | **Use Case** | Prototyping, standard .NET | Production, Native AOT |
 
 See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for comprehensive comparison.
@@ -475,22 +478,20 @@ See [docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md) for comprehensive
 2. **Use source generator for production** - Better performance, AOT support
 3. **Test validation thoroughly** - Unit test value objects, integration test endpoints
 
-## Resources
-
-- **[docs/REFLECTION-FALLBACK.md](docs/REFLECTION-FALLBACK.md)** - AOT vs reflection comparison
-- **[generator/README.md](generator/README.md)** - Source generator details
-- **[SAMPLES.md](SAMPLES.md)** - Comprehensive examples and patterns
-- **[Railway Oriented Programming](../Trellis.Results/README.md)** - Core `Result<T>` concepts
-- **[Domain-Driven Design](../Trellis.DomainDrivenDesign/README.md)** - Entity and value object patterns
-- **[Primitives](../Trellis.Primitives/README.md)** - Base value object types
-
 ## Examples
 
-- **[SampleMinimalApi](../Examples/SampleMinimalApi/)** - Minimal API with Native AOT and source generator
-- **[SampleMinimalApiNoAot](../Examples/SampleMinimalApiNoAot/)** - Minimal API with reflection fallback (no source generator) **← Start here!**
-- **[SampleWebApplication](../Examples/SampleWebApplication/)** - MVC controllers with validation
-- **[SampleUserLibrary](../Examples/SampleUserLibrary/)** - Shared value objects
+- **[SampleMinimalApi](../Examples/SampleWeb/SampleMinimalApi/)** — Minimal API with Native AOT and source generator
+- **[SampleMinimalApiNoAot](../Examples/SampleWeb/SampleMinimalApiNoAot/)** — Minimal API with reflection fallback (no source generator) **← Start here!**
+- **[SampleWebApplication](../Examples/SampleWeb/SampleWebApplication/)** — MVC controllers with validation
+- **[SampleUserLibrary](../Examples/SampleWeb/SampleUserLibrary/)** — Shared value objects
+
+## Related Packages
+
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` type
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — Base value object types
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — Entity and aggregate patterns
+- [Trellis.AspSourceGenerator](https://www.nuget.org/packages/Trellis.AspSourceGenerator) — AOT source generator
 
 ## License
 
-Part of the Trellis library. See [LICENSE](../LICENSE) for details.
+MIT — see [LICENSE](../LICENSE) for details.

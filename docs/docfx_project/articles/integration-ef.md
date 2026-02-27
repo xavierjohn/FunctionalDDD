@@ -805,7 +805,7 @@ flowchart TB
 
 ## Value Object Configuration
 
-Configure strongly-typed value objects (`RequiredGuid`, `RequiredUlid`, `RequiredString`, `EmailAddress`) with EF Core using value converters.
+Configure strongly-typed value objects (`RequiredGuid`, `RequiredString`, `EmailAddress`) with EF Core using value converters.
 
 ### Value Converter Examples
 
@@ -831,12 +831,11 @@ public class AppDbContext : DbContext
         {
             builder.HasKey(c => c.Id);
 
-            // RequiredUlid<CustomerId> -> string (26-char Crockford Base32)
+            // RequiredGuid<CustomerId> -> Guid
             builder.Property(c => c.Id)
                 .HasConversion(
-                    id => id.Value.ToString(),
-                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    id => id.Value,
+                    guid => CustomerId.Create(guid))
                 .IsRequired();
 
             // RequiredString<CustomerName> -> string
@@ -861,21 +860,18 @@ public class AppDbContext : DbContext
         {
             builder.HasKey(o => o.Id);
 
-            // RequiredUlid<OrderId> -> string
-            // ULIDs provide natural chronological ordering for queries!
+            // RequiredGuid<OrderId> -> Guid
             builder.Property(o => o.Id)
                 .HasConversion(
-                    id => id.Value.ToString(),
-                    str => OrderId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    id => id.Value,
+                    guid => OrderId.Create(guid))
                 .IsRequired();
 
-            // Foreign key using ULID
+            // Foreign key using GUID
             builder.Property(o => o.CustomerId)
                 .HasConversion(
-                    id => id.Value.ToString(),
-                    str => CustomerId.Create(Ulid.Parse(str, CultureInfo.InvariantCulture)))
-                .HasMaxLength(26)
+                    id => id.Value,
+                    guid => CustomerId.Create(guid))
                 .IsRequired();
         });
 
@@ -907,45 +903,39 @@ public class AppDbContext : DbContext
 | Value Object | EF Core Storage | Converter |
 |--------------|-----------------|-----------|
 | `RequiredGuid<T>` | `Guid` | `id => id.Value` ↔ `guid => T.Create(guid)` |
-| `RequiredUlid<T>` | `string(26)` | `id => id.Value.ToString()` ↔ `str => T.Create(Ulid.Parse(str))` |
+
 | `RequiredString<T>` | `string` | `val => val.Value` ↔ `str => T.Create(str)` |
 | `RequiredInt<T>` | `int` | `val => val.Value` ↔ `num => T.Create(num)` |
 | `RequiredDecimal<T>` | `decimal` | `val => val.Value` ↔ `num => T.Create(num)` |
 | `EmailAddress` | `string(254)` | `email => email.Value` ↔ `str => EmailAddress.Create(str)` |
 
-### Why Use ULID for Entity IDs?
+### Why Use GUID V7 for Entity IDs?
 
-ULIDs provide several advantages over GUIDs for entity identifiers:
+GUID V7 (`NewUniqueV7()`) provides the same benefits as ULIDs — time-ordered, sequential, timestamp-embedded — while using the standard `System.Guid` type with better database index performance than random GUIDs:
 
 ```csharp
-// Define ULID-based identifiers
-public partial class OrderId : RequiredUlid<OrderId> { }
-public partial class CustomerId : RequiredUlid<CustomerId> { }
+// Define GUID-based identifiers
+public partial class OrderId : RequiredGuid<OrderId> { }
+public partial class CustomerId : RequiredGuid<CustomerId> { }
 
-// ULIDs sort chronologically - great for database indexes!
+// GUID V7s sort chronologically - great for database indexes!
 var orders = await context.Orders
     .OrderBy(o => o.Id)  // Natural creation-time ordering
     .Take(10)
     .ToListAsync();
-
-// ULID format: 01ARZ3NDEKTSV4RRFFQ69G5FAV (26 chars, URL-safe)
-// - First 10 chars: millisecond timestamp
-// - Last 16 chars: random component
 ```
 
-| Feature | ULID | GUID |
-|---------|------|------|
+| Feature | GUID V7 | GUID V4 |
+|---------|---------|----------|
 | **Database Index Performance** | ✅ Sequential (better) | ❌ Random (fragmentation) |
 | **Natural Ordering** | ✅ By creation time | ❌ Random |
-| **Format** | 26 chars (URL-safe) | 36 chars (with dashes) |
 | **Use Case** | Orders, Events, Logs | Legacy systems |
 
 ### Complete Example
 
 See the [EF Core Example](https://github.com/xavierjohn/Trellis/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
 
-- `RequiredUlid<T>` for time-ordered identifiers (`OrderId`, `CustomerId`)
-- `RequiredGuid<T>` for traditional identifiers (`ProductId`)
+- `RequiredGuid<T>` for identifiers (`OrderId`, `CustomerId`, `ProductId`)
 - `RequiredString<T>` for validated strings (`ProductName`, `CustomerName`)
 - `EmailAddress` for RFC 5322 email validation
 - Complete EF Core configuration with value converters

@@ -103,7 +103,7 @@ The AI doesn't need to invent patterns. It follows the structure Trellis provide
 
 ### Compiler as Guardrail
 
-Trellis provides 18 Roslyn analyzers that catch incorrect usage at compile time. When AI generates code that doesn't follow the patterns, the compiler flags it immediately. See [Analyzer Rules](analyzers/index.md) for the complete list.
+Trellis provides 19 Roslyn analyzers that catch incorrect usage at compile time. When AI generates code that doesn't follow the patterns, the compiler flags it immediately. See [Analyzer Rules](analyzers/index.md) for the complete list.
 
 ### Mechanical Mapping
 

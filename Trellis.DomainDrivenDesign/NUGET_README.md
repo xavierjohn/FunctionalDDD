@@ -118,7 +118,7 @@ if (order.IsSuccess)
 |------|---------|----------|
 | **Entity\<TId\>** | Objects with identity | By ID |
 | **ValueObject** | Immutable, no identity | By all properties |
-| **ScalarValueObject\<T\>** | Wraps single primitive | By value |
+| **ScalarValueObject\<TSelf, T\>** | Wraps single primitive | By value |
 | **Aggregate\<TId\>** | Consistency boundary + events | By ID |
 | **IDomainEvent** | Marker for domain events | — |
 

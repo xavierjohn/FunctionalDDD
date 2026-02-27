@@ -1,16 +1,8 @@
-﻿# Trellis.Stateless — State Machine Integration
+# Stateless State Machine Integration
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Stateless.svg)](https://www.nuget.org/packages/Trellis.Stateless)
 
 Wraps the [Stateless](https://github.com/dotnet-state-machine/stateless) library's `Fire()` method to return `Result<TState>` instead of throwing on invalid transitions.
-
-## Table of Contents
-
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [How It Works](#how-it-works)
-- [Related Packages](#related-packages)
-- [License](#license)
 
 ## Installation
 
@@ -50,4 +42,4 @@ Result<OrderState> invalid = machine.FireResult(OrderTrigger.Cancel);
 
 ## License
 
-MIT — see [LICENSE](../LICENSE) for details.
+MIT — see [LICENSE](https://github.com/xavierjohn/Trellis/blob/main/LICENSE) for details.

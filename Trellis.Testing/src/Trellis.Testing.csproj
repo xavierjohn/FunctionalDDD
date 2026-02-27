@@ -14,7 +14,7 @@
     <PackageId>Trellis.Testing</PackageId>
     <Description>Testing utilities and assertions for Trellis - FluentAssertions extensions, test builders, and fake implementations for Railway-Oriented Programming</Description>
     <PackageTags>trellis;functional-programming;testing;assertions;fluent-assertions;ddd;railway-oriented-programming;result;maybe;test-utilities</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="../README.md" Pack="true" PackagePath="\" />
+    <None Include="../NUGET_README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

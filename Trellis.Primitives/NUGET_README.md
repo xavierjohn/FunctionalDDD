@@ -14,7 +14,7 @@ dotnet add package Trellis.Primitives.Generator
 ```
 
 **Important:** Both packages are required:
-- `Trellis.Primitives` — Base classes and **11 ready-to-use value objects**
+- `Trellis.Primitives` — Base classes and **12 ready-to-use value objects**
 - `Trellis.Primitives.Generator` — Source generator for `Required*` derivatives
 
 ## Quick Start
@@ -43,27 +43,16 @@ var result2 = TrackingId.TryCreate(input, "shipment.trackingId");
 
 ### RequiredGuid
 
+Use `NewUniqueV7()` for time-ordered, sortable identifiers — GUID V7 provides the same benefits as ULIDs (sequential, timestamp-embedded) with the standard `System.Guid` type.
+
 ```csharp
 public partial class EmployeeId : RequiredGuid<EmployeeId>
 {
 }
 
-var employeeId = EmployeeId.NewUniqueV7();
+var employeeId = EmployeeId.NewUniqueV7(); // Time-ordered, sortable
 var result = EmployeeId.TryCreate(guid);
 var result2 = EmployeeId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
-```
-
-### RequiredUlid
-
-Time-ordered, lexicographically sortable identifiers:
-
-```csharp
-public partial class OrderId : RequiredUlid<OrderId>
-{
-}
-
-var orderId = OrderId.NewUnique();
-var result = OrderId.TryCreate("01ARZ3NDEKTSV4RRFFQ69G5FAV");
 ```
 
 ### RequiredInt and RequiredDecimal
@@ -91,12 +80,30 @@ var price = Price.TryCreate(99.99m);
 | **CountryCode** | Country codes | ISO 3166-1 alpha-2 | `US`, `GB` |
 | **LanguageCode** | Language codes | ISO 639-1 alpha-2 | `en`, `es` |
 | **Age** | Age values | 0–150 range | `42` |
+| **Money** | Monetary amounts | Non-negative + ISO 4217 currency | `99.99 USD` |
 
 ```csharp
 var email = EmailAddress.TryCreate("user@example.com");
 var url = Url.TryCreate("https://example.com/path");
 var phone = PhoneNumber.TryCreate("+14155551234");
 var pct = Percentage.TryCreate(15.5m);
+var money = Money.TryCreate(99.99m, "USD");
+```
+
+## RequiredEnum
+
+Type-safe enumerations that replace C# enums with full-featured classes:
+
+```csharp
+public partial class OrderState : RequiredEnum<OrderState>
+{
+    public static readonly OrderState Draft = new();
+    public static readonly OrderState Confirmed = new();
+    public static readonly OrderState Shipped = new();
+}
+
+var result = OrderState.TryCreate("Confirmed");
+// result.Value == OrderState.Confirmed
 ```
 
 ## ASP.NET Core Integration
