@@ -192,7 +192,7 @@ builder.Services.AddOpenTelemetry()
 | **[Primitives](https://www.nuget.org/packages/Trellis.Primitives)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.svg)](https://www.nuget.org/packages/Trellis.Primitives) | Base classes (RequiredString, RequiredGuid, RequiredInt, RequiredDecimal, RequiredEnum) + 12 ready-to-use VOs | [📖 Docs](Trellis.Primitives/README.md) |
 | **[Primitives.Generator](https://www.nuget.org/packages/Trellis.Primitives.Generator)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Primitives.Generator.svg)](https://www.nuget.org/packages/Trellis.Primitives.Generator) | Source generator for value object boilerplate | [📖 Docs](Trellis.Primitives/generator/README.md) |
 | **[Analyzers](https://www.nuget.org/packages/Trellis.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers) | Roslyn analyzers for compile-time ROP safety (19 rules) | [📖 Docs](Trellis.Analyzers/README.md) |
-| **[DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Domain Events | [📖 Docs](Trellis.DomainDrivenDesign/README.md) |
+| **[DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Specification, Domain Events | [📖 Docs](Trellis.DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/Trellis.Testing)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Trellis.Testing/README.md) |
 
 ---
@@ -402,6 +402,7 @@ public class User : Aggregate<UserId>
 ## What's New
 
 **Recent enhancements:**
+- 🎯 **Specification Pattern** — Composable, expression-tree-based business rules with `And`/`Or`/`Not` composition and EF Core 8+ support
 - 🎯 **Maybe<T> Domain Optionality** — `notnull` constraint, `Map`, `Match` methods, full ASP.NET Core integration (JSON converter, model binder, MVC validation suppression)
 - 🎯 **RequiredEnum** — Type-safe enumerations with behavior, state machine support, and JSON serialization
 - 🔍 **Roslyn Analyzers** — 19 compile-time diagnostics to enforce ROP best practices

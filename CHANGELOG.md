@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Specification Pattern — Composable Business Rules
+
+`Specification<T>` is a new DDD building block for encapsulating business rules as composable, storage-agnostic expression trees:
+
+- **`Specification<T>`** — Abstract base class with `ToExpression()`, `IsSatisfiedBy(T)`, and `And`/`Or`/`Not` composition
+- **Expression-tree based** — Works with EF Core 8+ for server-side filtering via `IQueryable`
+- **Implicit conversion** to `Expression<Func<T, bool>>` for seamless LINQ integration
+- **In-memory evaluation** via `IsSatisfiedBy(T)` for domain logic and testing
+
+```csharp
+// Define a specification
+public class HighValueOrderSpec(decimal threshold) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.TotalAmount > threshold;
+}
+
+// Compose specifications
+var spec = new OverdueOrderSpec(now).And(new HighValueOrderSpec(500m));
+var orders = await dbContext.Orders.Where(spec).ToListAsync();
+```
+
 #### Maybe<T> — First-Class Domain-Level Optionality
 
 `Maybe<T>` now has a `notnull` constraint and new transformation methods, making it a proper domain-level optionality type:

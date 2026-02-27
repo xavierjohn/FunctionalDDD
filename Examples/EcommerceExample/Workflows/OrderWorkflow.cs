@@ -240,7 +240,7 @@ public class OrderWorkflow
         // 4. Accept changes - clears the uncommitted events list
         order.AcceptChanges();
 
-        Console.WriteLine($"?? Published {events.Count} domain event(s) for order {order.Id}");
+        Console.WriteLine($"📢 Published {events.Count} domain event(s) for order {order.Id}");
     }
 
     private static async Task PublishEventAsync(IDomainEvent domainEvent, CancellationToken cancellationToken)
@@ -263,7 +263,7 @@ public class OrderWorkflow
             _ => domainEvent.GetType().Name
         };
 
-        Console.WriteLine($"   ?? Event: {eventInfo}");
+        Console.WriteLine($"   📋 Event: {eventInfo}");
     }
 }
 

@@ -69,8 +69,8 @@ public static class BankingExamples
                 Console.WriteLine($"IsChanged: {account.IsChanged}");
             })
             .Match(
-                onSuccess: ok => $"? Account balance: {ok.Balance}. Transactions: {ok.Transactions.Count}",
-                onFailure: err => $"? Operation failed: {err.Detail}"
+                onSuccess: ok => $"✅ Account balance: {ok.Balance}. Transactions: {ok.Transactions.Count}",
+                onFailure: err => $"❌ Operation failed: {err.Detail}"
             );
 
         Console.WriteLine(result);
@@ -121,8 +121,8 @@ public static class BankingExamples
         );
 
         var message = result.Match(
-            onSuccess: ok => $"? Transfer successful!\n   From account balance: {ok.From.Balance}\n   To account balance: {ok.To.Balance}",
-            onFailure: err => $"? Transfer failed: {err.Detail}"
+            onSuccess: ok => $"✅ Transfer successful!\n   From account balance: {ok.From.Balance}\n   To account balance: {ok.To.Balance}",
+            onFailure: err => $"❌ Transfer failed: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -160,8 +160,8 @@ public static class BankingExamples
         );
 
         var message = result.Match(
-            onSuccess: ok => $"? Withdrawal successful. New balance: {ok.Balance}",
-            onFailure: err => $"?? Expected fraud detection:\n   Code: {err.Code}\n   Detail: {err.Detail}"
+            onSuccess: ok => $"✅ Withdrawal successful. New balance: {ok.Balance}",
+            onFailure: err => $"⚠️ Expected fraud detection:\n   Code: {err.Code}\n   Detail: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -192,16 +192,16 @@ public static class BankingExamples
 
         // Make multiple withdrawals
         var result1 = account.Withdraw(Money.Create(200m, "USD"), "ATM withdrawal");
-        Console.WriteLine(result1.IsSuccess ? "? First withdrawal: $200" : $"? {result1.Error.Detail}");
+        Console.WriteLine(result1.IsSuccess ? "✅ First withdrawal: $200" : $"❌ {result1.Error.Detail}");
 
         var result2 = account.Withdraw(Money.Create(200m, "USD"), "ATM withdrawal");
-        Console.WriteLine(result2.IsSuccess ? "? Second withdrawal: $200" : $"? {result2.Error.Detail}");
+        Console.WriteLine(result2.IsSuccess ? "✅ Second withdrawal: $200" : $"❌ {result2.Error.Detail}");
 
         // This should exceed daily limit - demonstrates Error.Domain
         var result3 = account.Withdraw(Money.Create(200m, "USD"), "ATM withdrawal");
         if (result3.IsFailure)
         {
-            Console.WriteLine($"?? Third withdrawal blocked:");
+            Console.WriteLine($"⚠️ Third withdrawal blocked:");
             Console.WriteLine($"   Error Type: {result3.Error.GetType().Name}");
             Console.WriteLine($"   Code: {result3.Error.Code}");
             Console.WriteLine($"   Detail: {result3.Error.Detail}");
@@ -244,12 +244,12 @@ public static class BankingExamples
             onSuccess: ok =>
             {
                 var interestTransaction = ok.Transactions.Last();
-                return $"? Interest payment processed\n" +
+                return $"✅ Interest payment processed\n" +
                        $"   Amount: {interestTransaction.Amount}\n" +
                        $"   New balance: {ok.Balance}\n" +
                        $"   Annual rate: {annualRate:P2}";
             },
-            onFailure: err => $"? Interest payment failed: {err.Detail}"
+            onFailure: err => $"❌ Interest payment failed: {err.Detail}"
         );
 
         Console.WriteLine(message);
@@ -278,7 +278,7 @@ public static class BankingExamples
 
         if (accountResult.IsFailure)
         {
-            Console.WriteLine($"? Account creation failed: {accountResult.Error.Detail}");
+            Console.WriteLine($"❌ Account creation failed: {accountResult.Error.Detail}");
             return;
         }
 

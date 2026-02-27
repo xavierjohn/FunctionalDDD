@@ -144,6 +144,12 @@ stateDiagram-v2
 ### Workflows
 - **OrderWorkflow**: Orchestrates the complete order processing flow with error handling and recoverys
 
+### Specifications
+- **OrderStatusSpec**: Matches orders with a specific status
+- **HighValueOrderSpec**: Matches orders above a monetary threshold
+- **CustomerOrderSpec**: Matches orders for a specific customer
+- **CancellableOrderSpec**: Matches orders eligible for cancellation (Draft, Pending, PaymentFailed)
+
 ---
 
 ## 🎨 Features Demonstrated
@@ -269,6 +275,7 @@ var result = await GetStudentInfoAsync(customerId, ct)
 | 3️⃣ | **Payment Failure Handling** | Recovery when payment fails | `RecoverOnFailure`, rollback, notifications |
 | 4️⃣ | **Insufficient Inventory** | Handling out-of-stock scenarios | Error handling, alternative suggestions |
 | 5️⃣ | **Domain Events Deep Dive** | Event tracking and change detection | `UncommittedEvents()`, `AcceptChanges()`, `IsChanged` |
+| 6️⃣ | **Specification Pattern** | Composable business rule filtering | `Specification<T>`, `And`, `Or`, `Not`, `IQueryable` |
 
 ### 🎮 Run All Examples
 

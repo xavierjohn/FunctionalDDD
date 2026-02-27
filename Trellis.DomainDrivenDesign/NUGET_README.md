@@ -96,6 +96,28 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
+### Specification
+
+Encapsulate business rules as composable, storage-agnostic expression trees.
+
+```csharp
+public class HighValueOrderSpec(decimal threshold) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.TotalAmount > threshold;
+}
+
+// Compose specifications
+var spec = new OverdueOrderSpec(now).And(new HighValueOrderSpec(500m));
+
+// Use with EF Core
+var orders = await dbContext.Orders.Where(spec).ToListAsync();
+
+// In-memory evaluation
+if (spec.IsSatisfiedBy(order))
+    // order matches
+```
+
 ### Domain Events
 
 Publish events after persisting:
@@ -120,6 +142,7 @@ if (order.IsSuccess)
 | **ValueObject** | Immutable, no identity | By all properties |
 | **ScalarValueObject\<TSelf, T\>** | Wraps single primitive | By value |
 | **Aggregate\<TId\>** | Consistency boundary + events | By ID |
+| **Specification\<T\>** | Composable business rules | — |
 | **IDomainEvent** | Marker for domain events | — |
 
 ## Best Practices

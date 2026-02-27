@@ -45,7 +45,7 @@ public class FraudDetectionService
     {
         if (amount.Amount > SuspiciousAmountThreshold)
         {
-            Console.WriteLine($"?? Large transaction detected: {amount}");
+            Console.WriteLine($"⚠️ Large transaction detected: {amount}");
             return Error.Domain(
                 $"Transaction amount {amount} exceeds threshold of ${SuspiciousAmountThreshold}. Manual review required.",
                 "fraud.detected",

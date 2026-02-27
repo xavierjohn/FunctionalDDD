@@ -1,10 +1,8 @@
 # Specifications
 
-**Level:** Intermediate | **Status:** Planned
+**Level:** Intermediate | **Package:** `Trellis.DomainDrivenDesign`
 
 Specifications express business rules as composable, storage-agnostic expression trees. The same specification works for querying EF Core, Cosmos DB, or in-memory collections.
-
-> **Note:** The Specification pattern is planned for `Trellis.DomainDrivenDesign`. This article describes the design and intended usage.
 
 ## Why Specifications?
 
@@ -12,16 +10,45 @@ Business rules like "find all overdue orders over $500 in the West region" appea
 
 Specifications solve this by encapsulating business rules as **reusable expression trees** that any LINQ provider can evaluate.
 
-## Concept
+## Defining a Specification
 
-A specification is a predicate expressed as an `Expression<Func<T, bool>>`:
+Inherit from `Specification<T>` and override `ToExpression()`:
 
 ```csharp
-public class OverdueOrderSpec : Specification<Order>
+using System.Linq.Expressions;
+using Trellis;
+
+public class OverdueOrderSpec(DateTimeOffset now) : Specification<Order>
 {
     public override Expression<Func<Order, bool>> ToExpression()
-        => order => order.DueDate < DateTime.UtcNow && order.Status != OrderStatus.Completed;
+        => order => order.DueDate < now && order.Status != OrderStatus.Completed;
 }
+
+public class HighValueOrderSpec(decimal threshold) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression()
+        => order => order.TotalAmount > threshold;
+}
+
+public class CustomerInRegionSpec(string region) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression()
+        => order => order.Customer.Region == region;
+}
+```
+
+## In-Memory Evaluation
+
+Use `IsSatisfiedBy` to evaluate a specification against an entity:
+
+```csharp
+var spec = new HighValueOrderSpec(500m);
+
+if (spec.IsSatisfiedBy(order))
+    Console.WriteLine("High-value order detected");
+
+// Filter a collection
+var highValueOrders = orders.Where(spec.IsSatisfiedBy).ToList();
 ```
 
 ## Composability
@@ -30,15 +57,79 @@ Specifications combine using `And`, `Or`, and `Not`:
 
 ```csharp
 // Compose multiple specifications
-var spec = new OverdueOrderSpec()
-    .And(new OrderValueExceedsSpec(500m))
+var spec = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+    .And(new HighValueOrderSpec(500m))
     .And(new CustomerInRegionSpec("West"));
 
-// Use with any LINQ provider
+// Negate a specification
+var notOverdue = new OverdueOrderSpec(DateTimeOffset.UtcNow).Not();
+
+// OR composition
+var urgentOrExpensive = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+    .Or(new HighValueOrderSpec(1000m));
+```
+
+Specifications are **immutable** — composition always returns a new specification, leaving the originals unchanged.
+
+## IQueryable Integration
+
+Specifications convert **implicitly** to `Expression<Func<T, bool>>`, so they work directly with `IQueryable.Where()`:
+
+```csharp
+var spec = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+    .And(new HighValueOrderSpec(500m));
+
+// Implicit conversion — expression tree translates to SQL via EF Core
 var results = await _dbContext.Orders
-    .Where(spec.ToExpression())
+    .Where(spec)
+    .OrderByDescending(o => o.TotalAmount)
     .ToListAsync();
 ```
+
+> **Note:** Composite specifications use `Expression.Invoke` internally, which requires **EF Core 8+** for server-side translation.
+
+## Repository Pattern
+
+Define repository interfaces that accept specifications:
+
+```csharp
+public interface IOrderRepository
+{
+    Task<IReadOnlyList<Order>> ListAsync(Specification<Order> spec, CancellationToken ct);
+    Task<int> CountAsync(Specification<Order> spec, CancellationToken ct);
+    Task<bool> AnyAsync(Specification<Order> spec, CancellationToken ct);
+}
+
+public class OrderRepository : IOrderRepository
+{
+    private readonly AppDbContext _db;
+
+    public OrderRepository(AppDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<Order>> ListAsync(
+        Specification<Order> spec, CancellationToken ct)
+        => await _db.Orders.Where(spec).ToListAsync(ct);
+
+    public async Task<int> CountAsync(
+        Specification<Order> spec, CancellationToken ct)
+        => await _db.Orders.Where(spec).CountAsync(ct);
+
+    public async Task<bool> AnyAsync(
+        Specification<Order> spec, CancellationToken ct)
+        => await _db.Orders.Where(spec).AnyAsync(ct);
+}
+```
+
+## API Reference
+
+| Member | Description |
+|--------|-------------|
+| `ToExpression()` | Returns `Expression<Func<T, bool>>` for LINQ providers |
+| `IsSatisfiedBy(T)` | Evaluates the specification in-memory |
+| `And(Specification<T>)` | Logical AND composition |
+| `Or(Specification<T>)` | Logical OR composition |
+| `Not()` | Logical negation |
+| Implicit operator | Converts to `Expression<Func<T, bool>>` for `IQueryable.Where()` |
 
 ## Design Principles
 
@@ -61,3 +152,4 @@ Specifications integrate with the rest of Trellis:
 - [Clean Architecture](clean-architecture.md) — Architecture patterns that use specifications
 - [Entity Framework Core](integration-ef.md) — Repository patterns for persistence
 - [Trellis for AI Code Generation](ai-code-generation.md) — How specs map to code
+- [DDD Samples](https://github.com/xavierjohn/Trellis/blob/main/Trellis.DomainDrivenDesign/SAMPLES.md#specification-pattern) — Comprehensive code examples

@@ -191,7 +191,7 @@ public class BankingWorkflow
         // 4. Accept changes - clears the uncommitted events list
         account.AcceptChanges();
 
-        Console.WriteLine($"?? Published {events.Count} domain event(s) for account {account.Id}");
+        Console.WriteLine($"📢 Published {events.Count} domain event(s) for account {account.Id}");
     }
 
     private static async Task PublishEventAsync(IDomainEvent domainEvent, CancellationToken cancellationToken)
@@ -212,7 +212,7 @@ public class BankingWorkflow
             _ => domainEvent.GetType().Name
         };
 
-        Console.WriteLine($"   ?? Event: {eventInfo}");
+        Console.WriteLine($"   📋 Event: {eventInfo}");
     }
 
     private static async Task NotifyTransferCompleteAsync(
@@ -222,7 +222,7 @@ public class BankingWorkflow
         CancellationToken cancellationToken)
     {
         await Task.Delay(50, cancellationToken);
-        Console.WriteLine($"?? Transfer notification sent: {amount} from {fromCustomerId} to {toCustomerId}");
+        Console.WriteLine($"📧 Transfer notification sent: {amount} from {fromCustomerId} to {toCustomerId}");
     }
 
     private static async Task NotifySecurityTeamAsync(
@@ -231,6 +231,6 @@ public class BankingWorkflow
         CancellationToken cancellationToken)
     {
         await Task.Delay(100, cancellationToken);
-        Console.WriteLine($"?? Security alert for customer {customerId}: {error.Detail}");
+        Console.WriteLine($"🚨 Security alert for customer {customerId}: {error.Detail}");
     }
 }
