@@ -1,5 +1,6 @@
 ﻿using EcommerceExample.Aggregates;
 using EcommerceExample.Services;
+using EcommerceExample.Specifications;
 using EcommerceExample.ValueObjects;
 using EcommerceExample.Workflows;
 using Trellis;
@@ -20,6 +21,7 @@ namespace EcommerceExample;
 /// - recovery and retry logic
 /// - Domain Events and Change Tracking (UncommittedEvents, AcceptChanges)
 /// - Various Error Types (Validation, Domain, Conflict, NotFound, Unexpected)
+/// - Specification Pattern for composable business rules
 /// </summary>
 public static class EcommerceExamples
 {
@@ -33,6 +35,7 @@ public static class EcommerceExamples
         await Example3_PaymentFailureWithrecovery();
         await Example4_InsufficientInventory();
         await Example5_DomainEventsAndChangeTracking();
+        Example6_SpecificationPatternFiltering();
     }
 
     /// <summary>
@@ -273,6 +276,120 @@ public static class EcommerceExamples
 
         Console.WriteLine();
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Example 6: Specification pattern for composable business rules.
+    /// Demonstrates: Specification, And/Or/Not composition, IsSatisfiedBy, IQueryable filtering
+    /// </summary>
+    private static void Example6_SpecificationPatternFiltering()
+    {
+        Console.WriteLine("Example 6: Specification Pattern — Composable Business Rules");
+        Console.WriteLine("-------------------------------------------------------------");
+
+        // --- Set up: create several orders in different states ---
+
+        var customer1 = CustomerId.NewUniqueV4();
+        var customer2 = CustomerId.NewUniqueV4();
+        var productId = ProductId.NewUniqueV4();
+
+        // Helper to create an order at a given status with a specific total
+        Order CreateOrder(CustomerId cid, decimal amount, OrderStatus targetStatus)
+        {
+            var order = Order.TryCreate(cid).Value;
+            order.AddLine(productId, "Widget", Money.Create(amount, "USD"), 1);
+
+            if (targetStatus >= OrderStatus.Pending)
+                order.Submit();
+            if (targetStatus >= OrderStatus.PaymentProcessing)
+                order.ProcessPayment($"TXN-{Guid.NewGuid():N}");
+            if (targetStatus == OrderStatus.PaymentFailed)
+                order.MarkPaymentFailed();
+            if (targetStatus >= OrderStatus.Confirmed)
+                order.Confirm();
+            if (targetStatus >= OrderStatus.Shipped)
+                order.MarkAsShipped();
+            if (targetStatus >= OrderStatus.Delivered)
+                order.MarkAsDelivered();
+            if (targetStatus == OrderStatus.Cancelled)
+            {
+                // Reset to a cancellable state first (Draft)
+                var fresh = Order.TryCreate(cid).Value;
+                fresh.AddLine(productId, "Widget", Money.Create(amount, "USD"), 1);
+                fresh.Cancel("No longer needed");
+                return fresh;
+            }
+
+            return order;
+        }
+
+        var orders = new[]
+        {
+            CreateOrder(customer1,  49.99m, OrderStatus.Draft),           // cheap, draft
+            CreateOrder(customer1, 599.99m, OrderStatus.Pending),         // expensive, pending
+            CreateOrder(customer2, 199.99m, OrderStatus.Confirmed),       // mid-range, confirmed
+            CreateOrder(customer2, 999.99m, OrderStatus.Shipped),         // high-value, shipped
+            CreateOrder(customer1, 149.99m, OrderStatus.PaymentFailed),   // mid-range, payment failed
+            CreateOrder(customer2,  29.99m, OrderStatus.Cancelled),       // cheap, cancelled
+        };
+
+        Console.WriteLine($"Total orders: {orders.Length}\n");
+
+        // --- 1. Simple specification: find confirmed orders ---
+        var confirmedSpec = new OrderStatusSpec(OrderStatus.Confirmed);
+        var confirmedOrders = orders.Where(confirmedSpec.IsSatisfiedBy).ToList();
+        Console.WriteLine($"Confirmed orders: {confirmedOrders.Count}");
+        foreach (var o in confirmedOrders)
+            Console.WriteLine($"  → {o.Id} | Total: {o.Total} | Status: {o.Status}");
+
+        // --- 2. Composition with AND: high-value orders for customer1 ---
+        var customer1HighValue = new CustomerOrderSpec(customer1)
+            .And(new HighValueOrderSpec(100m));
+
+        var customer1Expensive = orders.Where(customer1HighValue.IsSatisfiedBy).ToList();
+        Console.WriteLine($"\nCustomer 1 high-value orders (>$100): {customer1Expensive.Count}");
+        foreach (var o in customer1Expensive)
+            Console.WriteLine($"  → {o.Id} | Total: {o.Total} | Status: {o.Status}");
+
+        // --- 3. Composition with OR: find cancellable OR already cancelled ---
+        var cancellableOrCancelled = new CancellableOrderSpec()
+            .Or(new OrderStatusSpec(OrderStatus.Cancelled));
+
+        var result = orders.Where(cancellableOrCancelled.IsSatisfiedBy).ToList();
+        Console.WriteLine($"\nCancellable or already cancelled: {result.Count}");
+        foreach (var o in result)
+            Console.WriteLine($"  → {o.Id} | Status: {o.Status}");
+
+        // --- 4. Composition with NOT: orders that are NOT high-value ---
+        var budgetOrders = new HighValueOrderSpec(200m).Not();
+
+        var affordable = orders.Where(budgetOrders.IsSatisfiedBy).ToList();
+        Console.WriteLine($"\nBudget orders (≤$200): {affordable.Count}");
+        foreach (var o in affordable)
+            Console.WriteLine($"  → {o.Id} | Total: {o.Total}");
+
+        // --- 5. Complex composition: (confirmed OR shipped) AND high-value ---
+        var activeHighValue = new OrderStatusSpec(OrderStatus.Confirmed)
+            .Or(new OrderStatusSpec(OrderStatus.Shipped))
+            .And(new HighValueOrderSpec(100m));
+
+        var vipOrders = orders.Where(activeHighValue.IsSatisfiedBy).ToList();
+        Console.WriteLine($"\nActive high-value orders (confirmed/shipped, >$100): {vipOrders.Count}");
+        foreach (var o in vipOrders)
+            Console.WriteLine($"  → {o.Id} | Total: {o.Total} | Status: {o.Status}");
+
+        // --- 6. IQueryable integration (simulating what a repository would do) ---
+        var queryable = orders.AsQueryable();
+        var shippedOrDelivered = new OrderStatusSpec(OrderStatus.Shipped)
+            .Or(new OrderStatusSpec(OrderStatus.Delivered));
+
+        // Use the implicit conversion to Expression<Func<Order, bool>>
+        var fulfillmentQueue = queryable.Where(shippedOrDelivered.ToExpression()).ToList();
+        Console.WriteLine($"\nFulfillment queue (IQueryable, shipped/delivered): {fulfillmentQueue.Count}");
+        foreach (var o in fulfillmentQueue)
+            Console.WriteLine($"  → {o.Id} | Status: {o.Status}");
+
+        Console.WriteLine();
     }
 
     private static void PrintEvents(Order order)

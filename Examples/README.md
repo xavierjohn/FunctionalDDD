@@ -22,6 +22,7 @@ A complete e-commerce system with order management, payment processing, and inve
 - Multi-step workflow orchestration
 - Email notifications
 - recovery patterns for failures
+- Specification pattern for composable business rule filtering
 
 **Learn About**:
 - Complex domain aggregates
@@ -29,12 +30,14 @@ A complete e-commerce system with order management, payment processing, and inve
 - Async workflows with cancellation tokens
 - Parallel validation
 - Transaction-like behavior with rollback
+- `Specification<T>` with `And`, `Or`, `Not` composition
 
 **Files**:
 - `Aggregates/Order.cs` - Order aggregate root
 - `Services/PaymentService.cs` - Payment processing
 - `Services/InventoryService.cs` - Stock management
 - `Workflows/OrderWorkflow.cs` - Complete order processing flow
+- `Specifications/OrderSpecifications.cs` - Business rule specifications
 
 ---
 
