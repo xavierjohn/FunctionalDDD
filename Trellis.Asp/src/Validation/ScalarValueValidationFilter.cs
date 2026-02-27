@@ -1,12 +1,13 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Diagnostics.CodeAnalysis;
-using Trellis.Asp.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
+using Trellis;
+using Trellis.Asp.Validation;
 
 /// <summary>
 /// An action filter that checks for validation errors collected during JSON deserialization

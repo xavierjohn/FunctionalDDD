@@ -1,8 +1,7 @@
-namespace PrimitiveValueObjects.Tests.Helpers;
+﻿namespace Trellis.Primitives.Tests.Helpers;
 
 using System.Diagnostics;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Helper class for testing Activity tracing for Primitive Value Objects with complete isolation between tests.

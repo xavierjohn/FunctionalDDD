@@ -1,9 +1,10 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Trellis;
 
 /// <summary>
 /// Represents an email address value object with RFC 5322-compliant validation.

@@ -1,10 +1,11 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using Trellis.Asp.Validation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
+using Trellis;
+using Trellis.Asp.Validation;
 
 /// <summary>
 /// Middleware that creates a validation error collection scope for each request.

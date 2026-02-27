@@ -1,4 +1,5 @@
-using Trellis;
+﻿using Trellis;
+using Trellis.Asp;
 
 var builder = WebApplication.CreateBuilder(args);
 

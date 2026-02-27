@@ -1,8 +1,10 @@
+﻿using Trellis.FluentValidation;
+using Trellis.Primitives;
+
 namespace SampleUserLibrary;
 
 using FluentValidation;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 public class User : Aggregate<UserId>
 {

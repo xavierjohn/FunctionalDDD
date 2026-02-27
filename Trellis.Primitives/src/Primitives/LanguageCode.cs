@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// ISO 639-1 language code value object.

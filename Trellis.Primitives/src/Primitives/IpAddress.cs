@@ -1,8 +1,9 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// Represents an IP address (IPv4 or IPv6) as a value object.

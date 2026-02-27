@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// Age value object with validation for ages 0-150.

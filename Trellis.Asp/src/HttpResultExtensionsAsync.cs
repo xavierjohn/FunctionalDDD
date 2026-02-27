@@ -1,4 +1,6 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
+
+using Trellis;
 
 /// <summary>
 /// Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core Minimal API <see cref="Microsoft.AspNetCore.Http.IResult"/> responses.

@@ -4,17 +4,77 @@
 
 Functional programming library for .NET 10 implementing Railway Oriented Programming (ROP), Domain-Driven Design (DDD) primitives, and value objects.
 
-## Naming Conventions
+## Naming & Namespace Strategy
 
-This project uses `Trellis` as the package and namespace prefix.
+This project uses `Trellis` as the package and namespace prefix. Namespace matches the **nature of the type**, not the package boundary.
 
-| Context | Correct | Incorrect |
-|---------|---------|-----------|
-| Packages / Namespaces | `Trellis.Results` | `FunctionalDdd.RailwayOrientedProgramming` |
-| Using statements | `using Trellis;` | `using FunctionalDdd;` |
-| Assembly names | `Trellis.*` | `FunctionalDdd.*` |
+| Context | Correct |
+|---------|---------|
+| Using statements | `using Trellis;` |
+| Assembly names | `Trellis.*` |
+| Core types namespace | `Trellis` (not one namespace per package) |
 
 "Trellis" is used everywhere — packages, namespaces, documentation, and the GitHub repository name.
+
+### `Trellis` — Core Structural Building Blocks
+
+The single namespace for all structural types. These have zero dependencies beyond the .NET runtime. One `using Trellis;` makes the entire structural toolkit available.
+
+| From Package | Types in `Trellis` Namespace |
+|-------------|------------------------------|
+| Trellis.Results | `Result<T>`, `Maybe<T>`, `Error`, and all extension methods: `Bind`, `Tap`, `Match`, `Combine`, `Ensure`, `Map` |
+| Trellis.DomainDrivenDesign | `Aggregate<T>`, `Entity<T>`, `ValueObject`, `Specification<T>` |
+| Trellis.Primitives | `RequiredString`, `RequiredGuid`, `RequiredUlid`, `RequiredInt`, `RequiredDecimal` base classes |
+
+### `Trellis.Primitives` — Opinionated Ready-to-Use Value Objects
+
+Separate namespace for concrete value objects that encode specific validation rules (e.g., EmailAddress, Money, FirstName). Developers may want to replace these with their own validation. Separate namespace prevents collision if the consumer defines their own type with the same name.
+
+```csharp
+using Trellis;
+using Trellis.Primitives;  // Only if using built-in VOs like EmailAddress, Money
+
+namespace OrderManagement.Domain.Orders;
+```
+
+To replace a built-in VO, just don't import `Trellis.Primitives` — no collision:
+
+```csharp
+using Trellis;
+// No Trellis.Primitives — writing my own EmailAddress
+
+namespace OrderManagement.Domain.Common;
+
+public sealed class EmailAddress : RequiredString<EmailAddress>
+{
+    // My own validation rules
+}
+```
+
+### Integration Namespaces — One Per Package
+
+Each integration package gets its own namespace because it pulls in a third-party or framework dependency. Used in specific layers, not everywhere.
+
+| Namespace | Used In | Purpose |
+|-----------|---------|---------|
+| `Trellis.Asp` | API layer only | `ToMinimalApiResult()`, `ToActionResult()` |
+| `Trellis.Http` | ACL layer only | `HttpClient` → `Result<T>` extensions |
+| `Trellis.Stateless` | Domain layer (when needed) | Stateless state machine integration |
+| `Trellis.FluentValidation` | Domain layer (when needed) | FluentValidation integration |
+| `Trellis.Testing` | Test projects only | FluentAssertions extensions for `Result<T>` |
+| `Trellis.Mediator` | Application layer (CQRS only) | Mediator integration |
+| `Trellis.EntityFrameworkCore` | ACL layer only | EF Core integration |
+
+### Namespace Placement Rule
+
+If a type has **zero dependencies** beyond the .NET runtime → `Trellis` namespace.
+If it pulls in a **third-party or framework dependency** → its own namespace matching the package name.
+
+### Do NOT
+
+- Do NOT create one namespace per package (e.g., `Trellis.RailwayOrientedProgramming`). Core types share `Trellis`.
+- Do NOT put `ToMinimalApiResult` or `ToActionResult` in the `Trellis` namespace. They depend on ASP.NET Core and belong in `Trellis.Asp`.
+- Do NOT put ready-to-use value objects like `EmailAddress` in the `Trellis` namespace. They belong in `Trellis.Primitives` to avoid collision.
 
 ## Value Object Creation Patterns
 
@@ -347,7 +407,7 @@ Use `AsyncLocal<ActivitySource?>` for parallel-safe test isolation without `[Col
 ```csharp
 public static class PrimitiveValueObjectTrace
 {
-    private static readonly ActivitySource _defaultActivitySource = new("Functional DDD PVO", "1.0.0");
+    private static readonly ActivitySource _defaultActivitySource = new("Trellis.Primitives", "1.0.0");
     private static readonly AsyncLocal<ActivitySource?> _testActivitySource = new();
 
     public static ActivitySource ActivitySource => _testActivitySource.Value ?? _defaultActivitySource;

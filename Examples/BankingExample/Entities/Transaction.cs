@@ -1,8 +1,9 @@
+﻿using Trellis.Primitives;
+
 namespace BankingExample.Entities;
 
 using BankingExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 public enum TransactionType
 {

@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

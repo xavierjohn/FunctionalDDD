@@ -1,9 +1,10 @@
+﻿using Trellis.Primitives;
+
 namespace Benchmark;
 
 using BenchmarkDotNet.Attributes;
-using Trellis;
-using Trellis.PrimitiveValueObjects;
 using SampleUserLibrary;
+using Trellis;
 
 /// <summary>
 /// Benchmarks for Combine operation testing parallel result aggregation.

@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Helpers;
+﻿namespace RailwayOrientedProgramming.Tests.Helpers;
 
 using System.Diagnostics;
 using Trellis;

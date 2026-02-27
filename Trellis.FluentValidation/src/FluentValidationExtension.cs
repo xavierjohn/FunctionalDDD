@@ -1,10 +1,11 @@
-namespace Trellis;
+﻿namespace Trellis.FluentValidation;
 
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using FluentValidation;
-using FluentValidation.Results;
+using global::FluentValidation;
+using global::FluentValidation.Results;
+using Trellis;
 using static Trellis.ValidationError;
 
 /// <summary>

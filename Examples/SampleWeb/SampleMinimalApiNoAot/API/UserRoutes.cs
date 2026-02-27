@@ -1,9 +1,11 @@
+﻿using Trellis.Asp;
+using Trellis.Primitives;
+
 namespace SampleMinimalApiNoAot.API;
 
 using System.Globalization;
-using Trellis;
-using Trellis.PrimitiveValueObjects;
 using SampleUserLibrary;
+using Trellis;
 
 public static class UserRoutes
 {

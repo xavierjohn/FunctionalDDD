@@ -1,4 +1,4 @@
-namespace Trellis.Testing.Builders;
+﻿namespace Trellis.Testing.Builders;
 
 /// <summary>
 /// Fluent builder for creating Result instances in tests.

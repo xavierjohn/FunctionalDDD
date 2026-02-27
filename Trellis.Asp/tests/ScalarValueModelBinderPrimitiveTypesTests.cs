@@ -1,12 +1,12 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
 using FluentAssertions;
-using Trellis;
-using Trellis.Asp.ModelBinding;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
+using Trellis;
+using Trellis.Asp.ModelBinding;
 using Xunit;
 
 /// <summary>

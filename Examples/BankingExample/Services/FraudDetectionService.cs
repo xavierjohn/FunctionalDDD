@@ -1,10 +1,11 @@
+﻿using Trellis.Primitives;
+
 namespace BankingExample.Services;
 
 using System.Globalization;
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Detects fraudulent transactions based on patterns.

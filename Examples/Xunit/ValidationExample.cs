@@ -1,8 +1,9 @@
+﻿using Trellis.Primitives;
+
 namespace Example;
 
 using System.Collections.Immutable;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 using static EnsureExtensions;
 using static Trellis.ValidationError;
 

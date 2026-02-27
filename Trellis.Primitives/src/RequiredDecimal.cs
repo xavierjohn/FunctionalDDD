@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 /// <summary>
 /// Base class for creating strongly-typed decimal value objects that cannot have the default (zero) value.

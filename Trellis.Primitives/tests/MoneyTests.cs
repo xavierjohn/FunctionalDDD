@@ -1,7 +1,8 @@
-namespace PrimitiveValueObjects.Tests;
+﻿using Trellis.Primitives;
+
+namespace Trellis.Primitives.Tests;
 
 using System.Text.Json;
-using Trellis.PrimitiveValueObjects;
 
 public class MoneyTests
 {

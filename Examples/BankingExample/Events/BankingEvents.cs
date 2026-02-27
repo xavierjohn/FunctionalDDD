@@ -1,9 +1,10 @@
+﻿using Trellis.Primitives;
+
 namespace BankingExample.Events;
 
 using BankingExample.Aggregates;
 using BankingExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Raised when a new bank account is opened.

@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <Using Include="Trellis.Asp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
     <ProjectReference Include="..\src\Trellis.Asp.csproj" />
   </ItemGroup>

@@ -1,7 +1,6 @@
-namespace EfCoreExample.Enums;
+﻿namespace EfCoreExample.Enums;
 
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Enum value object demonstrating rich domain behavior for order state.

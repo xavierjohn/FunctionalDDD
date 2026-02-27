@@ -1,8 +1,8 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 using System.Diagnostics;
-using Trellis.Testing;
 using RailwayOrientedProgramming.Tests.Helpers;
+using Trellis.Testing;
 
 /// <summary>
 /// Integration tests for Activity tracing across complex ROP pipelines.

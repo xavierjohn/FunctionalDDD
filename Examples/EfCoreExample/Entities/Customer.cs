@@ -1,8 +1,9 @@
+﻿using Trellis.Primitives;
+
 namespace EfCoreExample.Entities;
 
 using EfCoreExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// Customer entity with strongly-typed ID (GUID) and validated email address.

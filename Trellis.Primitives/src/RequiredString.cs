@@ -1,4 +1,4 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis;
 
 /// <summary>
 /// Base class for creating strongly-typed string value objects that cannot be null or empty.
@@ -216,7 +216,7 @@ namespace Trellis.PrimitiveValueObjects;
 /// </example>
 /// <seealso cref="ScalarValueObject{TSelf, T}"/>
 /// <seealso cref="RequiredGuid{TSelf}"/>
-/// <seealso cref="EmailAddress"/>
+/// <seealso cref="Trellis.Primitives.EmailAddress"/>
 public abstract class RequiredString<TSelf> : ScalarValueObject<TSelf, string>
     where TSelf : RequiredString<TSelf>, IScalarValue<TSelf, string>
 {

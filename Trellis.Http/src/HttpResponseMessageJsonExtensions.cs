@@ -1,9 +1,10 @@
-namespace Trellis;
+﻿namespace Trellis.Http;
 
 using System;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization.Metadata;
+using Trellis;
 
 /// <summary>
 /// Provides extension methods for handling HTTP response messages with Result and Maybe monads.

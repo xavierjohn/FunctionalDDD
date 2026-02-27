@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Validation;
+﻿namespace Trellis.Asp.Validation;
 
 using System.Text.Json;
 

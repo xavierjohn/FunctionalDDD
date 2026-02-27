@@ -1,7 +1,9 @@
+﻿using Trellis.Asp;
+using Trellis.Primitives;
+
 namespace SampleMinimalApiNoAot.API;
 
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 public static class MoneyRoutes
 {

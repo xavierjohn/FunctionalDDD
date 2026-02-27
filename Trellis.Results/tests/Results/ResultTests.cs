@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results;
+﻿namespace RailwayOrientedProgramming.Tests.Results;
 
 using Trellis.Testing;
 

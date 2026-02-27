@@ -1,4 +1,4 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
 using System;
 using System.IO;
@@ -6,11 +6,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Trellis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Trellis;
 using Xunit;
 
 /// <summary>

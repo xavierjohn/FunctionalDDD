@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// JSON converter for Money value objects.

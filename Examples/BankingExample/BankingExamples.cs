@@ -1,9 +1,9 @@
-using BankingExample.Aggregates;
+﻿using BankingExample.Aggregates;
 using BankingExample.Services;
 using BankingExample.ValueObjects;
 using BankingExample.Workflows;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
+using Trellis.Primitives;
 
 namespace BankingExample;
 

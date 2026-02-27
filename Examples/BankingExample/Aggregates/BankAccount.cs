@@ -1,10 +1,11 @@
+﻿using Trellis.Primitives;
+
 namespace BankingExample.Aggregates;
 
 using BankingExample.Entities;
 using BankingExample.Events;
 using BankingExample.ValueObjects;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 public enum AccountStatus
 {

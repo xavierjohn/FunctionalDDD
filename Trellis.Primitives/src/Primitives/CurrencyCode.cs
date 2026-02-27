@@ -1,7 +1,8 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Trellis;
 
 /// <summary>
 /// Represents an ISO 4217 currency code as a value object.

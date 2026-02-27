@@ -1,6 +1,7 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using Microsoft.AspNetCore.Http;
+using Trellis;
 
 /// <summary>
 /// Configuration options for Trellis ASP.NET Core integration.

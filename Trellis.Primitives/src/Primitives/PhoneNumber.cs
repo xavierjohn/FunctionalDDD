@@ -1,8 +1,9 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿namespace Trellis.Primitives;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Trellis;
 
 /// <summary>
 /// Represents a phone number value object with E.164 format validation.

@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Maybes.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Maybes.Extensions;
 
 using Trellis;
 

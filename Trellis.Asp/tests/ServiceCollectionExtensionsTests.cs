@@ -1,15 +1,15 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
 using System.Linq;
 using System.Text.Json;
 using FluentAssertions;
-using Trellis;
-using Trellis.Asp.ModelBinding;
-using Trellis.Asp.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Trellis;
+using Trellis.Asp.ModelBinding;
+using Trellis.Asp.Validation;
 using Xunit;
 using HttpJsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 using MvcJsonOptions = Microsoft.AspNetCore.Mvc.JsonOptions;

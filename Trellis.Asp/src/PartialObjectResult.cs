@@ -1,8 +1,9 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Trellis;
 
 /// <summary>
 /// Represents an <see cref="ObjectResult"/> that returns HTTP 206 Partial Content with a Content-Range header.

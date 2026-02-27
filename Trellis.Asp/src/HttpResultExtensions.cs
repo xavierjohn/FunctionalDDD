@@ -1,9 +1,10 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using Microsoft.AspNetCore.Http;
+using Trellis;
 
 /// <summary>
-/// Provides extension methods to convert Result types to ASP.NET Core Minimal API <see cref="IResult"/> responses.
+/// Provides extension methods to convert Result types to ASP.NET Core Minimal API <see cref="Microsoft.AspNetCore.Http.IResult"/> responses.
 /// These methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.
 /// </summary>
 /// <remarks>
@@ -37,7 +38,7 @@ using Microsoft.AspNetCore.Http;
 public static class HttpResultExtensions
 {
     /// <summary>
-    /// Converts a <see cref="Result{TValue}"/> to an <see cref="IResult"/> with appropriate HTTP status code.
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> with appropriate HTTP status code.
     /// </summary>
     /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
     /// <param name="result">The result object to convert.</param>
@@ -131,7 +132,7 @@ public static class HttpResultExtensions
     }
 
     /// <summary>
-    /// Converts a domain <see cref="Error"/> to an <see cref="IResult"/> with appropriate HTTP status code and Problem Details format.
+    /// Converts a domain <see cref="Error"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> with appropriate HTTP status code and Problem Details format.
     /// </summary>
     /// <param name="error">The domain error to convert.</param>
     /// <returns>

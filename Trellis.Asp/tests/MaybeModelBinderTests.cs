@@ -1,13 +1,13 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Trellis;
-using Trellis.Asp.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Trellis;
+using Trellis.Asp.ModelBinding;
 using Xunit;
 
 /// <summary>

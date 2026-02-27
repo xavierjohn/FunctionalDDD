@@ -1,4 +1,4 @@
-﻿namespace PrimitiveValueObjects.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using FluentAssertions;
 using Xunit;

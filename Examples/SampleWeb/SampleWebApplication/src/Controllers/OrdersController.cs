@@ -1,8 +1,8 @@
-namespace SampleWebApplication.Controllers;
+﻿namespace SampleWebApplication.Controllers;
 
-using Trellis;
 using Microsoft.AspNetCore.Mvc;
 using SampleUserLibrary;
+using Trellis;
 
 /// <summary>
 /// Controller demonstrating RequiredEnum with ASP.NET Core MVC.

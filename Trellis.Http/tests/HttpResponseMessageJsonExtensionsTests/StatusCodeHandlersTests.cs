@@ -1,4 +1,4 @@
-namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
+﻿namespace Http.Tests.HttpResponseMessageJsonExtensionsTests;
 
 using System.Net;
 using System.Threading.Tasks;

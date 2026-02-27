@@ -1,9 +1,10 @@
-namespace Trellis;
+﻿namespace Trellis.Asp;
 
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Trellis;
 
 /// <summary>
 /// Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.

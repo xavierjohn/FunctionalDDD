@@ -1,4 +1,4 @@
-
+﻿
 namespace Trellis;
 
 public static partial class MaybeExtensions

@@ -1,8 +1,7 @@
-namespace FluentValidationExt.Tests;
+﻿namespace FluentValidationExt.Tests;
 
 using FluentValidation;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 internal class User : Aggregate<UserId>
 {

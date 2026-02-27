@@ -1,7 +1,7 @@
-namespace Trellis.Asp.ModelBinding;
+﻿namespace Trellis.Asp.ModelBinding;
 
-using Trellis;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Trellis;
 
 /// <summary>
 /// Model binder for <see cref="Maybe{TValue}"/> parameters where <typeparamref name="TValue"/>

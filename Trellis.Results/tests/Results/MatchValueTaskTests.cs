@@ -1,4 +1,4 @@
-namespace RailwayOrientedProgramming.Tests.Results;
+﻿namespace RailwayOrientedProgramming.Tests.Results;
 
 /// <summary>
 /// Tests for Match/Switch ValueTask extension methods.

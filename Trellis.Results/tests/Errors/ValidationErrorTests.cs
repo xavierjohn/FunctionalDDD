@@ -1,4 +1,4 @@
-namespace Trellis.Tests.Errors;
+﻿namespace Trellis.Tests.Errors;
 
 public class ValidationErrorTests
 {

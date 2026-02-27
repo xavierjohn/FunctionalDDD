@@ -1,8 +1,8 @@
-namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
 
 using System.Diagnostics;
-using Trellis.Testing;
 using RailwayOrientedProgramming.Tests.Helpers;
+using Trellis.Testing;
 
 /// <summary>
 /// Tests for Activity tracing in Combine operations (both base and tuple-based from T4 templates).

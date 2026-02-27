@@ -1,11 +1,11 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Trellis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Trellis;
 using Xunit;
 
 /// <summary>

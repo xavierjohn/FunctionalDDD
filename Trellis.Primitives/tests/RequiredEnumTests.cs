@@ -1,8 +1,7 @@
-namespace PrimitiveValueObjects.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using System.Text.Json;
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 using Xunit;
 
 /// <summary>

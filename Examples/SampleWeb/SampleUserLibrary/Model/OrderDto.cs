@@ -1,7 +1,8 @@
+﻿using Trellis.Primitives;
+
 namespace SampleUserLibrary;
 
 using Trellis;
-using Trellis.PrimitiveValueObjects;
 
 /// <summary>
 /// DTO for updating an order, demonstrating RequiredEnum auto-validation

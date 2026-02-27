@@ -1,4 +1,4 @@
-namespace Trellis;
+﻿namespace Trellis;
 
 /// <summary>
 /// Non-generic base interface for result types, exposing success/failure state and error information.

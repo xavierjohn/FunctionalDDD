@@ -1,8 +1,8 @@
-namespace Asp.Tests;
+﻿namespace Asp.Tests;
 
-using Trellis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Trellis;
 using Xunit;
 
 public class HttpResultsTests

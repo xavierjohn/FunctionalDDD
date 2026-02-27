@@ -1,4 +1,6 @@
-namespace Trellis.PrimitiveValueObjects;
+﻿using Trellis.Primitives;
+
+namespace Trellis;
 
 using OpenTelemetry.Trace;
 
