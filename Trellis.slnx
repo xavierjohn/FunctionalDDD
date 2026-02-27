@@ -1,0 +1,110 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+  </Configurations>
+  <Folder Name="/.github/">
+    <File Path=".github/codecov.yml" />
+    <File Path=".github/copilot-instructions.md" />
+    <File Path=".github/dependabot.yml" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/codeql.yml" />
+    <File Path=".github/workflows/documentation.yml" />
+    <File Path=".github/workflows/publish.yml" />
+  </Folder>
+  <Folder Name="/Docs/">
+    <File Path="docs/docfx_project/index.md" />
+    <File Path="docs/docfx_project/toc.yml" />
+  </Folder>
+  <Folder Name="/Docs/articles/">
+    <File Path="docs/docfx_project/articles/advanced-features.md" />
+    <File Path="docs/docfx_project/articles/basics.md" />
+    <File Path="docs/docfx_project/articles/BENCHMARKS.md" />
+    <File Path="docs/docfx_project/articles/clean-architecture.md" />
+    <File Path="docs/docfx_project/articles/debugging.md" />
+    <File Path="docs/docfx_project/articles/error-handling.md" />
+    <File Path="docs/docfx_project/articles/examples.md" />
+    <File Path="docs/docfx_project/articles/integration-aspnet.md" />
+    <File Path="docs/docfx_project/articles/integration-ef.md" />
+    <File Path="docs/docfx_project/articles/integration-fluentvalidation.md" />
+    <File Path="docs/docfx_project/articles/integration-http.md" />
+    <File Path="docs/docfx_project/articles/integration-observability.md" />
+    <File Path="docs/docfx_project/articles/integration.md" />
+    <File Path="docs/docfx_project/articles/intro.md" />
+    <File Path="docs/docfx_project/articles/performance.md" />
+    <File Path="docs/docfx_project/articles/toc.yml" />
+  </Folder>
+  <Folder Name="/Examples/">
+    <Project Path="Examples/BankingExample/BankingExample.csproj" />
+    <Project Path="Examples/EcommerceExample/EcommerceExample.csproj" />
+    <Project Path="Examples/EfCoreExample/EfCoreExample.csproj" />
+    <Project Path="Examples/Xunit/Example.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Examples/SampleWeb/">
+    <File Path="Examples/SampleWeb/ErrorResponse.http" />
+    <File Path="Examples/SampleWeb/MoneyApi.http" />
+    <File Path="Examples/SampleWeb/OrderApi.http" />
+    <File Path="Examples/SampleWeb/UserApi.http" />
+    <Project Path="Examples/SampleWeb/SampleMinimalApi/SampleMinimalApi.csproj" />
+    <Project Path="Examples/SampleWeb/SampleMinimalApiNoAot/SampleMinimalApiNoAot.csproj" />
+    <Project Path="Examples/SampleWeb/SampleUserLibrary/SampleUserLibrary.csproj" />
+    <Project Path="Examples/SampleWeb/SampleWebApplication/src/SampleWebApplication.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/copilot-instructions.md" />
+    <File Path="BENCHMARKS.md" />
+    <File Path="build/test.props" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="Examples/QUICKSTART.md" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+    <File Path="version.json" />
+  </Folder>
+  <Folder Name="/Trellis.Analyzers/">
+    <Project Path="Trellis.Analyzers/src/Trellis.Analyzers.csproj" />
+    <Project Path="Trellis.Analyzers/tests/Trellis.Analyzers.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Asp/">
+    <File Path="Trellis.Asp/SAMPLES.md" />
+    <Project Path="Trellis.Asp/generator/Trellis.AspSourceGenerator.csproj" />
+    <Project Path="Trellis.Asp/src/Trellis.Asp.csproj" />
+    <Project Path="Trellis.Asp/tests/Trellis.Asp.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Benchmark/">
+    <Project Path="Trellis.Benchmark/Trellis.Benchmark.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.DomainDrivenDesign/">
+    <File Path="Trellis.DomainDrivenDesign/SAMPLES.md" />
+    <Project Path="Trellis.DomainDrivenDesign/src/Trellis.DomainDrivenDesign.csproj" />
+    <Project Path="Trellis.DomainDrivenDesign/tests/Trellis.DomainDrivenDesign.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.FluentValidation/">
+    <Project Path="Trellis.FluentValidation/src/Trellis.FluentValidation.csproj" />
+    <Project Path="Trellis.FluentValidation/tests/Trellis.FluentValidation.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Http/">
+    <Project Path="Trellis.Http/src/Trellis.Http.csproj" />
+    <Project Path="Trellis.Http/tests/Trellis.Http.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Primitives/">
+    <File Path="Trellis.Primitives/SAMPLES.md" />
+    <Project Path="Trellis.Primitives/generator/Trellis.Primitives.Generator.csproj" />
+    <Project Path="Trellis.Primitives/src/Trellis.Primitives.csproj" />
+    <Project Path="Trellis.Primitives/tests/Trellis.Primitives.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Results/">
+    <Project Path="Trellis.Results/src/Trellis.Results.csproj" />
+    <Project Path="Trellis.Results/tests/Trellis.Results.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Stateless/">
+    <Project Path="Trellis.Stateless/src/Trellis.Stateless.csproj" />
+    <Project Path="Trellis.Stateless/tests/Trellis.Stateless.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Testing/">
+    <Project Path="Trellis.Testing/src/Trellis.Testing.csproj" />
+    <Project Path="Trellis.Testing/tests/Trellis.Testing.Tests.csproj" />
+  </Folder>
+</Solution>

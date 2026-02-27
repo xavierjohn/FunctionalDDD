@@ -25,7 +25,7 @@
 *.csproj text encoding=utf-8
 *.vbproj text encoding=utf-8
 *.fsproj text encoding=utf-8
-*.sln text encoding=utf-8 merge=union
+*.slnx text encoding=utf-8
 
 # Scripts
 *.ps1 text encoding=utf-8
