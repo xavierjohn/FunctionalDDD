@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results;
+﻿namespace Trellis.Results.Tests;
 
 public abstract class TestBase
 {

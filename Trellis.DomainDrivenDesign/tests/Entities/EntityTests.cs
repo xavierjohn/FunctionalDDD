@@ -1,4 +1,4 @@
-﻿namespace DomainDrivenDesign.Tests.Entities;
+﻿namespace Trellis.DomainDrivenDesign.Tests.Entities;
 
 using Trellis;
 

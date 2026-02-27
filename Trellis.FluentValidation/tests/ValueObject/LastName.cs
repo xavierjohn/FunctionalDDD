@@ -1,4 +1,4 @@
-﻿namespace FluentValidationExt.Tests;
+﻿namespace Trellis.FluentValidation.Tests;
 
 using Trellis;
 

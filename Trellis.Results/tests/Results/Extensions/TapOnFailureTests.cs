@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.TapOnFailure;
+﻿namespace Trellis.Results.Tests.Results.Extensions.TapOnFailure;
 
 using Trellis.Testing;
 

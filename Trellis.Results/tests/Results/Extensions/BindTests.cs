@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Bind;
+﻿namespace Trellis.Results.Tests.Results.Extensions.Bind;
 
 using Trellis.Testing;
 

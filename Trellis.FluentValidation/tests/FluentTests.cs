@@ -1,6 +1,6 @@
-﻿namespace FluentValidationExt.Tests;
+﻿namespace Trellis.FluentValidation.Tests;
 
-using FluentValidation;
+using global::FluentValidation;
 using Trellis;
 using Trellis.Testing;
 using Xunit;

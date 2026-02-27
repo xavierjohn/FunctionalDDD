@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;

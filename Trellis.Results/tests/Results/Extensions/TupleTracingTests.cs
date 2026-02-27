@@ -1,7 +1,7 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results;
+﻿namespace Trellis.Results.Tests.Results;
 
 using System.Diagnostics;
-using RailwayOrientedProgramming.Tests.Helpers;
+using Trellis.Results.Tests.Helpers;
 using Trellis.Testing;
 
 /// <summary>

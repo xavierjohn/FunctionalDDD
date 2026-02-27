@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;

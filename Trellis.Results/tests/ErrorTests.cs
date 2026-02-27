@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests;
+﻿namespace Trellis.Results.Tests;
 
 using Xunit;
 using static Trellis.ValidationError;

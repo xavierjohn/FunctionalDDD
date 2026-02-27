@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Functional.Results.Extensions;
+﻿namespace Trellis.Results.Tests.Functional.Results.Extensions;
 
 using Trellis;
 

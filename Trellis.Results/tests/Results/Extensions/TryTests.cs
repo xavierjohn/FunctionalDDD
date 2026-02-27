@@ -2,7 +2,7 @@
 using Trellis;
 using Xunit;
 
-namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+namespace Trellis.Results.Tests.Results.Extensions;
 
 public class TryTests
 {

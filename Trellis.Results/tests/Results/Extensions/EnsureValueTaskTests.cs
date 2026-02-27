@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions;
+﻿namespace Trellis.Results.Tests.Results.Extensions;
 
 using System.Threading.Tasks;
 using FluentAssertions;

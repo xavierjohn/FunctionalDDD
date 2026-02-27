@@ -1,4 +1,4 @@
-﻿namespace Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

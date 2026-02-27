@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests;
+﻿namespace Trellis.Results.Tests;
 
 using FluentAssertions;
 using Trellis.Testing;

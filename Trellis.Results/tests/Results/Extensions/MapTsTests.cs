@@ -1,4 +1,4 @@
-﻿namespace RailwayOrientedProgramming.Tests.Results.Extensions.Map;
+﻿namespace Trellis.Results.Tests.Results.Extensions.Map;
 
 using Trellis.Testing;
 

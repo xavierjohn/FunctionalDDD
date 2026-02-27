@@ -1,6 +1,6 @@
-﻿namespace FluentValidationExt.Tests;
+﻿namespace Trellis.FluentValidation.Tests;
 
-using FluentValidation;
+using global::FluentValidation;
 using Trellis;
 
 internal class User : Aggregate<UserId>
