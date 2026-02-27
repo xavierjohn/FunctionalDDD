@@ -97,7 +97,7 @@ See the [Introduction](articles/intro.md) for a full walkthrough, or jump to [Ba
 |---------|---------|
 | `Trellis.Results` | Result\<T\>, Maybe\<T\>, error types, pipeline operations, async support |
 | `Trellis.DomainDrivenDesign` | Aggregate, Entity, ValueObject, Domain Events |
-| `Trellis.Primitives` | RequiredString, RequiredGuid, RequiredInt, RequiredDecimal + 11 ready-to-use value objects |
+| `Trellis.Primitives` | RequiredString, RequiredGuid, RequiredInt, RequiredDecimal + 12 ready-to-use value objects |
 | `Trellis.Primitives.Generator` | Source generator for value object boilerplate |
 | `Trellis.Analyzers` | 19 Roslyn analyzers enforcing ROP best practices at compile time |
 

@@ -339,72 +339,72 @@ graph TD
     style A4 fill:#E1FFE1
 ```
 
-### ?? Beginner Path (Start Here!)
+### 🟢 Beginner Path (Start Here!)
 **Time:** 2-3 hours | **Goal:** Understand ROP basics and build your first features
 
-1. ?? **[Basics](basics.md)** - Learn Railway-Oriented Programming fundamentals
+1. 📖 **[Basics](basics.md)** - Learn Railway-Oriented Programming fundamentals
    - Result type, Combine, Bind, Map, Tap, Match
    - Safe error handling patterns
    - Complete working examples
 
-2. ?? **[Examples](examples.md)** - See real-world patterns and code snippets
+2. 💡 **[Examples](examples.md)** - See real-world patterns and code snippets
    - User registration, form validation
    - HTTP response handling
    - Common patterns library
 
-3. ?? **[ASP.NET Core Integration](integration-aspnet.md)** - Connect to your API
+3. 🌐 **[ASP.NET Core Integration](integration-aspnet.md)** - Connect to your API
    - ToActionResult, ToHttpResult
    - Automatic error-to-HTTP mapping
    - MVC and Minimal API examples
 
-### ?? Intermediate Path
+### 🔶 Intermediate Path
 **Time:** 4-6 hours | **Prerequisites:** Basics | **Goal:** Master error handling and async patterns
 
-1. ?? **[Error Handling](error-handling.md)** - Discriminated unions, error aggregation
+1. 🛡️ **[Error Handling](error-handling.md)** - Discriminated unions, error aggregation
    - Custom error types
    - MatchError patterns
    - ValidationError fluent API
 
-2. ? **[Working with Async Operations](basics.md#working-with-async-operations)** - CancellationToken patterns, timeouts
+2. ⏱️ **[Working with Async Operations](basics.md#working-with-async-operations)** - CancellationToken patterns, timeouts
    - Async operation chains
    - Parallel execution
    - Timeout and retry patterns
 
-3. ? **[FluentValidation Integration](integration-fluentvalidation.md)** - Domain validation
+3. ✅ **[FluentValidation Integration](integration-fluentvalidation.md)** - Domain validation
    - InlineValidator
    - Async validation rules
    - Reuse domain validation at API layer
 
-4. ?? **[Debugging](debugging.md)** - Tools and techniques for debugging ROP chains
+4. 🔧 **[Debugging](debugging.md)** - Tools and techniques for debugging ROP chains
    - Built-in debug extensions
    - OpenTelemetry tracing
    - Common pitfalls and solutions
 
-### ?? Advanced Path
+### 🔴 Advanced Path
 **Time:** 2-3 hours | **Prerequisites:** Intermediate | **Goal:** Expert-level patterns and optimization
 
-1. ?? **[Advanced Features](advanced-features.md)** - LINQ, parallel operations, Maybe type
+1. 🧩 **[Advanced Features](advanced-features.md)** - LINQ, parallel operations, Maybe type
    - LINQ query syntax
    - Parallel async operations
    - Pattern matching
    - Exception capture
 
-2. ??? **[Entity Framework Core](integration-ef.md)** - Repository patterns
+2. 🗄️ **[Entity Framework Core](integration-ef.md)** - Repository patterns
    - Result-based repositories
    - Async database operations
    - Transaction handling
 
-3. ?? **[OpenTelemetry Integration](integration-observability.md)** - Observability
+3. 📊 **[OpenTelemetry Integration](integration-observability.md)** - Observability
    - Automatic ROP tracing
    - Distributed tracing
    - Performance monitoring
 
-4. ? **[Performance](performance.md)** - Optimization and benchmarks
+4. ⚡ **[Performance](performance.md)** - Optimization and benchmarks
    - Performance characteristics
    - Benchmarking results
    - Optimization tips
 
-### ?? Reference Materials (Jump to as Needed)
+### 📚 Reference Materials (Jump to as Needed)
 
 - **[Error Handling Reference](error-handling.md)** - Complete error type catalog
 - **[Debugging Guide](debugging.md)** - Troubleshooting and tools

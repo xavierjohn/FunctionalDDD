@@ -36,3 +36,5 @@
   href: TRLS017.md
 - name: TRLS018 - Unsafe Value in LINQ
   href: TRLS018.md
+- name: TRLS019 - Combine chain too long
+  href: TRLS019.md
