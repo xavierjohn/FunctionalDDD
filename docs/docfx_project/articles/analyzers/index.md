@@ -49,9 +49,11 @@ The analyzer package is automatically included when you install any Trellis pack
 | [TRLS016](TRLS016.md) | Error message should not be empty | Warning | ❌ |
 | [TRLS017](TRLS017.md) | Don't compare Result or Maybe to null | Warning | ❌ |
 | [TRLS018](TRLS018.md) | Unsafe access to Value in LINQ expression | Warning | ❌ |
+| [TRLS019](TRLS019.md) | Combine chain exceeds maximum supported tuple size | Error | ❌ |
 
 ## Severity Levels
 
+- **Error**: Code that will not work correctly and must be fixed
 - **Warning**: Potential runtime errors or correctness issues that should be fixed
 - **Info**: Suggestions for more idiomatic or maintainable code
 
