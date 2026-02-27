@@ -9,6 +9,7 @@ Building blocks for implementing Domain-Driven Design tactical patterns in C# wi
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Core Concepts](#core-concepts)
+- [Specification Pattern](#specification-pattern)
 - [Best Practices](#best-practices)
 - [Related Packages](#related-packages)
 - [License](#license)
@@ -177,6 +178,43 @@ public class Order : Aggregate<OrderId>
 }
 ```
 
+### Specification
+
+Encapsulate business rules as composable, storage-agnostic expression trees.
+
+```csharp
+// Define a specification
+public class OverdueOrderSpec(DateTimeOffset now) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.Status == OrderStatus.Submitted
+              && order.SubmittedAt < now.AddDays(-30);
+}
+
+public class HighValueOrderSpec(decimal threshold) : Specification<Order>
+{
+    public override Expression<Func<Order, bool>> ToExpression() =>
+        order => order.TotalAmount > threshold;
+}
+
+// Compose specifications
+var spec = new OverdueOrderSpec(timeProvider.GetUtcNow())
+    .And(new HighValueOrderSpec(500m));
+
+// Pass to repository — expression tree translates to SQL via EF Core
+var orders = await orderRepository.ListAsync(spec, ct);
+
+// In-memory evaluation
+if (spec.IsSatisfiedBy(order))
+    // order is overdue and high-value
+
+// Negate
+var notOverdue = new OverdueOrderSpec(now).Not();
+
+// OR composition
+var urgentOrExpensive = new OverdueOrderSpec(now).Or(new HighValueOrderSpec(1000m));
+```
+
 ### Domain Events
 
 Publish events after persisting:
@@ -229,6 +267,18 @@ if (order.IsSuccess)
 - Consistency boundary
 - Manages domain events
 - Properties: `IsChanged`, `UncommittedEvents()`, `AcceptChanges()`
+
+## Specification Pattern
+
+### Specification<T>
+- Encapsulates a business rule as an expression tree
+- `ToExpression()` — returns `Expression<Func<T, bool>>` for LINQ/EF Core
+- `IsSatisfiedBy(T)` — in-memory evaluation
+- `And(spec)` — logical AND composition
+- `Or(spec)` — logical OR composition
+- `Not()` — logical negation
+- Implicit conversion to `Expression<Func<T, bool>>` for seamless `IQueryable.Where(spec)` usage
+- Composite specifications use `Expression.Invoke` — requires **EF Core 8+** for server-side translation
 
 ### IDomainEvent
 - Marker interface for domain events
