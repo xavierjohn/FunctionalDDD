@@ -1,0 +1,141 @@
+namespace Trellis.Mediator.Tests;
+
+using Microsoft.Extensions.Logging;
+using Trellis.Mediator.Tests.Helpers;
+
+/// <summary>
+/// Tests for <see cref="ExceptionBehavior{TMessage, TResponse}"/>.
+/// </summary>
+public class ExceptionBehaviorTests
+{
+    #region Handler throws — catches and returns failure
+
+    [Fact]
+    public async Task Handle_HandlerThrows_ReturnsUnexpectedError()
+    {
+        var logEntries = new List<(LogLevel Level, string Message, Exception? Ex)>();
+        var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
+        var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
+        var command = new TestCommand("Alice");
+        var next = NextDelegate.Throwing<TestCommand, Result<string>>(
+            new InvalidOperationException("Something went wrong"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<UnexpectedError>();
+        result.Error.Detail.Should().Contain("Something went wrong");
+        result.Error.Detail.Should().Contain("TestCommand");
+    }
+
+    #endregion
+
+    #region Handler throws — logs at Error level
+
+    [Fact]
+    public async Task Handle_HandlerThrows_LogsAtErrorLevel()
+    {
+        var logEntries = new List<(LogLevel Level, string Message, Exception? Ex)>();
+        var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
+        var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
+        var command = new TestCommand("Alice");
+        var next = NextDelegate.Throwing<TestCommand, Result<string>>(
+            new InvalidOperationException("Something went wrong"));
+
+        await behavior.Handle(command, next, CancellationToken.None);
+
+        logEntries.Should().ContainSingle();
+        logEntries[0].Level.Should().Be(LogLevel.Error);
+        logEntries[0].Ex.Should().BeOfType<InvalidOperationException>();
+        logEntries[0].Message.Should().Contain("TestCommand");
+    }
+
+    #endregion
+
+    #region OperationCanceledException — NOT caught
+
+    [Fact]
+    public async Task Handle_OperationCanceled_RethrowsException()
+    {
+        var logEntries = new List<(LogLevel Level, string Message, Exception? Ex)>();
+        var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
+        var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
+        var command = new TestCommand("Alice");
+        var next = NextDelegate.Throwing<TestCommand, Result<string>>(
+            new OperationCanceledException("Canceled"));
+
+        var act = async () => await behavior.Handle(command, next, CancellationToken.None);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        logEntries.Should().BeEmpty("OperationCanceledException should not be logged");
+    }
+
+    [Fact]
+    public async Task Handle_TaskCanceledException_RethrowsException()
+    {
+        var logEntries = new List<(LogLevel Level, string Message, Exception? Ex)>();
+        var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
+        var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
+        var command = new TestCommand("Alice");
+        var next = NextDelegate.Throwing<TestCommand, Result<string>>(
+            new TaskCanceledException("Canceled"));
+
+        var act = async () => await behavior.Handle(command, next, CancellationToken.None);
+
+        await act.Should().ThrowAsync<TaskCanceledException>();
+    }
+
+    #endregion
+
+    #region Handler succeeds — passes through unchanged
+
+    [Fact]
+    public async Task Handle_HandlerSucceeds_ReturnsResultUnchanged()
+    {
+        var logEntries = new List<(LogLevel Level, string Message, Exception? Ex)>();
+        var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
+        var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
+        var command = new TestCommand("Alice");
+        var next = NextDelegate.ReturningAsync<TestCommand, Result<string>>(
+            Result.Success("Hello, Alice!"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Hello, Alice!");
+        logEntries.Should().BeEmpty("no exception means no logging");
+    }
+
+    [Fact]
+    public async Task Handle_HandlerReturnsFailure_PassesThroughUnchanged()
+    {
+        var logEntries = new List<(LogLevel Level, string Message, Exception? Ex)>();
+        var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
+        var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
+        var command = new TestCommand("Alice");
+        var error = Error.Validation("Business rule failed.", "field");
+        var next = NextDelegate.ReturningAsync<TestCommand, Result<string>>(
+            Result.Failure<string>(error));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Detail.Should().Be("Business rule failed.");
+        logEntries.Should().BeEmpty("failure results are not exceptions");
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Minimal fake logger that captures log entries with exceptions for assertion.
+    /// </summary>
+    private sealed class FakeLogger<T>(List<(LogLevel Level, string Message, Exception? Ex)> entries) : ILogger<T>
+    {
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => entries.Add((logLevel, formatter(state, exception), exception));
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    }
+}
