@@ -86,6 +86,10 @@
     <Project Path="Trellis.DomainDrivenDesign/src/Trellis.DomainDrivenDesign.csproj" />
     <Project Path="Trellis.DomainDrivenDesign/tests/Trellis.DomainDrivenDesign.Tests.csproj" />
   </Folder>
+  <Folder Name="/Trellis.EntityFrameworkCore/">
+    <Project Path="Trellis.EntityFrameworkCore/src/Trellis.EntityFrameworkCore.csproj" />
+    <Project Path="Trellis.EntityFrameworkCore/tests/Trellis.EntityFrameworkCore.Tests.csproj" />
+  </Folder>
   <Folder Name="/Trellis.FluentValidation/">
     <Project Path="Trellis.FluentValidation/src/Trellis.FluentValidation.csproj" />
     <Project Path="Trellis.FluentValidation/tests/Trellis.FluentValidation.Tests.csproj" />

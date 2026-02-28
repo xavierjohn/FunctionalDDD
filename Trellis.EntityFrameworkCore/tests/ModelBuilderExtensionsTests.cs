@@ -1,0 +1,346 @@
+namespace Trellis.EntityFrameworkCore.Tests;
+
+using Trellis.EntityFrameworkCore.Tests.Helpers;
+using Trellis.Primitives;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+
+/// <summary>
+/// Tests for <see cref="ModelBuilderExtensions.ApplyTrellisValueConverters"/>.
+/// Validates that value converters are automatically registered for all Trellis primitive types
+/// and that round-trip save/load works correctly with SQLite in-memory.
+/// </summary>
+public class ModelBuilderExtensionsTests : IDisposable
+{
+    private readonly TestDbContext _context;
+    private readonly SqliteConnection _connection;
+
+    public ModelBuilderExtensionsTests() =>
+        (_context, _connection) = TestDbContext.CreateInMemory();
+
+    public void Dispose()
+    {
+        _context.Dispose();
+        _connection.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    #region RequiredGuid property converter
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_RequiredGuidProperty_RoundTripWorks()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customerId = TestCustomerId.NewUniqueV4();
+        var customer = new TestCustomer
+        {
+            Id = customerId,
+            Name = TestCustomerName.Create("Alice"),
+            Email = EmailAddress.Create("alice@example.com"),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // Act
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Customers.FindAsync([customerId], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.Id.Should().Be(customerId);
+    }
+
+    #endregion
+
+    #region RequiredString property converter
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_RequiredStringProperty_RoundTripWorks()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("Bob Smith"),
+            Email = EmailAddress.Create("bob@example.com"),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // Act
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Customers.FindAsync([customer.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.Name.Value.Should().Be("Bob Smith");
+    }
+
+    #endregion
+
+    #region RequiredEnum property converter
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_RequiredEnumProperty_StoredAsStringRoundTripWorks()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customerId = TestCustomerId.NewUniqueV4();
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = customerId,
+            Name = TestCustomerName.Create("Customer"),
+            Email = EmailAddress.Create("cust@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync(ct);
+
+        var order = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customerId,
+            Amount = 99.99m,
+            Status = TestOrderStatus.Confirmed
+        };
+
+        // Act
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Orders.FindAsync([order.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.Status.Should().Be(TestOrderStatus.Confirmed);
+        loaded.Status.Name.Should().Be("Confirmed");
+    }
+
+    #endregion
+
+    #region Built-in EmailAddress converter
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_BuiltInEmailAddress_RoundTripWorks()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("Charlie"),
+            Email = EmailAddress.Create("charlie@example.com"),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // Act
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Customers.FindAsync([customer.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.Email.Value.Should().Be("charlie@example.com");
+    }
+
+    #endregion
+
+    #region Manual HasConversion takes precedence
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_ManualHasConversionTakesPrecedence()
+    {
+        // Arrange — build a model with an explicit converter on a property
+        var ct = TestContext.Current.CancellationToken;
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<ManualConverterDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        using var context = new ManualConverterDbContext(options);
+
+        // If we get here without exception, the model was built successfully
+        // The manual converter takes precedence
+        await context.Database.EnsureCreatedAsync(ct);
+
+        var customer = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("Test"),
+            Email = EmailAddress.Create("test@example.com"),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        context.Customers.Add(customer);
+        await context.SaveChangesAsync(ct);
+
+        context.ChangeTracker.Clear();
+
+        var loaded = await context.Customers.FindAsync([customer.Id], ct);
+        loaded.Should().NotBeNull();
+        // Manual converter uppercases the name
+        loaded!.Name.Value.Should().Be("TEST");
+    }
+
+    /// <summary>
+    /// DbContext with a manual converter that uppercases customer names.
+    /// ApplyTrellisValueConverters should not overwrite this.
+    /// </summary>
+    private class ManualConverterDbContext : DbContext
+    {
+        public DbSet<TestCustomer> Customers => Set<TestCustomer>();
+
+        public ManualConverterDbContext(DbContextOptions<ManualConverterDbContext> options)
+            : base(options)
+        {
+        }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions(typeof(TestCustomerId).Assembly);
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<TestCustomer>(b =>
+            {
+                b.HasKey(c => c.Id);
+                // Manual converter — uppercases names on write
+                // Should override the convention-set converter for Name
+                b.Property(c => c.Name)
+                    .HasConversion(
+                        name => name.Value.ToUpperInvariant(),
+                        str => TestCustomerName.Create(str))
+                    .HasMaxLength(100);
+                b.Property(c => c.Email).HasMaxLength(254);
+                b.Property(c => c.CreatedAt).IsRequired();
+            });
+    }
+
+    #endregion
+
+    #region Non-Trellis properties ignored
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_NonTrellisPropertiesIgnored()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("Dave"),
+            Email = EmailAddress.Create("dave@example.com"),
+            CreatedAt = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc)
+        };
+
+        // Act — standard DateTime and decimal properties should not be affected
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Customers.FindAsync([customer.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.CreatedAt.Should().Be(new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc));
+    }
+
+    #endregion
+
+    #region RequiredInt property converter
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_RequiredIntProperty_RoundTripWorks()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customerId = TestCustomerId.NewUniqueV4();
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = customerId,
+            Name = TestCustomerName.Create("IntCustomer"),
+            Email = EmailAddress.Create("int@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync(ct);
+
+        var order = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customerId,
+            Amount = 50m,
+            Status = TestOrderStatus.Draft,
+            TicketNumber = TestTicketNumber.Create(42)
+        };
+
+        // Act
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Orders.FindAsync([order.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.TicketNumber.Should().NotBeNull();
+        loaded.TicketNumber!.Value.Should().Be(42);
+    }
+
+    #endregion
+
+    #region RequiredDecimal property converter
+
+    [Fact]
+    public async Task ApplyTrellisValueConverters_RequiredDecimalProperty_RoundTripWorks()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customerId = TestCustomerId.NewUniqueV4();
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = customerId,
+            Name = TestCustomerName.Create("DecCustomer"),
+            Email = EmailAddress.Create("dec@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync(ct);
+
+        var order = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customerId,
+            Amount = 100m,
+            Status = TestOrderStatus.Draft,
+            UnitPrice = TestUnitPrice.Create(19.99m)
+        };
+
+        // Act
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync(ct);
+
+        _context.ChangeTracker.Clear();
+
+        var loaded = await _context.Orders.FindAsync([order.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.UnitPrice.Should().NotBeNull();
+        loaded.UnitPrice!.Value.Should().Be(19.99m);
+    }
+
+    #endregion
+}
