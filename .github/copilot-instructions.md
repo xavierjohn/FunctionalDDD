@@ -285,11 +285,24 @@ predicateInvoked.Should().BeFalse("predicate should not be invoked for failed re
 | Mediator | `Trellis.Mediator/src/` | `Trellis.Mediator/tests/` |
 | ASP.NET | `Trellis.Asp/src/` | `Trellis.Asp/tests/` |
 | HTTP | `Trellis.Http/src/` | `Trellis.Http/tests/` |
+| EF Core | `Trellis.EntityFrameworkCore/src/` | `Trellis.EntityFrameworkCore/tests/` |
 
 ## Documentation Standards
 
 - All public APIs must have XML doc comments (`<summary>`, `<param>`, `<returns>`)
 - Test classes should have `<summary>` explaining what source file and async variant they cover
+
+### DocFX Checklist
+
+When adding or modifying a package, verify these documentation artifacts:
+
+| Artifact | Location | Action |
+|----------|----------|--------|
+| `docfx.json` metadata | `docs/docfx_project/docfx.json` | Add the new project's `.csproj` to the `metadata[0].src[0].files` array |
+| DocFX article | `docs/docfx_project/articles/` | Create or update the relevant `integration-*.md` article |
+| Article TOC | `docs/docfx_project/articles/toc.yml` | Add entry under the appropriate section (e.g., Integration Guides) |
+| `NUGET_README.md` | `Trellis.{Package}/NUGET_README.md` | Create or update — this is the NuGet.org package description |
+| `README.md` | `Trellis.{Package}/README.md` | Create or update — this is the GitHub-facing documentation |
 
 ```csharp
 /// <summary>

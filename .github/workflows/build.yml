@@ -42,8 +42,23 @@ jobs:
     - name: Build
       run: dotnet build --no-restore -c Release
 
+    - name: Install dotnet-coverage
+      run: dotnet tool install -g dotnet-coverage
+
     - name: Test with Coverage
-      run: dotnet test --no-build -c Release --collect:"XPlat Code Coverage" --logger "trx" --logger "console;verbosity=normal" --results-directory ./TestResults
+      run: |
+        failed=0
+        for project in $(find . -name "*.Tests.csproj" ! -path "*/bin/*" ! -path "*/obj/*"); do
+          name=$(basename "$project" .csproj)
+          echo "::group::$name"
+          dotnet-coverage collect \
+            "dotnet run --no-build -c Release --project $project -- -trx TestResults/${name}.trx" \
+            -f cobertura \
+            -o "TestResults/${name}.cobertura.xml" \
+            || failed=1
+          echo "::endgroup::"
+        done
+        exit $failed
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
@@ -57,7 +72,7 @@ jobs:
       if: always()
       continue-on-error: true
       with:
-        files: ./TestResults/**/coverage.cobertura.xml
+        files: TestResults/*.cobertura.xml
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
         verbose: true

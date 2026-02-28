@@ -54,25 +54,22 @@ public partial class CustomerName : RequiredString<CustomerName> { }
 
 ### EF Core Value Converters
 
+Trellis.EntityFrameworkCore eliminates all `HasConversion()` boilerplate. A single line in `ConfigureConventions` registers converters for every value object automatically:
+
 ```csharp
-// RequiredGuid -> Guid
-builder.Property(o => o.Id)
-    .HasConversion(
-        id => id.Value,
-        guid => OrderId.Create(guid));
+protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+    configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
 
-// RequiredGuid -> Guid
-builder.Property(p => p.Id)
-    .HasConversion(
-        id => id.Value,
-        guid => ProductId.Create(guid));
-
-// EmailAddress -> string
-builder.Property(c => c.Email)
-    .HasConversion(
-        email => email.Value,
-        str => EmailAddress.Create(str))
-    .HasMaxLength(254);
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // No HasConversion() needed — just configure keys, indexes, constraints
+    modelBuilder.Entity<Customer>(builder =>
+    {
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.Name).HasMaxLength(100).IsRequired();
+        builder.Property(c => c.Email).HasMaxLength(254).IsRequired();
+    });
+}
 ```
 
 ### Railway-Oriented Entity Creation

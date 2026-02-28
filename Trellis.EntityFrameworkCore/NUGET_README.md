@@ -1,0 +1,87 @@
+# EF Core Integration
+
+[![NuGet Package](https://img.shields.io/nuget/v/Trellis.EntityFrameworkCore.svg)](https://www.nuget.org/packages/Trellis.EntityFrameworkCore)
+
+Thin integration layer that eliminates repetitive EF Core boilerplate when using Trellis value objects and `Result<T>`.
+
+## Installation
+
+```bash
+dotnet add package Trellis.EntityFrameworkCore
+```
+
+## Quick Start
+
+Register all Trellis value objects as scalar properties with a single line in `ConfigureConventions`:
+
+```csharp
+using Trellis.EntityFrameworkCore;
+
+public class AppDbContext : DbContext
+{
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        // Scans your assembly for CustomerId, OrderStatus, etc.
+        // Also auto-scans Trellis.Primitives for EmailAddress, Url, PhoneNumber, etc.
+        configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // No HasConversion() boilerplate needed — just configure keys, indexes, constraints
+        modelBuilder.Entity<Customer>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            b.Property(c => c.Email).HasMaxLength(254).IsRequired();
+        });
+    }
+}
+```
+
+## Result-Returning SaveChanges
+
+```csharp
+// Returns Result<int> instead of throwing on conflicts or FK violations
+var result = await context.SaveChangesResultAsync(ct);
+
+// Returns Result<Unit> when you don't need the count
+var result = await context.SaveChangesResultUnitAsync(ct);
+```
+
+| Exception | Error Type |
+|-----------|------------|
+| `DbUpdateConcurrencyException` | `ConflictError` |
+| Duplicate key (unique constraint) | `ConflictError` |
+| Foreign key violation | `DomainError` |
+
+## Query Extensions
+
+```csharp
+// Maybe-returning queries (no exception on missing)
+Maybe<Customer> customer = await context.Customers
+    .FirstOrDefaultMaybeAsync(c => c.Id == customerId, ct);
+
+// Result-returning queries
+Result<Customer> customer = await context.Customers
+    .FirstOrDefaultResultAsync(
+        c => c.Id == customerId,
+        Error.NotFound("Customer", customerId),
+        ct);
+
+// Specification pattern
+var activeSpec = new ActiveCustomerSpec();
+var activeCustomers = await context.Customers
+    .Where(activeSpec)
+    .ToListAsync(ct);
+```
+
+## Related Packages
+
+- [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` and `Maybe<T>` types
+- [Trellis.Primitives](https://www.nuget.org/packages/Trellis.Primitives) — Value object base classes and built-in types
+- [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — `Specification<T>`, `Entity<T>`, `Aggregate<T>`
+
+## License
+
+MIT — see [LICENSE](https://github.com/xavierjohn/Trellis/blob/main/LICENSE) for details.

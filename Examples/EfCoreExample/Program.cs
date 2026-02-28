@@ -1,5 +1,5 @@
 ﻿// =============================================================================
-// EF Core Example with FunctionalDDD Primitive Value Objects
+// EF Core Example with Trellis Primitive Value Objects
 // =============================================================================
 // This example demonstrates seamless integration of strongly-typed value objects
 // with Entity Framework Core using an in-memory database.
@@ -29,7 +29,7 @@ using Trellis.Primitives;
 Console.OutputEncoding = Encoding.UTF8;
 
 Console.WriteLine("╔══════════════════════════════════════════════════════════════════╗");
-Console.WriteLine("║  EF Core Example with FunctionalDDD Primitive Value Objects      ║");
+Console.WriteLine("║  EF Core Example with Trellis Primitive Value Objects            ║");
 Console.WriteLine("╚══════════════════════════════════════════════════════════════════╝");
 Console.WriteLine();
 

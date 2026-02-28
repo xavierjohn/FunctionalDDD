@@ -1,17 +1,18 @@
 ﻿using Trellis;
+using Trellis.EntityFrameworkCore;
 using Trellis.Primitives;
 
 namespace EfCoreExample.Data;
 
-using System.Globalization;
 using EfCoreExample.Entities;
 using EfCoreExample.Enums;
 using EfCoreExample.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// EF Core DbContext demonstrating seamless integration with FunctionalDDD value objects.
-/// Shows how to configure value converters for RequiredGuid, RequiredString, and EmailAddress.
+/// EF Core DbContext demonstrating seamless integration with Trellis value objects.
+/// Uses <see cref="ModelConfigurationBuilderExtensions.ApplyTrellisConventions"/> to
+/// register value converters for all Trellis types automatically.
 /// </summary>
 public class AppDbContext : DbContext
 {
@@ -23,6 +24,9 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+        configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,97 +42,29 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Customer>(builder =>
         {
             builder.HasKey(c => c.Id);
-
-            // RequiredGuid<CustomerId> -> Guid -> stored as string in database
-            builder.Property(c => c.Id)
-                .HasConversion(
-                    id => id.Value.ToString(),
-                    str => CustomerId.Create(Guid.Parse(str)))
-                .HasMaxLength(36)
-                .IsRequired();
-
-            // RequiredString<CustomerName> -> string
-            builder.Property(c => c.Name)
-                .HasConversion(
-                    name => name.Value,
-                    str => CustomerName.Create(str))
-                .HasMaxLength(100)
-                .IsRequired();
-
-            // EmailAddress -> string (built-in RFC 5322 validation)
-            builder.Property(c => c.Email)
-                .HasConversion(
-                    email => email.Value,
-                    str => EmailAddress.Create(str))
-                .HasMaxLength(254)
-                .IsRequired();
-
-            builder.Property(c => c.CreatedAt)
-                .IsRequired();
+            builder.Property(c => c.Id).HasMaxLength(36).IsRequired();
+            builder.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            builder.Property(c => c.Email).HasMaxLength(254).IsRequired();
+            builder.Property(c => c.CreatedAt).IsRequired();
         });
 
     private static void ConfigureProduct(ModelBuilder modelBuilder) =>
         modelBuilder.Entity<Product>(builder =>
         {
             builder.HasKey(p => p.Id);
-
-            // RequiredGuid<ProductId> -> Guid
-            builder.Property(p => p.Id)
-                .HasConversion(
-                    id => id.Value,
-                    guid => ProductId.Create(guid))
-                .IsRequired();
-
-            // RequiredString<ProductName> -> string
-            builder.Property(p => p.Name)
-                .HasConversion(
-                    name => name.Value,
-                    str => ProductName.Create(str))
-                .HasMaxLength(200)
-                .IsRequired();
-
-            builder.Property(p => p.Price)
-                .IsRequired();
-
-            builder.Property(p => p.StockQuantity)
-                .IsRequired();
+            builder.Property(p => p.Name).HasMaxLength(200).IsRequired();
+            builder.Property(p => p.Price).IsRequired();
+            builder.Property(p => p.StockQuantity).IsRequired();
         });
 
     private static void ConfigureOrder(ModelBuilder modelBuilder) =>
         modelBuilder.Entity<Order>(builder =>
         {
             builder.HasKey(o => o.Id);
-
-            // RequiredGuid<OrderId> -> Guid -> string
-            // Orders benefit from GUID V7's time-ordering for natural chronological queries
-            builder.Property(o => o.Id)
-                .HasConversion(
-                    id => id.Value.ToString(),
-                    str => OrderId.Create(Guid.Parse(str)))
-                .HasMaxLength(36)
-                .IsRequired();
-
-            // Foreign key to Customer using GUID
-            builder.Property(o => o.CustomerId)
-                .HasConversion(
-                    id => id.Value.ToString(),
-                    str => CustomerId.Create(Guid.Parse(str)))
-                .HasMaxLength(36)
-                .IsRequired();
-
-            // RequiredEnum -> stored as int using auto-generated Value
-            // Value is assigned based on declaration order (0, 1, 2, ...)
-            builder.Property(o => o.State)
-                .HasConversion(
-                    state => state.Value,
-                    value => OrderState.GetAll().First(s => s.Value == value))
-                .IsRequired();
-
+            builder.Property(o => o.Id).HasMaxLength(36).IsRequired();
+            builder.Property(o => o.CustomerId).HasMaxLength(36).IsRequired();
+            builder.Property(o => o.State).IsRequired();
             builder.Property(o => o.CreatedAt).IsRequired();
-            builder.Property(o => o.ConfirmedAt);
-            builder.Property(o => o.ShippedAt);
-            builder.Property(o => o.DeliveredAt);
-            builder.Property(o => o.CancelledAt);
 
             // Ignore computed property
             builder.Ignore(o => o.Total);
@@ -144,37 +80,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OrderLine>(builder =>
         {
             builder.HasKey(l => l.Id);
-
-            builder.Property(l => l.Id)
-                .ValueGeneratedOnAdd();
-
-            // Foreign key using GUID
-            builder.Property(l => l.OrderId)
-                .HasConversion(
-                    id => id.Value.ToString(),
-                    str => OrderId.Create(Guid.Parse(str)))
-                .HasMaxLength(36)
-                .IsRequired();
-
-            // Foreign key using GUID
-            builder.Property(l => l.ProductId)
-                .HasConversion(
-                    id => id.Value,
-                    guid => ProductId.Create(guid))
-                .IsRequired();
-
-            builder.Property(l => l.ProductName)
-                .HasConversion(
-                    name => name.Value,
-                    str => ProductName.Create(str))
-                .HasMaxLength(200)
-                .IsRequired();
-
-            builder.Property(l => l.UnitPrice)
-                .IsRequired();
-
-            builder.Property(l => l.Quantity)
-                .IsRequired();
+            builder.Property(l => l.Id).ValueGeneratedOnAdd();
+            builder.Property(l => l.OrderId).HasMaxLength(36).IsRequired();
+            builder.Property(l => l.ProductId).IsRequired();
+            builder.Property(l => l.ProductName).HasMaxLength(200).IsRequired();
+            builder.Property(l => l.UnitPrice).IsRequired();
+            builder.Property(l => l.Quantity).IsRequired();
 
             // Ignore computed property
             builder.Ignore(l => l.LineTotal);
