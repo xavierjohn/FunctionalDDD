@@ -6,11 +6,155 @@ Integrate Railway-Oriented Programming with Entity Framework Core for type-safe 
 
 ## Table of Contents
 
+- [Installation](#installation)
+- [Value Object Configuration](#value-object-configuration)
 - [Repository Return Types](#repository-return-types)
 - [Result vs Maybe Pattern](#result-vs-maybe-pattern)
-- [Extension Methods for Nullable Conversion](#extension-methods-for-nullable-conversion)
+- [Query Extensions](#query-extensions)
 - [Handling Database Exceptions](#handling-database-exceptions)
-- [Value Object Configuration](#value-object-configuration)
+- [GUID V7 for Entity IDs](#guid-v7-for-entity-ids)
+
+> [!TIP]
+> This guide covers two approaches: using the **Trellis.EntityFrameworkCore** package (recommended) and a **manual** approach for teams that prefer not to take the dependency. Sections marked with 📦 use the package; sections marked with 🔧 show the manual equivalent.
+
+## Installation
+
+### 📦 With Trellis.EntityFrameworkCore (Recommended)
+
+```bash
+dotnet add package Trellis.EntityFrameworkCore
+```
+
+This package provides:
+
+| Feature | Description |
+|---------|-------------|
+| `ApplyTrellisConventions` | Auto-registers EF Core value converters for all Trellis value objects |
+| `SaveChangesResultAsync` | Wraps `SaveChangesAsync` — returns `Result<int>` instead of throwing |
+| `SaveChangesResultUnitAsync` | Same as above but returns `Result<Unit>` |
+| `DbExceptionClassifier` | Provider-agnostic exception classification (SQL Server, PostgreSQL, SQLite) |
+| `FirstOrDefaultMaybeAsync` | Wraps query results in `Maybe<T>` |
+| `FirstOrDefaultResultAsync` | Wraps query results in `Result<T>` with a not-found error |
+| `SingleOrDefaultMaybeAsync` | Single-result variant returning `Maybe<T>` |
+| `.Where(specification)` | Applies a `Specification<T>` as a LINQ Where clause |
+
+### 🔧 Without the Package
+
+No extra package needed — just reference `Trellis.Results` (or whichever Trellis packages you already use) and configure EF Core manually. Each section below shows the manual equivalent.
+
+## Value Object Configuration
+
+### 📦 Convention-Based (Recommended)
+
+Override `ConfigureConventions` in your `DbContext` and call `ApplyTrellisConventions`. This registers value converters for all Trellis value objects **before** EF Core's convention engine runs, so properties are treated as scalars — not navigations.
+
+```csharp
+using Trellis.EntityFrameworkCore;
+
+public class AppDbContext : DbContext
+{
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Order> Orders => Set<Order>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+        configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Customer>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            b.Property(c => c.Email).HasMaxLength(254).IsRequired();
+        });
+    }
+}
+```
+
+`ApplyTrellisConventions` automatically:
+
+- Scans your assemblies for types implementing `IScalarValue<TSelf, TPrimitive>` (e.g., `RequiredGuid<T>`, `RequiredString<T>`, `RequiredInt<T>`, `RequiredDecimal<T>`, custom `ScalarValueObject<,>` subclasses)
+- Scans for `RequiredEnum<T>` types and stores them as strings (using `Name` / `TryFromName`)
+- Always includes the `Trellis.Primitives` assembly (for `EmailAddress`, `Url`, `PhoneNumber`, etc.)
+
+### Manual Override
+
+If you need a custom converter for a specific property, use `HasConversion` in `OnModelCreating` — it takes precedence over the convention:
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Customer>(b =>
+    {
+        // This overrides the convention-registered converter for Name
+        b.Property(c => c.Name)
+            .HasConversion(
+                name => name.Value.ToUpperInvariant(),
+                str => CustomerName.Create(str));
+    });
+}
+```
+
+### Value Object Types Quick Reference
+
+| Value Object | Storage Type | Converter |
+|--------------|-------------|-----------|
+| `RequiredGuid<T>` | `Guid` | `v.Value` ↔ `T.Create(guid)` |
+| `RequiredString<T>` | `string` | `v.Value` ↔ `T.Create(str)` |
+| `RequiredInt<T>` | `int` | `v.Value` ↔ `T.Create(num)` |
+| `RequiredDecimal<T>` | `decimal` | `v.Value` ↔ `T.Create(num)` |
+| `RequiredEnum<T>` | `string` | `v.Name` ↔ `T.TryFromName(str).Value` |
+| `EmailAddress` | `string(254)` | `v.Value` ↔ `EmailAddress.Create(str)` |
+| Custom `ScalarValueObject<T,P>` | `P` | `v.Value` ↔ `T.Create(p)` |
+
+### 🔧 Manual HasConversion (Without Package)
+
+Register value converters per-property in `OnModelCreating`. You must add `HasConversion` for every Trellis value object property:
+
+```csharp
+public class AppDbContext : DbContext
+{
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Order> Orders => Set<Order>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Customer>(b =>
+        {
+            b.HasKey(c => c.Id);
+
+            // RequiredGuid<CustomerId> → Guid
+            b.Property(c => c.Id)
+                .HasConversion(id => id.Value, guid => CustomerId.Create(guid))
+                .IsRequired();
+
+            // RequiredString<CustomerName> → string
+            b.Property(c => c.Name)
+                .HasConversion(name => name.Value, str => CustomerName.Create(str))
+                .HasMaxLength(100)
+                .IsRequired();
+
+            // EmailAddress → string
+            b.Property(c => c.Email)
+                .HasConversion(email => email.Value, str => EmailAddress.Create(str))
+                .HasMaxLength(254)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Order>(b =>
+        {
+            b.HasKey(o => o.Id);
+            b.Property(o => o.Id)
+                .HasConversion(id => id.Value, guid => OrderId.Create(guid));
+            b.Property(o => o.CustomerId)
+                .HasConversion(id => id.Value, guid => CustomerId.Create(guid));
+        });
+    }
+}
+```
+
+> [!NOTE]
+> Without `ApplyTrellisConventions`, every Trellis value object property needs an explicit `HasConversion` call. Missing one causes EF Core to treat the property as a navigation (class-typed), resulting in runtime errors.
 
 ## Repository Return Types
 
@@ -180,67 +324,27 @@ public interface IUserRepository
 public class UserRepository : IUserRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly ILogger<UserRepository> _logger;
 
     public async Task<Result<Unit>> SaveAsync(
         User user,
         CancellationToken ct)
     {
-        try
-        {
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync(ct);
-            return Result.Success();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            // Infrastructure failure
-            return Error.Conflict("User was modified by another process");
-        }
-        catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
-        {
-            // Database constraint violation
-            return Error.Conflict("User with this email already exists");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving user {UserId}", user.Id);
-            return Error.Unexpected("Failed to save user");
-        }
+        _context.Users.Update(user);
+        return await _context.SaveChangesResultUnitAsync(ct);
     }
 
     public async Task<Result<Unit>> DeleteAsync(
         UserId id,
         CancellationToken ct)
     {
-        try
-        {
-            var user = await _context.Users.FindAsync(new object[] { id }, ct);
-            
-            if (user == null)
-                return Error.NotFound($"User {id} not found");
-            
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync(ct);
-            return Result.Success();
-        }
-        catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
-        {
-            // Database constraint violation
-            return Error.Domain("Cannot delete user with active orders");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting user {UserId}", id);
-            return Error.Unexpected("Failed to delete user");
-        }
+        var user = await _context.Users.FindAsync(new object[] { id }, ct);
+        
+        if (user == null)
+            return Error.NotFound($"User {id} not found");
+        
+        _context.Users.Remove(user);
+        return await _context.SaveChangesResultUnitAsync(ct);
     }
-
-    private static bool IsDuplicateKeyException(DbUpdateException ex)
-        => ex.InnerException?.Message.Contains("duplicate key") ?? false;
-
-    private static bool IsForeignKeyViolation(DbUpdateException ex)
-        => ex.InnerException?.Message.Contains("FOREIGN KEY constraint") ?? false;
 }
 ```
 
@@ -249,6 +353,7 @@ public class UserRepository : IUserRepository
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Trellis;
+using Trellis.EntityFrameworkCore;
 
 public interface IUserRepository
 {
@@ -260,206 +365,206 @@ public interface IUserRepository
     // Commands - return Result (infrastructure can fail)
     Task<Result<Unit>> SaveAsync(User user, CancellationToken ct);
     Task<Result<Unit>> DeleteAsync(UserId id, CancellationToken ct);
-    
-    // Pagination - return Result (query execution can fail)
-    Task<Result<PagedResult<User>>> GetPagedAsync(
-        int page, 
-        int pageSize, 
-        CancellationToken ct);
 }
 
 public class UserRepository : IUserRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly ILogger<UserRepository> _logger;
 
-    public UserRepository(
-        ApplicationDbContext context,
-        ILogger<UserRepository> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    public UserRepository(ApplicationDbContext context) => _context = context;
 
     // Maybe pattern - domain decides if "not found" is good/bad
-    public async Task<Maybe<User>> GetByIdAsync(UserId id, CancellationToken ct)
-    {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == id, ct);
-        
-        return Maybe.From(user);
-    }
+    public async Task<Maybe<User>> GetByIdAsync(UserId id, CancellationToken ct) =>
+        await _context.Users.FirstOrDefaultMaybeAsync(u => u.Id == id, ct);
 
-    public async Task<Maybe<User>> GetByEmailAsync(
-        EmailAddress email,
-        CancellationToken ct)
-    {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email, ct);
-        
-        return Maybe.From(user);
-    }
+    public async Task<Maybe<User>> GetByEmailAsync(EmailAddress email, CancellationToken ct) =>
+        await _context.Users.FirstOrDefaultMaybeAsync(u => u.Email == email, ct);
 
-    public async Task<bool> ExistsByEmailAsync(
-        EmailAddress email,
-        CancellationToken ct)
-    {
-        return await _context.Users
-            .AnyAsync(u => u.Email == email, ct);
-    }
+    public async Task<bool> ExistsByEmailAsync(EmailAddress email, CancellationToken ct) =>
+        await _context.Users.AnyAsync(u => u.Email == email, ct);
 
     // Result pattern - infrastructure can fail
     public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
     {
-        try
-        {
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync(ct);
-            return Result.Success();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Error.Conflict("User was modified by another process");
-        }
-        catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
-        {
-            return Error.Conflict("User with this email already exists");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving user {UserId}", user.Id);
-            return Error.Unexpected("Failed to save user");
-        }
+        _context.Users.Update(user);
+        return await _context.SaveChangesResultUnitAsync(ct);
     }
 
     public async Task<Result<Unit>> DeleteAsync(UserId id, CancellationToken ct)
     {
-        try
-        {
-            var user = await _context.Users.FindAsync(new object[] { id }, ct);
-            
-            if (user == null)
-                return Error.NotFound($"User {id} not found");
-            
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync(ct);
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting user {UserId}", id);
-            return Error.Unexpected("Failed to delete user");
-        }
-    }
-
-    public async Task<Result<PagedResult<User>>> GetPagedAsync(
-        int page,
-        int pageSize,
-        CancellationToken ct)
-    {
-        try
-        {
-            if (page < 0)
-                return Error.Validation("Page number must be non-negative", "page");
-            
-            if (pageSize <= 0 || pageSize > 100)
-                return Error.Validation("Page size must be between 1 and 100", "pageSize");
-            
-            var skip = page * pageSize;
-            var totalCount = await _context.Users.CountAsync(ct);
-            
-            var users = await _context.Users
-                .AsNoTracking()
-                .OrderBy(u => u.CreatedAt)
-                .Skip(skip)
-                .Take(pageSize)
-                .ToListAsync(ct);
-            
-            var result = new PagedResult<User>(
-                Items: users,
-                From: skip,
-                To: skip + users.Count - 1,
-                TotalCount: totalCount
-            );
-            
-            return Result.Success(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching paged users");
-            return Error.Unexpected("Failed to retrieve users");
-        }
-    }
-
-    private static bool IsDuplicateKeyException(DbUpdateException ex)
-        => ex.InnerException?.Message.Contains("duplicate key") ?? false;
-}
-
-public record PagedResult<T>(
-    IEnumerable<T> Items,
-    long From,
-    long To,
-    long TotalCount);
-```
-
-## Extension Methods for Nullable Conversion
-
-Create reusable extension methods for common nullable-to-Result conversions:
-
-```csharp
-public static class RepositoryExtensions
-{
-    /// <summary>
-    /// Converts a task returning a nullable reference type to a Result.
-    /// </summary>
-    public static async Task<Result<T>> ToResultAsync<T>(
-        this Task<T?> task,
-        Error notFoundError) where T : class
-    {
-        var entity = await task;
-        return entity != null
-            ? Result.Success(entity)
-            : Result.Failure<T>(notFoundError);
-    }
-    
-    /// <summary>
-    /// Converts a task returning a nullable value type to a Result.
-    /// </summary>
-    public static async Task<Result<T>> ToResultAsync<T>(
-        this Task<T?> task,
-        Error notFoundError) where T : struct
-    {
-        var entity = await task;
-        return entity.HasValue
-            ? Result.Success(entity.Value)
-            : Result.Failure<T>(notFoundError);
+        var user = await _context.Users.FindAsync(new object[] { id }, ct);
+        
+        if (user == null)
+            return Error.NotFound($"User {id} not found");
+        
+        _context.Users.Remove(user);
+        return await _context.SaveChangesResultUnitAsync(ct);
     }
 }
 ```
 
-### Usage
+## Query Extensions
+
+### 📦 With Package
+
+`Trellis.EntityFrameworkCore` provides query extension methods that wrap EF Core results in `Maybe<T>` or `Result<T>`, so you don't need to write your own nullable conversion helpers.
+
+#### Maybe — When Absence Is Neutral
+
+Use `FirstOrDefaultMaybeAsync` or `SingleOrDefaultMaybeAsync` when the domain layer should decide whether "not found" is good or bad:
 
 ```csharp
-public async Task<Result<User>> GetByIdAsync(UserId id, CancellationToken ct)
+public async Task<Maybe<User>> GetByEmailAsync(
+    EmailAddress email,
+    CancellationToken ct) =>
+    await _context.Users
+        .FirstOrDefaultMaybeAsync(u => u.Email == email, ct);
+```
+
+#### Result — When "Not Found" Is the Error
+
+Use `FirstOrDefaultResultAsync` when absence is always an error:
+
+```csharp
+public async Task<Result<User>> GetByIdAsync(
+    UserId id,
+    CancellationToken ct) =>
+    await _context.Users
+        .FirstOrDefaultResultAsync(
+            u => u.Id == id,
+            Error.NotFound($"User {id} not found"),
+            ct);
+```
+
+#### Specification Integration
+
+Apply a `Specification<T>` directly as a LINQ Where clause:
+
+```csharp
+public async Task<List<Order>> GetActiveOrdersAsync(CancellationToken ct) =>
+    await _context.Orders
+        .Where(new ActiveOrderSpecification())
+        .ToListAsync(ct);
+```
+
+### 🔧 Without Package
+
+Use `FirstOrDefaultAsync` and wrap the result with `Maybe.From` or check for null:
+
+```csharp
+// Maybe pattern
+public async Task<Maybe<User>> GetByEmailAsync(
+    EmailAddress email,
+    CancellationToken ct)
 {
-    return await _context.Users
-        .FirstOrDefaultAsync(u => u.Id == id, ct)
-        .ToResultAsync(Error.NotFound($"User {id} not found"));
+    var user = await _context.Users
+        .FirstOrDefaultAsync(u => u.Email == email, ct);
+    return Maybe.From(user);
 }
 
-public async Task<Result<Order>> GetOrderByNumberAsync(string orderNumber, CancellationToken ct)
+// Result pattern
+public async Task<Result<User>> GetByIdAsync(
+    UserId id,
+    CancellationToken ct)
 {
-    return await _context.Orders
-        .Include(o => o.Items)
-        .Include(o => o.Customer)
-        .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber, ct)
-        .ToResultAsync(Error.NotFound($"Order {orderNumber} not found"));
+    var user = await _context.Users
+        .FirstOrDefaultAsync(u => u.Id == id, ct);
+    return user is not null
+        ? Result.Success(user)
+        : Result.Failure<User>(Error.NotFound($"User {id} not found"));
 }
 ```
 
 ## Handling Database Exceptions
 
 **Key Principle:** Only convert **expected failures** to `Result<T>`. Let **unexpected failures** (infrastructure exceptions) propagate as exceptions.
+
+### 📦 With Package
+
+#### SaveChangesResultAsync
+
+The simplest approach — `SaveChangesResultAsync` handles exception classification for you:
+
+```csharp
+public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
+{
+    _context.Users.Update(user);
+    return await _context.SaveChangesResultUnitAsync(ct);
+    // Concurrency conflict → Error.Conflict
+    // Duplicate key → Error.Conflict
+    // Foreign key violation → Error.Domain
+    // Connection failure, timeout → exception propagates
+}
+```
+
+#### DbExceptionClassifier
+
+For custom error messages per exception type, use `DbExceptionClassifier` directly. It works with SQL Server, PostgreSQL, and SQLite:
+
+```csharp
+public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
+{
+    try
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        return Error.Conflict("User was modified by another process");
+    }
+    catch (DbUpdateException ex) when (DbExceptionClassifier.IsDuplicateKey(ex))
+    {
+        return Error.Conflict("User with this email already exists");
+    }
+    catch (DbUpdateException ex) when (DbExceptionClassifier.IsForeignKeyViolation(ex))
+    {
+        return Error.Domain("Cannot save user due to referential integrity");
+    }
+    // Unexpected failures (connection, timeout) propagate as exceptions
+}
+```
+
+### 🔧 Without Package
+
+Write your own exception classification using `DbUpdateException.InnerException` message inspection:
+
+```csharp
+public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
+{
+    try
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        return Error.Conflict("User was modified by another process");
+    }
+    catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+    {
+        return Error.Conflict("User with this email already exists");
+    }
+    catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
+    {
+        return Error.Domain("Cannot save user due to referential integrity");
+    }
+    // Don't catch generic Exception — let infrastructure failures propagate
+}
+
+private static bool IsDuplicateKey(DbUpdateException ex) =>
+    ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true
+    || ex.InnerException?.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase) == true;
+
+private static bool IsForeignKeyViolation(DbUpdateException ex) =>
+    ex.InnerException?.Message.Contains("FOREIGN KEY constraint", StringComparison.OrdinalIgnoreCase) == true
+    || ex.InnerException?.Message.Contains("violates foreign key", StringComparison.OrdinalIgnoreCase) == true;
+```
+
+> [!NOTE]
+> The manual approach uses message-string matching which is fragile across database providers. `DbExceptionClassifier` in the package handles SQL Server error numbers, PostgreSQL SqlState codes, and SQLite messages correctly.
 
 ### Expected vs Unexpected Failures
 
@@ -504,57 +609,6 @@ flowchart TB
     style PROPAGATE fill:#FF6B6B
 ```
 
-### ✅ Convert Expected Failures to Result
-
-```csharp
-public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
-{
-    try
-    {
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync(ct);
-        return Result.Success();
-    }
-    // Expected failure: concurrent modification
-    catch (DbUpdateConcurrencyException)
-    {
-        return Error.Conflict("User was modified by another process");
-    }
-    // Expected failure: unique constraint violation
-    catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
-    {
-        return Error.Conflict("User with this email already exists");
-    }
-    // Expected failure: foreign key violation
-    catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
-    {
-        return Error.Domain("Cannot save user due to referential integrity");
-    }
-    // ⚠️ Don't catch generic Exception - let infrastructure failures propagate
-}
-
-public async Task<Result<Unit>> DeleteAsync(UserId id, CancellationToken ct)
-{
-    try
-    {
-        var user = await _context.Users.FindAsync(new object[] { id }, ct);
-        
-        if (user == null)
-            return Error.NotFound($"User {id} not found");
-        
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync(ct);
-        return Result.Success();
-    }
-    // Expected failure: foreign key violation (user has orders)
-    catch (DbUpdateException ex) when (IsForeignKeyViolation(ex))
-    {
-        return Error.Domain("Cannot delete user with active orders");
-    }
-    // ⚠️ Let unexpected failures (connection issues, etc.) propagate
-}
-```
-
 ### ❌ Don't Catch Unexpected Failures
 
 ```csharp
@@ -574,23 +628,11 @@ public async Task<Result<User>> SaveAsync(User user, CancellationToken ct)
     }
 }
 
-// ✅ Good - only catches expected failures
+// ✅ Good - only catch expected failures (or use SaveChangesResultUnitAsync)
 public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
 {
-    try
-    {
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync(ct);
-        return Result.Success();
-    }
-    catch (DbUpdateConcurrencyException)
-    {
-        return Error.Conflict("User was modified by another process");
-    }
-    catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
-    {
-        return Error.Conflict("User with this email already exists");
-    }
+    _context.Users.Update(user);
+    return await _context.SaveChangesResultUnitAsync(ct);
     // Database connection failures, etc. will propagate as exceptions
 }
 ```
@@ -605,131 +647,37 @@ public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
 
 4. **Logging and monitoring** - Exception middleware, Application Insights, and monitoring tools can properly track infrastructure failures
 
-### Exception Helper Methods
+### Complete Repository Example with SaveChangesResultAsync
 
 ```csharp
-public static class DbExceptionHelpers
-{
-    public static bool IsDuplicateKeyException(DbUpdateException ex)
-    {
-        // SQL Server
-        if (ex.InnerException?.Message.Contains("duplicate key") ?? false)
-            return true;
-        
-        // PostgreSQL
-        if (ex.InnerException?.Message.Contains("duplicate key value violates unique constraint") ?? false)
-            return true;
-        
-        // SQLite
-        if (ex.InnerException?.Message.Contains("UNIQUE constraint failed") ?? false)
-            return true;
-        
-        return false;
-    }
-
-    public static bool IsForeignKeyViolation(DbUpdateException ex)
-    {
-        // SQL Server
-        if (ex.InnerException?.Message.Contains("FOREIGN KEY constraint") ?? false)
-            return true;
-        
-        // PostgreSQL
-        if (ex.InnerException?.Message.Contains("violates foreign key constraint") ?? false)
-            return true;
-        
-        // SQLite
-        if (ex.InnerException?.Message.Contains("FOREIGN KEY constraint") ?? false)
-            return true;
-        
-        return false;
-    }
-}
-```
-
-### Global Exception Handling
-
-Let unexpected infrastructure failures be handled by ASP.NET Core's global exception handler:
-
-```csharp
-// Program.cs
-var app = builder.Build();
-
-// Global exception handler for unexpected failures
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
-        var exception = exceptionHandlerFeature?.Error;
-
-        // Log the infrastructure failure
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(exception, "Unhandled exception occurred");
-
-        // Return Problem Details for infrastructure failures
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        context.Response.ContentType = "application/problem+json";
-
-        var problemDetails = new ProblemDetails
-        {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "An error occurred",
-            Detail = "An unexpected error occurred. Please try again later.",
-            Instance = context.Request.Path
-        };
-
-        await context.Response.WriteAsJsonAsync(problemDetails);
-    });
-});
-```
-
-### Complete Example with Retry Policy
-
-For transient failures (connection issues, timeouts), use a retry policy instead of catching exceptions:
-
-```csharp
-// Using the .NET resilience library for retry logic
-// Configure in Program.cs:
+// Configure EF Core retry policy for transient failures in Program.cs:
 //   builder.Services.AddDbContext<ApplicationDbContext>(options =>
 //       options.UseSqlServer(connectionString,
-//           sqlOptions => sqlOptions.EnableRetryOnFailure(
-//               maxRetryCount: 3,
-//               maxRetryDelay: TimeSpan.FromSeconds(30),
-//               errorNumbersToAdd: null)));
+//           sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
 public class UserRepository : IUserRepository
 {
     private readonly ApplicationDbContext _context;
 
-    public UserRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public UserRepository(ApplicationDbContext context) => _context = context;
+
+    public async Task<Maybe<User>> GetByIdAsync(UserId id, CancellationToken ct) =>
+        await _context.Users
+            .FirstOrDefaultMaybeAsync(u => u.Id == id, ct);
+
+    public async Task<Maybe<User>> GetByEmailAsync(EmailAddress email, CancellationToken ct) =>
+        await _context.Users
+            .FirstOrDefaultMaybeAsync(u => u.Email == email, ct);
 
     public async Task<Result<Unit>> SaveAsync(User user, CancellationToken ct)
     {
-        try
-        {
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync(ct);  // EF Core handles transient retries
-            return Result.Success();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return Error.Conflict("User was modified by another process");
-        }
-        catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
-        {
-            return Error.Conflict("User with this email already exists");
-        }
-        // Transient failures are retried by EF Core's EnableRetryOnFailure
-        // Non-transient failures propagate as exceptions
+        _context.Users.Update(user);
+        return await _context.SaveChangesResultUnitAsync(ct);
+        // EF Core handles transient retries via EnableRetryOnFailure
+        // Expected failures (duplicate key, concurrency) → Result error
+        // Non-transient failures → exception propagates
     }
-
-    private static bool IsDuplicateKeyException(DbUpdateException ex)
-        => ex.InnerException?.Message.Contains("duplicate key") ?? false;
 }
-
 ```
 
 ### ✅ Use Maybe<T> for Queries
@@ -803,113 +751,7 @@ flowchart TB
     style PROPAGATE fill:#FF6B6B
 ```
 
-## Value Object Configuration
-
-Configure strongly-typed value objects (`RequiredGuid`, `RequiredString`, `EmailAddress`) with EF Core using value converters.
-
-### Value Converter Examples
-
-```csharp
-using Microsoft.EntityFrameworkCore;
-using Trellis.Primitives;
-
-public class AppDbContext : DbContext
-{
-    public DbSet<Customer> Customers => Set<Customer>();
-    public DbSet<Order> Orders => Set<Order>();
-    public DbSet<Product> Products => Set<Product>();
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        ConfigureCustomer(modelBuilder);
-        ConfigureOrder(modelBuilder);
-        ConfigureProduct(modelBuilder);
-    }
-
-    private static void ConfigureCustomer(ModelBuilder modelBuilder) =>
-        modelBuilder.Entity<Customer>(builder =>
-        {
-            builder.HasKey(c => c.Id);
-
-            // RequiredGuid<CustomerId> -> Guid
-            builder.Property(c => c.Id)
-                .HasConversion(
-                    id => id.Value,
-                    guid => CustomerId.Create(guid))
-                .IsRequired();
-
-            // RequiredString<CustomerName> -> string
-            builder.Property(c => c.Name)
-                .HasConversion(
-                    name => name.Value,
-                    str => CustomerName.Create(str))
-                .HasMaxLength(100)
-                .IsRequired();
-
-            // EmailAddress -> string
-            builder.Property(c => c.Email)
-                .HasConversion(
-                    email => email.Value,
-                    str => EmailAddress.Create(str))
-                .HasMaxLength(254)
-                .IsRequired();
-        });
-
-    private static void ConfigureOrder(ModelBuilder modelBuilder) =>
-        modelBuilder.Entity<Order>(builder =>
-        {
-            builder.HasKey(o => o.Id);
-
-            // RequiredGuid<OrderId> -> Guid
-            builder.Property(o => o.Id)
-                .HasConversion(
-                    id => id.Value,
-                    guid => OrderId.Create(guid))
-                .IsRequired();
-
-            // Foreign key using GUID
-            builder.Property(o => o.CustomerId)
-                .HasConversion(
-                    id => id.Value,
-                    guid => CustomerId.Create(guid))
-                .IsRequired();
-        });
-
-    private static void ConfigureProduct(ModelBuilder modelBuilder) =>
-        modelBuilder.Entity<Product>(builder =>
-        {
-            builder.HasKey(p => p.Id);
-
-            // RequiredGuid<ProductId> -> Guid
-            builder.Property(p => p.Id)
-                .HasConversion(
-                    id => id.Value,
-                    guid => ProductId.Create(guid))
-                .IsRequired();
-
-            // RequiredString<ProductName> -> string
-            builder.Property(p => p.Name)
-                .HasConversion(
-                    name => name.Value,
-                    str => ProductName.Create(str))
-                .HasMaxLength(200)
-                .IsRequired();
-        });
-}
-```
-
-### Value Object Types Quick Reference
-
-| Value Object | EF Core Storage | Converter |
-|--------------|-----------------|-----------|
-| `RequiredGuid<T>` | `Guid` | `id => id.Value` ↔ `guid => T.Create(guid)` |
-
-| `RequiredString<T>` | `string` | `val => val.Value` ↔ `str => T.Create(str)` |
-| `RequiredInt<T>` | `int` | `val => val.Value` ↔ `num => T.Create(num)` |
-| `RequiredDecimal<T>` | `decimal` | `val => val.Value` ↔ `num => T.Create(num)` |
-| `EmailAddress` | `string(254)` | `email => email.Value` ↔ `str => EmailAddress.Create(str)` |
-
-### Why Use GUID V7 for Entity IDs?
+## GUID V7 for Entity IDs
 
 GUID V7 (`NewUniqueV7()`) provides the same benefits as ULIDs — time-ordered, sequential, timestamp-embedded — while using the standard `System.Guid` type with better database index performance than random GUIDs:
 
@@ -931,12 +773,13 @@ var orders = await context.Orders
 | **Natural Ordering** | ✅ By creation time | ❌ Random |
 | **Use Case** | Orders, Events, Logs | Legacy systems |
 
-### Complete Example
+## Complete Example
 
 See the [EF Core Example](https://github.com/xavierjohn/Trellis/tree/main/Examples/EfCoreExample) for a full working example demonstrating:
 
+- Convention-based value object configuration with `ApplyTrellisConventions`
 - `RequiredGuid<T>` for identifiers (`OrderId`, `CustomerId`, `ProductId`)
 - `RequiredString<T>` for validated strings (`ProductName`, `CustomerName`)
+- `RequiredEnum<T>` for enum-like types stored as strings
 - `EmailAddress` for RFC 5322 email validation
-- Complete EF Core configuration with value converters
 - Railway-Oriented Programming for entity creation and validation
