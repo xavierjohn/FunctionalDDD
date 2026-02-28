@@ -92,7 +92,7 @@ internal sealed class HttpActorProvider(IHttpContextAccessor accessor) : IActorP
             .Where(c => c.Type == "permission")
             .Select(c => c.Value)
             .ToHashSet();
-        return new Actor(id, permissions);
+        return Actor.Create(id, permissions);
     }
 }
 ```

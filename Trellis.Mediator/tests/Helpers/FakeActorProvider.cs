@@ -1,4 +1,4 @@
-namespace Trellis.Mediator.Tests.Helpers;
+﻿namespace Trellis.Mediator.Tests.Helpers;
 
 using Trellis.Authorization;
 
@@ -10,8 +10,8 @@ internal sealed class FakeActorProvider(Actor actor) : IActorProvider
     public Actor GetCurrentActor() => actor;
 
     public static FakeActorProvider WithPermissions(string userId, params string[] permissions)
-        => new(new Actor(userId, permissions.ToHashSet()));
+        => new(Actor.Create(userId, permissions.ToHashSet()));
 
     public static FakeActorProvider NoPermissions(string userId = "user-1")
-        => new(new Actor(userId, new HashSet<string>()));
+        => new(Actor.Create(userId, new HashSet<string>()));
 }

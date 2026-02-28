@@ -35,7 +35,7 @@ dotnet add package Trellis.Authorization
 ```csharp
 using Trellis.Authorization;
 
-var actor = new Actor("user-42", new HashSet<string> { "Orders.Read", "Orders.Write" });
+var actor = Actor.Create("user-42", new HashSet<string> { "Orders.Read", "Orders.Write" });
 
 actor.HasPermission("Orders.Read");                    // true
 actor.HasAllPermissions(["Orders.Read", "Admin"]);     // false
@@ -59,7 +59,7 @@ public class HttpActorProvider(IHttpContextAccessor accessor) : IActorProvider
             .Where(c => c.Type == "permission")
             .Select(c => c.Value)
             .ToHashSet();
-        return new Actor(id, permissions);
+        return Actor.Create(id, permissions);
     }
 }
 ```

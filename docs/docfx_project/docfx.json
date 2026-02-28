@@ -14,6 +14,7 @@
             "Trellis.Testing/src/Trellis.Testing.csproj",
             "Trellis.Stateless/src/Trellis.Stateless.csproj",
             "Trellis.Authorization/src/Trellis.Authorization.csproj",
+            "Trellis.Asp.Authorization/src/Trellis.Asp.Authorization.csproj",
             "Trellis.Mediator/src/Trellis.Mediator.csproj",
             "Trellis.EntityFrameworkCore/src/Trellis.EntityFrameworkCore.csproj"
           ]

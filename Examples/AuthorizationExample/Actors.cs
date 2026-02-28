@@ -1,4 +1,4 @@
-using Trellis.Authorization;
+﻿using Trellis.Authorization;
 
 namespace AuthorizationExample;
 
@@ -7,9 +7,9 @@ namespace AuthorizationExample;
 /// </summary>
 public static class Actors
 {
-    public static readonly Actor Alice = new("alice", new HashSet<string> { "Documents.Publish" });
-    public static readonly Actor Bob = new("bob", new HashSet<string>());
-    public static readonly Actor Charlie = new("charlie", new HashSet<string> { "Documents.Publish", "Documents.Delete", "Documents.EditAny" });
+    public static readonly Actor Alice = Actor.Create("alice", new HashSet<string> { "Documents.Publish" });
+    public static readonly Actor Bob = Actor.Create("bob", new HashSet<string>());
+    public static readonly Actor Charlie = Actor.Create("charlie", new HashSet<string> { "Documents.Publish", "Documents.Delete", "Documents.EditAny" });
 
     public static void PrintActors()
     {

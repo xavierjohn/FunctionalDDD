@@ -1,4 +1,4 @@
-namespace Trellis.EntityFrameworkCore;
+﻿namespace Trellis.EntityFrameworkCore;
 
 /// <summary>
 /// Determines whether a CLR type is a Trellis value object

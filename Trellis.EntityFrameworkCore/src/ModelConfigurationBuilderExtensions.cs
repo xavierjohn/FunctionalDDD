@@ -1,4 +1,4 @@
-namespace Trellis.EntityFrameworkCore;
+﻿namespace Trellis.EntityFrameworkCore;
 
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;

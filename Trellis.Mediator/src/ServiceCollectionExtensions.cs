@@ -1,4 +1,4 @@
-namespace Trellis.Mediator;
+﻿namespace Trellis.Mediator;
 
 using global::Mediator;
 using Microsoft.Extensions.DependencyInjection;

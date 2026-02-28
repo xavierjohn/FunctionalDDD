@@ -1,4 +1,4 @@
-namespace Trellis.Mediator;
+﻿namespace Trellis.Mediator;
 
 /// <summary>
 /// Marker interface for commands/queries that can self-validate before reaching the handler.

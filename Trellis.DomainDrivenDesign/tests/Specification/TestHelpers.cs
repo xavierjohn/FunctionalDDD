@@ -1,4 +1,4 @@
-namespace Trellis.DomainDrivenDesign.Tests.Specification;
+﻿namespace Trellis.DomainDrivenDesign.Tests.Specification;
 
 using System.Linq.Expressions;
 using Trellis;

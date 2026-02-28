@@ -1,9 +1,9 @@
-namespace Trellis.EntityFrameworkCore.Tests;
+﻿namespace Trellis.EntityFrameworkCore.Tests;
 
-using Trellis.EntityFrameworkCore.Tests.Helpers;
-using Trellis.Primitives;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Trellis.EntityFrameworkCore.Tests.Helpers;
+using Trellis.Primitives;
 
 /// <summary>
 /// Tests for <see cref="ModelConfigurationBuilderExtensions.ApplyTrellisConventions"/>.

@@ -1,4 +1,4 @@
-namespace Trellis.EntityFrameworkCore.Tests.Helpers;
+﻿namespace Trellis.EntityFrameworkCore.Tests.Helpers;
 
 /// <summary>
 /// Test value object: strongly-typed customer identifier.

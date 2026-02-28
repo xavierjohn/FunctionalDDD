@@ -48,6 +48,8 @@
     href: integration.md
   - name: ASP.NET Core
     href: integration-aspnet.md
+  - name: ASP.NET Core Authorization (Entra ID)
+    href: integration-asp-authorization.md
   - name: HTTP Client
     href: integration-http.md
   - name: FluentValidation
