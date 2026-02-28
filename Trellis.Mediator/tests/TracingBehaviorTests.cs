@@ -1,4 +1,4 @@
-namespace Trellis.Mediator.Tests;
+﻿namespace Trellis.Mediator.Tests;
 
 using System.Diagnostics;
 using Trellis.Mediator.Tests.Helpers;

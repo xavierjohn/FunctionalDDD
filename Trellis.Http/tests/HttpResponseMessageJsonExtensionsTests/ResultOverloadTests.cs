@@ -1,4 +1,4 @@
-namespace Trellis.Http.Tests.HttpResponseMessageJsonExtensionsTests;
+﻿namespace Trellis.Http.Tests.HttpResponseMessageJsonExtensionsTests;
 
 using System.Net;
 using System.Threading.Tasks;

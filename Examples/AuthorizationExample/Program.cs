@@ -1,4 +1,4 @@
-using AuthorizationExample;
+﻿using AuthorizationExample;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 

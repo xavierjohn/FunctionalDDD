@@ -1,4 +1,4 @@
-namespace AuthorizationExample;
+﻿namespace AuthorizationExample;
 
 /// <summary>
 /// A simple document with an owner.

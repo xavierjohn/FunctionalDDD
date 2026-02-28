@@ -29,7 +29,7 @@ public class HttpActorProvider(IHttpContextAccessor accessor) : IActorProvider
             .Where(c => c.Type == "permission")
             .Select(c => c.Value)
             .ToHashSet();
-        return new Actor(id, permissions);
+        return Actor.Create(id, permissions);
     }
 }
 ```

@@ -1,4 +1,4 @@
-using Trellis;
+﻿using Trellis;
 using Trellis.Authorization;
 
 namespace AuthorizationExample;

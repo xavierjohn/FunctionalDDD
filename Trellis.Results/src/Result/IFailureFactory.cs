@@ -1,4 +1,4 @@
-namespace Trellis;
+﻿namespace Trellis;
 
 /// <summary>
 /// Enables construction of a failure result of the implementing type from an <see cref="Error"/>.

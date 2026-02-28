@@ -1,4 +1,4 @@
-namespace Trellis.DomainDrivenDesign.Tests.Specification;
+﻿namespace Trellis.DomainDrivenDesign.Tests.Specification;
 
 /// <summary>
 /// Tests for complex composed specifications — triple composition,

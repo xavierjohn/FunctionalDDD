@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE0022:Use expression body for method")]
 [assembly: SuppressMessage("Style", "IDE0021:Use expression body for constructor")]

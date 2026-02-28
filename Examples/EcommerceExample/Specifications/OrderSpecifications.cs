@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using EcommerceExample.Aggregates;
 using EcommerceExample.ValueObjects;
 using Trellis;
