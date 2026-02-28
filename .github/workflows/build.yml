@@ -45,7 +45,7 @@ jobs:
       # --coverage: Native MTP coverage (requires Microsoft.Testing.Extensions.CodeCoverage)
       # --report-trx: Native MTP TRX generation (requires Microsoft.Testing.Extensions.TrxReport)
       # --results-directory is a VSTest-only flag that forces the VSTest code path, breaking MTP flags.
-      # MTP writes TRX to ./TestResults by default; coverage path is set explicitly via --coverage-output.
+      # MTP writes TRX to TestResults/ relative to each test project directory; coverage path is set explicitly via --coverage-output.
       run: |
         dotnet test --no-build -c Release \
           --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml \
@@ -56,7 +56,7 @@ jobs:
       if: always()
       with:
         files: |
-          TestResults/**/*.trx
+          **/TestResults/**/*.trx
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v5
