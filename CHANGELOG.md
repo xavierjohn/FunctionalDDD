@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Trellis.Authorization — NEW Package!
+
+Lightweight authorization primitives with zero dependencies beyond `Trellis.Results`:
+
+- **`Actor`** — Sealed record representing an authenticated user (`Id` + `Permissions`) with `HasPermission`, `HasAllPermissions`, `HasAnyPermission` helpers
+- **`IActorProvider`** — Abstraction for resolving the current actor (implement in API layer)
+- **`IAuthorize`** — Marker interface for static permission requirements (AND logic)
+- **`IAuthorizeResource`** — Marker interface for resource-based authorization via `Authorize(Actor)`
+
+Usable with or without CQRS — no Mediator dependency.
+
+#### Trellis.Mediator — NEW Package!
+
+Result-aware pipeline behaviors for [martinothamar/Mediator](https://github.com/martinothamar/Mediator) v3:
+
+- **`ValidationBehavior`** — Short-circuits on `IValidate.Validate()` failure
+- **`AuthorizationBehavior`** — Checks `IAuthorize.RequiredPermissions` via `IActorProvider`
+- **`ResourceAuthorizationBehavior`** — Delegates to `IAuthorizeResource.Authorize(Actor)`
+- **`LoggingBehavior`** — Structured logging with duration and Result outcome
+- **`TracingBehavior`** — OpenTelemetry activity span with Result status
+- **`ExceptionBehavior`** — Catches unhandled exceptions → `Error.Unexpected`
+- **`ServiceCollectionExtensions`** — `PipelineBehaviors` array and `AddTrellisBehaviors()` DI registration
+
+#### Trellis.Results — IFailureFactory
+
+- **`IFailureFactory<TSelf>`** — Static abstract interface for AOT-friendly typed failure creation in generic pipeline behaviors
+- **`Result<TValue>`** now implements `IFailureFactory<Result<TValue>>`
+
 #### Specification Pattern — Composable Business Rules
 
 `Specification<T>` is a new DDD building block for encapsulating business rules as composable, storage-agnostic expression trees:

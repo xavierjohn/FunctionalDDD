@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <Using Include="Trellis.Authorization" />
+    <Using Include="Trellis.Mediator" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Trellis.Mediator.csproj" />
+    <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

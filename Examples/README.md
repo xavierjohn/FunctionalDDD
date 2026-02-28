@@ -41,7 +41,32 @@ A complete e-commerce system with order management, payment processing, and inve
 
 ---
 
-### 2. 🏦 [Banking Transactions](./BankingExample/)
+### 2. 🔐 [Authorization](./AuthorizationExample/)
+**Complexity**: ⭐⭐
+
+Same authorization rules enforced two ways — with and without CQRS.
+
+**Key Features**:
+- `Actor` with permission-based and resource-based authorization
+- Direct service approach using `Trellis.Authorization` only
+- Mediator pipeline approach using `Trellis.Mediator`
+- Side-by-side comparison of identical outcomes
+
+**Learn About**:
+- `Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource`
+- Separating authorization from business logic
+- When to use CQRS vs direct service calls
+- Pipeline behaviors that enforce auth automatically
+
+**Files**:
+- `DirectServiceExample.cs` - Manual authorization in service methods
+- `MediatorExample.cs` - Declarative authorization with pipeline behaviors
+- `Actors.cs` - Test actors with varying permissions
+- `Document.cs` - Simple document record and in-memory store
+
+---
+
+### 3. 🏦 [Banking Transactions](./BankingExample/)
 **Complexity**: ⭐⭐⭐⭐⭐
 
 A banking system with accounts, transfers, fraud detection, and security features.
@@ -70,7 +95,7 @@ A banking system with accounts, transfers, fraud detection, and security feature
 
 ---
 
-### 3. 👤 [User Management](./SampleWeb/SampleUserLibrary/)
+### 4. 👤 [User Management](./SampleWeb/SampleUserLibrary/)
 **Complexity**: ⭐⭐
 
 User registration system with automatic value object validation and FluentValidation integration.
@@ -125,7 +150,7 @@ POST /users/registerWithAutoValidation
 
 ---
 
-### 4. 🧪 [Unit Test Examples](../Xunit/)
+### 5. 🧪 [Unit Test Examples](../Xunit/)
 **Complexity**: ⭐⭐
 
 Comprehensive test examples using xUnit.
@@ -148,7 +173,7 @@ Comprehensive test examples using xUnit.
 
 ---
 
-### 5. 🌐 [Web API Examples](../SampleWebApplication/)
+### 6. 🌐 [Web API Examples](../SampleWebApplication/)
 **Complexity**: ⭐⭐⭐
 
 ASP.NET Core MVC examples showing how to integrate ROP with web APIs.
@@ -170,7 +195,7 @@ ASP.NET Core MVC examples showing how to integrate ROP with web APIs.
 
 ---
 
-### 6. ⚡ [Minimal API Examples](../SampleMinimalApi/)
+### 7. ⚡ [Minimal API Examples](../SampleMinimalApi/)
 **Complexity**: ⭐⭐⭐
 
 ASP.NET Core Minimal API examples with ROP integration and AOT support.

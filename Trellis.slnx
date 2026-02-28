@@ -38,6 +38,7 @@
   <Folder Name="/Examples/">
     <Project Path="Examples/BankingExample/BankingExample.csproj" />
     <Project Path="Examples/EcommerceExample/EcommerceExample.csproj" />
+    <Project Path="Examples/AuthorizationExample/AuthorizationExample.csproj" />
     <Project Path="Examples/EfCoreExample/EfCoreExample.csproj" />
     <Project Path="Examples/Xunit/Example.Tests.csproj" />
   </Folder>
@@ -73,6 +74,10 @@
     <Project Path="Trellis.Asp/src/Trellis.Asp.csproj" />
     <Project Path="Trellis.Asp/tests/Trellis.Asp.Tests.csproj" />
   </Folder>
+  <Folder Name="/Trellis.Authorization/">
+    <Project Path="Trellis.Authorization/src/Trellis.Authorization.csproj" />
+    <Project Path="Trellis.Authorization/tests/Trellis.Authorization.Tests.csproj" />
+  </Folder>
   <Folder Name="/Trellis.Benchmark/">
     <Project Path="Trellis.Benchmark/Trellis.Benchmark.csproj" />
   </Folder>
@@ -88,6 +93,10 @@
   <Folder Name="/Trellis.Http/">
     <Project Path="Trellis.Http/src/Trellis.Http.csproj" />
     <Project Path="Trellis.Http/tests/Trellis.Http.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Trellis.Mediator/">
+    <Project Path="Trellis.Mediator/src/Trellis.Mediator.csproj" />
+    <Project Path="Trellis.Mediator/tests/Trellis.Mediator.Tests.csproj" />
   </Folder>
   <Folder Name="/Trellis.Primitives/">
     <File Path="Trellis.Primitives/SAMPLES.md" />

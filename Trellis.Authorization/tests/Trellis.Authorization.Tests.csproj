@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\src\Trellis.Authorization.csproj" />
+    <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
+  </ItemGroup>
+</Project>

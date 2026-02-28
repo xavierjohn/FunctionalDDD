@@ -33,7 +33,7 @@ using System.Diagnostics;
 /// </example>
 [DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure\"}, Value = {(_value is null ? \"<null>\" : _value)}, Error = {(_error is null ? \"<none>\" : _error.Code)}")]
 [DebuggerTypeProxy(typeof(ResultDebugView<>))]
-public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>
+public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>
 {
     /// <summary>
     /// Gets the underlying value if the result is successful; otherwise throws.
@@ -86,6 +86,17 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <param name="error">The error to wrap in a failed result.</param>
     /// <returns>A failed result containing the error.</returns>
     public static implicit operator Result<TValue>(Error error) => Result.Failure<TValue>(error);
+
+    /// <summary>
+    /// Creates a failure result wrapping the given error.
+    /// Used by generic pipeline behaviors that need to construct failure results
+    /// without knowing the inner type parameter.
+    /// </summary>
+    /// <param name="error">The error describing the failure.</param>
+    /// <returns>A failed <see cref="Result{TValue}"/>.</returns>
+#pragma warning disable CA1000 // Do not declare static members on generic types — required by IFailureFactory<TSelf>
+    public static Result<TValue> CreateFailure(Error error) => Result.Failure<TValue>(error);
+#pragma warning restore CA1000
 
     internal Result(bool isFailure, TValue? ok, Error? error)
     {
