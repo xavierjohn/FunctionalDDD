@@ -50,7 +50,7 @@ jobs:
       run: dotnet test --no-build --configuration Release --logger "console;verbosity=normal"
 
     - name: Pack
-      run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols --include-source
+      run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols
 
     - name: List packages
       run: |

@@ -23,6 +23,9 @@ jobs:
       with:
         setAllVars: true
 
+    - name: Restore dependencies
+      run: dotnet restore
+
     - name: Update doc tools
       run: dotnet tool update -g docfx
       
