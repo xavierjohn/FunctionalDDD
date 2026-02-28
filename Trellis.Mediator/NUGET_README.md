@@ -4,6 +4,8 @@ Result-aware pipeline behaviors for [martinothamar/Mediator](https://github.com/
 
 Provides validation, authorization, logging, tracing, and exception handling behaviors that understand Trellis `Result<T>` types and short-circuit correctly.
 
+Authorization types (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource`) live in the separate `Trellis.Authorization` package — use them with or without CQRS.
+
 ## Behaviors
 
 | Behavior | Purpose |

@@ -2,6 +2,8 @@
 
 Result-aware pipeline behaviors for [martinothamar/Mediator](https://github.com/martinothamar/Mediator). This package bridges the Trellis `Result<T>` type system with Mediator's pipeline model, providing reusable, cross-cutting behaviors that understand success/failure and short-circuit correctly.
 
+Authorization types (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource`) live in the separate [Trellis.Authorization](../Trellis.Authorization/README.md) package, which has no Mediator dependency. This means you can use the same authorization primitives in non-CQRS scenarios.
+
 ## What It Is
 
 A thin integration layer — **not** a mediator implementation. The actual mediator is martinothamar/Mediator (source-generated, `ValueTask`-based, AOT-friendly). This package provides:
@@ -38,6 +40,7 @@ services.AddMediator(options =>
 ```csharp
 using Mediator;
 using Trellis;
+using Trellis.Authorization;
 using Trellis.Mediator;
 
 public sealed record CreateOrderCommand(string CustomerId, int Quantity)
@@ -55,6 +58,8 @@ public sealed record CreateOrderCommand(string CustomerId, int Quantity)
 ### 3. Add authorization
 
 ```csharp
+using Trellis.Authorization;
+
 // Static permission check
 public sealed record DeleteOrderCommand(OrderId OrderId)
     : ICommand<Result<Unit>>, IAuthorize
@@ -104,7 +109,8 @@ Request → ExceptionBehavior → TracingBehavior → LoggingBehavior
 
 | Project | Package |
 |---------|---------|
-| Application layer | `Mediator.Abstractions` + `Trellis.Mediator` |
+| Domain/Application layer | `Trellis.Authorization` (auth types only, no Mediator dependency) |
+| Application layer (CQRS) | `Trellis.Mediator` (includes `Trellis.Authorization` transitively) |
 | API/Host (composition root) | `Mediator.SourceGenerator` |
 
 `Mediator.SourceGenerator` is installed **only** in the outermost project.

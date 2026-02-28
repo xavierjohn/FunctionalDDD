@@ -194,6 +194,8 @@ builder.Services.AddOpenTelemetry()
 | **[Analyzers](https://www.nuget.org/packages/Trellis.Analyzers)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers) | Roslyn analyzers for compile-time ROP safety (19 rules) | [📖 Docs](Trellis.Analyzers/README.md) |
 | **[DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.DomainDrivenDesign.svg)](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) | Aggregate, Entity, ValueObject, Specification, Domain Events | [📖 Docs](Trellis.DomainDrivenDesign/README.md) |
 | **[Testing](https://www.nuget.org/packages/Trellis.Testing)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing) | FluentAssertions extensions, test builders, fakes | [📖 Docs](Trellis.Testing/README.md) |
+| **[Authorization](https://www.nuget.org/packages/Trellis.Authorization)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Authorization.svg)](https://www.nuget.org/packages/Trellis.Authorization) | Actor, IActorProvider, permission & resource-based auth | [📖 Docs](Trellis.Authorization/README.md) |
+| **[Mediator](https://www.nuget.org/packages/Trellis.Mediator)** | [![NuGet](https://img.shields.io/nuget/v/Trellis.Mediator.svg)](https://www.nuget.org/packages/Trellis.Mediator) | Result-aware pipeline behaviors for martinothamar/Mediator | [📖 Docs](Trellis.Mediator/README.md) |
 
 ---
 

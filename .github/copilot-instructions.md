@@ -57,12 +57,13 @@ Each integration package gets its own namespace because it pulls in a third-part
 
 | Namespace | Used In | Purpose |
 |-----------|---------|---------|
+| `Trellis.Authorization` | Domain/Application layer | `Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource` |
 | `Trellis.Asp` | API layer only | `ToMinimalApiResult()`, `ToActionResult()` |
 | `Trellis.Http` | ACL layer only | `HttpClient` → `Result<T>` extensions |
 | `Trellis.Stateless` | Domain layer (when needed) | Stateless state machine integration |
 | `Trellis.FluentValidation` | Domain layer (when needed) | FluentValidation integration |
 | `Trellis.Testing` | Test projects only | FluentAssertions extensions for `Result<T>` |
-| `Trellis.Mediator` | Application layer (CQRS only) | Mediator integration |
+| `Trellis.Mediator` | Application layer (CQRS only) | Mediator pipeline behaviors (depends on `Trellis.Authorization`) |
 | `Trellis.EntityFrameworkCore` | ACL layer only | EF Core integration |
 
 ### Namespace Placement Rule
@@ -280,6 +281,8 @@ predicateInvoked.Should().BeFalse("predicate should not be invoked for failed re
 | Core ROP | `Trellis.Results/src/Result/Extensions/` | `Trellis.Results/tests/Results/Extensions/` |
 | Value Objects | `Trellis.Primitives/src/` | `Trellis.Primitives/tests/` |
 | DDD | `Trellis.DomainDrivenDesign/src/` | `Trellis.DomainDrivenDesign/tests/` |
+| Authorization | `Trellis.Authorization/src/` | `Trellis.Authorization/tests/` |
+| Mediator | `Trellis.Mediator/src/` | `Trellis.Mediator/tests/` |
 | ASP.NET | `Trellis.Asp/src/` | `Trellis.Asp/tests/` |
 | HTTP | `Trellis.Http/src/` | `Trellis.Http/tests/` |
 
