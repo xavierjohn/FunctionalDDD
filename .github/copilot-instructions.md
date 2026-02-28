@@ -285,6 +285,7 @@ predicateInvoked.Should().BeFalse("predicate should not be invoked for failed re
 | Mediator | `Trellis.Mediator/src/` | `Trellis.Mediator/tests/` |
 | ASP.NET | `Trellis.Asp/src/` | `Trellis.Asp/tests/` |
 | HTTP | `Trellis.Http/src/` | `Trellis.Http/tests/` |
+| EF Core | `Trellis.EntityFrameworkCore/src/` | `Trellis.EntityFrameworkCore/tests/` |
 
 ## Documentation Standards
 
