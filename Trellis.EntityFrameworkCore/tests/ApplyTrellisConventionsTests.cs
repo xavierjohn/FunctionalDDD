@@ -6,16 +6,16 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Tests for <see cref="ModelBuilderExtensions.ApplyTrellisValueConverters"/>.
-/// Validates that value converters are automatically registered for all Trellis primitive types
-/// and that round-trip save/load works correctly with SQLite in-memory.
+/// Tests for <see cref="ModelConfigurationBuilderExtensions.ApplyTrellisConventions"/>.
+/// Validates that convention-based value converters are automatically registered for all
+/// Trellis value object types and that round-trip save/load works correctly with SQLite in-memory.
 /// </summary>
-public class ModelBuilderExtensionsTests : IDisposable
+public class ApplyTrellisConventionsTests : IDisposable
 {
     private readonly TestDbContext _context;
     private readonly SqliteConnection _connection;
 
-    public ModelBuilderExtensionsTests() =>
+    public ApplyTrellisConventionsTests() =>
         (_context, _connection) = TestDbContext.CreateInMemory();
 
     public void Dispose()
@@ -28,7 +28,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region RequiredGuid property converter
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_RequiredGuidProperty_RoundTripWorks()
+    public async Task RequiredGuidProperty_RoundTripWorks()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
@@ -59,7 +59,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region RequiredString property converter
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_RequiredStringProperty_RoundTripWorks()
+    public async Task RequiredStringProperty_RoundTripWorks()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
@@ -89,7 +89,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region RequiredEnum property converter
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_RequiredEnumProperty_StoredAsStringRoundTripWorks()
+    public async Task RequiredEnumProperty_StoredAsStringRoundTripWorks()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
@@ -130,7 +130,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region Built-in EmailAddress converter
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_BuiltInEmailAddress_RoundTripWorks()
+    public async Task BuiltInEmailAddress_RoundTripWorks()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
@@ -160,7 +160,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region Manual HasConversion takes precedence
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_ManualHasConversionTakesPrecedence()
+    public async Task ManualHasConversion_TakesPrecedence()
     {
         // Arrange — build a model with an explicit converter on a property
         var ct = TestContext.Current.CancellationToken;
@@ -198,7 +198,8 @@ public class ModelBuilderExtensionsTests : IDisposable
 
     /// <summary>
     /// DbContext with a manual converter that uppercases customer names.
-    /// ApplyTrellisValueConverters should not overwrite this.
+    /// The inline <c>HasConversion</c> in <c>OnModelCreating</c> should override
+    /// the convention-set converter from <c>ApplyTrellisConventions</c>.
     /// </summary>
     private class ManualConverterDbContext : DbContext
     {
@@ -233,7 +234,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region Non-Trellis properties ignored
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_NonTrellisPropertiesIgnored()
+    public async Task NonTrellisProperties_Ignored()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
@@ -263,7 +264,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region RequiredInt property converter
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_RequiredIntProperty_RoundTripWorks()
+    public async Task RequiredIntProperty_RoundTripWorks()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
@@ -305,7 +306,7 @@ public class ModelBuilderExtensionsTests : IDisposable
     #region RequiredDecimal property converter
 
     [Fact]
-    public async Task ApplyTrellisValueConverters_RequiredDecimalProperty_RoundTripWorks()
+    public async Task RequiredDecimalProperty_RoundTripWorks()
     {
         // Arrange
         var ct = TestContext.Current.CancellationToken;
