@@ -20,8 +20,10 @@ using Trellis.Authorization;
 /// </para>
 /// <para>
 /// Override any delegate to customize mapping. All delegates receive the
-/// <see cref="System.Security.Claims.ClaimsPrincipal"/> and (where applicable)
-/// the <see cref="Microsoft.AspNetCore.Http.HttpContext"/>.
+/// authenticated user's claims as <see cref="IEnumerable{T}"/> of
+/// <see cref="System.Security.Claims.Claim"/>. <see cref="MapAttributes"/>
+/// additionally receives the <see cref="Microsoft.AspNetCore.Http.HttpContext"/>
+/// for request-level context (e.g., IP address).
 /// </para>
 /// </remarks>
 public sealed class EntraActorOptions
@@ -35,8 +37,8 @@ public sealed class EntraActorOptions
         "http://schemas.microsoft.com/identity/claims/objectidentifier";
 
     /// <summary>
-    /// Maps <see cref="System.Security.Claims.ClaimsPrincipal"/> claims to the
-    /// <see cref="Actor.Permissions"/> set.
+    /// Maps the authenticated user's claims to the <see cref="Actor.Permissions"/> set.
+    /// Receives the claims as <see cref="IEnumerable{T}"/> of <see cref="System.Security.Claims.Claim"/>.
     /// Defaults to extracting all claims of type <c>roles</c>.
     /// </summary>
     /// <remarks>
@@ -51,8 +53,8 @@ public sealed class EntraActorOptions
             .ToHashSet();
 
     /// <summary>
-    /// Maps <see cref="System.Security.Claims.ClaimsPrincipal"/> claims to the
-    /// <see cref="Actor.ForbiddenPermissions"/> set.
+    /// Maps the authenticated user's claims to the <see cref="Actor.ForbiddenPermissions"/> set.
+    /// Receives the claims as <see cref="IEnumerable{T}"/> of <see cref="System.Security.Claims.Claim"/>.
     /// Defaults to an empty set — override to populate from an external store
     /// or a custom claim type.
     /// </summary>

@@ -1,5 +1,7 @@
 ﻿namespace Trellis.Authorization;
 
+using System.Collections.Frozen;
+
 /// <summary>
 /// Represents the current authenticated user making the request.
 /// Contains identity, permissions, forbidden permissions, and contextual attributes
@@ -24,7 +26,9 @@
 /// </remarks>
 /// <param name="Id">The unique identifier of the actor (e.g., user ID from JWT sub claim).</param>
 /// <param name="Permissions">
-/// The set of permissions granted to the actor. Use <see cref="HashSet{T}"/> for O(1) lookups.
+/// The set of permissions granted to the actor.
+/// Implementations such as <see cref="HashSet{T}"/> and <see cref="System.Collections.Frozen.FrozenSet{T}"/>
+/// provide O(1) lookups.
 /// </param>
 /// <param name="ForbiddenPermissions">
 /// Permissions that are explicitly denied for this actor.
@@ -55,7 +59,7 @@ public sealed record Actor(
     /// <param name="permissions">The set of permissions granted to the actor.</param>
     /// <returns>A new <see cref="Actor"/> instance.</returns>
     public static Actor Create(string id, IReadOnlySet<string> permissions) =>
-        new(id, permissions, new HashSet<string>(), new Dictionary<string, string>());
+        new(id, permissions, FrozenSet<string>.Empty, FrozenDictionary<string, string>.Empty);
 
     /// <summary>
     /// Returns true if this actor has the specified permission and it is not forbidden.
