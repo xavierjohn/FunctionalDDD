@@ -2,9 +2,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    
     <NoWarn>$(NoWarn),CA1707</NoWarn>
     
-    <!-- Test projects don't need AOT/Trim compatibility -->
     <EnableAotAnalyzer>false</EnableAotAnalyzer>
     <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
   </PropertyGroup>
@@ -16,8 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.v3"/>
+    <PackageReference Include="xunit.v3" />
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
   </ItemGroup>
-
 </Project>
