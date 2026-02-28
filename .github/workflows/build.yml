@@ -9,14 +9,13 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
-        fetch-depth: 0 # depth is needed for nbgv
+        fetch-depth: 0
         
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
@@ -29,7 +28,7 @@ jobs:
         setAllVars: true
 
     - name: Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -42,23 +41,15 @@ jobs:
     - name: Build
       run: dotnet build --no-restore -c Release
 
-    - name: Install dotnet-coverage
-      run: dotnet tool install -g dotnet-coverage
-
     - name: Test with Coverage
+      # --coverage: Native MTP coverage (requires Microsoft.Testing.Extensions.CodeCoverage)
+      # --report-trx: Native MTP TRX generation (requires Microsoft.Testing.Extensions.TrxReport)
+      # --results-directory is a VSTest-only flag that forces the VSTest code path, breaking MTP flags.
+      # MTP writes TRX to ./TestResults by default; coverage path is set explicitly via --coverage-output.
       run: |
-        failed=0
-        for project in $(find . -name "*.Tests.csproj" ! -path "*/bin/*" ! -path "*/obj/*"); do
-          name=$(basename "$project" .csproj)
-          echo "::group::$name"
-          dotnet-coverage collect \
-            "dotnet run --no-build -c Release --project $project -- -trx TestResults/${name}.trx" \
-            -f cobertura \
-            -o "TestResults/${name}.cobertura.xml" \
-            || failed=1
-          echo "::endgroup::"
-        done
-        exit $failed
+        dotnet test --no-build -c Release \
+          --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml \
+          --report-trx
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
@@ -68,14 +59,13 @@ jobs:
           TestResults/**/*.trx
 
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: always()
-      continue-on-error: true
       with:
-        files: TestResults/*.cobertura.xml
+        # MTP writes coverage relative to each test project; search recursively
+        files: ./**/*.cobertura.xml
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
-        verbose: true
 
     - name: Update doc tools
       run: dotnet tool update -g docfx
@@ -85,8 +75,7 @@ jobs:
   
     - name: Pack
       if: ${{ success() && !github.base_ref }}
-      run: |
-        dotnet pack --no-build --verbosity normal -c Release -o artifacts/
+      run: dotnet pack --no-build --verbosity normal -c Release -o artifacts/
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

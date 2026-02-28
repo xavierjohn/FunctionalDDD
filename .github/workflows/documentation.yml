@@ -1,4 +1,4 @@
-name: Publish documentation.
+﻿name: Publish documentation.
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0 # depth is needed for nbgv
         
@@ -22,6 +22,17 @@ jobs:
       uses: dotnet/nbgv@master
       with:
         setAllVars: true
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore
 
     - name: Update doc tools
       run: dotnet tool update -g docfx
