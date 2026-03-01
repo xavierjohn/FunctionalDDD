@@ -209,7 +209,9 @@ public ActionResult<User> Register([FromBody] RegisterRequest request) =>
         .Combine(EmailAddress.TryCreate(request.Email))
         .Bind((firstName, lastName, email) =>
             User.TryCreate(firstName, lastName, email, request.Password))
-        .ToActionResult(this);
+        .ToCreatedAtActionResult(this,
+            actionName: nameof(GetUser),
+            routeValues: user => new { id = user.Id });
 ```
 
 ### Minimal APIs
@@ -221,7 +223,9 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
         .Combine(EmailAddress.TryCreate(request.Email))
         .Bind((firstName, lastName, email) =>
             User.TryCreate(firstName, lastName, email, request.Password))
-        .ToHttpResult());
+        .ToCreatedAtRouteHttpResult(
+            routeName: "GetUser",
+            routeValues: user => new RouteValueDictionary(new { id = user.Id })));
 ```
 
 ### HTTP Status Mapping
@@ -229,6 +233,7 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
 | Result Type | HTTP Status | Description |
 |------------|-------------|-------------|
 | Success | 200 OK | Success with content |
+| Success (Created) | 201 Created | Resource created with Location header |
 | Success (Unit) | 204 No Content | Success without content |
 | ValidationError | 400 Bad Request | Validation errors with details |
 | BadRequestError | 400 Bad Request | General bad request |

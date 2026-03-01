@@ -64,9 +64,9 @@ public class UsersController : ControllerBase
             .Bind((firstName, lastName, email) => 
                 User.TryCreate(firstName, lastName, email, request.Password))
             .Tap(user => _repository.Add(user))
-            .Finally(
-                ok => CreatedAtAction(nameof(GetById), new { id = ok.Id }, ok),
-                err => err.ToErrorActionResult<User>(this));
+            .ToCreatedAtActionResult(this,
+                actionName: nameof(GetById),
+                routeValues: user => new { id = user.Id });
 
     // READ single resource
     [HttpGet("{id}")]
@@ -222,9 +222,9 @@ public class ProductsController : ControllerBase
                 tuple.category))
             // Save
             .Tap(product => _repository.Add(product))
-            .Finally(
-                ok => CreatedAtAction(nameof(GetById), new { id = ok.Id }, ok),
-                err => err.ToErrorActionResult<Product>(this));
+            .ToCreatedAtActionResult(this,
+                actionName: nameof(GetById),
+                routeValues: product => new { id = product.Id });
 
     [HttpGet("{id}")]
     public ActionResult<Product> GetById(string id) =>
@@ -247,7 +247,7 @@ public class ProductsController : ControllerBase
 
 ### Custom Status Codes
 
-Using `Finally` for specific HTTP status codes:
+> **Tip:** For 201 Created responses, prefer `ToCreatedAtActionResult` (MVC) or `ToCreatedAtRouteHttpResult` (Minimal API) — see CREATE examples above. Use `Finally` only for other custom status codes like 202 Accepted.
 
 ```csharp
 [ApiController]
@@ -268,12 +268,9 @@ public class JobsController : ControllerBase
     [HttpPost("batch")]
     public ActionResult<BatchJob> CreateBatch([FromBody] CreateBatchRequest request) =>
         _jobService.CreateBatch(request)
-            .Finally(
-                ok => CreatedAtAction(
-                    nameof(GetBatchStatus),
-                    new { batchId = ok.Id },
-                    ok),
-                err => err.ToErrorActionResult<BatchJob>(this));
+            .ToCreatedAtActionResult(this,
+                actionName: nameof(GetBatchStatus),
+                routeValues: batch => new { batchId = batch.Id });
 
     // 204 No Content for successful operation without content
     [HttpPost("{id}/cancel")]
@@ -413,7 +410,9 @@ userApi.MapPost("/", (
         .Bind((firstName, lastName, email) => 
             User.TryCreate(firstName, lastName, email, request.Password))
         .Tap(user => repository.Add(user))
-        .ToHttpResult());
+        .ToCreatedAtRouteHttpResult(
+            routeName: "GetUserById",
+            routeValues: user => new RouteValueDictionary(new { id = user.Id })));
 
 // READ
 userApi.MapGet("/{id}", (
@@ -508,7 +507,7 @@ orderApi.MapDelete("/{id}", async (
 
 ### Custom Status Codes in Minimal API
 
-Using `Finally` for specific HTTP responses:
+> **Tip:** For 201 Created responses, prefer `ToCreatedAtRouteHttpResult` — see CREATE examples above. Use `Finally` only for other custom status codes like 202 Accepted.
 
 ```csharp
 var productApi = app.MapGroup("/api/products");
@@ -521,12 +520,9 @@ productApi.MapPost("/", (
         .Combine(Price.TryCreate(request.Price))
         .Bind((name, price) => Product.TryCreate(name, price))
         .Tap(product => repository.Add(product))
-        .Finally(
-            ok => Results.CreatedAtRoute(
-                "GetProductById",
-                new { id = ok.Id },
-                ok),
-            err => err.ToErrorResult()))
+        .ToCreatedAtRouteHttpResult(
+            routeName: "GetProductById",
+            routeValues: product => new RouteValueDictionary(new { id = product.Id })))
     .WithName("GetProductById");
 
 // 202 Accepted
