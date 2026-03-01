@@ -81,17 +81,19 @@ public static class ActionResultExtensions
     /// </code>
     /// </example>
     /// <example>
-    /// POST endpoint returning created resource:
+    /// POST endpoint returning 201 Created with Location header:
     /// <code>
     /// [HttpPost]
     /// public ActionResult&lt;UserDto&gt; CreateUser(CreateUserRequest request) =>
     ///     EmailAddress.TryCreate(request.Email)
     ///         .Combine(FirstName.TryCreate(request.FirstName))
     ///         .Bind((email, name) => _userService.CreateUser(email, name))
-    ///         .Map(user => new UserDto(user))
-    ///         .ToActionResult(this);
+    ///         .ToCreatedAtActionResult(this,
+    ///             actionName: nameof(GetUser),
+    ///             routeValues: user => new { id = user.Id },
+    ///             map: user => new UserDto(user));
     /// 
-    /// // Success: 200 OK with UserDto
+    /// // Success: 201 Created with Location: /api/users/{id}
     /// // Validation error: 400 Bad Request with field-level errors
     /// // Conflict: 409 Conflict if user already exists
     /// </code>
@@ -395,6 +397,116 @@ public static class ActionResultExtensions
 
         var error = result.Error;
         return error.ToActionResult<TOut>(controllerBase);
+    }
+
+    /// <summary>
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> that returns
+    /// 201 Created with a Location header on success, or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="actionName">The name of the action to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="controllerName">Optional controller name. When null, the current controller is used.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method is ideal for POST endpoints that create a resource and need to return
+    /// a 201 Created response with a Location header pointing to the GET endpoint for the new resource.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// POST endpoint creating a user:
+    /// <code>
+    /// [HttpPost]
+    /// public ActionResult&lt;UserDto&gt; CreateUser(CreateUserRequest request) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .Combine(FirstName.TryCreate(request.FirstName))
+    ///         .Bind((email, name) => _userService.CreateUser(email, name))
+    ///         .Map(user => new UserDto(user))
+    ///         .ToCreatedAtActionResult(this,
+    ///             actionName: nameof(GetUser),
+    ///             routeValues: dto => new { id = dto.Id });
+    ///
+    /// // Success: 201 Created with Location: /api/users/{id}
+    /// // Validation error: 400 Bad Request with Problem Details
+    /// </code>
+    /// </example>
+    public static ActionResult<TValue> ToCreatedAtActionResult<TValue>(
+        this Result<TValue> result,
+        ControllerBase controllerBase,
+        string actionName,
+        Func<TValue, object?> routeValues,
+        string? controllerName = null)
+    {
+        if (result.IsSuccess)
+            return (ActionResult<TValue>)controllerBase.CreatedAtAction(actionName, controllerName, routeValues(result.Value), result.Value);
+
+        return result.Error.ToActionResult<TValue>(controllerBase);
+    }
+
+    /// <summary>
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="ActionResult{TOut}"/> that returns
+    /// 201 Created with a Location header on success (with value transformation), or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the output ActionResult.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="actionName">The name of the action to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="map">A function that transforms the input value to the output type for the response body.</param>
+    /// <param name="controllerName">Optional controller name. When null, the current controller is used.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and mapped value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Use this overload when the domain entity needs to be transformed (e.g., to a DTO)
+    /// before including it in the response body.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// POST endpoint creating a user with entity-to-DTO mapping:
+    /// <code>
+    /// [HttpPost]
+    /// public ActionResult&lt;UserDto&gt; CreateUser(CreateUserRequest request) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .Combine(FirstName.TryCreate(request.FirstName))
+    ///         .Bind((email, name) => _userService.CreateUser(email, name))
+    ///         .ToCreatedAtActionResult(this,
+    ///             actionName: nameof(GetUser),
+    ///             routeValues: user => new { id = user.Id },
+    ///             map: user => new UserDto(user));
+    ///
+    /// // Success: 201 Created with Location: /api/users/{id} and UserDto body
+    /// // Validation error: 400 Bad Request with Problem Details
+    /// </code>
+    /// </example>
+    public static ActionResult<TOut> ToCreatedAtActionResult<TValue, TOut>(
+        this Result<TValue> result,
+        ControllerBase controllerBase,
+        string actionName,
+        Func<TValue, object?> routeValues,
+        Func<TValue, TOut> map,
+        string? controllerName = null)
+    {
+        if (result.IsSuccess)
+        {
+            var value = map(result.Value);
+            return (ActionResult<TOut>)controllerBase.CreatedAtAction(actionName, controllerName, routeValues(result.Value), value);
+        }
+
+        return result.Error.ToActionResult<TOut>(controllerBase);
     }
 
     private static ActionResult<TValue> ValidationErrors<TValue>(string? detail, ValidationError validation, string? instance, ControllerBase controllerBase, int statusCode)

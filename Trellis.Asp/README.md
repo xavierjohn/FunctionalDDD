@@ -313,7 +313,9 @@ public class UsersController : ControllerBase
             .Combine(EmailAddress.TryCreate(request.Email))
             .Bind((firstName, lastName, email) =>
                 User.TryCreate(firstName, lastName, email, request.Password))
-            .ToActionResult(this);
+            .ToCreatedAtActionResult(this,
+                actionName: nameof(GetUserAsync),
+                routeValues: user => new { id = user.Id });
 
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUserAsync(
@@ -338,7 +340,9 @@ userApi.MapPost("/register", (RegisterUserRequest request) =>
         .Combine(EmailAddress.TryCreate(request.Email))
         .Bind((firstName, lastName, email) =>
             User.TryCreate(firstName, lastName, email, request.Password))
-        .ToHttpResult());
+        .ToCreatedAtRouteHttpResult(
+            routeName: "GetUser",
+            routeValues: user => new RouteValueDictionary(new { id = user.Id })));
 
 userApi.MapGet("/{id}", async (
     string id,
@@ -346,7 +350,8 @@ userApi.MapGet("/{id}", async (
     CancellationToken cancellationToken) =>
     await repository.GetByIdAsync(id, cancellationToken)
         .ToResultAsync(Error.NotFound($"User {id} not found"))
-        .ToHttpResultAsync());
+        .ToHttpResultAsync())
+    .WithName("GetUser");
 ```
 
 ### HTTP Status Mapping
@@ -354,6 +359,7 @@ userApi.MapGet("/{id}", async (
 | Result Type | HTTP Status | Description |
 |------------|-------------|-------------|
 | Success | 200 OK | Success with content |
+| Success (Created) | 201 Created | Resource created with Location header |
 | Success (Unit) | 204 No Content | Success without content |
 | ValidationError | 400 Bad Request | Validation errors with details |
 | BadRequestError | 400 Bad Request | Invalid request |

@@ -1,4 +1,5 @@
-﻿using Trellis.Asp;
+﻿using Microsoft.AspNetCore.Routing;
+using Trellis.Asp;
 using Trellis.Primitives;
 
 namespace SampleMinimalApi.API;
@@ -37,9 +38,9 @@ public static class UserRoutes
             .Combine(CountryCode.TryCreate(request.country))
             .Bind((firstName, lastName, email, phone, age, country) =>
                 User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
-            .Match(
-                    onSuccess: ok => Results.CreatedAtRoute("GetUserById", new RouteValueDictionary { { "name", ok.FirstName } }, ok),
-                    onFailure: err => err.ToHttpResult()));
+            .ToCreatedAtRouteHttpResult(
+                    routeName: "GetUserById",
+                    routeValues: user => new RouteValueDictionary { { "name", user.FirstName } }));
 
         userApi.MapGet("/notfound/{id}", (int id) =>
             Result.Failure(Error.NotFound("User not found", id.ToString(CultureInfo.InvariantCulture)))

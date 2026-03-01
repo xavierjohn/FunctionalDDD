@@ -199,4 +199,127 @@ public static class HttpResultExtensionsAsync
         var result = await resultTask.ConfigureAwait(false);
         return result.ToHttpResult(options);
     }
+
+    /// <summary>
+    /// Converts a Task-wrapped <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> that returns
+    /// 201 Created with a Location header on success, or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="routeName">The name of the route to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.
+    /// Return a <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> to remain AOT-compatible.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// Async variant of <see cref="HttpResultExtensions.ToCreatedAtRouteHttpResult{TValue}"/>.
+    /// </remarks>
+    public static async Task<Microsoft.AspNetCore.Http.IResult> ToCreatedAtRouteHttpResultAsync<TValue>(
+        this Task<Result<TValue>> resultTask,
+        string routeName,
+        Func<TValue, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues,
+        TrellisAspOptions? options = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtRouteHttpResult(routeName, routeValues, options);
+    }
+
+    /// <summary>
+    /// Converts a ValueTask-wrapped <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> that returns
+    /// 201 Created with a Location header on success, or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="routeName">The name of the route to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// ValueTask variant optimized for scenarios with cached or frequently synchronous results.
+    /// </remarks>
+    public static async ValueTask<Microsoft.AspNetCore.Http.IResult> ToCreatedAtRouteHttpResultAsync<TValue>(
+        this ValueTask<Result<TValue>> resultTask,
+        string routeName,
+        Func<TValue, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues,
+        TrellisAspOptions? options = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtRouteHttpResult(routeName, routeValues, options);
+    }
+
+    /// <summary>
+    /// Converts a Task-wrapped <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> that returns
+    /// 201 Created with a Location header on success (with value transformation), or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the response body.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="routeName">The name of the route to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="map">A function that transforms the input value to the output type for the response body.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and mapped value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// Async variant of <see cref="HttpResultExtensions.ToCreatedAtRouteHttpResult{TValue, TOut}"/>.
+    /// </remarks>
+    public static async Task<Microsoft.AspNetCore.Http.IResult> ToCreatedAtRouteHttpResultAsync<TValue, TOut>(
+        this Task<Result<TValue>> resultTask,
+        string routeName,
+        Func<TValue, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues,
+        Func<TValue, TOut> map,
+        TrellisAspOptions? options = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtRouteHttpResult(routeName, routeValues, map, options);
+    }
+
+    /// <summary>
+    /// Converts a ValueTask-wrapped <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> that returns
+    /// 201 Created with a Location header on success (with value transformation), or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the response body.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="routeName">The name of the route to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="map">A function that transforms the input value to the output type for the response body.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and mapped value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// ValueTask variant optimized for scenarios with cached or frequently synchronous results.
+    /// </remarks>
+    public static async ValueTask<Microsoft.AspNetCore.Http.IResult> ToCreatedAtRouteHttpResultAsync<TValue, TOut>(
+        this ValueTask<Result<TValue>> resultTask,
+        string routeName,
+        Func<TValue, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues,
+        Func<TValue, TOut> map,
+        TrellisAspOptions? options = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtRouteHttpResult(routeName, routeValues, map, options);
+    }
 }

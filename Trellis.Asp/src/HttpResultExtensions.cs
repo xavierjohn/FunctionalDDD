@@ -1,6 +1,7 @@
 ﻿namespace Trellis.Asp;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Trellis;
 
 /// <summary>
@@ -77,16 +78,18 @@ public static class HttpResultExtensions
     /// </code>
     /// </example>
     /// <example>
-    /// POST endpoint with validation:
+    /// POST endpoint returning 201 Created with Location header:
     /// <code>
     /// app.MapPost("/users", (CreateUserRequest request, IUserService userService) =>
     ///     EmailAddress.TryCreate(request.Email)
     ///         .Combine(FirstName.TryCreate(request.FirstName))
     ///         .Bind((email, name) => userService.CreateUser(email, name))
-    ///         .Map(user => new UserDto(user))
-    ///         .ToHttpResult());
+    ///         .ToCreatedAtRouteHttpResult(
+    ///             routeName: "GetUser",
+    ///             routeValues: user => new RouteValueDictionary(new { id = user.Id }),
+    ///             map: user => new UserDto(user)));
     /// 
-    /// // Success: 200 OK with UserDto
+    /// // Success: 201 Created with Location: /api/users/{id}
     /// // Validation error: 400 Bad Request with field-level errors
     /// // Conflict: 409 Conflict if user already exists
     /// </code>
@@ -283,5 +286,97 @@ public static class HttpResultExtensions
         }
 
         return Results.Problem(error.Detail, error.Instance, statusCode);
+    }
+
+    /// <summary>
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> that returns
+    /// 201 Created with a Location header on success, or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="routeName">The name of the route to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.
+    /// Return a <see cref="RouteValueDictionary"/> to remain AOT-compatible.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method is ideal for POST endpoints that create a resource and need to return
+    /// a 201 Created response with a Location header pointing to the GET endpoint for the new resource.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// POST Minimal API endpoint creating a user:
+    /// <code>
+    /// app.MapPost("/users", (CreateUserRequest request, IUserService service) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .Bind(email => service.CreateUser(email))
+    ///         .Map(user => new UserDto(user))
+    ///         .ToCreatedAtRouteHttpResult(
+    ///             routeName: "GetUser",
+    ///             routeValues: dto => new RouteValueDictionary(new { id = dto.Id })));
+    /// </code>
+    /// </example>
+    public static Microsoft.AspNetCore.Http.IResult ToCreatedAtRouteHttpResult<TValue>(
+        this Result<TValue> result,
+        string routeName,
+        Func<TValue, RouteValueDictionary> routeValues,
+        TrellisAspOptions? options = null)
+    {
+        if (result.IsSuccess)
+            return Results.CreatedAtRoute(routeName, routeValues(result.Value), result.Value);
+
+        return result.Error.ToHttpResult(options);
+    }
+
+    /// <summary>
+    /// Converts a <see cref="Result{TValue}"/> to an <see cref="Microsoft.AspNetCore.Http.IResult"/> that returns
+    /// 201 Created with a Location header on success (with value transformation), or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the response body.</typeparam>
+    /// <param name="result">The result object to convert.</param>
+    /// <param name="routeName">The name of the route to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.
+    /// Return a <see cref="RouteValueDictionary"/> to remain AOT-compatible.</param>
+    /// <param name="map">A function that transforms the input value to the output type for the response body.</param>
+    /// <param name="options">Optional custom error-to-status-code mappings. When null, uses default mappings.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and mapped value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <example>
+    /// POST Minimal API endpoint with entity-to-DTO mapping:
+    /// <code>
+    /// app.MapPost("/users", (CreateUserRequest request, IUserService service) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .Bind(email => service.CreateUser(email))
+    ///         .ToCreatedAtRouteHttpResult(
+    ///             routeName: "GetUser",
+    ///             routeValues: user => new RouteValueDictionary(new { id = user.Id }),
+    ///             map: user => new UserDto(user)));
+    /// </code>
+    /// </example>
+    public static Microsoft.AspNetCore.Http.IResult ToCreatedAtRouteHttpResult<TValue, TOut>(
+        this Result<TValue> result,
+        string routeName,
+        Func<TValue, RouteValueDictionary> routeValues,
+        Func<TValue, TOut> map,
+        TrellisAspOptions? options = null)
+    {
+        if (result.IsSuccess)
+        {
+            var value = map(result.Value);
+            return Results.CreatedAtRoute(routeName, routeValues(result.Value), value);
+        }
+
+        return result.Error.ToHttpResult(options);
     }
 }

@@ -312,4 +312,160 @@ public static class ActionResultExtensionsAsync
         var result = await resultTask.ConfigureAwait(false);
         return result.ToActionResult(controllerBase, from, to, totalLength);
     }
+
+    /// <summary>
+    /// Converts a Task-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> that returns
+    /// 201 Created with a Location header on success, or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="actionName">The name of the action to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="controllerName">Optional controller name. When null, the current controller is used.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// Async variant of <see cref="ActionResultExtensions.ToCreatedAtActionResult{TValue}(Result{TValue}, ControllerBase, string, Func{TValue, object?}, string?)"/>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// [HttpPost]
+    /// public Task&lt;ActionResult&lt;UserDto&gt;&gt; CreateUserAsync(
+    ///     CreateUserRequest request, CancellationToken ct) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .BindAsync(email => _userService.CreateUserAsync(email, ct))
+    ///         .MapAsync(user => new UserDto(user))
+    ///         .ToCreatedAtActionResultAsync(this,
+    ///             actionName: nameof(GetUser),
+    ///             routeValues: dto => new { id = dto.Id });
+    /// </code>
+    /// </example>
+    public static async Task<ActionResult<TValue>> ToCreatedAtActionResultAsync<TValue>(
+        this Task<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        string actionName,
+        Func<TValue, object?> routeValues,
+        string? controllerName = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtActionResult(controllerBase, actionName, routeValues, controllerName);
+    }
+
+    /// <summary>
+    /// Converts a ValueTask-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TValue}"/> that returns
+    /// 201 Created with a Location header on success, or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the result.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="actionName">The name of the action to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="controllerName">Optional controller name. When null, the current controller is used.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// ValueTask variant optimized for scenarios with cached or frequently synchronous results.
+    /// </remarks>
+    public static async ValueTask<ActionResult<TValue>> ToCreatedAtActionResultAsync<TValue>(
+        this ValueTask<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        string actionName,
+        Func<TValue, object?> routeValues,
+        string? controllerName = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtActionResult(controllerBase, actionName, routeValues, controllerName);
+    }
+
+    /// <summary>
+    /// Converts a Task-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TOut}"/> that returns
+    /// 201 Created with a Location header on success (with value transformation), or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the output ActionResult.</typeparam>
+    /// <param name="resultTask">The task containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="actionName">The name of the action to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="map">A function that transforms the input value to the output type for the response body.</param>
+    /// <param name="controllerName">Optional controller name. When null, the current controller is used.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and mapped value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// Async variant of <see cref="ActionResultExtensions.ToCreatedAtActionResult{TValue, TOut}(Result{TValue}, ControllerBase, string, Func{TValue, object?}, Func{TValue, TOut}, string?)"/>.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// [HttpPost]
+    /// public Task&lt;ActionResult&lt;UserDto&gt;&gt; CreateUserAsync(
+    ///     CreateUserRequest request, CancellationToken ct) =>
+    ///     EmailAddress.TryCreate(request.Email)
+    ///         .BindAsync(email => _userService.CreateUserAsync(email, ct))
+    ///         .ToCreatedAtActionResultAsync(this,
+    ///             actionName: nameof(GetUser),
+    ///             routeValues: user => new { id = user.Id },
+    ///             map: user => new UserDto(user));
+    /// </code>
+    /// </example>
+    public static async Task<ActionResult<TOut>> ToCreatedAtActionResultAsync<TValue, TOut>(
+        this Task<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        string actionName,
+        Func<TValue, object?> routeValues,
+        Func<TValue, TOut> map,
+        string? controllerName = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtActionResult(controllerBase, actionName, routeValues, map, controllerName);
+    }
+
+    /// <summary>
+    /// Converts a ValueTask-wrapped <see cref="Result{TValue}"/> to an <see cref="ActionResult{TOut}"/> that returns
+    /// 201 Created with a Location header on success (with value transformation), or Problem Details on failure.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value contained in the input result.</typeparam>
+    /// <typeparam name="TOut">The type of the value in the output ActionResult.</typeparam>
+    /// <param name="resultTask">The ValueTask containing the result object to convert.</param>
+    /// <param name="controllerBase">The controller context used to create the ActionResult.</param>
+    /// <param name="actionName">The name of the action to use for generating the Location header URL.</param>
+    /// <param name="routeValues">A function that extracts route values from the result value for URL generation.</param>
+    /// <param name="map">A function that transforms the input value to the output type for the response body.</param>
+    /// <param name="controllerName">Optional controller name. When null, the current controller is used.</param>
+    /// <returns>
+    /// A ValueTask that represents the asynchronous operation, containing:
+    /// <list type="bullet">
+    /// <item>201 Created with Location header and mapped value if result is successful</item>
+    /// <item>Appropriate error status code (400-599) based on error type if result is failure</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// ValueTask variant optimized for scenarios with cached or frequently synchronous results.
+    /// </remarks>
+    public static async ValueTask<ActionResult<TOut>> ToCreatedAtActionResultAsync<TValue, TOut>(
+        this ValueTask<Result<TValue>> resultTask,
+        ControllerBase controllerBase,
+        string actionName,
+        Func<TValue, object?> routeValues,
+        Func<TValue, TOut> map,
+        string? controllerName = null)
+    {
+        var result = await resultTask.ConfigureAwait(false);
+        return result.ToCreatedAtActionResult(controllerBase, actionName, routeValues, map, controllerName);
+    }
 }

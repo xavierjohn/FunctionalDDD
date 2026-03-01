@@ -34,9 +34,9 @@ public class UsersController : ControllerBase
         .Combine(CountryCode.TryCreate(request.country))
         .Bind((firstName, lastName, email, phone, age, country) =>
             SampleUserLibrary.User.TryCreate(firstName, lastName, email, phone, age, country, request.password))
-        .Match(
-            onSuccess: ok => CreatedAtAction("Get", new { name = ok.FirstName }, ok),
-            onFailure: err => err.ToActionResult<User>(this));
+        .ToCreatedAtActionResult(this,
+            actionName: nameof(Get),
+            routeValues: user => new { name = user.FirstName });
 
     [HttpPost("[action]")]
     public ActionResult<User> RegisterAccepted([FromBody] RegisterUserRequest request) =>

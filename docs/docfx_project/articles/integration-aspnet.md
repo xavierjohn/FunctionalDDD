@@ -59,6 +59,10 @@ The **Trellis.Asp** package provides extension methods to convert `Result<T>` to
 ActionResult<T> ToActionResult<T>(this Result<T> result, ControllerBase controller);
 Task<ActionResult<T>> ToActionResultAsync<T>(this Task<Result<T>> resultTask, ControllerBase controller);
 
+// 201 Created with Location header
+ActionResult<T> ToCreatedAtActionResult<T>(this Result<T> result, ControllerBase controller,
+    string actionName, Func<T, object?> routeValues, string? controllerName = null);
+
 // Pagination support
 ActionResult<T> ToActionResult<T>(
     this Result<T> result, 
@@ -72,6 +76,10 @@ ActionResult<T> ToActionResult<T>(
 ```csharp
 IResult ToHttpResult<T>(this Result<T> result);
 Task<IResult> ToHttpResultAsync<T>(this Task<Result<T>> resultTask);
+
+// 201 Created with Location header (AOT-compatible)
+IResult ToCreatedAtRouteHttpResult<T>(this Result<T> result,
+    string routeName, Func<T, RouteValueDictionary> routeValues);
 ```
 
 **What happens:**
@@ -269,7 +277,10 @@ public class UsersController : ControllerBase
         CancellationToken ct)
         => await _userService.CreateUserAsync(request, ct)
             .MapAsync(user => new UserDto(user))
-            .ToActionResultAsync(this);  // Converts Result<UserDto> → ActionResult<UserDto>
+            .ToCreatedAtActionResultAsync(this,
+                actionName: nameof(GetUser),
+                routeValues: dto => new { id = dto.Id });
+            // Success: 201 Created with Location header
 
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDto>> GetUser(
@@ -330,9 +341,12 @@ userApi.MapPost("/", async (
     CancellationToken ct) =>
     await userService.CreateUserAsync(request, ct)
         .MapAsync(user => new UserDto(user))
-        .ToHttpResultAsync())  // Converts Result<UserDto> → IResult
+        .ToCreatedAtRouteHttpResultAsync(
+            routeName: "GetUser",
+            routeValues: dto => new RouteValueDictionary(new { id = dto.Id })))
+    // Success: 201 Created with Location header
     .WithName("CreateUser")
-    .Produces<UserDto>(StatusCodes.Status200OK)
+    .Produces<UserDto>(StatusCodes.Status201Created)
     .ProducesValidationProblem()
     .ProducesProblem(StatusCodes.Status409Conflict);
 
@@ -379,6 +393,9 @@ The package automatically maps error types to HTTP status codes:
 
 | Error Type | HTTP Status | Example Use Case |
 |------------|-------------|------------------|
+| (Success) | 200 OK | Resource retrieved or updated |
+| (Success - Created) | 201 Created | Resource created with Location header |
+| (Success - Unit) | 204 No Content | Delete or side-effect operation |
 | `ValidationError` | 400 Bad Request | Invalid email format, required field missing |
 | `BadRequestError` | 400 Bad Request | Malformed request, invalid query parameters |
 | `UnauthorizedError` | 401 Unauthorized | Missing authentication token |
@@ -608,7 +625,9 @@ public async Task<ActionResult<UserDto>> CreateUser(
     CancellationToken ct) =>
     await _userService.CreateUserAsync(request, ct)
         .MapAsync(user => new UserDto(user))
-        .ToActionResultAsync(this);  // ← Convert at boundary
+        .ToCreatedAtActionResultAsync(this,
+            actionName: nameof(GetUser),
+            routeValues: dto => new { id = dto.Id });  // ← Convert at boundary
 
 // ❌ Bad - exposing Result in controller return type
 public async Task<Result<User>> CreateUser(...)
@@ -658,13 +677,21 @@ Error.Validation("Invalid")
 
 ### 5. Prefer Automatic Mapping Over Custom Logic
 
-Use `ToActionResult`/`ToHttpResult` for consistent error responses. Only use `MatchError` when you need custom logic:
+Use `ToActionResult`/`ToHttpResult` for consistent error responses, and `ToCreatedAtActionResult`/`ToCreatedAtRouteHttpResult` for POST endpoints that return 201 Created. Only use `MatchError` when you need custom logic:
 
 ```csharp
-// ✅ Good - consistent Problem Details across API
+// ✅ Good - 201 Created with Location header
 [HttpPost]
 public async Task<ActionResult<User>> CreateUser(CreateUserRequest request, CancellationToken ct)
     => await _userService.CreateUserAsync(request, ct)
+        .ToCreatedAtActionResultAsync(this,
+            actionName: nameof(GetUser),
+            routeValues: user => new { id = user.Id });
+
+// ✅ Good - 200 OK for non-create operations
+[HttpGet("{id}")]
+public async Task<ActionResult<User>> GetUser(string id, CancellationToken ct)
+    => await _userService.GetUserAsync(id, ct)
         .ToActionResultAsync(this);
 
 // ⚠️ Use only when necessary - custom error handling
