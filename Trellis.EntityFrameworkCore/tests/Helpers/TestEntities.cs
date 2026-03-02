@@ -40,4 +40,11 @@ public class TestOrder
         get => _optionalStatus is not null ? Maybe.From(_optionalStatus) : Maybe.None<TestOrderStatus>();
         set => _optionalStatus = value.HasValue ? value.Value : null;
     }
+
+    private DateTime? _submittedAt;
+    public Maybe<DateTime> SubmittedAt
+    {
+        get => _submittedAt.HasValue ? Maybe.From(_submittedAt.Value) : Maybe.None<DateTime>();
+        set => _submittedAt = value.HasValue ? value.Value : null;
+    }
 }

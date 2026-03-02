@@ -216,6 +216,94 @@ public class MaybeQueryableExtensionsTests : IDisposable
 
     #endregion
 
+    #region WhereNone / WhereHasValue / WhereEquals — value-type inner (DateTime)
+
+    [Fact]
+    public async Task WhereNone_ValueTypeInner_ReturnsEntitiesWithNullBackingField()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var submitted = CreateOrder(customer.Id);
+        submitted.SubmittedAt = Maybe.From(new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc));
+        var notSubmitted = CreateOrder(customer.Id);
+
+        _context.Orders.AddRange(submitted, notSubmitted);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Orders
+            .WhereNone(o => o.SubmittedAt)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(notSubmitted.Id);
+    }
+
+    [Fact]
+    public async Task WhereHasValue_ValueTypeInner_ReturnsEntitiesWithValue()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Bob");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var submitted = CreateOrder(customer.Id);
+        submitted.SubmittedAt = Maybe.From(new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc));
+        var notSubmitted = CreateOrder(customer.Id);
+
+        _context.Orders.AddRange(submitted, notSubmitted);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Orders
+            .WhereHasValue(o => o.SubmittedAt)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(submitted.Id);
+    }
+
+    [Fact]
+    public async Task WhereEquals_ValueTypeInner_ReturnsMatchingEntities()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Charlie");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var targetDate = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+        var order1 = CreateOrder(customer.Id);
+        order1.SubmittedAt = Maybe.From(targetDate);
+        var order2 = CreateOrder(customer.Id);
+        order2.SubmittedAt = Maybe.From(new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc));
+        var order3 = CreateOrder(customer.Id); // no SubmittedAt
+
+        _context.Orders.AddRange(order1, order2, order3);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Orders
+            .WhereEquals(o => o.SubmittedAt, targetDate)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(order1.Id);
+    }
+
+    #endregion
+
     #region Helpers
 
     private static TestCustomer CreateCustomer(string name, string? phone = null)

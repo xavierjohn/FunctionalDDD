@@ -44,6 +44,7 @@ internal class TestDbContext : DbContext
             b.Property(o => o.Amount).IsRequired();
             b.Property(o => o.Status).IsRequired();
             b.MaybeProperty(o => o.OptionalStatus);
+            b.MaybeProperty(o => o.SubmittedAt);
         });
     }
 
