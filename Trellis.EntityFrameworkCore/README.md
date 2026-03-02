@@ -74,7 +74,7 @@ public class AppDbContext : DbContext
 |-------------------|---------------|-----------|
 | `IScalarValue<TSelf, TPrimitive>` | `TPrimitive` (string, Guid, int, decimal) | `Value` → DB, `Create()` ← DB |
 | `RequiredEnum<TSelf>` | `string` | `Name` → DB, `TryFromName()` ← DB |
-| `Money` | Owned type: `decimal(18,2)` + `nvarchar(3)` | Auto-mapped as owned entity (Amount + Currency columns) |
+| `Money` | Owned type: `decimal(18,3)` + `nvarchar(3)` | Auto-mapped as owned entity (Amount + Currency columns) |
 
 This covers all built-in types: `RequiredString<T>`, `RequiredGuid<T>`, `RequiredInt<T>`, `RequiredDecimal<T>`, `RequiredEnum<T>`, `EmailAddress`, `Money`, and any custom `ScalarValueObject<TSelf, T>`.
 
@@ -109,7 +109,7 @@ public class Order
 | `Price` | `Price` | `PriceCurrency` |
 | `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` |
 
-Amount columns use `decimal(18,2)` precision. Currency columns use `nvarchar(3)` (ISO 4217).
+Amount columns use `decimal(18,3)` precision. Currency columns use `nvarchar(3)` (ISO 4217). Scale 3 accommodates all ISO 4217 minor units (0 for JPY, 2 for USD/EUR, 3 for BHD/KWD/OMR/TND).
 
 ### Explicit Override
 

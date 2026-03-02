@@ -964,8 +964,8 @@ configurationBuilder.ApplyTrellisConventions(typeof(Order).Assembly);
 
 | Property Name | Amount Column | Currency Column | Amount Type | Currency Type |
 |---------------|---------------|-----------------|-------------|---------------|
-| `Price` | `Price` | `PriceCurrency` | `decimal(18,2)` | `nvarchar(3)` |
-| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,2)` | `nvarchar(3)` |
+| `Price` | `Price` | `PriceCurrency` | `decimal(18,3)` | `nvarchar(3)` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,3)` | `nvarchar(3)` |
 
 Explicit `OwnsOne` configuration takes precedence over the convention.
 

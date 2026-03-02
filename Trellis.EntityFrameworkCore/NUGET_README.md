@@ -46,8 +46,8 @@ public class AppDbContext : DbContext
 
 | Property Name | Amount Column | Currency Column | Amount Type | Currency Type |
 |---------------|---------------|-----------------|-------------|---------------|
-| `Price` | `Price` | `PriceCurrency` | `decimal(18,2)` | `nvarchar(3)` |
-| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,2)` | `nvarchar(3)` |
+| `Price` | `Price` | `PriceCurrency` | `decimal(18,3)` | `nvarchar(3)` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,3)` | `nvarchar(3)` |
 
 No `OwnsOne` calls needed — just declare `Money` properties on your entities and they work.
 

@@ -1,5 +1,6 @@
 namespace Trellis.EntityFrameworkCore;
 
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Trellis.Primitives;
@@ -13,7 +14,7 @@ using Trellis.Primitives;
 /// For a property named <c>{Name}</c> of type <see cref="Money"/>, two columns are generated:
 /// </para>
 /// <list type="bullet">
-/// <item><c>{Name}</c> column — <c>decimal(18,2)</c> for the monetary amount</item>
+/// <item><c>{Name}</c> column — <c>decimal(18,3)</c> for the monetary amount (scale 3 covers all ISO 4217 minor units)</item>
 /// <item><c>{Name}Currency</c> column — <c>nvarchar(3)</c> for the ISO 4217 currency code</item>
 /// </list>
 /// <para>
@@ -60,20 +61,21 @@ internal sealed class MoneyConvention : IModelInitializedConvention, IModelFinal
             if (navigationName is null)
                 continue;
 
-            // Amount → column "{NavigationName}", decimal(18,2)
+            // Amount → column "{NavigationName}", decimal(18,3)
+            // Scale 3 accommodates all ISO 4217 minor units: 0 (JPY), 2 (USD), 3 (BHD/KWD/OMR/TND)
             var amount = entityType.FindProperty(nameof(Money.Amount));
             if (amount is not null)
             {
-                amount.Builder.HasAnnotation("Relational:ColumnName", navigationName);
+                amount.Builder.HasAnnotation(RelationalAnnotationNames.ColumnName, navigationName);
                 amount.Builder.HasPrecision(18);
-                amount.Builder.HasScale(2);
+                amount.Builder.HasScale(3);
             }
 
             // Currency → column "{NavigationName}Currency", max-length 3
             var currency = entityType.FindProperty(nameof(Money.Currency));
             if (currency is not null)
             {
-                currency.Builder.HasAnnotation("Relational:ColumnName", navigationName + "Currency");
+                currency.Builder.HasAnnotation(RelationalAnnotationNames.ColumnName, navigationName + "Currency");
                 currency.Builder.HasMaxLength(3);
             }
         }

@@ -61,13 +61,13 @@ public class MoneyConventionTests : IDisposable
     }
 
     [Fact]
-    public void MoneyProperty_AutoMapped_AmountHasPrecision18Scale2()
+    public void MoneyProperty_AutoMapped_AmountHasPrecision18Scale3()
     {
         var ownedType = GetOwnedMoneyType<MoneyProduct>(nameof(MoneyProduct.UnitPrice));
         var amount = ownedType.FindProperty(nameof(Money.Amount))!;
 
         amount.GetPrecision().Should().Be(18);
-        amount.GetScale().Should().Be(2);
+        amount.GetScale().Should().Be(3);
     }
 
     [Fact]
@@ -146,6 +146,28 @@ public class MoneyConventionTests : IDisposable
         loaded.ShippingCost.Currency.Value.Should().Be("EUR");
     }
 
+    [Fact]
+    public async Task ThreeDecimalCurrency_RoundTripPreservesAllDigits()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var product = new MoneyProduct
+        {
+            Id = 2,
+            Name = "Dinar Widget",
+            UnitPrice = Money.Create(1.234m, "KWD")
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync(ct);
+
+        Context.ChangeTracker.Clear();
+
+        var loaded = await Context.Products.FindAsync([2], ct);
+        loaded.Should().NotBeNull();
+        loaded!.UnitPrice.Amount.Should().Be(1.234m);
+        loaded.UnitPrice.Currency.Value.Should().Be("KWD");
+    }
+
     #endregion
 
     #region Explicit OwnsOne takes precedence
@@ -184,8 +206,7 @@ public class MoneyConventionTests : IDisposable
     }
 
     private static string? GetColumnName(IReadOnlyProperty property) =>
-        property.FindAnnotation("Relational:ColumnName")?.Value as string
-        ?? property.GetDefaultColumnName();
+        property.GetColumnName();
 
     #endregion
 

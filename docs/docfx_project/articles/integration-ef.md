@@ -804,7 +804,7 @@ public class Order
 | `Price` | `Price` | `PriceCurrency` |
 | `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` |
 
-Amount columns use `decimal(18,2)` precision. Currency columns use `nvarchar(3)` (ISO 4217).
+Amount columns use `decimal(18,3)` precision. Currency columns use `nvarchar(3)` (ISO 4217). Scale 3 accommodates all ISO 4217 minor units (0 for JPY, 2 for USD/EUR, 3 for BHD/KWD/OMR/TND).
 
 ### Explicit Override
 
