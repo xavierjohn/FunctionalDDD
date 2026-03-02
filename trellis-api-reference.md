@@ -995,6 +995,33 @@ modelBuilder.Entity<Customer>(b =>
 
 Backing field naming: `Phone` → `_phone`, `SubmittedAt` → `_submittedAt`, `AlternateEmail` → `_alternateEmail`.
 
+### Maybe\<T\> Queryable Extensions
+
+Because `MaybeProperty` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use these extension methods instead of raw `EF.Property` calls:
+
+```csharp
+// WhereNone — WHERE backing_field IS NULL
+IQueryable<TEntity> WhereNone<TEntity, TInner>(
+    this IQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
+// WhereHasValue — WHERE backing_field IS NOT NULL
+IQueryable<TEntity> WhereHasValue<TEntity, TInner>(
+    this IQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
+// WhereEquals — WHERE backing_field = @value
+IQueryable<TEntity> WhereEquals<TEntity, TInner>(
+    this IQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector,
+    TInner value)
+
+// Usage
+var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
+var withPhone    = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
+var matches      = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+```
+
 ### Exception Classification
 
 ```csharp

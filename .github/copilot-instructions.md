@@ -513,6 +513,23 @@ The backing field must follow `_camelCase` naming from the property name:
 
 Trellis scalar value objects (e.g., `PhoneNumber`, `EmailAddress`) get their converters automatically from `ApplyTrellisConventions`. No extra `HasConversion` call is needed. For plain CLR types (`DateTime?`, `string?`), EF Core handles them natively.
 
+### Querying Maybe\<T\> Properties
+
+Because `MaybeProperty` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use the query extensions instead of raw `EF.Property` calls:
+
+```csharp
+// WhereNone — WHERE column IS NULL
+var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
+
+// WhereHasValue — WHERE column IS NOT NULL
+var withPhone = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
+
+// WhereEquals — WHERE column = @value
+var matches = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+```
+
+These methods rewrite the expression tree to target the backing field via `EF.Property<T?>`, so EF Core can translate the query to SQL.
+
 ## Known Namespace Collisions
 
 ### `Trellis.Unit` vs `Mediator.Unit`

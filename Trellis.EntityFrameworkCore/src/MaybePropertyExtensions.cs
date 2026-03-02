@@ -48,7 +48,7 @@ public static class MaybePropertyExtensions
     /// itself is ignored by EF Core.
     /// </summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
-    /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>. Must be a reference type.</typeparam>
+    /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>. Supports both reference types and value types.</typeparam>
     /// <param name="builder">The entity type builder.</param>
     /// <param name="propertyExpression">
     /// An expression selecting the <see cref="Maybe{T}"/> property (e.g., <c>c =&gt; c.Phone</c>).
@@ -115,11 +115,46 @@ public static class MaybePropertyExtensions
             ? typeof(Nullable<>).MakeGenericType(innerType)
             : innerType;
 
+        ValidateBackingField(
+            typeof(TEntity), propertyInfo.Name, backingFieldName, nullableType,
+            nameof(propertyExpression));
+
         builder.Ignore(propertyInfo.Name);
 
         return builder.Property(nullableType, backingFieldName)
             .UsePropertyAccessMode(PropertyAccessMode.Field)
             .IsRequired(false);
+    }
+
+    private static void ValidateBackingField(
+        Type entityType, string propertyName, string backingFieldName, Type expectedType,
+        string paramName)
+    {
+        var field = entityType.GetField(
+            backingFieldName,
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        if (field is null)
+            throw new ArgumentException(
+                $"Entity '{entityType.Name}' does not declare a private backing field '{backingFieldName}' " +
+                $"for Maybe<> property '{propertyName}'. " +
+                $"Declare: private {FormatTypeName(expectedType)} {backingFieldName};",
+                paramName);
+
+        if (field.FieldType != expectedType)
+            throw new ArgumentException(
+                $"Backing field '{entityType.Name}.{backingFieldName}' is of type '{FormatTypeName(field.FieldType)}' " +
+                $"but expected '{FormatTypeName(expectedType)}'. " +
+                $"Change the field to: private {FormatTypeName(expectedType)} {backingFieldName};",
+                paramName);
+    }
+
+    private static string FormatTypeName(Type type)
+    {
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            return $"{type.GetGenericArguments()[0].Name}?";
+
+        return type.Name;
     }
 
     private static PropertyInfo GetPropertyInfo<TEntity, TInner>(

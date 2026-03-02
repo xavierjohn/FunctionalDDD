@@ -213,4 +213,85 @@ public class MaybePropertyTests : IDisposable
     }
 
     #endregion
+
+    #region Validation — missing or mismatched backing field
+
+    [Fact]
+    public void MaybeProperty_MissingBackingField_ThrowsArgumentException()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new MissingFieldDbContext(
+            new DbContextOptionsBuilder<MissingFieldDbContext>().UseSqlite(connection).Options);
+
+        var act = () => context.Model;
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*does not declare a private backing field '_website'*")
+            .WithMessage("*for Maybe<> property 'Website'*");
+    }
+
+    [Fact]
+    public void MaybeProperty_WrongFieldType_ThrowsArgumentException()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new WrongFieldTypeDbContext(
+            new DbContextOptionsBuilder<WrongFieldTypeDbContext>().UseSqlite(connection).Options);
+
+        var act = () => context.Model;
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*is of type*but expected*");
+    }
+
+    /// <summary>Entity with a Maybe property but no backing field.</summary>
+    private class EntityWithoutBackingField
+    {
+        public Guid Id { get; set; }
+        // Missing: private Url? _website;
+        public Maybe<Url> Website { get; set; }
+    }
+
+    private class MissingFieldDbContext(DbContextOptions<MissingFieldDbContext> options)
+        : DbContext(options)
+    {
+        public DbSet<EntityWithoutBackingField> Items => Set<EntityWithoutBackingField>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<EntityWithoutBackingField>(b =>
+            {
+                b.HasKey(e => e.Id);
+                b.MaybeProperty(e => e.Website);
+            });
+    }
+
+    /// <summary>Entity with a backing field of the wrong type.</summary>
+    private class EntityWithWrongFieldType
+    {
+        public Guid Id { get; set; }
+        private string? _website; // Wrong — should be Url?
+        public Maybe<Url> Website
+        {
+            get => _website is not null ? Maybe.From(Url.Create(_website)) : Maybe.None<Url>();
+            set => _website = value.HasValue ? value.Value.Value : null;
+        }
+    }
+
+    private class WrongFieldTypeDbContext(DbContextOptions<WrongFieldTypeDbContext> options)
+        : DbContext(options)
+    {
+        public DbSet<EntityWithWrongFieldType> Items => Set<EntityWithWrongFieldType>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<EntityWithWrongFieldType>(b =>
+            {
+                b.HasKey(e => e.Id);
+                b.MaybeProperty(e => e.Website);
+            });
+    }
+
+    #endregion
 }
