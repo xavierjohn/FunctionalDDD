@@ -303,7 +303,7 @@ When adding or modifying a package, verify these documentation artifacts:
 | Article TOC | `docs/docfx_project/articles/toc.yml` | Add entry under the appropriate section (e.g., Integration Guides) |
 | `NUGET_README.md` | `Trellis.{Package}/NUGET_README.md` | Create or update — this is the NuGet.org package description |
 | `README.md` | `Trellis.{Package}/README.md` | Create or update — this is the GitHub-facing documentation |
-| `trellis-api-reference` | `trellis-api-reference` (repo root) | Update the AI API reference with any new or changed public types, methods, or extension methods — this document is consumed by AI coding assistants |
+| `trellis-api-reference.md` | `trellis-api-reference.md` (repo root) | Update the AI API reference with any new or changed public types, methods, or extension methods — this document is consumed by AI coding assistants |
 
 ```csharp
 /// <summary>
