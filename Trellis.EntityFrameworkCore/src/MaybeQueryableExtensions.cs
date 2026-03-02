@@ -148,7 +148,9 @@ public static class MaybeQueryableExtensions
                 "Expression must be a simple property access (e.g., c => c.Phone).",
                 nameof(propertySelector));
 
-        var backingFieldName = $"_{char.ToLowerInvariant(property.Name[0])}{property.Name[1..]}";
+        var backingFieldName = property.Name.Length == 1
+            ? $"_{char.ToLowerInvariant(property.Name[0])}"
+            : $"_{char.ToLowerInvariant(property.Name[0])}{property.Name[1..]}";
         var innerType = typeof(TInner);
         var nullableType = innerType.IsValueType
             ? typeof(Nullable<>).MakeGenericType(innerType)

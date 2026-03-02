@@ -169,5 +169,7 @@ public static class MaybePropertyExtensions
     }
 
     private static string ToBackingFieldName(string propertyName) =>
-        $"_{char.ToLowerInvariant(propertyName[0])}{propertyName[1..]}";
+        propertyName.Length == 1
+            ? $"_{char.ToLowerInvariant(propertyName[0])}"
+            : $"_{char.ToLowerInvariant(propertyName[0])}{propertyName[1..]}";
 }
