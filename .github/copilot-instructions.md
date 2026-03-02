@@ -530,6 +530,53 @@ var matches = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsy
 
 These methods rewrite the expression tree to target the backing field via `EF.Property<T?>`, so EF Core can translate the query to SQL.
 
+## Money with EF Core
+
+`Money` properties are automatically mapped as owned types by `ApplyTrellisConventions` — no `OwnsOne` configuration needed.
+
+### How It Works
+
+The `MoneyConvention` (registered by `ApplyTrellisConventions`) uses two EF Core convention interfaces:
+- `IModelInitializedConvention` — calls `modelBuilder.Owned(typeof(Money))` to pre-register Money as an owned type before entity discovery runs
+- `IModelFinalizingConvention` — sets column names, precision, and max length on the owned Money properties
+
+### Column Naming Convention
+
+| Property Name | Amount Column | Currency Column |
+|---------------|---------------|-----------------|
+| `Price` | `Price` | `PriceCurrency` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` |
+
+Amount columns: `decimal(18,3)`. Currency columns: `nvarchar(3)` (ISO 4217). Scale 3 accommodates all ISO 4217 minor units (0 for JPY, 2 for USD/EUR, 3 for BHD/KWD/OMR/TND).
+
+### Entity Declaration
+
+Just declare `Money` properties — no special backing fields or configuration needed:
+
+```csharp
+public class Order
+{
+    public OrderId Id { get; set; } = null!;
+    public Money Price { get; set; } = null!;
+    public Money ShippingCost { get; set; } = null!;
+}
+```
+
+### Explicit Override
+
+If you need custom column names, use `OwnsOne` in `OnModelCreating` — explicit configuration takes precedence:
+
+```csharp
+modelBuilder.Entity<Order>(b =>
+{
+    b.OwnsOne(o => o.Price, money =>
+    {
+        money.Property(m => m.Amount).HasColumnName("UnitPrice").HasPrecision(19, 4);
+        money.Property(m => m.Currency).HasColumnName("UnitCurrency");
+    });
+});
+```
+
 ## Known Namespace Collisions
 
 ### `Trellis.Unit` vs `Mediator.Unit`
