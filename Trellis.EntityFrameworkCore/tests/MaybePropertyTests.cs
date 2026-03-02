@@ -229,7 +229,8 @@ public class MaybePropertyTests : IDisposable
 
         act.Should().Throw<ArgumentException>()
             .WithMessage("*does not declare a private backing field '_website'*")
-            .WithMessage("*for Maybe<> property 'Website'*");
+            .WithMessage("*for Maybe<> property 'Website'*")
+            .WithMessage("*Declare: private Url? _website;*");
     }
 
     [Fact]
@@ -244,7 +245,7 @@ public class MaybePropertyTests : IDisposable
         var act = () => context.Model;
 
         act.Should().Throw<ArgumentException>()
-            .WithMessage("*is of type*but expected*");
+            .WithMessage("*is of type 'String?'*but expected 'Url?'*");
     }
 
     /// <summary>Entity with a Maybe property but no backing field.</summary>
@@ -305,7 +306,7 @@ public class MaybePropertyTests : IDisposable
         var act = () => context.Model;
 
         act.Should().Throw<ArgumentException>()
-            .WithMessage("*is of type 'String'*but expected 'DateTime?'*");
+            .WithMessage("*is of type 'String?'*but expected 'DateTime?'*");
     }
 
     /// <summary>Entity with a value-type Maybe and a wrong backing field type.</summary>

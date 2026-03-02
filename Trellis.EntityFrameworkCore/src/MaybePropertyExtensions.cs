@@ -154,6 +154,11 @@ public static class MaybePropertyExtensions
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             return $"{type.GetGenericArguments()[0].Name}?";
 
+        // Reference types are naturally nullable — append ? for clarity in
+        // nullable-enabled projects (e.g., "Url?" instead of "Url").
+        if (!type.IsValueType)
+            return $"{type.Name}?";
+
         return type.Name;
     }
 
