@@ -303,6 +303,7 @@ When adding or modifying a package, verify these documentation artifacts:
 | Article TOC | `docs/docfx_project/articles/toc.yml` | Add entry under the appropriate section (e.g., Integration Guides) |
 | `NUGET_README.md` | `Trellis.{Package}/NUGET_README.md` | Create or update — this is the NuGet.org package description |
 | `README.md` | `Trellis.{Package}/README.md` | Create or update — this is the GitHub-facing documentation |
+| `trellis-api-reference.md` | `trellis-api-reference.md` (repo root) | Update the AI API reference with any new or changed public types, methods, or extension methods — this document is consumed by AI coding assistants |
 
 ```csharp
 /// <summary>
@@ -450,3 +451,99 @@ Set-Content $path -Value $content -NoNewline
 When running PowerShell commands in the terminal:
 - Avoid long or complex scripts — they tend to get stuck or timeout
 - Use smaller, targeted file edits with the `replace_string_in_file` tool instead of large PowerShell scripts for file manipulation
+
+## Maybe\<T\> with EF Core
+
+`Maybe<T>` is a `readonly struct`. EF Core refuses to mark non-nullable struct properties as optional — calling `IsRequired(false)` or setting `IsNullable = true` throws `InvalidOperationException`. This is a hard limitation in EF Core's metadata layer.
+
+### Solution: Backing-Field Pattern with `MaybeProperty`
+
+Use a private nullable backing field for the inner type, with a computed `Maybe<T>` property. The `MaybeProperty` extension method (from `Trellis.EntityFrameworkCore`) automates the EF Core configuration:
+
+```csharp
+// Entity — backing field + computed Maybe<T> property
+public class Customer
+{
+    public CustomerId Id { get; set; } = null!;
+
+    private PhoneNumber? _phone;
+    public Maybe<PhoneNumber> Phone
+    {
+        get => _phone is not null ? Maybe.From(_phone) : Maybe.None<PhoneNumber>();
+        set => _phone = value.HasValue ? value.Value : null;
+    }
+
+    private DateTime? _submittedAt;
+    public Maybe<DateTime> SubmittedAt
+    {
+        get => _submittedAt.HasValue ? Maybe.From(_submittedAt.Value) : Maybe.None<DateTime>();
+        set => _submittedAt = value.HasValue ? value.Value : null;
+    }
+}
+```
+
+```csharp
+// OnModelCreating — one line per Maybe<T> property
+modelBuilder.Entity<Customer>(b =>
+{
+    b.HasKey(c => c.Id);
+    b.MaybeProperty(c => c.Phone).HasMaxLength(20);
+    b.MaybeProperty(c => c.SubmittedAt);
+});
+```
+
+### What `MaybeProperty` Does
+
+1. Ignores the `Maybe<T>` CLR property (EF Core can't map structs as nullable)
+2. Maps the private `_camelCase` backing field as the EF property
+3. Marks the backing field as optional (`IsRequired(false)`)
+4. Configures field-only access mode
+
+### Naming Convention
+
+The backing field must follow `_camelCase` naming from the property name:
+
+| Property | Backing Field |
+|----------|---------------|
+| `Phone` | `_phone` |
+| `SubmittedAt` | `_submittedAt` |
+| `AlternateEmail` | `_alternateEmail` |
+
+### Value Converters
+
+Trellis scalar value objects (e.g., `PhoneNumber`, `EmailAddress`) get their converters automatically from `ApplyTrellisConventions`. No extra `HasConversion` call is needed. For plain CLR types (`DateTime?`, `string?`), EF Core handles them natively.
+
+### Querying Maybe\<T\> Properties
+
+Because `MaybeProperty` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use the query extensions instead of raw `EF.Property` calls:
+
+```csharp
+// WhereNone — WHERE column IS NULL
+var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
+
+// WhereHasValue — WHERE column IS NOT NULL
+var withPhone = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
+
+// WhereEquals — WHERE column = @value
+var matches = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+```
+
+These methods rewrite the expression tree to target the backing field via `EF.Property<T?>`, so EF Core can translate the query to SQL.
+
+## Known Namespace Collisions
+
+### `Trellis.Unit` vs `Mediator.Unit`
+
+Projects referencing both `Trellis.Results` and `Mediator` will encounter ambiguous `Unit` references. Both libraries define a `Unit` type.
+
+**Workarounds:**
+
+```csharp
+// Preferred: Use parameterless Result.Success() — avoids referencing Unit entirely
+return Result.Success();  // instead of Result.Success(Unit.Value)
+
+// Alternative: Using alias (if you need to reference Unit directly)
+using Unit = Trellis.Unit;
+```
+
+The parameterless `Result.Success()` is preferred — it avoids the type name entirely.

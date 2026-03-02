@@ -226,6 +226,7 @@ public class ApplyTrellisConventionsTests : IDisposable
                     .HasMaxLength(100);
                 b.Property(c => c.Email).HasMaxLength(254);
                 b.Property(c => c.CreatedAt).IsRequired();
+                b.MaybeProperty(c => c.Phone);
             });
     }
 

@@ -34,6 +34,7 @@ internal class TestDbContext : DbContext
             b.Property(c => c.Email).HasMaxLength(254).IsRequired();
             b.HasIndex(c => c.Email).IsUnique(); // For duplicate key tests
             b.Property(c => c.CreatedAt).IsRequired();
+            b.MaybeProperty(c => c.Phone).HasMaxLength(20);
         });
 
         modelBuilder.Entity<TestOrder>(b =>
@@ -42,6 +43,8 @@ internal class TestDbContext : DbContext
             b.HasOne<TestCustomer>().WithMany().HasForeignKey(o => o.CustomerId);
             b.Property(o => o.Amount).IsRequired();
             b.Property(o => o.Status).IsRequired();
+            b.MaybeProperty(o => o.OptionalStatus);
+            b.MaybeProperty(o => o.SubmittedAt);
         });
     }
 
