@@ -1,0 +1,81 @@
+namespace Trellis.EntityFrameworkCore;
+
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Trellis.Primitives;
+
+/// <summary>
+/// Convention that automatically maps <see cref="Money"/> properties as owned types
+/// with standardized column naming.
+/// </summary>
+/// <remarks>
+/// <para>
+/// For a property named <c>{Name}</c> of type <see cref="Money"/>, two columns are generated:
+/// </para>
+/// <list type="bullet">
+/// <item><c>{Name}</c> column — <c>decimal(18,2)</c> for the monetary amount</item>
+/// <item><c>{Name}Currency</c> column — <c>nvarchar(3)</c> for the ISO 4217 currency code</item>
+/// </list>
+/// <para>
+/// Money is registered as an owned type during model initialization
+/// (<see cref="IModelInitializedConvention"/>), which instructs EF Core to treat all
+/// Money properties as ownership navigations from the start.
+/// Column naming and precision are applied during model finalization
+/// (<see cref="IModelFinalizingConvention"/>).
+/// </para>
+/// <para>
+/// Explicit <c>OwnsOne</c> configuration in <c>OnModelCreating</c> takes precedence;
+/// convention-level annotations never override explicit-level configuration.
+/// </para>
+/// </remarks>
+internal sealed class MoneyConvention : IModelInitializedConvention, IModelFinalizingConvention
+{
+    private static readonly Type s_moneyType = typeof(Money);
+
+    /// <summary>
+    /// Marks <see cref="Money"/> as an owned type so that EF Core's built-in
+    /// <c>NavigationDiscoveryConvention</c> creates ownership relationships
+    /// instead of regular navigations.
+    /// </summary>
+    public void ProcessModelInitialized(
+        IConventionModelBuilder modelBuilder,
+        IConventionContext<IConventionModelBuilder> context) =>
+        modelBuilder.Owned(s_moneyType);
+
+    /// <summary>
+    /// After the model is built, configures column names, precision, and max-length
+    /// for all owned <see cref="Money"/> entity types.
+    /// </summary>
+    public void ProcessModelFinalizing(
+        IConventionModelBuilder modelBuilder,
+        IConventionContext<IConventionModelBuilder> context)
+    {
+        foreach (var entityType in modelBuilder.Metadata.GetEntityTypes().ToList())
+        {
+            if (entityType.ClrType != s_moneyType || !entityType.IsOwned())
+                continue;
+
+            var ownership = entityType.FindOwnership();
+            var navigationName = ownership?.PrincipalToDependent?.Name;
+            if (navigationName is null)
+                continue;
+
+            // Amount → column "{NavigationName}", decimal(18,2)
+            var amount = entityType.FindProperty(nameof(Money.Amount));
+            if (amount is not null)
+            {
+                amount.Builder.HasAnnotation("Relational:ColumnName", navigationName);
+                amount.Builder.HasPrecision(18);
+                amount.Builder.HasScale(2);
+            }
+
+            // Currency → column "{NavigationName}Currency", max-length 3
+            var currency = entityType.FindProperty(nameof(Money.Currency));
+            if (currency is not null)
+            {
+                currency.Builder.HasAnnotation("Relational:ColumnName", navigationName + "Currency");
+                currency.Builder.HasMaxLength(3);
+            }
+        }
+    }
+}

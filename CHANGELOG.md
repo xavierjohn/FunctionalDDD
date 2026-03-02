@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Trellis.EntityFrameworkCore — Money Convention
+
+- **`MoneyConvention`** — `ApplyTrellisConventions` now automatically maps `Money` properties as owned types with `{PropertyName}` (decimal 18,2) + `{PropertyName}Currency` (nvarchar 3) columns. No `OwnsOne` configuration needed. Explicit `OwnsOne` takes precedence.
+
+#### Trellis.Primitives — Money EF Core Support
+
+- **`Money`** — Added private parameterless constructor and private setters on `Amount`/`Currency` for EF Core materialization support. No public API changes.
+
 #### Trellis.Authorization — NEW Package!
 
 Lightweight authorization primitives with zero dependencies beyond `Trellis.Results`:

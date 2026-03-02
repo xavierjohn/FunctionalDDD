@@ -19,12 +19,15 @@ public class Money : ValueObject
     /// <summary>
     /// Gets the monetary amount in the currency's base unit.
     /// </summary>
-    public decimal Amount { get; }
+    public decimal Amount { get; private set; }
 
     /// <summary>
     /// Gets the ISO 4217 currency code.
     /// </summary>
-    public CurrencyCode Currency { get; }
+    public CurrencyCode Currency { get; private set; }
+
+    // ReSharper disable once UnusedMember.Local — used by EF Core for materialization
+    private Money() => Currency = null!;
 
     private Money(decimal amount, CurrencyCode currency)
     {

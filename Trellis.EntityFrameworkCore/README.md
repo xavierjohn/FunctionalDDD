@@ -8,6 +8,7 @@ Thin integration layer that eliminates repetitive EF Core boilerplate when using
 
 - [Installation](#installation)
 - [Convention-Based Value Converters](#convention-based-value-converters)
+- [Money Property Convention](#money-property-convention)
 - [Result-Returning SaveChanges](#result-returning-savechanges)
 - [Query Extensions](#query-extensions)
 - [Database Exception Classification](#database-exception-classification)
@@ -50,6 +51,7 @@ public class AppDbContext : DbContext
     {
         // Scans your assembly for CustomerId, OrderStatus, etc.
         // Also auto-scans Trellis.Primitives for EmailAddress, Url, PhoneNumber, etc.
+        // Also auto-maps Money properties as owned types (Amount + Currency columns)
         configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
     }
 
@@ -72,8 +74,9 @@ public class AppDbContext : DbContext
 |-------------------|---------------|-----------|
 | `IScalarValue<TSelf, TPrimitive>` | `TPrimitive` (string, Guid, int, decimal) | `Value` → DB, `Create()` ← DB |
 | `RequiredEnum<TSelf>` | `string` | `Name` → DB, `TryFromName()` ← DB |
+| `Money` | Owned type: `decimal(18,2)` + `nvarchar(3)` | Auto-mapped as owned entity (Amount + Currency columns) |
 
-This covers all built-in types: `RequiredString<T>`, `RequiredGuid<T>`, `RequiredInt<T>`, `RequiredDecimal<T>`, `RequiredEnum<T>`, `EmailAddress`, and any custom `ScalarValueObject<TSelf, T>`.
+This covers all built-in types: `RequiredString<T>`, `RequiredGuid<T>`, `RequiredInt<T>`, `RequiredDecimal<T>`, `RequiredEnum<T>`, `EmailAddress`, `Money`, and any custom `ScalarValueObject<TSelf, T>`.
 
 ### Multiple Assemblies
 
@@ -84,6 +87,43 @@ configurationBuilder.ApplyTrellisConventions(
     typeof(CustomerId).Assembly,      // Your domain assembly
     typeof(SharedTypes).Assembly);    // Another assembly
 // Trellis.Primitives is always included automatically
+```
+
+## Money Property Convention
+
+`Money` properties on entities are automatically mapped as owned types — no `OwnsOne` configuration needed:
+
+```csharp
+public class Order
+{
+    public OrderId Id { get; set; } = null!;
+    public Money Price { get; set; } = null!;
+    public Money ShippingCost { get; set; } = null!;
+}
+```
+
+### Column Naming
+
+| Property Name | Amount Column | Currency Column |
+|---------------|---------------|------------------|
+| `Price` | `Price` | `PriceCurrency` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` |
+
+Amount columns use `decimal(18,2)` precision. Currency columns use `nvarchar(3)` (ISO 4217).
+
+### Explicit Override
+
+If you need custom column names or settings, use `OwnsOne` in `OnModelCreating` — explicit configuration takes precedence over the convention:
+
+```csharp
+modelBuilder.Entity<Order>(b =>
+{
+    b.OwnsOne(o => o.Price, money =>
+    {
+        money.Property(m => m.Amount).HasColumnName("UnitPrice").HasPrecision(19, 4);
+        money.Property(m => m.Currency).HasColumnName("UnitCurrency");
+    });
+});
 ```
 
 ## Result-Returning SaveChanges

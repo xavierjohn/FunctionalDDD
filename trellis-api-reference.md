@@ -955,7 +955,19 @@ IQueryable<T> Where<T>(this IQueryable<T> query, Specification<T> specification)
 // In OnModelCreating or ConfigureConventions
 configurationBuilder.ApplyTrellisConventions(typeof(Order).Assembly);
 // Auto-registers converters for all IScalarValue and RequiredEnum types
+// Auto-maps Money properties as owned types (Amount + Currency columns)
 ```
+
+### Money Property Convention
+
+`Money` properties on entities are automatically mapped as owned types — no `OwnsOne` configuration needed. Column naming convention:
+
+| Property Name | Amount Column | Currency Column | Amount Type | Currency Type |
+|---------------|---------------|-----------------|-------------|---------------|
+| `Price` | `Price` | `PriceCurrency` | `decimal(18,2)` | `nvarchar(3)` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,2)` | `nvarchar(3)` |
+
+Explicit `OwnsOne` configuration takes precedence over the convention.
 
 ### Maybe\<T\> Property Mapping
 

@@ -12,6 +12,7 @@ Integrate Railway-Oriented Programming with Entity Framework Core for type-safe 
 - [Result vs Maybe Pattern](#result-vs-maybe-pattern)
 - [Query Extensions](#query-extensions)
 - [Handling Database Exceptions](#handling-database-exceptions)
+- [Money Property Convention](#money-property-convention)
 - [GUID V7 for Entity IDs](#guid-v7-for-entity-ids)
 
 > [!TIP]
@@ -29,7 +30,7 @@ This package provides:
 
 | Feature | Description |
 |---------|-------------|
-| `ApplyTrellisConventions` | Auto-registers EF Core value converters for all Trellis value objects |
+| `ApplyTrellisConventions` | Auto-registers EF Core value converters for all Trellis value objects and auto-maps `Money` as owned types |
 | `SaveChangesResultAsync` | Wraps `SaveChangesAsync` — returns `Result<int>` instead of throwing |
 | `SaveChangesResultUnitAsync` | Same as above but returns `Result<Unit>` |
 | `DbExceptionClassifier` | Provider-agnostic exception classification (SQL Server, PostgreSQL, SQLite) |
@@ -772,6 +773,56 @@ var orders = await context.Orders
 | **Database Index Performance** | ✅ Sequential (better) | ❌ Random (fragmentation) |
 | **Natural Ordering** | ✅ By creation time | ❌ Random |
 | **Use Case** | Orders, Events, Logs | Legacy systems |
+
+## Money Property Convention
+
+`Money` properties on entities are automatically mapped as owned types by `ApplyTrellisConventions` — no `OwnsOne` configuration needed.
+
+### How It Works
+
+The `MoneyConvention` (registered by `ApplyTrellisConventions`) uses two EF Core convention interfaces:
+- `IModelInitializedConvention` — calls `modelBuilder.Owned(typeof(Money))` to pre-register Money as an owned type before entity discovery runs
+- `IModelFinalizingConvention` — sets column names, precision, and max length on the owned Money properties
+
+### Entity Declaration
+
+Just declare `Money` properties on your entities:
+
+```csharp
+public class Order
+{
+    public OrderId Id { get; set; } = null!;
+    public Money Price { get; set; } = null!;
+    public Money ShippingCost { get; set; } = null!;
+}
+```
+
+### Column Naming Convention
+
+| Property Name | Amount Column | Currency Column |
+|---------------|---------------|------------------|
+| `Price` | `Price` | `PriceCurrency` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` |
+
+Amount columns use `decimal(18,2)` precision. Currency columns use `nvarchar(3)` (ISO 4217).
+
+### Explicit Override
+
+If you need custom column names or precision, use `OwnsOne` in `OnModelCreating` — explicit configuration takes precedence:
+
+```csharp
+modelBuilder.Entity<Order>(b =>
+{
+    b.OwnsOne(o => o.Price, money =>
+    {
+        money.Property(m => m.Amount).HasColumnName("UnitPrice").HasPrecision(19, 4);
+        money.Property(m => m.Currency).HasColumnName("UnitCurrency");
+    });
+});
+```
+
+> [!NOTE]
+> Multiple `Money` properties on the same entity work automatically — each gets its own pair of columns.
 
 ## Complete Example
 

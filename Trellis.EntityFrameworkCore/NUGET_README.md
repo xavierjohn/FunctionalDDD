@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     {
         // Scans your assembly for CustomerId, OrderStatus, etc.
         // Also auto-scans Trellis.Primitives for EmailAddress, Url, PhoneNumber, etc.
+        // Also auto-maps Money properties as owned types (Amount + Currency columns)
         configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
     }
 
@@ -38,6 +39,17 @@ public class AppDbContext : DbContext
     }
 }
 ```
+
+### Money Properties — Zero Configuration
+
+`Money` properties are automatically mapped as owned types with proper column naming and precision:
+
+| Property Name | Amount Column | Currency Column | Amount Type | Currency Type |
+|---------------|---------------|-----------------|-------------|---------------|
+| `Price` | `Price` | `PriceCurrency` | `decimal(18,2)` | `nvarchar(3)` |
+| `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,2)` | `nvarchar(3)` |
+
+No `OwnsOne` calls needed — just declare `Money` properties on your entities and they work.
 
 ## Result-Returning SaveChanges
 
