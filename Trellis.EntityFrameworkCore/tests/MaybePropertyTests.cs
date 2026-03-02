@@ -293,5 +293,45 @@ public class MaybePropertyTests : IDisposable
             });
     }
 
+    [Fact]
+    public void MaybeProperty_WrongFieldType_ValueTypeInner_ThrowsWithNullableTypeName()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new WrongFieldTypeValueTypeDbContext(
+            new DbContextOptionsBuilder<WrongFieldTypeValueTypeDbContext>().UseSqlite(connection).Options);
+
+        var act = () => context.Model;
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*is of type 'String'*but expected 'DateTime?'*");
+    }
+
+    /// <summary>Entity with a value-type Maybe and a wrong backing field type.</summary>
+    private class EntityWithWrongFieldTypeValueType
+    {
+        public Guid Id { get; set; }
+        private string? _createdAt; // Wrong — should be DateTime?
+        public Maybe<DateTime> CreatedAt
+        {
+            get => DateTime.TryParse(_createdAt, out var dt) ? Maybe.From(dt) : Maybe.None<DateTime>();
+            set => _createdAt = value.HasValue ? value.Value.ToString("O") : null;
+        }
+    }
+
+    private class WrongFieldTypeValueTypeDbContext(DbContextOptions<WrongFieldTypeValueTypeDbContext> options)
+        : DbContext(options)
+    {
+        public DbSet<EntityWithWrongFieldTypeValueType> Items => Set<EntityWithWrongFieldTypeValueType>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<EntityWithWrongFieldTypeValueType>(b =>
+            {
+                b.HasKey(e => e.Id);
+                b.MaybeProperty(e => e.CreatedAt);
+            });
+    }
+
     #endregion
 }
