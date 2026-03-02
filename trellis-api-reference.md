@@ -957,12 +957,66 @@ configurationBuilder.ApplyTrellisConventions(typeof(Order).Assembly);
 // Auto-registers converters for all IScalarValue and RequiredEnum types
 ```
 
+### Maybe\<T\> Property Mapping
+
+`Maybe<T>` is a `readonly struct`. EF Core cannot mark non-nullable struct properties as optional — calling `IsRequired(false)` or setting `IsNullable = true` throws `InvalidOperationException`. Use the backing-field pattern with `MaybeProperty`:
+
+```csharp
+// Extension method
+PropertyBuilder MaybeProperty<TEntity, TInner>(
+    this EntityTypeBuilder<TEntity> builder,
+    Expression<Func<TEntity, Maybe<TInner>>> propertyExpression)
+    where TEntity : class
+    where TInner : notnull
+// 1. Ignores the Maybe<T> CLR property
+// 2. Maps private _camelCase backing field as optional
+// 3. Returns PropertyBuilder for chaining (HasMaxLength, etc.)
+
+// Entity — backing field + computed Maybe<T> property
+public class Customer
+{
+    public CustomerId Id { get; set; } = null!;
+
+    private PhoneNumber? _phone;
+    public Maybe<PhoneNumber> Phone
+    {
+        get => _phone is not null ? Maybe.From(_phone) : Maybe.None<PhoneNumber>();
+        set => _phone = value.HasValue ? value.Value : null;
+    }
+}
+
+// OnModelCreating
+modelBuilder.Entity<Customer>(b =>
+{
+    b.HasKey(c => c.Id);
+    b.MaybeProperty(c => c.Phone).HasMaxLength(20);
+});
+```
+
+Backing field naming: `Phone` → `_phone`, `SubmittedAt` → `_submittedAt`, `AlternateEmail` → `_alternateEmail`.
+
 ### Exception Classification
 
 ```csharp
 bool DbExceptionClassifier.IsDuplicateKey(DbUpdateException ex)       // SQL Server, PostgreSQL, SQLite
 bool DbExceptionClassifier.IsForeignKeyViolation(DbUpdateException ex)
 string? DbExceptionClassifier.ExtractConstraintDetail(DbUpdateException ex)
+```
+
+---
+
+# Known Issues & Workarounds
+
+## Trellis.Unit vs Mediator.Unit
+
+Projects referencing both `Trellis.Results` and `Mediator` will encounter ambiguous `Unit` references. Both libraries define a `Unit` type.
+
+```csharp
+// Preferred: Use parameterless Result.Success() — avoids referencing Unit entirely
+return Result.Success();  // instead of Result.Success(Unit.Value)
+
+// Alternative: Using alias (if you need to reference Unit directly)
+using Unit = Trellis.Unit;
 ```
 
 ---
@@ -1122,6 +1176,18 @@ public record CreateProfileRequest(
 var result = EmailAddress.TryCreate(dto.Email)
     .Combine(Maybe.Optional(dto.MiddleName.AsNullable(), MiddleName.TryCreate))
     .Bind((email, middleName) => CreateProfile(email, middleName));
+
+// EF Core persistence — use backing-field pattern (see §12 MaybeProperty)
+public class Profile
+{
+    private Url? _website;
+    public Maybe<Url> Website
+    {
+        get => _website is not null ? Maybe.From(_website) : Maybe.None<Url>();
+        set => _website = value.HasValue ? value.Value : null;
+    }
+}
+// OnModelCreating: b.MaybeProperty(p => p.Website);
 ```
 
 ## Convert Result to HTTP Response
