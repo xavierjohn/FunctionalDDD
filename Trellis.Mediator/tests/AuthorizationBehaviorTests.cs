@@ -50,9 +50,9 @@ public class AuthorizationBehaviorTests
     public async Task Handle_ActorMissingMultiplePermissions_ErrorListsAllMissing()
     {
         var actorProvider = FakeActorProvider.WithPermissions("user-1", "Other.Read");
-        var behavior = new AuthorizationBehavior<DualAuthCommand, Result<string>>(actorProvider);
-        var command = new DualAuthCommand("owner-1");
-        var (next, tracker) = NextDelegate.TrackingAsync<DualAuthCommand, Result<string>>(
+        var behavior = new AuthorizationBehavior<MultiPermissionCommand, Result<string>>(actorProvider);
+        var command = new MultiPermissionCommand("data");
+        var (next, tracker) = NextDelegate.TrackingAsync<MultiPermissionCommand, Result<string>>(
             Result.Success("should not reach"));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);

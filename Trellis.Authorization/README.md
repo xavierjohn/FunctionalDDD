@@ -4,7 +4,7 @@ Lightweight authorization primitives for [Trellis](https://github.com/xavierjohn
 
 ## Why a Separate Package?
 
-Authorization is a domain concern, not a CQRS concern. `Actor`, `IActorProvider`, `IAuthorize`, and `IAuthorizeResource` are useful in:
+Authorization is a domain concern, not a CQRS concern. `Actor`, `IActorProvider`, `IAuthorize`, and `IAuthorizeResource<TResource>` are useful in:
 
 - Web services without CQRS (middleware, endpoint filters, service classes)
 - Domain services that need to check permissions
@@ -26,7 +26,9 @@ dotnet add package Trellis.Authorization
 | `Actor` | Sealed record representing the current user (`Id` + `Permissions`) |
 | `IActorProvider` | Abstraction for resolving the current actor — implement in your API layer |
 | `IAuthorize` | Marker interface for static permission requirements (`RequiredPermissions`) |
-| `IAuthorizeResource` | Marker interface for resource-based authorization (`Authorize(Actor)`) |
+| `IAuthorizeResource<TResource>` | Resource-based authorization that receives a loaded resource (`Authorize(Actor, TResource)`) |
+| `IResourceLoader<TMessage, TResource>` | Loads the resource for `IAuthorizeResource<TResource>` — register as scoped in DI |
+| `ResourceLoaderById<TMessage, TResource, TId>` | Convenience base for the common extract-ID-and-load pattern |
 
 ## Usage
 
@@ -103,12 +105,12 @@ public sealed record PublishCommand(string DocumentId)
     public IReadOnlyList<string> RequiredPermissions => ["Documents.Publish"];
 }
 
-// Resource-based authorization
-public sealed record EditCommand(string DocumentId, string OwnerId, string NewContent)
-    : ICommand<Result<Document>>, IAuthorizeResource
+// Resource-based authorization with loaded resource
+public sealed record EditCommand(string DocumentId, string NewContent)
+    : ICommand<Result<Document>>, IAuthorizeResource<Document>
 {
-    public IResult Authorize(Actor actor) =>
-        actor.Id == OwnerId || actor.HasPermission("Documents.EditAny")
+    public IResult Authorize(Actor actor, Document document) =>
+        actor.Id == document.OwnerId || actor.HasPermission("Documents.EditAny")
             ? Result.Success()
             : Result.Failure(Error.Forbidden("Only the owner can edit"));
 }

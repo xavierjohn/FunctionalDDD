@@ -36,29 +36,12 @@ internal sealed record AdminCommand(string Data)
 }
 
 /// <summary>
-/// Command with resource-based authorization.
+/// Command with multiple required permissions for testing missing-permission reporting.
 /// </summary>
-internal sealed record OwnerOnlyCommand(string ResourceOwnerId, string Data)
-    : ICommand<Result<string>>, IAuthorizeResource
-{
-    public IResult Authorize(Actor actor) =>
-        actor.Id == ResourceOwnerId
-            ? Result.Success()
-            : Result.Failure(Error.Forbidden("Not the resource owner"));
-}
-
-/// <summary>
-/// Command with both static and resource-based authorization.
-/// </summary>
-internal sealed record DualAuthCommand(string ResourceOwnerId)
-    : ICommand<Result<string>>, IAuthorize, IAuthorizeResource
+internal sealed record MultiPermissionCommand(string Data)
+    : ICommand<Result<string>>, IAuthorize
 {
     public IReadOnlyList<string> RequiredPermissions => ["Orders.Write"];
-
-    public IResult Authorize(Actor actor) =>
-        actor.Id == ResourceOwnerId || actor.HasPermission("Orders.WriteAny")
-            ? Result.Success()
-            : Result.Failure(Error.Forbidden("Cannot modify another user's resource"));
 }
 
 /// <summary>
@@ -80,4 +63,36 @@ internal sealed record TestQuery(int Id)
         Id <= 0
             ? Result.Failure<string>(Error.Validation("Id must be positive.", "Id"))
             : Result.Success(Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+}
+
+/// <summary>
+/// Resource used in resource-based authorization tests.
+/// </summary>
+internal sealed record TestResource(string Id, string OwnerId);
+
+/// <summary>
+/// Command with generic resource-based authorization (<see cref="IAuthorizeResource{TResource}"/>).
+/// Requires the loaded resource to check ownership.
+/// </summary>
+internal sealed record ResourceOwnerCommand(string ResourceId)
+    : ICommand<Result<string>>, IAuthorizeResource<TestResource>
+{
+    public IResult Authorize(Actor actor, TestResource resource) =>
+        actor.Id == resource.OwnerId
+            ? Result.Success()
+            : Result.Failure(Error.Forbidden("Only the resource owner can perform this operation."));
+}
+
+/// <summary>
+/// Command with both static permissions and generic resource-based authorization.
+/// </summary>
+internal sealed record FullAuthResourceCommand(string ResourceId)
+    : ICommand<Result<string>>, IAuthorize, IAuthorizeResource<TestResource>
+{
+    public IReadOnlyList<string> RequiredPermissions => ["Resources.Write"];
+
+    public IResult Authorize(Actor actor, TestResource resource) =>
+        actor.Id == resource.OwnerId || actor.HasPermission("Resources.WriteAny")
+            ? Result.Success()
+            : Result.Failure(Error.Forbidden("Cannot modify another user's resource."));
 }

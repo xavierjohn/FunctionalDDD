@@ -2,7 +2,7 @@
 
 Result-aware pipeline behaviors for [martinothamar/Mediator](https://github.com/martinothamar/Mediator). This package bridges the Trellis `Result<T>` type system with Mediator's pipeline model, providing reusable, cross-cutting behaviors that understand success/failure and short-circuit correctly.
 
-Authorization types (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource`) live in the separate [Trellis.Authorization](../Trellis.Authorization/README.md) package, which has no Mediator dependency. This means you can use the same authorization primitives in non-CQRS scenarios.
+Authorization types (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource<TResource>`) live in the separate [Trellis.Authorization](../Trellis.Authorization/README.md) package, which has no Mediator dependency. This means you can use the same authorization primitives in non-CQRS scenarios.
 
 ## What It Is
 
@@ -10,7 +10,7 @@ A thin integration layer — **not** a mediator implementation. The actual media
 
 - **ValidationBehavior** — short-circuits on validation failure via `IValidate`
 - **AuthorizationBehavior** — checks static permissions via `IAuthorize`
-- **ResourceAuthorizationBehavior** — checks resource-based auth via `IAuthorizeResource`
+- **ResourceAuthorizationBehavior<TMessage, TResource, TResponse>** — loads resource via `IResourceLoader`, checks ownership via `IAuthorizeResource<TResource>`. Auto-discovered via `AddResourceAuthorization(Assembly)`.
 - **LoggingBehavior** — structured logging with duration and Result outcome
 - **TracingBehavior** — OpenTelemetry activity with Result status
 - **ExceptionBehavior** — catches unhandled exceptions as `Error.Unexpected` failures
@@ -33,6 +33,9 @@ services.AddMediator(options =>
     options.Assemblies = [typeof(MyCommand).Assembly];
     options.PipelineBehaviors = ServiceCollectionExtensions.PipelineBehaviors;
 });
+
+// Auto-discover IAuthorizeResource<T> commands and IResourceLoader<,> implementations
+services.AddResourceAuthorization(typeof(MyCommand).Assembly);
 ```
 
 ### 2. Define a command with validation
@@ -67,14 +70,23 @@ public sealed record DeleteOrderCommand(OrderId OrderId)
     public IReadOnlyList<string> RequiredPermissions => ["Orders.Delete"];
 }
 
-// Resource-based check
-public sealed record CancelOrderCommand(OrderId OrderId, string OrderOwnerId)
-    : ICommand<Result<Order>>, IAuthorizeResource
+// Resource-based check with loaded resource
+public sealed record CancelOrderCommand(OrderId OrderId)
+    : ICommand<Result<Order>>, IAuthorizeResource<Order>
 {
-    public IResult Authorize(Actor actor) =>
-        actor.Id == OrderOwnerId || actor.HasPermission("Orders.CancelAny")
+    public IResult Authorize(Actor actor, Order order) =>
+        actor.Id == order.OwnerId || actor.HasPermission("Orders.CancelAny")
             ? Result.Success()
             : Result.Failure(Error.Forbidden("Only the order owner or admins can cancel"));
+}
+
+// Resource loader registered in DI
+public sealed class CancelOrderResourceLoader(IOrderRepository repo)
+    : ResourceLoaderById<CancelOrderCommand, Order, OrderId>
+{
+    protected override OrderId GetId(CancelOrderCommand message) => message.OrderId;
+    protected override Task<Result<Order>> GetByIdAsync(OrderId id, CancellationToken ct) =>
+        repo.GetByIdAsync(id, ct);
 }
 ```
 
@@ -101,7 +113,7 @@ internal sealed class HttpActorProvider(IHttpContextAccessor accessor) : IActorP
 
 ```
 Request → ExceptionBehavior → TracingBehavior → LoggingBehavior
-  → AuthorizationBehavior → ResourceAuthorizationBehavior
+  → AuthorizationBehavior → ResourceAuthorizationBehavior<,,>
     → ValidationBehavior → Handler → Result<T>
 ```
 

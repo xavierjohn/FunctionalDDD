@@ -649,7 +649,13 @@ string? GetAttribute(string key)
 ```csharp
 interface IActorProvider { Actor GetCurrentActor(); }
 interface IAuthorize { IReadOnlyList<string> RequiredPermissions { get; } }
-interface IAuthorizeResource { IResult Authorize(Actor actor); }
+interface IAuthorizeResource<TResource> { IResult Authorize(Actor actor, TResource resource); }
+interface IResourceLoader<TMessage, TResource> { Task<Result<TResource>> LoadAsync(TMessage message, CancellationToken ct); }
+abstract class ResourceLoaderById<TMessage, TResource, TId> : IResourceLoader<TMessage, TResource>
+{
+    protected abstract TId GetId(TMessage message);
+    protected abstract Task<Result<TResource>> GetByIdAsync(TId id, CancellationToken ct);
+}
 ```
 
 ## ActorAttributes Constants
@@ -784,7 +790,9 @@ var result = await httpClient.GetAsync($"/api/orders/{id}")
 
 ### Pipeline Order
 
-Exception → Tracing → Logging → Authorization → ResourceAuthorization → Validation
+Exception → Tracing → Logging → Authorization → ResourceAuthorization (actor-only) → Validation
+
+Resource-based authorization with a loaded resource (`IAuthorizeResource<TResource>`) is auto-discovered via `AddResourceAuthorization(Assembly)`, or registered explicitly per-command via `AddResourceAuthorization<TMessage, TResource, TResponse>()` for AOT scenarios.
 
 ### Behaviors
 
@@ -794,7 +802,7 @@ Exception → Tracing → Logging → Authorization → ResourceAuthorization �
 | `TracingBehavior` | `IMessage` | OpenTelemetry Activity span |
 | `LoggingBehavior` | `IMessage` | Structured logging with duration |
 | `AuthorizationBehavior` | `IAuthorize, IMessage` | Checks `HasAllPermissions` → `Error.Forbidden` |
-| `ResourceAuthorizationBehavior` | `IAuthorizeResource, IMessage` | Delegates to `message.Authorize(actor)` |
+| `ResourceAuthorizationBehavior<,,>` | `IAuthorizeResource<TResource>, IMessage` | Loads resource via `IResourceLoader`, delegates to `message.Authorize(actor, resource)`. Auto-discovered via `AddResourceAuthorization(Assembly)`. |
 | `ValidationBehavior` | `IValidate, IMessage` | Calls `message.Validate()`, short-circuits |
 
 ### IValidate Interface
@@ -807,6 +815,13 @@ interface IValidate { IResult Validate(); }
 
 ```csharp
 services.AddTrellisBehaviors();
+
+// Recommended: scan-register both IAuthorizeResource<T> behaviors and IResourceLoader<,> implementations
+services.AddResourceAuthorization(typeof(CancelOrderCommand).Assembly);
+
+// OR: explicit per-command registration (AOT-compatible)
+services.AddResourceAuthorization<CancelOrderCommand, Order, Result<Order>>();
+services.AddResourceLoaders(typeof(CancelOrderResourceLoader).Assembly);
 ```
 
 ---

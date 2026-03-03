@@ -1,21 +1,25 @@
 ﻿namespace Trellis.Mediator.Tests;
 
+using Microsoft.Extensions.DependencyInjection;
+using Trellis.Authorization;
 using Trellis.Mediator.Tests.Helpers;
 
 /// <summary>
-/// Tests for <see cref="ResourceAuthorizationBehavior{TMessage, TResponse}"/>.
+/// Tests for <see cref="ResourceAuthorizationBehavior{TMessage, TResource, TResponse}"/>.
+/// The generic behavior loads a resource via <see cref="IResourceLoader{TMessage, TResource}"/>
+/// and authorizes against it before calling the handler.
 /// </summary>
 public class ResourceAuthorizationBehaviorTests
 {
-    #region Actor is resource owner
+    #region Resource loaded and actor is owner — calls handler
 
     [Fact]
-    public async Task Handle_ActorIsOwner_CallsNextAndReturnsHandlerResult()
+    public async Task Handle_ResourceFoundAndActorIsOwner_CallsNextAndReturnsSuccess()
     {
-        var actorProvider = FakeActorProvider.NoPermissions("owner-1");
-        var behavior = new ResourceAuthorizationBehavior<OwnerOnlyCommand, Result<string>>(actorProvider);
-        var command = new OwnerOnlyCommand("owner-1", "data");
-        var (next, tracker) = NextDelegate.TrackingAsync<OwnerOnlyCommand, Result<string>>(
+        var resource = new TestResource("res-1", "owner-1");
+        var behavior = CreateBehavior<ResourceOwnerCommand>("owner-1", resource);
+        var command = new ResourceOwnerCommand("res-1");
+        var (next, tracker) = NextDelegate.TrackingAsync<ResourceOwnerCommand, Result<string>>(
             Result.Success("Done"));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);
@@ -27,36 +31,73 @@ public class ResourceAuthorizationBehaviorTests
 
     #endregion
 
-    #region Actor is NOT resource owner
+    #region Resource loaded and actor is NOT owner — returns Forbidden
 
     [Fact]
-    public async Task Handle_ActorIsNotOwner_DoesNotCallNextAndReturnsForbidden()
+    public async Task Handle_ResourceFoundAndActorIsNotOwner_ReturnsForbiddenAndDoesNotCallHandler()
     {
-        var actorProvider = FakeActorProvider.NoPermissions("other-user");
-        var behavior = new ResourceAuthorizationBehavior<OwnerOnlyCommand, Result<string>>(actorProvider);
-        var command = new OwnerOnlyCommand("owner-1", "data");
-        var (next, tracker) = NextDelegate.TrackingAsync<OwnerOnlyCommand, Result<string>>(
+        var resource = new TestResource("res-1", "owner-1");
+        var behavior = CreateBehavior<ResourceOwnerCommand>("other-user", resource);
+        var command = new ResourceOwnerCommand("res-1");
+        var (next, tracker) = NextDelegate.TrackingAsync<ResourceOwnerCommand, Result<string>>(
             Result.Success("should not reach"));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<ForbiddenError>();
-        result.Error.Detail.Should().Contain("Not the resource owner");
+        result.Error.Detail.Should().Contain("Only the resource owner");
         tracker.WasInvoked.Should().BeFalse("handler should not be invoked when authorization fails");
     }
 
     #endregion
 
-    #region Actor with elevated permissions via DualAuthCommand
+    #region Resource not found — returns failure before auth check
 
     [Fact]
-    public async Task Handle_ActorIsNotOwnerButHasElevatedPermission_AllowsAccess()
+    public async Task Handle_ResourceNotFound_ReturnsNotFoundAndDoesNotCallHandler()
     {
-        var actorProvider = FakeActorProvider.WithPermissions("admin-user", "Orders.WriteAny");
-        var behavior = new ResourceAuthorizationBehavior<DualAuthCommand, Result<string>>(actorProvider);
-        var command = new DualAuthCommand("owner-1");
-        var (next, tracker) = NextDelegate.TrackingAsync<DualAuthCommand, Result<string>>(
+        var behavior = CreateBehavior<ResourceOwnerCommand>("owner-1", resource: null);
+        var command = new ResourceOwnerCommand("nonexistent");
+        var (next, tracker) = NextDelegate.TrackingAsync<ResourceOwnerCommand, Result<string>>(
+            Result.Success("should not reach"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().BeOfType<NotFoundError>();
+        tracker.WasInvoked.Should().BeFalse("handler should not be invoked when resource is not found");
+    }
+
+    #endregion
+
+    #region Resource not found — authorization not invoked
+
+    [Fact]
+    public async Task Handle_ResourceNotFound_AuthorizeIsNotCalled()
+    {
+        var behavior = CreateBehavior<TrackingAuthCommand>("owner-1", resource: null);
+        var command = new TrackingAuthCommand("nonexistent");
+        var (next, _) = NextDelegate.TrackingAsync<TrackingAuthCommand, Result<string>>(
+            Result.Success("done"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        command.AuthorizeWasCalled.Should().BeFalse("Authorize should not be called when resource loading fails");
+    }
+
+    #endregion
+
+    #region FullAuthResourceCommand — non-owner with elevated permission
+
+    [Fact]
+    public async Task Handle_NonOwnerWithElevatedPermission_AllowsAccess()
+    {
+        var resource = new TestResource("res-1", "owner-1");
+        var behavior = CreateBehavior<FullAuthResourceCommand>("admin-user", resource, "Resources.WriteAny");
+        var command = new FullAuthResourceCommand("res-1");
+        var (next, tracker) = NextDelegate.TrackingAsync<FullAuthResourceCommand, Result<string>>(
             Result.Success("Done"));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);
@@ -67,15 +108,15 @@ public class ResourceAuthorizationBehaviorTests
 
     #endregion
 
-    #region Custom error detail preserved
+    #region Error detail preserved from authorization
 
     [Fact]
     public async Task Handle_AuthorizationFails_PreservesCustomErrorDetail()
     {
-        var actorProvider = FakeActorProvider.NoPermissions("other-user");
-        var behavior = new ResourceAuthorizationBehavior<DualAuthCommand, Result<string>>(actorProvider);
-        var command = new DualAuthCommand("owner-1");
-        var (next, tracker) = NextDelegate.TrackingAsync<DualAuthCommand, Result<string>>(
+        var resource = new TestResource("res-1", "owner-1");
+        var behavior = CreateBehavior<FullAuthResourceCommand>("other-user", resource);
+        var command = new FullAuthResourceCommand("res-1");
+        var (next, tracker) = NextDelegate.TrackingAsync<FullAuthResourceCommand, Result<string>>(
             Result.Success("should not reach"));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);
@@ -83,6 +124,125 @@ public class ResourceAuthorizationBehaviorTests
         result.IsFailure.Should().BeTrue();
         result.Error.Detail.Should().Contain("Cannot modify another user's resource");
         tracker.WasInvoked.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Error detail preserved from loader
+
+    [Fact]
+    public async Task Handle_LoaderReturnsCustomError_ErrorIsPreserved()
+    {
+        var notFoundError = Error.NotFound("Order 'xyz' was not found.", "OrderId");
+        var behavior = CreateBehavior<ResourceOwnerCommand>("owner-1", resource: null, notFoundError: notFoundError);
+        var command = new ResourceOwnerCommand("xyz");
+        var (next, _) = NextDelegate.TrackingAsync<ResourceOwnerCommand, Result<string>>(
+            Result.Success("should not reach"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Detail.Should().Contain("Order 'xyz' was not found.");
+    }
+
+    #endregion
+
+    #region CancellationToken propagated to loader
+
+    [Fact]
+    public async Task Handle_PropagatesCancellationTokenToLoader()
+    {
+        using var cts = new CancellationTokenSource();
+        var resource = new TestResource("res-1", "owner-1");
+        var loader = new FakeResourceLoader<ResourceOwnerCommand>(resource);
+        var behavior = CreateBehaviorWithLoader<ResourceOwnerCommand>("owner-1", loader);
+        var command = new ResourceOwnerCommand("res-1");
+        var next = NextDelegate.ReturningAsync<ResourceOwnerCommand, Result<string>>(
+            Result.Success("Done"));
+
+        await behavior.Handle(command, next, cts.Token);
+
+        loader.LastCancellationToken.Should().Be(cts.Token);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private static ResourceAuthorizationBehavior<TMessage, TestResource, Result<string>>
+        CreateBehavior<TMessage>(
+            string actorId,
+            TestResource? resource,
+            params string[] permissions)
+        where TMessage : IAuthorizeResource<TestResource>, global::Mediator.IMessage
+        => CreateBehavior<TMessage>(actorId, resource, notFoundError: null, permissions);
+
+    private static ResourceAuthorizationBehavior<TMessage, TestResource, Result<string>>
+        CreateBehavior<TMessage>(
+            string actorId,
+            TestResource? resource,
+            Error? notFoundError,
+            params string[] permissions)
+        where TMessage : IAuthorizeResource<TestResource>, global::Mediator.IMessage
+    {
+        var loader = new FakeResourceLoader<TMessage>(resource, notFoundError);
+        return CreateBehaviorWithLoader(actorId, loader, permissions);
+    }
+
+    private static ResourceAuthorizationBehavior<TMessage, TestResource, Result<string>>
+        CreateBehaviorWithLoader<TMessage>(
+            string actorId,
+            FakeResourceLoader<TMessage> loader,
+            params string[] permissions)
+        where TMessage : IAuthorizeResource<TestResource>, global::Mediator.IMessage
+    {
+        var actorProvider = permissions.Length > 0
+            ? FakeActorProvider.WithPermissions(actorId, permissions)
+            : FakeActorProvider.NoPermissions(actorId);
+
+        var services = new ServiceCollection();
+        services.AddScoped<IResourceLoader<TMessage, TestResource>>(_ => loader);
+        var sp = services.BuildServiceProvider();
+
+        return new ResourceAuthorizationBehavior<TMessage, TestResource, Result<string>>(
+            actorProvider, sp);
+    }
+
+    /// <summary>
+    /// Command that tracks whether Authorize was called (for verifying short-circuit on NotFound).
+    /// </summary>
+    private sealed record TrackingAuthCommand(string ResourceId)
+        : global::Mediator.ICommand<Result<string>>, IAuthorizeResource<TestResource>
+    {
+        public bool AuthorizeWasCalled { get; private set; }
+
+        public IResult Authorize(Actor actor, TestResource resource)
+        {
+            AuthorizeWasCalled = true;
+            return Result.Success();
+        }
+    }
+
+    private sealed class FakeResourceLoader<TMessage> : IResourceLoader<TMessage, TestResource>
+    {
+        private readonly TestResource? _resource;
+        private readonly Error _notFoundError;
+
+        public CancellationToken LastCancellationToken { get; private set; }
+
+        public FakeResourceLoader(TestResource? resource, Error? notFoundError = null)
+        {
+            _resource = resource;
+            _notFoundError = notFoundError ?? Error.NotFound("Resource not found.");
+        }
+
+        public Task<Result<TestResource>> LoadAsync(TMessage message, CancellationToken ct)
+        {
+            LastCancellationToken = ct;
+            return _resource is not null
+                ? Task.FromResult(Result.Success(_resource))
+                : Task.FromResult(Result.Failure<TestResource>(_notFoundError));
+        }
     }
 
     #endregion

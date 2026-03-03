@@ -24,7 +24,9 @@ Lightweight authorization primitives with zero dependencies beyond `Trellis.Resu
 - **`Actor`** — Sealed record representing an authenticated user (`Id` + `Permissions`) with `HasPermission`, `HasAllPermissions`, `HasAnyPermission` helpers
 - **`IActorProvider`** — Abstraction for resolving the current actor (implement in API layer)
 - **`IAuthorize`** — Marker interface for static permission requirements (AND logic)
-- **`IAuthorizeResource`** — Marker interface for resource-based authorization via `Authorize(Actor)`
+- **`IAuthorizeResource<TResource>`** — Resource-based authorization with a loaded resource via `Authorize(Actor, TResource)`
+- **`IResourceLoader<TMessage, TResource>`** — Loads the resource required for resource-based authorization
+- **`ResourceLoaderById<TMessage, TResource, TId>`** — Convenience base class for ID-based resource loading
 
 Usable with or without CQRS — no Mediator dependency.
 
@@ -34,7 +36,7 @@ Result-aware pipeline behaviors for [martinothamar/Mediator](https://github.com/
 
 - **`ValidationBehavior`** — Short-circuits on `IValidate.Validate()` failure
 - **`AuthorizationBehavior`** — Checks `IAuthorize.RequiredPermissions` via `IActorProvider`
-- **`ResourceAuthorizationBehavior`** — Delegates to `IAuthorizeResource.Authorize(Actor)`
+- **`ResourceAuthorizationBehavior<TMessage, TResource, TResponse>`** — Loads resource via `IResourceLoader`, delegates to `IAuthorizeResource<TResource>.Authorize(Actor, TResource)`. Auto-discovered via `AddResourceAuthorization(Assembly)` or registered explicitly for AOT.
 - **`LoggingBehavior`** — Structured logging with duration and Result outcome
 - **`TracingBehavior`** — OpenTelemetry activity span with Result status
 - **`ExceptionBehavior`** — Catches unhandled exceptions → `Error.Unexpected`

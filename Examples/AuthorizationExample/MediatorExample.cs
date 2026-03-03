@@ -26,14 +26,15 @@ public sealed record CreateDocumentCommand(string Title, string Content)
 
 /// <summary>
 /// Only the document owner (or users with Documents.EditAny) can edit.
-/// Authorization is declared via <see cref="IAuthorizeResource"/> — the pipeline
-/// calls <see cref="Authorize"/> automatically before the handler runs.
+/// Authorization is declared via <see cref="IAuthorizeResource{TResource}"/> — the pipeline
+/// loads the document via <see cref="EditDocumentResourceLoader"/>, then calls
+/// <see cref="Authorize"/> with the loaded resource.
 /// </summary>
-public sealed record EditDocumentCommand(string DocumentId, string OwnerId, string NewContent)
-    : ICommand<Result<Document>>, IAuthorizeResource, IValidate
+public sealed record EditDocumentCommand(string DocumentId, string NewContent)
+    : ICommand<Result<Document>>, IAuthorizeResource<Document>, IValidate
 {
-    public IResult Authorize(Actor actor) =>
-        actor.Id == OwnerId || actor.HasPermission("Documents.EditAny")
+    public IResult Authorize(Actor actor, Document document) =>
+        actor.Id == document.OwnerId || actor.HasPermission("Documents.EditAny")
             ? Result.Success()
             : Result.Failure(Error.Forbidden("Only the owner can edit this document"));
 
@@ -41,6 +42,22 @@ public sealed record EditDocumentCommand(string DocumentId, string OwnerId, stri
         string.IsNullOrWhiteSpace(NewContent)
             ? Result.Failure<Document>(Error.Validation("Content is required", "Content"))
             : Result.Success();
+}
+
+/// <summary>
+/// Loads the document required by <see cref="EditDocumentCommand"/> for authorization.
+/// </summary>
+public sealed class EditDocumentResourceLoader(DocumentStore store)
+    : IResourceLoader<EditDocumentCommand, Document>
+{
+    public Task<Result<Document>> LoadAsync(
+        EditDocumentCommand message, CancellationToken ct)
+    {
+        var doc = store.Get(message.DocumentId);
+        return doc is not null
+            ? Task.FromResult(Result.Success(doc))
+            : Task.FromResult(Result.Failure<Document>(Error.NotFound("Document not found")));
+    }
 }
 
 /// <summary>
@@ -130,6 +147,7 @@ public static class MediatorExample
         var services = new ServiceCollection();
         services.AddMediator();
         services.AddTrellisBehaviors();
+        services.AddResourceAuthorization(typeof(EditDocumentCommand).Assembly);
         services.AddSingleton<IActorProvider>(actorProvider);
         services.AddSingleton(store);
         services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
@@ -143,22 +161,21 @@ public static class MediatorExample
         var createResult = await mediator.Send(new CreateDocumentCommand("Design Doc", "Initial draft"));
         Print("Alice creates 'Design Doc'", createResult);
         var docId = createResult.Value.Id;
-        var ownerId = createResult.Value.OwnerId;
 
         // 2. Alice edits her own document (owner)
         actorProvider.CurrentActor = Actors.Alice;
         Print("Alice edits her document",
-            await mediator.Send(new EditDocumentCommand(docId, ownerId, "Updated by Alice")));
+            await mediator.Send(new EditDocumentCommand(docId, "Updated by Alice")));
 
         // 3. Bob tries to edit Alice's document (not owner, no EditAny)
         actorProvider.CurrentActor = Actors.Bob;
         Print("Bob tries to edit Alice's document",
-            await mediator.Send(new EditDocumentCommand(docId, ownerId, "Updated by Bob")));
+            await mediator.Send(new EditDocumentCommand(docId, "Updated by Bob")));
 
         // 4. Charlie edits Alice's document (has Documents.EditAny)
         actorProvider.CurrentActor = Actors.Charlie;
         Print("Charlie edits Alice's document",
-            await mediator.Send(new EditDocumentCommand(docId, ownerId, "Updated by Charlie")));
+            await mediator.Send(new EditDocumentCommand(docId, "Updated by Charlie")));
 
         // 5. Bob tries to publish (no Documents.Publish permission)
         actorProvider.CurrentActor = Actors.Bob;
