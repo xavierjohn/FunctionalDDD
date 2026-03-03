@@ -157,7 +157,7 @@ public static class ServiceCollectionExtensions
             typeof(global::Mediator.IRequest<>),
         ];
 
-        foreach (var type in assembly.GetTypes())
+        foreach (var type in GetLoadableTypes(assembly))
         {
             if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)
                 continue;
@@ -188,6 +188,11 @@ public static class ServiceCollectionExtensions
             if (tResponse is null)
                 continue;
 
+            // TResponse must satisfy the behavior's constraints: IResult + IFailureFactory<TResponse>
+            if (!typeof(IResult).IsAssignableFrom(tResponse)
+                || !typeof(IFailureFactory<>).MakeGenericType(tResponse).IsAssignableFrom(tResponse))
+                continue;
+
             // Register ResourceAuthorizationBehavior<TMessage, TResource, TResponse>
             // as IPipelineBehavior<TMessage, TResponse>
             var closedBehavior = behaviorDef.MakeGenericType(type, tResource, tResponse);
@@ -215,7 +220,7 @@ public static class ServiceCollectionExtensions
     {
         var loaderInterface = typeof(IResourceLoader<,>);
 
-        foreach (var type in assembly.GetTypes())
+        foreach (var type in GetLoadableTypes(assembly))
         {
             if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)
                 continue;
@@ -228,5 +233,22 @@ public static class ServiceCollectionExtensions
         }
 
         return services;
+    }
+
+    /// <summary>
+    /// Returns all types from the assembly that can be loaded, gracefully handling
+    /// <see cref="ReflectionTypeLoadException"/> when some types have missing dependencies.
+    /// </summary>
+    [RequiresUnreferencedCode("Calls Assembly.GetTypes().")]
+    private static Type[] GetLoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            return ex.Types.Where(t => t is not null).ToArray()!;
+        }
     }
 }
