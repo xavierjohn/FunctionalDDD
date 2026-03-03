@@ -26,7 +26,10 @@ dotnet add package Trellis.Authorization
 | `Actor` | Sealed record representing the current user (`Id` + `Permissions`) |
 | `IActorProvider` | Abstraction for resolving the current actor — implement in your API layer |
 | `IAuthorize` | Marker interface for static permission requirements (`RequiredPermissions`) |
-| `IAuthorizeResource` | Marker interface for resource-based authorization (`Authorize(Actor)`) |
+| `IAuthorizeResource` | Marker interface for actor-only resource-based authorization (`Authorize(Actor)`) |
+| `IAuthorizeResource<TResource>` | Resource-based authorization that receives a loaded resource (`Authorize(Actor, TResource)`) |
+| `IResourceLoader<TMessage, TResource>` | Loads the resource for `IAuthorizeResource<TResource>` — register as scoped in DI |
+| `ResourceLoaderById<TMessage, TResource, TId>` | Convenience base for the common extract-ID-and-load pattern |
 
 ## Usage
 

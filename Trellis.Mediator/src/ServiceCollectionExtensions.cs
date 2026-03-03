@@ -1,5 +1,7 @@
 ﻿namespace Trellis.Mediator;
 
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using global::Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis.Authorization;
@@ -18,7 +20,8 @@ public static class ServiceCollectionExtensions
     ///   <item><description><see cref="TracingBehavior{TMessage, TResponse}"/> — OpenTelemetry activity span</description></item>
     ///   <item><description><see cref="LoggingBehavior{TMessage, TResponse}"/> — structured logging with duration</description></item>
     ///   <item><description><see cref="AuthorizationBehavior{TMessage, TResponse}"/> — checks static permissions (<see cref="IAuthorize"/>)</description></item>
-    ///   <item><description><see cref="ResourceAuthorizationBehavior{TMessage, TResponse}"/> — checks resource-based auth (<see cref="IAuthorizeResource"/>)</description></item>
+    ///   <item><description><see cref="ResourceAuthorizationBehavior{TMessage, TResponse}"/> — checks actor-only resource auth (<see cref="IAuthorizeResource"/>)</description></item>
+    ///   <item><description><c>ResourceAuthorizationBehavior&lt;TMessage, TResource, TResponse&gt;</c> — loads resource, checks ownership (<see cref="IAuthorizeResource{TResource}"/>)</description></item>
     ///   <item><description><see cref="ValidationBehavior{TMessage, TResponse}"/> — short-circuits on validation failure</description></item>
     /// </list>
     /// </summary>
@@ -38,6 +41,7 @@ public static class ServiceCollectionExtensions
         typeof(LoggingBehavior<,>),
         typeof(AuthorizationBehavior<,>),
         typeof(ResourceAuthorizationBehavior<,>),
+        typeof(ResourceAuthorizationBehavior<,,>),
         typeof(ValidationBehavior<,>),
     ];
 
@@ -55,7 +59,40 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(ResourceAuthorizationBehavior<,>));
+        services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(ResourceAuthorizationBehavior<,,>));
         services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        return services;
+    }
+
+    /// <summary>
+    /// Scans the specified assembly for types implementing
+    /// <see cref="IResourceLoader{TMessage, TResource}"/> and registers them as scoped services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="assembly">The assembly to scan for resource loader implementations.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <example>
+    /// <code>
+    /// services.AddResourceLoaders(typeof(CancelOrderResourceLoader).Assembly);
+    /// </code>
+    /// </example>
+    [RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")]
+    public static IServiceCollection AddResourceLoaders(this IServiceCollection services, Assembly assembly)
+    {
+        var loaderInterface = typeof(IResourceLoader<,>);
+
+        foreach (var type in assembly.GetTypes())
+        {
+            if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)
+                continue;
+
+            foreach (var iface in type.GetInterfaces())
+            {
+                if (iface.IsGenericType && iface.GetGenericTypeDefinition() == loaderInterface)
+                    services.AddScoped(iface, type);
+            }
+        }
 
         return services;
     }

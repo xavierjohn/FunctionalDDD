@@ -10,7 +10,8 @@ A thin integration layer — **not** a mediator implementation. The actual media
 
 - **ValidationBehavior** — short-circuits on validation failure via `IValidate`
 - **AuthorizationBehavior** — checks static permissions via `IAuthorize`
-- **ResourceAuthorizationBehavior** — checks resource-based auth via `IAuthorizeResource`
+- **ResourceAuthorizationBehavior** — checks actor-only resource auth via `IAuthorizeResource`
+- **ResourceAuthorizationBehavior<TMessage, TResource, TResponse>** — loads resource via `IResourceLoader`, checks ownership via `IAuthorizeResource<TResource>`
 - **LoggingBehavior** — structured logging with duration and Result outcome
 - **TracingBehavior** — OpenTelemetry activity with Result status
 - **ExceptionBehavior** — catches unhandled exceptions as `Error.Unexpected` failures
@@ -102,7 +103,7 @@ internal sealed class HttpActorProvider(IHttpContextAccessor accessor) : IActorP
 ```
 Request → ExceptionBehavior → TracingBehavior → LoggingBehavior
   → AuthorizationBehavior → ResourceAuthorizationBehavior
-    → ValidationBehavior → Handler → Result<T>
+    → ResourceAuthorizationBehavior<,,> → ValidationBehavior → Handler → Result<T>
 ```
 
 ## Package References

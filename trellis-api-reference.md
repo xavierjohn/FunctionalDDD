@@ -650,6 +650,13 @@ string? GetAttribute(string key)
 interface IActorProvider { Actor GetCurrentActor(); }
 interface IAuthorize { IReadOnlyList<string> RequiredPermissions { get; } }
 interface IAuthorizeResource { IResult Authorize(Actor actor); }
+interface IAuthorizeResource<TResource> { IResult Authorize(Actor actor, TResource resource); }
+interface IResourceLoader<TMessage, TResource> { Task<Result<TResource>> LoadAsync(TMessage message, CancellationToken ct); }
+abstract class ResourceLoaderById<TMessage, TResource, TId> : IResourceLoader<TMessage, TResource>
+{
+    protected abstract TId GetId(TMessage message);
+    protected abstract Task<Result<TResource>> GetByIdAsync(TId id, CancellationToken ct);
+}
 ```
 
 ## ActorAttributes Constants
@@ -784,7 +791,7 @@ var result = await httpClient.GetAsync($"/api/orders/{id}")
 
 ### Pipeline Order
 
-Exception → Tracing → Logging → Authorization → ResourceAuthorization → Validation
+Exception → Tracing → Logging → Authorization → ResourceAuthorization (actor-only) → ResourceAuthorization (with resource) → Validation
 
 ### Behaviors
 
@@ -795,6 +802,7 @@ Exception → Tracing → Logging → Authorization → ResourceAuthorization �
 | `LoggingBehavior` | `IMessage` | Structured logging with duration |
 | `AuthorizationBehavior` | `IAuthorize, IMessage` | Checks `HasAllPermissions` → `Error.Forbidden` |
 | `ResourceAuthorizationBehavior` | `IAuthorizeResource, IMessage` | Delegates to `message.Authorize(actor)` |
+| `ResourceAuthorizationBehavior<,,>` | `IAuthorizeResource<TResource>, IMessage` | Loads resource via `IResourceLoader`, delegates to `message.Authorize(actor, resource)` |
 | `ValidationBehavior` | `IValidate, IMessage` | Calls `message.Validate()`, short-circuits |
 
 ### IValidate Interface
@@ -807,6 +815,7 @@ interface IValidate { IResult Validate(); }
 
 ```csharp
 services.AddTrellisBehaviors();
+services.AddResourceLoaders(typeof(MyResourceLoader).Assembly); // scan-register IResourceLoader<,> implementations
 ```
 
 ---

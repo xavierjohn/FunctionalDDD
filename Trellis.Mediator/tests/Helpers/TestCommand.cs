@@ -81,3 +81,35 @@ internal sealed record TestQuery(int Id)
             ? Result.Failure<string>(Error.Validation("Id must be positive.", "Id"))
             : Result.Success(Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
 }
+
+/// <summary>
+/// Resource used in resource-based authorization tests.
+/// </summary>
+internal sealed record TestResource(string Id, string OwnerId);
+
+/// <summary>
+/// Command with generic resource-based authorization (<see cref="IAuthorizeResource{TResource}"/>).
+/// Requires the loaded resource to check ownership.
+/// </summary>
+internal sealed record ResourceOwnerCommand(string ResourceId)
+    : ICommand<Result<string>>, IAuthorizeResource<TestResource>
+{
+    public IResult Authorize(Actor actor, TestResource resource) =>
+        actor.Id == resource.OwnerId
+            ? Result.Success()
+            : Result.Failure(Error.Forbidden("Only the resource owner can perform this operation."));
+}
+
+/// <summary>
+/// Command with both static permissions and generic resource-based authorization.
+/// </summary>
+internal sealed record FullAuthResourceCommand(string ResourceId)
+    : ICommand<Result<string>>, IAuthorize, IAuthorizeResource<TestResource>
+{
+    public IReadOnlyList<string> RequiredPermissions => ["Resources.Write"];
+
+    public IResult Authorize(Actor actor, TestResource resource) =>
+        actor.Id == resource.OwnerId || actor.HasPermission("Resources.WriteAny")
+            ? Result.Success()
+            : Result.Failure(Error.Forbidden("Cannot modify another user's resource."));
+}

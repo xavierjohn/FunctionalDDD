@@ -14,7 +14,8 @@ Authorization types (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResourc
 | `TracingBehavior` | OpenTelemetry Activity with Result status |
 | `LoggingBehavior` | Structured logging with duration |
 | `AuthorizationBehavior` | Static permission checks (`IAuthorize`) |
-| `ResourceAuthorizationBehavior` | Resource-based auth (`IAuthorizeResource`) |
+| `ResourceAuthorizationBehavior` | Actor-only resource auth (`IAuthorizeResource`) |
+| `ResourceAuthorizationBehavior<,,>` | Loads resource, checks ownership (`IAuthorizeResource<TResource>`) |
 | `ValidationBehavior` | Self-validation via `IValidate` |
 
 ## Usage

@@ -2,16 +2,19 @@
 
 Lightweight authorization primitives for [Trellis](https://github.com/xavierjohn/Trellis).
 
-Provides `Actor`, `IActorProvider`, `IAuthorize`, and `IAuthorizeResource` types that integrate with the Trellis `Result<T>` type system. No dependency on any mediator or web framework.
+Provides `Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource`, and `IAuthorizeResource<TResource>` types that integrate with the Trellis `Result<T>` type system. No dependency on any mediator or web framework.
 
 ## Types
 
 | Type | Purpose |
-|------|---------|
+|------|---------||
 | `Actor` | Represents the current user with `Id` and `Permissions` |
 | `IActorProvider` | Abstraction for resolving the current actor (implement in API layer) |
 | `IAuthorize` | Marker for static permission-based authorization |
-| `IAuthorizeResource` | Marker for resource-based authorization |
+| `IAuthorizeResource` | Marker for actor-only resource-based authorization |
+| `IAuthorizeResource<TResource>` | Resource-based authorization with a loaded resource (ownership checks) |
+| `IResourceLoader<TMessage, TResource>` | Loads the resource required for `IAuthorizeResource<TResource>` |
+| `ResourceLoaderById<TMessage, TResource, TId>` | Convenience base class for ID-based resource loading |
 
 ## Usage
 
