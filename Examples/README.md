@@ -53,7 +53,7 @@ Same authorization rules enforced two ways — with and without CQRS.
 - Side-by-side comparison of identical outcomes
 
 **Learn About**:
-- `Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource`
+- `Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource<T>`
 - Separating authorization from business logic
 - When to use CQRS vs direct service calls
 - Pipeline behaviors that enforce auth automatically

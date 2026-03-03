@@ -36,29 +36,12 @@ internal sealed record AdminCommand(string Data)
 }
 
 /// <summary>
-/// Command with resource-based authorization.
+/// Command with multiple required permissions for testing missing-permission reporting.
 /// </summary>
-internal sealed record OwnerOnlyCommand(string ResourceOwnerId, string Data)
-    : ICommand<Result<string>>, IAuthorizeResource
-{
-    public IResult Authorize(Actor actor) =>
-        actor.Id == ResourceOwnerId
-            ? Result.Success()
-            : Result.Failure(Error.Forbidden("Not the resource owner"));
-}
-
-/// <summary>
-/// Command with both static and resource-based authorization.
-/// </summary>
-internal sealed record DualAuthCommand(string ResourceOwnerId)
-    : ICommand<Result<string>>, IAuthorize, IAuthorizeResource
+internal sealed record MultiPermissionCommand(string Data)
+    : ICommand<Result<string>>, IAuthorize
 {
     public IReadOnlyList<string> RequiredPermissions => ["Orders.Write"];
-
-    public IResult Authorize(Actor actor) =>
-        actor.Id == ResourceOwnerId || actor.HasPermission("Orders.WriteAny")
-            ? Result.Success()
-            : Result.Failure(Error.Forbidden("Cannot modify another user's resource"));
 }
 
 /// <summary>

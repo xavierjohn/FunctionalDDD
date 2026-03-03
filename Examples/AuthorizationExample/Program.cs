@@ -16,7 +16,7 @@ await MediatorExample.RunAsync();
 
 Console.WriteLine();
 Console.WriteLine("Both approaches enforce the same domain rules:");
-Console.WriteLine("  ✓ Resource-based auth (owner check via IAuthorizeResource)");
+Console.WriteLine("  ✓ Resource-based auth (owner check via IAuthorizeResource<T>)");
 Console.WriteLine("  ✓ Permission-based auth (static check via IAuthorize)");
 Console.WriteLine("  ✓ Input validation (IValidate)");
 Console.WriteLine();

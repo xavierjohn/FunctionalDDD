@@ -8,7 +8,7 @@ Demonstrates the same authorization rules enforced two ways — with and without
 
 - **`Actor`** — how to represent users with permissions
 - **`IAuthorize`** — static permission checks (AND logic)
-- **`IAuthorizeResource`** — resource-based authorization (owner checks)
+- **`IAuthorizeResource<T>`** — resource-based authorization (owner checks with loaded resource)
 - **Direct vs. Pipeline** — same domain rules, different execution models
 
 ## The Scenario
@@ -63,11 +63,11 @@ Authorization is **declared** on commands and **enforced** by pipeline behaviors
 
 ```csharp
 // Command declares its auth requirements
-public sealed record EditDocumentCommand(string DocumentId, string OwnerId, string NewContent)
-    : ICommand<Result<Document>>, IAuthorizeResource
+public sealed record EditDocumentCommand(string DocumentId, string NewContent)
+    : ICommand<Result<Document>>, IAuthorizeResource<Document>
 {
-    public IResult Authorize(Actor actor) =>
-        actor.Id == OwnerId || actor.HasPermission("Documents.EditAny")
+    public IResult Authorize(Actor actor, Document document) =>
+        actor.Id == document.OwnerId || actor.HasPermission("Documents.EditAny")
             ? Result.Success()
             : Result.Failure(Error.Forbidden("Only the owner can edit"));
 }

@@ -1,41 +1,87 @@
 ﻿namespace Trellis.Mediator;
 
 using global::Mediator;
+using Microsoft.Extensions.DependencyInjection;
 using Trellis.Authorization;
 
 /// <summary>
-/// Pipeline behavior that delegates authorization to the message's
-/// <see cref="IAuthorizeResource.Authorize"/> method, passing the current actor.
-/// Short-circuits with the returned error if authorization fails.
+/// Pipeline behavior that loads a resource and performs resource-based authorization
+/// before the handler runs. The resource loader is resolved from <see cref="IServiceProvider"/>
+/// per-request (same pattern as ASP.NET Core middleware resolving scoped services).
 /// </summary>
-/// <typeparam name="TMessage">The message type, constrained to <see cref="IAuthorizeResource"/>.</typeparam>
-/// <typeparam name="TResponse">The response type, constrained to <see cref="IResult"/> and <see cref="IFailureFactory{TSelf}"/>.</typeparam>
-public sealed class ResourceAuthorizationBehavior<TMessage, TResponse>
+/// <typeparam name="TMessage">
+/// The message type, constrained to <see cref="IAuthorizeResource{TResource}"/>.
+/// </typeparam>
+/// <typeparam name="TResource">The resource type loaded for authorization.</typeparam>
+/// <typeparam name="TResponse">
+/// The response type, constrained to <see cref="IResult"/> and <see cref="IFailureFactory{TSelf}"/>.
+/// </typeparam>
+/// <remarks>
+/// <para>
+/// This behavior cannot be registered as an open generic because it has 3 type parameters
+/// while <see cref="IPipelineBehavior{TMessage, TResponse}"/> has 2. Register per-command via
+/// <see cref="ServiceCollectionExtensions.AddResourceAuthorization{TMessage, TResource, TResponse}"/>.
+/// </para>
+/// <para>
+/// The <see cref="IResourceLoader{TMessage, TResource}"/> depends on scoped services (DbContext/repository),
+/// so it is resolved from <see cref="IServiceProvider"/> on each request — no lifetime mismatch.
+/// </para>
+/// <para>
+/// Pipeline execution order for a command implementing both <see cref="IAuthorize"/> and
+/// <see cref="IAuthorizeResource{TResource}"/>:
+/// <list type="number">
+///   <item><description>AuthorizationBehavior — checks static permissions</description></item>
+///   <item><description>ResourceAuthorizationBehavior — loads resource, checks ownership</description></item>
+///   <item><description>ValidationBehavior — validates command properties</description></item>
+///   <item><description>Handler — pure business logic</description></item>
+/// </list>
+/// </para>
+/// </remarks>
+public sealed class ResourceAuthorizationBehavior<TMessage, TResource, TResponse>
     : IPipelineBehavior<TMessage, TResponse>
-    where TMessage : IAuthorizeResource, global::Mediator.IMessage
+    where TMessage : IAuthorizeResource<TResource>, global::Mediator.IMessage
     where TResponse : IResult, IFailureFactory<TResponse>
 {
     private readonly IActorProvider _actorProvider;
+    private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ResourceAuthorizationBehavior{TMessage, TResponse}"/> class.
+    /// Initializes a new instance of the
+    /// <see cref="ResourceAuthorizationBehavior{TMessage, TResource, TResponse}"/> class.
     /// </summary>
     /// <param name="actorProvider">Provides the current authenticated actor.</param>
-    public ResourceAuthorizationBehavior(IActorProvider actorProvider)
-        => _actorProvider = actorProvider;
+    /// <param name="serviceProvider">
+    /// Service provider used to resolve the scoped <see cref="IResourceLoader{TMessage, TResource}"/>.
+    /// </param>
+    public ResourceAuthorizationBehavior(
+        IActorProvider actorProvider,
+        IServiceProvider serviceProvider)
+    {
+        _actorProvider = actorProvider;
+        _serviceProvider = serviceProvider;
+    }
 
     /// <inheritdoc />
-    public ValueTask<TResponse> Handle(
+    public async ValueTask<TResponse> Handle(
         TMessage message,
         MessageHandlerDelegate<TMessage, TResponse> next,
         CancellationToken cancellationToken)
     {
+        // Resolve the scoped loader per-request (like middleware resolving scoped services)
+        var loader = _serviceProvider.GetRequiredService<IResourceLoader<TMessage, TResource>>();
+
+        // 1. Load the resource
+        var loadResult = await loader.LoadAsync(message, cancellationToken).ConfigureAwait(false);
+        if (loadResult.IsFailure)
+            return TResponse.CreateFailure(loadResult.Error);
+
+        // 2. Authorize against the loaded resource
         var actor = _actorProvider.GetCurrentActor();
-        var authResult = message.Authorize(actor);
-
+        var authResult = message.Authorize(actor, loadResult.Value);
         if (authResult.IsFailure)
-            return new ValueTask<TResponse>(TResponse.CreateFailure(authResult.Error));
+            return TResponse.CreateFailure(authResult.Error);
 
-        return next(message, cancellationToken);
+        // 3. Proceed to handler
+        return await next(message, cancellationToken).ConfigureAwait(false);
     }
 }
