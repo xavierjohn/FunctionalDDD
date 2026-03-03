@@ -236,167 +236,19 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers the <see cref="ResourceAuthorizationBehavior{TMessage, TResource, TResponse}"/>
-    /// for a specific command/resource pair. Call once per command that implements
-    /// <see cref="IAuthorizeResource{TResource}"/>.
+    /// Returns all types from the assembly that can be loaded, gracefully handling
+    /// <see cref="ReflectionTypeLoadException"/> when some types have missing dependencies.
     /// </summary>
-    /// <typeparam name="TMessage">
-    /// The command or query type that implements <see cref="IAuthorizeResource{TResource}"/>.
-    /// </typeparam>
-    /// <typeparam name="TResource">The resource type loaded for authorization.</typeparam>
-    /// <typeparam name="TResponse">
-    /// The response type (e.g., <c>Result&lt;Order&gt;</c>).
-    /// Must implement <see cref="IResult"/> and <see cref="IFailureFactory{TSelf}"/>.
-    /// </typeparam>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The service collection for chaining.</returns>
-    /// <remarks>
-    /// <para>
-    /// Prefer <see cref="AddResourceAuthorization(IServiceCollection, Assembly)"/> for automatic
-    /// discovery. Use this explicit overload for AOT/trimming scenarios where assembly scanning
-    /// is not available.
-    /// </para>
-    /// <para>
-    /// Also register the corresponding <see cref="IResourceLoader{TMessage, TResource}"/> as scoped,
-    /// either explicitly or via <see cref="AddResourceLoaders"/>.
-    /// </para>
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// services.AddResourceAuthorization&lt;CancelOrderCommand, Order, Result&lt;Order&gt;&gt;();
-    /// services.AddScoped&lt;IResourceLoader&lt;CancelOrderCommand, Order&gt;, CancelOrderResourceLoader&gt;();
-    /// </code>
-    /// </example>
-    public static IServiceCollection AddResourceAuthorization<TMessage, TResource, TResponse>(
-        this IServiceCollection services)
-        where TMessage : IAuthorizeResource<TResource>, global::Mediator.IMessage
-        where TResponse : IResult, IFailureFactory<TResponse>
+    [RequiresUnreferencedCode("Calls Assembly.GetTypes().")]
+    private static Type[] GetLoadableTypes(Assembly assembly)
     {
-        services.AddSingleton<
-            IPipelineBehavior<TMessage, TResponse>,
-            ResourceAuthorizationBehavior<TMessage, TResource, TResponse>>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Scans the specified assembly for types implementing
-    /// <see cref="IAuthorizeResource{TResource}"/> and automatically registers the
-    /// <see cref="ResourceAuthorizationBehavior{TMessage, TResource, TResponse}"/> for each.
-    /// Also scans and registers all <see cref="IResourceLoader{TMessage, TResource}"/> implementations
-    /// as scoped services.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="assembly">The assembly to scan.</param>
-    /// <returns>The service collection for chaining.</returns>
-    /// <remarks>
-    /// <para>
-    /// For each concrete type that implements <see cref="IAuthorizeResource{TResource}"/>,
-    /// the method extracts <c>TResource</c> and resolves <c>TResponse</c> from
-    /// <c>ICommand&lt;TResponse&gt;</c>, <c>IQuery&lt;TResponse&gt;</c>, or
-    /// <c>IRequest&lt;TResponse&gt;</c>. It then registers the closed-generic
-    /// <c>ResourceAuthorizationBehavior&lt;TMessage, TResource, TResponse&gt;</c>
-    /// as <c>IPipelineBehavior&lt;TMessage, TResponse&gt;</c>.
-    /// </para>
-    /// <para>
-    /// This method also scans for <see cref="IResourceLoader{TMessage, TResource}"/>
-    /// implementations and registers them as scoped services, so you don't need to call
-    /// <see cref="AddResourceLoaders"/> separately.
-    /// </para>
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// // Scans for both IAuthorizeResource&lt;T&gt; commands and IResourceLoader&lt;,&gt; implementations
-    /// services.AddResourceAuthorization(typeof(CancelOrderCommand).Assembly);
-    /// </code>
-    /// </example>
-    [RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")]
-    [RequiresDynamicCode("Constructs closed generic types at runtime. Use explicit registration for AOT scenarios.")]
-    public static IServiceCollection AddResourceAuthorization(
-        this IServiceCollection services, Assembly assembly)
-    {
-        var authorizeResourceDef = typeof(IAuthorizeResource<>);
-        var loaderDef = typeof(IResourceLoader<,>);
-        var behaviorDef = typeof(ResourceAuthorizationBehavior<,,>);
-        var pipelineDef = typeof(IPipelineBehavior<,>);
-
-        Type[] messageInterfaces =
-        [
-            typeof(global::Mediator.ICommand<>),
-            typeof(global::Mediator.IQuery<>),
-            typeof(global::Mediator.IRequest<>),
-        ];
-
-        foreach (var type in assembly.GetTypes())
+        try
         {
-            if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)
-                continue;
-
-            // Register IResourceLoader<,> implementations as scoped
-            foreach (var iface in type.GetInterfaces())
-            {
-                if (iface.IsGenericType && iface.GetGenericTypeDefinition() == loaderDef)
-                    services.AddScoped(iface, type);
-            }
-
-            // Register ResourceAuthorizationBehavior for IAuthorizeResource<TResource> commands
-            var authIface = type.GetInterfaces()
-                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeResourceDef);
-            if (authIface is null)
-                continue;
-
-            var tResource = authIface.GetGenericArguments()[0];
-
-            // Find TResponse from ICommand<TResponse>, IQuery<TResponse>, or IRequest<TResponse>
-            var tResponse = type.GetInterfaces()
-                .Where(i => i.IsGenericType)
-                .Select(i => (iface: i, def: i.GetGenericTypeDefinition()))
-                .Where(x => messageInterfaces.Contains(x.def))
-                .Select(x => x.iface.GetGenericArguments()[0])
-                .FirstOrDefault();
-
-            if (tResponse is null)
-                continue;
-
-            // Register ResourceAuthorizationBehavior<TMessage, TResource, TResponse>
-            // as IPipelineBehavior<TMessage, TResponse>
-            var closedBehavior = behaviorDef.MakeGenericType(type, tResource, tResponse);
-            var closedPipeline = pipelineDef.MakeGenericType(type, tResponse);
-            services.AddSingleton(closedPipeline, closedBehavior);
+            return assembly.GetTypes();
         }
-
-        return services;
-    }
-
-    /// <summary>
-    /// Scans the specified assembly for types implementing
-    /// <see cref="IResourceLoader{TMessage, TResource}"/> and registers them as scoped services.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="assembly">The assembly to scan for resource loader implementations.</param>
-    /// <returns>The service collection for chaining.</returns>
-    /// <example>
-    /// <code>
-    /// services.AddResourceLoaders(typeof(CancelOrderResourceLoader).Assembly);
-    /// </code>
-    /// </example>
-    [RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")]
-    public static IServiceCollection AddResourceLoaders(this IServiceCollection services, Assembly assembly)
-    {
-        var loaderInterface = typeof(IResourceLoader<,>);
-
-        foreach (var type in assembly.GetTypes())
+        catch (ReflectionTypeLoadException ex)
         {
-            if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)
-                continue;
-
-            foreach (var iface in type.GetInterfaces())
-            {
-                if (iface.IsGenericType && iface.GetGenericTypeDefinition() == loaderInterface)
-                    services.AddScoped(iface, type);
-            }
+            return ex.Types.Where(t => t is not null).ToArray()!;
         }
-
-        return services;
     }
 }
