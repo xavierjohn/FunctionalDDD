@@ -3,6 +3,7 @@
 using global::Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis.Authorization;
+using Trellis.Mediator.Tests.Helpers;
 
 /// <summary>
 /// Tests for <see cref="ServiceCollectionExtensions.AddResourceLoaders"/>.
@@ -113,7 +114,7 @@ public class AddResourceAuthorizationTests
             d => d.ServiceType == typeof(IPipelineBehavior<TestAuthCommand, Result<string>>));
 
         descriptor.Should().NotBeNull();
-        descriptor!.Lifetime.Should().Be(ServiceLifetime.Singleton);
+        descriptor!.Lifetime.Should().Be(ServiceLifetime.Scoped);
     }
 
     #endregion
@@ -145,6 +146,29 @@ public class AddResourceAuthorizationTests
 
     #endregion
 
+    #region Behavior resolves scoped loader with ValidateScopes enabled
+
+    [Fact]
+    public async Task AddResourceAuthorization_BehaviorResolvesWithScopeValidation()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IActorProvider>(FakeActorProvider.WithPermissions("owner-1"));
+        services.AddResourceAuthorization<TestAuthCommand, TestAuthResource, Result<string>>();
+        services.AddScoped<IResourceLoader<TestAuthCommand, TestAuthResource>>(_ =>
+            new TestAuthResourceLoader(new TestAuthResource("res-1", "owner-1")));
+
+        // ValidateScopes = true (ASP.NET Core default in Development)
+        await using var sp = services.BuildServiceProvider(validateScopes: true);
+        using var scope = sp.CreateScope();
+
+        var behavior = scope.ServiceProvider
+            .GetRequiredService<IPipelineBehavior<TestAuthCommand, Result<string>>>();
+
+        behavior.Should().BeOfType<ResourceAuthorizationBehavior<TestAuthCommand, TestAuthResource, Result<string>>>();
+    }
+
+    #endregion
+
     #region Test helpers
 
     public sealed record TestAuthResource(string Id, string OwnerId);
@@ -156,6 +180,13 @@ public class AddResourceAuthorizationTests
             actor.Id == resource.OwnerId
                 ? Result.Success()
                 : Result.Failure(Error.Forbidden("Not the owner"));
+    }
+
+    private sealed class TestAuthResourceLoader(TestAuthResource resource)
+        : IResourceLoader<TestAuthCommand, TestAuthResource>
+    {
+        public Task<Result<TestAuthResource>> LoadAsync(TestAuthCommand message, CancellationToken ct)
+            => Task.FromResult(Result.Success(resource));
     }
 
     #endregion
@@ -180,7 +211,7 @@ public class AddResourceAuthorizationScanTests
             d => d.ServiceType == typeof(IPipelineBehavior<ScanTestCommand, Result<string>>));
 
         descriptor.Should().NotBeNull();
-        descriptor!.Lifetime.Should().Be(ServiceLifetime.Singleton);
+        descriptor!.Lifetime.Should().Be(ServiceLifetime.Scoped);
     }
 
     #endregion
@@ -246,7 +277,7 @@ public class AddResourceAuthorizationScanTests
             d => d.ServiceType == typeof(IPipelineBehavior<ScanTestQuery, Result<string>>));
 
         descriptor.Should().NotBeNull();
-        descriptor!.Lifetime.Should().Be(ServiceLifetime.Singleton);
+        descriptor!.Lifetime.Should().Be(ServiceLifetime.Scoped);
     }
 
     #endregion
