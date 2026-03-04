@@ -6,8 +6,8 @@ using Trellis.Authorization;
 
 /// <summary>
 /// Pipeline behavior that loads a resource and performs resource-based authorization
-/// before the handler runs. The resource loader is resolved from <see cref="IServiceProvider"/>
-/// per-request (same pattern as ASP.NET Core middleware resolving scoped services).
+/// before the handler runs. Registered as scoped so the injected <see cref="IServiceProvider"/>
+/// is the request-scoped provider, allowing correct resolution of scoped dependencies.
 /// </summary>
 /// <typeparam name="TMessage">
 /// The message type, constrained to <see cref="IAuthorizeResource{TResource}"/>.
@@ -23,8 +23,10 @@ using Trellis.Authorization;
 /// <see cref="ServiceCollectionExtensions.AddResourceAuthorization{TMessage, TResource, TResponse}"/>.
 /// </para>
 /// <para>
-/// The <see cref="IResourceLoader{TMessage, TResource}"/> depends on scoped services (DbContext/repository),
-/// so it is resolved from <see cref="IServiceProvider"/> on each request — no lifetime mismatch.
+/// The behavior is registered as scoped (not singleton) because it resolves
+/// <see cref="IResourceLoader{TMessage, TResource}"/> from the injected <see cref="IServiceProvider"/>.
+/// A singleton would receive the root provider, causing <c>InvalidOperationException</c>
+/// when ASP.NET Core's scope validation is enabled (default in Development).
 /// </para>
 /// <para>
 /// Pipeline execution order for a command implementing both <see cref="IAuthorize"/> and

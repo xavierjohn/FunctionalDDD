@@ -102,7 +102,7 @@ public static class ServiceCollectionExtensions
         where TMessage : IAuthorizeResource<TResource>, global::Mediator.IMessage
         where TResponse : IResult, IFailureFactory<TResponse>
     {
-        services.AddSingleton<
+        services.AddScoped<
             IPipelineBehavior<TMessage, TResponse>,
             ResourceAuthorizationBehavior<TMessage, TResource, TResponse>>();
 
@@ -197,7 +197,7 @@ public static class ServiceCollectionExtensions
             // as IPipelineBehavior<TMessage, TResponse>
             var closedBehavior = behaviorDef.MakeGenericType(type, tResource, tResponse);
             var closedPipeline = pipelineDef.MakeGenericType(type, tResponse);
-            services.AddSingleton(closedPipeline, closedBehavior);
+            services.AddScoped(closedPipeline, closedBehavior);
         }
 
         return services;

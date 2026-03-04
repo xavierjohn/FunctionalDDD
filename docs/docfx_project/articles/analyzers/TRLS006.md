@@ -21,6 +21,9 @@ if (maybe.HasValue)
     var customer = maybe.Value;
     // Use customer...
 }
+
+// ✅ Good - Ternary guard is also recognized
+Customer? customerOrNull = maybe.HasValue ? maybe.Value : null;
 ```
 
 ### Option 2: Use TryGetValue

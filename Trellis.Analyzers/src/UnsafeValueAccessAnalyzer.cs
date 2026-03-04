@@ -82,12 +82,14 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "IsFailure", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetValue") ||
+        IsInsideNegatedTryBlock(memberAccess, semanticModel, "TryGetError") ||
         IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByFailureCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
         IsGuardedByCheck(memberAccess, semanticModel, "IsFailure", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetError") ||
+        IsInsideNegatedTryBlock(memberAccess, semanticModel, "TryGetValue") ||
         IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByHasValueCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
@@ -140,6 +142,42 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
                     if (matchesThenBranch && IsInThenBranch(memberAccess, ifStatement))
                         return true;
                     if (!matchesThenBranch && IsInElseBranch(memberAccess, ifStatement))
+                        return true;
+                }
+            }
+
+            // Check for ternary conditional expression: condition ? whenTrue : whenFalse
+            if (current is ConditionalExpressionSyntax conditionalExpression)
+            {
+                // Check for negated condition: !result.Property ? ... : ...
+                if (conditionalExpression.Condition is PrefixUnaryExpressionSyntax { Operand: MemberAccessExpressionSyntax negatedTernaryMemberAccess } ternaryPrefixUnary &&
+                    ternaryPrefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
+                    negatedTernaryMemberAccess.Name.Identifier.Text == checkPropertyName &&
+                    AreSameVariable(negatedTernaryMemberAccess.Expression, memberAccess.Expression, semanticModel))
+                {
+                    if (!expectedValue && IsInWhenTrueBranch(memberAccess, conditionalExpression))
+                        return true;
+                    if (expectedValue && IsInWhenFalseBranch(memberAccess, conditionalExpression))
+                        return true;
+                }
+
+                // Check for simple property condition: result.Property ? ... : ...
+                if (conditionalExpression.Condition is MemberAccessExpressionSyntax ternaryConditionMemberAccess &&
+                    ternaryConditionMemberAccess.Name.Identifier.Text == checkPropertyName &&
+                    AreSameVariable(ternaryConditionMemberAccess.Expression, memberAccess.Expression, semanticModel))
+                {
+                    if (expectedValue && IsInWhenTrueBranch(memberAccess, conditionalExpression))
+                        return true;
+                    if (!expectedValue && IsInWhenFalseBranch(memberAccess, conditionalExpression))
+                        return true;
+                }
+
+                // Check for equality comparison: result.Property == true/false ? ... : ...
+                if (IsEqualityCheckingProperty(conditionalExpression.Condition, memberAccess.Expression, checkPropertyName, expectedValue, semanticModel, out var ternaryMatchesTrueBranch))
+                {
+                    if (ternaryMatchesTrueBranch && IsInWhenTrueBranch(memberAccess, conditionalExpression))
+                        return true;
+                    if (!ternaryMatchesTrueBranch && IsInWhenFalseBranch(memberAccess, conditionalExpression))
                         return true;
                 }
             }
@@ -218,20 +256,60 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
     private static bool IsInElseBranch(SyntaxNode node, IfStatementSyntax ifStatement) =>
         ifStatement.Else?.Statement.Contains(node) ?? false;
 
+    private static bool IsInWhenTrueBranch(SyntaxNode node, ConditionalExpressionSyntax conditionalExpression) =>
+        conditionalExpression.WhenTrue.Contains(node);
+
+    private static bool IsInWhenFalseBranch(SyntaxNode node, ConditionalExpressionSyntax conditionalExpression) =>
+        conditionalExpression.WhenFalse.Contains(node);
+
     private static bool IsInsideTryGetValueBlock(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel, string tryMethodName)
     {
         // Look for pattern: if (result.TryGetValue(out var value)) { ... }
+        // and negated:       if (!result.TryGetValue(out var value)) { ... }
         var current = memberAccess.Parent;
         while (current != null)
         {
-            if (current is IfStatementSyntax { Condition: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } } ifStatement &&
-                methodAccess.Name.Identifier.Text == tryMethodName)
+            if (current is IfStatementSyntax ifStatement)
             {
-                // Verify it's the same variable
-                if (AreSameVariable(methodAccess.Expression, memberAccess.Expression, semanticModel))
+                // Direct: if (result.TryGetValue(out var value)) — then branch is success
+                if (ifStatement.Condition is InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } &&
+                    methodAccess.Name.Identifier.Text == tryMethodName &&
+                    AreSameVariable(methodAccess.Expression, memberAccess.Expression, semanticModel))
                 {
                     return IsInThenBranch(memberAccess, ifStatement);
                 }
+
+                // Negated: if (!result.TryGetValue(out var value)) — then branch is failure, else branch is success
+                if (ifStatement.Condition is PrefixUnaryExpressionSyntax { Operand: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax negatedMethodAccess } } prefixUnary &&
+                    prefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
+                    negatedMethodAccess.Name.Identifier.Text == tryMethodName &&
+                    AreSameVariable(negatedMethodAccess.Expression, memberAccess.Expression, semanticModel))
+                {
+                    return IsInElseBranch(memberAccess, ifStatement);
+                }
+            }
+
+            current = current.Parent;
+        }
+
+        return false;
+    }
+
+    private static bool IsInsideNegatedTryBlock(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel, string tryMethodName)
+    {
+        // Look for negated pattern: if (!result.Try*(...)) { ... }.
+        // This covers both !TryGetValue(...) guarding .Error access and !TryGetError(...) guarding .Value access.
+        // In the negated form, the then branch represents the opposite outcome of the Try* method name.
+        var current = memberAccess.Parent;
+        while (current != null)
+        {
+            if (current is IfStatementSyntax ifStatement &&
+                ifStatement.Condition is PrefixUnaryExpressionSyntax { Operand: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } } prefixUnary &&
+                prefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
+                methodAccess.Name.Identifier.Text == tryMethodName &&
+                AreSameVariable(methodAccess.Expression, memberAccess.Expression, semanticModel))
+            {
+                return IsInThenBranch(memberAccess, ifStatement);
             }
 
             current = current.Parent;
