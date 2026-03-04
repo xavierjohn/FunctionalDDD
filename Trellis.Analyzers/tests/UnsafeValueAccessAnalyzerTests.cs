@@ -149,6 +149,146 @@ public class UnsafeValueAccessAnalyzerTests
     }
 
     [Fact]
+    public async Task TernaryGuardedMaybeValueAccess_HasValue_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Maybe<int> maybe)
+                {
+                    return maybe.HasValue ? maybe.Value : 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryGuardedMaybeValueAccess_NegatedHasNoValue_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Maybe<int> maybe)
+                {
+                    return !maybe.HasNoValue ? maybe.Value : 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryGuardedMaybeValueAccess_HasNoValueFalseBranch_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Maybe<int> maybe)
+                {
+                    return maybe.HasNoValue ? 0 : maybe.Value;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryGuardedMaybeValueAccess_HasValueEqualityTrue_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Maybe<int> maybe)
+                {
+                    return maybe.HasValue == true ? maybe.Value : 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryUnguardedMaybeValueAccess_WrongBranch_ReportsDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Maybe<int> maybe)
+                {
+                    return maybe.HasValue ? 0 : maybe.Value;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
+                .WithLocation(11, 43));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryGuardedResultValueAccess_IsSuccess_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Result<int> result)
+                {
+                    return result.IsSuccess ? result.Value : 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryGuardedResultValueAccess_NegatedIsFailure_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public int TestMethod(Result<int> result)
+                {
+                    return !result.IsFailure ? result.Value : 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task TernaryGuardedResultErrorAccess_IsFailure_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public string TestMethod(Result<int> result)
+                {
+                    return result.IsFailure ? result.Error.Detail : "ok";
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
     public async Task ValueAccessInBindLambda_NoDiagnostic()
     {
         const string source = """

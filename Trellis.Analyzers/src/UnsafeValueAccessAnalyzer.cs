@@ -146,6 +146,42 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
                 }
             }
 
+            // Check for ternary conditional expression: condition ? whenTrue : whenFalse
+            if (current is ConditionalExpressionSyntax conditionalExpression)
+            {
+                // Check for negated condition: !result.Property ? ... : ...
+                if (conditionalExpression.Condition is PrefixUnaryExpressionSyntax { Operand: MemberAccessExpressionSyntax negatedTernaryMemberAccess } ternaryPrefixUnary &&
+                    ternaryPrefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
+                    negatedTernaryMemberAccess.Name.Identifier.Text == checkPropertyName &&
+                    AreSameVariable(negatedTernaryMemberAccess.Expression, memberAccess.Expression, semanticModel))
+                {
+                    if (!expectedValue && IsInWhenTrueBranch(memberAccess, conditionalExpression))
+                        return true;
+                    if (expectedValue && IsInWhenFalseBranch(memberAccess, conditionalExpression))
+                        return true;
+                }
+
+                // Check for simple property condition: result.Property ? ... : ...
+                if (conditionalExpression.Condition is MemberAccessExpressionSyntax ternaryConditionMemberAccess &&
+                    ternaryConditionMemberAccess.Name.Identifier.Text == checkPropertyName &&
+                    AreSameVariable(ternaryConditionMemberAccess.Expression, memberAccess.Expression, semanticModel))
+                {
+                    if (expectedValue && IsInWhenTrueBranch(memberAccess, conditionalExpression))
+                        return true;
+                    if (!expectedValue && IsInWhenFalseBranch(memberAccess, conditionalExpression))
+                        return true;
+                }
+
+                // Check for equality comparison: result.Property == true/false ? ... : ...
+                if (IsEqualityCheckingProperty(conditionalExpression.Condition, memberAccess.Expression, checkPropertyName, expectedValue, semanticModel, out var ternaryMatchesTrueBranch))
+                {
+                    if (ternaryMatchesTrueBranch && IsInWhenTrueBranch(memberAccess, conditionalExpression))
+                        return true;
+                    if (!ternaryMatchesTrueBranch && IsInWhenFalseBranch(memberAccess, conditionalExpression))
+                        return true;
+                }
+            }
+
             // Check for conditional access ?.Value pattern (which is safe)
             if (current is ConditionalAccessExpressionSyntax)
             {
@@ -219,6 +255,12 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 
     private static bool IsInElseBranch(SyntaxNode node, IfStatementSyntax ifStatement) =>
         ifStatement.Else?.Statement.Contains(node) ?? false;
+
+    private static bool IsInWhenTrueBranch(SyntaxNode node, ConditionalExpressionSyntax conditionalExpression) =>
+        conditionalExpression.WhenTrue.Contains(node);
+
+    private static bool IsInWhenFalseBranch(SyntaxNode node, ConditionalExpressionSyntax conditionalExpression) =>
+        conditionalExpression.WhenFalse.Contains(node);
 
     private static bool IsInsideTryGetValueBlock(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel, string tryMethodName)
     {
