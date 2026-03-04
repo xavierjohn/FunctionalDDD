@@ -82,12 +82,14 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "IsFailure", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetValue") ||
+        IsInsideNegatedTryBlock(memberAccess, semanticModel, "TryGetError") ||
         IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByFailureCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
         IsGuardedByCheck(memberAccess, semanticModel, "IsFailure", true) ||
         IsGuardedByCheck(memberAccess, semanticModel, "IsSuccess", false) ||
         IsInsideTryGetValueBlock(memberAccess, semanticModel, "TryGetError") ||
+        IsInsideNegatedTryBlock(memberAccess, semanticModel, "TryGetValue") ||
         IsInsideMatchOrSwitch(memberAccess, semanticModel);
 
     private static bool IsGuardedByHasValueCheck(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel) =>
@@ -221,17 +223,51 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
     private static bool IsInsideTryGetValueBlock(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel, string tryMethodName)
     {
         // Look for pattern: if (result.TryGetValue(out var value)) { ... }
+        // and negated:       if (!result.TryGetValue(out var value)) { ... }
         var current = memberAccess.Parent;
         while (current != null)
         {
-            if (current is IfStatementSyntax { Condition: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } } ifStatement &&
-                methodAccess.Name.Identifier.Text == tryMethodName)
+            if (current is IfStatementSyntax ifStatement)
             {
-                // Verify it's the same variable
-                if (AreSameVariable(methodAccess.Expression, memberAccess.Expression, semanticModel))
+                // Direct: if (result.TryGetValue(out var value)) — then branch is success
+                if (ifStatement.Condition is InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } &&
+                    methodAccess.Name.Identifier.Text == tryMethodName &&
+                    AreSameVariable(methodAccess.Expression, memberAccess.Expression, semanticModel))
                 {
                     return IsInThenBranch(memberAccess, ifStatement);
                 }
+
+                // Negated: if (!result.TryGetValue(out var value)) — then branch is failure, else branch is success
+                if (ifStatement.Condition is PrefixUnaryExpressionSyntax { Operand: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax negatedMethodAccess } } prefixUnary &&
+                    prefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
+                    negatedMethodAccess.Name.Identifier.Text == tryMethodName &&
+                    AreSameVariable(negatedMethodAccess.Expression, memberAccess.Expression, semanticModel))
+                {
+                    return IsInElseBranch(memberAccess, ifStatement);
+                }
+            }
+
+            current = current.Parent;
+        }
+
+        return false;
+    }
+
+    private static bool IsInsideNegatedTryBlock(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel, string tryMethodName)
+    {
+        // Look for negated pattern: if (!result.TryGetValue(out var value)) { ... use .Error ... }
+        // The then branch has the opposite meaning of the method name.
+        // !TryGetValue then = failure, !TryGetError then = success.
+        var current = memberAccess.Parent;
+        while (current != null)
+        {
+            if (current is IfStatementSyntax ifStatement &&
+                ifStatement.Condition is PrefixUnaryExpressionSyntax { Operand: InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax methodAccess } } prefixUnary &&
+                prefixUnary.IsKind(SyntaxKind.LogicalNotExpression) &&
+                methodAccess.Name.Identifier.Text == tryMethodName &&
+                AreSameVariable(methodAccess.Expression, memberAccess.Expression, semanticModel))
+            {
+                return IsInThenBranch(memberAccess, ifStatement);
             }
 
             current = current.Parent;

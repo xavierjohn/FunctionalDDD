@@ -203,4 +203,73 @@ public class UnsafeValueAccessAnalyzerTests
         var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task NegatedTryGetValue_ErrorAccessInThenBranch_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public Result<string> TestMethod(Result<int> result)
+                {
+                    if (!result.TryGetValue(out var value))
+                    {
+                        return Result.Failure<string>(result.Error);
+                    }
+                    return Result.Success(value.ToString());
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task NegatedTryGetValue_ValueAccessInElseBranch_NoDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public void TestMethod(Result<int> result)
+                {
+                    if (!result.TryGetValue(out var value))
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        Console.WriteLine(result.Value);
+                    }
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task NegatedTryGetValue_ValueAccessInThenBranch_ReportsDiagnostic()
+    {
+        const string source = """
+            public class TestClass
+            {
+                public void TestMethod(Result<int> result)
+                {
+                    if (!result.TryGetValue(out var value))
+                    {
+                        Console.WriteLine(result.Value);
+                    }
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeResultValueAccess)
+                .WithLocation(13, 38));
+
+        await test.RunAsync();
+    }
 }
