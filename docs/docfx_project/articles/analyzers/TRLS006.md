@@ -21,6 +21,9 @@ if (maybe.HasValue)
     var customer = maybe.Value;
     // Use customer...
 }
+
+// ✅ Good - Ternary guard is also recognized
+var phone = customer.PhoneNumber.HasValue ? customer.PhoneNumber.Value : null;
 ```
 
 ### Option 2: Use TryGetValue

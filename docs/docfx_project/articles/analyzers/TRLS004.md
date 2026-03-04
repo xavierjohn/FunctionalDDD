@@ -21,6 +21,9 @@ if (result.IsFailure)
     var error = result.Error;
     Logger.LogError(error.Detail);
 }
+
+// ✅ Good - Ternary guard is also recognized
+var message = result.IsFailure ? result.Error.Detail : "ok";
 ```
 
 ### Option 2: Use Match

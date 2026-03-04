@@ -23,6 +23,9 @@ if (result.IsSuccess)
     var customer = result.Value;
     // Use customer...
 }
+
+// ✅ Good - Ternary guard is also recognized
+var name = result.IsSuccess ? result.Value : "default";
 ```
 
 ### Option 2: Use Match
