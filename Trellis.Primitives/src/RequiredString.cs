@@ -222,7 +222,7 @@
 /// // Success
 /// 
 /// var tooLong = ProductSKU.TryCreateWithValidation(new string('A', 21));
-/// // Failure: "Product S K U must be 20 characters or fewer."
+/// // Failure: "Product SKU must be 20 characters or fewer."
 /// 
 /// var invalid = ProductSKU.TryCreateWithValidation("PROD@12345");
 /// // Failure: "SKU can only contain letters, digits, and hyphens"

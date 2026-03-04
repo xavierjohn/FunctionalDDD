@@ -80,10 +80,4 @@ public sealed class StringLengthAttribute : Attribute
 
         MaximumLength = maximumLength;
     }
-
-    /// <summary>
-    /// Validates that the attribute's constraints are consistent.
-    /// </summary>
-    /// <returns><c>true</c> if <see cref="MinimumLength"/> is less than or equal to <see cref="MaximumLength"/>; otherwise <c>false</c>.</returns>
-    public bool IsValid() => MinimumLength <= MaximumLength;
 }
