@@ -297,9 +297,9 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 
     private static bool IsInsideNegatedTryBlock(MemberAccessExpressionSyntax memberAccess, SemanticModel semanticModel, string tryMethodName)
     {
-        // Look for negated pattern: if (!result.TryGetValue(out var value)) { ... use .Error ... }
-        // The then branch has the opposite meaning of the method name.
-        // !TryGetValue then = failure, !TryGetError then = success.
+        // Look for negated pattern: if (!result.Try*(...)) { ... }.
+        // This covers both !TryGetValue(...) guarding .Error access and !TryGetError(...) guarding .Value access.
+        // In the negated form, the then branch represents the opposite outcome of the Try* method name.
         var current = memberAccess.Parent;
         while (current != null)
         {
