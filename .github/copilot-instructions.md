@@ -144,6 +144,17 @@ public static Money Create(decimal amount, string currencyCode)
 }
 ```
 
+## Diagnostic ID Conventions
+
+Analyzers (`Trellis.Analyzers`) and source generators (`Trellis.Primitives/generator`) use **separate ID prefixes** to avoid collisions:
+
+| Prefix | Owner | Range | Example |
+|--------|-------|-------|---------|
+| `TRLS` | Trellis.Analyzers | `TRLS001`–`TRLS999` | `TRLS007` — Use `Create()` instead of `TryCreate().Value` |
+| `TRLSGEN` | Primitives source generator | `TRLSGEN001`–`TRLSGEN999` | `TRLSGEN002` — `MinimumLength` exceeds `MaximumLength` |
+
+**Do NOT** reuse a `TRLS` ID in the source generator or vice versa.
+
 ## Code Style
 
 ### General Rules

@@ -230,7 +230,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor(
-                        id: "TRLS001",
+                        id: "TRLSGEN001",
                         title: "Unsupported base type for RequiredPartialClassGenerator",
                         messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal, RequiredEnum.",
                         category: "SourceGenerator",
@@ -467,7 +467,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
                         new DiagnosticDescriptor(
-                            id: "TRLS008",
+                            id: "TRLSGEN002",
                             title: "StringLength MinimumLength exceeds MaximumLength",
                             messageFormat: "Class '{0}' has [StringLength({1}, MinimumLength = {2})] where MinimumLength exceeds MaximumLength. No value can satisfy both constraints.",
                             category: "SourceGenerator",
