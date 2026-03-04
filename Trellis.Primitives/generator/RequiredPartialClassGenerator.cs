@@ -476,6 +476,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                         g.ClassName,
                         g.MaxLength.Value,
                         g.MinLength.Value));
+                    continue;
                 }
 
                 // Build length validation Ensure calls if [StringLength] is applied
@@ -755,7 +756,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                         // Named argument: MinimumLength = 3
                         foreach (var named in attr.NamedArguments)
                         {
-                            if (named.Key == "MinimumLength" && named.Value.Value is int min)
+                            if (named.Key == "MinimumLength" && named.Value.Value is int min && min > 0)
                                 minLength = min;
                         }
                     }

@@ -52,7 +52,10 @@ public sealed class StringLengthAttribute : Attribute
     /// <summary>
     /// Gets or sets the minimum allowable length of the string.
     /// </summary>
-    /// <value>The minimum length, inclusive. Defaults to 0 (no minimum beyond non-empty).</value>
+    /// <value>
+    /// The minimum length, inclusive. Defaults to 0 (no minimum beyond non-empty).
+    /// Negative values are treated as 0 by the source generator (no minimum length check is emitted).
+    /// </value>
     public int MinimumLength { get; set; }
 
     /// <summary>
