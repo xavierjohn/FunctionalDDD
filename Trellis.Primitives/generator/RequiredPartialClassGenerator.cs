@@ -729,7 +729,8 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             {
                 foreach (var attr in classSymbol.GetAttributes())
                 {
-                    if (attr.AttributeClass?.Name == "StringLengthAttribute")
+                    if (attr.AttributeClass?.Name == "StringLengthAttribute"
+                        && attr.AttributeClass.ContainingNamespace?.ToDisplayString() == "Trellis")
                     {
                         // Constructor: StringLengthAttribute(int maximumLength)
                         if (attr.ConstructorArguments.Length >= 1 && attr.ConstructorArguments[0].Value is int max)

@@ -1,4 +1,4 @@
-namespace Trellis;
+﻿namespace Trellis;
 
 /// <summary>
 /// Specifies the minimum and maximum length of characters that are allowed in a
@@ -30,7 +30,7 @@ namespace Trellis;
 /// <example>
 /// Both minimum and maximum length:
 /// <code>
-/// [StringLength(100, MinLength = 3)]
+/// [StringLength(100, MinimumLength = 3)]
 /// public partial class Description : RequiredString&lt;Description&gt; { }
 ///
 /// // Generated TryCreate validates:
