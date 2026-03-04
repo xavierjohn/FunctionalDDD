@@ -39,6 +39,13 @@ if (result.IsSuccess)
 
 // With custom field name for validation errors
 var result2 = TrackingId.TryCreate(input, "shipment.trackingId");
+
+// Optional: enforce length constraints with [StringLength]
+[StringLength(50)]
+public partial class FirstName : RequiredString<FirstName> { }
+
+[StringLength(500, MinimumLength = 10)]
+public partial class Description : RequiredString<Description> { }
 ```
 
 ### RequiredGuid

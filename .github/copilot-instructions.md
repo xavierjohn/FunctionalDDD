@@ -103,6 +103,7 @@ var money = Money.TryCreate(amount, currency).Value;
 
 - All scalar value objects inherit `Create(T value)` from `ScalarValueObject<TSelf, T>`, which calls `TryCreate` and throws `InvalidOperationException` on failure
 - Source-generated types (`RequiredGuid`, `RequiredString`, `RequiredInt`, `RequiredDecimal`) auto-generate `Create()` overloads mirroring each `TryCreate()` overload
+- `RequiredString` supports optional `[StringLength(max)]` or `[StringLength(max, MinimumLength = min)]` — the generator emits `.Ensure()` length checks in `TryCreate`
 - The TRLS007 analyzer suggests `Create()` instead of `TryCreate().Value`
 - Override `Create` for multi-parameter signatures (e.g., `Money.Create(amount, currency)`)
 
@@ -111,7 +112,7 @@ var money = Money.TryCreate(amount, currency).Value;
 | Type | Overloads |
 |------|-----------|
 | `RequiredGuid` | `Create(Guid)`, `Create(string)`, `NewUniqueV4()`, `NewUniqueV7()` |
-| `RequiredString` | `Create(string?, string? fieldName)` |
+| `RequiredString` | `Create(string?, string? fieldName)` — add `[StringLength(max, MinimumLength = min)]` for length validation |
 | `RequiredInt` / `RequiredDecimal` | `Create(int/decimal)`, `Create(string)` |
 
 **Custom value objects** inherit `Create` automatically:

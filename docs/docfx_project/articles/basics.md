@@ -121,6 +121,8 @@ Person CreatePerson(FirstName firstName, LastName lastName)
 
 **Why `partial`?** The class must be partial to allow source code generation of the `TryCreate` method by the library.
 
+> **Tip:** Add `[StringLength(50)]` to constrain maximum length, or `[StringLength(50, MinimumLength = 2)]` for both min and max — the generated `TryCreate` will include length validation automatically.
+
 The generated `TryCreate` method returns a `Result` type that is either `Success` or `Failure`:
 
 ```csharp

@@ -462,6 +462,21 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
             if (g.ClassBase == "RequiredString")
             {
+                // Build length validation Ensure calls if [StringLength] is applied
+                var lengthEnsures = "";
+
+                if (g.MinLength.HasValue)
+                {
+                    lengthEnsures += $@"
+                .Ensure(str => str.Length >= {g.MinLength.Value}, Error.Validation(""{g.ClassName.SplitPascalCase()} must be at least {g.MinLength.Value} {"character" + (g.MinLength.Value == 1 ? "" : "s")}."", field))";
+                }
+
+                if (g.MaxLength.HasValue)
+                {
+                    lengthEnsures += $@"
+                .Ensure(str => str.Length <= {g.MaxLength.Value}, Error.Validation(""{g.ClassName.SplitPascalCase()} must be {g.MaxLength.Value} {"character" + (g.MaxLength.Value == 1 ? "" : "s")} or fewer."", field))";
+                }
+
                 source += $@"
 
         /// <summary>
@@ -478,7 +493,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
                 : ""{g.ClassName.ToCamelCase()}"";
             return value
-                .EnsureNotNullOrWhiteSpace(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field))
+                .EnsureNotNullOrWhiteSpace(Error.Validation(""{g.ClassName.SplitPascalCase()} cannot be empty."", field)){lengthEnsures}
                 .Map(str => new {g.ClassName}(str));
         }}
 
@@ -706,7 +721,31 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             // Extract just the base class name without type parameters (e.g., "RequiredGuid" from "RequiredGuid<EmployeeId>")
             string @base = classSymbol.BaseType?.Name ?? "unknown";
             string accessibility = classSymbol.DeclaredAccessibility.ToString();
-            classToGenerate.Add(new RequiredPartialClassInfo(@namespace, className, @base, accessibility));
+
+            // Read [StringLength] attribute for RequiredString types
+            int? maxLength = null;
+            int? minLength = null;
+            if (@base == "RequiredString")
+            {
+                foreach (var attr in classSymbol.GetAttributes())
+                {
+                    if (attr.AttributeClass?.Name == "StringLengthAttribute")
+                    {
+                        // Constructor: StringLengthAttribute(int maximumLength)
+                        if (attr.ConstructorArguments.Length >= 1 && attr.ConstructorArguments[0].Value is int max)
+                            maxLength = max;
+
+                        // Named argument: MinimumLength = 3
+                        foreach (var named in attr.NamedArguments)
+                        {
+                            if (named.Key == "MinimumLength" && named.Value.Value is int min)
+                                minLength = min;
+                        }
+                    }
+                }
+            }
+
+            classToGenerate.Add(new RequiredPartialClassInfo(@namespace, className, @base, accessibility, maxLength, minLength));
         }
 
         return classToGenerate;

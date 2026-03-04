@@ -102,29 +102,43 @@ public void ParseFromString()
 }
 ```
 
-### Custom Validation
+### String Length Constraints
 
-Extending RequiredString with additional validation rules:
+Use `[StringLength]` to enforce min/max length declaratively — the source generator includes length validation in the generated `TryCreate`:
 
 ```csharp
-// RequiredString validates non-empty strings.
-// For additional validation, create a separate factory method
-// that builds on the generated TryCreate.
+// Maximum length only
+[StringLength(20)]
+public partial class ProductCode : RequiredString<ProductCode> { }
 
-public partial class PhoneNumber : RequiredString
+ProductCode.TryCreate("PROD-123");              // ✅ Success
+ProductCode.TryCreate(new string('x', 21));     // ❌ "Product Code must be 20 characters or fewer."
+
+// Both minimum and maximum length
+[StringLength(50, MinimumLength = 3)]
+public partial class CustomerName : RequiredString<CustomerName> { }
+
+CustomerName.TryCreate("Jo");                   // ❌ "Customer Name must be at least 3 characters."
+CustomerName.TryCreate("John Doe");             // ✅ Success
+```
+
+### Custom Validation
+
+For validation beyond length (format, pattern, etc.), extend with a custom factory method:
+
+```csharp
+// Length is handled by [StringLength], format by custom validation
+[StringLength(15, MinimumLength = 10)]
+public partial class PhoneNumber : RequiredString<PhoneNumber>
 {
-    // Custom factory with additional validation
     public static Result<PhoneNumber> TryCreateWithValidation(string? value) =>
-        TryCreate(value) // Use generated method first (validates non-empty)
-            .Ensure(
-                phone => phone.Value.Length >= 10,
-                Error.Validation("Phone number must be at least 10 digits", "phoneNumber"))
+        TryCreate(value) // Generated: validates non-empty + length 10–15
             .Ensure(
                 phone => phone.Value.All(c => char.IsDigit(c) || c == '-' || c == ' '),
                 Error.Validation("Phone number can only contain digits, dashes, and spaces", "phoneNumber"));
 }
 
-public partial class ZipCode : RequiredString
+public partial class ZipCode : RequiredString<ZipCode>
 {
     public static Result<ZipCode> TryCreateWithValidation(string? value) =>
         TryCreate(value)
@@ -136,13 +150,11 @@ public partial class ZipCode : RequiredString
                 Error.Validation("Invalid zip code format (use 12345 or 12345-6789)", "zipCode"));
 }
 
-public partial class ProductCode : RequiredString
+[StringLength(20, MinimumLength = 3)]
+public partial class ProductCode : RequiredString<ProductCode>
 {
     public static Result<ProductCode> TryCreateWithValidation(string? value) =>
-        TryCreate(value)
-            .Ensure(
-                code => code.Value.Length >= 3 && code.Value.Length <= 20,
-                Error.Validation("Product code must be between 3 and 20 characters", "productCode"))
+        TryCreate(value) // Generated: validates non-empty + length 3–20
             .Ensure(
                 code => Regex.IsMatch(code.Value, @"^[A-Z0-9-]+$"),
                 Error.Validation("Product code can only contain uppercase letters, digits, and dashes", "productCode"));
@@ -625,6 +637,30 @@ public partial class TrackingId : RequiredString, IParsable<TrackingId>, ITryCre
             .EnsureNotNullOrWhiteSpace(Error.Validation("Tracking Id cannot be empty.", field))
             .Map(str => new TrackingId(str));
     }
+}
+```
+
+### RequiredString Generation with `[StringLength]`
+
+When `[StringLength]` is applied, the generated `TryCreate` includes `.Ensure()` length checks:
+
+```csharp
+// Your declaration
+[StringLength(50, MinimumLength = 3)]
+public partial class ProductName : RequiredString<ProductName> { }
+
+// Generated TryCreate (simplified)
+public static Result<ProductName> TryCreate(string? value, string? fieldName = null)
+{
+    using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("ProductName.TryCreate");
+    var field = !string.IsNullOrEmpty(fieldName)
+        ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
+        : "productName";
+    return value
+        .EnsureNotNullOrWhiteSpace(Error.Validation("Product Name cannot be empty.", field))
+        .Ensure(str => str.Length >= 3, Error.Validation("Product Name must be at least 3 characters.", field))
+        .Ensure(str => str.Length <= 50, Error.Validation("Product Name must be 50 characters or fewer.", field))
+        .Map(str => new ProductName(str));
 }
 ```
 

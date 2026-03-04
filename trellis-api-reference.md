@@ -524,6 +524,20 @@ static explicit operator Foo(string value)
 // [JsonConverter(typeof(ParsableJsonConverter<Foo>))]
 ```
 
+#### `[StringLength]` — Optional Length Constraints
+
+Apply `[StringLength(max)]` or `[StringLength(max, MinimumLength = min)]` to the class to add length validation into the generated `TryCreate`:
+
+```csharp
+[StringLength(50)]                        // max only
+public partial class FirstName : RequiredString<FirstName> { }
+
+[StringLength(500, MinimumLength = 10)]   // min + max
+public partial class Description : RequiredString<Description> { }
+```
+
+Generated validation errors: `"{Name} must be at least {min} characters."`, `"{Name} must be {max} characters or fewer."`
+
 ### RequiredGuid\<TSelf\>
 
 Inherits `ScalarValueObject<TSelf, Guid>`. Source generator provides:
@@ -1099,6 +1113,13 @@ public partial class FirstName : RequiredString<FirstName> { }
 // Usage
 var name = FirstName.Create("Alice");
 var result = FirstName.TryCreate(userInput);
+
+// With length constraints
+[StringLength(50)]
+public partial class ProductName : RequiredString<ProductName> { }
+
+[StringLength(500, MinimumLength = 10)]
+public partial class Description : RequiredString<Description> { }
 ```
 
 ## Create a Custom Value Object (RequiredEnum — Smart Enum)

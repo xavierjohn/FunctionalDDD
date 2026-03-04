@@ -30,10 +30,22 @@
 /// </list>
 /// </para>
 /// <para>
+/// <strong>String length constraints:</strong> Apply the <see cref="StringLengthAttribute"/> to enforce
+/// minimum and/or maximum lengths at creation time:
+/// <code>
+/// [StringLength(50)]
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+/// 
+/// [StringLength(500, MinimumLength = 10)]
+/// public partial class Description : RequiredString&lt;Description&gt; { }
+/// </code>
+/// </para>
+/// <para>
 /// Benefits over plain strings:
 /// <list type="bullet">
 /// <item><strong>Type safety</strong>: Cannot mix FirstName with LastName</item>
 /// <item><strong>Validation</strong>: Prevents null/empty strings at creation time</item>
+/// <item><strong>Length constraints</strong>: Optional min/max length via <see cref="StringLengthAttribute"/></item>
 /// <item><strong>Domain clarity</strong>: Self-documenting code that expresses intent</item>
 /// <item><strong>Consistency</strong>: Centralized trimming and normalization</item>
 /// <item><strong>Testability</strong>: Easy to test validation rules in isolation</item>
@@ -212,6 +224,24 @@
 /// 
 /// var invalid = ProductSKU.TryCreateWithValidation("PROD@12345");
 /// // Failure: "SKU can only contain letters, digits, and hyphens"
+/// </code>
+/// </example>
+/// <example>
+/// String length constraints with <see cref="StringLengthAttribute"/>:
+/// <code>
+/// // Maximum length only — rejects strings longer than 50 characters
+/// [StringLength(50)]
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+/// 
+/// var ok = FirstName.TryCreate("John");      // Success
+/// var tooLong = FirstName.TryCreate(new string('x', 51)); // Failure: "First Name must be 50 characters or fewer."
+/// 
+/// // Both minimum and maximum length
+/// [StringLength(500, MinimumLength = 10)]
+/// public partial class Description : RequiredString&lt;Description&gt; { }
+/// 
+/// var tooShort = Description.TryCreate("Hi");        // Failure: "Description must be at least 10 characters."
+/// var tooLong2 = Description.TryCreate(new string('x', 501)); // Failure: "Description must be 500 characters or fewer."
 /// </code>
 /// </example>
 /// <seealso cref="ScalarValueObject{TSelf, T}"/>

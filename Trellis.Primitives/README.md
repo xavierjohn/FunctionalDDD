@@ -53,6 +53,13 @@ public partial class TrackingId : RequiredString<TrackingId>
 // - TryParse(string?, IFormatProvider?, out TrackingId) -> bool
 // - explicit operator TrackingId(string)
 
+// Optional: Add [StringLength] for length constraints
+[StringLength(50)]
+public partial class FirstName : RequiredString<FirstName> { }
+
+[StringLength(500, MinimumLength = 10)]
+public partial class Description : RequiredString<Description> { }
+
 var result = TrackingId.TryCreate("TRK-12345");
 if (result.IsSuccess)
 {
@@ -380,7 +387,7 @@ This library provides both **base classes** for creating custom value objects an
 #### Base Classes (with Source Generation)
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
-| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValue, IParsable, ASP.NET validation |
+| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValue, IParsable, ASP.NET validation, optional `[StringLength]` constraints |
 | **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValue, NewUniqueV4()/V7(), ASP.NET validation |
 | **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValue, IParsable, ASP.NET validation |
 | **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValue, IParsable, ASP.NET validation |
