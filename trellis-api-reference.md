@@ -1113,8 +1113,11 @@ public partial class FirstName : RequiredString<FirstName> { }
 // Usage
 var name = FirstName.Create("Alice");
 var result = FirstName.TryCreate(userInput);
+```
 
-// With length constraints
+With length constraints:
+
+```csharp
 [StringLength(50)]
 public partial class ProductName : RequiredString<ProductName> { }
 

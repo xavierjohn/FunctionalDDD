@@ -53,13 +53,6 @@ public partial class TrackingId : RequiredString<TrackingId>
 // - TryParse(string?, IFormatProvider?, out TrackingId) -> bool
 // - explicit operator TrackingId(string)
 
-// Optional: Add [StringLength] for length constraints
-[StringLength(50)]
-public partial class FirstName : RequiredString<FirstName> { }
-
-[StringLength(500, MinimumLength = 10)]
-public partial class Description : RequiredString<Description> { }
-
 var result = TrackingId.TryCreate("TRK-12345");
 if (result.IsSuccess)
 {
@@ -76,6 +69,16 @@ var parsed = TrackingId.Parse("TRK-12345", null);
 
 // Explicit cast operator (throws on failure)
 var trackingId = (TrackingId)"TRK-12345";
+```
+
+Optional: Add `[StringLength]` for length constraints:
+
+```csharp
+[StringLength(50)]
+public partial class FirstName : RequiredString<FirstName> { }
+
+[StringLength(500, MinimumLength = 10)]
+public partial class Description : RequiredString<Description> { }
 ```
 
 ### RequiredGuid

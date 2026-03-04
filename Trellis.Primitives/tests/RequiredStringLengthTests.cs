@@ -1,6 +1,5 @@
 ﻿namespace Trellis.Primitives.Tests;
 
-using System.Globalization;
 using System.Text.Json;
 
 /// <summary>
@@ -16,14 +15,6 @@ public partial class ShortCode : RequiredString<ShortCode>
 /// </summary>
 [StringLength(50, MinimumLength = 3)]
 public partial class UserName : RequiredString<UserName>
-{
-}
-
-/// <summary>
-/// Test value object with min length of 1 (effectively same as RequiredString default).
-/// </summary>
-[StringLength(100, MinimumLength = 1)]
-public partial class Title : RequiredString<Title>
 {
 }
 

@@ -165,7 +165,7 @@ public void ValidateCustom()
 {
     // Phone validation
     var phone = PhoneNumber.TryCreateWithValidation("555-1234");
-    // Error: "Phone number must be at least 10 digits"
+    // Error: "Phone Number must be at least 10 characters."
     
     var validPhone = PhoneNumber.TryCreateWithValidation("555-123-4567");
     // Success
