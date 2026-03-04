@@ -109,17 +109,17 @@ Use `[StringLength]` to enforce min/max length declaratively — the source gene
 ```csharp
 // Maximum length only
 [StringLength(20)]
-public partial class ProductCode : RequiredString<ProductCode> { }
+public partial class ShortCode : RequiredString<ShortCode> { }
 
-ProductCode.TryCreate("PROD-123");              // ✅ Success
-ProductCode.TryCreate(new string('x', 21));     // ❌ "Product Code must be 20 characters or fewer."
+ShortCode.TryCreate("ABC-123");                 // ✅ Success
+ShortCode.TryCreate(new string('x', 21));       // ❌ "Short Code must be 20 characters or fewer."
 
 // Both minimum and maximum length
-[StringLength(50, MinimumLength = 3)]
-public partial class CustomerName : RequiredString<CustomerName> { }
+[StringLength(100, MinimumLength = 3)]
+public partial class DisplayName : RequiredString<DisplayName> { }
 
-CustomerName.TryCreate("Jo");                   // ❌ "Customer Name must be at least 3 characters."
-CustomerName.TryCreate("John Doe");             // ✅ Success
+DisplayName.TryCreate("Jo");                    // ❌ "Display Name must be at least 3 characters."
+DisplayName.TryCreate("John Doe");              // ✅ Success
 ```
 
 ### Custom Validation
@@ -127,15 +127,15 @@ CustomerName.TryCreate("John Doe");             // ✅ Success
 For validation beyond length (format, pattern, etc.), extend with a custom factory method:
 
 ```csharp
-// Length is handled by [StringLength], format by custom validation
+// Length is handled by [StringLength], format by custom factory method
 [StringLength(15, MinimumLength = 10)]
-public partial class PhoneNumber : RequiredString<PhoneNumber>
+public partial class ContactPhone : RequiredString<ContactPhone>
 {
-    public static Result<PhoneNumber> TryCreateWithValidation(string? value) =>
+    public static Result<ContactPhone> TryCreateWithValidation(string? value) =>
         TryCreate(value) // Generated: validates non-empty + length 10–15
             .Ensure(
                 phone => phone.Value.All(c => char.IsDigit(c) || c == '-' || c == ' '),
-                Error.Validation("Phone number can only contain digits, dashes, and spaces", "phoneNumber"));
+                Error.Validation("Phone number can only contain digits, dashes, and spaces", "contactPhone"));
 }
 
 public partial class ZipCode : RequiredString<ZipCode>
@@ -151,33 +151,33 @@ public partial class ZipCode : RequiredString<ZipCode>
 }
 
 [StringLength(20, MinimumLength = 3)]
-public partial class ProductCode : RequiredString<ProductCode>
+public partial class PartNumber : RequiredString<PartNumber>
 {
-    public static Result<ProductCode> TryCreateWithValidation(string? value) =>
+    public static Result<PartNumber> TryCreateWithValidation(string? value) =>
         TryCreate(value) // Generated: validates non-empty + length 3–20
             .Ensure(
                 code => Regex.IsMatch(code.Value, @"^[A-Z0-9-]+$"),
-                Error.Validation("Product code can only contain uppercase letters, digits, and dashes", "productCode"));
+                Error.Validation("Part number can only contain uppercase letters, digits, and dashes", "partNumber"));
 }
 
 // Usage
 public void ValidateCustom()
 {
     // Phone validation
-    var phone = PhoneNumber.TryCreateWithValidation("555-1234");
-    // Error: "Phone Number must be at least 10 characters."
+    var phone = ContactPhone.TryCreateWithValidation("555-1234");
+    // Error: "Contact Phone must be at least 10 characters."
     
-    var validPhone = PhoneNumber.TryCreateWithValidation("555-123-4567");
+    var validPhone = ContactPhone.TryCreateWithValidation("555-123-4567");
     // Success
     
     // Zip code validation
     var zip = ZipCode.TryCreateWithValidation("12345").Value;
     var zipPlus4 = ZipCode.TryCreateWithValidation("12345-6789").Value;
     
-    // Product code validation
-    var productCode = ProductCode.TryCreateWithValidation("PROD-ABC-123").Value;
-    var invalid = ProductCode.TryCreateWithValidation("prod-abc");
-    // Error: "Product code can only contain uppercase letters, digits, and dashes"
+    // Part number validation
+    var partNumber = PartNumber.TryCreateWithValidation("PROD-ABC-123").Value;
+    var invalid = PartNumber.TryCreateWithValidation("prod-abc");
+    // Error: "Part number can only contain uppercase letters, digits, and dashes"
 }
 ```
 

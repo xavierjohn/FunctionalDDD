@@ -206,14 +206,13 @@
 /// <example>
 /// Advanced: Adding custom validation to derived types:
 /// <code>
-/// // While RequiredString handles null/empty, you can add domain-specific rules
+/// // Use [StringLength] for length, add custom validation for format rules
+/// [StringLength(20)]
 /// public partial class ProductSKU : RequiredString&lt;ProductSKU&gt;
 /// {
-///     // Additional validation can be done in factory methods
+///     // Additional format validation via custom factory method
 ///     public static Result&lt;ProductSKU&gt; TryCreateWithValidation(string? value) =>
-///         TryCreate(value) // Use generated validation first
-///             .Ensure(sku => sku.Value.Length &lt;= 20,
-///                    Error.Validation("SKU must be 20 characters or less", "sku"))
+///         TryCreate(value) // Generated: validates non-empty + length &lt;= 20
 ///             .Ensure(sku => sku.Value.All(c => char.IsLetterOrDigit(c) || c == '-'),
 ///                    Error.Validation("SKU can only contain letters, digits, and hyphens", "sku"));
 /// }
@@ -221,6 +220,9 @@
 /// // Usage
 /// var result = ProductSKU.TryCreateWithValidation("PROD-12345");
 /// // Success
+/// 
+/// var tooLong = ProductSKU.TryCreateWithValidation(new string('A', 21));
+/// // Failure: "Product S K U must be 20 characters or fewer."
 /// 
 /// var invalid = ProductSKU.TryCreateWithValidation("PROD@12345");
 /// // Failure: "SKU can only contain letters, digits, and hyphens"

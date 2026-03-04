@@ -462,6 +462,23 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
             if (g.ClassBase == "RequiredString")
             {
+                // Validate [StringLength] constraints are consistent
+                if (g.MinLength.HasValue && g.MaxLength.HasValue && g.MinLength.Value > g.MaxLength.Value)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        new DiagnosticDescriptor(
+                            id: "TRLS008",
+                            title: "StringLength MinimumLength exceeds MaximumLength",
+                            messageFormat: "Class '{0}' has [StringLength({1}, MinimumLength = {2})] where MinimumLength exceeds MaximumLength. No value can satisfy both constraints.",
+                            category: "SourceGenerator",
+                            DiagnosticSeverity.Error,
+                            isEnabledByDefault: true),
+                        location: null,
+                        g.ClassName,
+                        g.MaxLength.Value,
+                        g.MinLength.Value));
+                }
+
                 // Build length validation Ensure calls if [StringLength] is applied
                 var lengthEnsures = "";
 
