@@ -30,10 +30,22 @@
 /// </list>
 /// </para>
 /// <para>
+/// <strong>String length constraints:</strong> Apply the <see cref="StringLengthAttribute"/> to enforce
+/// minimum and/or maximum lengths at creation time:
+/// <code>
+/// [StringLength(50)]
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+/// 
+/// [StringLength(500, MinimumLength = 10)]
+/// public partial class Description : RequiredString&lt;Description&gt; { }
+/// </code>
+/// </para>
+/// <para>
 /// Benefits over plain strings:
 /// <list type="bullet">
 /// <item><strong>Type safety</strong>: Cannot mix FirstName with LastName</item>
 /// <item><strong>Validation</strong>: Prevents null/empty strings at creation time</item>
+/// <item><strong>Length constraints</strong>: Optional min/max length via <see cref="StringLengthAttribute"/></item>
 /// <item><strong>Domain clarity</strong>: Self-documenting code that expresses intent</item>
 /// <item><strong>Consistency</strong>: Centralized trimming and normalization</item>
 /// <item><strong>Testability</strong>: Easy to test validation rules in isolation</item>
@@ -194,14 +206,13 @@
 /// <example>
 /// Advanced: Adding custom validation to derived types:
 /// <code>
-/// // While RequiredString handles null/empty, you can add domain-specific rules
+/// // Use [StringLength] for length, add custom validation for format rules
+/// [StringLength(20)]
 /// public partial class ProductSKU : RequiredString&lt;ProductSKU&gt;
 /// {
-///     // Additional validation can be done in factory methods
+///     // Additional format validation via custom factory method
 ///     public static Result&lt;ProductSKU&gt; TryCreateWithValidation(string? value) =>
-///         TryCreate(value) // Use generated validation first
-///             .Ensure(sku => sku.Value.Length &lt;= 20,
-///                    Error.Validation("SKU must be 20 characters or less", "sku"))
+///         TryCreate(value) // Generated: validates non-empty + length &lt;= 20
 ///             .Ensure(sku => sku.Value.All(c => char.IsLetterOrDigit(c) || c == '-'),
 ///                    Error.Validation("SKU can only contain letters, digits, and hyphens", "sku"));
 /// }
@@ -210,8 +221,29 @@
 /// var result = ProductSKU.TryCreateWithValidation("PROD-12345");
 /// // Success
 /// 
+/// var tooLong = ProductSKU.TryCreateWithValidation(new string('A', 21));
+/// // Failure: "Product SKU must be 20 characters or fewer."
+/// 
 /// var invalid = ProductSKU.TryCreateWithValidation("PROD@12345");
 /// // Failure: "SKU can only contain letters, digits, and hyphens"
+/// </code>
+/// </example>
+/// <example>
+/// String length constraints with <see cref="StringLengthAttribute"/>:
+/// <code>
+/// // Maximum length only — rejects strings longer than 50 characters
+/// [StringLength(50)]
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+/// 
+/// var ok = FirstName.TryCreate("John");      // Success
+/// var tooLong = FirstName.TryCreate(new string('x', 51)); // Failure: "First Name must be 50 characters or fewer."
+/// 
+/// // Both minimum and maximum length
+/// [StringLength(500, MinimumLength = 10)]
+/// public partial class Description : RequiredString&lt;Description&gt; { }
+/// 
+/// var tooShort = Description.TryCreate("Hi");        // Failure: "Description must be at least 10 characters."
+/// var tooLong2 = Description.TryCreate(new string('x', 501)); // Failure: "Description must be 500 characters or fewer."
 /// </code>
 /// </example>
 /// <seealso cref="ScalarValueObject{TSelf, T}"/>

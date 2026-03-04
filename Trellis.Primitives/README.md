@@ -71,6 +71,16 @@ var parsed = TrackingId.Parse("TRK-12345", null);
 var trackingId = (TrackingId)"TRK-12345";
 ```
 
+Optional: Add `[StringLength]` for length constraints:
+
+```csharp
+[StringLength(50)]
+public partial class FirstName : RequiredString<FirstName> { }
+
+[StringLength(500, MinimumLength = 10)]
+public partial class Description : RequiredString<Description> { }
+```
+
 ### RequiredGuid
 
 Create strongly-typed GUID value objects. Use `NewUniqueV7()` for time-ordered, sortable identifiers — GUID V7 provides the same benefits as ULIDs (sequential, timestamp-embedded) while using the standard `System.Guid` type.
@@ -380,7 +390,7 @@ This library provides both **base classes** for creating custom value objects an
 #### Base Classes (with Source Generation)
 | Value Object | Base Class | Purpose | Key Features |
 |-------------|-----------|----------|-------------|
-| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValue, IParsable, ASP.NET validation |
+| **RequiredString** | Primitive wrapper | Non-empty strings | Source generation, IScalarValue, IParsable, ASP.NET validation, optional `[StringLength]` constraints |
 | **RequiredGuid** | Primitive wrapper | Non-default GUIDs | Source generation, IScalarValue, NewUniqueV4()/V7(), ASP.NET validation |
 | **RequiredInt** | Primitive wrapper | Non-default integers | Source generation, IScalarValue, IParsable, ASP.NET validation |
 | **RequiredDecimal** | Primitive wrapper | Non-default decimals | Source generation, IScalarValue, IParsable, ASP.NET validation |

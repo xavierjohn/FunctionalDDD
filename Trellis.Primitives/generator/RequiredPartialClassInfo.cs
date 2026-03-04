@@ -69,17 +69,39 @@ internal class RequiredPartialClassInfo
     public readonly string Accessibility;
 
     /// <summary>
+    /// Gets the maximum string length constraint, if specified via <c>[StringLength]</c>.
+    /// </summary>
+    /// <value>
+    /// The maximum length (inclusive), or <c>null</c> if no constraint was specified.
+    /// Only applicable when <see cref="ClassBase"/> is <c>"RequiredString"</c>.
+    /// </value>
+    public readonly int? MaxLength;
+
+    /// <summary>
+    /// Gets the minimum string length constraint, if specified via <c>[StringLength(max, MinimumLength = min)]</c>.
+    /// </summary>
+    /// <value>
+    /// The minimum length (inclusive), or <c>null</c> if no constraint was specified.
+    /// Only applicable when <see cref="ClassBase"/> is <c>"RequiredString"</c>.
+    /// </value>
+    public readonly int? MinLength;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="RequiredPartialClassInfo"/> class.
     /// </summary>
     /// <param name="nameSpace">The namespace of the partial class.</param>
     /// <param name="className">The name of the partial class.</param>
     /// <param name="classBase">The base class (RequiredGuid or RequiredString).</param>
     /// <param name="accessibility">The accessibility level (public, internal, etc.).</param>
-    public RequiredPartialClassInfo(string nameSpace, string className, string classBase, string accessibility)
+    /// <param name="maxLength">Optional maximum string length from <c>[StringLength]</c> attribute.</param>
+    /// <param name="minLength">Optional minimum string length from <c>[StringLength]</c> attribute.</param>
+    public RequiredPartialClassInfo(string nameSpace, string className, string classBase, string accessibility, int? maxLength = null, int? minLength = null)
     {
         NameSpace = nameSpace;
         ClassName = className;
         ClassBase = classBase;
         Accessibility = accessibility;
+        MaxLength = maxLength;
+        MinLength = minLength;
     }
 }

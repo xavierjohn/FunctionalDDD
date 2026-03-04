@@ -41,6 +41,16 @@ if (result.IsSuccess)
 var result2 = TrackingId.TryCreate(input, "shipment.trackingId");
 ```
 
+Optional: enforce length constraints with `[StringLength]`:
+
+```csharp
+[StringLength(50)]
+public partial class FirstName : RequiredString<FirstName> { }
+
+[StringLength(500, MinimumLength = 10)]
+public partial class Description : RequiredString<Description> { }
+```
+
 ### RequiredGuid
 
 Use `NewUniqueV7()` for time-ordered, sortable identifiers — GUID V7 provides the same benefits as ULIDs (sequential, timestamp-embedded) with the standard `System.Guid` type.
