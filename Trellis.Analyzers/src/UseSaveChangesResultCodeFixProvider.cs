@@ -61,6 +61,54 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
             .WithTriviaFrom(identifierNode);
 
         var newRoot = root.ReplaceNode(identifierNode, newIdentifier);
+
+        // If the original call was synchronous SaveChanges(), we need to add await and make the method async
+        if (identifierNode.Identifier.Text == "SaveChanges")
+            newRoot = AddAwaitAndMakeAsync(newRoot, identifierNode.SpanStart);
+
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private static SyntaxNode AddAwaitAndMakeAsync(SyntaxNode root, int originalSpanStart)
+    {
+        // Find the invocation expression that contains our replaced identifier
+        var newIdentifier = root.FindToken(originalSpanStart).Parent;
+        var invocation = newIdentifier?.FirstAncestorOrSelf<InvocationExpressionSyntax>();
+        if (invocation is null)
+            return root;
+
+        // Find the containing expression statement
+        var expressionStatement = invocation.FirstAncestorOrSelf<ExpressionStatementSyntax>();
+        if (expressionStatement is null)
+            return root;
+
+        // Wrap the invocation in an await expression
+        var awaitExpression = SyntaxFactory.AwaitExpression(invocation.WithoutLeadingTrivia())
+            .WithLeadingTrivia(invocation.GetLeadingTrivia());
+        var newStatement = expressionStatement.WithExpression(awaitExpression);
+        root = root.ReplaceNode(expressionStatement, newStatement);
+
+        // Find the containing method and make it async with Task return type
+        var methodDecl = root.FindToken(originalSpanStart).Parent?
+            .FirstAncestorOrSelf<MethodDeclarationSyntax>();
+        if (methodDecl is null)
+            return root;
+
+        // Skip if already async
+        if (methodDecl.Modifiers.Any(SyntaxKind.AsyncKeyword))
+            return root;
+
+        var newMethod = methodDecl
+            .AddModifiers(SyntaxFactory.Token(SyntaxKind.AsyncKeyword).WithTrailingTrivia(SyntaxFactory.Space));
+
+        // Change void return type to Task
+        if (methodDecl.ReturnType is PredefinedTypeSyntax predefined &&
+            predefined.Keyword.IsKind(SyntaxKind.VoidKeyword))
+        {
+            var taskType = SyntaxFactory.ParseTypeName("Task").WithTriviaFrom(methodDecl.ReturnType);
+            newMethod = newMethod.WithReturnType(taskType);
+        }
+
+        return root.ReplaceNode(methodDecl, newMethod);
     }
 }

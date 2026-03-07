@@ -123,9 +123,9 @@ public class UseSaveChangesResultCodeFixProviderTests
                 private readonly DbContext _dbContext;
                 public TestService(DbContext dbContext) => _dbContext = dbContext;
 
-                public void DoWork()
+                public async Task DoWork()
                 {
-                    _dbContext.SaveChangesResultUnitAsync();
+                    await _dbContext.SaveChangesResultUnitAsync();
                 }
             }
             """;
