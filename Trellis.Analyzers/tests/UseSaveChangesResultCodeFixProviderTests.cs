@@ -9,6 +9,11 @@ using Xunit;
 public class UseSaveChangesResultCodeFixProviderTests
 {
     private const string EfCoreStubSource = """
+        namespace Trellis
+        {
+            public record struct Unit;
+        }
+
         namespace Microsoft.EntityFrameworkCore
         {
             using System.Threading;
@@ -36,10 +41,10 @@ public class UseSaveChangesResultCodeFixProviderTests
                     CancellationToken cancellationToken = default)
                     => Task.FromResult(Trellis.Result.Success(0));
 
-                public static Task<Trellis.Result<int>> SaveChangesResultUnitAsync(
+                public static Task<Trellis.Result<Trellis.Unit>> SaveChangesResultUnitAsync(
                     this DbContext context,
                     CancellationToken cancellationToken = default)
-                    => Task.FromResult(Trellis.Result.Success(0));
+                    => Task.FromResult(Trellis.Result.Success(default(Trellis.Unit)));
             }
         }
         """;

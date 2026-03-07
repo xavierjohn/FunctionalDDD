@@ -9,6 +9,11 @@ using Xunit;
 public class UseSaveChangesResultAnalyzerTests
 {
     private const string EfCoreStubSource = """
+        namespace Trellis
+        {
+            public record struct Unit;
+        }
+
         namespace Microsoft.EntityFrameworkCore
         {
             using System.Threading;
@@ -36,10 +41,10 @@ public class UseSaveChangesResultAnalyzerTests
                     CancellationToken cancellationToken = default)
                     => Task.FromResult(Trellis.Result.Success(0));
 
-                public static Task<Trellis.Result<int>> SaveChangesResultUnitAsync(
+                public static Task<Trellis.Result<Trellis.Unit>> SaveChangesResultUnitAsync(
                     this DbContext context,
                     CancellationToken cancellationToken = default)
-                    => Task.FromResult(Trellis.Result.Success(0));
+                    => Task.FromResult(Trellis.Result.Success(default(Trellis.Unit)));
             }
         }
         """;
@@ -234,6 +239,37 @@ public class UseSaveChangesResultAnalyzerTests
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
                 .WithLocation(20, 26)
+                .WithArguments("SaveChangesAsync"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+
+        await test.RunAsync();
+    }
+
+    #endregion
+
+    #region Unqualified call from within DbContext subclass
+
+    [Fact]
+    public async Task SaveChangesAsync_UnqualifiedInSubclass_ProducesWarning()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class AppDbContext : DbContext
+            {
+                public async Task DoSomething(CancellationToken ct)
+                {
+                    await SaveChangesAsync(ct);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UseSaveChangesResultAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(15, 15)
                 .WithArguments("SaveChangesAsync"));
         test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
 
