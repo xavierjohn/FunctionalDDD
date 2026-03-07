@@ -178,4 +178,69 @@ public class UseSaveChangesResultCodeFixProviderTests
 
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task SaveChanges_InNonVoidMethod_NoCodeFixOffered()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public int DoWork()
+                {
+                    _dbContext.SaveChanges();
+                    return 42;
+                }
+            }
+            """;
+
+        // The code fix should not be offered for sync SaveChanges in a non-void method
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            source,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(17, 24)
+                .WithArguments("SaveChanges"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task SaveChanges_InReturnStatement_NoCodeFixOffered()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public int DoWork()
+                {
+                    return _dbContext.SaveChanges();
+                }
+            }
+            """;
+
+        // The code fix should not be offered — return statement is not a standalone ExpressionStatement
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            source,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(17, 31)
+                .WithArguments("SaveChanges"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+
+        await test.RunAsync();
+    }
 }

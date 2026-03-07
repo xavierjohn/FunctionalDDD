@@ -41,12 +41,23 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
             return;
 
         // For sync SaveChanges(), only offer the fix when it's a standalone expression statement.
-        // When used in assignments, returns, etc., the sync-to-async conversion is too complex
-        // for an automatic fix — the developer must refactor manually.
+        // For sync SaveChanges(), the code fix converts the method to async Task.
+        // Skip the fix when:
+        //  - The call is not a standalone expression statement (assignments, returns, etc.)
+        //  - The containing method has a non-void return type (async int is not valid C#)
         if (identifierNode.Identifier.Text == "SaveChanges")
         {
             var invocation = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
             if (invocation?.FirstAncestorOrSelf<ExpressionStatementSyntax>() is null)
+                return;
+
+            var containingMethod = identifierNode.FirstAncestorOrSelf<MethodDeclarationSyntax>();
+            if (containingMethod is null)
+                return;
+
+            var isVoid = containingMethod.ReturnType is PredefinedTypeSyntax predefined
+                         && predefined.Keyword.IsKind(SyntaxKind.VoidKeyword);
+            if (!isVoid)
                 return;
         }
 
