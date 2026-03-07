@@ -40,6 +40,16 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         if (node is not IdentifierNameSyntax identifierNode)
             return;
 
+        // For sync SaveChanges(), only offer the fix when it's a standalone expression statement.
+        // When used in assignments, returns, etc., the sync-to-async conversion is too complex
+        // for an automatic fix — the developer must refactor manually.
+        if (identifierNode.Identifier.Text == "SaveChanges")
+        {
+            var invocation = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
+            if (invocation?.FirstAncestorOrSelf<ExpressionStatementSyntax>() is null)
+                return;
+        }
+
         context.RegisterCodeFix(
             CodeAction.Create(
                 title: Title,

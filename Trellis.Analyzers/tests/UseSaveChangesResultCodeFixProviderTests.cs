@@ -146,4 +146,36 @@ public class UseSaveChangesResultCodeFixProviderTests
 
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task SaveChanges_InAssignment_NoCodeFixOffered()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public void DoWork()
+                {
+                    var count = _dbContext.SaveChanges();
+                }
+            }
+            """;
+
+        // The code fix should not be offered, so fixedSource == source (no transformation)
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            source,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(17, 36)
+                .WithArguments("SaveChanges"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+
+        await test.RunAsync();
+    }
 }
