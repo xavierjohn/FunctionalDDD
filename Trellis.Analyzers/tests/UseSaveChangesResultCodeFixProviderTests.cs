@@ -1,5 +1,7 @@
 namespace Trellis.Analyzers.Tests;
 
+using Microsoft.CodeAnalysis.CSharp.Testing;
+using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 
 /// <summary>
@@ -93,6 +95,57 @@ public class UseSaveChangesResultCodeFixProviderTests
             fixedSource,
             CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
                 .WithLocation(19, 30)
+                .WithArguments("SaveChangesAsync"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task SaveChangesAsync_WithReturnValueUsed_ReplacedWith_SaveChangesResultAsync()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public async Task DoWork(CancellationToken ct)
+                {
+                    var count = await _dbContext.SaveChangesAsync(ct);
+                }
+            }
+            """;
+
+        const string fixedSource = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public async Task DoWork(CancellationToken ct)
+                {
+                    var count = await _dbContext.SaveChangesResultAsync(ct);
+                }
+            }
+            """;
+
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            fixedSource,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(19, 42)
                 .WithArguments("SaveChangesAsync"));
         test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
         test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
@@ -240,6 +293,158 @@ public class UseSaveChangesResultCodeFixProviderTests
                 .WithArguments("SaveChanges"));
         test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
         test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task SaveChanges_Sync_AddsUsingDirective_WhenMissing()
+    {
+        // Full source without using System.Threading.Tasks — bypasses CodeFixTestHelper.WrapInNamespace
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+
+            namespace TestNamespace
+            {
+                public class TestService
+                {
+                    private readonly DbContext _dbContext;
+                    public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                    public void DoWork()
+                    {
+                        _dbContext.SaveChanges();
+                    }
+                }
+            }
+            """;
+
+        const string fixedSource = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+            using System.Threading.Tasks;
+
+            namespace TestNamespace
+            {
+                public class TestService
+                {
+                    private readonly DbContext _dbContext;
+                    public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                    public async Task DoWork()
+                    {
+                        await _dbContext.SaveChangesResultUnitAsync();
+                    }
+                }
+            }
+            """;
+
+        var test = new CSharpCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider, DefaultVerifier>
+        {
+            TestCode = source,
+            FixedCode = fixedSource,
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+        };
+
+        test.ExpectedDiagnostics.Add(
+            new DiagnosticResult(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(13, 24)
+                .WithArguments("SaveChanges"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.TestState.Sources.Add(("TrellisStubs.cs", TrellisResultStubSource));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.FixedState.Sources.Add(("TrellisStubs.cs", TrellisResultStubSource));
+
+        await test.RunAsync();
+    }
+
+    /// <summary>
+    /// Minimal Trellis Result stubs for tests that bypass CodeFixTestHelper.
+    /// Unit is already defined in EfCoreStubSource.
+    /// </summary>
+    private const string TrellisResultStubSource = """
+        #pragma warning disable TRLS003
+        #pragma warning disable TRLS004
+        namespace Trellis
+        {
+            public readonly struct Result<T>
+            {
+                private readonly T _value;
+                private Result(T value) { _value = value; }
+                public bool IsFailure => false;
+                public bool IsSuccess => true;
+                public T Value => _value;
+                public static implicit operator Result<T>(T value) => new Result<T>(value);
+            }
+
+            public static class Result
+            {
+                public static Result<T> Success<T>(T value) => value;
+            }
+        }
+        """;
+
+    [Fact]
+    public async Task SaveChangesAsync_AddsEfCoreUsing_WhenMissing()
+    {
+        // Source has no 'using Trellis.EntityFrameworkCore;' — the code fix should add it
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            namespace TestNamespace
+            {
+                public class TestService
+                {
+                    private readonly DbContext _dbContext;
+                    public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                    public async Task DoWork(CancellationToken ct)
+                    {
+                        await _dbContext.SaveChangesAsync(ct);
+                    }
+                }
+            }
+            """;
+
+        const string fixedSource = """
+            using Microsoft.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+            using Trellis.EntityFrameworkCore;
+
+            namespace TestNamespace
+            {
+                public class TestService
+                {
+                    private readonly DbContext _dbContext;
+                    public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                    public async Task DoWork(CancellationToken ct)
+                    {
+                        await _dbContext.SaveChangesResultUnitAsync(ct);
+                    }
+                }
+            }
+            """;
+
+        var test = new CSharpCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider, DefaultVerifier>
+        {
+            TestCode = source,
+            FixedCode = fixedSource,
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+        };
+
+        test.ExpectedDiagnostics.Add(
+            new DiagnosticResult(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(14, 30)
+                .WithArguments("SaveChangesAsync"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.TestState.Sources.Add(("TrellisStubs.cs", TrellisResultStubSource));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreStubSource));
+        test.FixedState.Sources.Add(("TrellisStubs.cs", TrellisResultStubSource));
 
         await test.RunAsync();
     }

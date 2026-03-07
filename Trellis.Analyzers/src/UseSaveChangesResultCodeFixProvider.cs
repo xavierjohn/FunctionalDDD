@@ -12,14 +12,13 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /// <summary>
-/// Code fix provider that replaces SaveChangesAsync/SaveChanges with SaveChangesResultUnitAsync.
+/// Code fix provider that replaces SaveChangesAsync/SaveChanges with SaveChangesResultUnitAsync
+/// or SaveChangesResultAsync depending on whether the return value is used.
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(UseSaveChangesResultCodeFixProvider))]
 [Shared]
 public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use SaveChangesResultUnitAsync";
-
     public override ImmutableArray<string> FixableDiagnosticIds =>
         ImmutableArray.Create(DiagnosticDescriptors.UseSaveChangesResult.Id);
 
@@ -41,7 +40,7 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
             return;
 
         // For sync SaveChanges(), only offer the fix when it's a standalone expression statement.
-        // For sync SaveChanges(), the code fix converts the method to async Task.
+        // The code fix converts the method to async Task.
         // Skip the fix when:
         //  - The call is not a standalone expression statement (assignments, returns, etc.)
         //  - The containing method has a non-void return type (async int is not valid C#)
@@ -61,24 +60,55 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
                 return;
         }
 
+        // Determine replacement: SaveChangesResultUnitAsync (standalone) vs SaveChangesResultAsync (value used)
+        var replacementName = GetReplacementMethodName(identifierNode);
+        var title = $"Use {replacementName}";
+
         context.RegisterCodeFix(
             CodeAction.Create(
-                title: Title,
-                createChangedDocument: c => ReplaceSaveChangesAsync(context.Document, identifierNode, c),
-                equivalenceKey: Title),
+                title: title,
+                createChangedDocument: c => ApplyFixAsync(context.Document, identifierNode, replacementName, c),
+                equivalenceKey: title),
             diagnostic);
     }
 
-    private static async Task<Document> ReplaceSaveChangesAsync(
+    /// <summary>
+    /// Determines whether to use SaveChangesResultUnitAsync or SaveChangesResultAsync.
+    /// If the return value of SaveChangesAsync is used (assignment, return, condition, etc.),
+    /// SaveChangesResultAsync (returning Result&lt;int&gt;) is the correct replacement.
+    /// </summary>
+    private static string GetReplacementMethodName(IdentifierNameSyntax identifierNode)
+    {
+        if (identifierNode.Identifier.Text != "SaveChangesAsync")
+            return "SaveChangesResultUnitAsync";
+
+        // Walk up: Identifier → MemberAccess → Invocation → possibly Await → check parent
+        var invocation = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
+        if (invocation is null)
+            return "SaveChangesResultUnitAsync";
+
+        // The effective node is the await expression if present, otherwise the invocation itself
+        SyntaxNode effectiveNode = invocation.Parent is AwaitExpressionSyntax awaitExpr
+            ? awaitExpr
+            : invocation;
+
+        // If the effective expression is a direct child of an ExpressionStatement, the value is discarded
+        return effectiveNode.Parent is ExpressionStatementSyntax
+            ? "SaveChangesResultUnitAsync"
+            : "SaveChangesResultAsync";
+    }
+
+    private static async Task<Document> ApplyFixAsync(
         Document document,
         IdentifierNameSyntax identifierNode,
+        string replacementName,
         CancellationToken cancellationToken)
     {
         var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
         if (root == null)
             return document;
 
-        var newIdentifier = SyntaxFactory.IdentifierName("SaveChangesResultUnitAsync")
+        var newIdentifier = SyntaxFactory.IdentifierName(replacementName)
             .WithTriviaFrom(identifierNode);
 
         var newRoot = root.ReplaceNode(identifierNode, newIdentifier);
@@ -87,7 +117,38 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         if (identifierNode.Identifier.Text == "SaveChanges")
             newRoot = AddAwaitAndMakeAsync(newRoot, identifierNode.SpanStart);
 
+        // Ensure 'using Trellis.EntityFrameworkCore;' is present (replacement methods are extension methods)
+        newRoot = AddUsingIfMissing(newRoot, "Trellis.EntityFrameworkCore");
+
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private static SyntaxNode AddUsingIfMissing(SyntaxNode root, string namespaceName)
+    {
+        if (root is not CompilationUnitSyntax compilationUnit)
+            return root;
+
+        // Check top-level usings
+        if (compilationUnit.Usings.Any(u => u.Name?.ToString() == namespaceName))
+            return root;
+
+        // Check usings inside namespace declarations
+        foreach (var member in compilationUnit.Members)
+        {
+            var namespaceUsings = member switch
+            {
+                NamespaceDeclarationSyntax ns => ns.Usings,
+                FileScopedNamespaceDeclarationSyntax fs => fs.Usings,
+                _ => default
+            };
+
+            if (namespaceUsings.Any(u => u.Name?.ToString() == namespaceName))
+                return root;
+        }
+
+        var usingDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
+            .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
+        return compilationUnit.AddUsings(usingDirective);
     }
 
     private static SyntaxNode AddAwaitAndMakeAsync(SyntaxNode root, int originalSpanStart)
@@ -130,6 +191,11 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
             newMethod = newMethod.WithReturnType(taskType);
         }
 
-        return root.ReplaceNode(methodDecl, newMethod);
+        root = root.ReplaceNode(methodDecl, newMethod);
+
+        // Add 'using System.Threading.Tasks;' if not already present
+        root = AddUsingIfMissing(root, "System.Threading.Tasks");
+
+        return root;
     }
 }

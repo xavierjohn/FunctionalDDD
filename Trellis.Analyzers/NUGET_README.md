@@ -2,7 +2,7 @@
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers)
 
-19 Roslyn analyzers that enforce proper usage of `Result<T>` and `Maybe<T>` patterns at compile time — catch unsafe access, unhandled results, and anti-patterns before they reach production.
+20 Roslyn analyzers that enforce proper usage of `Result<T>` and `Maybe<T>` patterns at compile time — catch unsafe access, unhandled results, and anti-patterns before they reach production.
 
 ## Installation
 
