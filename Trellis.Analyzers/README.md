@@ -56,6 +56,10 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 - **Unsafe LINQ access (TRLS018)** - Detects `.Value` in LINQ without filtering by IsSuccess/HasValue
 - **Combine chain too long (TRLS019)** - Detects Combine chains exceeding 9-element tuple limit
 
+### Entity Framework Core Integration
+
+- **Use SaveChangesResult (TRLS020)** - Warns when `SaveChanges`/`SaveChangesAsync` is called directly instead of `SaveChangesResultUnitAsync` or `SaveChangesResultAsync`
+
 ### Error Handling Best Practices
 
 - **Specific error types (TRLS010)** - Encourages using `Error.Validation()`, `Error.NotFound()` etc. instead of base `Error` class
@@ -194,7 +198,7 @@ dotnet_diagnostic.TRLS007.severity = warning     # Upgrade to warning
 ```xml
 <!-- In .csproj -->
 <PropertyGroup>
-  <NoWarn>$(NoWarn);TRLS001;TRLS002;TRLS003;TRLS004;TRLS005;TRLS006;TRLS007;TRLS008;TRLS009;TRLS010;TRLS011;TRLS012;TRLS013;TRLS014;TRLS015;TRLS016;TRLS017;TRLS018;TRLS019</NoWarn>
+  <NoWarn>$(NoWarn);TRLS001;TRLS002;TRLS003;TRLS004;TRLS005;TRLS006;TRLS007;TRLS008;TRLS009;TRLS010;TRLS011;TRLS012;TRLS013;TRLS014;TRLS015;TRLS016;TRLS017;TRLS018;TRLS019;TRLS020</NoWarn>
 </PropertyGroup>
 ```
 
@@ -221,6 +225,7 @@ dotnet_diagnostic.TRLS007.severity = warning     # Upgrade to warning
 | TRLS017 | Don't compare Result or Maybe to null | Warning |
 | TRLS018 | Unsafe access to Value in LINQ expression | Warning |
 | TRLS019 | Combine chain exceeds maximum tuple size | Error |
+| TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
 
 ## Related Packages
 

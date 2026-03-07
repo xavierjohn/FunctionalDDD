@@ -69,6 +69,7 @@ var email = EmailAddress.Create(input);
 | TRLS017 | Don't compare Result or Maybe to null | Warning |
 | TRLS018 | Unsafe access to Value in LINQ expression | Warning |
 | TRLS019 | Combine chain exceeds maximum tuple size | Error |
+| TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
 
 ## Configuration
 
