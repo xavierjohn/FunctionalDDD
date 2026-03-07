@@ -1,0 +1,66 @@
+namespace Trellis.Analyzers;
+
+using System.Collections.Immutable;
+using System.Composition;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+/// <summary>
+/// Code fix provider that replaces SaveChangesAsync/SaveChanges with SaveChangesResultUnitAsync.
+/// </summary>
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(UseSaveChangesResultCodeFixProvider))]
+[Shared]
+public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
+{
+    private const string Title = "Use SaveChangesResultUnitAsync";
+
+    public override ImmutableArray<string> FixableDiagnosticIds =>
+        ImmutableArray.Create(DiagnosticDescriptors.UseSaveChangesResult.Id);
+
+    public override FixAllProvider GetFixAllProvider() =>
+        WellKnownFixAllProviders.BatchFixer;
+
+    public override async Task RegisterCodeFixesAsync(CodeFixContext context)
+    {
+        var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+        if (root == null)
+            return;
+
+        var diagnostic = context.Diagnostics.First();
+        var diagnosticSpan = diagnostic.Location.SourceSpan;
+
+        // Find the method name identifier node
+        var node = root.FindNode(diagnosticSpan);
+        if (node is not IdentifierNameSyntax identifierNode)
+            return;
+
+        context.RegisterCodeFix(
+            CodeAction.Create(
+                title: Title,
+                createChangedDocument: c => ReplaceSaveChangesAsync(context.Document, identifierNode, c),
+                equivalenceKey: Title),
+            diagnostic);
+    }
+
+    private static async Task<Document> ReplaceSaveChangesAsync(
+        Document document,
+        IdentifierNameSyntax identifierNode,
+        CancellationToken cancellationToken)
+    {
+        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+        if (root == null)
+            return document;
+
+        var newIdentifier = SyntaxFactory.IdentifierName("SaveChangesResultUnitAsync")
+            .WithTriviaFrom(identifierNode);
+
+        var newRoot = root.ReplaceNode(identifierNode, newIdentifier);
+        return document.WithSyntaxRoot(newRoot);
+    }
+}
