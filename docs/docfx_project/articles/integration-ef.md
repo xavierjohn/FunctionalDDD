@@ -13,6 +13,7 @@ Integrate Railway-Oriented Programming with Entity Framework Core for type-safe 
 - [Query Extensions](#query-extensions)
 - [Handling Database Exceptions](#handling-database-exceptions)
 - [Money Property Convention](#money-property-convention)
+- [Maybe\<T\> Property Convention](#maybe-property-convention)
 - [GUID V7 for Entity IDs](#guid-v7-for-entity-ids)
 
 > [!TIP]
@@ -823,6 +824,79 @@ modelBuilder.Entity<Order>(b =>
 
 > [!NOTE]
 > Multiple `Money` properties on the same entity work automatically — each gets its own pair of columns.
+
+## <a id="maybe-property-convention"></a>Maybe\<T\> Property Convention
+
+`Maybe<T>` is a `readonly struct`. EF Core cannot mark non-nullable struct properties as optional — calling `IsRequired(false)` or setting `IsNullable = true` throws `InvalidOperationException`. The `Trellis.EntityFrameworkCore.Generator` source generator and `MaybeConvention` eliminate all boilerplate.
+
+### Entity Declaration
+
+Declare optional properties as `partial Maybe<T>`:
+
+```csharp
+public partial class Customer
+{
+    public CustomerId Id { get; set; } = null!;
+    public CustomerName Name { get; set; } = null!;
+
+    public partial Maybe<PhoneNumber> Phone { get; set; }
+    public partial Maybe<DateTime> SubmittedAt { get; set; }
+}
+```
+
+No `OnModelCreating` configuration needed — `MaybeConvention` (registered by `ApplyTrellisConventions`) handles everything automatically.
+
+### How It Works
+
+The **source generator** emits a private `_camelCase` backing field and getter/setter for each `partial Maybe<T>` property:
+
+```csharp
+// Auto-generated
+private PhoneNumber? _phone;
+public partial Maybe<PhoneNumber> Phone
+{
+    get => _phone is not null ? Maybe.From(_phone) : Maybe.None<PhoneNumber>();
+    set => _phone = value.HasValue ? value.Value : null;
+}
+```
+
+The **`MaybeConvention`** (`IModelFinalizingConvention`) then:
+
+1. Always ignores the `Maybe<T>` CLR property (EF Core can't map structs as nullable)
+2. Discovers the private `_camelCase` backing field
+3. Maps the backing field as optional (`IsRequired(false)`)
+4. Sets the column name to the original property name (`Phone`, not `_phone`)
+5. Configures field-only access mode
+
+### Column Naming
+
+| Property | Backing Field | Column Name |
+|----------|---------------|-------------|
+| `Phone` | `_phone` | `Phone` |
+| `SubmittedAt` | `_submittedAt` | `SubmittedAt` |
+| `AlternateEmail` | `_alternateEmail` | `AlternateEmail` |
+
+### Querying Maybe\<T\> Properties
+
+Because `MaybeConvention` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use the query extensions:
+
+```csharp
+// WhereNone — WHERE column IS NULL
+var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
+
+// WhereHasValue — WHERE column IS NOT NULL
+var withPhone = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
+
+// WhereEquals — WHERE column = @value
+var matches = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+```
+
+> [!WARNING]
+> Do not use direct property references like `.Where(c => c.Phone.HasValue)` — EF Core cannot translate them. Always use the query extensions above.
+
+### TRLSGEN100 Diagnostic
+
+If a `Maybe<T>` property is not declared `partial`, the source generator emits diagnostic `TRLSGEN100` prompting the developer to add the `partial` modifier.
 
 ## Complete Example
 

@@ -91,6 +91,7 @@
     <Project Path="Trellis.DomainDrivenDesign/tests/Trellis.DomainDrivenDesign.Tests.csproj" />
   </Folder>
   <Folder Name="/Trellis.EntityFrameworkCore/">
+    <Project Path="Trellis.EntityFrameworkCore/generator/Trellis.EntityFrameworkCore.Generator.csproj" />
     <Project Path="Trellis.EntityFrameworkCore/src/Trellis.EntityFrameworkCore.csproj" />
     <Project Path="Trellis.EntityFrameworkCore/tests/Trellis.EntityFrameworkCore.Tests.csproj" />
   </Folder>

@@ -226,7 +226,6 @@ public class ApplyTrellisConventionsTests : IDisposable
                     .HasMaxLength(100);
                 b.Property(c => c.Email).HasMaxLength(254);
                 b.Property(c => c.CreatedAt).IsRequired();
-                b.MaybeProperty(c => c.Phone);
             });
     }
 
@@ -285,7 +284,7 @@ public class ApplyTrellisConventionsTests : IDisposable
             CustomerId = customerId,
             Amount = 50m,
             Status = TestOrderStatus.Draft,
-            TicketNumber = TestTicketNumber.Create(42)
+            TicketNumber = Maybe.From(TestTicketNumber.Create(42))
         };
 
         // Act
@@ -298,8 +297,8 @@ public class ApplyTrellisConventionsTests : IDisposable
 
         // Assert
         loaded.Should().NotBeNull();
-        loaded!.TicketNumber.Should().NotBeNull();
-        loaded.TicketNumber!.Value.Should().Be(42);
+        loaded!.TicketNumber.HasValue.Should().BeTrue();
+        loaded.TicketNumber.Value.Value.Should().Be(42);
     }
 
     #endregion
@@ -327,7 +326,7 @@ public class ApplyTrellisConventionsTests : IDisposable
             CustomerId = customerId,
             Amount = 100m,
             Status = TestOrderStatus.Draft,
-            UnitPrice = TestUnitPrice.Create(19.99m)
+            UnitPrice = Maybe.From(TestUnitPrice.Create(19.99m))
         };
 
         // Act
@@ -340,8 +339,8 @@ public class ApplyTrellisConventionsTests : IDisposable
 
         // Assert
         loaded.Should().NotBeNull();
-        loaded!.UnitPrice.Should().NotBeNull();
-        loaded.UnitPrice!.Value.Should().Be(19.99m);
+        loaded!.UnitPrice.HasValue.Should().BeTrue();
+        loaded.UnitPrice.Value.Value.Should().Be(19.99m);
     }
 
     #endregion

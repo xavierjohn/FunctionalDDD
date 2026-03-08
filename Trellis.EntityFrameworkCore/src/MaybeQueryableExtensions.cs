@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Because <see cref="MaybePropertyExtensions.MaybeProperty{TEntity,TInner}"/> ignores the
-/// <see cref="Maybe{T}"/> CLR property, EF Core cannot translate direct LINQ references to it.
+/// Because the <see cref="MaybeConvention"/> ignores the <see cref="Maybe{T}"/> CLR property,
+/// EF Core cannot translate direct LINQ references to it.
 /// These extension methods provide a strongly-typed alternative to raw <c>EF.Property</c> calls.
 /// </para>
 /// <code>

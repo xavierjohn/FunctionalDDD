@@ -9,6 +9,7 @@ Thin integration layer that eliminates repetitive EF Core boilerplate when using
 - [Installation](#installation)
 - [Convention-Based Value Converters](#convention-based-value-converters)
 - [Money Property Convention](#money-property-convention)
+- [Maybe\<T\> Property Convention](#maybetproperty-convention)
 - [Result-Returning SaveChanges](#result-returning-savechanges)
 - [Query Extensions](#query-extensions)
 - [Database Exception Classification](#database-exception-classification)
@@ -125,6 +126,44 @@ modelBuilder.Entity<Order>(b =>
     });
 });
 ```
+
+## Maybe\<T\> Property Convention
+
+`Maybe<T>` is a `readonly struct` which EF Core cannot map as optional. The `Trellis.EntityFrameworkCore.Generator` source generator and `MaybeConvention` eliminate all boilerplate — just declare `partial Maybe<T>` properties:
+
+```csharp
+public partial class Customer
+{
+    public CustomerId Id { get; set; } = null!;
+    public CustomerName Name { get; set; } = null!;
+
+    public partial Maybe<PhoneNumber> Phone { get; set; }
+    public partial Maybe<DateTime> SubmittedAt { get; set; }
+}
+```
+
+No `OnModelCreating` configuration needed — `MaybeConvention` (registered by `ApplyTrellisConventions`) auto-discovers `Maybe<T>` properties, maps the generated `_camelCase` backing field as nullable, and sets the column name to the property name.
+
+### Column Naming
+
+| Property | Backing Field | Column Name |
+|----------|---------------|-------------|
+| `Phone` | `_phone` | `Phone` |
+| `SubmittedAt` | `_submittedAt` | `SubmittedAt` |
+
+### Querying Maybe\<T\> Properties
+
+Because `MaybeConvention` ignores the `Maybe<T>` CLR property, use the query extensions for LINQ:
+
+```csharp
+var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
+var withPhone    = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
+var matches      = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+```
+
+### TRLSGEN100
+
+If a `Maybe<T>` property is not declared `partial`, the generator emits diagnostic `TRLSGEN100`.
 
 ## Result-Returning SaveChanges
 

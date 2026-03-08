@@ -1002,45 +1002,35 @@ Explicit `OwnsOne` configuration takes precedence over the convention.
 
 ### Maybe\<T\> Property Mapping
 
-`Maybe<T>` is a `readonly struct`. EF Core cannot mark non-nullable struct properties as optional — calling `IsRequired(false)` or setting `IsNullable = true` throws `InvalidOperationException`. Use the backing-field pattern with `MaybeProperty`:
+`Maybe<T>` is a `readonly struct`. EF Core cannot mark non-nullable struct properties as optional — calling `IsRequired(false)` or setting `IsNullable = true` throws `InvalidOperationException`. Use C# 13 `partial` properties with the `Trellis.EntityFrameworkCore.Generator` source generator:
 
 ```csharp
-// Extension method
-PropertyBuilder MaybeProperty<TEntity, TInner>(
-    this EntityTypeBuilder<TEntity> builder,
-    Expression<Func<TEntity, Maybe<TInner>>> propertyExpression)
-    where TEntity : class
-    where TInner : notnull
-// 1. Ignores the Maybe<T> CLR property
-// 2. Maps private _camelCase backing field as optional
-// 3. Returns PropertyBuilder for chaining (HasMaxLength, etc.)
-
-// Entity — backing field + computed Maybe<T> property
-public class Customer
+// Entity — just declare partial Maybe<T> properties
+public partial class Customer
 {
     public CustomerId Id { get; set; } = null!;
 
-    private PhoneNumber? _phone;
-    public Maybe<PhoneNumber> Phone
-    {
-        get => _phone is not null ? Maybe.From(_phone) : Maybe.None<PhoneNumber>();
-        set => _phone = value.HasValue ? value.Value : null;
-    }
+    public partial Maybe<PhoneNumber> Phone { get; set; }
+
+    public partial Maybe<DateTime> SubmittedAt { get; set; }
 }
 
-// OnModelCreating
+// OnModelCreating — no configuration needed for Maybe<T>, convention handles everything
 modelBuilder.Entity<Customer>(b =>
 {
     b.HasKey(c => c.Id);
-    b.MaybeProperty(c => c.Phone).HasMaxLength(20);
 });
 ```
 
+The source generator emits a private `_camelCase` backing field and getter/setter for each `partial Maybe<T>` property. The `MaybeConvention` (registered by `ApplyTrellisConventions`) auto-discovers `Maybe<T>` properties, ignores the struct property, maps the backing field as nullable, and sets the column name to the property name.
+
 Backing field naming: `Phone` → `_phone`, `SubmittedAt` → `_submittedAt`, `AlternateEmail` → `_alternateEmail`.
+
+If a `Maybe<T>` property is not declared `partial`, the generator emits diagnostic `TRLSGEN100`.
 
 ### Maybe\<T\> Queryable Extensions
 
-Because `MaybeProperty` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use these extension methods instead of raw `EF.Property` calls:
+Because `MaybeConvention` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use these extension methods instead of raw `EF.Property` calls:
 
 ```csharp
 // WhereNone — WHERE backing_field IS NULL
@@ -1257,17 +1247,12 @@ var result = EmailAddress.TryCreate(dto.Email)
     .Combine(Maybe.Optional(dto.MiddleName.AsNullable(), MiddleName.TryCreate))
     .Bind((email, middleName) => CreateProfile(email, middleName));
 
-// EF Core persistence — use backing-field pattern (see §12 MaybeProperty)
-public class Profile
+// EF Core persistence — use partial Maybe<T> property (see §12 Maybe<T> Property Mapping)
+public partial class Profile
 {
-    private Url? _website;
-    public Maybe<Url> Website
-    {
-        get => _website is not null ? Maybe.From(_website) : Maybe.None<Url>();
-        set => _website = value.HasValue ? value.Value : null;
-    }
+    public partial Maybe<Url> Website { get; set; }
 }
-// OnModelCreating: b.MaybeProperty(p => p.Website);
+// MaybeConvention auto-configures the backing field — no OnModelCreating needed
 ```
 
 ## Convert Result to HTTP Response

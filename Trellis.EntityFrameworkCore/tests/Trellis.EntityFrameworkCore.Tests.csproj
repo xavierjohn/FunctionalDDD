@@ -8,10 +8,12 @@
 	  <ProjectReference Include="..\src\Trellis.EntityFrameworkCore.csproj" />
 	  <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
 	  <ProjectReference Include="..\..\Trellis.Primitives\generator\Trellis.Primitives.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	  <ProjectReference Include="..\generator\Trellis.EntityFrameworkCore.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
 	</ItemGroup>
 
 </Project>
