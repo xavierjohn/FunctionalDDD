@@ -159,8 +159,14 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
                 return root;
         }
 
-        var usingDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
-            .WithTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed);
+        var usingDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName));
+
+        // Match line endings from the last existing using directive
+        var lastUsing = compilationUnit.Usings.LastOrDefault();
+        usingDirective = lastUsing is not null
+            ? usingDirective.WithTrailingTrivia(lastUsing.GetTrailingTrivia())
+            : usingDirective.WithTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed);
+
         return compilationUnit.AddUsings(usingDirective);
     }
 
