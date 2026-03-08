@@ -1,4 +1,4 @@
-# TRLS020: Use SaveChangesResultAsync instead of SaveChangesAsync
+﻿# TRLS020: Use SaveChangesResultAsync instead of SaveChangesAsync
 
 ## Cause
 
@@ -119,4 +119,4 @@ public async Task<Result<int>> UpdatePrices(decimal factor, CancellationToken ct
 
 ## See Also
 
-- [Entity Framework Core Integration](../integration-efcore.md) - Full EF Core integration guide
+- [Entity Framework Core Integration](../integration-ef.md) - Full EF Core integration guide

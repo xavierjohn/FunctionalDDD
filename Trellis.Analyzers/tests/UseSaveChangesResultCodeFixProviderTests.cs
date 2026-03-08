@@ -294,7 +294,7 @@ public class UseSaveChangesResultCodeFixProviderTests
             }
             """;
 
-        // The code fix should not be offered â€” return statement is not a standalone ExpressionStatement
+        // The code fix should not be offered — return statement is not a standalone ExpressionStatement
         var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
             source,
             source,
@@ -310,7 +310,7 @@ public class UseSaveChangesResultCodeFixProviderTests
     [Fact]
     public async Task SaveChanges_Sync_AddsUsingDirective_WhenMissing()
     {
-        // Full source without using System.Threading.Tasks â€” bypasses CodeFixTestHelper.WrapInNamespace
+        // Full source without using System.Threading.Tasks — bypasses CodeFixTestHelper.WrapInNamespace
         const string source = """
             using Microsoft.EntityFrameworkCore;
             using Trellis.EntityFrameworkCore;
@@ -398,7 +398,7 @@ public class UseSaveChangesResultCodeFixProviderTests
     [Fact]
     public async Task SaveChangesAsync_AddsEfCoreUsing_WhenMissing()
     {
-        // Source has no 'using Trellis.EntityFrameworkCore;' â€” the code fix should add it
+        // Source has no 'using Trellis.EntityFrameworkCore;' — the code fix should add it
         const string source = """
             using Microsoft.EntityFrameworkCore;
             using System.Threading;
