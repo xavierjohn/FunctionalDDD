@@ -35,8 +35,7 @@ public sealed class AuthorizationBehavior<TMessage, TResponse>
         if (!actor.HasAllPermissions(message.RequiredPermissions))
         {
             var missing = message.RequiredPermissions
-                .Where(p => !actor.HasPermission(p))
-                .ToList();
+                .Where(p => !actor.HasPermission(p));
 
             var error = Error.Forbidden(
                 $"Missing required permissions: {string.Join(", ", missing)}");

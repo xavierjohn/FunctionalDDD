@@ -87,11 +87,10 @@ public sealed class EntraActorOptions
             if (ipAddress is not null)
                 attributes[ActorAttributes.IpAddress] = ipAddress;
 
-            var amrValues = claimList
-                .Where(c => string.Equals(c.Type, "amr", StringComparison.OrdinalIgnoreCase))
-                .Select(c => c.Value)
-                .ToList();
-            attributes[ActorAttributes.MfaAuthenticated] = amrValues.Contains("mfa") ? "true" : "false";
+            var hasMfa = claimList
+                .Any(c => string.Equals(c.Type, "amr", StringComparison.OrdinalIgnoreCase)
+                       && string.Equals(c.Value, "mfa", StringComparison.Ordinal));
+            attributes[ActorAttributes.MfaAuthenticated] = hasMfa ? "true" : "false";
 
             return attributes;
         };

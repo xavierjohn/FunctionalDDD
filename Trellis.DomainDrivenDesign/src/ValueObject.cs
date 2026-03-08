@@ -273,17 +273,25 @@ public abstract class ValueObject : IComparable<ValueObject>, IEquatable<ValueOb
         if (thisType != otherType)
             throw new ArgumentException($"Cannot compare objects of different types: {thisType} and {otherType}");
 
-        object[] components = GetEqualityComponents().ToArray();
-        object[] otherComponents = other.GetEqualityComponents().ToArray();
+        using var e1 = GetEqualityComponents().GetEnumerator();
+        using var e2 = other.GetEqualityComponents().GetEnumerator();
 
-        for (var i = 0; i < components.Length; i++)
+        while (true)
         {
-            var comparison = CompareComponents(components[i], otherComponents[i]);
+            var has1 = e1.MoveNext();
+            var has2 = e2.MoveNext();
+
+            if (!has1 && !has2)
+                return 0;
+            if (!has1)
+                return -1;
+            if (!has2)
+                return 1;
+
+            var comparison = CompareComponents(e1.Current, e2.Current);
             if (comparison != 0)
                 return comparison;
         }
-
-        return 0;
     }
 
     private static int CompareComponents(object? object1, object? object2)
