@@ -27,6 +27,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 /// <item>Maps the private <c>_camelCase</c> backing field as an EF property</item>
 /// <item>Marks the backing field as optional (<c>IsRequired(false)</c>)</item>
 /// <item>Configures field-only access mode</item>
+/// <item>Sets the column name to the original property name (e.g., <c>Phone</c> instead of <c>_phone</c>)</item>
 /// </list>
 /// <para>
 /// User code with the source generator:
@@ -69,7 +70,7 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
             {
                 var propertyName = clrProperty.Name;
                 var innerType = clrProperty.PropertyType.GetGenericArguments()[0];
-                var backingFieldName = ToBackingFieldName(propertyName);
+                var backingFieldName = MaybeFieldNaming.ToBackingFieldName(propertyName);
 
                 // Always ignore the Maybe<T> CLR property — EF Core cannot map structs as nullable
                 entityType.Builder.Ignore(propertyName);
@@ -111,8 +112,4 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
                && type.GetGenericTypeDefinition() == s_maybeOpenGenericType;
     }
 
-    private static string ToBackingFieldName(string propertyName) =>
-        propertyName.Length == 1
-            ? $"_{char.ToLowerInvariant(propertyName[0])}"
-            : $"_{char.ToLowerInvariant(propertyName[0])}{propertyName[1..]}";
 }

@@ -1,9 +1,14 @@
 ﻿namespace Trellis.EntityFrameworkCore.Generator;
 
+using System;
+using System.Linq;
+
 /// <summary>
 /// Metadata about a partial property of type <c>Maybe&lt;T&gt;</c> that requires source generation.
+/// Implements <see cref="IEquatable{T}"/> so the incremental generator pipeline can skip
+/// re-generation when the semantic model hasn't changed.
 /// </summary>
-internal sealed class MaybePropertyInfo
+internal sealed class MaybePropertyInfo : IEquatable<MaybePropertyInfo>
 {
     /// <summary>The namespace of the containing type.</summary>
     public readonly string Namespace;
@@ -62,5 +67,39 @@ internal sealed class MaybePropertyInfo
         InnerTypeShortName = innerTypeShortName;
         InnerTypeIsValueType = innerTypeIsValueType;
         NestingParents = nestingParents;
+    }
+
+    public bool Equals(MaybePropertyInfo? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return Namespace == other.Namespace
+            && TypeName == other.TypeName
+            && TypeAccessibility == other.TypeAccessibility
+            && IsRecord == other.IsRecord
+            && PropertyName == other.PropertyName
+            && PropertyAccessibility == other.PropertyAccessibility
+            && SetterAccessibility == other.SetterAccessibility
+            && InnerTypeName == other.InnerTypeName
+            && InnerTypeShortName == other.InnerTypeShortName
+            && InnerTypeIsValueType == other.InnerTypeIsValueType
+            && NestingParents.SequenceEqual(other.NestingParents);
+    }
+
+    public override bool Equals(object? obj) => Equals(obj as MaybePropertyInfo);
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            var hash = 17;
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(Namespace);
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(TypeName);
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(PropertyName);
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(InnerTypeName);
+            hash = (hash * 31) + InnerTypeIsValueType.GetHashCode();
+            return hash;
+        }
     }
 }
