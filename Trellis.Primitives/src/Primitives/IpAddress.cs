@@ -30,9 +30,7 @@ public class IpAddress : ScalarValueObject<IpAddress, string>, IScalarValue<IpAd
     public static Result<IpAddress> TryCreate(string? value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(IpAddress) + '.' + nameof(TryCreate));
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "ipAddress";
+        var field = fieldName.NormalizeFieldName("ipAddress");
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<IpAddress>(Error.Validation("IP address is required.", field));
         var trimmed = value.Trim();
@@ -49,31 +47,12 @@ public class IpAddress : ScalarValueObject<IpAddress, string>, IScalarValue<IpAd
     /// <summary>
     /// Parses an IP address.
     /// </summary>
-    public static IpAddress Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static IpAddress Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<IpAddress>(s);
 
     /// <summary>
     /// Tries to parse an IP address.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out IpAddress result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out IpAddress result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 }

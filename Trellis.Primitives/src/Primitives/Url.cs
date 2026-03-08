@@ -73,9 +73,7 @@ public class Url : ScalarValueObject<Url, string>, IScalarValue<Url, string>, IP
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Url) + '.' + nameof(TryCreate));
 
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "url";
+        var field = fieldName.NormalizeFieldName("url");
 
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<Url>(Error.Validation("URL is required.", field));
@@ -130,33 +128,14 @@ public class Url : ScalarValueObject<Url, string>, IScalarValue<Url, string>, IP
     /// <summary>
     /// Parses the string representation of a URL to its <see cref="Url"/> equivalent.
     /// </summary>
-    public static Url Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static Url Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<Url>(s);
 
     /// <summary>
     /// Tries to parse a string into a <see cref="Url"/>.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Url result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Url result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 
     /// <inheritdoc/>
     protected override IEnumerable<IComparable> GetEqualityComponents()

@@ -32,9 +32,7 @@ public class Age : ScalarValueObject<Age, int>, IScalarValue<Age, int>, IParsabl
     public static Result<Age> TryCreate(int value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Age) + '.' + nameof(TryCreate));
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "age";
+        var field = fieldName.NormalizeFieldName("age");
         if (value < 0)
             return Result.Failure<Age>(Error.Validation("Age must be non-negative.", field));
         if (value > 150)

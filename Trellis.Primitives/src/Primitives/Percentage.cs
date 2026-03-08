@@ -92,9 +92,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Percentage) + '.' + nameof(TryCreate));
 
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "percentage";
+        var field = fieldName.NormalizeFieldName("percentage");
 
         if (value is < 0m or > 100m)
             return Result.Failure<Percentage>(Error.Validation("Percentage must be between 0 and 100.", field));
@@ -114,9 +112,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Percentage) + '.' + nameof(TryCreate));
 
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "percentage";
+        var field = fieldName.NormalizeFieldName("percentage");
 
         if (value is null)
             return Result.Failure<Percentage>(Error.Validation("Percentage is required.", field));
