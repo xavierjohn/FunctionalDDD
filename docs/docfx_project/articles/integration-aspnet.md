@@ -11,6 +11,7 @@ Integrate Railway-Oriented Programming with ASP.NET Core using the **Trellis.Asp
 - [Installation](#installation)
 - [What the Package Provides](#what-the-package-provides)
 - [Scalar Value Auto-Validation](#scalar-value-auto-validation)
+- [Optional Value Objects with Maybe](#optional-value-objects-with-maybe)
 - [MVC Controllers](#mvc-controllers)
 - [Minimal API](#minimal-api)
 - [Automatic Error Mapping](#automatic-error-mapping)
@@ -249,6 +250,123 @@ public class CreateProductRequestValidator : AbstractValidator<CreateProductRequ
 ```
 
 See [FluentValidation Integration](integration-fluentvalidation.md) for more details.
+
+## Optional Value Objects with Maybe
+
+Value objects are non-null by design, but some properties are optional — a customer's phone number, a secondary email, a website URL. `Maybe<T>` expresses this optionality, and `AddScalarValueValidation()` automatically registers the components that make it work with JSON, model binding, and validation.
+
+For background on why `Maybe<T>` exists and when to use it vs. `T?`, see [Why Maybe?](maybe-type.md).
+
+### Using Maybe in DTOs
+
+Declare optional value object properties as `Maybe<T>`:
+
+```csharp
+public record UpdateCustomerRequest(
+    FirstName Name,
+    Maybe<PhoneNumber> Phone,
+    Maybe<Url> Website
+);
+```
+
+### Three-State JSON Handling
+
+`MaybeScalarValueJsonConverter` handles deserialization automatically:
+
+| JSON Input | Deserialized As | HTTP Response |
+|-----------|----------------|---------------|
+| `"phone": "555-1234"` | `Maybe.From(PhoneNumber)` | Request continues |
+| `"phone": null` or field absent | `Maybe.None<PhoneNumber>()` | Request continues |
+| `"phone": "invalid!"` | Validation error collected | 400 Bad Request |
+
+This solves a problem that `T?` cannot: distinguishing "absent" from "invalid." With `PhoneNumber?`, a `null` result tells you nothing — was the field missing, or did it fail validation? With `Maybe<PhoneNumber>`, absence is `None` and invalid input is a validation error.
+
+**Request with optional fields:**
+```http
+POST /api/customers HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "John",
+  "phone": null,
+  "website": "https://example.com"
+}
+```
+
+**Deserialized result:**
+```csharp
+// name = FirstName("John")
+// phone = Maybe.None<PhoneNumber>()   — null was intentional, not an error
+// website = Maybe.From(Url("https://example.com"))
+```
+
+**Request with invalid optional field:**
+```http
+POST /api/customers HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "John",
+  "phone": "not-a-phone",
+  "website": "not-a-url"
+}
+```
+
+**Response:**
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "phone": ["Phone number must be in E.164 format (e.g., +14155551234)."],
+    "website": ["URL must be a valid absolute HTTP or HTTPS URL."]
+  }
+}
+```
+
+### Model Binding for Route and Query Parameters
+
+`MaybeModelBinder` handles `Maybe<T>` in route parameters, query strings, form data, and headers:
+
+```csharp
+[HttpGet("search")]
+public async Task<ActionResult<IEnumerable<CustomerDto>>> Search(
+    [FromQuery] Maybe<PhoneNumber> phone,
+    [FromQuery] Maybe<CountryCode> country,
+    CancellationToken ct)
+{
+    // phone.HasNoValue → parameter was absent or empty
+    // phone.HasValue   → parameter was present and valid
+    return await _service.SearchAsync(phone, country, ct)
+        .ToActionResultAsync(this);
+}
+```
+
+| Query String | Binding Result |
+|-------------|----------------|
+| `/search` | `phone = None, country = None` |
+| `/search?phone=+14155551234` | `phone = Maybe.From(PhoneNumber), country = None` |
+| `/search?phone=invalid` | 400 Bad Request with validation error |
+
+### Validation Safety
+
+`MaybeSuppressChildValidationMetadataProvider` prevents ASP.NET Core's validation visitor from recursing into `Maybe<T>` properties. Without this, the validator would attempt to access `Maybe<T>.Value` via reflection, which throws `InvalidOperationException` when `HasNoValue` is true. This is registered automatically — no configuration needed.
+
+### What Gets Registered
+
+A single call to `AddScalarValueValidation()` registers all three components:
+
+| Component | Purpose |
+|-----------|--------|
+| `MaybeScalarValueJsonConverter` | JSON: `null` → `None`, valid → `From`, invalid → error |
+| `MaybeModelBinder` | Route/query/form: absent → `None`, valid → `From`, invalid → error |
+| `MaybeSuppressChildValidationMetadataProvider` | Prevents validation crash on `Maybe.None` |
+
+No additional configuration is needed beyond what you've already set up for scalar value auto-validation.
 
 ## MVC Controllers
 
