@@ -146,14 +146,15 @@ public static Money Create(decimal amount, string currencyCode)
 
 ## Diagnostic ID Conventions
 
-Analyzers (`Trellis.Analyzers`) and source generators (`Trellis.Primitives/generator`) use **separate ID prefixes** to avoid collisions:
+Analyzers (`Trellis.Analyzers`) and source generators use **separate ID prefixes** to avoid collisions:
 
 | Prefix | Owner | Range | Example |
 |--------|-------|-------|---------|
 | `TRLS` | Trellis.Analyzers | `TRLS001`–`TRLS999` | `TRLS007` — Use `Create()` instead of `TryCreate().Value` |
-| `TRLSGEN` | Primitives source generator | `TRLSGEN001`–`TRLSGEN999` | `TRLSGEN002` — `MinimumLength` exceeds `MaximumLength` |
+| `TRLSGEN` | Primitives source generator | `TRLSGEN001`–`TRLSGEN099` | `TRLSGEN002` — `MinimumLength` exceeds `MaximumLength` |
+| `TRLSGEN` | EF Core source generator | `TRLSGEN100`–`TRLSGEN199` | `TRLSGEN100` — `Maybe<T>` property should be partial |
 
-**Do NOT** reuse a `TRLS` ID in the source generator or vice versa.
+**Do NOT** reuse a `TRLS` ID in a source generator or vice versa. Do NOT overlap generator ranges.
 
 ## Code Style
 
@@ -468,58 +469,65 @@ When running PowerShell commands in the terminal:
 
 `Maybe<T>` is a `readonly struct`. EF Core refuses to mark non-nullable struct properties as optional — calling `IsRequired(false)` or setting `IsNullable = true` throws `InvalidOperationException`. This is a hard limitation in EF Core's metadata layer.
 
-### Solution: Backing-Field Pattern with `MaybeProperty`
+### Solution: Source Generator + `MaybeConvention`
 
-Use a private nullable backing field for the inner type, with a computed `Maybe<T>` property. The `MaybeProperty` extension method (from `Trellis.EntityFrameworkCore`) automates the EF Core configuration:
+Use C# 13 `partial` properties with `Maybe<T>`. The `Trellis.EntityFrameworkCore.Generator` source generator emits the private `_camelCase` backing field and getter/setter implementation automatically. The `MaybeConvention` (registered by `ApplyTrellisConventions`) auto-discovers `Maybe<T>` properties, ignores the struct property, and maps the backing field as nullable.
 
 ```csharp
-// Entity — backing field + computed Maybe<T> property
-public class Customer
+// Entity — just declare partial Maybe<T> properties
+public partial class Customer
 {
     public CustomerId Id { get; set; } = null!;
 
-    private PhoneNumber? _phone;
-    public Maybe<PhoneNumber> Phone
-    {
-        get => _phone is not null ? Maybe.From(_phone) : Maybe.None<PhoneNumber>();
-        set => _phone = value.HasValue ? value.Value : null;
-    }
+    public partial Maybe<PhoneNumber> Phone { get; set; }
 
-    private DateTime? _submittedAt;
-    public Maybe<DateTime> SubmittedAt
-    {
-        get => _submittedAt.HasValue ? Maybe.From(_submittedAt.Value) : Maybe.None<DateTime>();
-        set => _submittedAt = value.HasValue ? value.Value : null;
-    }
+    public partial Maybe<DateTime> SubmittedAt { get; set; }
 }
 ```
 
 ```csharp
-// OnModelCreating — one line per Maybe<T> property
+// OnModelCreating — no MaybeProperty calls needed, convention handles everything
 modelBuilder.Entity<Customer>(b =>
 {
     b.HasKey(c => c.Id);
-    b.MaybeProperty(c => c.Phone).HasMaxLength(20);
-    b.MaybeProperty(c => c.SubmittedAt);
 });
 ```
 
-### What `MaybeProperty` Does
+### What the Source Generator Emits
 
-1. Ignores the `Maybe<T>` CLR property (EF Core can't map structs as nullable)
-2. Maps the private `_camelCase` backing field as the EF property
-3. Marks the backing field as optional (`IsRequired(false)`)
-4. Configures field-only access mode
+For each `partial Maybe<T>` property, the generator emits a private nullable backing field and the getter/setter:
+
+```csharp
+// Auto-generated
+private PhoneNumber? _phone;
+public partial Maybe<PhoneNumber> Phone
+{
+    get => _phone is not null ? Maybe.From(_phone) : Maybe.None<PhoneNumber>();
+    set => _phone = value.HasValue ? value.Value : null;
+}
+```
+
+### What `MaybeConvention` Does
+
+1. Always ignores the `Maybe<T>` CLR property (EF Core can't map structs as nullable)
+2. Discovers the private `_camelCase` backing field
+3. Maps the backing field as optional (`IsRequired(false)`)
+4. Sets the column name to the original property name (`Phone`, not `_phone`)
+5. Configures field-only access mode
 
 ### Naming Convention
 
-The backing field must follow `_camelCase` naming from the property name:
+The backing field follows `_camelCase` naming from the property name:
 
-| Property | Backing Field |
-|----------|---------------|
-| `Phone` | `_phone` |
-| `SubmittedAt` | `_submittedAt` |
-| `AlternateEmail` | `_alternateEmail` |
+| Property | Backing Field | Column Name |
+|----------|---------------|-------------|
+| `Phone` | `_phone` | `Phone` |
+| `SubmittedAt` | `_submittedAt` | `SubmittedAt` |
+| `AlternateEmail` | `_alternateEmail` | `AlternateEmail` |
+
+### TRLSGEN100 Diagnostic
+
+If a `Maybe<T>` property is not declared `partial`, the generator emits diagnostic `TRLSGEN100` prompting the developer to add the `partial` modifier.
 
 ### Value Converters
 
@@ -527,7 +535,7 @@ Trellis scalar value objects (e.g., `PhoneNumber`, `EmailAddress`) get their con
 
 ### Querying Maybe\<T\> Properties
 
-Because `MaybeProperty` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use the query extensions instead of raw `EF.Property` calls:
+Because `MaybeConvention` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use the query extensions instead of raw `EF.Property` calls:
 
 ```csharp
 // WhereNone — WHERE column IS NULL

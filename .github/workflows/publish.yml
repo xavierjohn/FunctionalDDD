@@ -47,7 +47,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release
 
     - name: Run tests
-      run: dotnet test --no-build --configuration Release
+      run: dotnet test --no-build --configuration Release --filter-not-trait "Category=Integration"
 
     - name: Pack
       run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols

@@ -51,6 +51,28 @@ public class AppDbContext : DbContext
 
 No `OwnsOne` calls needed — just declare `Money` properties on your entities and they work.
 
+### Maybe\<T\> Properties — Source Generator + Convention
+
+`Maybe<T>` is a `readonly struct` that EF Core cannot map as optional. Use `partial` properties — the source generator and `MaybeConvention` handle everything:
+
+```csharp
+public partial class Customer
+{
+    public CustomerId Id { get; set; } = null!;
+
+    public partial Maybe<PhoneNumber> Phone { get; set; }
+    public partial Maybe<DateTime> SubmittedAt { get; set; }
+}
+```
+
+No `OnModelCreating` configuration needed. Querying uses dedicated extensions:
+
+```csharp
+var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
+var withPhone    = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
+var matches      = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+```
+
 ## Result-Returning SaveChanges
 
 ```csharp

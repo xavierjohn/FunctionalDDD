@@ -1,5 +1,7 @@
 ﻿namespace Trellis.PrimitiveValueObjectGenerator;
 
+using System;
+
 /// <summary>
 /// Represents metadata about a partial class that requires source generation for value object functionality.
 /// Used by the source generator to create factory methods, validation, and parsing logic.
@@ -21,7 +23,7 @@
 /// </list>
 /// </para>
 /// </remarks>
-internal class RequiredPartialClassInfo
+internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
 {
     /// <summary>
     /// Gets the namespace of the partial class.
@@ -103,5 +105,33 @@ internal class RequiredPartialClassInfo
         Accessibility = accessibility;
         MaxLength = maxLength;
         MinLength = minLength;
+    }
+
+    public bool Equals(RequiredPartialClassInfo? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return NameSpace == other.NameSpace
+            && ClassName == other.ClassName
+            && ClassBase == other.ClassBase
+            && Accessibility == other.Accessibility
+            && MaxLength == other.MaxLength
+            && MinLength == other.MinLength;
+    }
+
+    public override bool Equals(object? obj) => Equals(obj as RequiredPartialClassInfo);
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            var hash = 17;
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(NameSpace);
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(ClassName);
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(ClassBase);
+            hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(Accessibility);
+            return hash;
+        }
     }
 }

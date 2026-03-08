@@ -34,17 +34,16 @@ internal class TestDbContext : DbContext
             b.Property(c => c.Email).HasMaxLength(254).IsRequired();
             b.HasIndex(c => c.Email).IsUnique(); // For duplicate key tests
             b.Property(c => c.CreatedAt).IsRequired();
-            b.MaybeProperty(c => c.Phone).HasMaxLength(20);
+            // Phone — MaybeConvention auto-configures the _phone backing field
         });
 
         modelBuilder.Entity<TestOrder>(b =>
         {
             b.HasKey(o => o.Id);
-            b.HasOne<TestCustomer>().WithMany().HasForeignKey(o => o.CustomerId);
+            b.HasOne(o => o.Customer).WithMany().HasForeignKey(o => o.CustomerId);
             b.Property(o => o.Amount).IsRequired();
             b.Property(o => o.Status).IsRequired();
-            b.MaybeProperty(o => o.OptionalStatus);
-            b.MaybeProperty(o => o.SubmittedAt);
+            // OptionalStatus and SubmittedAt — MaybeConvention auto-configures backing fields
         });
     }
 

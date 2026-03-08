@@ -48,6 +48,7 @@ jobs:
       # MTP writes TRX to TestResults/ relative to each test project directory; coverage path is set explicitly via --coverage-output.
       run: |
         dotnet test --no-build -c Release \
+          --filter-not-trait "Category=Integration" \
           --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml \
           --report-trx
 

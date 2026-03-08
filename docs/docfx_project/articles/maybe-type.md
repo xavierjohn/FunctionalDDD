@@ -266,6 +266,6 @@ Result<Maybe<PhoneNumber>> result = Maybe.Optional(input, PhoneNumber.TryCreate)
 ## Next Steps
 
 - Learn the [Basics](basics.md) of Railway Oriented Programming
-- See [Entity Framework Core Integration](integration-ef.md#maybe-properties) for persisting `Maybe<T>` properties
+- See [Entity Framework Core Integration](integration-ef.md#maybe-property-convention) for persisting `Maybe<T>` properties
 - See [ASP.NET Core Integration](integration-aspnet.md#optional-value-objects-with-maybe) for JSON and model binding support
 - Review [Error Handling](error-handling.md) for the error types used with `ToResult`

@@ -68,6 +68,7 @@ public static class ModelConfigurationBuilderExtensions
         }
 
         configurationBuilder.Conventions.Add(static _ => new MoneyConvention());
+        configurationBuilder.Conventions.Add(static _ => new MaybeConvention());
 
         return configurationBuilder;
     }

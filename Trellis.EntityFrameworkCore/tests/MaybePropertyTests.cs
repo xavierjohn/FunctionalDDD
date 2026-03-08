@@ -7,8 +7,8 @@ using Trellis.Primitives;
 using Trellis.Testing;
 
 /// <summary>
-/// Tests for <see cref="MaybePropertyExtensions.MaybeProperty{TEntity,TInner}"/>.
-/// Validates that Maybe{T} properties backed by private nullable fields
+/// Tests for the <see cref="MaybeConvention"/> and source-generated <c>partial Maybe&lt;T&gt;</c> properties.
+/// Validates that Maybe{T} properties backed by generated private nullable fields
 /// round-trip correctly through EF Core with SQLite in-memory.
 /// </summary>
 public class MaybePropertyTests : IDisposable
@@ -195,7 +195,7 @@ public class MaybePropertyTests : IDisposable
     #region Column metadata
 
     [Fact]
-    public void MaybeProperty_BackingField_IsNullableInModel()
+    public void MaybeConvention_BackingField_IsNullableInModel()
     {
         var customerType = _context.Model.FindEntityType(typeof(TestCustomer))!;
         var phoneProp = customerType.FindProperty("_phone")!;
@@ -204,7 +204,16 @@ public class MaybePropertyTests : IDisposable
     }
 
     [Fact]
-    public void MaybeProperty_MaybeProperty_IsIgnored()
+    public void MaybeConvention_BackingField_ColumnName_UsesPropertyName()
+    {
+        var customerType = _context.Model.FindEntityType(typeof(TestCustomer))!;
+        var phoneProp = customerType.FindProperty("_phone")!;
+
+        phoneProp.GetColumnName().Should().Be("Phone", "column name should use the original property name, not the backing field name");
+    }
+
+    [Fact]
+    public void MaybeConvention_MaybeProperty_IsIgnored()
     {
         var customerType = _context.Model.FindEntityType(typeof(TestCustomer))!;
         var phoneProp = customerType.FindProperty("Phone");
@@ -212,126 +221,107 @@ public class MaybePropertyTests : IDisposable
         phoneProp.Should().BeNull("The Maybe<T> CLR property should be ignored by EF Core");
     }
 
+    [Fact]
+    public void MaybeConvention_ValueType_BackingField_IsNullableInModel()
+    {
+        var orderType = _context.Model.FindEntityType(typeof(TestOrder))!;
+        var submittedAtProp = orderType.FindProperty("_submittedAt")!;
+
+        submittedAtProp.IsNullable.Should().BeTrue("Maybe<DateTime> backing field should be nullable");
+    }
+
+    [Fact]
+    public void MaybeConvention_Enum_BackingField_IsNullableInModel()
+    {
+        var orderType = _context.Model.FindEntityType(typeof(TestOrder))!;
+        var optionalStatusProp = orderType.FindProperty("_optionalStatus")!;
+
+        optionalStatusProp.IsNullable.Should().BeTrue("Maybe<TestOrderStatus> backing field should be nullable");
+    }
+
     #endregion
 
-    #region Validation — missing or mismatched backing field
+    #region Navigation property with Include
 
     [Fact]
-    public void MaybeProperty_MissingBackingField_ThrowsArgumentException()
+    public async Task MaybeScalar_NavigationInclude_LoadsRelatedEntityWithMaybeProperty()
     {
+        // Arrange
+        var (context, connection) = TestDbContext.CreateInMemory();
+        using var _ = connection;
+        await using var __ = context;
+        var ct = TestContext.Current.CancellationToken;
+
+        var phone = PhoneNumber.Create("+1-555-0199");
+        var customer = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("NavAlice"),
+            Email = EmailAddress.Create("navalice@example.com"),
+            CreatedAt = DateTime.UtcNow,
+            Phone = Maybe.From(phone)
+        };
+        var order = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customer.Id,
+            Amount = 42.50m,
+            Status = TestOrderStatus.Confirmed
+        };
+
+        context.Customers.Add(customer);
+        context.Orders.Add(order);
+        await context.SaveChangesAsync(ct);
+        context.ChangeTracker.Clear();
+
+        // Act
+        var loaded = await context.Orders
+            .Include(o => o.Customer)
+            .FirstAsync(o => o.Id == order.Id, ct);
+
+        // Assert
+        loaded.Customer.Should().NotBeNull();
+        loaded.Customer.Name.Value.Should().Be("NavAlice");
+        loaded.Customer.Phone.HasValue.Should().BeTrue();
+        loaded.Customer.Phone.Value.Value.Should().Be(phone.Value);
+    }
+
+    #endregion
+
+    #region MaybeConvention — entity without backing field is silently skipped
+
+    [Fact]
+    public void MaybeConvention_NoBacking_Field_SkipsSilently()
+    {
+        // When no backing field exists (e.g., user didn't use the source generator),
+        // the convention silently skips the property — no exception.
         using var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
 
-        using var context = new MissingFieldDbContext(
-            new DbContextOptionsBuilder<MissingFieldDbContext>().UseSqlite(connection).Options);
+        using var context = new NoBackingFieldDbContext(
+            new DbContextOptionsBuilder<NoBackingFieldDbContext>().UseSqlite(connection).Options);
 
         var act = () => context.Model;
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*does not declare a private backing field '_website'*")
-            .WithMessage("*for Maybe<> property 'Website'*")
-            .WithMessage("*Declare: private Url? _website;*");
+        act.Should().NotThrow("MaybeConvention should silently skip Maybe<T> properties without backing fields");
     }
 
-    [Fact]
-    public void MaybeProperty_WrongFieldType_ThrowsArgumentException()
-    {
-        using var connection = new SqliteConnection("DataSource=:memory:");
-        connection.Open();
-
-        using var context = new WrongFieldTypeDbContext(
-            new DbContextOptionsBuilder<WrongFieldTypeDbContext>().UseSqlite(connection).Options);
-
-        var act = () => context.Model;
-
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*is of type 'String?'*but expected 'Url?'*");
-    }
-
-    /// <summary>Entity with a Maybe property but no backing field.</summary>
     private class EntityWithoutBackingField
     {
         public Guid Id { get; set; }
-        // Missing: private Url? _website;
         public Maybe<Url> Website { get; set; }
     }
 
-    private class MissingFieldDbContext(DbContextOptions<MissingFieldDbContext> options)
+    private class NoBackingFieldDbContext(DbContextOptions<NoBackingFieldDbContext> options)
         : DbContext(options)
     {
         public DbSet<EntityWithoutBackingField> Items => Set<EntityWithoutBackingField>();
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.Entity<EntityWithoutBackingField>(b =>
-            {
-                b.HasKey(e => e.Id);
-                b.MaybeProperty(e => e.Website);
-            });
-    }
-
-    /// <summary>Entity with a backing field of the wrong type.</summary>
-    private class EntityWithWrongFieldType
-    {
-        public Guid Id { get; set; }
-        private string? _website; // Wrong — should be Url?
-        public Maybe<Url> Website
-        {
-            get => _website is not null ? Maybe.From(Url.Create(_website)) : Maybe.None<Url>();
-            set => _website = value.HasValue ? value.Value.Value : null;
-        }
-    }
-
-    private class WrongFieldTypeDbContext(DbContextOptions<WrongFieldTypeDbContext> options)
-        : DbContext(options)
-    {
-        public DbSet<EntityWithWrongFieldType> Items => Set<EntityWithWrongFieldType>();
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.Entity<EntityWithWrongFieldType>(b =>
-            {
-                b.HasKey(e => e.Id);
-                b.MaybeProperty(e => e.Website);
-            });
-    }
-
-    [Fact]
-    public void MaybeProperty_WrongFieldType_ValueTypeInner_ThrowsWithNullableTypeName()
-    {
-        using var connection = new SqliteConnection("DataSource=:memory:");
-        connection.Open();
-
-        using var context = new WrongFieldTypeValueTypeDbContext(
-            new DbContextOptionsBuilder<WrongFieldTypeValueTypeDbContext>().UseSqlite(connection).Options);
-
-        var act = () => context.Model;
-
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*is of type 'String?'*but expected 'DateTime?'*");
-    }
-
-    /// <summary>Entity with a value-type Maybe and a wrong backing field type.</summary>
-    private class EntityWithWrongFieldTypeValueType
-    {
-        public Guid Id { get; set; }
-        private string? _createdAt; // Wrong — should be DateTime?
-        public Maybe<DateTime> CreatedAt
-        {
-            get => DateTime.TryParse(_createdAt, out var dt) ? Maybe.From(dt) : Maybe.None<DateTime>();
-            set => _createdAt = value.HasValue ? value.Value.ToString("O") : null;
-        }
-    }
-
-    private class WrongFieldTypeValueTypeDbContext(DbContextOptions<WrongFieldTypeValueTypeDbContext> options)
-        : DbContext(options)
-    {
-        public DbSet<EntityWithWrongFieldTypeValueType> Items => Set<EntityWithWrongFieldTypeValueType>();
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.Entity<EntityWithWrongFieldTypeValueType>(b =>
-            {
-                b.HasKey(e => e.Id);
-                b.MaybeProperty(e => e.CreatedAt);
-            });
+            modelBuilder.Entity<EntityWithoutBackingField>(b => b.HasKey(e => e.Id));
     }
 
     #endregion
