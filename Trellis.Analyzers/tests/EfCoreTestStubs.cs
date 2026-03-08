@@ -46,8 +46,20 @@ public static class EfCoreTestStubs
                     CancellationToken cancellationToken = default)
                     => Task.FromResult(Trellis.Result.Success(0));
 
+                public static Task<Trellis.Result<int>> SaveChangesResultAsync(
+                    this DbContext context,
+                    bool acceptAllChangesOnSuccess,
+                    CancellationToken cancellationToken = default)
+                    => Task.FromResult(Trellis.Result.Success(0));
+
                 public static Task<Trellis.Result<Trellis.Unit>> SaveChangesResultUnitAsync(
                     this DbContext context,
+                    CancellationToken cancellationToken = default)
+                    => Task.FromResult(Trellis.Result.Success(default(Trellis.Unit)));
+
+                public static Task<Trellis.Result<Trellis.Unit>> SaveChangesResultUnitAsync(
+                    this DbContext context,
+                    bool acceptAllChangesOnSuccess,
                     CancellationToken cancellationToken = default)
                     => Task.FromResult(Trellis.Result.Success(default(Trellis.Unit)));
             }

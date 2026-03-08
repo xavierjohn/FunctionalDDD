@@ -55,17 +55,21 @@ The code fix automatically renames the method call:
 
 - **Standalone `SaveChangesAsync`** → `SaveChangesResultUnitAsync`
 - **`SaveChangesAsync` with return value used** → `SaveChangesResultAsync`
+- **`SaveChangesAsync(bool, CancellationToken)` standalone** → `SaveChangesResultUnitAsync(bool, CancellationToken)`
 - **Standalone `SaveChanges` in a void method** → `SaveChangesResultUnitAsync` (also adds `await`, `async`, and `Task` return type)
+- **`SaveChanges(bool)` in a void method** → `SaveChangesResultUnitAsync(bool)` (also adds `await`, `async`, and `Task` return type)
 
 The code fix also adds `using Trellis.EntityFrameworkCore;` and `using System.Threading.Tasks;` if not already present.
 
+The code fix correctly handles `.ConfigureAwait(false)` chains, preserving them in the fixed code. The `acceptAllChangesOnSuccess` parameter is preserved when present.
+
 > [!NOTE]
-> The code fix is not offered for synchronous `SaveChanges()` when:
+> The code fix is not offered when:
 >
-> - The return value is used (e.g., `var count = _dbContext.SaveChanges()`)
-> - The containing method has a non-void return type
+> - **Sync `SaveChanges()`**: The return value is used, or the containing method has a non-void return type
+> - **Async `SaveChangesAsync` in a return statement**: e.g., `return await _dbContext.SaveChangesAsync(ct)` — the method return type would need to change from `Task<int>` to `Task<Result<int>>`
 >
-> These cases require manual refactoring because the return type semantics change from `int` to `Result<Unit>` or `Result<int>`.
+> These cases require manual refactoring.
 
 ## Examples
 

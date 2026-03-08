@@ -60,7 +60,49 @@ public static class DbContextExtensions
     }
 
     /// <summary>
-    /// Convenience overload: calls <see cref="SaveChangesResultAsync"/> and maps success to <see cref="Result{Unit}"/>.
+    /// Overload that accepts <paramref name="acceptAllChangesOnSuccess"/> to control whether
+    /// <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker.AcceptAllChanges"/>
+    /// is called after saving successfully.
+    /// </summary>
+    /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
+    /// <param name="acceptAllChangesOnSuccess">
+    /// <see langword="true"/> to accept all changes after saving (default EF Core behavior);
+    /// <see langword="false"/> to leave the change tracker state unchanged.
+    /// </param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A <see cref="Result{T}"/> containing the number of state entries written on success,
+    /// or an error on failure.</returns>
+    public static async Task<Result<int>> SaveChangesResultAsync(
+        this DbContext context,
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var count = await context.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
+            return Result.Success(count);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            return Error.Conflict(
+                $"One or more entities were modified by another process. {ex.Entries.Count} entities affected.");
+        }
+        catch (DbUpdateException ex) when (DbExceptionClassifier.IsDuplicateKey(ex))
+        {
+            return Error.Conflict(
+                DbExceptionClassifier.ExtractConstraintDetail(ex)
+                ?? "A record with the same unique value already exists.");
+        }
+        catch (DbUpdateException ex) when (DbExceptionClassifier.IsForeignKeyViolation(ex))
+        {
+            return Error.Domain(
+                DbExceptionClassifier.ExtractConstraintDetail(ex)
+                ?? "Operation violates a referential integrity constraint.");
+        }
+    }
+
+    /// <summary>
+    /// Convenience overload: calls <see cref="SaveChangesResultAsync(DbContext, CancellationToken)"/> and maps success to <see cref="Result{Unit}"/>.
     /// Use when callers don't need the affected row count.
     /// </summary>
     /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
@@ -71,6 +113,27 @@ public static class DbContextExtensions
         CancellationToken cancellationToken = default)
     {
         var result = await context.SaveChangesResultAsync(cancellationToken).ConfigureAwait(false);
+        return result.Map(_ => default(Unit));
+    }
+
+    /// <summary>
+    /// Convenience overload: calls <see cref="SaveChangesResultAsync(DbContext, bool, CancellationToken)"/>
+    /// and maps success to <see cref="Result{Unit}"/>.
+    /// Use when callers don't need the affected row count.
+    /// </summary>
+    /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
+    /// <param name="acceptAllChangesOnSuccess">
+    /// <see langword="true"/> to accept all changes after saving (default EF Core behavior);
+    /// <see langword="false"/> to leave the change tracker state unchanged.
+    /// </param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A <see cref="Result{Unit}"/> representing success or failure.</returns>
+    public static async Task<Result<Unit>> SaveChangesResultUnitAsync(
+        this DbContext context,
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await context.SaveChangesResultAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
         return result.Map(_ => default(Unit));
     }
 }

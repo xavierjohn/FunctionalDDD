@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Classifies database exceptions across providers (SQL Server, PostgreSQL, SQLite).
-/// Used internally by <see cref="DbContextExtensions.SaveChangesResultAsync"/>.
+/// Used internally by <see cref="DbContextExtensions.SaveChangesResultAsync(DbContext, CancellationToken)"/>.
 /// Also available for direct use in repositories that need custom error messages per exception type.
 /// </summary>
 public static class DbExceptionClassifier

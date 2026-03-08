@@ -39,16 +39,7 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         if (node is not IdentifierNameSyntax identifierNode)
             return;
 
-        // Skip the fix for overloads that accept bool acceptAllChangesOnSuccess —
-        // SaveChangesResultAsync/SaveChangesResultUnitAsync don't support that parameter
-        var invocationNode = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
-        if (invocationNode is not null)
-        {
-            var semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
-            if (semanticModel?.GetSymbolInfo(invocationNode, context.CancellationToken).Symbol is IMethodSymbol method &&
-                method.Parameters.Any(p => p.Type.SpecialType == SpecialType.System_Boolean))
-                return;
-        }
+        var invocation = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
 
         // For sync SaveChanges(), only offer the fix when it's a standalone expression statement.
         // The code fix converts the method to async Task.
@@ -57,7 +48,6 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         //  - The containing method has a non-void return type (async int is not valid C#)
         if (identifierNode.Identifier.Text == "SaveChanges")
         {
-            var invocation = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
             if (invocation?.FirstAncestorOrSelf<ExpressionStatementSyntax>() is null)
                 return;
 
@@ -73,6 +63,13 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
 
         // Determine replacement: SaveChangesResultUnitAsync (standalone) vs SaveChangesResultAsync (value used)
         var replacementName = GetReplacementMethodName(identifierNode);
+
+        // Skip the fix when SaveChangesAsync return value is used in a return statement —
+        // the method return type would need to change (e.g., Task<int> to Task<Result<int>>)
+        if (replacementName == "SaveChangesResultAsync" &&
+            identifierNode.FirstAncestorOrSelf<ReturnStatementSyntax>() is not null)
+            return;
+
         var title = $"Use {replacementName}";
 
         context.RegisterCodeFix(
@@ -170,15 +167,24 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
                 return root;
         }
 
-        var usingDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName));
-
-        // Match line endings from the last existing using directive
-        var lastUsing = compilationUnit.Usings.LastOrDefault();
-        usingDirective = lastUsing is not null
-            ? usingDirective.WithTrailingTrivia(lastUsing.GetTrailingTrivia())
-            : usingDirective.WithTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed);
+        var usingDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
+            .WithTrailingTrivia(DetectEndOfLine(compilationUnit));
 
         return compilationUnit.AddUsings(usingDirective);
+    }
+
+    /// <summary>
+    /// Detects the document's line ending style by finding the first newline in the source text.
+    /// </summary>
+    private static SyntaxTrivia DetectEndOfLine(SyntaxNode root)
+    {
+        var text = root.ToFullString();
+        var idx = text.IndexOf('\n');
+        if (idx > 0 && text[idx - 1] == '\r')
+            return SyntaxFactory.CarriageReturnLineFeed;
+        if (idx >= 0)
+            return SyntaxFactory.LineFeed;
+        return SyntaxFactory.CarriageReturnLineFeed;
     }
 
     private static SyntaxNode AddAwaitAndMakeAsync(SyntaxNode root, int originalSpanStart)
