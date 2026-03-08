@@ -444,6 +444,57 @@ public class UseSaveChangesResultCodeFixProviderTests
     }
 
     [Fact]
+    public async Task SaveChangesAsync_WithAcceptAllChangesOnSuccess_ReturnValueUsed_ReplacedWith_SaveChangesResultAsync()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public async Task DoWork(CancellationToken ct)
+                {
+                    var count = await _dbContext.SaveChangesAsync(false, ct);
+                }
+            }
+            """;
+
+        const string fixedSource = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public async Task DoWork(CancellationToken ct)
+                {
+                    var count = await _dbContext.SaveChangesResultAsync(false, ct);
+                }
+            }
+            """;
+
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            fixedSource,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(19, 42)
+                .WithArguments("SaveChangesAsync"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
     public async Task SaveChanges_WithAcceptAllChangesOnSuccess_ReplacedWith_SaveChangesResultUnitAsync()
     {
         const string source = """

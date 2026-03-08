@@ -31,33 +31,10 @@ public static class DbContextExtensions
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Result{T}"/> containing the number of state entries written on success,
     /// or an error on failure.</returns>
-    public static async Task<Result<int>> SaveChangesResultAsync(
+    public static Task<Result<int>> SaveChangesResultAsync(
         this DbContext context,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var count = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return Result.Success(count);
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            return Error.Conflict(
-                $"One or more entities were modified by another process. {ex.Entries.Count} entities affected.");
-        }
-        catch (DbUpdateException ex) when (DbExceptionClassifier.IsDuplicateKey(ex))
-        {
-            return Error.Conflict(
-                DbExceptionClassifier.ExtractConstraintDetail(ex)
-                ?? "A record with the same unique value already exists.");
-        }
-        catch (DbUpdateException ex) when (DbExceptionClassifier.IsForeignKeyViolation(ex))
-        {
-            return Error.Domain(
-                DbExceptionClassifier.ExtractConstraintDetail(ex)
-                ?? "Operation violates a referential integrity constraint.");
-        }
-    }
+        CancellationToken cancellationToken = default) =>
+        context.SaveChangesResultAsync(true, cancellationToken);
 
     /// <summary>
     /// Calls <see cref="DbContext.SaveChangesAsync(bool, CancellationToken)"/> and converts expected database exceptions

@@ -240,6 +240,28 @@ public class DbContextExtensionsTests : IDisposable
         result.Error.Should().BeOfType<ConflictError>();
     }
 
+    [Fact]
+    public async Task SaveChangesResultAsync_AcceptAllChangesOnSuccess_ForeignKeyViolation_ReturnsDomainError()
+    {
+        // Arrange — order references a non-existent customer
+        var ct = TestContext.Current.CancellationToken;
+        var order = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = TestCustomerId.NewUniqueV4(),
+            Amount = 50m,
+            Status = TestOrderStatus.Draft
+        };
+        _context.Orders.Add(order);
+
+        // Act
+        var result = await _context.SaveChangesResultAsync(acceptAllChangesOnSuccess: false, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().BeOfType<DomainError>();
+    }
+
     #endregion
 
     #region SaveChangesResultUnitAsync — acceptAllChangesOnSuccess
