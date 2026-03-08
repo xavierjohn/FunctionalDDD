@@ -38,3 +38,5 @@
   href: TRLS018.md
 - name: TRLS019 - Combine chain too long
   href: TRLS019.md
+- name: TRLS020 - Use SaveChangesResultAsync
+  href: TRLS020.md
