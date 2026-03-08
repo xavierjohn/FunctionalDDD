@@ -24,7 +24,12 @@ public static class EfCoreTestStubs
                 public virtual Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
                     => Task.FromResult(0);
 
+                public virtual Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+                    => Task.FromResult(0);
+
                 public virtual int SaveChanges() => 0;
+
+                public virtual int SaveChanges(bool acceptAllChangesOnSuccess) => 0;
             }
         }
 

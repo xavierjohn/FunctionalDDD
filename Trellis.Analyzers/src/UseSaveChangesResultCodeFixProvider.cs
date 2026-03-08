@@ -39,6 +39,17 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         if (node is not IdentifierNameSyntax identifierNode)
             return;
 
+        // Skip the fix for overloads that accept bool acceptAllChangesOnSuccess —
+        // SaveChangesResultAsync/SaveChangesResultUnitAsync don't support that parameter
+        var invocationNode = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
+        if (invocationNode is not null)
+        {
+            var semanticModel = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
+            if (semanticModel?.GetSymbolInfo(invocationNode, context.CancellationToken).Symbol is IMethodSymbol method &&
+                method.Parameters.Any(p => p.Type.SpecialType == SpecialType.System_Boolean))
+                return;
+        }
+
         // For sync SaveChanges(), only offer the fix when it's a standalone expression statement.
         // The code fix converts the method to async Task.
         // Skip the fix when:

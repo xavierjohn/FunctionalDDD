@@ -308,6 +308,70 @@ public class UseSaveChangesResultCodeFixProviderTests
     }
 
     [Fact]
+    public async Task SaveChangesAsync_WithAcceptAllChangesOnSuccess_NoCodeFixOffered()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public async Task DoWork(CancellationToken ct)
+                {
+                    await _dbContext.SaveChangesAsync(false, ct);
+                }
+            }
+            """;
+
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            source,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(19, 30)
+                .WithArguments("SaveChangesAsync"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task SaveChanges_WithAcceptAllChangesOnSuccess_NoCodeFixOffered()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using Trellis.EntityFrameworkCore;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public void DoWork()
+                {
+                    _dbContext.SaveChanges(false);
+                }
+            }
+            """;
+
+        var test = CodeFixTestHelper.CreateCodeFixTest<UseSaveChangesResultAnalyzer, UseSaveChangesResultCodeFixProvider>(
+            source,
+            source,
+            CodeFixTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(17, 24)
+                .WithArguments("SaveChanges"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+        test.FixedState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
     public async Task SaveChanges_Sync_AddsUsingDirective_WhenMissing()
     {
         // Full source without using System.Threading.Tasks — bypasses CodeFixTestHelper.WrapInNamespace
