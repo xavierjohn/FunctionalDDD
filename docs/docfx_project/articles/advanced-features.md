@@ -9,7 +9,7 @@ Advanced Railway Oriented Programming patterns for complex scenarios.
 - [Exception Capture](#exception-capture)
 - [Parallel Operations](#parallel-operations)
 - [LINQ Query Syntax](#linq-query-syntax)
-- [Maybe Type](#maybe-type)
+- [Maybe Type](#maybe-type) *(see dedicated article)*
 
 ## Pattern Matching
 
@@ -357,64 +357,24 @@ var result = await (
 
 ## Maybe Type
 
-`Maybe<T>` represents an optional value that may or may not exist, without implying an error:
+`Maybe<T>` represents domain-level optionality — a value that was either provided or intentionally omitted. It composes with `Result<T>` pipelines and provides type-safe handling of optional value objects.
 
-### Creating Maybe Values
+For a complete guide on why `Maybe<T>` exists, when to use it vs. `T?`, and its full API, see the dedicated **[Why Maybe?](maybe-type.md)** article.
+
+**Quick example:**
 
 ```csharp
-// From nullable value
-Maybe<User> user = Maybe.From(nullableUser);
-
-// Implicit conversion
-Maybe<string> some = "value";
-Maybe<string> none = Maybe.None<string>();
-
-// Checking for value
-if (user.HasValue)
+// Optional value object on an entity
+public class Customer : Entity<CustomerId>
 {
-    Console.WriteLine($"Hello {user.Value.Name}");
+    public Maybe<PhoneNumber> Phone { get; }
 }
-else
-{
-    Console.WriteLine("No user found");
-}
-```
 
-### Maybe vs Result
-
-Use `Maybe<T>` when absence is **not an error** (optional data):
-```csharp
-Maybe<string> middleName = GetMiddleName(user); // OK to be missing
-```
-
-Use `Result<T>` when you need to **track why** something failed:
-```csharp
-Result<User> user = GetUser(id); // Need to know why it failed
-```
-
-### Converting Maybe to Result
-
-```csharp
-Maybe<User> maybeUser = FindUserInCache(id);
-
-Result<User> result = maybeUser
-    .ToResult(Error.NotFound($"User {id} not found in cache"));
-```
-
-### Using Maybe Operations
-
-```csharp
-Maybe<User> maybeUser = GetUserById(id);
-
-// Convert to Result for chaining
-var result = maybeUser
-    .ToResult(Error.NotFound($"User {id} not found"))
-    .Bind(user => GetEmailPreferences(user.Email));
-
-// Or use directly with HasValue
-string preferences = maybeUser.HasValue 
-    ? GetEmailPreferences(maybeUser.Value.Email)
-    : "No preferences found";
+// Bridge to Result pipeline
+var result = customer.Phone
+    .ToResult(Error.NotFound("No phone on file"))
+    .Map(phone => FormatForDisplay(phone))
+    .Bind(formatted => SendSmsAsync(formatted));
 ```
 
 ## Best Practices

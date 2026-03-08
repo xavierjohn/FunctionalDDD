@@ -12,6 +12,8 @@
     items:
     - name: RequiredEnum
       href: required-enum.md
+  - name: Maybe Type
+    href: maybe-type.md
   - name: Aggregates & Entities
     items:
     - name: Aggregate Factory Pattern
