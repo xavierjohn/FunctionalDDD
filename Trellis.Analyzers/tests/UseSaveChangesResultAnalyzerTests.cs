@@ -40,6 +40,36 @@ public class UseSaveChangesResultAnalyzerTests
         await test.RunAsync();
     }
 
+    [Fact]
+    public async Task SaveChangesAsync_WithAcceptAllChangesOnSuccess_ProducesWarning()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            public class TestService
+            {
+                private readonly DbContext _dbContext;
+                public TestService(DbContext dbContext) => _dbContext = dbContext;
+
+                public async Task DoWork(CancellationToken ct)
+                {
+                    await _dbContext.SaveChangesAsync(false, ct);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UseSaveChangesResultAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UseSaveChangesResult)
+                .WithLocation(18, 26)
+                .WithArguments("SaveChangesAsync"));
+        test.TestState.Sources.Add(("EfCoreStubs.cs", EfCoreTestStubs.Source));
+
+        await test.RunAsync();
+    }
+
     #endregion
 
     #region SaveChanges (sync) produces warning

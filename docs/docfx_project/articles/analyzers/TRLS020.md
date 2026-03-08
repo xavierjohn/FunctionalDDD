@@ -89,7 +89,7 @@ public async Task<Result<Order>> CreateOrder(Order order, CancellationToken ct)
 {
     _dbContext.Orders.Add(order);
     return await _dbContext.SaveChangesResultUnitAsync(ct)
-        .Map(_ => order);
+        .MapAsync(_ => order);
 }
 ```
 

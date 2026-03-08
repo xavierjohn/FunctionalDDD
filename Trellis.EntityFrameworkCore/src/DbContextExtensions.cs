@@ -9,23 +9,9 @@ using Microsoft.EntityFrameworkCore;
 public static class DbContextExtensions
 {
     /// <summary>
-    /// Calls <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> and converts expected database exceptions
-    /// to <see cref="Result{T}"/> failures.
-    /// <para>
-    /// Expected exceptions converted:
-    /// <list type="bullet">
-    ///   <item><see cref="DbUpdateConcurrencyException"/> → <see cref="Error.Conflict(string, string?)"/> with detail</item>
-    ///   <item><see cref="DbUpdateException"/> (duplicate key) → <see cref="Error.Conflict(string, string?)"/> with detail</item>
-    ///   <item><see cref="DbUpdateException"/> (foreign key violation) → <see cref="Error.Domain(string, string?)"/> with detail</item>
-    /// </list>
-    /// </para>
-    /// <para>
-    /// Unexpected exceptions (connection failures, timeouts, etc.) are NOT caught.
-    /// They propagate as exceptions for global exception handlers and retry policies.
-    /// </para>
-    /// <para>
-    /// <see cref="OperationCanceledException"/> is NOT caught (re-throws).
-    /// </para>
+    /// Convenience overload: delegates to
+    /// <see cref="SaveChangesResultAsync(DbContext, bool, CancellationToken)"/> with
+    /// <c>acceptAllChangesOnSuccess</c> set to <see langword="true"/> (EF Core's default behavior).
     /// </summary>
     /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
@@ -38,9 +24,7 @@ public static class DbContextExtensions
 
     /// <summary>
     /// Calls <see cref="DbContext.SaveChangesAsync(bool, CancellationToken)"/> and converts expected database exceptions
-    /// to <see cref="Result{T}"/> failures. Behaves identically to
-    /// <see cref="SaveChangesResultAsync(DbContext, CancellationToken)"/> but accepts
-    /// <paramref name="acceptAllChangesOnSuccess"/> to control whether
+    /// to <see cref="Result{T}"/> failures. The <paramref name="acceptAllChangesOnSuccess"/> parameter controls whether
     /// <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker.AcceptAllChanges"/>
     /// is called after saving successfully.
     /// <para>
