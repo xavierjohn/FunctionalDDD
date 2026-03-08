@@ -76,21 +76,34 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
     /// Determines whether to use SaveChangesResultUnitAsync or SaveChangesResultAsync.
     /// If the return value of SaveChangesAsync is used (assignment, return, condition, etc.),
     /// SaveChangesResultAsync (returning Result&lt;int&gt;) is the correct replacement.
+    /// Walks up through chained method calls (e.g. .ConfigureAwait(false)) to find the
+    /// outermost invocation before checking whether the value is discarded.
     /// </summary>
     private static string GetReplacementMethodName(IdentifierNameSyntax identifierNode)
     {
         if (identifierNode.Identifier.Text != "SaveChangesAsync")
             return "SaveChangesResultUnitAsync";
 
-        // Walk up: Identifier → MemberAccess → Invocation → possibly Await → check parent
+        // Walk up: Identifier → MemberAccess → Invocation → possibly chained calls → possibly Await → check parent
         var invocation = identifierNode.FirstAncestorOrSelf<InvocationExpressionSyntax>();
         if (invocation is null)
             return "SaveChangesResultUnitAsync";
 
-        // The effective node is the await expression if present, otherwise the invocation itself
-        SyntaxNode effectiveNode = invocation.Parent is AwaitExpressionSyntax awaitExpr
+        // Walk up through chained method calls (e.g. .ConfigureAwait(false))
+        // Pattern: InvocationExpression is the expression of a MemberAccessExpression,
+        //          which is the expression of another InvocationExpression
+        SyntaxNode current = invocation;
+        while (current.Parent is MemberAccessExpressionSyntax memberAccess &&
+               memberAccess.Parent is InvocationExpressionSyntax outerInvocation &&
+               memberAccess.Expression == current)
+        {
+            current = outerInvocation;
+        }
+
+        // The effective node is the await expression if present, otherwise the outermost invocation
+        SyntaxNode effectiveNode = current.Parent is AwaitExpressionSyntax awaitExpr
             ? awaitExpr
-            : invocation;
+            : current;
 
         // If the effective expression is a direct child of an ExpressionStatement, the value is discarded
         return effectiveNode.Parent is ExpressionStatementSyntax
@@ -147,7 +160,7 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         }
 
         var usingDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
-            .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed);
+            .WithTrailingTrivia(SyntaxFactory.ElasticCarriageReturnLineFeed);
         return compilationUnit.AddUsings(usingDirective);
     }
 
