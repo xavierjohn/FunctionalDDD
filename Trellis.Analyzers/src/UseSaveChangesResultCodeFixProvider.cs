@@ -51,11 +51,17 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
             if (invocation?.FirstAncestorOrSelf<ExpressionStatementSyntax>() is null)
                 return;
 
-            var containingMethod = identifierNode.FirstAncestorOrSelf<MethodDeclarationSyntax>();
-            if (containingMethod is null)
+            var containingFunction = FindContainingFunction(identifierNode);
+            if (containingFunction is null)
                 return;
 
-            var isVoid = containingMethod.ReturnType is PredefinedTypeSyntax predefined
+            var returnType = containingFunction switch
+            {
+                MethodDeclarationSyntax m => m.ReturnType,
+                LocalFunctionStatementSyntax l => l.ReturnType,
+                _ => null
+            };
+            var isVoid = returnType is PredefinedTypeSyntax predefined
                          && predefined.Keyword.IsKind(SyntaxKind.VoidKeyword);
             if (!isVoid)
                 return;
@@ -129,10 +135,21 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         if (root == null)
             return document;
 
-        var newIdentifier = SyntaxFactory.IdentifierName(replacementName)
-            .WithTriviaFrom(identifierNode);
+        var newIdentifier = SyntaxFactory.IdentifierName(replacementName);
 
-        var newRoot = root.ReplaceNode(identifierNode, newIdentifier);
+        // Unqualified calls (e.g. SaveChangesAsync(ct) inside a DbContext subclass) need
+        // an explicit 'this.' receiver because the replacement is an extension method.
+        bool isUnqualified = identifierNode.Parent is InvocationExpressionSyntax inv
+                             && inv.Expression == identifierNode;
+        SyntaxNode replacement = isUnqualified
+            ? SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.ThisExpression(),
+                    newIdentifier)
+                .WithTriviaFrom(identifierNode)
+            : newIdentifier.WithTriviaFrom(identifierNode);
+
+        var newRoot = root.ReplaceNode(identifierNode, replacement);
 
         // If the original call was synchronous SaveChanges(), we need to add await and make the method async
         if (identifierNode.Identifier.Text == "SaveChanges")
@@ -206,32 +223,59 @@ public sealed class UseSaveChangesResultCodeFixProvider : CodeFixProvider
         var newStatement = expressionStatement.WithExpression(awaitExpression);
         root = root.ReplaceNode(expressionStatement, newStatement);
 
-        // Find the containing method and make it async with Task return type
-        var methodDecl = root.FindToken(originalSpanStart).Parent?
-            .FirstAncestorOrSelf<MethodDeclarationSyntax>();
-        if (methodDecl is null)
+        // Find the containing method or local function and make it async with Task return type
+        var containingFunction = FindContainingFunction(root.FindToken(originalSpanStart).Parent);
+        if (containingFunction is null)
             return root;
 
-        // Skip if already async
-        if (methodDecl.Modifiers.Any(SyntaxKind.AsyncKeyword))
-            return root;
-
-        var newMethod = methodDecl
-            .AddModifiers(SyntaxFactory.Token(SyntaxKind.AsyncKeyword).WithTrailingTrivia(SyntaxFactory.Space));
-
-        // Change void return type to Task
-        if (methodDecl.ReturnType is PredefinedTypeSyntax predefined &&
-            predefined.Keyword.IsKind(SyntaxKind.VoidKeyword))
-        {
-            var taskType = SyntaxFactory.ParseTypeName("Task").WithTriviaFrom(methodDecl.ReturnType);
-            newMethod = newMethod.WithReturnType(taskType);
-        }
-
-        root = root.ReplaceNode(methodDecl, newMethod);
+        root = MakeAsyncWithTaskReturnType(root, containingFunction);
 
         // Add 'using System.Threading.Tasks;' if not already present
         root = AddUsingIfMissing(root, "System.Threading.Tasks");
 
         return root;
+    }
+
+    /// <summary>
+    /// Finds the nearest containing function scope — either a method or a local function.
+    /// </summary>
+    private static SyntaxNode? FindContainingFunction(SyntaxNode? node) =>
+        node?.Ancestors().FirstOrDefault(a => a is MethodDeclarationSyntax or LocalFunctionStatementSyntax);
+
+    /// <summary>
+    /// Adds the <c>async</c> modifier and changes <c>void</c> return type to <c>Task</c>
+    /// on the given method or local function declaration.
+    /// </summary>
+    private static SyntaxNode MakeAsyncWithTaskReturnType(SyntaxNode root, SyntaxNode functionDecl)
+    {
+        var (modifiers, returnType) = functionDecl switch
+        {
+            MethodDeclarationSyntax m => (m.Modifiers, m.ReturnType),
+            LocalFunctionStatementSyntax l => (l.Modifiers, l.ReturnType),
+            _ => (default, null)
+        };
+
+        if (returnType is null || modifiers.Any(SyntaxKind.AsyncKeyword))
+            return root;
+
+        var asyncToken = SyntaxFactory.Token(SyntaxKind.AsyncKeyword).WithTrailingTrivia(SyntaxFactory.Space);
+
+        SyntaxNode newDecl = functionDecl switch
+        {
+            MethodDeclarationSyntax m => m.AddModifiers(asyncToken)
+                .WithReturnType(MakeTaskReturnType(m.ReturnType)),
+            LocalFunctionStatementSyntax l => l.AddModifiers(asyncToken)
+                .WithReturnType(MakeTaskReturnType(l.ReturnType)),
+            _ => functionDecl
+        };
+
+        return root.ReplaceNode(functionDecl, newDecl);
+
+        static TypeSyntax MakeTaskReturnType(TypeSyntax returnType)
+        {
+            if (returnType is PredefinedTypeSyntax predefined && predefined.Keyword.IsKind(SyntaxKind.VoidKeyword))
+                return SyntaxFactory.ParseTypeName("Task").WithTriviaFrom(returnType);
+            return returnType;
+        }
     }
 }
