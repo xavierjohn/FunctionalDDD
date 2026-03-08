@@ -278,4 +278,18 @@ public static class DiagnosticDescriptors
         description: "Combine supports up to 9 elements. Downstream methods (Bind, Map, Tap, Match) also only support tuples up to 9 elements. " +
                      "Group related fields into intermediate value objects or sub-results, then combine those groups.",
         helpLinkUri: HelpLinkBase + "TRLS019");
+
+    /// <summary>
+    /// TRLS020: Use SaveChangesResultAsync instead of SaveChangesAsync.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UseSaveChangesResult = new(
+        id: "TRLS020",
+        title: "Use SaveChangesResultAsync instead of SaveChangesAsync",
+        messageFormat: "Use 'SaveChangesResultUnitAsync' or 'SaveChangesResultAsync' instead of '{0}'. Direct SaveChanges calls bypass the Result pipeline and turn database errors into unhandled exceptions.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Direct SaveChanges/SaveChangesAsync calls bypass the Result pipeline and turn database errors into unhandled exceptions. " +
+                     "Use SaveChangesResultAsync (returns Result<int>) or SaveChangesResultUnitAsync (returns Result<Unit>) instead.",
+        helpLinkUri: HelpLinkBase + "TRLS020");
 }

@@ -51,6 +51,12 @@ The analyzer package is automatically included when you install any Trellis pack
 | [TRLS018](TRLS018.md) | Unsafe access to Value in LINQ expression | Warning | ❌ |
 | [TRLS019](TRLS019.md) | Combine chain exceeds maximum supported tuple size | Error | ❌ |
 
+### Entity Framework Core (TRLS020)
+
+| ID | Title | Severity | Has Code Fix |
+|----|-------|----------|--------------|
+| [TRLS020](TRLS020.md) | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning | ✅ |
+
 ## Severity Levels
 
 - **Error**: Code that will not work correctly and must be fixed
@@ -69,6 +75,7 @@ Several analyzers provide automatic code fixes (✅ in the table above):
 - **TRLS007**: Replaces `TryCreate().Value` with `Create()`
 - **TRLS013**: Replaces ternary with `GetValueOrDefault()` or `Match()`
 - **TRLS014**: Replaces sync method with async variant (e.g., `Map` → `MapAsync`)
+- **TRLS020**: Replaces `SaveChangesAsync`/`SaveChanges` with `SaveChangesResultUnitAsync` or `SaveChangesResultAsync`
 
 ## Configuration
 

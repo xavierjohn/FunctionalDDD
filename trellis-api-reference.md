@@ -1,4 +1,4 @@
-# Trellis — AI API Reference
+﻿# Trellis — AI API Reference
 
 > **Purpose**: Machine-readable reference for AI coding assistants. Covers every public type, method signature, and usage pattern in the Trellis library ecosystem.
 
@@ -960,7 +960,9 @@ Result<TState> FireResult<TState, TTrigger>(this StateMachine<TState, TTrigger> 
 
 ```csharp
 Task<Result<int>> SaveChangesResultAsync(this DbContext context, CancellationToken ct = default)
+Task<Result<int>> SaveChangesResultAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken ct = default)
 Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, CancellationToken ct = default)
+Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken ct = default)
 // DbUpdateConcurrencyException → Error.Conflict
 // Duplicate key → Error.Conflict
 // FK violation → Error.Domain

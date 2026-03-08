@@ -2,7 +2,7 @@
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers)
 
-19 Roslyn analyzers that enforce proper usage of `Result<T>` and `Maybe<T>` patterns at compile time — catch unsafe access, unhandled results, and anti-patterns before they reach production.
+20 Roslyn analyzers that enforce proper usage of `Result<T>` and `Maybe<T>` patterns at compile time — catch unsafe access, unhandled results, and anti-patterns before they reach production.
 
 ## Installation
 
@@ -69,6 +69,7 @@ var email = EmailAddress.Create(input);
 | TRLS017 | Don't compare Result or Maybe to null | Warning |
 | TRLS018 | Unsafe access to Value in LINQ expression | Warning |
 | TRLS019 | Combine chain exceeds maximum tuple size | Error |
+| TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Analyzers.svg)](https://www.nuget.org/packages/Trellis.Analyzers)
 
-19 Roslyn analyzers that enforce proper usage of `Result<T>` and `Maybe<T>` patterns at compile time — catch unsafe access, unhandled results, and anti-patterns before they reach production.
+20 Roslyn analyzers that enforce proper usage of `Result<T>` and `Maybe<T>` patterns at compile time — catch unsafe access, unhandled results, and anti-patterns before they reach production.
 
 ## Table of Contents
 
@@ -55,6 +55,10 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 - **Null comparisons (TRLS017)** - Detects comparing Result/Maybe to null (they're structs)
 - **Unsafe LINQ access (TRLS018)** - Detects `.Value` in LINQ without filtering by IsSuccess/HasValue
 - **Combine chain too long (TRLS019)** - Detects Combine chains exceeding 9-element tuple limit
+
+### Entity Framework Core Integration
+
+- **Use SaveChangesResult (TRLS020)** - Warns when `SaveChanges`/`SaveChangesAsync` is called directly instead of `SaveChangesResultUnitAsync` or `SaveChangesResultAsync`
 
 ### Error Handling Best Practices
 
@@ -194,7 +198,7 @@ dotnet_diagnostic.TRLS007.severity = warning     # Upgrade to warning
 ```xml
 <!-- In .csproj -->
 <PropertyGroup>
-  <NoWarn>$(NoWarn);TRLS001;TRLS002;TRLS003;TRLS004;TRLS005;TRLS006;TRLS007;TRLS008;TRLS009;TRLS010;TRLS011;TRLS012;TRLS013;TRLS014;TRLS015;TRLS016;TRLS017;TRLS018;TRLS019</NoWarn>
+  <NoWarn>$(NoWarn);TRLS001;TRLS002;TRLS003;TRLS004;TRLS005;TRLS006;TRLS007;TRLS008;TRLS009;TRLS010;TRLS011;TRLS012;TRLS013;TRLS014;TRLS015;TRLS016;TRLS017;TRLS018;TRLS019;TRLS020</NoWarn>
 </PropertyGroup>
 ```
 
@@ -221,6 +225,7 @@ dotnet_diagnostic.TRLS007.severity = warning     # Upgrade to warning
 | TRLS017 | Don't compare Result or Maybe to null | Warning |
 | TRLS018 | Unsafe access to Value in LINQ expression | Warning |
 | TRLS019 | Combine chain exceeds maximum tuple size | Error |
+| TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
 
 ## Related Packages
 

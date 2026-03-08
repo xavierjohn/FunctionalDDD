@@ -9,8 +9,24 @@ using Microsoft.EntityFrameworkCore;
 public static class DbContextExtensions
 {
     /// <summary>
-    /// Calls <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> and converts expected database exceptions
-    /// to <see cref="Result{T}"/> failures.
+    /// Convenience overload: delegates to
+    /// <see cref="SaveChangesResultAsync(DbContext, bool, CancellationToken)"/> with
+    /// <c>acceptAllChangesOnSuccess</c> set to <see langword="true"/> (EF Core's default behavior).
+    /// </summary>
+    /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A <see cref="Result{T}"/> containing the number of state entries written on success,
+    /// or an error on failure.</returns>
+    public static Task<Result<int>> SaveChangesResultAsync(
+        this DbContext context,
+        CancellationToken cancellationToken = default) =>
+        context.SaveChangesResultAsync(true, cancellationToken);
+
+    /// <summary>
+    /// Calls <see cref="DbContext.SaveChangesAsync(bool, CancellationToken)"/> and converts expected database exceptions
+    /// to <see cref="Result{T}"/> failures. The <paramref name="acceptAllChangesOnSuccess"/> parameter controls whether
+    /// <see cref="Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker.AcceptAllChanges"/>
+    /// is called after saving successfully.
     /// <para>
     /// Expected exceptions converted:
     /// <list type="bullet">
@@ -28,16 +44,21 @@ public static class DbContextExtensions
     /// </para>
     /// </summary>
     /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
+    /// <param name="acceptAllChangesOnSuccess">
+    /// <see langword="true"/> to accept all changes after saving (default EF Core behavior);
+    /// <see langword="false"/> to leave the change tracker state unchanged.
+    /// </param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     /// <returns>A <see cref="Result{T}"/> containing the number of state entries written on success,
     /// or an error on failure.</returns>
     public static async Task<Result<int>> SaveChangesResultAsync(
         this DbContext context,
+        bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var count = await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            var count = await context.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
             return Result.Success(count);
         }
         catch (DbUpdateConcurrencyException ex)
@@ -60,7 +81,7 @@ public static class DbContextExtensions
     }
 
     /// <summary>
-    /// Convenience overload: calls <see cref="SaveChangesResultAsync"/> and maps success to <see cref="Result{Unit}"/>.
+    /// Convenience overload: calls <see cref="SaveChangesResultAsync(DbContext, CancellationToken)"/> and maps success to <see cref="Result{Unit}"/>.
     /// Use when callers don't need the affected row count.
     /// </summary>
     /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
@@ -71,6 +92,27 @@ public static class DbContextExtensions
         CancellationToken cancellationToken = default)
     {
         var result = await context.SaveChangesResultAsync(cancellationToken).ConfigureAwait(false);
+        return result.Map(_ => default(Unit));
+    }
+
+    /// <summary>
+    /// Convenience overload: calls <see cref="SaveChangesResultAsync(DbContext, bool, CancellationToken)"/>
+    /// and maps success to <see cref="Result{Unit}"/>.
+    /// Use when callers don't need the affected row count.
+    /// </summary>
+    /// <param name="context">The <see cref="DbContext"/> to save changes on.</param>
+    /// <param name="acceptAllChangesOnSuccess">
+    /// <see langword="true"/> to accept all changes after saving (default EF Core behavior);
+    /// <see langword="false"/> to leave the change tracker state unchanged.
+    /// </param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A <see cref="Result{Unit}"/> representing success or failure.</returns>
+    public static async Task<Result<Unit>> SaveChangesResultUnitAsync(
+        this DbContext context,
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await context.SaveChangesResultAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
         return result.Map(_ => default(Unit));
     }
 }

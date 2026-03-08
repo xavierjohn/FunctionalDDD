@@ -164,6 +164,151 @@ public class DbContextExtensionsTests : IDisposable
 
     #endregion
 
+    #region SaveChangesResultAsync — acceptAllChangesOnSuccess
+
+    [Fact]
+    public async Task SaveChangesResultAsync_AcceptAllChangesOnSuccess_True_ReturnsSuccessWithCount()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("AcceptTrue"),
+            Email = EmailAddress.Create("accept-true@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        // Act
+        var result = await _context.SaveChangesResultAsync(acceptAllChangesOnSuccess: true, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SaveChangesResultAsync_AcceptAllChangesOnSuccess_False_ReturnsSuccessAndPreservesTrackerState()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("AcceptFalse"),
+            Email = EmailAddress.Create("accept-false@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        // Act
+        var result = await _context.SaveChangesResultAsync(acceptAllChangesOnSuccess: false, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(1);
+        _context.ChangeTracker.HasChanges().Should().BeTrue("acceptAllChangesOnSuccess: false should preserve tracker state");
+    }
+
+    [Fact]
+    public async Task SaveChangesResultAsync_AcceptAllChangesOnSuccess_DuplicateKey_ReturnsConflictError()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var email = EmailAddress.Create("dup-accept@example.com");
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("First"),
+            Email = email,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync(ct);
+
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("Second"),
+            Email = email,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        // Act
+        var result = await _context.SaveChangesResultAsync(acceptAllChangesOnSuccess: false, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().BeOfType<ConflictError>();
+    }
+
+    [Fact]
+    public async Task SaveChangesResultAsync_AcceptAllChangesOnSuccess_ForeignKeyViolation_ReturnsDomainError()
+    {
+        // Arrange — order references a non-existent customer
+        var ct = TestContext.Current.CancellationToken;
+        var order = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = TestCustomerId.NewUniqueV4(),
+            Amount = 50m,
+            Status = TestOrderStatus.Draft
+        };
+        _context.Orders.Add(order);
+
+        // Act
+        var result = await _context.SaveChangesResultAsync(acceptAllChangesOnSuccess: false, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().BeOfType<DomainError>();
+    }
+
+    #endregion
+
+    #region SaveChangesResultUnitAsync — acceptAllChangesOnSuccess
+
+    [Fact]
+    public async Task SaveChangesResultUnitAsync_AcceptAllChangesOnSuccess_True_ReturnsSuccess()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("UnitAcceptTrue"),
+            Email = EmailAddress.Create("unit-accept-true@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        // Act
+        var result = await _context.SaveChangesResultUnitAsync(acceptAllChangesOnSuccess: true, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SaveChangesResultUnitAsync_AcceptAllChangesOnSuccess_False_PreservesTrackerState()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        _context.Customers.Add(new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("UnitAcceptFalse"),
+            Email = EmailAddress.Create("unit-accept-false@example.com"),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        // Act
+        var result = await _context.SaveChangesResultUnitAsync(acceptAllChangesOnSuccess: false, ct);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _context.ChangeTracker.HasChanges().Should().BeTrue("acceptAllChangesOnSuccess: false should preserve tracker state");
+    }
+
+    #endregion
+
     #region OperationCanceledException — not caught
 
     [Fact]
