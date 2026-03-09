@@ -1,10 +1,53 @@
 ﻿namespace Trellis;
 
+using System.Diagnostics.CodeAnalysis;
+
 /// <summary>
 /// Provides internal string manipulation extension methods for the PrimitiveValueObjects library.
 /// </summary>
 internal static class StringExtensions
 {
+    /// <summary>
+    /// Normalizes an optional field name to camelCase, falling back to a default name.
+    /// </summary>
+    /// <param name="fieldName">The optional field name to normalize.</param>
+    /// <param name="defaultName">The default field name if <paramref name="fieldName"/> is null or empty.</param>
+    /// <returns>The camelCased field name, or <paramref name="defaultName"/> if not provided.</returns>
+    public static string NormalizeFieldName(this string? fieldName, string defaultName) =>
+        !string.IsNullOrEmpty(fieldName) ? fieldName.ToCamelCase() : defaultName;
+
+    /// <summary>
+    /// Parses a string value using the specified <see cref="IScalarValue{TSelf, TPrimitive}"/> factory.
+    /// Throws <see cref="FormatException"/> if the value is invalid.
+    /// </summary>
+    public static T ParseScalarValue<T>(string? s) where T : class, IScalarValue<T, string>
+    {
+        var r = T.TryCreate(s!);
+        if (r.IsFailure)
+        {
+            var val = (ValidationError)r.Error;
+            throw new FormatException(val.FieldErrors[0].Details[0]);
+        }
+
+        return r.Value;
+    }
+
+    /// <summary>
+    /// Tries to parse a string value using the specified <see cref="IScalarValue{TSelf, TPrimitive}"/> factory.
+    /// </summary>
+    public static bool TryParseScalarValue<T>([NotNullWhen(true)] string? s, [MaybeNullWhen(false)] out T result) where T : class, IScalarValue<T, string>
+    {
+        var r = T.TryCreate(s!);
+        if (r.IsFailure)
+        {
+            result = default;
+            return false;
+        }
+
+        result = r.Value;
+        return true;
+    }
+
     /// <summary>
     /// Converts the first character of a string to lowercase while preserving the rest of the string.
     /// Used primarily for converting C# PascalCase property names to camelCase for JSON serialization and validation error field names.

@@ -34,9 +34,7 @@ public partial class Slug : ScalarValueObject<Slug, string>, IScalarValue<Slug, 
     public static Result<Slug> TryCreate(string? value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Slug) + '.' + nameof(TryCreate));
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "slug";
+        var field = fieldName.NormalizeFieldName("slug");
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<Slug>(Error.Validation("Slug is required.", field));
         var trimmed = value.Trim();
@@ -49,33 +47,14 @@ public partial class Slug : ScalarValueObject<Slug, string>, IScalarValue<Slug, 
     /// <summary>
     /// Parses a slug.
     /// </summary>
-    public static Slug Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static Slug Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<Slug>(s);
 
     /// <summary>
     /// Tries to parse a slug.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Slug result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Slug result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 
     [GeneratedRegex(@"^(?!-)(?!.*--)[a-z0-9-]+(?<!-)$")]
     private static partial Regex SlugRegex();

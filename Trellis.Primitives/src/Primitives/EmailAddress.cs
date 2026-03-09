@@ -221,10 +221,7 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
             }
         }
 
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "email";
-        return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", field));
+        return Result.Failure<EmailAddress>(Error.Validation("Email address is not valid.", fieldName.NormalizeFieldName("email")));
     }
 
     /// <summary>
@@ -241,17 +238,8 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
     /// This method implements the <see cref="IParsable{TSelf}"/> interface, providing standard
     /// .NET parsing behavior. For safer parsing without exceptions, use <see cref="TryParse"/> or <see cref="TryCreate(string?, string?)"/>.
     /// </remarks>
-    public static EmailAddress Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s, null);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static EmailAddress Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<EmailAddress>(s);
 
     /// <summary>
     /// Tries to parse a string into an <see cref="EmailAddress"/>.
@@ -269,18 +257,8 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
     /// This method implements the <see cref="IParsable{TSelf}"/> interface, providing standard
     /// .NET try-parse pattern. This is a safe alternative to <see cref="Parse"/> that doesn't throw exceptions.
     /// </remarks>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out EmailAddress result)
-    {
-        var r = TryCreate(s, null);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out EmailAddress result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 
     /// <summary>
     /// Compiled regular expression for RFC 5322-compliant email validation.

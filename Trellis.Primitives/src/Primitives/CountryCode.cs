@@ -32,9 +32,7 @@ public class CountryCode : ScalarValueObject<CountryCode, string>, IScalarValue<
     public static Result<CountryCode> TryCreate(string? value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(CountryCode) + '.' + nameof(TryCreate));
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "countryCode";
+        var field = fieldName.NormalizeFieldName("countryCode");
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<CountryCode>(Error.Validation("Country code is required.", field));
         var code = value.Trim();
@@ -46,31 +44,12 @@ public class CountryCode : ScalarValueObject<CountryCode, string>, IScalarValue<
     /// <summary>
     /// Parses a country code.
     /// </summary>
-    public static CountryCode Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static CountryCode Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<CountryCode>(s);
 
     /// <summary>
     /// Tries to parse a country code.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out CountryCode result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out CountryCode result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 }

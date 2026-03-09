@@ -33,9 +33,7 @@ public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValu
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(CurrencyCode) + '.' + nameof(TryCreate));
 
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "currencyCode";
+        var field = fieldName.NormalizeFieldName("currencyCode");
 
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<CurrencyCode>(Error.Validation("Currency code is required.", field));
@@ -51,31 +49,12 @@ public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValu
     /// <summary>
     /// Parses a currency code.
     /// </summary>
-    public static CurrencyCode Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static CurrencyCode Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<CurrencyCode>(s);
 
     /// <summary>
     /// Tries to parse a currency code.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out CurrencyCode result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out CurrencyCode result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 }

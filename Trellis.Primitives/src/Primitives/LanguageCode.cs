@@ -21,9 +21,7 @@ public class LanguageCode : ScalarValueObject<LanguageCode, string>, IScalarValu
     public static Result<LanguageCode> TryCreate(string? value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(LanguageCode) + '.' + nameof(TryCreate));
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "languageCode";
+        var field = fieldName.NormalizeFieldName("languageCode");
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<LanguageCode>(Error.Validation("Language code is required.", field));
         var code = value.Trim();
@@ -35,31 +33,12 @@ public class LanguageCode : ScalarValueObject<LanguageCode, string>, IScalarValu
     /// <summary>
     /// Parses a language code.
     /// </summary>
-    public static LanguageCode Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static LanguageCode Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<LanguageCode>(s);
 
     /// <summary>
     /// Tries to parse a language code.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out LanguageCode result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out LanguageCode result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 }

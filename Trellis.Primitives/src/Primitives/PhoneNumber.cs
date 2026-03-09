@@ -73,9 +73,7 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(PhoneNumber) + '.' + nameof(TryCreate));
 
-        var field = !string.IsNullOrEmpty(fieldName)
-            ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
-            : "phoneNumber";
+        var field = fieldName.NormalizeFieldName("phoneNumber");
 
         if (string.IsNullOrWhiteSpace(value))
             return Result.Failure<PhoneNumber>(Error.Validation("Phone number is required.", field));
@@ -93,33 +91,14 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
     /// <summary>
     /// Parses the string representation of a phone number to its <see cref="PhoneNumber"/> equivalent.
     /// </summary>
-    public static PhoneNumber Parse(string? s, IFormatProvider? provider)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            var val = (ValidationError)r.Error;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
-        }
-
-        return r.Value;
-    }
+    public static PhoneNumber Parse(string? s, IFormatProvider? provider) =>
+        StringExtensions.ParseScalarValue<PhoneNumber>(s);
 
     /// <summary>
     /// Tries to parse a string into a <see cref="PhoneNumber"/>.
     /// </summary>
-    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out PhoneNumber result)
-    {
-        var r = TryCreate(s);
-        if (r.IsFailure)
-        {
-            result = default;
-            return false;
-        }
-
-        result = r.Value;
-        return true;
-    }
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out PhoneNumber result) =>
+        StringExtensions.TryParseScalarValue(s, out result);
 
     /// <summary>
     /// Gets the country code portion of the phone number.

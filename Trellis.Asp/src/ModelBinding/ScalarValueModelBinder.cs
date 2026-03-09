@@ -21,53 +21,14 @@ using Trellis;
 /// <c>[ApiController]</c>, invalid requests automatically return 400 Bad Request.
 /// </para>
 /// </remarks>
-public class ScalarValueModelBinder<TValue, TPrimitive> : IModelBinder
+public class ScalarValueModelBinder<TValue, TPrimitive> : ScalarValueModelBinderBase<TValue, TValue, TPrimitive>
     where TValue : IScalarValue<TValue, TPrimitive>
     where TPrimitive : IComparable
 {
-    /// <summary>
-    /// Attempts to bind a model from the value provider.
-    /// </summary>
-    /// <param name="bindingContext">The binding context.</param>
-    /// <returns>A completed task.</returns>
-    public Task BindModelAsync(ModelBindingContext bindingContext)
-    {
-        ArgumentNullException.ThrowIfNull(bindingContext);
+    /// <inheritdoc />
+    protected override ModelBindingResult OnMissingValue() => default;
 
-        var modelName = bindingContext.ModelName;
-        var valueProviderResult = bindingContext.ValueProvider.GetValue(modelName);
-
-        if (valueProviderResult == ValueProviderResult.None)
-            return Task.CompletedTask;
-
-        bindingContext.ModelState.SetModelValue(modelName, valueProviderResult);
-
-        var rawValue = valueProviderResult.FirstValue;
-        var parseResult = PrimitiveConverter.ConvertToPrimitive<TPrimitive>(rawValue);
-
-        if (parseResult.IsFailure)
-        {
-            bindingContext.ModelState.AddModelError(modelName, parseResult.Error.Detail);
-            bindingContext.Result = ModelBindingResult.Failed();
-            return Task.CompletedTask;
-        }
-
-        var primitiveValue = parseResult.Value;
-
-        // Call TryCreate directly - no reflection needed due to static abstract interface
-        // Pass the model name so validation errors have the correct field name
-        var result = TValue.TryCreate(primitiveValue, modelName);
-
-        if (result.IsSuccess)
-        {
-            bindingContext.Result = ModelBindingResult.Success(result.Value);
-        }
-        else
-        {
-            bindingContext.ModelState.AddResultErrors(modelName, result.Error);
-            bindingContext.Result = ModelBindingResult.Failed();
-        }
-
-        return Task.CompletedTask;
-    }
+    /// <inheritdoc />
+    protected override ModelBindingResult OnSuccess(TValue value) =>
+        ModelBindingResult.Success(value);
 }
