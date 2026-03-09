@@ -1,8 +1,10 @@
 ﻿using Benchmark;
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 
-var config = DefaultConfig.Instance;
+var config = ManualConfig.Create(DefaultConfig.Instance)
+    .AddJob(Job.ShortRun);
 
 if (args.Length == 0)
 {
@@ -16,6 +18,12 @@ if (args.Length == 0)
     BenchmarkRunner.Run<ErrorBenchmarks>(config);
     BenchmarkRunner.Run<RecoverBenchmarks>(config);
     BenchmarkRunner.Run<CombineBenchmarks>(config);
+    BenchmarkRunner.Run<MatchBenchmarks>(config);
+    BenchmarkRunner.Run<MapOnFailureBenchmarks>(config);
+    BenchmarkRunner.Run<ValueObjectBenchmarks>(config);
+    BenchmarkRunner.Run<SpecificationBenchmarks>(config);
+    BenchmarkRunner.Run<MoneyBenchmarks>(config);
+    BenchmarkRunner.Run<ActorBenchmarks>(config);
 }
 else
 {
