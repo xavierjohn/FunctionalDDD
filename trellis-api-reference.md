@@ -1220,6 +1220,8 @@ Backing field naming: `Phone` → `_phone`, `SubmittedAt` → `_submittedAt`, `A
 
 If a `Maybe<T>` property is not declared `partial`, the generator emits diagnostic `TRLSGEN100`.
 
+**Troubleshooting:** If the generator produces no output despite correct `partial` declarations, run a clean build (`dotnet clean` followed by `dotnet build`). Stale incremental build artifacts can prevent the generator from executing.
+
 ### Maybe\<T\> Queryable Extensions
 
 Because `MaybeConvention` ignores the `Maybe<T>` CLR property, EF Core cannot translate direct LINQ references to it. Use these extension methods instead of raw `EF.Property` calls:
