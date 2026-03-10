@@ -1,4 +1,4 @@
-﻿name: Publish documentation.
+name: Publish documentation.
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
 
