@@ -112,17 +112,7 @@ public sealed class HasIndexMaybePropertyAnalyzer : DiagnosticAnalyzer
             _ => null
         };
 
-    private static bool IsAccessOnParameter(MemberAccessExpressionSyntax memberAccess, string parameterName)
-    {
-        var root = GetRootIdentifier(memberAccess.Expression);
-        return root?.Identifier.Text == parameterName;
-    }
-
-    private static IdentifierNameSyntax? GetRootIdentifier(ExpressionSyntax expression) =>
-        expression switch
-        {
-            IdentifierNameSyntax identifier => identifier,
-            MemberAccessExpressionSyntax memberAccess => GetRootIdentifier(memberAccess.Expression),
-            _ => null
-        };
+    private static bool IsAccessOnParameter(MemberAccessExpressionSyntax memberAccess, string parameterName) =>
+        memberAccess.Expression is IdentifierNameSyntax identifier &&
+        identifier.Identifier.Text == parameterName;
 }

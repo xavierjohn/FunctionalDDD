@@ -224,6 +224,43 @@ public class HasIndexMaybePropertyAnalyzerTests
 
     #endregion
 
+    #region Nested navigation property access does not produce warning
+
+    [Fact]
+    public async Task HasIndex_NestedNavigation_MaybeProperty_NoDiagnostic()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+            public class Customer
+            {
+                public int Id { get; set; }
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+
+            public class Order
+            {
+                public int Id { get; set; }
+                public Customer Customer { get; set; } = null!;
+            }
+
+            public class TestConfig
+            {
+                public void Configure(EntityTypeBuilder<Order> builder)
+                {
+                    builder.HasIndex(e => e.Customer.SubmittedAt);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<HasIndexMaybePropertyAnalyzer>(source);
+        test.TestState.Sources.Add(("EfCoreBuilderStubs.cs", EfCoreBuilderStubSource));
+
+        await test.RunAsync();
+    }
+
+    #endregion
+
     #region Member access on captured variable does not produce warning
 
     [Fact]
