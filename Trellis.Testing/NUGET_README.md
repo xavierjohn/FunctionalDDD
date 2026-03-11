@@ -1,4 +1,4 @@
-# Testing Utilities
+﻿# Testing Utilities
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing)
 
@@ -90,6 +90,20 @@ await using var scope = actorProvider.WithActor("user-1", "Orders.Read");
 var result = await mediator.Send(new CreateOrderCommand());
 result.Should().BeFailure();
 // scope disposes → actor reverts to admin
+```
+
+### ReplaceResourceLoader — DI Registration Replacement
+
+Replaces existing `IResourceLoader<TCommand, TResource>` registrations in one call — no manual `RemoveAll` needed.
+
+```csharp
+using Trellis.Testing;
+
+builder.ConfigureServices(services =>
+{
+    services.ReplaceResourceLoader<CancelOrderCommand, Order>(
+        new FakeOrderResourceLoader(fakeRepo));
+});
 ```
 
 ### CreateClientWithActor — Integration Test HttpClient

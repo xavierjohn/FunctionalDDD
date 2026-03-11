@@ -190,6 +190,20 @@ public class OrderAuthorizationTests
 }
 ```
 
+### ReplaceResourceLoader — DI Registration Replacement
+
+When the ACL layer registers `IResourceLoader<TCommand, TResource>` and the test fixture calls `AddMockAntiCorruptionLayer()`, you get duplicate DI registrations. `ReplaceResourceLoader` handles removal and re-registration in a single call.
+
+```csharp
+using Trellis.Testing;
+
+builder.ConfigureServices(services =>
+{
+    services.ReplaceResourceLoader<CancelOrderCommand, Order>(
+        new FakeOrderResourceLoader(fakeRepo));
+});
+```
+
 ### CreateClientWithActor — Integration Test HttpClient
 
 Eliminates the copy-pasted helper that creates an `HttpClient` with an `X-Test-Actor` header for authorization integration tests.
@@ -280,6 +294,12 @@ public class OrderEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 | `GetCurrentActor()` | Returns the current actor (`IActorProvider` implementation) |
 
 `TestActorScope` implements both `IAsyncDisposable` and `IDisposable`. Nested scopes restore the correct actor at each level.
+
+### ServiceCollection Extensions
+
+| Method | Description |
+|--------|-------------|
+| `ReplaceResourceLoader<TMessage, TResource>(loader)` | Removes all existing `IResourceLoader<TMessage, TResource>` registrations and re-registers the provided instance as scoped |
 
 ### WebApplicationFactory Extensions
 
