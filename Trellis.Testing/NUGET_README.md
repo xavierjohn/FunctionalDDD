@@ -76,6 +76,22 @@ repo.PublishedEvents.Should().ContainSingle()
     .Which.Should().BeOfType<UserCreatedEvent>();
 ```
 
+### TestActorProvider — Scoped Actor Switching
+
+Eliminates `try/finally` boilerplate in authorization tests. `WithActor` temporarily switches the actor and restores the previous one on dispose.
+
+```csharp
+using Trellis.Testing.Fakes;
+
+var actorProvider = new TestActorProvider("admin", "Orders.Read", "Orders.Write");
+
+// Temporarily switch to a restricted user
+await using var scope = actorProvider.WithActor("user-1", "Orders.Read");
+var result = await mediator.Send(new CreateOrderCommand());
+result.Should().BeFailure();
+// scope disposes → actor reverts to admin
+```
+
 ## Assertion API Reference
 
 ### Result
@@ -135,6 +151,7 @@ Async variants (`BeSuccessAsync`, `BeFailureAsync`, `BeFailureOfTypeAsync`) are 
 
 - [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` and `Maybe<T>` types
 - [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — DDD building blocks
+- [Trellis.Authorization](https://www.nuget.org/packages/Trellis.Authorization) — `Actor`, `IActorProvider`, authorization primitives
 
 ## License
 

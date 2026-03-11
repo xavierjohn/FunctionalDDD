@@ -157,6 +157,39 @@ public class UserServiceTests
 }
 ```
 
+### TestActorProvider — Scoped Actor Switching
+
+Eliminates `try/finally/ResetToAdmin()` boilerplate in authorization tests. `WithActor` temporarily replaces the current actor and restores it on dispose.
+
+```csharp
+using Trellis.Testing.Fakes;
+
+public class OrderAuthorizationTests
+{
+    private readonly TestActorProvider _actorProvider = new("admin", "Orders.Read", "Orders.Write");
+
+    [Fact]
+    public async Task CreateOrder_WithoutWritePermission_ReturnsForbidden()
+    {
+        await using var scope = _actorProvider.WithActor("user-1", "Orders.Read");
+
+        var result = await _mediator.Send(new CreateOrderCommand());
+
+        result.Should().BeFailure();
+        // scope auto-restores admin actor on dispose
+    }
+
+    [Fact]
+    public async Task CreateOrder_WithWritePermission_ReturnsSuccess()
+    {
+        // admin actor already has Orders.Write — no scope needed
+        var result = await _mediator.Send(new CreateOrderCommand());
+
+        result.Should().BeSuccess();
+    }
+}
+```
+
 ## API Reference
 
 ### Result Assertions
@@ -210,6 +243,18 @@ public class UserServiceTests
 | `HaveValueMatching(predicate)` | Asserts the value satisfies a predicate |
 | `HaveValueEquivalentTo(expected)` | Asserts the value is structurally equivalent |
 
+### TestActorProvider (`Trellis.Testing.Fakes`)
+
+| Method | Description |
+|--------|-------------|
+| `new TestActorProvider(actor)` | Creates a provider with the specified `Actor` |
+| `new TestActorProvider(userId, permissions)` | Creates a provider from user ID and permission strings |
+| `WithActor(actor)` | Temporarily switches to the given `Actor`; returns `TestActorScope` |
+| `WithActor(userId, permissions)` | Temporarily switches actor; returns `TestActorScope` |
+| `GetCurrentActor()` | Returns the current actor (`IActorProvider` implementation) |
+
+`TestActorScope` implements both `IAsyncDisposable` and `IDisposable`. Nested scopes restore the correct actor at each level.
+
 ## Benefits
 
 | Before | After |
@@ -239,6 +284,7 @@ public class UserServiceTests
 
 - [Trellis.Results](https://www.nuget.org/packages/Trellis.Results) — Core `Result<T>` and `Maybe<T>` types
 - [Trellis.DomainDrivenDesign](https://www.nuget.org/packages/Trellis.DomainDrivenDesign) — DDD building blocks
+- [Trellis.Authorization](https://www.nuget.org/packages/Trellis.Authorization) — `Actor`, `IActorProvider`, authorization primitives
 
 ## License
 

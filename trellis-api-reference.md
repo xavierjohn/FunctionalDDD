@@ -24,7 +24,7 @@
 | Trellis.Asp.Authorization | `Trellis.Asp.Authorization` | Trellis.Authorization, ASP.NET Core |
 | Trellis.Http | `Trellis.Http` | Trellis.Results |
 | Trellis.Mediator | `Trellis.Mediator` | Mediator, Trellis.Authorization |
-| Trellis.Testing | `Trellis.Testing` | FluentAssertions |
+| Trellis.Testing | `Trellis.Testing`, `Trellis.Testing.Fakes` | FluentAssertions, Trellis.Authorization |
 | Trellis.FluentValidation | `Trellis.FluentValidation` | FluentValidation |
 | Trellis.Stateless | `Trellis.Stateless` | Stateless |
 | Trellis.EntityFrameworkCore | `Trellis.EntityFrameworkCore` | EF Core |
@@ -1114,6 +1114,44 @@ var result = await repo.GetByIdAsync(orderId);        // Result<Order> (NotFound
 var maybe = await repo.FindByIdAsync(orderId);        // Result<Maybe<Order>>
 await repo.DeleteAsync(orderId);
 repo.PublishedEvents                                   // IReadOnlyList<IDomainEvent>
+```
+
+## TestActorProvider and TestActorScope
+
+**Namespace: `Trellis.Testing.Fakes`**
+
+Mutable `IActorProvider` for authorization testing. Uses `AsyncLocal<Actor?>` internally so parallel tests sharing a singleton provider never interfere. `WithActor` returns a scope that restores the previous actor on dispose, eliminating `try/finally` boilerplate.
+
+### Construction
+
+```csharp
+var actorProvider = new TestActorProvider("admin", "Orders.Read", "Orders.Write");
+var actorFromInstance = new TestActorProvider(actor);               // from Actor instance
+```
+
+### Scoped Actor Switching
+
+```csharp
+// Temporarily switch actor — restored on dispose
+await using var scope1 = actorProvider.WithActor("user-1", "Orders.Read");
+await using var scope2 = actorProvider.WithActor(actor);           // from Actor instance
+
+// Synchronous dispose also supported
+using var scope3 = actorProvider.WithActor("user-1", "Orders.Read");
+```
+
+### Nested Scopes
+
+```csharp
+await using (actorProvider.WithActor("user-1", "Read"))
+{
+    await using (actorProvider.WithActor("user-2", "Write"))
+    {
+        // actor is user-2
+    }
+    // actor is user-1
+}
+// actor is admin
 ```
 
 ---
