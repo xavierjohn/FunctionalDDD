@@ -53,7 +53,7 @@ The backing field follows `_camelCase` naming from the property name:
 
 ## Background
 
-`Maybe<T>` is a `readonly struct`. EF Core cannot mark non-nullable struct properties as optional. The Trellis source generator emits a private nullable backing field (e.g., `DateTime? _submittedAt`) and the `MaybeConvention` maps that field instead. See the [EF Core integration guide](../integration-efcore.md) for full details.
+`Maybe<T>` is a `readonly struct`. EF Core cannot mark non-nullable struct properties as optional. The Trellis source generator emits a private nullable backing field (e.g., `DateTime? _submittedAt`) and the `MaybeConvention` maps that field instead. See the [EF Core integration guide](../integration-ef.md) for full details.
 
 ## When to Suppress Warnings
 
@@ -69,6 +69,6 @@ However, in this case it's clearer to remove the `Maybe<T>` property from the in
 
 ## See Also
 
-- [EF Core Integration](../integration-efcore.md)
-- [Maybe\<T\> with EF Core](../integration-efcore.md)
+- [EF Core Integration](../integration-ef.md)
+- [Maybe\<T\> with EF Core](../integration-ef.md)
 - [MaybeConvention source](https://github.com/xavierjohn/Trellis)
