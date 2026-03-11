@@ -1,4 +1,4 @@
-namespace Trellis.EntityFrameworkCore;
+﻿namespace Trellis.EntityFrameworkCore;
 
 /// <summary>
 /// Shared naming convention for <see cref="Maybe{T}"/> backing fields.

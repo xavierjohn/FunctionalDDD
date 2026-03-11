@@ -31,6 +31,8 @@ public static class WebApplicationFactoryExtensions
         params string[] permissions)
         where TEntryPoint : class
     {
+        permissions ??= [];
+
         var client = factory.CreateClient();
         var json = new JsonObject
         {

@@ -40,6 +40,18 @@ public sealed class WebApplicationFactoryExtensionsTests : IDisposable
     }
 
     [Fact]
+    public void CreateClientWithActor_NullPermissions_SetsHeaderWithEmptyArray()
+    {
+        var client = _factory.CreateClientWithActor("admin", null!);
+
+        client.DefaultRequestHeaders.TryGetValues("X-Test-Actor", out var values).Should().BeTrue();
+        var json = values!.Single();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("Id").GetString().Should().Be("admin");
+        doc.RootElement.GetProperty("Permissions").EnumerateArray().Should().BeEmpty();
+    }
+
+    [Fact]
     public void CreateClientWithActor_SinglePermission_SetsHeaderCorrectly()
     {
         var client = _factory.CreateClientWithActor("user-2", "Documents.Publish");
@@ -83,4 +95,3 @@ public sealed class WebApplicationFactoryExtensionsTests : IDisposable
         }
     }
 }
-
