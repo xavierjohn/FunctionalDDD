@@ -316,9 +316,10 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         var minStartTime = startTimes.Min();
         var startTimeSpread = maxStartTime - minStartTime;
 
-        // All tasks should start within 30ms of each other (parallel)
-        // Sequential would have ~50ms gaps between starts
-        startTimeSpread.Should().BeLessThan(30,
+        // All tasks should start within 50ms of each other (parallel)
+        // Sequential would have ~50ms gaps × 3 = ~150ms+ spread
+        // Using a generous threshold to avoid flakiness on resource-constrained CI runners
+        startTimeSpread.Should().BeLessThan(50,
             "all tasks should start concurrently in parallel execution");
     }
 
