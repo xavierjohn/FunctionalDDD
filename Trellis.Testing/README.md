@@ -190,6 +190,32 @@ public class OrderAuthorizationTests
 }
 ```
 
+### CreateClientWithActor — Integration Test HttpClient
+
+Eliminates the copy-pasted helper that creates an `HttpClient` with an `X-Test-Actor` header for authorization integration tests.
+
+```csharp
+using Trellis.Testing;
+
+public class OrderEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public OrderEndpointTests(WebApplicationFactory<Program> factory) =>
+        _factory = factory;
+
+    [Fact]
+    public async Task CreateOrder_WithPermission_ReturnsCreated()
+    {
+        var client = _factory.CreateClientWithActor("user-1", "Orders.Create", "Orders.Read");
+
+        var response = await client.PostAsync("/api/orders", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+}
+```
+
 ## API Reference
 
 ### Result Assertions
@@ -254,6 +280,12 @@ public class OrderAuthorizationTests
 | `GetCurrentActor()` | Returns the current actor (`IActorProvider` implementation) |
 
 `TestActorScope` implements both `IAsyncDisposable` and `IDisposable`. Nested scopes restore the correct actor at each level.
+
+### WebApplicationFactory Extensions
+
+| Method | Description |
+|--------|-------------|
+| `CreateClientWithActor(actorId, permissions)` | Creates an `HttpClient` with the `X-Test-Actor` header set to a JSON payload containing the actor ID and permissions |
 
 ## Benefits
 
