@@ -292,4 +292,20 @@ public static class DiagnosticDescriptors
         description: "Direct SaveChanges/SaveChangesAsync calls bypass the Result pipeline and turn database errors into unhandled exceptions. " +
                      "Use SaveChangesResultAsync (returns Result<int>) or SaveChangesResultUnitAsync (returns Result<Unit>) instead.",
         helpLinkUri: HelpLinkBase + "TRLS020");
+
+    /// <summary>
+    /// TRLS021: HasIndex references a Maybe&lt;T&gt; property.
+    /// </summary>
+    public static readonly DiagnosticDescriptor HasIndexMaybeProperty = new(
+        id: "TRLS021",
+        title: "HasIndex references a Maybe<T> property",
+        messageFormat: "'{0}' is a Maybe<T> property. Use the backing field name '{1}' in HasIndex to avoid a silent no-op.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "HasIndex with a Maybe<T> property silently fails to create the index because MaybeConvention maps " +
+                     "Maybe<T> via backing fields, so the CLR property is invisible to EF Core's index builder. " +
+                     "Use string-based HasIndex with the backing field name instead. " +
+                     "Example: builder.HasIndex(\"Status\", \"_submittedAt\").",
+        helpLinkUri: HelpLinkBase + "TRLS021");
 }

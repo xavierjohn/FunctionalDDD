@@ -59,6 +59,7 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 ### Entity Framework Core Integration
 
 - **Use SaveChangesResult (TRLS020)** - Warns when `SaveChanges`/`SaveChangesAsync` is called directly instead of `SaveChangesResultUnitAsync` or `SaveChangesResultAsync`
+- **HasIndex with Maybe\<T\> (TRLS021)** - Warns when `HasIndex` lambda references a `Maybe<T>` property, which silently fails because `MaybeConvention` maps via backing fields
 
 ### Error Handling Best Practices
 
@@ -198,7 +199,7 @@ dotnet_diagnostic.TRLS007.severity = warning     # Upgrade to warning
 ```xml
 <!-- In .csproj -->
 <PropertyGroup>
-  <NoWarn>$(NoWarn);TRLS001;TRLS002;TRLS003;TRLS004;TRLS005;TRLS006;TRLS007;TRLS008;TRLS009;TRLS010;TRLS011;TRLS012;TRLS013;TRLS014;TRLS015;TRLS016;TRLS017;TRLS018;TRLS019;TRLS020</NoWarn>
+  <NoWarn>$(NoWarn);TRLS001;TRLS002;TRLS003;TRLS004;TRLS005;TRLS006;TRLS007;TRLS008;TRLS009;TRLS010;TRLS011;TRLS012;TRLS013;TRLS014;TRLS015;TRLS016;TRLS017;TRLS018;TRLS019;TRLS020;TRLS021</NoWarn>
 </PropertyGroup>
 ```
 
@@ -226,6 +227,7 @@ dotnet_diagnostic.TRLS007.severity = warning     # Upgrade to warning
 | TRLS018 | Unsafe access to Value in LINQ expression | Warning |
 | TRLS019 | Combine chain exceeds maximum tuple size | Error |
 | TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
+| TRLS021 | HasIndex references a Maybe&lt;T&gt; property | Warning |
 
 ## Related Packages
 
