@@ -92,6 +92,17 @@ result.Should().BeFailure();
 // scope disposes → actor reverts to admin
 ```
 
+### CreateClientWithActor — Integration Test HttpClient
+
+Creates an `HttpClient` with the `X-Test-Actor` header pre-set for authorization integration tests.
+
+```csharp
+using Trellis.Testing;
+
+var client = _factory.CreateClientWithActor("user-1", "Orders.Create", "Orders.Read");
+var response = await client.PostAsync("/api/orders", content);
+```
+
 ## Assertion API Reference
 
 ### Result

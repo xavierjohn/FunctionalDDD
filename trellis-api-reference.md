@@ -1154,6 +1154,16 @@ await using (actorProvider.WithActor("user-1", "Read"))
 // actor is admin
 ```
 
+## WebApplicationFactory Extensions
+
+Creates an `HttpClient` with the `X-Test-Actor` header pre-set, encoding actor identity and permissions as JSON.
+
+```csharp
+// Extension on WebApplicationFactory<TEntryPoint>
+var client = factory.CreateClientWithActor("user-1", "Orders.Create", "Orders.Read");
+// Sets header: X-Test-Actor: {"Id":"user-1","Permissions":["Orders.Create","Orders.Read"]}
+```
+
 ---
 
 # 10. Trellis.FluentValidation
