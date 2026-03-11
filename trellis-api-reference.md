@@ -1120,18 +1120,29 @@ repo.PublishedEvents                                   // IReadOnlyList<IDomainE
 
 **Namespace: `Trellis.Testing.Fakes`**
 
-Mutable `IActorProvider` for authorization testing. `WithActor` returns a scope that restores the previous actor on dispose, eliminating `try/finally` boilerplate.
+Mutable `IActorProvider` for authorization testing. Uses `AsyncLocal<Actor?>` internally so parallel tests sharing a singleton provider never interfere. `WithActor` returns a scope that restores the previous actor on dispose, eliminating `try/finally` boilerplate.
+
+### Construction
 
 ```csharp
-// Construction
 var actorProvider = new TestActorProvider("admin", "Orders.Read", "Orders.Write");
-var actorProvider = new TestActorProvider(actor);                   // from Actor instance
+var actorFromInstance = new TestActorProvider(actor);               // from Actor instance
+```
 
-// Scoped actor switching — restores previous actor on dispose
-await using var scope = actorProvider.WithActor("user-1", "Orders.Read");
-await using var scope = actorProvider.WithActor(actor);            // from Actor instance
+### Scoped Actor Switching
 
-// Nested scopes restore correctly at each level
+```csharp
+// Temporarily switch actor — restored on dispose
+await using var scope1 = actorProvider.WithActor("user-1", "Orders.Read");
+await using var scope2 = actorProvider.WithActor(actor);           // from Actor instance
+
+// Synchronous dispose also supported
+using var scope3 = actorProvider.WithActor("user-1", "Orders.Read");
+```
+
+### Nested Scopes
+
+```csharp
 await using (actorProvider.WithActor("user-1", "Read"))
 {
     await using (actorProvider.WithActor("user-2", "Write"))
@@ -1141,9 +1152,6 @@ await using (actorProvider.WithActor("user-1", "Read"))
     // actor is user-1
 }
 // actor is admin
-
-// Synchronous dispose also supported
-using var scope = actorProvider.WithActor("user-1", "Orders.Read");
 ```
 
 ---
