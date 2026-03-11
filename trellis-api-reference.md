@@ -1154,6 +1154,21 @@ await using (actorProvider.WithActor("user-1", "Read"))
 // actor is admin
 ```
 
+## ServiceCollection Extensions
+
+Replaces existing `IResourceLoader<TMessage, TResource>` DI registrations with a test implementation. Registered as scoped, matching the production lifetime.
+
+```csharp
+// Stateless fake — capture a pre-created instance
+var fakeLoader = new FakeOrderResourceLoader(fakeRepo);
+services.ReplaceResourceLoader<CancelOrderCommand, Order>(_ => fakeLoader);
+
+// Scoped dependency — resolve from the container
+services.ReplaceResourceLoader<CancelOrderCommand, Order>(
+    sp => new FakeOrderResourceLoader(sp.GetRequiredService<AppDbContext>()));
+// Internally: RemoveAll + AddScoped
+```
+
 ## WebApplicationFactory Extensions
 
 Creates an `HttpClient` with the `X-Test-Actor` header pre-set, encoding actor identity and permissions as JSON.
