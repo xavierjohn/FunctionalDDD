@@ -40,3 +40,5 @@
   href: TRLS019.md
 - name: TRLS020 - Use SaveChangesResultAsync
   href: TRLS020.md
+- name: TRLS021 - HasIndex with Maybe<T> property
+  href: TRLS021.md

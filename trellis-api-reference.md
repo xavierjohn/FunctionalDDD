@@ -1368,6 +1368,7 @@ Roslyn analyzers and code fixes for correct `Result<T>`, `Maybe<T>`, and ROP pip
 | `TRLS018` | Warning | Unsafe access to `.Value` in LINQ without filtering by success state |
 | `TRLS019` | Error | Combine chain exceeds maximum supported tuple size (9) |
 | `TRLS020` | Warning | Use `SaveChangesResultAsync` instead of `SaveChangesAsync` |
+| `TRLS021` | Warning | `HasIndex` references a `Maybe<T>` property — use backing field name instead |
 
 Source generator diagnostics use a separate `TRLSGEN` prefix (see §3 and §12).
 

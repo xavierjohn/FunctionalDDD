@@ -70,6 +70,7 @@ var email = EmailAddress.Create(input);
 | TRLS018 | Unsafe access to Value in LINQ expression | Warning |
 | TRLS019 | Combine chain exceeds maximum tuple size | Error |
 | TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
+| TRLS021 | HasIndex references a Maybe\<T\> property | Warning |
 
 ## Configuration
 
