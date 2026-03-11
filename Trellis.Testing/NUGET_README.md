@@ -94,15 +94,23 @@ result.Should().BeFailure();
 
 ### ReplaceResourceLoader — DI Registration Replacement
 
-Replaces existing `IResourceLoader<TCommand, TResource>` registrations in one call — no manual `RemoveAll` needed.
+Replaces existing `IResourceLoader<TCommand, TResource>` registrations in one call — no manual `RemoveAll` needed. Registered as scoped, matching the production lifetime.
 
 ```csharp
 using Trellis.Testing;
 
+// Stateless fake — capture the instance in the factory
 builder.ConfigureServices(services =>
 {
     services.ReplaceResourceLoader<CancelOrderCommand, Order>(
-        new FakeOrderResourceLoader(fakeRepo));
+        _ => new FakeOrderResourceLoader(fakeRepo));
+});
+
+// Scoped dependency — resolve from the container
+builder.ConfigureServices(services =>
+{
+    services.ReplaceResourceLoader<CancelOrderCommand, Order>(
+        sp => new FakeOrderResourceLoader(sp.GetRequiredService<AppDbContext>()));
 });
 ```
 

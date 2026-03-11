@@ -12,29 +12,31 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Replaces any existing <see cref="IResourceLoader{TMessage, TResource}"/> registration
-    /// with the specified <paramref name="loader"/> instance, registered as a singleton.
-    /// The caller owns the instance lifetime; the DI container will not create new instances per scope.
+    /// with a scoped factory, matching the production lifetime of resource loaders.
+    /// For stateless fakes, capture the instance in the factory: <c>_ => fakeLoader</c>.
     /// </summary>
     /// <typeparam name="TMessage">The command or query type that identifies the resource.</typeparam>
     /// <typeparam name="TResource">The resource type returned by the loader.</typeparam>
     /// <param name="services">The service collection to modify.</param>
-    /// <param name="loader">The replacement resource loader instance.</param>
+    /// <param name="factory">A factory that creates a loader instance per scope.</param>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     /// <example>
     /// <code>
-    /// builder.ConfigureServices(services =>
-    /// {
-    ///     services.ReplaceResourceLoader&lt;CancelOrderCommand, Order&gt;(
-    ///         new FakeOrderResourceLoader(fakeRepo));
-    /// });
+    /// // Stateless fake — capture the instance
+    /// services.ReplaceResourceLoader&lt;CancelOrderCommand, Order&gt;(
+    ///     _ => new FakeOrderResourceLoader(fakeRepo));
+    ///
+    /// // Scoped dependency — resolve from the container
+    /// services.ReplaceResourceLoader&lt;CancelOrderCommand, Order&gt;(
+    ///     sp => new FakeOrderResourceLoader(sp.GetRequiredService&lt;AppDbContext&gt;()));
     /// </code>
     /// </example>
     public static IServiceCollection ReplaceResourceLoader<TMessage, TResource>(
         this IServiceCollection services,
-        IResourceLoader<TMessage, TResource> loader)
+        Func<IServiceProvider, IResourceLoader<TMessage, TResource>> factory)
     {
         services.RemoveAll<IResourceLoader<TMessage, TResource>>();
-        services.AddSingleton<IResourceLoader<TMessage, TResource>>(loader);
+        services.AddScoped(factory);
         return services;
     }
 }

@@ -192,15 +192,23 @@ public class OrderAuthorizationTests
 
 ### ReplaceResourceLoader — DI Registration Replacement
 
-When the ACL layer registers `IResourceLoader<TCommand, TResource>` and the test fixture calls `AddMockAntiCorruptionLayer()`, you get duplicate DI registrations. `ReplaceResourceLoader` handles removal and re-registration in a single call.
+When the ACL layer registers `IResourceLoader<TCommand, TResource>` and the test fixture calls `AddMockAntiCorruptionLayer()`, you get duplicate DI registrations. `ReplaceResourceLoader` handles removal and re-registration in a single call. Registered as scoped, matching the production lifetime.
 
 ```csharp
 using Trellis.Testing;
 
+// Stateless fake — capture the instance in the factory
 builder.ConfigureServices(services =>
 {
     services.ReplaceResourceLoader<CancelOrderCommand, Order>(
-        new FakeOrderResourceLoader(fakeRepo));
+        _ => new FakeOrderResourceLoader(fakeRepo));
+});
+
+// Scoped dependency — resolve from the container
+builder.ConfigureServices(services =>
+{
+    services.ReplaceResourceLoader<CancelOrderCommand, Order>(
+        sp => new FakeOrderResourceLoader(sp.GetRequiredService<AppDbContext>()));
 });
 ```
 
@@ -299,7 +307,7 @@ public class OrderEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
 | Method | Description |
 |--------|-------------|
-| `ReplaceResourceLoader<TMessage, TResource>(loader)` | Removes all existing `IResourceLoader<TMessage, TResource>` registrations and re-registers the provided instance as a singleton |
+| `ReplaceResourceLoader<TMessage, TResource>(factory)` | Removes all existing `IResourceLoader<TMessage, TResource>` registrations and re-registers using a scoped factory (matching production lifetime) |
 
 ### WebApplicationFactory Extensions
 

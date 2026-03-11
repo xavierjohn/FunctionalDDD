@@ -14,28 +14,27 @@ public class ServiceCollectionExtensionsTests
     public void ReplaceResourceLoader_NoExistingRegistration_RegistersLoader()
     {
         var services = new ServiceCollection();
-        var loader = new FakeResourceLoader();
 
-        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+        services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new FakeResourceLoader());
 
         using var provider = services.BuildServiceProvider();
-        var resolved = provider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
-        resolved.Should().BeSameAs(loader);
+        using var scope = provider.CreateScope();
+        var resolved = scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        resolved.Should().BeOfType<FakeResourceLoader>();
     }
 
     [Fact]
     public void ReplaceResourceLoader_WithExistingRegistration_ReplacesIt()
     {
         var services = new ServiceCollection();
-        var original = new FakeResourceLoader();
-        var replacement = new FakeResourceLoader();
-        services.AddScoped<IResourceLoader<TestCommand, TestResource>>(_ => original);
+        services.AddScoped<IResourceLoader<TestCommand, TestResource>>(_ => new FakeResourceLoader());
 
-        services.ReplaceResourceLoader<TestCommand, TestResource>(replacement);
+        services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new AlternateFakeResourceLoader());
 
         using var provider = services.BuildServiceProvider();
-        var resolved = provider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
-        resolved.Should().BeSameAs(replacement);
+        using var scope = provider.CreateScope();
+        var resolved = scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        resolved.Should().BeOfType<AlternateFakeResourceLoader>();
     }
 
     [Fact]
@@ -44,22 +43,21 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddScoped<IResourceLoader<TestCommand, TestResource>>(_ => new FakeResourceLoader());
         services.AddScoped<IResourceLoader<TestCommand, TestResource>>(_ => new FakeResourceLoader());
-        var replacement = new FakeResourceLoader();
 
-        services.ReplaceResourceLoader<TestCommand, TestResource>(replacement);
+        services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new AlternateFakeResourceLoader());
 
         using var provider = services.BuildServiceProvider();
-        var all = provider.GetServices<IResourceLoader<TestCommand, TestResource>>().ToList();
-        all.Should().ContainSingle().Which.Should().BeSameAs(replacement);
+        using var scope = provider.CreateScope();
+        var all = scope.ServiceProvider.GetServices<IResourceLoader<TestCommand, TestResource>>().ToList();
+        all.Should().ContainSingle().Which.Should().BeOfType<AlternateFakeResourceLoader>();
     }
 
     [Fact]
     public void ReplaceResourceLoader_ReturnsServiceCollection_ForChaining()
     {
         var services = new ServiceCollection();
-        var loader = new FakeResourceLoader();
 
-        var returned = services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+        var returned = services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new FakeResourceLoader());
 
         returned.Should().BeSameAs(services);
     }
@@ -70,12 +68,12 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         var otherLoader = new OtherFakeResourceLoader();
         services.AddScoped<IResourceLoader<OtherCommand, OtherResource>>(_ => otherLoader);
-        var replacement = new FakeResourceLoader();
 
-        services.ReplaceResourceLoader<TestCommand, TestResource>(replacement);
+        services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new FakeResourceLoader());
 
         using var provider = services.BuildServiceProvider();
-        var other = provider.GetRequiredService<IResourceLoader<OtherCommand, OtherResource>>();
+        using var scope = provider.CreateScope();
+        var other = scope.ServiceProvider.GetRequiredService<IResourceLoader<OtherCommand, OtherResource>>();
         other.Should().BeSameAs(otherLoader);
     }
 
@@ -84,24 +82,11 @@ public class ServiceCollectionExtensionsTests
     #region Scoped Lifetime Tests
 
     [Fact]
-    public void ReplaceResourceLoader_ResolvesFromScopedProvider_ReturnsSameInstance()
+    public void ReplaceResourceLoader_CreatesNewInstancePerScope()
     {
         var services = new ServiceCollection();
-        var loader = new FakeResourceLoader();
-        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
 
-        using var provider = services.BuildServiceProvider();
-        using var scope = provider.CreateScope();
-        var resolved = scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
-        resolved.Should().BeSameAs(loader);
-    }
-
-    [Fact]
-    public void ReplaceResourceLoader_TwoScopes_ResolveSameInstance()
-    {
-        var services = new ServiceCollection();
-        var loader = new FakeResourceLoader();
-        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+        services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new FakeResourceLoader());
 
         using var provider = services.BuildServiceProvider();
         using var scope1 = provider.CreateScope();
@@ -110,45 +95,44 @@ public class ServiceCollectionExtensionsTests
         var resolved1 = scope1.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
         var resolved2 = scope2.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
 
-        resolved1.Should().BeSameAs(loader);
-        resolved2.Should().BeSameAs(loader);
-        resolved1.Should().BeSameAs(resolved2);
+        resolved1.Should().NotBeSameAs(resolved2, "scoped registration creates a new instance per scope");
     }
 
     [Fact]
-    public void ReplaceResourceLoader_DisposableLoader_NotDisposedWhenScopeEnds()
+    public void ReplaceResourceLoader_SameInstanceWithinScope()
     {
         var services = new ServiceCollection();
-        var loader = new DisposableFakeResourceLoader();
-        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+
+        services.ReplaceResourceLoader<TestCommand, TestResource>(_ => new FakeResourceLoader());
 
         using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
 
-        var scope = provider.CreateScope();
+        var resolved1 = scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        var resolved2 = scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+
+        resolved1.Should().BeSameAs(resolved2, "scoped registration returns the same instance within a scope");
+    }
+
+    [Fact]
+    public void ReplaceResourceLoader_ReceivesServiceProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton("injected-value");
+
+        IServiceProvider? capturedProvider = null;
+        services.ReplaceResourceLoader<TestCommand, TestResource>(sp =>
+        {
+            capturedProvider = sp;
+            return new FakeResourceLoader();
+        });
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
         scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
-        scope.Dispose();
 
-        loader.Disposed.Should().BeFalse("singleton instances are not disposed when a scope ends");
-    }
-
-    [Fact]
-    public void ReplaceResourceLoader_DisposableLoader_SecondScopeStillUsable()
-    {
-        var services = new ServiceCollection();
-        var loader = new DisposableFakeResourceLoader();
-        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
-
-        using var provider = services.BuildServiceProvider();
-
-        var scope1 = provider.CreateScope();
-        scope1.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
-        scope1.Dispose();
-
-        using var scope2 = provider.CreateScope();
-        var resolved = scope2.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
-
-        resolved.Should().BeSameAs(loader);
-        loader.Disposed.Should().BeFalse("the instance must survive across scopes");
+        capturedProvider.Should().NotBeNull();
+        capturedProvider!.GetRequiredService<string>().Should().Be("injected-value");
     }
 
     #endregion
@@ -172,14 +156,10 @@ public class ServiceCollectionExtensionsTests
             Task.FromResult(Result.Success(new OtherResource("other")));
     }
 
-    private sealed class DisposableFakeResourceLoader : IResourceLoader<TestCommand, TestResource>, IDisposable
+    private sealed class AlternateFakeResourceLoader : IResourceLoader<TestCommand, TestResource>
     {
-        public bool Disposed { get; private set; }
-
         public Task<Result<TestResource>> LoadAsync(TestCommand message, CancellationToken ct) =>
-            Task.FromResult(Result.Success(new TestResource("disposable")));
-
-        public void Dispose() => Disposed = true;
+            Task.FromResult(Result.Success(new TestResource("alternate")));
     }
 
     #endregion
