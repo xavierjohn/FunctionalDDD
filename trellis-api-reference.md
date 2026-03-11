@@ -1159,9 +1159,9 @@ await using (actorProvider.WithActor("user-1", "Read"))
 Replaces existing `IResourceLoader<TMessage, TResource>` DI registrations with a test implementation. Registered as scoped, matching the production lifetime.
 
 ```csharp
-// Stateless fake — capture the instance in the factory
-services.ReplaceResourceLoader<CancelOrderCommand, Order>(
-    _ => new FakeOrderResourceLoader(fakeRepo));
+// Stateless fake — capture a pre-created instance
+var fakeLoader = new FakeOrderResourceLoader(fakeRepo);
+services.ReplaceResourceLoader<CancelOrderCommand, Order>(_ => fakeLoader);
 
 // Scoped dependency — resolve from the container
 services.ReplaceResourceLoader<CancelOrderCommand, Order>(

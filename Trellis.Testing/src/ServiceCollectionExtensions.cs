@@ -13,7 +13,7 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Replaces any existing <see cref="IResourceLoader{TMessage, TResource}"/> registration
     /// with a scoped factory, matching the production lifetime of resource loaders.
-    /// For stateless fakes, capture the instance in the factory: <c>_ => fakeLoader</c>.
+    /// For stateless fakes, capture a pre-created instance: <c>_ => fakeLoader</c>.
     /// </summary>
     /// <typeparam name="TMessage">The command or query type that identifies the resource.</typeparam>
     /// <typeparam name="TResource">The resource type returned by the loader.</typeparam>
@@ -22,9 +22,9 @@ public static class ServiceCollectionExtensions
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     /// <example>
     /// <code>
-    /// // Stateless fake — capture the instance
-    /// services.ReplaceResourceLoader&lt;CancelOrderCommand, Order&gt;(
-    ///     _ => new FakeOrderResourceLoader(fakeRepo));
+    /// // Stateless fake — capture a pre-created instance
+    /// var fakeLoader = new FakeOrderResourceLoader(fakeRepo);
+    /// services.ReplaceResourceLoader&lt;CancelOrderCommand, Order&gt;(_ => fakeLoader);
     ///
     /// // Scoped dependency — resolve from the container
     /// services.ReplaceResourceLoader&lt;CancelOrderCommand, Order&gt;(

@@ -197,11 +197,11 @@ When the ACL layer registers `IResourceLoader<TCommand, TResource>` and the test
 ```csharp
 using Trellis.Testing;
 
-// Stateless fake — capture the instance in the factory
+// Stateless fake — capture a pre-created instance
+var fakeLoader = new FakeOrderResourceLoader(fakeRepo);
 builder.ConfigureServices(services =>
 {
-    services.ReplaceResourceLoader<CancelOrderCommand, Order>(
-        _ => new FakeOrderResourceLoader(fakeRepo));
+    services.ReplaceResourceLoader<CancelOrderCommand, Order>(_ => fakeLoader);
 });
 
 // Scoped dependency — resolve from the container

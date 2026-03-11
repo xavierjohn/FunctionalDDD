@@ -311,7 +311,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         startTimes.Should().HaveCount(4);
 
         // If sequential: start times would be ~0, ~50, ~100, ~150
-        // If parallel: all start times should be close together (within 30ms of each other)
+        // If parallel: all start times should be close together (within 50ms of each other)
         var maxStartTime = startTimes.Max();
         var minStartTime = startTimes.Min();
         var startTimeSpread = maxStartTime - minStartTime;
