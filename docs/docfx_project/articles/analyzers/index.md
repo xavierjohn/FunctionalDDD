@@ -51,11 +51,12 @@ The analyzer package is automatically included when you install any Trellis pack
 | [TRLS018](TRLS018.md) | Unsafe access to Value in LINQ expression | Warning | ❌ |
 | [TRLS019](TRLS019.md) | Combine chain exceeds maximum supported tuple size | Error | ❌ |
 
-### Entity Framework Core (TRLS020)
+### Entity Framework Core (TRLS020-TRLS021)
 
 | ID | Title | Severity | Has Code Fix |
 |----|-------|----------|--------------|
 | [TRLS020](TRLS020.md) | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning | ✅ |
+| [TRLS021](TRLS021.md) | HasIndex references a Maybe\<T\> property | Warning | ❌ |
 
 ## Severity Levels
 

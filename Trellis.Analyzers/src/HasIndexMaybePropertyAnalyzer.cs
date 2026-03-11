@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 /// Analyzer that detects HasIndex lambda expressions referencing Maybe&lt;T&gt; properties.
 /// MaybeConvention maps Maybe&lt;T&gt; via backing fields, so the CLR property is invisible
 /// to EF Core's index builder and the index silently fails to be created.
+/// Only activates when the compilation references the Trellis.EntityFrameworkCore assembly.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class HasIndexMaybePropertyAnalyzer : DiagnosticAnalyzer
@@ -25,10 +26,11 @@ public sealed class HasIndexMaybePropertyAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(compilationContext =>
         {
-            // Only activate when the compilation references EF Core
-            var entityTypeBuilderType = compilationContext.Compilation.GetTypeByMetadataName(
-                "Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder`1");
-            if (entityTypeBuilderType is null)
+            // Only activate when the compilation references Trellis.EntityFrameworkCore
+            // by checking for the MaybeConvention type that maps Maybe<T> via backing fields
+            var maybeConventionType = compilationContext.Compilation.GetTypeByMetadataName(
+                "Trellis.EntityFrameworkCore.MaybeConvention");
+            if (maybeConventionType is null)
                 return;
 
             compilationContext.RegisterSyntaxNodeAction(
@@ -59,9 +61,16 @@ public sealed class HasIndexMaybePropertyAnalyzer : DiagnosticAnalyzer
             if (argument.Expression is not LambdaExpressionSyntax lambda)
                 continue;
 
+            var lambdaParameter = GetLambdaParameter(lambda);
+            if (lambdaParameter is null)
+                continue;
+
             var memberAccesses = lambda.DescendantNodes().OfType<MemberAccessExpressionSyntax>();
             foreach (var ma in memberAccesses)
             {
+                if (!IsAccessOnParameter(ma, lambdaParameter))
+                    continue;
+
                 var propSymbol = context.SemanticModel.GetSymbolInfo(ma).Symbol;
                 if (propSymbol is not IPropertySymbol propertySymbol)
                     continue;
@@ -93,4 +102,27 @@ public sealed class HasIndexMaybePropertyAnalyzer : DiagnosticAnalyzer
 
         return false;
     }
+
+    private static string? GetLambdaParameter(LambdaExpressionSyntax lambda) =>
+        lambda switch
+        {
+            SimpleLambdaExpressionSyntax simple => simple.Parameter.Identifier.Text,
+            ParenthesizedLambdaExpressionSyntax paren when paren.ParameterList.Parameters.Count > 0 =>
+                paren.ParameterList.Parameters[0].Identifier.Text,
+            _ => null
+        };
+
+    private static bool IsAccessOnParameter(MemberAccessExpressionSyntax memberAccess, string parameterName)
+    {
+        var root = GetRootIdentifier(memberAccess.Expression);
+        return root?.Identifier.Text == parameterName;
+    }
+
+    private static IdentifierNameSyntax? GetRootIdentifier(ExpressionSyntax expression) =>
+        expression switch
+        {
+            IdentifierNameSyntax identifier => identifier,
+            MemberAccessExpressionSyntax memberAccess => GetRootIdentifier(memberAccess.Expression),
+            _ => null
+        };
 }

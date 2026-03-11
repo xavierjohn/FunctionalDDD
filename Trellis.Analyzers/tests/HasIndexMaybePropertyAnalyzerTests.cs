@@ -9,9 +9,35 @@ using Xunit;
 public class HasIndexMaybePropertyAnalyzerTests
 {
     /// <summary>
-    /// Stub source for EF Core builder types used in TRLS021 analyzer tests.
+    /// Stub source for EF Core builder types and Trellis.EntityFrameworkCore types used in TRLS021 analyzer tests.
     /// </summary>
     private const string EfCoreBuilderStubSource = """
+        namespace Microsoft.EntityFrameworkCore.Metadata.Builders
+        {
+            using System;
+            using System.Linq.Expressions;
+
+            public class EntityTypeBuilder<TEntity> where TEntity : class
+            {
+                public virtual IndexBuilder HasIndex(Expression<Func<TEntity, object>> indexExpression) => new IndexBuilder();
+                public virtual IndexBuilder HasIndex(params string[] propertyNames) => new IndexBuilder();
+            }
+
+            public class IndexBuilder
+            {
+            }
+        }
+
+        namespace Trellis.EntityFrameworkCore
+        {
+            public class MaybeConvention { }
+        }
+        """;
+
+    /// <summary>
+    /// Stub source for EF Core builder types WITHOUT Trellis.EntityFrameworkCore.
+    /// </summary>
+    private const string EfCoreOnlyStubSource = """
         namespace Microsoft.EntityFrameworkCore.Metadata.Builders
         {
             using System;
@@ -167,6 +193,44 @@ public class HasIndexMaybePropertyAnalyzerTests
 
     #endregion
 
+    #region Member access on captured variable does not produce warning
+
+    [Fact]
+    public async Task HasIndex_CapturedVariable_MaybeProperty_NoDiagnostic()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+            public class Order
+            {
+                public int Id { get; set; }
+                public string Status { get; set; } = "";
+            }
+
+            public class Other
+            {
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+
+            public class TestConfig
+            {
+                private readonly Other _other = new Other();
+
+                public void Configure(EntityTypeBuilder<Order> builder)
+                {
+                    builder.HasIndex(e => new { e.Status, _other.SubmittedAt });
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<HasIndexMaybePropertyAnalyzer>(source);
+        test.TestState.Sources.Add(("EfCoreBuilderStubs.cs", EfCoreBuilderStubSource));
+
+        await test.RunAsync();
+    }
+
+    #endregion
+
     #region String-based HasIndex does not produce warning
 
     [Fact]
@@ -220,6 +284,37 @@ public class HasIndexMaybePropertyAnalyzerTests
             """;
 
         var test = AnalyzerTestHelper.CreateNoDiagnosticTest<HasIndexMaybePropertyAnalyzer>(source);
+
+        await test.RunAsync();
+    }
+
+    #endregion
+
+    #region EF Core without Trellis.EntityFrameworkCore does not activate analyzer
+
+    [Fact]
+    public async Task EfCoreWithoutTrellisEntityFrameworkCore_NoDiagnostic()
+    {
+        const string source = """
+            using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+            public class Order
+            {
+                public int Id { get; set; }
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+
+            public class TestConfig
+            {
+                public void Configure(EntityTypeBuilder<Order> builder)
+                {
+                    builder.HasIndex(e => e.SubmittedAt);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<HasIndexMaybePropertyAnalyzer>(source);
+        test.TestState.Sources.Add(("EfCoreOnlyStubs.cs", EfCoreOnlyStubSource));
 
         await test.RunAsync();
     }
