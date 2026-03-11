@@ -1144,7 +1144,7 @@ Result<TState> FireResult<TState, TTrigger>(this StateMachine<TState, TTrigger> 
 
 ### LazyStateMachine\<TState, TTrigger\>
 
-Defers state machine construction until first use, solving the EF Core materialization problem where `stateAccessor` throws because entity properties are not yet populated.
+Defers state machine construction until first use, solving the ORM materialization problem where `stateAccessor` reads a default or uninitialized value before entity properties are populated.
 
 ```csharp
 // Constructor — stateAccessor/stateMutator not invoked, configure not called

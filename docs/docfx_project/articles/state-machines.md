@@ -146,7 +146,7 @@ Every transition returns `Result<OrderState>`, making invalid transitions a regu
 
 ## LazyStateMachine
 
-Aggregates with state machines run into a common EF Core problem: the parameterless constructor executes before EF Core populates properties, so `() => Status` throws when `Status` is still null. This forces a manual null-coalescing pattern: `_machine ??= ConfigureStateMachine()`.
+Aggregates with state machines run into a common materialization problem: the parameterless constructor executes before the ORM populates properties, so `() => Status` reads a default or uninitialized value — reference-type states throw, while enum states silently start the machine in the wrong state. This forces a manual null-coalescing pattern: `_machine ??= ConfigureStateMachine()`.
 
 `LazyStateMachine<TState, TTrigger>` eliminates that boilerplate by deferring both the `stateAccessor`/`stateMutator` invocation and the machine configuration until first use:
 

@@ -31,7 +31,7 @@ Result<OrderState> invalid = machine.FireResult(OrderTrigger.Cancel);
 
 ## LazyStateMachine
 
-Aggregates with state machines often face an EF Core materialization problem: the parameterless constructor runs before properties are populated, so a `stateAccessor` lambda like `() => Status` throws. `LazyStateMachine<TState, TTrigger>` defers machine construction until first use:
+Aggregates with state machines face a materialization problem with ORMs like EF Core: the parameterless constructor runs before properties are populated, so a `stateAccessor` lambda like `() => Status` reads a default or uninitialized value — reference-type states throw, while enum states silently start the machine in the wrong state. `LazyStateMachine<TState, TTrigger>` defers machine construction until first use:
 
 ```csharp
 public class Order : Aggregate<OrderId>

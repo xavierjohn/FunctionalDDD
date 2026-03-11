@@ -13,14 +13,20 @@ using Trellis;
 /// <para>
 /// EF Core invokes the parameterless constructor before populating entity properties.
 /// If a state machine is configured eagerly in the constructor using a <c>stateAccessor</c>
-/// lambda (e.g., <c>() =&gt; Status</c>), the accessor will throw because <c>Status</c>
-/// is still null/default. This forces aggregates to use a manual null-coalescing pattern:
-/// <c>_machine ??= ConfigureStateMachine()</c>.
+/// lambda (e.g., <c>() =&gt; Status</c>), the accessor reads a default or uninitialized
+/// value — reference-type and value-object states throw, while enum states silently
+/// start the machine in the wrong state. This forces aggregates to use a manual
+/// null-coalescing pattern: <c>_machine ??= ConfigureStateMachine()</c>.
 /// </para>
 /// <para>
 /// <see cref="LazyStateMachine{TState, TTrigger}"/> eliminates that boilerplate by deferring
 /// both the <c>stateAccessor</c>/<c>stateMutator</c> invocation and the machine configuration
 /// until the first call to <see cref="FireResult"/> or <see cref="Machine"/>.
+/// </para>
+/// <para>
+/// This type is not thread-safe, consistent with the underlying
+/// <see cref="StateMachine{TState, TTrigger}"/>. DDD aggregates are single-threaded
+/// consistency boundaries; concurrent access to the same instance is a design error.
 /// </para>
 /// <para>
 /// Usage:
@@ -59,7 +65,7 @@ public sealed class LazyStateMachine<TState, TTrigger>
     /// <param name="stateMutator">An action that sets the current state. Not invoked until first use.</param>
     /// <param name="configure">
     /// A callback that configures the state machine's transitions.
-    /// Invoked exactly once, when the machine is first accessed.
+    /// Invoked once, when the machine is first accessed.
     /// </param>
     public LazyStateMachine(
         Func<TState> stateAccessor,
