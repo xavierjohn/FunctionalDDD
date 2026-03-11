@@ -1156,11 +1156,11 @@ await using (actorProvider.WithActor("user-1", "Read"))
 
 ## ServiceCollection Extensions
 
-Replaces existing `IResourceLoader<TMessage, TResource>` DI registrations with a test implementation. Removes all prior registrations and adds the replacement as scoped.
+Replaces existing `IResourceLoader<TMessage, TResource>` DI registrations with a test implementation. Removes all prior registrations and adds the replacement as a singleton.
 
 ```csharp
 services.ReplaceResourceLoader<CancelOrderCommand, Order>(new FakeOrderResourceLoader(fakeRepo));
-// Internally: RemoveAll<IResourceLoader<CancelOrderCommand, Order>>() + AddScoped
+// Internally: RemoveAll<IResourceLoader<CancelOrderCommand, Order>>() + AddSingleton
 ```
 
 ## WebApplicationFactory Extensions

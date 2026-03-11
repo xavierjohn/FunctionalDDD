@@ -81,6 +81,78 @@ public class ServiceCollectionExtensionsTests
 
     #endregion
 
+    #region Scoped Lifetime Tests
+
+    [Fact]
+    public void ReplaceResourceLoader_ResolvesFromScopedProvider_ReturnsSameInstance()
+    {
+        var services = new ServiceCollection();
+        var loader = new FakeResourceLoader();
+        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var resolved = scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        resolved.Should().BeSameAs(loader);
+    }
+
+    [Fact]
+    public void ReplaceResourceLoader_TwoScopes_ResolveSameInstance()
+    {
+        var services = new ServiceCollection();
+        var loader = new FakeResourceLoader();
+        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+
+        using var provider = services.BuildServiceProvider();
+        using var scope1 = provider.CreateScope();
+        using var scope2 = provider.CreateScope();
+
+        var resolved1 = scope1.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        var resolved2 = scope2.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+
+        resolved1.Should().BeSameAs(loader);
+        resolved2.Should().BeSameAs(loader);
+        resolved1.Should().BeSameAs(resolved2);
+    }
+
+    [Fact]
+    public void ReplaceResourceLoader_DisposableLoader_NotDisposedWhenScopeEnds()
+    {
+        var services = new ServiceCollection();
+        var loader = new DisposableFakeResourceLoader();
+        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+
+        using var provider = services.BuildServiceProvider();
+
+        var scope = provider.CreateScope();
+        scope.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        scope.Dispose();
+
+        loader.Disposed.Should().BeFalse("singleton instances are not disposed when a scope ends");
+    }
+
+    [Fact]
+    public void ReplaceResourceLoader_DisposableLoader_SecondScopeStillUsable()
+    {
+        var services = new ServiceCollection();
+        var loader = new DisposableFakeResourceLoader();
+        services.ReplaceResourceLoader<TestCommand, TestResource>(loader);
+
+        using var provider = services.BuildServiceProvider();
+
+        var scope1 = provider.CreateScope();
+        scope1.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+        scope1.Dispose();
+
+        using var scope2 = provider.CreateScope();
+        var resolved = scope2.ServiceProvider.GetRequiredService<IResourceLoader<TestCommand, TestResource>>();
+
+        resolved.Should().BeSameAs(loader);
+        loader.Disposed.Should().BeFalse("the instance must survive across scopes");
+    }
+
+    #endregion
+
     #region Test Types
 
     private sealed record TestCommand(string Id);
@@ -98,6 +170,16 @@ public class ServiceCollectionExtensionsTests
     {
         public Task<Result<OtherResource>> LoadAsync(OtherCommand message, CancellationToken ct) =>
             Task.FromResult(Result.Success(new OtherResource("other")));
+    }
+
+    private sealed class DisposableFakeResourceLoader : IResourceLoader<TestCommand, TestResource>, IDisposable
+    {
+        public bool Disposed { get; private set; }
+
+        public Task<Result<TestResource>> LoadAsync(TestCommand message, CancellationToken ct) =>
+            Task.FromResult(Result.Success(new TestResource("disposable")));
+
+        public void Dispose() => Disposed = true;
     }
 
     #endregion

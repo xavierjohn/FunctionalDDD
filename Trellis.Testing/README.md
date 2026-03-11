@@ -299,7 +299,7 @@ public class OrderEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
 | Method | Description |
 |--------|-------------|
-| `ReplaceResourceLoader<TMessage, TResource>(loader)` | Removes all existing `IResourceLoader<TMessage, TResource>` registrations and re-registers the provided instance as scoped |
+| `ReplaceResourceLoader<TMessage, TResource>(loader)` | Removes all existing `IResourceLoader<TMessage, TResource>` registrations and re-registers the provided instance as a singleton |
 
 ### WebApplicationFactory Extensions
 

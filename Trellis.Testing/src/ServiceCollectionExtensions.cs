@@ -12,7 +12,8 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Replaces any existing <see cref="IResourceLoader{TMessage, TResource}"/> registration
-    /// with the specified <paramref name="loader"/> instance, registered as scoped.
+    /// with the specified <paramref name="loader"/> instance, registered as a singleton.
+    /// The caller owns the instance lifetime; the DI container will not create new instances per scope.
     /// </summary>
     /// <typeparam name="TMessage">The command or query type that identifies the resource.</typeparam>
     /// <typeparam name="TResource">The resource type returned by the loader.</typeparam>
@@ -33,7 +34,7 @@ public static class ServiceCollectionExtensions
         IResourceLoader<TMessage, TResource> loader)
     {
         services.RemoveAll<IResourceLoader<TMessage, TResource>>();
-        services.AddScoped(_ => loader);
+        services.AddSingleton<IResourceLoader<TMessage, TResource>>(loader);
         return services;
     }
 }
