@@ -144,6 +144,49 @@ machine.Configure(OrderState.Shipped)
 
 Every transition returns `Result<OrderState>`, making invalid transitions a regular error flow rather than an exception.
 
+## LazyStateMachine
+
+Aggregates with state machines run into a common EF Core problem: the parameterless constructor executes before EF Core populates properties, so `() => Status` throws when `Status` is still null. This forces a manual null-coalescing pattern: `_machine ??= ConfigureStateMachine()`.
+
+`LazyStateMachine<TState, TTrigger>` eliminates that boilerplate by deferring both the `stateAccessor`/`stateMutator` invocation and the machine configuration until first use:
+
+```csharp
+public class Order : Aggregate<OrderId>
+{
+    private readonly LazyStateMachine<OrderStatus, string> _machine;
+
+    public OrderStatus Status { get; private set; }
+
+    // Safe with EF Core — stateAccessor not invoked during construction
+    public Order()
+    {
+        _machine = new LazyStateMachine<OrderStatus, string>(
+            () => Status,
+            s => Status = s,
+            ConfigureStateMachine);
+    }
+
+    public Result<Order> Submit() =>
+        _machine.FireResult("submit")
+            .Tap(_ => DomainEvents.Add(new OrderSubmittedEvent(Id)))
+            .Map(_ => this);
+
+    private static void ConfigureStateMachine(StateMachine<OrderStatus, string> machine)
+    {
+        machine.Configure(OrderStatus.Draft)
+            .Permit("submit", OrderStatus.Submitted);
+
+        machine.Configure(OrderStatus.Submitted)
+            .Permit("approve", OrderStatus.Approved);
+    }
+}
+```
+
+Key behaviors:
+- **Constructor-safe** — `stateAccessor` and `stateMutator` are not invoked until first `FireResult()` or `Machine` access
+- **Configure once** — the configuration callback runs exactly once on first access
+- **Direct access** — use `.Machine` to reach the underlying `StateMachine<TState, TTrigger>` for `CanFire()` checks
+
 ## Next Steps
 
 - [Basics](basics.md) — Learn core ROP operations

@@ -37,6 +37,41 @@ Result<OrderState> invalid = machine.FireResult(OrderTrigger.Cancel);
 // invalid.IsFailure == true, invalid.Error is DomainError
 ```
 
+## LazyStateMachine
+
+Aggregates with state machines often face an EF Core materialization problem: the parameterless constructor runs before properties are populated, so a `stateAccessor` lambda like `() => Status` throws. `LazyStateMachine<TState, TTrigger>` defers machine construction until first use:
+
+```csharp
+public class Order : Aggregate<OrderId>
+{
+    private readonly LazyStateMachine<OrderStatus, string> _machine;
+
+    public OrderStatus Status { get; private set; }
+
+    public Order()
+    {
+        _machine = new LazyStateMachine<OrderStatus, string>(
+            () => Status,
+            s => Status = s,
+            ConfigureStateMachine);
+    }
+
+    public Result<Order> Submit() =>
+        _machine.FireResult("submit")
+            .Map(_ => this);
+
+    private static void ConfigureStateMachine(StateMachine<OrderStatus, string> machine)
+    {
+        machine.Configure(OrderStatus.Draft)
+            .Permit("submit", OrderStatus.Submitted);
+    }
+}
+```
+
+- **Constructor-safe** — `stateAccessor`/`stateMutator` are not invoked until first `FireResult` or `Machine` access
+- **Configure once** — the configuration callback runs exactly once on first access
+- **Direct access** — use `.Machine` to access the underlying `StateMachine<TState, TTrigger>` for `CanFire()` checks
+
 ## How It Works
 
 - Uses Stateless's `CanFire()` to check before firing — **no try/catch internally**
