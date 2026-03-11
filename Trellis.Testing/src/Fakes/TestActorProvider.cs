@@ -4,8 +4,8 @@ using Trellis.Authorization;
 
 /// <summary>
 /// Mutable <see cref="IActorProvider"/> for integration and authorization testing.
-/// Use <see cref="WithActor(Actor)"/> to temporarily switch the actor for a test scope;
-/// the previous actor is restored automatically on dispose.
+/// Stores the current actor in an <see cref="AsyncLocal{T}"/> so parallel tests using
+/// overlapping <see cref="WithActor(Actor)"/> scopes never interfere with each other.
 /// </summary>
 /// <example>
 /// <code>
@@ -20,14 +20,15 @@ using Trellis.Authorization;
 /// </example>
 public sealed class TestActorProvider : IActorProvider
 {
-    private Actor _currentActor;
+    private readonly Actor _defaultActor;
+    private readonly AsyncLocal<Actor?> _asyncLocalActor = new();
 
     /// <summary>
     /// Initializes a new <see cref="TestActorProvider"/> with the specified <see cref="Actor"/>.
     /// </summary>
-    /// <param name="actor">The initial actor.</param>
+    /// <param name="actor">The initial (default) actor returned when no scope is active.</param>
     public TestActorProvider(Actor actor) =>
-        _currentActor = actor;
+        _defaultActor = actor;
 
     /// <summary>
     /// Initializes a new <see cref="TestActorProvider"/> with an actor created from the specified user ID and permissions.
@@ -40,19 +41,19 @@ public sealed class TestActorProvider : IActorProvider
     }
 
     /// <inheritdoc />
-    public Actor GetCurrentActor() => _currentActor;
+    public Actor GetCurrentActor() => _asyncLocalActor.Value ?? _defaultActor;
 
     /// <summary>
-    /// Temporarily replaces the current actor. Returns a <see cref="TestActorScope"/> that
-    /// restores the previous actor on dispose.
+    /// Temporarily replaces the current actor for the current async flow.
+    /// Returns a <see cref="TestActorScope"/> that restores the previous actor on dispose.
     /// </summary>
     /// <param name="actor">The actor to use for the duration of the scope.</param>
     /// <returns>A disposable scope that restores the previous actor.</returns>
     public TestActorScope WithActor(Actor actor)
     {
-        var previous = _currentActor;
-        _currentActor = actor;
-        return new TestActorScope(this, previous);
+        var previous = _asyncLocalActor.Value;
+        _asyncLocalActor.Value = actor;
+        return new TestActorScope(_asyncLocalActor, previous);
     }
 
     /// <summary>
@@ -64,6 +65,4 @@ public sealed class TestActorProvider : IActorProvider
     /// <returns>A disposable scope that restores the previous actor.</returns>
     public TestActorScope WithActor(string userId, params string[] permissions) =>
         WithActor(Actor.Create(userId, new HashSet<string>(permissions)));
-
-    internal void RestoreActor(Actor actor) => _currentActor = actor;
 }
