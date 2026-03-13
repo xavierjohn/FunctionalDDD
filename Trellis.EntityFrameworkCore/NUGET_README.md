@@ -1,4 +1,4 @@
-# EF Core Integration
+﻿# EF Core Integration
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.EntityFrameworkCore.svg)](https://www.nuget.org/packages/Trellis.EntityFrameworkCore)
 
@@ -42,14 +42,14 @@ public class AppDbContext : DbContext
 
 ### Money Properties — Zero Configuration
 
-`Money` properties are automatically mapped as owned types with proper column naming and precision:
+`Money` properties are automatically mapped as owned types with proper column naming and precision.
+No `OwnsOne` calls needed — just declare `Money` properties on your entities and they work.
+This also applies when `Money` is declared on owned entity types, including items inside `OwnsMany` collections.
 
 | Property Name | Amount Column | Currency Column | Amount Type | Currency Type |
 |---------------|---------------|-----------------|-------------|---------------|
 | `Price` | `Price` | `PriceCurrency` | `decimal(18,3)` | `nvarchar(3)` |
 | `ShippingCost` | `ShippingCost` | `ShippingCostCurrency` | `decimal(18,3)` | `nvarchar(3)` |
-
-No `OwnsOne` calls needed — just declare `Money` properties on your entities and they work.
 
 ### Maybe\<T\> Properties — Source Generator + Convention
 

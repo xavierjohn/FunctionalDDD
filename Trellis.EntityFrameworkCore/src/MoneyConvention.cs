@@ -25,6 +25,11 @@ using Trellis.Primitives;
 /// (<see cref="IModelFinalizingConvention"/>).
 /// </para>
 /// <para>
+/// This applies to <see cref="Money"/> properties declared directly on entities and to
+/// <see cref="Money"/> properties declared on owned entity types, including items inside
+/// <c>OwnsMany</c> collections.
+/// </para>
+/// <para>
 /// Explicit <c>OwnsOne</c> configuration in <c>OnModelCreating</c> takes precedence;
 /// convention-level annotations never override explicit-level configuration.
 /// </para>
@@ -53,31 +58,34 @@ internal sealed class MoneyConvention : IModelInitializedConvention, IModelFinal
     {
         foreach (var entityType in modelBuilder.Metadata.GetEntityTypes().ToList())
         {
-            if (entityType.ClrType != s_moneyType || !entityType.IsOwned())
-                continue;
-
-            var ownership = entityType.FindOwnership();
-            var navigationName = ownership?.PrincipalToDependent?.Name;
-            if (navigationName is null)
-                continue;
-
-            // Amount → column "{NavigationName}", decimal(18,3)
-            // Scale 3 accommodates all ISO 4217 minor units: 0 (JPY), 2 (USD), 3 (BHD/KWD/OMR/TND)
-            var amount = entityType.FindProperty(nameof(Money.Amount));
-            if (amount is not null)
+            foreach (var navigation in entityType.GetDeclaredNavigations())
             {
-                amount.Builder.HasAnnotation(RelationalAnnotationNames.ColumnName, navigationName);
-                amount.Builder.HasPrecision(18);
-                amount.Builder.HasScale(3);
-            }
+                if (navigation.TargetEntityType.ClrType != s_moneyType || !navigation.TargetEntityType.IsOwned())
+                    continue;
 
-            // Currency → column "{NavigationName}Currency", max-length 3
-            var currency = entityType.FindProperty(nameof(Money.Currency));
-            if (currency is not null)
-            {
-                currency.Builder.HasAnnotation(RelationalAnnotationNames.ColumnName, navigationName + "Currency");
-                currency.Builder.HasMaxLength(3);
+                ConfigureMoneyColumns(navigation.TargetEntityType, navigation.Name);
             }
+        }
+    }
+
+    private static void ConfigureMoneyColumns(IConventionEntityType entityType, string navigationName)
+    {
+        // Amount → column "{NavigationName}", decimal(18,3)
+        // Scale 3 accommodates all ISO 4217 minor units: 0 (JPY), 2 (USD), 3 (BHD/KWD/OMR/TND)
+        var amount = entityType.FindProperty(nameof(Money.Amount));
+        if (amount is not null)
+        {
+            amount.Builder.HasAnnotation(RelationalAnnotationNames.ColumnName, navigationName);
+            amount.Builder.HasPrecision(18);
+            amount.Builder.HasScale(3);
+        }
+
+        // Currency → column "{NavigationName}Currency", max-length 3
+        var currency = entityType.FindProperty(nameof(Money.Currency));
+        if (currency is not null)
+        {
+            currency.Builder.HasAnnotation(RelationalAnnotationNames.ColumnName, navigationName + "Currency");
+            currency.Builder.HasMaxLength(3);
         }
     }
 }

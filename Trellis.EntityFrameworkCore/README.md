@@ -1,4 +1,4 @@
-# Trellis.EntityFrameworkCore — EF Core Integration
+﻿# Trellis.EntityFrameworkCore — EF Core Integration
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.EntityFrameworkCore.svg)](https://www.nuget.org/packages/Trellis.EntityFrameworkCore)
 
@@ -92,7 +92,8 @@ configurationBuilder.ApplyTrellisConventions(
 
 ## Money Property Convention
 
-`Money` properties on entities are automatically mapped as owned types — no `OwnsOne` configuration needed:
+`Money` properties on entities are automatically mapped as owned types — no `OwnsOne` configuration needed.
+This also applies when `Money` is declared on owned entity types, including items inside `OwnsMany` collections.
 
 ```csharp
 public class Order

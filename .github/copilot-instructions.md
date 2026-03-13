@@ -553,6 +553,7 @@ These methods rewrite the expression tree to target the backing field via `EF.Pr
 ## Money with EF Core
 
 `Money` properties are automatically mapped as owned types by `ApplyTrellisConventions` — no `OwnsOne` configuration needed.
+This includes `Money` properties declared on owned entity types, including items inside `OwnsMany` collections.
 
 ### How It Works
 

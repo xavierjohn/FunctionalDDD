@@ -170,6 +170,53 @@ public class MoneyConventionTests : IDisposable
 
     #endregion
 
+    #region Money properties inside owned collections
+
+    [Fact]
+    public void MoneyProperty_OnOwnedCollectionItem_AutoMapped_WithStandardColumnNames()
+    {
+        var ownedType = GetOwnedMoneyType<OwnedMoneyOrder>(nameof(OwnedMoneyOrder.LineItems), nameof(OwnedMoneyOrderLineItem.UnitPrice));
+
+        GetColumnName(ownedType.FindProperty(nameof(Money.Amount))!)
+            .Should().Be("UnitPrice");
+        GetColumnName(ownedType.FindProperty(nameof(Money.Currency))!)
+            .Should().Be("UnitPriceCurrency");
+    }
+
+    [Fact]
+    public async Task MoneyProperty_OnOwnedCollectionItem_RoundTripWorks()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var order = new OwnedMoneyOrder
+        {
+            Id = 1,
+            LineItems =
+            [
+                new OwnedMoneyOrderLineItem
+                {
+                    Id = 1,
+                    Sku = "SKU-1",
+                    UnitPrice = Money.Create(12.345m, "BHD")
+                }
+            ]
+        };
+
+        Context.Orders.Add(order);
+        await Context.SaveChangesAsync(ct);
+
+        Context.ChangeTracker.Clear();
+
+        var loaded = await Context.Orders
+            .Include(x => x.LineItems)
+            .SingleAsync(x => x.Id == 1, ct);
+
+        loaded.LineItems.Should().HaveCount(1);
+        loaded.LineItems[0].UnitPrice.Amount.Should().Be(12.345m);
+        loaded.LineItems[0].UnitPrice.Currency.Value.Should().Be("BHD");
+    }
+
+    #endregion
+
     #region Explicit OwnsOne takes precedence
 
     [Fact]
@@ -205,6 +252,13 @@ public class MoneyConventionTests : IDisposable
         return entityType.FindNavigation(navigationName)!.TargetEntityType;
     }
 
+    private IReadOnlyEntityType GetOwnedMoneyType<TEntity>(string collectionNavigationName, string moneyNavigationName)
+    {
+        var entityType = Context.Model.FindEntityType(typeof(TEntity))!;
+        var collectionOwnedType = entityType.FindNavigation(collectionNavigationName)!.TargetEntityType;
+        return collectionOwnedType.FindNavigation(moneyNavigationName)!.TargetEntityType;
+    }
+
     private static string? GetColumnName(IReadOnlyProperty property) =>
         property.GetColumnName();
 
@@ -230,11 +284,28 @@ public class MoneyConventionTests : IDisposable
     {
         public DbSet<MoneyProduct> Products => Set<MoneyProduct>();
         public DbSet<MoneyLineItem> LineItems => Set<MoneyLineItem>();
+        public DbSet<OwnedMoneyOrder> Orders => Set<OwnedMoneyOrder>();
 
         public MoneyTestDbContext(DbContextOptions<MoneyTestDbContext> options) : base(options) { }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
             configurationBuilder.ApplyTrellisConventions();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<OwnedMoneyOrder>().OwnsMany(x => x.LineItems);
+    }
+
+    private class OwnedMoneyOrder
+    {
+        public int Id { get; set; }
+        public List<OwnedMoneyOrderLineItem> LineItems { get; set; } = [];
+    }
+
+    private class OwnedMoneyOrderLineItem
+    {
+        public int Id { get; set; }
+        public string Sku { get; set; } = null!;
+        public Money UnitPrice { get; set; } = null!;
     }
 
     private class ExplicitMoneyDbContext : DbContext
