@@ -93,6 +93,7 @@ configurationBuilder.ApplyTrellisConventions(
 ## Money Property Convention
 
 `Money` properties on entities are automatically mapped as owned types — no `OwnsOne` configuration needed:
+This also applies when `Money` is declared on owned entity types, including items inside `OwnsMany` collections.
 
 ```csharp
 public class Order

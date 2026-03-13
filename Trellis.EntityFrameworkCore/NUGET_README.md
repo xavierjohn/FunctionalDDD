@@ -43,6 +43,8 @@ public class AppDbContext : DbContext
 ### Money Properties — Zero Configuration
 
 `Money` properties are automatically mapped as owned types with proper column naming and precision:
+No `OwnsOne` calls needed — just declare `Money` properties on your entities and they work.
+This also applies when `Money` is declared on owned entity types, including items inside `OwnsMany` collections.
 
 | Property Name | Amount Column | Currency Column | Amount Type | Currency Type |
 |---------------|---------------|-----------------|-------------|---------------|
