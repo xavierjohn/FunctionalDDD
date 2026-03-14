@@ -53,9 +53,7 @@ jobs:
       run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols
 
     - name: Install SBOM tool
-      run: |
-        curl -Lo "$RUNNER_TEMP/sbom-tool" https://github.com/microsoft/sbom-tool/releases/download/v4.1.5/sbom-tool-linux-x64
-        chmod +x "$RUNNER_TEMP/sbom-tool"
+      run: dotnet tool install --global Microsoft.Sbom.DotNetTool --version 4.1.5
 
     - name: Generate SBOM
       shell: pwsh
@@ -67,7 +65,8 @@ jobs:
         New-Item -ItemType Directory -Force -Path $sbomDirectory | Out-Null
         New-Item -ItemType Directory -Force -Path $dropDirectory | Out-Null
 
-        $packageFiles = Get-ChildItem -Path $packagesDirectory -Filter *.nupkg
+        $packageFiles = Get-ChildItem -Path $packagesDirectory -Filter *.nupkg |
+          Where-Object { $_.Name -notlike '*.symbols.nupkg' }
 
         if ($packageFiles.Count -eq 0) {
           throw 'No NuGet packages were produced for SBOM generation.'
@@ -80,7 +79,7 @@ jobs:
         $versionMetadata = dotnet msbuild .\Trellis.Results\src\Trellis.Results.csproj --getProperty:PackageVersion | ConvertFrom-Json
         $packageVersion = $versionMetadata.Properties.PackageVersion
 
-        & "$env:RUNNER_TEMP/sbom-tool" generate `
+        sbom-tool generate `
           -b $dropDirectory `
           -bc $PWD `
           -pn 'Trellis' `
@@ -106,7 +105,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: sbom-spdx
-        path: sbom/**
+        path: sbom/_manifest/**
 
     - name: Publish to NuGet
       if: ${{ inputs.dry_run == 'false' }}
