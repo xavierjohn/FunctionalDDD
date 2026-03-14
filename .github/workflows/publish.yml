@@ -52,10 +52,67 @@ jobs:
     - name: Pack
       run: dotnet pack --no-build --configuration Release --output nupkgs --include-symbols
 
+    - name: Install CycloneDX
+      run: |
+        dotnet tool install --global CycloneDX --version 6.0.0
+        echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+    - name: Generate SBOMs
+      shell: pwsh
+      run: |
+        $packagesDirectory = Join-Path $PWD 'nupkgs'
+        $sbomDirectory = Join-Path $PWD 'sbom'
+
+        New-Item -ItemType Directory -Force -Path $sbomDirectory | Out-Null
+
+        $projectFiles = Get-ChildItem -Path $PWD -Recurse -Filter *.csproj |
+          Where-Object {
+            $_.FullName -match '[\\/]Trellis\.[^\\/]+[\\/](src|generator)[\\/][^\\/]+\.csproj$'
+          }
+
+        foreach ($project in $projectFiles) {
+          $metadata = dotnet msbuild $project.FullName --getProperty:PackageId --getProperty:IsPackable | ConvertFrom-Json
+
+          if ($metadata.Properties.IsPackable -ne 'true') {
+            continue
+          }
+
+          $packageId = $metadata.Properties.PackageId
+          $packageFile = Get-ChildItem -Path $packagesDirectory -Filter "$packageId.*.nupkg" |
+            Where-Object { $_.Name -notlike '*.snupkg' }
+
+          if ($packageFile.Count -ne 1) {
+            throw "Expected exactly one package for $packageId but found $($packageFile.Count)."
+          }
+
+          $packageVersion = $packageFile[0].BaseName.Substring($packageId.Length + 1)
+          $sbomFileName = "$packageId.$packageVersion.cdx.json"
+
+          dotnet-CycloneDX $project.FullName `
+            -o $sbomDirectory `
+            -fn $sbomFileName `
+            -F Json `
+            -rs `
+            -sn $packageId `
+            -sv $packageVersion `
+            -st Library
+        }
+
+        Write-Host 'Generated SBOMs:'
+        Get-ChildItem -Path $sbomDirectory -Filter *.json |
+          Select-Object Name, Length |
+          Format-Table -AutoSize
+
     - name: List packages
       run: |
         echo "Packages to be published:"
         ls -lh nupkgs/*.nupkg
+
+    - name: Upload SBOMs
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom-cyclonedx
+        path: sbom/*.json
 
     - name: Publish to NuGet
       if: ${{ inputs.dry_run == 'false' }}
