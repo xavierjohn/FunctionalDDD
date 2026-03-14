@@ -48,9 +48,7 @@ public static class MaybeEntityTypeBuilderExtensions
             return property.Name;
 
         var descriptor = MaybePropertyResolver.Describe(property);
-        var backingField = entityTypeBuilder.Metadata.ClrType.GetField(
-            descriptor.BackingFieldName,
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        var backingField = MaybePropertyResolver.FindBackingField(entityTypeBuilder.Metadata.ClrType, descriptor);
 
         if (backingField is not null || entityTypeBuilder.Metadata.FindProperty(descriptor.BackingFieldName) is not null)
             return descriptor.BackingFieldName;

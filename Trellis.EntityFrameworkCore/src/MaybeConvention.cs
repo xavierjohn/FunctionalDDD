@@ -65,9 +65,7 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
                 entityType.Builder.Ignore(maybeProperty.PropertyName);
 
                 // Verify the backing field exists (source generator should have created it)
-                var backingField = entityType.ClrType.GetField(
-                    maybeProperty.BackingFieldName,
-                    BindingFlags.Instance | BindingFlags.NonPublic);
+                var backingField = MaybePropertyResolver.FindBackingField(entityType.ClrType, maybeProperty);
 
                 if (backingField is null)
                     continue; // No backing field — nothing to map

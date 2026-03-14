@@ -97,6 +97,24 @@ internal static class MaybePropertyResolver
     internal static MaybePropertyDescriptor Describe(PropertyInfo property) =>
         CreateDescriptor(property);
 
+    internal static FieldInfo? FindBackingField(Type clrType, MaybePropertyDescriptor descriptor)
+    {
+        for (var currentType = descriptor.Property.DeclaringType; currentType is not null; currentType = currentType.BaseType)
+        {
+            if (!currentType.IsAssignableFrom(clrType))
+                continue;
+
+            var field = currentType.GetField(
+                descriptor.BackingFieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (field is not null)
+                return field;
+        }
+
+        return null;
+    }
+
     private static readonly MethodInfo s_efPropertyMethodInfo =
         typeof(EF).GetMethod(nameof(EF.Property))!;
 

@@ -322,6 +322,26 @@ public class MaybePropertyTests : IDisposable
     }
 
     [Fact]
+    public void HasTrellisIndex_InheritedMaybeProperty_FindsBackingFieldOnBaseType()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new InheritedMaybeIndexedDbContext(
+            new DbContextOptionsBuilder<InheritedMaybeIndexedDbContext>()
+                .UseSqlite(connection)
+                .Options);
+
+        var customerType = context.Model.FindEntityType(typeof(DerivedTestCustomer))!;
+        var index = customerType.GetIndexes()
+            .Single(candidate => candidate.Properties.Select(property => property.Name).SequenceEqual(["_phone"]));
+        var phoneProperty = customerType.FindProperty("_phone")!;
+
+        index.Properties.Select(property => property.Name).Should().Equal(["_phone"]);
+        phoneProperty.GetColumnName().Should().Be(nameof(TestCustomer.Phone));
+    }
+
+    [Fact]
     public void HasTrellisIndex_InvalidSelectorShape_ThrowsWithPropertySelectorParamName()
     {
         using var connection = new SqliteConnection("DataSource=:memory:");
@@ -491,6 +511,20 @@ public class MaybePropertyTests : IDisposable
                 builder.HasTrellisIndex(order => new { order.Status, order.SubmittedAt });
             });
         }
+    }
+
+    private class InheritedMaybeIndexedDbContext(DbContextOptions<InheritedMaybeIndexedDbContext> options)
+        : DbContext(options)
+    {
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions(typeof(TestCustomerId).Assembly);
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<DerivedTestCustomer>(builder =>
+            {
+                builder.HasKey(customer => customer.Id);
+                builder.HasTrellisIndex(customer => customer.Phone);
+            });
     }
 
     private class InvalidSelectorIndexedDbContext(DbContextOptions<InvalidSelectorIndexedDbContext> options)

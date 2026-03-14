@@ -16,6 +16,10 @@ public partial class TestCustomer
     public partial Maybe<PhoneNumber> Phone { get; set; }
 }
 
+public class DerivedTestCustomer : TestCustomer
+{
+}
+
 /// <summary>
 /// Test entity representing an order with foreign key to customer.
 /// Uses partial properties with the <c>MaybePartialPropertyGenerator</c> source generator.
