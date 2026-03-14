@@ -321,6 +321,23 @@ public class MaybePropertyTests : IDisposable
         phoneProperty.GetColumnName().Should().Be(nameof(TestCustomer.Phone), "indexed Maybe<T> backing fields should still map to the CLR property column name");
     }
 
+    [Fact]
+    public void HasTrellisIndex_InvalidSelectorShape_ThrowsWithPropertySelectorParamName()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new InvalidSelectorIndexedDbContext(
+            new DbContextOptionsBuilder<InvalidSelectorIndexedDbContext>()
+                .UseSqlite(connection)
+                .Options);
+
+        var act = () => context.Model;
+
+        act.Should().Throw<ArgumentException>()
+            .Where(exception => exception.ParamName == "propertySelector");
+    }
+
     #endregion
 
     #region Navigation property with Include
@@ -457,6 +474,20 @@ public class MaybePropertyTests : IDisposable
                 builder.HasTrellisIndex(order => new { order.Status, order.SubmittedAt });
             });
         }
+    }
+
+    private class InvalidSelectorIndexedDbContext(DbContextOptions<InvalidSelectorIndexedDbContext> options)
+        : DbContext(options)
+    {
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions(typeof(TestCustomerId).Assembly);
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<TestCustomer>(builder =>
+            {
+                builder.HasKey(customer => customer.Id);
+                builder.HasTrellisIndex(customer => customer.Name.Value.Contains('a'));
+            });
     }
 
     #endregion

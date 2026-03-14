@@ -46,7 +46,15 @@ internal static class MaybePropertyResolver
     internal static IReadOnlyList<PropertyInfo> ResolveReferencedProperties(LambdaExpression propertySelector)
     {
         var properties = new List<PropertyInfo>();
-        CollectReferencedProperties(propertySelector.Body, properties);
+
+        try
+        {
+            CollectReferencedProperties(propertySelector.Body, properties, nameof(propertySelector));
+        }
+        catch (ArgumentException exception) when (exception.ParamName == "expression")
+        {
+            throw new ArgumentException(exception.Message, nameof(propertySelector), exception);
+        }
 
         if (properties.Count == 0)
         {
@@ -107,7 +115,10 @@ internal static class MaybePropertyResolver
         return new MaybePropertyDescriptor(property, property.Name, backingFieldName, innerType, storeType);
     }
 
-    private static void CollectReferencedProperties(Expression expression, ICollection<PropertyInfo> properties)
+    private static void CollectReferencedProperties(
+        Expression expression,
+        ICollection<PropertyInfo> properties,
+        string parameterName)
     {
         expression = UnwrapConvert(expression);
 
@@ -119,14 +130,14 @@ internal static class MaybePropertyResolver
 
             case NewExpression newExpression:
                 foreach (var argument in newExpression.Arguments)
-                    CollectReferencedProperties(argument, properties);
+                    CollectReferencedProperties(argument, properties, parameterName);
 
                 return;
 
             default:
                 throw new ArgumentException(
                     "Expression must be a property access or anonymous object of property accesses.",
-                    nameof(expression));
+                    parameterName);
         }
     }
 
