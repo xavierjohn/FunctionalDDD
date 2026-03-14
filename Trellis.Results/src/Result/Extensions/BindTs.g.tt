@@ -163,6 +163,7 @@ public static partial class BindExtensionsAsync
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Result<TResult>> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
         ArgumentNullException.ThrowIfNull(func);
 
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
@@ -213,6 +214,7 @@ public static partial class BindExtensionsAsync
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
         ArgumentNullException.ThrowIfNull(func);
 
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));

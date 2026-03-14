@@ -25,6 +25,15 @@ public class MapTsTests : TestBase
     }
 
     [Fact]
+    public async Task MapAsync_2Tuple_TaskResultWithFunc_NullResultTask_ThrowsArgumentNullException()
+    {
+        var act = async () => await ((Task<Result<(T, K)>>)null!).MapAsync((t, k) => $"{t}-{k}");
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "resultTask");
+    }
+
+    [Fact]
     public void Map_2Tuple_Success_ExecutesFunction()
     {
         // Arrange

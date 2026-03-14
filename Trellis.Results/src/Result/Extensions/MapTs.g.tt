@@ -156,6 +156,7 @@ public static partial class MapExtensionsAsync
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, TResult> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
         ArgumentNullException.ThrowIfNull(func);
 
         var result = await resultTask.ConfigureAwait(false);
@@ -186,6 +187,7 @@ public static partial class MapExtensionsAsync
         this Task<Result<(<# WriteTs(i); #>)>> resultTask,
         Func<<# WriteTs(i); #>, Task<TResult>> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
         ArgumentNullException.ThrowIfNull(func);
 
         using var activity = RopTrace.ActivitySource.StartActivity();
