@@ -72,13 +72,12 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
                 if (backingField is null)
                     continue; // No backing field — nothing to map
 
-                // Check if already configured explicitly
+                // Reuse an existing property if earlier model-building steps created it (for example via HasIndex).
                 var existingBackingProp = entityType.FindProperty(maybeProperty.BackingFieldName);
-                if (existingBackingProp is not null)
-                    continue;
 
-                // Map the backing field as a nullable property
-                var propertyBuilder = entityType.Builder.Property(maybeProperty.StoreType, maybeProperty.BackingFieldName);
+                // Map or fetch the backing field as a nullable property.
+                var propertyBuilder = existingBackingProp?.Builder
+                    ?? entityType.Builder.Property(maybeProperty.StoreType, maybeProperty.BackingFieldName);
                 if (propertyBuilder is null)
                     continue;
 

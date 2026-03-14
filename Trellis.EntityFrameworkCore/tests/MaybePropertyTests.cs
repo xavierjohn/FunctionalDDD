@@ -303,6 +303,24 @@ public class MaybePropertyTests : IDisposable
         index.Properties.Select(property => property.Name).Should().Equal([nameof(TestOrder.Status), "_submittedAt"]);
     }
 
+    [Fact]
+    public void HasTrellisIndex_MaybeProperty_PreservesConventionMapping()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new IndexedMaybeDbContext(
+            new DbContextOptionsBuilder<IndexedMaybeDbContext>()
+                .UseSqlite(connection)
+                .Options);
+
+        var customerType = context.Model.FindEntityType(typeof(TestCustomer))!;
+        var phoneProperty = customerType.FindProperty("_phone")!;
+
+        phoneProperty.IsNullable.Should().BeTrue("indexed Maybe<T> backing fields should remain optional");
+        phoneProperty.GetColumnName().Should().Be(nameof(TestCustomer.Phone), "indexed Maybe<T> backing fields should still map to the CLR property column name");
+    }
+
     #endregion
 
     #region Navigation property with Include
