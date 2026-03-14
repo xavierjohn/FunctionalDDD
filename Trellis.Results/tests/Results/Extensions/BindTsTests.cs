@@ -13,6 +13,17 @@ public class BindTsTests : TestBase
     #region 2-Tuple Synchronous Tests
 
     [Fact]
+    public void Bind_2Tuple_WithNullFunc_ThrowsArgumentNullException()
+    {
+        var result = Result.Success((T.Value1, K.Value1));
+
+        var act = () => result.Bind<T, K, string>(null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
+    }
+
+    [Fact]
     public void Bind_2Tuple_Success_ExecutesFunction()
     {
         // Arrange
@@ -92,6 +103,17 @@ public class BindTsTests : TestBase
         // Assert
         functionCalled.Should().BeFalse();
         actual.Should().BeFailure();
+    }
+
+    [Fact]
+    public async Task BindAsync_2Tuple_ResultWithTaskFunc_NullFunc_ThrowsArgumentNullException()
+    {
+        var result = Result.Success((T.Value1, K.Value1));
+
+        var act = async () => await result.BindAsync((Func<T, K, Task<Result<string>>>)null!);
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
     }
 
     [Fact]

@@ -6,6 +6,17 @@ using Xunit;
 public class MapTests : TestBase
 {
     [Fact]
+    public void Map_WithNullFunc_ShouldThrowArgumentNullException()
+    {
+        var result = Result.Success(5);
+
+        var act = () => result.Map<int, string>(null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
+    }
+
+    [Fact]
     public void Map_ShouldReturnResult()
     {
         // Arrange
@@ -89,6 +100,17 @@ public class MapTests : TestBase
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be(Error1);
+    }
+
+    [Fact]
+    public async Task MapAsync_Right_Task_WithNullFunc_ShouldThrowArgumentNullException()
+    {
+        var result = Result.Success(5);
+
+        var act = async () => await result.MapAsync((Func<int, Task<string>>)null!);
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
     }
 
     [Fact]

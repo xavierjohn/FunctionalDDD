@@ -192,10 +192,10 @@ internal static class MaybePropertyResolver
     private static Expression UnwrapConvert(Expression expression)
     {
         while (expression is UnaryExpression
-               {
-                   NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked,
-                   Operand: { } operand
-               })
+            {
+                NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked,
+                Operand: { } operand
+            })
         {
             expression = operand;
         }

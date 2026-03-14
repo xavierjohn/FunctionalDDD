@@ -31,6 +31,8 @@ public static partial class TapExtensions
     /// <returns>The original result unchanged.</returns>
     public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess)
             action();
@@ -48,6 +50,8 @@ public static partial class TapExtensions
     /// <returns>The original result unchanged.</returns>
     public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess)
             action(result.Value);
@@ -74,6 +78,9 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Action action)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(action);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
@@ -87,6 +94,9 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Action<TValue> action)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(action);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
@@ -102,6 +112,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<Task> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
             await func().ConfigureAwait(false);
@@ -121,6 +133,9 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Task> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.TapAsync(func).ConfigureAwait(false);
     }
@@ -136,6 +151,9 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, Task> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.TapAsync(func).ConfigureAwait(false);
     }
@@ -151,6 +169,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, Task> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
             await func(result.Value).ConfigureAwait(false);
@@ -170,6 +190,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<ValueTask> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
             await func().ConfigureAwait(false);
@@ -187,6 +209,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, ValueTask> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess)
             await func(result.Value).ConfigureAwait(false);
@@ -206,6 +230,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<ValueTask> valueTask)
     {
+        ArgumentNullException.ThrowIfNull(valueTask);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.TapAsync(valueTask).ConfigureAwait(false);
     }
@@ -219,6 +245,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Func<TValue, ValueTask> valueTask)
     {
+        ArgumentNullException.ThrowIfNull(valueTask);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.TapAsync(valueTask).ConfigureAwait(false);
     }
@@ -234,6 +262,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
@@ -247,6 +277,8 @@ public static partial class TapExtensionsAsync
     /// <returns>The original result unchanged.</returns>
     public static async ValueTask<Result<TValue>> TapAsync<TValue>(this ValueTask<Result<TValue>> resultTask, Action<TValue> action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }

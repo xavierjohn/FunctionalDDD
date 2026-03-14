@@ -3,6 +3,28 @@
 public class EnsureTests
 {
     [Fact]
+    public void Ensure_WithNullPredicate_ShouldThrowArgumentNullException()
+    {
+        var sut = Result.Success("Hello");
+
+        var act = () => sut.Ensure((Func<bool>)null!, Error.Unexpected("predicate failed"));
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "predicate");
+    }
+
+    [Fact]
+    public void Ensure_WithNullErrorPredicate_ShouldThrowArgumentNullException()
+    {
+        var sut = Result.Success("Hello");
+
+        var act = () => sut.Ensure(static _ => false, (Func<string, Error>)null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "errorPredicate");
+    }
+
+    [Fact]
     public void Ensure_source_result_is_failure_predicate_do_not_invoked_expect_is_result_failure()
     {
         var sut = Result.Failure<string>(Error.Unexpected("some error"));
@@ -64,6 +86,17 @@ public class EnsureTests
         var result = await sut.EnsureAsync(() => Task.FromResult(true), Error.Unexpected("can't be this error"));
 
         result.Should().Be(sut);
+    }
+
+    [Fact]
+    public async Task EnsureAsync_Right_Task_WithNullPredicate_ShouldThrowArgumentNullException()
+    {
+        var sut = Result.Success("Hello");
+
+        var act = async () => await sut.EnsureAsync((Func<Task<bool>>)null!, Error.Unexpected("predicate failed"));
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "predicate");
     }
 
     [Fact]

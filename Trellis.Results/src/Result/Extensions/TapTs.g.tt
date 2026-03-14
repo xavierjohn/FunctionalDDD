@@ -1,4 +1,4 @@
-<#@ template debug="false" hostspecific="false" language="C#" #>
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
@@ -90,6 +90,8 @@ public static partial class TapExtensions
                   this Result<(<# WriteTs(i); #>)> result,
                   Action<<# WriteTs(i); #>> action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
@@ -151,6 +153,8 @@ public static partial class TapExtensionsAsync
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action<<# WriteTs(i); #>> action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         var result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
@@ -168,6 +172,8 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, Task> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
@@ -191,6 +197,8 @@ public static partial class TapExtensionsAsync
                   (this Task<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<<# WriteTs(i); #>, Task> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         var result = await resultTask.ConfigureAwait(false);
         return await result.TapAsync(func).ConfigureAwait(false);
     }
@@ -210,6 +218,8 @@ public static partial class TapExtensionsAsync
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Action<<# WriteTs(i); #>> action)
     {
+        ArgumentNullException.ThrowIfNull(action);
+
         var result = await resultTask.ConfigureAwait(false);
         return result.Tap(action);
     }
@@ -227,6 +237,8 @@ public static partial class TapExtensionsAsync
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, ValueTask> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(TapExtensions.Tap));
         if (result.IsSuccess) {
             var (<# WriteArgs(i); #>) = result.Value;
@@ -250,6 +262,8 @@ public static partial class TapExtensionsAsync
                   (this ValueTask<Result<(<# WriteTs(i); #>)>> resultTask,
                   Func<<# WriteTs(i); #>, ValueTask> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         var result = await resultTask.ConfigureAwait(false);
         return await result.TapAsync(func).ConfigureAwait(false);
     }
