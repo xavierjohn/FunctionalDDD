@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Specifications | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Specifications | Trellis ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/specifications.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="specifications">Specifications</h1>
+
+<p><strong>Level:</strong> Intermediate | <strong>Package:</strong> <code>Trellis.DomainDrivenDesign</code></p>
+<p>Specifications express business rules as composable, storage-agnostic expression trees. The same specification works for querying EF Core, Cosmos DB, or in-memory collections.</p>
+<h2 id="why-specifications">Why Specifications?</h2>
+<p>Business rules like &quot;find all overdue orders over $500 in the West region&quot; appear in multiple places — queries, validation, reporting. Without specifications, this logic gets duplicated across repositories, services, and controllers.</p>
+<p>Specifications solve this by encapsulating business rules as <strong>reusable expression trees</strong> that any LINQ provider can evaluate.</p>
+<h2 id="defining-a-specification">Defining a Specification</h2>
+<p>Inherit from <code>Specification&lt;T&gt;</code> and override <code>ToExpression()</code>:</p>
+<pre><code class="lang-csharp">using System.Linq.Expressions;
+using Trellis;
+
+public class OverdueOrderSpec(DateTimeOffset now) : Specification&lt;Order&gt;
+{
+    public override Expression&lt;Func&lt;Order, bool&gt;&gt; ToExpression()
+        =&gt; order =&gt; order.DueDate &lt; now &amp;&amp; order.Status != OrderStatus.Completed;
+}
+
+public class HighValueOrderSpec(decimal threshold) : Specification&lt;Order&gt;
+{
+    public override Expression&lt;Func&lt;Order, bool&gt;&gt; ToExpression()
+        =&gt; order =&gt; order.TotalAmount &gt; threshold;
+}
+
+public class CustomerInRegionSpec(string region) : Specification&lt;Order&gt;
+{
+    public override Expression&lt;Func&lt;Order, bool&gt;&gt; ToExpression()
+        =&gt; order =&gt; order.Customer.Region == region;
+}
+</code></pre>
+<h2 id="in-memory-evaluation">In-Memory Evaluation</h2>
+<p>Use <code>IsSatisfiedBy</code> to evaluate a specification against an entity:</p>
+<pre><code class="lang-csharp">var spec = new HighValueOrderSpec(500m);
+
+if (spec.IsSatisfiedBy(order))
+    Console.WriteLine(&quot;High-value order detected&quot;);
+
+// Filter a collection
+var highValueOrders = orders.Where(spec.IsSatisfiedBy).ToList();
+</code></pre>
+<h2 id="composability">Composability</h2>
+<p>Specifications combine using <code>And</code>, <code>Or</code>, and <code>Not</code>:</p>
+<pre><code class="lang-csharp">// Compose multiple specifications
+var spec = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+    .And(new HighValueOrderSpec(500m))
+    .And(new CustomerInRegionSpec(&quot;West&quot;));
+
+// Negate a specification
+var notOverdue = new OverdueOrderSpec(DateTimeOffset.UtcNow).Not();
+
+// OR composition
+var urgentOrExpensive = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+    .Or(new HighValueOrderSpec(1000m));
+</code></pre>
+<p>Specifications are <strong>immutable</strong> — composition always returns a new specification, leaving the originals unchanged.</p>
+<h2 id="iqueryable-integration">IQueryable Integration</h2>
+<p>Specifications convert <strong>implicitly</strong> to <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code>, so they work directly with <code>IQueryable.Where()</code>:</p>
+<pre><code class="lang-csharp">var spec = new OverdueOrderSpec(DateTimeOffset.UtcNow)
+    .And(new HighValueOrderSpec(500m));
+
+// Implicit conversion — expression tree translates to SQL via EF Core
+var results = await _dbContext.Orders
+    .Where(spec)
+    .OrderByDescending(o =&gt; o.TotalAmount)
+    .ToListAsync();
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> Composite specifications use <code>Expression.Invoke</code> internally, which requires <strong>EF Core 8+</strong> for server-side translation.</p>
+</blockquote>
+<h2 id="repository-pattern">Repository Pattern</h2>
+<p>Define repository interfaces that accept specifications:</p>
+<pre><code class="lang-csharp">public interface IOrderRepository
+{
+    Task&lt;IReadOnlyList&lt;Order&gt;&gt; ListAsync(Specification&lt;Order&gt; spec, CancellationToken ct);
+    Task&lt;int&gt; CountAsync(Specification&lt;Order&gt; spec, CancellationToken ct);
+    Task&lt;bool&gt; AnyAsync(Specification&lt;Order&gt; spec, CancellationToken ct);
+}
+
+public class OrderRepository : IOrderRepository
+{
+    private readonly AppDbContext _db;
+
+    public OrderRepository(AppDbContext db) =&gt; _db = db;
+
+    public async Task&lt;IReadOnlyList&lt;Order&gt;&gt; ListAsync(
+        Specification&lt;Order&gt; spec, CancellationToken ct)
+        =&gt; await _db.Orders.Where(spec).ToListAsync(ct);
+
+    public async Task&lt;int&gt; CountAsync(
+        Specification&lt;Order&gt; spec, CancellationToken ct)
+        =&gt; await _db.Orders.Where(spec).CountAsync(ct);
+
+    public async Task&lt;bool&gt; AnyAsync(
+        Specification&lt;Order&gt; spec, CancellationToken ct)
+        =&gt; await _db.Orders.Where(spec).AnyAsync(ct);
+}
+</code></pre>
+<h2 id="api-reference">API Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ToExpression()</code></td>
+<td>Returns <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code> for LINQ providers</td>
+</tr>
+<tr>
+<td><code>IsSatisfiedBy(T)</code></td>
+<td>Evaluates the specification in-memory</td>
+</tr>
+<tr>
+<td><code>And(Specification&lt;T&gt;)</code></td>
+<td>Logical AND composition</td>
+</tr>
+<tr>
+<td><code>Or(Specification&lt;T&gt;)</code></td>
+<td>Logical OR composition</td>
+</tr>
+<tr>
+<td><code>Not()</code></td>
+<td>Logical negation</td>
+</tr>
+<tr>
+<td>Implicit operator</td>
+<td>Converts to <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code> for <code>IQueryable.Where()</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="design-principles">Design Principles</h2>
+<ul>
+<li><strong>Domain concept</strong> — Specifications express business rules, not persistence concerns</li>
+<li><strong>Storage-agnostic</strong> — Works with EF Core, Cosmos DB, or any LINQ provider</li>
+<li><strong>Composable</strong> — <code>And</code>, <code>Or</code>, <code>Not</code> for building complex queries from simple parts</li>
+<li><strong>Testable</strong> — Specifications can be tested against in-memory collections</li>
+<li><strong>Owned by the domain layer</strong> — No dependency on any persistence library</li>
+</ul>
+<h2 id="relationship-to-trellis">Relationship to Trellis</h2>
+<p>Specifications integrate with the rest of Trellis:</p>
+<ul>
+<li>Value objects in specification predicates enforce type safety</li>
+<li>Result types for specification evaluation failures</li>
+<li>Aggregate boundaries respected in specification queries</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><a href="clean-architecture.html">Clean Architecture</a> — Architecture patterns that use specifications</li>
+<li><a href="integration-ef.html">Entity Framework Core</a> — Repository patterns for persistence</li>
+<li><a href="ai-code-generation.html">Trellis for AI Code Generation</a> — How specs map to code</li>
+<li><a href="https://github.com/xavierjohn/Trellis/blob/main/Trellis.DomainDrivenDesign/SAMPLES.md#specification-pattern">DDD Samples</a> — Comprehensive code examples</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/specifications.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

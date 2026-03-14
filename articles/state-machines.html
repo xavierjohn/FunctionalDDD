@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>State Machines | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="State Machines | Trellis ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/state-machines.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="state-machines">State Machines</h1>
+
+<p><strong>Level:</strong> Intermediate | <strong>Time:</strong> 20-30 min | <strong>Prerequisites:</strong> <a href="basics.html">Basics</a></p>
+<p>Integrate state machines with Railway-Oriented Programming using the <strong>Trellis.Stateless</strong> package. This package wraps the <a href="https://github.com/dotnet-state-machine/stateless">Stateless</a> library's <code>Fire()</code> method to return <code>Result&lt;TState&gt;</code> instead of throwing on invalid transitions, making state machines composable with Trellis pipelines.</p>
+<h2 id="installation">Installation</h2>
+<pre><code class="lang-bash">dotnet add package Trellis.Stateless
+</code></pre>
+<h2 id="the-problem">The Problem</h2>
+<p>The Stateless library throws <code>InvalidOperationException</code> when you attempt an invalid state transition. This breaks ROP pipelines and forces try/catch blocks:</p>
+<pre><code class="lang-csharp">// ❌ Stateless throws on invalid transitions
+try
+{
+    machine.Fire(OrderTrigger.Ship);  // InvalidOperationException if not allowed
+}
+catch (InvalidOperationException ex)
+{
+    return BadRequest(ex.Message);
+}
+</code></pre>
+<h2 id="the-solution">The Solution</h2>
+<p>Trellis.Stateless provides <code>FireResult()</code> extension methods that return <code>Result&lt;TState&gt;</code>:</p>
+<pre><code class="lang-csharp">// ✅ Returns Result&lt;TState&gt; — composable with Trellis pipelines
+Result&lt;OrderState&gt; result = machine.FireResult(OrderTrigger.Ship);
+</code></pre>
+<h2 id="basic-usage">Basic Usage</h2>
+<pre><code class="lang-csharp">using Stateless;
+using Trellis;
+
+// Define states and triggers
+public enum OrderState { Draft, Submitted, Approved, Shipped, Cancelled }
+public enum OrderTrigger { Submit, Approve, Ship, Cancel }
+
+// Configure the state machine
+var machine = new StateMachine&lt;OrderState, OrderTrigger&gt;(OrderState.Draft);
+
+machine.Configure(OrderState.Draft)
+    .Permit(OrderTrigger.Submit, OrderState.Submitted)
+    .Permit(OrderTrigger.Cancel, OrderState.Cancelled);
+
+machine.Configure(OrderState.Submitted)
+    .Permit(OrderTrigger.Approve, OrderState.Approved)
+    .Permit(OrderTrigger.Cancel, OrderState.Cancelled);
+
+machine.Configure(OrderState.Approved)
+    .Permit(OrderTrigger.Ship, OrderState.Shipped)
+    .Permit(OrderTrigger.Cancel, OrderState.Cancelled);
+
+machine.Configure(OrderState.Shipped)
+    .Ignore(OrderTrigger.Cancel);  // Can't cancel a shipped order
+
+// Use FireResult — returns Result&lt;OrderState&gt;
+Result&lt;OrderState&gt; result = machine.FireResult(OrderTrigger.Submit);
+// result.IsSuccess == true, result.Value == OrderState.Submitted
+
+Result&lt;OrderState&gt; invalid = machine.FireResult(OrderTrigger.Ship);
+// invalid.IsFailure == true, invalid.Error is DomainError
+</code></pre>
+<h2 id="composing-with-rop-pipelines">Composing with ROP Pipelines</h2>
+<p><code>FireResult()</code> integrates naturally with Trellis pipelines:</p>
+<pre><code class="lang-csharp">public class Order : Aggregate&lt;OrderId&gt;
+{
+    private readonly StateMachine&lt;OrderState, OrderTrigger&gt; _machine;
+
+    public Result&lt;Order&gt; Submit() =&gt;
+        _machine.FireResult(OrderTrigger.Submit)
+            .Tap(_ =&gt; DomainEvents.Add(new OrderSubmittedEvent(Id)))
+            .Map(_ =&gt; this);
+
+    public Result&lt;Order&gt; Approve(UserId approvedBy) =&gt;
+        _machine.FireResult(OrderTrigger.Approve)
+            .Tap(_ =&gt; ApprovedBy = approvedBy)
+            .Tap(_ =&gt; DomainEvents.Add(new OrderApprovedEvent(Id, approvedBy)))
+            .Map(_ =&gt; this);
+
+    public Result&lt;Order&gt; Ship(TrackingNumber tracking) =&gt;
+        _machine.FireResult(OrderTrigger.Ship)
+            .Tap(_ =&gt; TrackingNumber = tracking)
+            .Tap(_ =&gt; ShippedAt = DateTime.UtcNow)
+            .Tap(_ =&gt; DomainEvents.Add(new OrderShippedEvent(Id, tracking)))
+            .Map(_ =&gt; this);
+}
+</code></pre>
+<p>Use in a service:</p>
+<pre><code class="lang-csharp">public async Task&lt;Result&lt;Order&gt;&gt; SubmitOrderAsync(OrderId orderId, CancellationToken ct)
+    =&gt; await _repository.GetByIdAsync(orderId, ct)
+        .ToResultAsync(Error.NotFound(&quot;Order not found&quot;))
+        .BindAsync(order =&gt; order.Submit())
+        .TapAsync(order =&gt; _repository.SaveAsync(order, ct));
+</code></pre>
+<h2 id="how-it-works">How It Works</h2>
+<ul>
+<li>Uses Stateless's <code>CanFire()</code> to check before firing — <strong>no try/catch internally</strong></li>
+<li>Returns <code>Result&lt;TState&gt;</code> with the new state on success</li>
+<li>Returns a <code>DomainError</code> with details about the invalid transition on failure</li>
+<li>Preserves Stateless's guard clause support</li>
+</ul>
+<h2 id="spec-mapping">Spec Mapping</h2>
+<p>When a specification says:</p>
+<blockquote>
+<p>&quot;The status transitions from Draft → Submitted → Approved → Shipped. An order can be cancelled from any state except Shipped.&quot;</p>
+</blockquote>
+<p>This maps directly to:</p>
+<pre><code class="lang-csharp">machine.Configure(OrderState.Draft)
+    .Permit(OrderTrigger.Submit, OrderState.Submitted)
+    .Permit(OrderTrigger.Cancel, OrderState.Cancelled);
+
+machine.Configure(OrderState.Submitted)
+    .Permit(OrderTrigger.Approve, OrderState.Approved)
+    .Permit(OrderTrigger.Cancel, OrderState.Cancelled);
+
+machine.Configure(OrderState.Approved)
+    .Permit(OrderTrigger.Ship, OrderState.Shipped)
+    .Permit(OrderTrigger.Cancel, OrderState.Cancelled);
+
+machine.Configure(OrderState.Shipped)
+    .Ignore(OrderTrigger.Cancel);  // &quot;except from Shipped&quot;
+</code></pre>
+<p>Every transition returns <code>Result&lt;OrderState&gt;</code>, making invalid transitions a regular error flow rather than an exception.</p>
+<h2 id="lazystatemachine">LazyStateMachine</h2>
+<p>Aggregates with state machines run into a common materialization problem: the parameterless constructor executes before the ORM populates properties, so <code>() =&gt; Status</code> reads a default or uninitialized value — reference-type states throw, while enum states silently start the machine in the wrong state. This forces a manual null-coalescing pattern: <code>_machine ??= ConfigureStateMachine()</code>.</p>
+<p><code>LazyStateMachine&lt;TState, TTrigger&gt;</code> eliminates that boilerplate by deferring both the <code>stateAccessor</code>/<code>stateMutator</code> invocation and the machine configuration until first use:</p>
+<pre><code class="lang-csharp">public class Order : Aggregate&lt;OrderId&gt;
+{
+    private readonly LazyStateMachine&lt;OrderStatus, string&gt; _machine;
+
+    public OrderStatus Status { get; private set; }
+
+    // Safe with EF Core — stateAccessor not invoked during construction
+    public Order()
+    {
+        _machine = new LazyStateMachine&lt;OrderStatus, string&gt;(
+            () =&gt; Status,
+            s =&gt; Status = s,
+            ConfigureStateMachine);
+    }
+
+    public Result&lt;Order&gt; Submit() =&gt;
+        _machine.FireResult(&quot;submit&quot;)
+            .Tap(_ =&gt; DomainEvents.Add(new OrderSubmittedEvent(Id)))
+            .Map(_ =&gt; this);
+
+    private static void ConfigureStateMachine(StateMachine&lt;OrderStatus, string&gt; machine)
+    {
+        machine.Configure(OrderStatus.Draft)
+            .Permit(&quot;submit&quot;, OrderStatus.Submitted);
+
+        machine.Configure(OrderStatus.Submitted)
+            .Permit(&quot;approve&quot;, OrderStatus.Approved);
+    }
+}
+</code></pre>
+<p>Key behaviors:</p>
+<ul>
+<li><strong>Constructor-safe</strong> — <code>stateAccessor</code> and <code>stateMutator</code> are not invoked until first <code>FireResult()</code> or <code>Machine</code> access</li>
+<li><strong>Configure once</strong> — the configuration callback runs exactly once on first access</li>
+<li><strong>Direct access</strong> — use <code>.Machine</code> to reach the underlying <code>StateMachine&lt;TState, TTrigger&gt;</code> for <code>CanFire()</code> checks</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><a href="basics.html">Basics</a> — Learn core ROP operations</li>
+<li><a href="clean-architecture.html">Clean Architecture</a> — Full architecture patterns with state machines</li>
+<li><a href="ai-code-generation.html">Trellis for AI Code Generation</a> — How specs map to Trellis constructs</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/state-machines.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

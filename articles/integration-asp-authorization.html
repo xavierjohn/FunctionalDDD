@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>ASP.NET Core Authorization (Entra ID) | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="ASP.NET Core Authorization (Entra ID) | Trellis ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/integration-asp-authorization.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="aspnet-core-authorization-entra-id">ASP.NET Core Authorization (Entra ID)</h1>
+
+<p><strong>Level:</strong> Intermediate | <strong>Time:</strong> 15-20 min | <strong>Prerequisites:</strong> <a href="basics.html">Basics</a>, <a href="https://github.com/xavierjohn/Trellis/tree/main/Trellis.Authorization">Trellis.Authorization</a></p>
+<p>Map Azure Entra ID v2.0 JWT claims to <code>Actor</code> using the <strong>Trellis.Asp.Authorization</strong> package. This package provides <code>EntraActorProvider</code>, an <code>IActorProvider</code> implementation that hydrates an <code>Actor</code> from <code>HttpContext.User</code> with permissions, forbidden permissions, and ABAC attributes.</p>
+<blockquote>
+<p><strong>Note:</strong> This package assumes authentication middleware (e.g., <code>AddMicrosoftIdentityWebApi</code>) has already been configured. It handles <strong>claim-to-Actor mapping</strong>, not authentication itself.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#default-claim-mapping">Default Claim Mapping</a></li>
+<li><a href="#customizing-mappings">Customizing Mappings</a></li>
+<li><a href="#actorattributes-constants">ActorAttributes Constants</a></li>
+<li><a href="#integration-with-trellismediator">Integration with Trellis.Mediator</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre><code class="lang-bash">dotnet add package Trellis.Asp.Authorization
+</code></pre>
+<p>This package transitively references <code>Trellis.Authorization</code> — no need to install both.</p>
+<h2 id="quick-start">Quick Start</h2>
+<pre><code class="lang-csharp">using Trellis.Asp.Authorization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Configure authentication (e.g., Microsoft Identity)
+builder.Services.AddAuthentication().AddJwtBearer();
+
+// 2. Register the Entra actor provider
+builder.Services.AddEntraActorProvider();
+
+var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
+app.Run();
+</code></pre>
+<p>That's it. <code>IActorProvider</code> is now available via DI, and <code>Actor</code> is automatically hydrated from the authenticated user's JWT claims on every request.</p>
+<h2 id="default-claim-mapping">Default Claim Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Actor Property</th>
+<th>Source</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Id</code></td>
+<td><code>oid</code> claim</td>
+<td>Object identifier from Entra ID</td>
+</tr>
+<tr>
+<td><code>Permissions</code></td>
+<td><code>roles</code> claims</td>
+<td>App role assignments</td>
+</tr>
+<tr>
+<td><code>ForbiddenPermissions</code></td>
+<td><em>(empty)</em></td>
+<td>Override via <code>MapForbiddenPermissions</code></td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;tid&quot;]</code></td>
+<td><code>tid</code> claim</td>
+<td>Tenant identifier</td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;preferred_username&quot;]</code></td>
+<td><code>preferred_username</code> claim</td>
+<td>User's display email/UPN</td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;azp&quot;]</code></td>
+<td><code>azp</code> claim</td>
+<td>Authorized party (client app ID)</td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;azpacr&quot;]</code></td>
+<td><code>azpacr</code> claim</td>
+<td>Client authentication method</td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;acrs&quot;]</code></td>
+<td><code>acrs</code> claim</td>
+<td>Auth context class reference</td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;ip_address&quot;]</code></td>
+<td><code>HttpContext.Connection.RemoteIpAddress</code></td>
+<td>Client IP</td>
+</tr>
+<tr>
+<td><code>Attributes[&quot;mfa&quot;]</code></td>
+<td>Derived from <code>amr</code> claim</td>
+<td><code>&quot;true&quot;</code> if <code>amr</code> contains <code>&quot;mfa&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="customizing-mappings">Customizing Mappings</h2>
+<h3 id="custom-permission-mapping">Custom Permission Mapping</h3>
+<p>Flatten JWT roles into granular permissions:</p>
+<pre><code class="lang-csharp">builder.Services.AddEntraActorProvider(options =&gt;
+{
+    options.MapPermissions = claims =&gt; claims
+        .Where(c =&gt; c.Type == &quot;roles&quot;)
+        .SelectMany(role =&gt; RolePermissionMap[role.Value])
+        .ToHashSet();
+});
+</code></pre>
+<h3 id="scope-based-permissions">Scope-Based Permissions</h3>
+<p>Map delegated permissions from the <code>scp</code> claim:</p>
+<pre><code class="lang-csharp">builder.Services.AddEntraActorProvider(options =&gt;
+{
+    options.MapPermissions = claims =&gt; claims
+        .Where(c =&gt; c.Type == &quot;scp&quot;)
+        .SelectMany(c =&gt; c.Value.Split(' '))
+        .ToHashSet();
+});
+</code></pre>
+<h3 id="custom-id-claim">Custom ID Claim</h3>
+<p>Use <code>sub</code> instead of <code>oid</code>:</p>
+<pre><code class="lang-csharp">builder.Services.AddEntraActorProvider(options =&gt;
+{
+    options.IdClaimType = &quot;sub&quot;;
+});
+</code></pre>
+<h3 id="forbidden-permissions">Forbidden Permissions</h3>
+<p>Populate the deny list from an external source:</p>
+<pre><code class="lang-csharp">builder.Services.AddEntraActorProvider(options =&gt;
+{
+    options.MapForbiddenPermissions = claims =&gt; claims
+        .Where(c =&gt; c.Type == &quot;denied_permissions&quot;)
+        .Select(c =&gt; c.Value)
+        .ToHashSet();
+});
+</code></pre>
+<h3 id="custom-attributes">Custom Attributes</h3>
+<p>Add application-specific ABAC attributes:</p>
+<pre><code class="lang-csharp">builder.Services.AddEntraActorProvider(options =&gt;
+{
+    options.MapAttributes = (claims, httpContext) =&gt;
+    {
+        var attrs = new Dictionary&lt;string, string&gt;();
+        var region = claims.FirstOrDefault(c =&gt; c.Type == &quot;region&quot;);
+        if (region is not null)
+            attrs[&quot;region&quot;] = region.Value;
+        return attrs;
+    };
+});
+</code></pre>
+<h2 id="actorattributes-constants">ActorAttributes Constants</h2>
+<p>Use <code>ActorAttributes</code> constants for well-known attribute keys to avoid typos:</p>
+<pre><code class="lang-csharp">using Trellis.Authorization;
+
+if (actor.GetAttribute(ActorAttributes.MfaAuthenticated) == &quot;true&quot;)
+{
+    // Allow sensitive operation
+}
+
+var tenantId = actor.GetAttribute(ActorAttributes.TenantId);
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TenantId</code></td>
+<td><code>&quot;tid&quot;</code></td>
+<td>Entra <code>tid</code> claim</td>
+</tr>
+<tr>
+<td><code>PreferredUsername</code></td>
+<td><code>&quot;preferred_username&quot;</code></td>
+<td>Entra <code>preferred_username</code> claim</td>
+</tr>
+<tr>
+<td><code>AuthorizedParty</code></td>
+<td><code>&quot;azp&quot;</code></td>
+<td>Entra <code>azp</code> claim</td>
+</tr>
+<tr>
+<td><code>AuthorizedPartyAcr</code></td>
+<td><code>&quot;azpacr&quot;</code></td>
+<td>Entra <code>azpacr</code> claim</td>
+</tr>
+<tr>
+<td><code>AuthContextClassReference</code></td>
+<td><code>&quot;acrs&quot;</code></td>
+<td>Entra <code>acrs</code> claim</td>
+</tr>
+<tr>
+<td><code>IpAddress</code></td>
+<td><code>&quot;ip_address&quot;</code></td>
+<td><code>HttpContext.Connection.RemoteIpAddress</code></td>
+</tr>
+<tr>
+<td><code>MfaAuthenticated</code></td>
+<td><code>&quot;mfa&quot;</code></td>
+<td>Derived from <code>amr</code> claim</td>
+</tr>
+</tbody>
+</table>
+<h2 id="integration-with-trellismediator">Integration with Trellis.Mediator</h2>
+<p>When using <code>Trellis.Mediator</code>, the <code>EntraActorProvider</code> is automatically used by authorization pipeline behaviors:</p>
+<pre><code class="lang-csharp">// Program.cs
+builder.Services.AddEntraActorProvider();
+builder.Services.AddMediator(options =&gt;
+{
+    options.PipelineBehaviors = ServiceCollectionExtensions.PipelineBehaviors;
+});
+
+// Command with authorization
+public sealed record DeleteDocumentCommand(string DocumentId)
+    : ICommand&lt;Result&lt;Unit&gt;&gt;, IAuthorize
+{
+    public IReadOnlyList&lt;string&gt; RequiredPermissions =&gt; [&quot;Documents.Delete&quot;];
+}
+</code></pre>
+<p>The <code>AuthorizationBehavior</code> resolves <code>IActorProvider</code> → <code>EntraActorProvider</code> → <code>Actor</code> from JWT claims → permission check, all automatically.</p>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Pre-flatten permissions</strong> — Use <code>MapPermissions</code> to convert coarse JWT roles into granular permissions at hydration time, keeping all <code>HasPermission</code> checks O(1).</li>
+<li><strong>Use <code>ActorAttributes</code> constants</strong> — Avoid raw strings for attribute keys.</li>
+<li><strong>Don't use <code>preferred_username</code> for authorization</strong> — It can change when a user is renamed. Use it for display/audit only.</li>
+<li><strong>Consider <code>azpacr</code> for sensitive operations</strong> — Require certificate-based client auth (<code>&quot;2&quot;</code>) for admin endpoints.</li>
+<li><strong>Leverage <code>acrs</code> for step-up auth</strong> — Enforce Conditional Access authentication context for high-risk operations.</li>
+</ol>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/integration-asp-authorization.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

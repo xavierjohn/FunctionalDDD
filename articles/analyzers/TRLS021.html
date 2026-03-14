@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>TRLS021: HasIndex references a Maybe&lt;T&gt; property | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="TRLS021: HasIndex references a Maybe&lt;T&gt; property | Trellis ">
+      
+      
+      <link rel="icon" href="../../favicon.ico">
+      <link rel="stylesheet" href="../../public/docfx.min.css">
+      <link rel="stylesheet" href="../../public/main.css">
+      <meta name="docfx:navrel" content="../../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/analyzers/TRLS021.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../../index.html">
+            <img id="logo" class="svg" src="../..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="trls021-hasindex-references-a-maybet-property">TRLS021: HasIndex references a Maybe&lt;T&gt; property</h1>
+
+<h2 id="cause">Cause</h2>
+<p>A <code>HasIndex</code> lambda expression in an EF Core entity configuration references a property declared as <code>Maybe&lt;T&gt;</code>. This silently fails to create the index because <code>MaybeConvention</code> maps <code>Maybe&lt;T&gt;</code> via private backing fields, making the CLR property invisible to EF Core's index builder.</p>
+<h2 id="rule-description">Rule Description</h2>
+<p>When you use <code>Maybe&lt;T&gt;</code> for optional properties, the Trellis <code>MaybeConvention</code> ignores the <code>Maybe&lt;T&gt;</code> CLR property and maps the private <code>_camelCase</code> backing field instead. EF Core's <code>HasIndex</code> with a lambda expression resolves properties by their CLR property name — since the <code>Maybe&lt;T&gt;</code> property is ignored, the index silently doesn't get created.</p>
+<p>This rule fires as a <strong>Warning</strong> because the code compiles and runs without errors, but the database index simply won't exist at runtime.</p>
+<h2 id="how-to-fix-violations">How to Fix Violations</h2>
+<p>Replace the lambda-based <code>HasIndex</code> with <code>HasTrellisIndex</code>, or use the string-based overload with the mapped backing field name.</p>
+<p><code>HasTrellisIndex</code> only accepts direct property access on the lambda parameter. Expressions like <code>e =&gt; e.Customer.SubmittedAt</code> are rejected with <code>ArgumentException</code> instead of being interpreted as indexes on the root entity.</p>
+<p>For <code>Maybe&lt;T&gt;</code> properties, <code>HasTrellisIndex</code> validates that the expected backing field exists on the entity CLR type hierarchy or is already mapped in the EF model. If the backing field is missing, it throws <code>InvalidOperationException</code> with guidance to use <code>partial</code> properties or explicit field mapping.</p>
+<h3 id="single-property-index">Single property index</h3>
+<pre><code class="lang-csharp">// ❌ Bad - index silently not created
+builder.HasIndex(e =&gt; e.SubmittedAt);
+
+// ✅ Preferred - resolves Maybe&lt;T&gt; to the mapped backing field for you
+builder.HasTrellisIndex(e =&gt; e.SubmittedAt);
+
+// ✅ Also valid - uses backing field name directly
+builder.HasIndex(&quot;_submittedAt&quot;);
+</code></pre>
+<h3 id="composite-index-with-maybet">Composite index with Maybe&lt;T&gt;</h3>
+<pre><code class="lang-csharp">// ❌ Bad - SubmittedAt part of index silently ignored
+builder.HasIndex(e =&gt; new { e.Status, e.SubmittedAt });
+
+// ✅ Preferred - regular properties stay regular, Maybe&lt;T&gt; resolves automatically
+builder.HasTrellisIndex(e =&gt; new { e.Status, e.SubmittedAt });
+
+// ✅ Also valid - uses string-based overload with backing field
+builder.HasIndex(&quot;Status&quot;, &quot;_submittedAt&quot;);
+</code></pre>
+<h3 id="composite-index-without-maybet">Composite index without Maybe&lt;T&gt;</h3>
+<pre><code class="lang-csharp">// ✅ Fine - no Maybe&lt;T&gt; properties, lambda works correctly
+builder.HasIndex(e =&gt; new { e.Status, e.Name });
+</code></pre>
+<h2 id="backing-field-naming-convention">Backing Field Naming Convention</h2>
+<p>The backing field follows <code>_camelCase</code> naming from the property name:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Backing Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SubmittedAt</code></td>
+<td><code>_submittedAt</code></td>
+</tr>
+<tr>
+<td><code>Phone</code></td>
+<td><code>_phone</code></td>
+</tr>
+<tr>
+<td><code>AlternateEmail</code></td>
+<td><code>_alternateEmail</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="background">Background</h2>
+<p><code>Maybe&lt;T&gt;</code> is a <code>readonly struct</code>. EF Core cannot mark non-nullable struct properties as optional. The Trellis source generator emits a private nullable backing field (e.g., <code>DateTime? _submittedAt</code>) and the <code>MaybeConvention</code> maps that field instead. See the <a href="../integration-ef.html">EF Core integration guide</a> for full details.</p>
+<h2 id="when-to-suppress-warnings">When to Suppress Warnings</h2>
+<p>Suppress this warning only if you intentionally don't want an index on the <code>Maybe&lt;T&gt;</code> property and the <code>HasIndex</code> includes other non-Maybe properties that you do want indexed:</p>
+<pre><code class="lang-csharp">#pragma warning disable TRLS021
+builder.HasIndex(e =&gt; new { e.Status, e.SubmittedAt }); // Only Status index matters
+#pragma warning restore TRLS021
+</code></pre>
+<p>However, in this case it's clearer to remove the <code>Maybe&lt;T&gt;</code> property from the index expression entirely or switch to <code>HasTrellisIndex</code>.</p>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="../integration-ef.html">EF Core Integration</a></li>
+<li><a href="../integration-ef.html">Maybe&lt;T&gt; with EF Core</a></li>
+<li><a href="https://github.com/xavierjohn/Trellis">MaybeConvention source</a></li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/analyzers/TRLS021.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

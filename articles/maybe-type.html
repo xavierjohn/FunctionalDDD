@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Why Maybe&lt;T&gt;? | Trellis </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Why Maybe&lt;T&gt;? | Trellis ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/maybe-type.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="..//images/iconsmall.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="why-maybet">Why Maybe&lt;T&gt;?</h1>
+
+<p>C# already has <code>Nullable&lt;T&gt;</code> for value types and nullable reference types (<code>T?</code>) for reference types. So why does Trellis include a <code>Maybe&lt;T&gt;</code> type?</p>
+<p>This article makes an honest case: <code>Maybe&lt;T&gt;</code> solves specific problems in domain modeling and functional pipelines that C#'s built-in nullability can't address — but it's not a universal replacement for <code>null</code>.</p>
+<pre><code class="lang-csharp">using Trellis;
+</code></pre>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#the-problem">The Problem</a></li>
+<li><a href="#what-c-already-provides">What C# Already Provides</a></li>
+<li><a href="#where-maybe-wins">Where Maybe Wins</a>
+<ul>
+<li><a href="#1-pipeline-composition">Pipeline Composition</a></li>
+<li><a href="#2-optional-value-objects">Optional Value Objects</a></li>
+<li><a href="#3-aspnet-boundary-integration">ASP.NET Boundary Integration</a></li>
+<li><a href="#4-where-nullability-lives">Where Nullability Lives</a></li>
+</ul>
+</li>
+<li><a href="#when-to-use-t-instead">When to Use T? Instead</a></li>
+<li><a href="#quick-reference">Quick Reference</a></li>
+<li><a href="#api-overview">API Overview</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+</ul>
+<h2 id="the-problem">The Problem</h2>
+<p>In domain-driven design, you frequently model properties that are <em>intentionally optional</em> — a customer's phone number, a secondary email address, a middle name. The question is: how do you express &quot;this value may or may not be present&quot; in a way that's type-safe, composable, and semantically clear?</p>
+<pre><code class="lang-csharp">public class Customer : Entity&lt;CustomerId&gt;
+{
+    public CustomerName Name { get; }
+    public PhoneNumber? Phone { get; }  // Is this good enough?
+}
+</code></pre>
+<p>For simple cases, <code>PhoneNumber?</code> works fine. But as your domain grows, you'll run into three gaps that C#'s built-in nullability can't fill.</p>
+<h2 id="what-c-already-provides">What C# Already Provides</h2>
+<p>C# has two nullability mechanisms, and it's important to understand what they do well:</p>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Works With</th>
+<th>Runtime Type?</th>
+<th>Enforcement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Nullable&lt;T&gt;</code> (<code>int?</code>, <code>DateTime?</code>)</td>
+<td>Value types only</td>
+<td>Yes — real wrapper struct</td>
+<td>Full runtime enforcement</td>
+</tr>
+<tr>
+<td><code>T?</code> (nullable reference types)</td>
+<td>Reference types only</td>
+<td>No — compiler annotation only</td>
+<td>Warnings only (can be ignored)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>For most code, these are sufficient.</strong> If you're writing a standard web API or working with primitives, <code>T?</code> is the idiomatic C# choice. Trellis doesn't suggest otherwise.</p>
+<h2 id="where-maybe-wins">Where Maybe Wins</h2>
+<p><code>Maybe&lt;T&gt;</code> addresses specific gaps that matter when you're building domain models with Railway Oriented Programming.</p>
+<h3 id="1-pipeline-composition">1. Pipeline Composition</h3>
+<p>This is the strongest justification. <code>T?</code> gives you <code>?.</code> and <code>??</code>, but these are limited to simple null-coalescing. They can't inject validation, transformation, or error handling into a chain.</p>
+<p><strong>With <code>T?</code> — imperative null checks:</strong></p>
+<pre><code class="lang-csharp">PhoneNumber? phone = FindPhone(customerId);
+if (phone is null)
+    return Result.Failure&lt;string&gt;(Error.NotFound(&quot;No phone on file&quot;));
+
+var formatted = FormatForDisplay(phone);
+var result = await SendSmsAsync(formatted);
+</code></pre>
+<p><strong>With <code>Maybe&lt;T&gt;</code> — composable pipeline:</strong></p>
+<pre><code class="lang-csharp">var result = FindPhone(customerId)           // returns Maybe&lt;PhoneNumber&gt;
+    .ToResult(Error.NotFound(&quot;No phone on file&quot;))
+    .Map(phone =&gt; FormatForDisplay(phone))
+    .Bind(formatted =&gt; SendSmsAsync(formatted));
+</code></pre>
+<p>The <code>Maybe&lt;T&gt;</code> version plugs directly into the same <code>Result&lt;T&gt;</code> pipeline you're already using for validation and error handling. The <code>T?</code> version forces you out of the pipeline and into imperative code.</p>
+<p><strong>The bridge method — <code>ToResult</code>:</strong></p>
+<pre><code class="lang-csharp">// Maybe → Result: absence becomes a domain error
+Maybe&lt;User&gt; maybeUser = FindUserInCache(id);
+Result&lt;User&gt; result = maybeUser.ToResult(Error.NotFound($&quot;User {id} not found&quot;));
+
+// From here, chain with Bind, Map, Ensure, Tap — the full ROP toolkit
+</code></pre>
+<h3 id="2-optional-value-objects">2. Optional Value Objects</h3>
+<p>Value objects are non-null by design — a <code>PhoneNumber</code> is always valid, an <code>EmailAddress</code> always contains a well-formed address. The question becomes: how do you express &quot;this entity may or may not have a phone number&quot;?</p>
+<p><strong>The invariant problem:</strong></p>
+<p>A <code>PhoneNumber</code> protects its invariants — it cannot be empty, null, or invalid. An &quot;empty phone number&quot; is a contradiction. So <strong>nullability must live on the entity, not inside the value object:</strong></p>
+<pre><code class="lang-csharp">// ✅ Nullability on the entity — PhoneNumber is always valid
+public class Customer : Entity&lt;CustomerId&gt;
+{
+    public Maybe&lt;PhoneNumber&gt; Phone { get; }
+}
+
+// ❌ Nullability inside the value object — breaks invariants
+public class PhoneNumber : ValueObject
+{
+    public string? Number { get; }  // What does an empty phone number mean?
+}
+</code></pre>
+<p><code>Maybe&lt;PhoneNumber&gt;</code> makes the intent explicit: the customer may or may not have a phone number, but if they do, it's always valid.</p>
+<p><strong>Context-dependent optionality:</strong></p>
+<p>The same value object can be required in one entity and optional in another:</p>
+<pre><code class="lang-csharp">public class Customer : Entity&lt;CustomerId&gt;
+{
+    public Maybe&lt;PhoneNumber&gt; Phone { get; }  // Optional for customers
+}
+
+public class Employee : Entity&lt;EmployeeId&gt;
+{
+    public PhoneNumber Phone { get; }         // Required for employees
+}
+</code></pre>
+<p><strong>The <code>notnull</code> constraint prevents misuse:</strong></p>
+<pre><code class="lang-csharp">Maybe&lt;PhoneNumber&gt; phone;     // ✅ Valid
+Maybe&lt;int&gt; count;             // ✅ Valid
+Maybe&lt;string?&gt; name;          // ❌ Compile error — T must be notnull
+Maybe&lt;Maybe&lt;string&gt;&gt; nested;  // ❌ Analyzer TRLS011 warns against double wrapping
+</code></pre>
+<h3 id="3-aspnet-boundary-integration">3. ASP.NET Boundary Integration</h3>
+<p>At the API boundary, <code>null</code> is ambiguous. Did the client omit the field, or did they explicitly send <code>null</code>? For value objects, there's a third case: the field was present but invalid.</p>
+<p>Trellis provides automatic integration for <code>Maybe&lt;T&gt;</code> in DTOs:</p>
+<pre><code class="lang-csharp">public record UpdateCustomerRequest(
+    FirstName Name,
+    Maybe&lt;PhoneNumber&gt; Phone    // Three possible states handled automatically
+);
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>JSON Input</th>
+<th>Deserialized As</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;phone&quot;: &quot;555-1234&quot;</code></td>
+<td><code>Maybe.From(PhoneNumber)</code></td>
+<td>Validated and wrapped</td>
+</tr>
+<tr>
+<td><code>&quot;phone&quot;: null</code> or field absent</td>
+<td><code>Maybe.None&lt;PhoneNumber&gt;()</code></td>
+<td>Treated as intentionally empty</td>
+</tr>
+<tr>
+<td><code>&quot;phone&quot;: &quot;invalid!&quot;</code></td>
+<td>Validation error</td>
+<td>Returns <code>400</code> with field-level error</td>
+</tr>
+</tbody>
+</table>
+<p>This is handled automatically by:</p>
+<ul>
+<li><code>MaybeScalarValueJsonConverter</code> — JSON deserialization</li>
+<li><code>MaybeModelBinder</code> — MVC model binding</li>
+<li><code>MaybeSuppressChildValidationMetadataProvider</code> — prevents MVC validation crashes</li>
+</ul>
+<p>All registered with a single call to <code>AddScalarValueValidation()</code>. With <code>T?</code>, you'd need custom converters to distinguish &quot;absent&quot; from &quot;invalid.&quot;</p>
+<h3 id="4-where-nullability-lives">4. Where Nullability Lives</h3>
+<p>When validating optional input from users or APIs, you often need to handle &quot;null means skip, non-null means validate.&quot; <code>Maybe.Optional</code> solves this cleanly:</p>
+<pre><code class="lang-csharp">// Optional input: null is fine, but if provided, it must be valid
+string? phoneInput = request.Phone;
+string? websiteInput = request.Website;
+
+var result = FirstName.TryCreate(request.FirstName)
+    .Combine(LastName.TryCreate(request.LastName))
+    .Combine(Maybe.Optional(phoneInput, PhoneNumber.TryCreate))
+    .Combine(Maybe.Optional(websiteInput, Url.TryCreate))
+    .Bind((first, last, phone, website) =&gt;
+        Customer.TryCreate(first, last, phone, website));
+</code></pre>
+<p><code>Maybe.Optional</code> encodes the rule: <strong>null input → <code>Maybe.None</code> (success), non-null input → validate and wrap in <code>Maybe.From</code></strong>, invalid input → propagate the validation error. This composes naturally with <code>Combine</code> and keeps optional fields in the same pipeline as required fields.</p>
+<h2 id="when-to-use-t-instead">When to Use T? Instead</h2>
+<p><code>Maybe&lt;T&gt;</code> is not always the right choice. Use <code>T?</code> for:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Use</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Optional primitives on entities</td>
+<td><code>T?</code></td>
+<td><code>DateTime? CancelledAt</code></td>
+</tr>
+<tr>
+<td>Optional strings</td>
+<td><code>T?</code></td>
+<td><code>string? MiddleName</code></td>
+</tr>
+<tr>
+<td>Optional primitives in DTOs</td>
+<td><code>T?</code></td>
+<td><code>int? PageSize</code></td>
+</tr>
+<tr>
+<td>Methods consumed directly (not piped)</td>
+<td><code>T?</code></td>
+<td><code>User? FindUser(int id)</code></td>
+</tr>
+<tr>
+<td>Performance-critical hot paths</td>
+<td><code>T?</code></td>
+<td>Zero allocation vs. struct copy</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The rule of thumb:</strong></p>
+<blockquote>
+<p>Use <code>Maybe&lt;T&gt;</code> for optional value objects and when composing with <code>Result&lt;T&gt;</code> pipelines. Use <code>T?</code> for everything else.</p>
+</blockquote>
+<h2 id="quick-reference">Quick Reference</h2>
+<table>
+<thead>
+<tr>
+<th>I want to...</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Express &quot;this value object is optional&quot;</td>
+<td><code>Maybe&lt;PhoneNumber&gt;</code></td>
+</tr>
+<tr>
+<td>Feed optionality into an ROP pipeline</td>
+<td><code>maybe.ToResult(error).Bind(...)</code></td>
+</tr>
+<tr>
+<td>Validate optional API input</td>
+<td><code>Maybe.Optional(input, TryCreate)</code></td>
+</tr>
+<tr>
+<td>Express &quot;this primitive is optional&quot;</td>
+<td><code>DateTime? CancelledAt</code></td>
+</tr>
+<tr>
+<td>Return &quot;not found&quot; from a query</td>
+<td><code>Maybe&lt;T&gt;</code> if piped, <code>T?</code> if consumed directly</td>
+</tr>
+<tr>
+<td>Transform an optional value</td>
+<td><code>maybe.Map(x =&gt; x.Format())</code></td>
+</tr>
+<tr>
+<td>Pattern match on presence</td>
+<td><code>maybe.Match(x =&gt; ..., () =&gt; ...)</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="api-overview">API Overview</h2>
+<h3 id="creating-maybe-values">Creating Maybe Values</h3>
+<pre><code class="lang-csharp">Maybe&lt;PhoneNumber&gt; some = Maybe.From(phoneNumber);  // Wrap a value
+Maybe&lt;PhoneNumber&gt; none = Maybe.None&lt;PhoneNumber&gt;(); // No value
+Maybe&lt;string&gt; greeting = &quot;hello&quot;;                     // Implicit conversion
+</code></pre>
+<h3 id="checking-and-extracting">Checking and Extracting</h3>
+<pre><code class="lang-csharp">if (maybe.HasValue)
+    Console.WriteLine(maybe.Value);
+
+if (maybe.TryGetValue(out var value))
+    Console.WriteLine(value);
+
+var fallback = maybe.GetValueOrDefault(PhoneNumber.Create(&quot;000-0000&quot;));
+</code></pre>
+<h3 id="transforming">Transforming</h3>
+<pre><code class="lang-csharp">// Map — transform the inner value
+Maybe&lt;string&gt; formatted = maybePhone.Map(p =&gt; p.ToString());
+
+// Match — handle both cases
+string display = maybePhone.Match(
+    p =&gt; $&quot;Phone: {p}&quot;,
+    () =&gt; &quot;No phone on file&quot;
+);
+</code></pre>
+<h3 id="bridging-to-result">Bridging to Result</h3>
+<pre><code class="lang-csharp">// Convert to Result for ROP pipeline
+Result&lt;PhoneNumber&gt; result = maybePhone
+    .ToResult(Error.NotFound(&quot;No phone on file&quot;));
+
+// Lazy error creation
+Result&lt;PhoneNumber&gt; result = maybePhone
+    .ToResult(() =&gt; Error.NotFound($&quot;Phone not found for {customerId}&quot;));
+</code></pre>
+<h3 id="handling-optional-input">Handling Optional Input</h3>
+<pre><code class="lang-csharp">// Null → Maybe.None (success), non-null → validate and wrap
+Result&lt;Maybe&lt;PhoneNumber&gt;&gt; result = Maybe.Optional(input, PhoneNumber.TryCreate);
+</code></pre>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li>Learn the <a href="basics.html">Basics</a> of Railway Oriented Programming</li>
+<li>See <a href="integration-ef.html#maybe-property-convention">Entity Framework Core Integration</a> for persisting <code>Maybe&lt;T&gt;</code> properties</li>
+<li>See <a href="integration-aspnet.html#optional-value-objects-with-maybe">ASP.NET Core Integration</a> for JSON and model binding support</li>
+<li>Review <a href="error-handling.html">Error Handling</a> for the error types used with <code>ToResult</code></li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/xavierjohn/Trellis/blob/main/docs/docfx_project/articles/maybe-type.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          <span>Made with <a href="https://dotnet.github.io/docfx">docfx</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

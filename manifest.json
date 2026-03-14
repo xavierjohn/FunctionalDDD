@@ -1,0 +1,2929 @@
+{
+  "source_base_path": "/home/runner/work/Trellis/Trellis/docs/docfx_project",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Aggregate-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Aggregate-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Aggregate<TId>",
+      "Summary": "<p sourcefile=\"api/Trellis.Aggregate-1.yml\" sourcestartlinenumber=\"1\">Base class for aggregate roots in Domain-Driven Design.\nAn aggregate is a cluster of domain objects (entities and value objects) that form a consistency boundary.\nThe aggregate root is the only entry point for modifications and ensures all invariants within the boundary are maintained.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.AggregateError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.AggregateError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.AggregateError",
+      "Summary": "<p sourcefile=\"api/Trellis.AggregateError.yml\" sourcestartlinenumber=\"1\">Represents an aggregate of multiple errors that occurred together.\nUse this when multiple independent errors need to be returned as a single failure result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ActionResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ActionResultExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ActionResultExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ActionResultExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods to convert Result types to ASP.NET Core ActionResult responses.\nThese methods bridge Railway Oriented Programming with ASP.NET Core MVC/Web API controllers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ActionResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ActionResultExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ActionResultExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ActionResultExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core ActionResult responses.\nThese methods enable clean async/await patterns in controllers while maintaining Railway Oriented Programming benefits.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Authorization.EntraActorOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Authorization.EntraActorOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Authorization.EntraActorOptions",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Authorization.EntraActorOptions.yml\" sourcestartlinenumber=\"1\">Configuration options for <xref href=\"Trellis.Asp.Authorization.EntraActorProvider\" data-throw-if-not-resolved=\"false\"></xref>.\nControls how Azure Entra ID v2.0 JWT claims are mapped to <xref href=\"Trellis.Authorization.Actor\" data-throw-if-not-resolved=\"false\"></xref> properties.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Authorization.EntraActorProvider.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Authorization.EntraActorProvider.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Authorization.EntraActorProvider",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Authorization.EntraActorProvider.yml\" sourcestartlinenumber=\"1\"><xref href=\"Trellis.Authorization.IActorProvider\" data-throw-if-not-resolved=\"false\"></xref> implementation that hydrates an <xref href=\"Trellis.Authorization.Actor\" data-throw-if-not-resolved=\"false\"></xref>\nfrom the current <xref href=\"Microsoft.AspNetCore.Http.HttpContext.User\" data-throw-if-not-resolved=\"false\"></xref> using Azure Entra ID v2.0 JWT claims.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Authorization.ServiceCollectionExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Authorization.ServiceCollectionExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Authorization.ServiceCollectionExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Authorization.ServiceCollectionExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for registering <xref href=\"Trellis.Asp.Authorization.EntraActorProvider\" data-throw-if-not-resolved=\"false\"></xref> in ASP.NET Core DI.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Authorization.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Authorization.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Authorization",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.HttpResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.HttpResultExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.HttpResultExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.HttpResultExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods to convert Result types to ASP.NET Core Minimal API <xref href=\"Microsoft.AspNetCore.Http.IResult\" data-throw-if-not-resolved=\"false\"></xref> responses.\nThese methods bridge Railway Oriented Programming with ASP.NET Core Minimal APIs.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.HttpResultExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.HttpResultExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.HttpResultExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.HttpResultExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods to convert Task/ValueTask-wrapped Result types to ASP.NET Core Minimal API <xref href=\"Microsoft.AspNetCore.Http.IResult\" data-throw-if-not-resolved=\"false\"></xref> responses.\nThese methods enable clean async patterns in Minimal API endpoints while maintaining Railway Oriented Programming benefits.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ModelBinding.MaybeModelBinder-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ModelBinding.MaybeModelBinder-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ModelBinding.MaybeModelBinder<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ModelBinding.MaybeModelBinder-2.yml\" sourcestartlinenumber=\"1\">Model binder for <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> parameters where <code class=\"typeparamref\">TValue</code>\nimplements <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.\nBinds optional route, query, form, and header parameters to <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ModelBinding.ScalarValueModelBinder-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ModelBinding.ScalarValueModelBinder-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ModelBinding.ScalarValueModelBinder<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ModelBinding.ScalarValueModelBinder-2.yml\" sourcestartlinenumber=\"1\">Model binder for scalar value types.\nValidates scalar values during model binding by calling TryCreate.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ModelBinding.ScalarValueModelBinderBase-3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ModelBinding.ScalarValueModelBinderBase-3.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ModelBinding.ScalarValueModelBinderBase<TResult, TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ModelBinding.ScalarValueModelBinderBase-3.yml\" sourcestartlinenumber=\"1\">Base model binder for scalar value types that handles primitive conversion,\nvalidation via <code>TryCreate</code>, and error collection.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider.yml\" sourcestartlinenumber=\"1\">Detects scalar value types and <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> wrapping scalar value types,\nand provides model binders for them.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ModelBinding.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ModelBinding.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ModelBinding",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.PartialObjectResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.PartialObjectResult.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.PartialObjectResult",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.PartialObjectResult.yml\" sourcestartlinenumber=\"1\">Represents an <xref href=\"Microsoft.AspNetCore.Mvc.ObjectResult\" data-throw-if-not-resolved=\"false\"></xref> that returns HTTP 206 Partial Content with a Content-Range header.\nUsed to indicate that the response contains a subset of the requested resource.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ScalarValueValidationEndpointFilter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ScalarValueValidationEndpointFilter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ScalarValueValidationEndpointFilter",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ScalarValueValidationEndpointFilter.yml\" sourcestartlinenumber=\"1\">An endpoint filter that checks for scalar value validation errors collected during JSON deserialization.\nFor Minimal APIs, this filter returns validation problem results when validation errors are detected.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ScalarValueValidationFilter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ScalarValueValidationFilter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ScalarValueValidationFilter",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ScalarValueValidationFilter.yml\" sourcestartlinenumber=\"1\">An action filter that checks for validation errors collected during JSON deserialization\nand validates <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref> route/query parameters.\nReturns a 400 Bad Request response with validation problem details when validation fails.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ScalarValueValidationMiddleware.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ScalarValueValidationMiddleware.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ScalarValueValidationMiddleware",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ScalarValueValidationMiddleware.yml\" sourcestartlinenumber=\"1\">Middleware that creates a validation error collection scope for each request.\nThis enables ValidatingJsonConverter to collect validation errors\nacross the entire request deserialization process.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ServiceCollectionExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ServiceCollectionExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ServiceCollectionExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ServiceCollectionExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for configuring automatic value object validation in ASP.NET Core.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.TrellisAspOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.TrellisAspOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.TrellisAspOptions",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.TrellisAspOptions.yml\" sourcestartlinenumber=\"1\">Configuration options for Trellis ASP.NET Core integration.\nControls how domain error types are mapped to HTTP status codes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Validation.MaybeScalarValueJsonConverter-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Validation.MaybeScalarValueJsonConverter-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Validation.MaybeScalarValueJsonConverter<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Validation.MaybeScalarValueJsonConverter-2.yml\" sourcestartlinenumber=\"1\">A JSON converter for <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties where <code class=\"typeparamref\">TValue</code>\nimplements <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Validation.MaybeScalarValueJsonConverterFactory.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Validation.MaybeScalarValueJsonConverterFactory.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Validation.MaybeScalarValueJsonConverterFactory",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Validation.MaybeScalarValueJsonConverterFactory.yml\" sourcestartlinenumber=\"1\">Factory for creating <xref href=\"Trellis.Asp.Validation.MaybeScalarValueJsonConverter%602\" data-throw-if-not-resolved=\"false\"></xref> instances\nfor <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties where T implements <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Validation.ScalarValueJsonConverterBase-3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Validation.ScalarValueJsonConverterBase-3.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Validation.ScalarValueJsonConverterBase<TResult, TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Validation.ScalarValueJsonConverterBase-3.yml\" sourcestartlinenumber=\"1\">Base JSON converter for scalar value objects that collects validation errors\ninstead of throwing exceptions during deserialization.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Validation.ValidatingJsonConverter-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Validation.ValidatingJsonConverter-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Validation.ValidatingJsonConverter<TValue, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Validation.ValidatingJsonConverter-2.yml\" sourcestartlinenumber=\"1\">A JSON converter for value objects that implement <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref>.\nThis converter collects validation errors instead of throwing exceptions,\nenabling comprehensive validation error responses.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Validation.ValidatingJsonConverterFactory.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Validation.ValidatingJsonConverterFactory.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Validation.ValidatingJsonConverterFactory",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.Validation.ValidatingJsonConverterFactory.yml\" sourcestartlinenumber=\"1\">Factory for creating validating JSON converters for <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref> types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.Validation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.Validation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.Validation",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.ValidationErrorsContext.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.ValidationErrorsContext.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp.ValidationErrorsContext",
+      "Summary": "<p sourcefile=\"api/Trellis.Asp.ValidationErrorsContext.yml\" sourcestartlinenumber=\"1\">Provides a context for collecting validation errors during JSON deserialization.\nUses AsyncLocal to maintain thread-safe, request-scoped error collection.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Asp.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Asp.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Asp",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.Actor.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.Actor.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.Actor",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.Actor.yml\" sourcestartlinenumber=\"1\">Represents the current authenticated user making the request.\nContains identity, permissions, forbidden permissions, and contextual attributes\nused by authorization behaviors.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.ActorAttributes.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.ActorAttributes.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.ActorAttributes",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.ActorAttributes.yml\" sourcestartlinenumber=\"1\">Well-known attribute keys for <xref href=\"Trellis.Authorization.Actor.Attributes\" data-throw-if-not-resolved=\"false\"></xref> used in\nattribute-based access control (ABAC) checks.\nClaim-based keys align with Azure Entra ID v2.0 access token claims.\nUse these constants instead of raw strings to prevent key-casing mismatches.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.IActorProvider.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.IActorProvider.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.IActorProvider",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.IActorProvider.yml\" sourcestartlinenumber=\"1\">Provides the current authenticated actor for authorization behaviors.\nImplement in the API/ACL layer, typically extracting from HttpContext.User.\nRegister as scoped in DI.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.IAuthorize.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.IAuthorize.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.IAuthorize",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.IAuthorize.yml\" sourcestartlinenumber=\"1\">Marker interface for commands/queries that require static permissions.\nAuthorization checks verify that the current actor has ALL of the\n<xref href=\"Trellis.Authorization.IAuthorize.RequiredPermissions\" data-throw-if-not-resolved=\"false\"></xref> before calling the handler.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.IAuthorizeResource-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.IAuthorizeResource-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.IAuthorizeResource<TResource>",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.IAuthorizeResource-1.yml\" sourcestartlinenumber=\"1\">Declares resource-based authorization that requires a loaded resource.\nImplemented by the command/query. The pipeline loads the resource via\n<xref href=\"Trellis.Authorization.IResourceLoader%602\" data-throw-if-not-resolved=\"false\"></xref> and passes it to this method.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.IResourceLoader-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.IResourceLoader-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.IResourceLoader<TMessage, TResource>",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.IResourceLoader-2.yml\" sourcestartlinenumber=\"1\">Loads the resource required for resource-based authorization.\nRegistered in DI as scoped (typically depends on DbContext via a repository).\nResolved per-request by the pipeline behavior via <xref href=\"System.IServiceProvider\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.ResourceLoaderById-3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.ResourceLoaderById-3.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization.ResourceLoaderById<TMessage, TResource, TId>",
+      "Summary": "<p sourcefile=\"api/Trellis.Authorization.ResourceLoaderById-3.yml\" sourcestartlinenumber=\"1\">Convenience base class for resource loaders that extract a typed ID from the message\nand load via a repository's GetByIdAsync method.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Authorization.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Authorization.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Authorization",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.BadRequestError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.BadRequestError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.BadRequestError",
+      "Summary": "<p sourcefile=\"api/Trellis.BadRequestError.yml\" sourcestartlinenumber=\"1\">Represents a bad request error indicating the request was malformed or syntactically invalid.\nUse this for requests that cannot be processed due to syntax errors, missing required data, or malformed content.\nMaps to HTTP 400 Bad Request.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.BindExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.BindExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.BindExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.BindExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for binding (chaining) operations over Result values.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.BindExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.BindExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.BindExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.BindExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for binding (chaining) operations over Result values.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.CombineErrorExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.CombineErrorExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.CombineErrorExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.CombineErrorExtensions.yml\" sourcestartlinenumber=\"1\">Combine errors into one.\nIf both the errors types are <xref href=\"Trellis.ValidationError\" data-throw-if-not-resolved=\"false\"></xref>, the validation errors will be merged.\nOtherwise, the errors will be wrapped into an <xref href=\"Trellis.AggregateError\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.CombineExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.CombineExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.CombineExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.CombineExtensions.yml\" sourcestartlinenumber=\"1\">Combines two or more <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref> into one tuple containing all the Results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.CombineExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.CombineExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.CombineExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.CombineExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Combines two or more <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref> into one tuple containing all the Results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ConflictError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ConflictError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ConflictError",
+      "Summary": "<p sourcefile=\"api/Trellis.ConflictError.yml\" sourcestartlinenumber=\"1\">Represents a conflict error indicating the request conflicts with the current state of the resource.\nUse this when an operation cannot be completed due to a conflict with existing data or state.\nMaps to HTTP 409 Conflict.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.DomainError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.DomainError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.DomainError",
+      "Summary": "<p sourcefile=\"api/Trellis.DomainError.yml\" sourcestartlinenumber=\"1\">Represents a domain or business rule violation.\nUse this for errors that occur when domain logic or business rules prevent an operation from completing.\nMaps to HTTP 422 Unprocessable Entity.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EnsureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EnsureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EnsureExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EnsureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for ensuring conditions on Result values.\nIf conditions fail, the result is converted to a failure with the specified error.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EnsureExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EnsureExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EnsureExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.EnsureExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Async Ensure extensions where BOTH input and predicates are async (Task).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Entity-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Entity-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Entity<TId>",
+      "Summary": "<p sourcefile=\"api/Trellis.Entity-1.yml\" sourcestartlinenumber=\"1\">Base class for entities in Domain-Driven Design.\nAn entity is a domain object defined by its identity rather than its attributes.\nTwo entities with different attributes but the same ID are considered equal.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.DbContextExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.DbContextExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.DbContextExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.DbContextExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods on <xref href=\"Microsoft.EntityFrameworkCore.DbContext\" data-throw-if-not-resolved=\"false\"></xref> that wrap <xref href=\"Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(System.Threading.CancellationToken)\" data-throw-if-not-resolved=\"false\"></xref>\nand convert expected database exceptions to <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref> failures.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.DbExceptionClassifier.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.DbExceptionClassifier.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.DbExceptionClassifier",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.DbExceptionClassifier.yml\" sourcestartlinenumber=\"1\">Classifies database exceptions across providers (SQL Server, PostgreSQL, SQLite).\nUsed internally by both <xref href=\"Trellis.EntityFrameworkCore.DbContextExtensions.SaveChangesResultAsync(Microsoft.EntityFrameworkCore.DbContext%2cSystem.Threading.CancellationToken)\" data-throw-if-not-resolved=\"false\"></xref>\nand <xref href=\"Trellis.EntityFrameworkCore.DbContextExtensions.SaveChangesResultAsync(Microsoft.EntityFrameworkCore.DbContext%2cSystem.Boolean%2cSystem.Threading.CancellationToken)\" data-throw-if-not-resolved=\"false\"></xref> overloads.\nAlso available for direct use in repositories that need custom error messages per exception type.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.MaybeEntityTypeBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.MaybeEntityTypeBuilderExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.MaybeEntityTypeBuilderExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.MaybeEntityTypeBuilderExtensions.yml\" sourcestartlinenumber=\"1\">Entity type builder helpers that resolve <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties to their mapped backing fields.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.MaybeModelExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.MaybeModelExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.MaybeModelExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.MaybeModelExtensions.yml\" sourcestartlinenumber=\"1\">Diagnostics helpers for inspecting resolved EF Core mappings for <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.MaybePropertyMapping.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.MaybePropertyMapping.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.MaybePropertyMapping",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.MaybePropertyMapping.yml\" sourcestartlinenumber=\"1\">Describes how a <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> property resolved to an EF Core field-only mapping.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.MaybeQueryableExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.MaybeQueryableExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.MaybeQueryableExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.MaybeQueryableExtensions.yml\" sourcestartlinenumber=\"1\">LINQ query extensions for <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties backed by private nullable fields.\nThese methods rewrite the expression tree to target the underlying <code>_camelCase</code> backing field\nvia <xref href=\"Microsoft.EntityFrameworkCore.EF.Property%60%601(System.Object%2cSystem.String)\" data-throw-if-not-resolved=\"false\"></xref>, enabling EF Core to translate the query to SQL.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.MaybeUpdateExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.MaybeUpdateExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.MaybeUpdateExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.MaybeUpdateExtensions.yml\" sourcestartlinenumber=\"1\">ExecuteUpdate helpers for setting and clearing mapped <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> properties via CLR selectors.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.ModelConfigurationBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.ModelConfigurationBuilderExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.ModelConfigurationBuilderExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.ModelConfigurationBuilderExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for <xref href=\"Microsoft.EntityFrameworkCore.ModelConfigurationBuilder\" data-throw-if-not-resolved=\"false\"></xref> that register\nTrellis value object conventions before EF Core model building.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.QueryableExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.QueryableExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.QueryableExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.QueryableExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods on <xref href=\"System.Linq.IQueryable%601\" data-throw-if-not-resolved=\"false\"></xref> that wrap EF Core query results\nin <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> or <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.TrellisEnumConverter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.TrellisEnumConverter-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.TrellisEnumConverter<TModel>",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.TrellisEnumConverter-1.yml\" sourcestartlinenumber=\"1\">Value converter for <xref href=\"Trellis.RequiredEnum%601\" data-throw-if-not-resolved=\"false\"></xref> value objects.\nStores the enum as its <code>Name</code> (string) in the database\nand reconstructs it using <code>TryFromName</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.TrellisScalarConverter-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.TrellisScalarConverter-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore.TrellisScalarConverter<TModel, TProvider>",
+      "Summary": "<p sourcefile=\"api/Trellis.EntityFrameworkCore.TrellisScalarConverter-2.yml\" sourcestartlinenumber=\"1\">Value converter for Trellis <xref href=\"Trellis.IScalarValue%602\" data-throw-if-not-resolved=\"false\"></xref> types.</p>\n<p>\nConverts to database using the <code>Value</code> property and from database\nusing the static <code>Create</code> factory method. Expression trees are\npreserved so EF Core can inspect them for query translation.\n</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.EntityFrameworkCore.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.EntityFrameworkCore.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.EntityFrameworkCore",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Error.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Error.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Error",
+      "Summary": "<p sourcefile=\"api/Trellis.Error.yml\" sourcestartlinenumber=\"1\">Base class for all error types in the functional DDD library.\nErrors represent failure states and contain structured information about what went wrong.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.FluentValidation.FluentValidationResultExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.FluentValidation.FluentValidationResultExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.FluentValidation.FluentValidationResultExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.FluentValidation.FluentValidationResultExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods to integrate FluentValidation with Railway Oriented Programming Result types.\nEnables seamless conversion of FluentValidation results to Result&lt;T&gt; for functional error handling.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.FluentValidation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.FluentValidation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.FluentValidation",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ForbiddenError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ForbiddenError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ForbiddenError",
+      "Summary": "<p sourcefile=\"api/Trellis.ForbiddenError.yml\" sourcestartlinenumber=\"1\">Represents a forbidden error when an authenticated user lacks permission to access a resource.\nUse this when the user is authenticated but does not have the required authorization or role.\nMaps to HTTP 403 Forbidden.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Http.HttpResponseExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Http.HttpResponseExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Http.HttpResponseExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Http.HttpResponseExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for handling HTTP response messages with Result and Maybe monads.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Http.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Http.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Http",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.IAggregate.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.IAggregate.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.IAggregate",
+      "Summary": "<p sourcefile=\"api/Trellis.IAggregate.yml\" sourcestartlinenumber=\"1\">Defines the contract for an aggregate root in Domain-Driven Design.\nAn aggregate is a cluster of domain objects that can be treated as a single unit for data changes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.IDomainEvent.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.IDomainEvent.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.IDomainEvent",
+      "Summary": "<p sourcefile=\"api/Trellis.IDomainEvent.yml\" sourcestartlinenumber=\"1\">Represents a domain event - a record of something significant that happened in the business domain.\nDomain events capture state changes and business occurrences that domain experts care about.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.IFailureFactory-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.IFailureFactory-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.IFailureFactory<TSelf>",
+      "Summary": "<p sourcefile=\"api/Trellis.IFailureFactory-1.yml\" sourcestartlinenumber=\"1\">Enables construction of a failure result of the implementing type from an <xref href=\"Trellis.Error\" data-throw-if-not-resolved=\"false\"></xref>.\nImplemented by <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref> to support generic pipeline behaviors\nthat need to construct failure results without knowing the inner type parameter.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.IResult-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.IResult-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.IResult<TValue>",
+      "Summary": "<p sourcefile=\"api/Trellis.IResult-1.yml\" sourcestartlinenumber=\"1\">Generic interface for result types, providing typed access to the success value.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.IResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.IResult.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.IResult",
+      "Summary": "<p sourcefile=\"api/Trellis.IResult.yml\" sourcestartlinenumber=\"1\">Non-generic base interface for result types, exposing success/failure state and error information.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.IScalarValue-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.IScalarValue-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.IScalarValue<TSelf, TPrimitive>",
+      "Summary": "<p sourcefile=\"api/Trellis.IScalarValue-2.yml\" sourcestartlinenumber=\"1\">Interface for scalar value objects that can be created with validation.\nEnables automatic ASP.NET Core model binding and JSON serialization.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MapExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MapExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MapExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.MapExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for mapping (transforming) values inside Result objects.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MapExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MapExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MapExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.MapExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for mapping (transforming) values inside Result objects.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MapOnFailureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MapOnFailureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MapOnFailureExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.MapOnFailureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for transforming errors in failed Results while leaving successful Results unchanged.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MatchErrorExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MatchErrorExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MatchErrorExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.MatchErrorExtensions.yml\" sourcestartlinenumber=\"1\">Pattern matching helpers for discriminating specific error types in Result.\nAllows matching on specific error types (ValidationError, NotFoundError, etc.)\nrather than treating all errors the same.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MatchErrorExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MatchErrorExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MatchErrorExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.MatchErrorExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous pattern matching helpers for discriminating specific error types in Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MatchExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MatchExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MatchExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.MatchExtensions.yml\" sourcestartlinenumber=\"1\">Pattern matching helpers (Match / Switch) for Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MatchExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MatchExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MatchExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.MatchExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous pattern matching helpers for Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Maybe-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Maybe-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Maybe<T>",
+      "Summary": "<p sourcefile=\"api/Trellis.Maybe-1.yml\" sourcestartlinenumber=\"1\">Represents domain-level optionality — a value that was either provided or intentionally omitted.\nUnlike <xref href=\"System.Nullable%601\" data-throw-if-not-resolved=\"false\"></xref> (value types only) or <code>T?</code> (annotation only for reference types),\n<xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> is a real generic type that works uniformly with both value and reference types\nand composes with <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref> pipelines.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Maybe.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Maybe.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Maybe",
+      "Summary": "<p sourcefile=\"api/Trellis.Maybe.yml\" sourcestartlinenumber=\"1\">Contains static methods to create a <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MaybeExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MaybeExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MaybeExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.MaybeExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for converting <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> instances to <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref>\nobjects and for wrapping values in a <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.MaybeExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.MaybeExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.MaybeExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.MaybeExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for converting <xref href=\"Trellis.Maybe%601\" data-throw-if-not-resolved=\"false\"></xref> instances to <xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.AuthorizationBehavior-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.AuthorizationBehavior-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.AuthorizationBehavior<TMessage, TResponse>",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.AuthorizationBehavior-2.yml\" sourcestartlinenumber=\"1\">Pipeline behavior that checks the current actor has all permissions\ndeclared in <xref href=\"Trellis.Authorization.IAuthorize.RequiredPermissions\" data-throw-if-not-resolved=\"false\"></xref>.\nShort-circuits with <xref href=\"Trellis.Error.Forbidden(System.String%2cSystem.String)\" data-throw-if-not-resolved=\"false\"></xref> if any permission is missing.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.ExceptionBehavior-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.ExceptionBehavior-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.ExceptionBehavior<TMessage, TResponse>",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.ExceptionBehavior-2.yml\" sourcestartlinenumber=\"1\">Pipeline behavior that catches unhandled exceptions from handlers and converts\nthem to <xref href=\"Trellis.Error.Unexpected(System.String%2cSystem.String)\" data-throw-if-not-resolved=\"false\"></xref> failures. This is a safety net — handlers\nshould not throw, but if they do, this prevents unhandled exceptions from escaping\nthe mediator pipeline.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.IValidate.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.IValidate.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.IValidate",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.IValidate.yml\" sourcestartlinenumber=\"1\">Marker interface for commands/queries that can self-validate before reaching the handler.\nImplement on command/query records to enable the <xref href=\"Trellis.Mediator.ValidationBehavior%602\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.LoggingBehavior-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.LoggingBehavior-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.LoggingBehavior<TMessage, TResponse>",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.LoggingBehavior-2.yml\" sourcestartlinenumber=\"1\">Pipeline behavior that logs command/query execution with duration and Result outcome.\nLogs at Information level for success, Warning level for failure.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.ResourceAuthorizationBehavior-3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.ResourceAuthorizationBehavior-3.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.ResourceAuthorizationBehavior<TMessage, TResource, TResponse>",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.ResourceAuthorizationBehavior-3.yml\" sourcestartlinenumber=\"1\">Pipeline behavior that loads a resource and performs resource-based authorization\nbefore the handler runs. Registered as scoped so the injected <xref href=\"System.IServiceProvider\" data-throw-if-not-resolved=\"false\"></xref>\nis the request-scoped provider, allowing correct resolution of scoped dependencies.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.ServiceCollectionExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.ServiceCollectionExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.ServiceCollectionExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.ServiceCollectionExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for registering Trellis.Mediator pipeline behaviors.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.TracingBehavior-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.TracingBehavior-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.TracingBehavior<TMessage, TResponse>",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.TracingBehavior-2.yml\" sourcestartlinenumber=\"1\">Pipeline behavior that creates an OpenTelemetry Activity for each command/query.\nTags the activity with Result status and error details on failure.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.ValidationBehavior-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.ValidationBehavior-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator.ValidationBehavior<TMessage, TResponse>",
+      "Summary": "<p sourcefile=\"api/Trellis.Mediator.ValidationBehavior-2.yml\" sourcestartlinenumber=\"1\">Pipeline behavior that validates messages implementing <xref href=\"Trellis.Mediator.IValidate\" data-throw-if-not-resolved=\"false\"></xref>\nbefore they reach the handler. If validation fails, returns the failure Result\nwithout calling the handler.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Mediator.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Mediator.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Mediator",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.NotFoundError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.NotFoundError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.NotFoundError",
+      "Summary": "<p sourcefile=\"api/Trellis.NotFoundError.yml\" sourcestartlinenumber=\"1\">Represents a &quot;not found&quot; error when a requested resource does not exist.\nUse this when an entity, record, or resource cannot be located.\nMaps to HTTP 404 Not Found.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.NullableExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.NullableExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.NullableExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.NullableExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for converting nullable values to Result types.\nProvides a convenient way to handle null checking with Railway Oriented Programming.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.NullableExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.NullableExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.NullableExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.NullableExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous extension methods for converting nullable values to Result types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ParsableJsonConverter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ParsableJsonConverter-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ParsableJsonConverter<T>",
+      "Summary": "<p sourcefile=\"api/Trellis.ParsableJsonConverter-1.yml\" sourcestartlinenumber=\"1\">A JSON converter for value objects that implement <xref href=\"System.IParsable%601\" data-throw-if-not-resolved=\"false\"></xref>.\nEnables automatic serialization and deserialization of parsable value objects in ASP.NET Core APIs and System.Text.Json scenarios.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.PrimitiveValueObjectTrace.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.PrimitiveValueObjectTrace.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.PrimitiveValueObjectTrace",
+      "Summary": "<p sourcefile=\"api/Trellis.PrimitiveValueObjectTrace.yml\" sourcestartlinenumber=\"1\">Provides OpenTelemetry activity tracing for Primitive Value Objects operations.\nEnables monitoring and diagnostics of value object creation, validation, and parsing activities.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.PrimitiveValueObjectTraceProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.PrimitiveValueObjectTraceProviderBuilderExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.PrimitiveValueObjectTraceProviderBuilderExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.PrimitiveValueObjectTraceProviderBuilderExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for configuring OpenTelemetry tracing for Primitive Value Objects (PVO).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.Age.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.Age.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.Age",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.Age.yml\" sourcestartlinenumber=\"1\">Age value object with validation for ages 0-150.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.CountryCode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.CountryCode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.CountryCode",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.CountryCode.yml\" sourcestartlinenumber=\"1\">ISO 3166-1 alpha-2 country code value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.CurrencyCode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.CurrencyCode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.CurrencyCode",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.CurrencyCode.yml\" sourcestartlinenumber=\"1\">Represents an ISO 4217 currency code as a value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.EmailAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.EmailAddress.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.EmailAddress",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.EmailAddress.yml\" sourcestartlinenumber=\"1\">Represents an email address value object with RFC 5322-compliant validation.\nEnsures that email addresses are syntactically valid and prevents invalid email data in the domain model.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.Hostname.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.Hostname.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.Hostname",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.Hostname.yml\" sourcestartlinenumber=\"1\">RFC 1123 compliant hostname value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.IpAddress.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.IpAddress.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.IpAddress",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.IpAddress.yml\" sourcestartlinenumber=\"1\">Represents an IP address (IPv4 or IPv6) as a value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.LanguageCode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.LanguageCode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.LanguageCode",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.LanguageCode.yml\" sourcestartlinenumber=\"1\">ISO 639-1 language code value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.Money.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.Money.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.Money",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.Money.yml\" sourcestartlinenumber=\"1\">Represents a monetary amount with a currency code.\nProvides type-safe arithmetic operations that prevent mixing different currencies.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.MoneyJsonConverter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.MoneyJsonConverter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.MoneyJsonConverter",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.MoneyJsonConverter.yml\" sourcestartlinenumber=\"1\">JSON converter for Money value objects.\nSerializes Money as {&quot;amount&quot;: 99.99, &quot;currency&quot;: &quot;USD&quot;}.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.Percentage.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.Percentage.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.Percentage",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.Percentage.yml\" sourcestartlinenumber=\"1\">Represents a percentage value object (value between 0 and 100 inclusive).\nEnsures that percentage values are within the valid range for percentage calculations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.PhoneNumber.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.PhoneNumber.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.PhoneNumber",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.PhoneNumber.yml\" sourcestartlinenumber=\"1\">Represents a phone number value object with E.164 format validation.\nEnsures that phone numbers follow international standards for telephony.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.Slug.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.Slug.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.Slug",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.Slug.yml\" sourcestartlinenumber=\"1\">URL-safe slug value object (lowercase letters, digits, single hyphens).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.Url.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.Url.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives.Url",
+      "Summary": "<p sourcefile=\"api/Trellis.Primitives.Url.yml\" sourcestartlinenumber=\"1\">Represents a URL value object with format validation.\nEnsures that URLs are valid and well-formed for web and API scenarios.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Primitives.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Primitives.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Primitives",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RailwayTrackAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RailwayTrackAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RailwayTrackAttribute",
+      "Summary": "<p sourcefile=\"api/Trellis.RailwayTrackAttribute.yml\" sourcestartlinenumber=\"1\">Indicates which railway track an operation executes on.\nThis metadata can be used by IDE extensions, analyzers, and documentation generators.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RateLimitError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RateLimitError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RateLimitError",
+      "Summary": "<p sourcefile=\"api/Trellis.RateLimitError.yml\" sourcestartlinenumber=\"1\">Represents a rate limiting error when too many requests have been made.\nUse this when a client has exceeded their request quota or rate limit.\nMaps to HTTP 429 Too Many Requests.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RecoverOnFailureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RecoverOnFailureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RecoverOnFailureExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.RecoverOnFailureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for recovering from failed results by executing fallback operations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RecoverOnFailureExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RecoverOnFailureExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RecoverOnFailureExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.RecoverOnFailureExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for recovering from failed results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RequiredDecimal-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RequiredDecimal-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RequiredDecimal<TSelf>",
+      "Summary": "<p sourcefile=\"api/Trellis.RequiredDecimal-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed decimal value objects that cannot have the default (zero) value.\nProvides a foundation for monetary amounts, percentages, and other domain concepts represented by decimals.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RequiredEnum-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RequiredEnum-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RequiredEnum<TSelf>",
+      "Summary": "<p sourcefile=\"api/Trellis.RequiredEnum-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed, behavior-rich enumeration value objects.\nEnum value objects are a DDD pattern that replaces C# enums with full-featured classes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RequiredEnumJsonConverter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RequiredEnumJsonConverter-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RequiredEnumJsonConverter<TRequiredEnum>",
+      "Summary": "<p sourcefile=\"api/Trellis.RequiredEnumJsonConverter-1.yml\" sourcestartlinenumber=\"1\">JSON converter for <xref href=\"Trellis.RequiredEnum%601\" data-throw-if-not-resolved=\"false\"></xref> types.\nSerializes to the string Name and deserializes from string name.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RequiredGuid-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RequiredGuid-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RequiredGuid<TSelf>",
+      "Summary": "<p sourcefile=\"api/Trellis.RequiredGuid-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed GUID value objects that cannot have the default (empty) GUID value.\nProvides a foundation for entity identifiers and other domain concepts represented by GUIDs.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RequiredInt-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RequiredInt-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RequiredInt<TSelf>",
+      "Summary": "<p sourcefile=\"api/Trellis.RequiredInt-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed integer value objects that cannot have the default (zero) value.\nProvides a foundation for entity identifiers, counts, and other domain concepts represented by integers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.RequiredString-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.RequiredString-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.RequiredString<TSelf>",
+      "Summary": "<p sourcefile=\"api/Trellis.RequiredString-1.yml\" sourcestartlinenumber=\"1\">Base class for creating strongly-typed string value objects that cannot be null or empty.\nProvides a foundation for domain primitives like names, descriptions, codes, and other textual concepts.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Result-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Result-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Result<TValue>",
+      "Summary": "<p sourcefile=\"api/Trellis.Result-1.yml\" sourcestartlinenumber=\"1\">Represents either a successful computation (with a value) or a failure (with an <xref href=\"Trellis.Result%601.Error\" data-throw-if-not-resolved=\"false\"></xref>).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Result.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Result.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Result",
+      "Summary": "<p sourcefile=\"api/Trellis.Result.yml\" sourcestartlinenumber=\"1\">Static Combine methods for combining multiple independent Result values without chaining.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ResultDebugExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ResultDebugExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ResultDebugExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.ResultDebugExtensions.yml\" sourcestartlinenumber=\"1\">Debug extension methods for inspecting Result values during development.\nThese methods execute only in DEBUG builds and become no-ops in RELEASE builds (with zero overhead).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ResultDebugExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ResultDebugExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ResultDebugExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.ResultDebugExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Debug-only async extension methods for inspecting Result values during development.\nThese methods are only available in DEBUG builds and are automatically excluded from RELEASE builds.\nDebug information is written to dedicated Activity spans for OpenTelemetry compatibility.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ResultLinqExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ResultLinqExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ResultLinqExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.ResultLinqExtensions.yml\" sourcestartlinenumber=\"1\">Provides LINQ query expression support for Result types, enabling C# query syntax for functional operations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ResultsTraceProviderBuilderExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ResultsTraceProviderBuilderExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ResultsTraceProviderBuilderExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.ResultsTraceProviderBuilderExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for configuring OpenTelemetry tracing for Railway Oriented Programming operations.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ScalarValueObject-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ScalarValueObject-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ScalarValueObject<TSelf, T>",
+      "Summary": "<p sourcefile=\"api/Trellis.ScalarValueObject-2.yml\" sourcestartlinenumber=\"1\">Base class for value objects that wrap a single scalar value.\nProvides a strongly-typed wrapper around primitive types with domain semantics.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ServiceUnavailableError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ServiceUnavailableError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ServiceUnavailableError",
+      "Summary": "<p sourcefile=\"api/Trellis.ServiceUnavailableError.yml\" sourcestartlinenumber=\"1\">Represents a temporary service unavailability error.\nUse this when the service is temporarily unable to handle the request due to maintenance or overload.\nMaps to HTTP 503 Service Unavailable.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Specification-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Specification-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Specification<T>",
+      "Summary": "<p sourcefile=\"api/Trellis.Specification-1.yml\" sourcestartlinenumber=\"1\">Base class for the Specification pattern. Encapsulates a business rule\nas a composable, storage-agnostic expression tree.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Stateless.LazyStateMachine-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Stateless.LazyStateMachine-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Stateless.LazyStateMachine<TState, TTrigger>",
+      "Summary": "<p sourcefile=\"api/Trellis.Stateless.LazyStateMachine-2.yml\" sourcestartlinenumber=\"1\">A lazy wrapper around <xref href=\"Stateless.StateMachine%602\" data-throw-if-not-resolved=\"false\"></xref> that defers machine\nconstruction until first use, solving the EF Core materialization problem.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Stateless.StateMachineExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Stateless.StateMachineExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Stateless.StateMachineExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Stateless.StateMachineExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for <xref href=\"Stateless.StateMachine%602\" data-throw-if-not-resolved=\"false\"></xref> that return\n<xref href=\"Trellis.Result%601\" data-throw-if-not-resolved=\"false\"></xref> instead of throwing on invalid transitions.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Stateless.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Stateless.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Stateless",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.StringLengthAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.StringLengthAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.StringLengthAttribute",
+      "Summary": "<p sourcefile=\"api/Trellis.StringLengthAttribute.yml\" sourcestartlinenumber=\"1\">Specifies the minimum and maximum length of characters that are allowed in a\n<xref href=\"Trellis.RequiredString%601\" data-throw-if-not-resolved=\"false\"></xref>-derived value object.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.TapExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.TapExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.TapExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.TapExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for executing side effects on successful Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.TapExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.TapExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.TapExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.TapExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for executing side effects on successful Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.TapOnFailureExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.TapOnFailureExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.TapOnFailureExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.TapOnFailureExtensions.yml\" sourcestartlinenumber=\"1\">Provides extension methods for executing side effects on failed Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.TapOnFailureExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.TapOnFailureExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.TapOnFailureExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.TapOnFailureExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Provides asynchronous extension methods for executing side effects on failed Results without changing the Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Builders.ResultBuilder.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Builders.ResultBuilder.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Builders.ResultBuilder",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.Builders.ResultBuilder.yml\" sourcestartlinenumber=\"1\">Fluent builder for creating Result instances in tests.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Builders.ValidationErrorBuilder.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Builders.ValidationErrorBuilder.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Builders.ValidationErrorBuilder",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.Builders.ValidationErrorBuilder.yml\" sourcestartlinenumber=\"1\">Fluent builder for creating complex ValidationError instances in tests.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Builders.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Builders.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Builders",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ErrorAssertions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ErrorAssertions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ErrorAssertions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ErrorAssertions.yml\" sourcestartlinenumber=\"1\">Contains assertion methods for Error types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ErrorAssertionsExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ErrorAssertionsExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ErrorAssertionsExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ErrorAssertionsExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods to enable FluentAssertions on Error types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Fakes.FakeRepository-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Fakes.FakeRepository-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Fakes.FakeRepository<TAggregate, TId>",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.Fakes.FakeRepository-2.yml\" sourcestartlinenumber=\"1\">In-memory fake repository for testing aggregates.\nProvides a simple in-memory store with domain event tracking.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Fakes.TestActorProvider.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Fakes.TestActorProvider.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Fakes.TestActorProvider",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.Fakes.TestActorProvider.yml\" sourcestartlinenumber=\"1\">Mutable <xref href=\"Trellis.Authorization.IActorProvider\" data-throw-if-not-resolved=\"false\"></xref> for integration and authorization testing.\nStores the current actor in an <xref href=\"System.Threading.AsyncLocal%601\" data-throw-if-not-resolved=\"false\"></xref> so parallel tests using\noverlapping <xref href=\"Trellis.Testing.Fakes.TestActorProvider.WithActor(Trellis.Authorization.Actor)\" data-throw-if-not-resolved=\"false\"></xref> scopes never interfere with each other.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Fakes.TestActorScope.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Fakes.TestActorScope.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Fakes.TestActorScope",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.Fakes.TestActorScope.yml\" sourcestartlinenumber=\"1\">Captures the current <xref href=\"Trellis.Authorization.Actor\" data-throw-if-not-resolved=\"false\"></xref> and restores it on dispose.\nCreated by <xref href=\"Trellis.Testing.Fakes.TestActorProvider.WithActor(Trellis.Authorization.Actor)\" data-throw-if-not-resolved=\"false\"></xref>.\nSupports both <code>await using</code> and <code>using</code> patterns.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.Fakes.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.Fakes.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.Fakes",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.MaybeAssertions-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.MaybeAssertions-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.MaybeAssertions<T>",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.MaybeAssertions-1.yml\" sourcestartlinenumber=\"1\">Contains assertion methods for Maybe types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.MaybeAssertionsExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.MaybeAssertionsExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.MaybeAssertionsExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.MaybeAssertionsExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods to enable FluentAssertions on Maybe types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ResultAssertions-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ResultAssertions-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ResultAssertions<TValue>",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ResultAssertions-1.yml\" sourcestartlinenumber=\"1\">Contains assertion methods for Result types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ResultAssertionsAsyncExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ResultAssertionsAsyncExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ResultAssertionsAsyncExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ResultAssertionsAsyncExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods to enable FluentAssertions on async Result types (Task and ValueTask).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ResultAssertionsExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ResultAssertionsExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ResultAssertionsExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ResultAssertionsExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods to enable FluentAssertions on Result types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ServiceCollectionExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ServiceCollectionExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ServiceCollectionExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ServiceCollectionExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for <xref href=\"Microsoft.Extensions.DependencyInjection.IServiceCollection\" data-throw-if-not-resolved=\"false\"></xref> that simplify\nreplacing service registrations in integration tests.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ValidationErrorAssertions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ValidationErrorAssertions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ValidationErrorAssertions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ValidationErrorAssertions.yml\" sourcestartlinenumber=\"1\">Contains assertion methods for ValidationError types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.ValidationErrorAssertionsExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.ValidationErrorAssertionsExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.ValidationErrorAssertionsExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.ValidationErrorAssertionsExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods to enable FluentAssertions on ValidationError types.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.WebApplicationFactoryExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.WebApplicationFactoryExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing.WebApplicationFactoryExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.Testing.WebApplicationFactoryExtensions.yml\" sourcestartlinenumber=\"1\">Extension methods for <xref href=\"Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory%601\" data-throw-if-not-resolved=\"false\"></xref>\nthat simplify creating authenticated HTTP clients for integration tests.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Testing.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Testing.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Testing",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.TrackBehavior.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.TrackBehavior.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.TrackBehavior",
+      "Summary": "<p sourcefile=\"api/Trellis.TrackBehavior.yml\" sourcestartlinenumber=\"1\">Defines which railway track an operation runs on in Railway-Oriented Programming.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.TraverseExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.TraverseExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.TraverseExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.TraverseExtensions.yml\" sourcestartlinenumber=\"1\">Transforms a collection of items into a Result containing a collection,\nshort-circuiting on the first failure.\nUseful for processing collections where each item can fail independently.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.UnauthorizedError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.UnauthorizedError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.UnauthorizedError",
+      "Summary": "<p sourcefile=\"api/Trellis.UnauthorizedError.yml\" sourcestartlinenumber=\"1\">Represents an authorization error when authentication is required but not provided.\nUse this when a user is not authenticated (not logged in) and must authenticate to access the resource.\nMaps to HTTP 401 Unauthorized.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.UnexpectedError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.UnexpectedError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.UnexpectedError",
+      "Summary": "<p sourcefile=\"api/Trellis.UnexpectedError.yml\" sourcestartlinenumber=\"1\">Represents an unexpected system error or exception.\nUse this for infrastructure failures, unhandled exceptions, or system-level errors.\nMaps to HTTP 500 Internal Server Error.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.Unit.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.Unit.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.Unit",
+      "Summary": "<p sourcefile=\"api/Trellis.Unit.yml\" sourcestartlinenumber=\"1\">Represents the absence of a meaningful value, used for operations that have no return value.\nThis is the functional programming equivalent of <code>void</code>, but as a proper type that can be used with generics.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ValidationError.FieldError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ValidationError.FieldError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ValidationError.FieldError",
+      "Summary": "<p sourcefile=\"api/Trellis.ValidationError.FieldError.yml\" sourcestartlinenumber=\"1\">Represents an error for a specific field, which may have multiple detail messages.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ValidationError.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ValidationError.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ValidationError",
+      "Summary": "<p sourcefile=\"api/Trellis.ValidationError.yml\" sourcestartlinenumber=\"1\">Represents validation errors for one or more fields. Used when input data fails business rules or constraints.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.ValueObject.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.ValueObject.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.ValueObject",
+      "Summary": "<p sourcefile=\"api/Trellis.ValueObject.yml\" sourcestartlinenumber=\"1\">Base class for value objects in Domain-Driven Design.\nA value object represents a descriptive aspect of the domain with no conceptual identity.\nValue objects are immutable, defined by their attributes, and support structural equality.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.WhenExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.WhenExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.WhenExtensions",
+      "Summary": "<p sourcefile=\"api/Trellis.WhenExtensions.yml\" sourcestartlinenumber=\"1\">Conditionally executes an operation based on a predicate, maintaining the railway.\nUseful for executing operations only when certain conditions are met without breaking the Result chain.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.WhenExtensionsAsync.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.WhenExtensionsAsync.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis.WhenExtensionsAsync",
+      "Summary": "<p sourcefile=\"api/Trellis.WhenExtensionsAsync.yml\" sourcestartlinenumber=\"1\">Asynchronous conditional execution operations for Result.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Trellis.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Trellis.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Trellis",
+      "Summary": null
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "api/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "api/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/toc.html"
+        },
+        ".json": {
+          "relative_path": "api/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/BENCHMARKS.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/BENCHMARKS.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/advanced-features.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/advanced-features.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/aggregate-factory-pattern.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/aggregate-factory-pattern.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/ai-code-generation.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/ai-code-generation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS001.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS001.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS002.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS002.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS003.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS003.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS004.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS004.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS005.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS005.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS006.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS006.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS007.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS007.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS008.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS008.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS009.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS009.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS010.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS010.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS011.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS011.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS012.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS012.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS013.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS013.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS014.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS014.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS015.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS015.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS016.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS016.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS017.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS017.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS018.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS018.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS019.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS019.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS020.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS020.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/TRLS021.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/TRLS021.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/analyzers/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "articles/analyzers/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "articles/analyzers/toc.html"
+        },
+        ".json": {
+          "relative_path": "articles/analyzers/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/basics.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/basics.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/clean-architecture.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/clean-architecture.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/debugging.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/debugging.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/error-handling.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/error-handling.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/examples.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/examples.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-asp-authorization.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-asp-authorization.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-aspnet.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-aspnet.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-ef.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-ef.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-fluentvalidation.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-fluentvalidation.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-http.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-http.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration-observability.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration-observability.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/integration.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/integration.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/intro.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/intro.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/maybe-type.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/maybe-type.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/migration.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/migration.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/performance.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/performance.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/required-enum.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/required-enum.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/specifications.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/specifications.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "articles/state-machines.md",
+      "output": {
+        ".html": {
+          "relative_path": "articles/state-machines.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "articles/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "articles/toc.html"
+        },
+        ".json": {
+          "relative_path": "articles/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/icon.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/icon.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/iconsmall.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/iconsmall.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/railway-oriented-programming.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "images/railway-oriented-programming.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}
