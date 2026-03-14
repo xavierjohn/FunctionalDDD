@@ -1360,12 +1360,12 @@ IndexBuilder<TEntity> HasTrellisIndex<TEntity>(
     Expression<Func<TEntity, object?>> propertySelector)
 
 // ExecuteUpdate helpers
-void SetMaybeValue<TEntity, TInner>(
+UpdateSettersBuilder<TEntity> SetMaybeValue<TEntity, TInner>(
     this UpdateSettersBuilder<TEntity> updateSettersBuilder,
     Expression<Func<TEntity, Maybe<TInner>>> propertySelector,
     TInner value)
 
-void SetMaybeNone<TEntity, TInner>(
+UpdateSettersBuilder<TEntity> SetMaybeNone<TEntity, TInner>(
     this UpdateSettersBuilder<TEntity> updateSettersBuilder,
     Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
 
