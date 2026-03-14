@@ -15,6 +15,9 @@ public static partial class EnsureExtensionsAsync
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<bool> predicate, Error error)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(predicate);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Ensure(predicate, error);
     }
@@ -29,6 +32,9 @@ public static partial class EnsureExtensionsAsync
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, bool> predicate, Error error)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(predicate);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Ensure(predicate, error);
     }
@@ -43,6 +49,10 @@ public static partial class EnsureExtensionsAsync
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(errorPredicate);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Ensure(predicate, errorPredicate);
     }
@@ -58,6 +68,10 @@ public static partial class EnsureExtensionsAsync
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, bool> predicate, Func<TValue, Task<Error>> errorPredicate)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(errorPredicate);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(EnsureExtensions.Ensure));
         Result<TValue> result = await resultTask.ConfigureAwait(false);
 
@@ -85,6 +99,9 @@ public static partial class EnsureExtensionsAsync
     /// <returns>The original result if both succeed; otherwise a failure.</returns>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<Result<TValue>> predicate)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(predicate);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Ensure(predicate);
     }
@@ -98,6 +115,9 @@ public static partial class EnsureExtensionsAsync
     /// <returns>The original result if both succeed; otherwise a failure.</returns>
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Task<Result<TValue>> resultTask, Func<TValue, Result<TValue>> predicate)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(predicate);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Ensure(predicate);
     }

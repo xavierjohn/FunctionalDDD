@@ -424,13 +424,11 @@ public class MaybePropertyTests : IDisposable
 
     #endregion
 
-    #region MaybeConvention — entity without backing field is silently skipped
+    #region MaybeConvention — entity without backing field fails fast
 
     [Fact]
-    public void MaybeConvention_NoBacking_Field_SkipsSilently()
+    public void MaybeConvention_NoBackingField_ThrowsClearException()
     {
-        // When no backing field exists (e.g., user didn't use the source generator),
-        // the convention silently skips the property — no exception.
         using var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
 
@@ -439,7 +437,8 @@ public class MaybePropertyTests : IDisposable
 
         var act = () => context.Model;
 
-        act.Should().NotThrow("MaybeConvention should silently skip Maybe<T> properties without backing fields");
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Website*_website*partial*");
     }
 
     [Fact]

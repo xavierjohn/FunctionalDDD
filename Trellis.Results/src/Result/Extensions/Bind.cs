@@ -26,6 +26,8 @@ public static partial class BindExtensions
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static Result<TResult> Bind<TValue, TResult>(this Result<TValue> result, Func<TValue, Result<TResult>> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -52,6 +54,8 @@ public static partial class BindExtensionsAsync
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);
@@ -71,6 +75,9 @@ public static partial class BindExtensionsAsync
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, Task<Result<TResult>>> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.BindAsync(func).ConfigureAwait(false);
     }
@@ -85,6 +92,9 @@ public static partial class BindExtensionsAsync
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Task<Result<TValue>> resultTask, Func<TValue, Result<TResult>> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
     }
@@ -99,6 +109,8 @@ public static partial class BindExtensionsAsync
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this ValueTask<Result<TValue>> resultTask, Func<TValue, ValueTask<Result<TResult>>> valueTask)
     {
+        ArgumentNullException.ThrowIfNull(valueTask);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return await result.BindAsync(valueTask).ConfigureAwait(false);
     }
@@ -113,6 +125,8 @@ public static partial class BindExtensionsAsync
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this ValueTask<Result<TValue>> resultTask, Func<TValue, Result<TResult>> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TValue> result = await resultTask.ConfigureAwait(false);
         return result.Bind(func);
     }
@@ -127,6 +141,8 @@ public static partial class BindExtensionsAsync
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, ValueTask<Result<TResult>>> valueTask)
     {
+        ArgumentNullException.ThrowIfNull(valueTask);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (result.IsFailure)
             return Result.Failure<TResult>(result.Error);

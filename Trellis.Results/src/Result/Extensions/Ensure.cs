@@ -25,6 +25,8 @@ public static class EnsureExtensions
     /// <returns>The original result if success and predicate is true; otherwise a failure with the specified error.</returns>
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<bool> predicate, Error error)
     {
+        ArgumentNullException.ThrowIfNull(predicate);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(Ensure));
         if (result.IsSuccess && !predicate())
             return Result.Failure<TValue>(error);
@@ -43,6 +45,8 @@ public static class EnsureExtensions
     /// <returns>The original result if success and predicate is true; otherwise a failure with the specified error.</returns>
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
+        ArgumentNullException.ThrowIfNull(predicate);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(Ensure));
         if (result.IsSuccess && !predicate(result.Value))
             return Result.Failure<TValue>(error);
@@ -62,6 +66,9 @@ public static class EnsureExtensions
     /// <returns>The original result if success and predicate is true; otherwise a failure with an error from the error function.</returns>
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Func<TValue, Error> errorPredicate)
     {
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(errorPredicate);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(Ensure));
         if (result.IsSuccess && !predicate(result.Value))
             return Result.Failure<TValue>(errorPredicate(result.Value));
@@ -79,6 +86,8 @@ public static class EnsureExtensions
     /// <returns>The original result if both it and the predicate result are successes; otherwise a failure.</returns>
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<Result<TValue>> predicate)
     {
+        ArgumentNullException.ThrowIfNull(predicate);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(Ensure));
         if (result.IsFailure)
         {
@@ -105,6 +114,8 @@ public static class EnsureExtensions
     /// <returns>The original result if both it and the predicate result are successes; otherwise a failure.</returns>
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, Result<TValue>> predicate)
     {
+        ArgumentNullException.ThrowIfNull(predicate);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(Ensure));
         if (result.IsFailure)
         {

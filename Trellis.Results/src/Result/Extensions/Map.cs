@@ -25,6 +25,8 @@ public static partial class MapExtensions
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static Result<TOut> Map<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
@@ -49,6 +51,8 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(MapExtensions.Map));
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
@@ -68,6 +72,9 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, TOut> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return result.Map(func);
@@ -83,6 +90,9 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> resultTask, Func<TIn, Task<TOut>> func)
     {
+        ArgumentNullException.ThrowIfNull(resultTask);
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return await result.MapAsync(func).ConfigureAwait(false);
@@ -98,6 +108,8 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, ValueTask<TOut>> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(MapExtensions.Map));
         if (result.IsFailure)
             return Result.Failure<TOut>(result.Error);
@@ -117,6 +129,8 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, TOut> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return result.Map(func);
@@ -132,6 +146,8 @@ public static partial class MapExtensionsAsync
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
     public static async ValueTask<Result<TOut>> MapAsync<TIn, TOut>(this ValueTask<Result<TIn>> resultTask, Func<TIn, ValueTask<TOut>> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
+
         Result<TIn> result = await resultTask.ConfigureAwait(false);
 
         return await result.MapAsync(func).ConfigureAwait(false);

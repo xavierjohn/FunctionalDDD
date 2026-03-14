@@ -61,14 +61,17 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
 
             foreach (var maybeProperty in MaybePropertyResolver.GetMaybeProperties(entityType.ClrType))
             {
-                // Always ignore the Maybe<T> CLR property — EF Core cannot map structs as nullable
-                entityType.Builder.Ignore(maybeProperty.PropertyName);
-
                 // Verify the backing field exists (source generator should have created it)
                 var backingField = MaybePropertyResolver.FindBackingField(entityType.ClrType, maybeProperty);
 
                 if (backingField is null)
-                    continue; // No backing field — nothing to map
+                    throw new InvalidOperationException(
+                        $"Cannot map Maybe<T> property '{maybeProperty.PropertyName}' on entity '{entityType.ClrType.Name}'. " +
+                        $"Expected generated backing field '{maybeProperty.BackingFieldName}' was not found. " +
+                        "Declare the property as partial so the Trellis.EntityFrameworkCore.Generator can emit the backing field, or configure the backing field property explicitly before model finalization.");
+
+                // Always ignore the Maybe<T> CLR property — EF Core cannot map structs as nullable
+                entityType.Builder.Ignore(maybeProperty.PropertyName);
 
                 // Reuse an existing property if earlier model-building steps created it (for example via HasIndex).
                 var existingBackingProp = entityType.FindProperty(maybeProperty.BackingFieldName);
@@ -77,7 +80,9 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
                 var propertyBuilder = existingBackingProp?.Builder
                     ?? entityType.Builder.Property(maybeProperty.StoreType, maybeProperty.BackingFieldName);
                 if (propertyBuilder is null)
-                    continue;
+                    throw new InvalidOperationException(
+                        $"Cannot map Maybe<T> property '{maybeProperty.PropertyName}' on entity '{entityType.ClrType.Name}'. " +
+                        $"Backing field '{maybeProperty.BackingFieldName}' exists but EF Core could not map it as store type '{maybeProperty.StoreType.Name}'.");
 
                 propertyBuilder.UsePropertyAccessMode(PropertyAccessMode.Field);
                 propertyBuilder.IsRequired(false);

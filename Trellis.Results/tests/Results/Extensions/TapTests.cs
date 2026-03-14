@@ -32,6 +32,17 @@ public partial class TapTests : TestBase
         return ValueTask.CompletedTask;
     }
 
+    [Fact]
+    public void Tap_WithNullAction_ShouldThrowArgumentNullException()
+    {
+        Result<T> result = Result.Success(T.Value1);
+
+        var act = () => result.Tap((Action)null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "action");
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -135,6 +146,17 @@ public partial class TapTests : TestBase
 
         ActionExecuted.Should().Be(isSuccess);
         result.Should().Be(returned);
+    }
+
+    [Fact]
+    public async Task TapAsync_Right_Task_WithNullFunc_ShouldThrowArgumentNullException()
+    {
+        Result<T> result = Result.Success(T.Value1);
+
+        var act = async () => await result.TapAsync((Func<Task>)null!);
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
     }
 
     [Theory]

@@ -25,6 +25,17 @@ public class TapTupleTests : TestBase
     #region 2-Tuple Tap Tests (Comprehensive Coverage)
 
     [Fact]
+    public void Tap_2Tuple_WithNullAction_ThrowsArgumentNullException()
+    {
+        var result = Result.Success((42, "hello"));
+
+        var act = () => result.Tap<int, string>((Action<int, string>)null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "action");
+    }
+
+    [Fact]
     public void Tap_2Tuple_Success_ExecutesAction()
     {
         // Arrange

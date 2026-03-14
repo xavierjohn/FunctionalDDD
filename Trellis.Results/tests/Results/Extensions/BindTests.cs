@@ -6,6 +6,17 @@ public partial class BindTests : TestBase
 {
 
     [Fact]
+    public void Bind_WithNullFunc_ShouldThrowArgumentNullException()
+    {
+        var result = Result.Success(42);
+
+        var act = () => result.Bind<int, string>(null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
+    }
+
+    [Fact]
     public void Bind_WithSuccessResult_ShouldReturnNewResult()
     {
         // Arrange
@@ -123,6 +134,17 @@ public partial class BindTests : TestBase
         functionCalled.Should().BeFalse();
         actual.Should().BeFailure();
         actual.Error.Should().Be(Error1);
+    }
+
+    [Fact]
+    public async Task BindAsync_Right_Task_WithNullFunc_ShouldThrowArgumentNullException()
+    {
+        var result = Result.Success("Hello");
+
+        var act = async () => await result.BindAsync((Func<string, Task<Result<string>>>)null!);
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "func");
     }
 
     [Fact]
