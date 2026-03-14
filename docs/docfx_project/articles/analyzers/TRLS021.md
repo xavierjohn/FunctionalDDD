@@ -14,6 +14,10 @@ This rule fires as a **Warning** because the code compiles and runs without erro
 
 Replace the lambda-based `HasIndex` with `HasTrellisIndex`, or use the string-based overload with the mapped backing field name.
 
+`HasTrellisIndex` only accepts direct property access on the lambda parameter. Expressions like `e => e.Customer.SubmittedAt` are rejected with `ArgumentException` instead of being interpreted as indexes on the root entity.
+
+For `Maybe<T>` properties, `HasTrellisIndex` validates that the expected backing field exists on the entity CLR type hierarchy or is already mapped in the EF model. If the backing field is missing, it throws `InvalidOperationException` with guidance to use `partial` properties or explicit field mapping.
+
 ### Single property index
 
 ```csharp

@@ -72,6 +72,8 @@ var email = EmailAddress.Create(input);
 | TRLS020 | Use SaveChangesResultAsync instead of SaveChangesAsync | Warning |
 | TRLS021 | HasIndex references a Maybe\<T\> property | Warning |
 
+`TRLS021` recommends `HasTrellisIndex(...)` as the preferred fix for `Maybe<T>` indexes. String-based `HasIndex("_backingField")` remains valid as a fallback when you need to specify the mapped field explicitly.
+
 ## Configuration
 
 Suppress or adjust rules using standard .NET mechanisms:

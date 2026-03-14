@@ -926,6 +926,10 @@ var debugView = context.ToMaybeMappingDebugString();
 
 `HasTrellisIndex` resolves `Maybe<T>` selectors to their mapped backing fields while leaving regular properties unchanged, so mixed composite indexes stay strongly typed.
 
+`HasTrellisIndex` only accepts **direct** property access on the lambda parameter. Nested selectors such as `o => o.Customer.Phone` are rejected with `ArgumentException` so the helper cannot accidentally resolve a backing field name against the wrong entity type.
+
+For `Maybe<T>` properties, `HasTrellisIndex` also validates that the expected backing field exists on the CLR type hierarchy or is already mapped in the EF model. If the source-generated backing field is missing, the method throws `InvalidOperationException` with guidance to declare the property as `partial` or configure the backing field property explicitly before calling `HasTrellisIndex`.
+
 ### TRLSGEN100 Diagnostic
 
 If a `Maybe<T>` property is not declared `partial`, the source generator emits diagnostic `TRLSGEN100` prompting the developer to add the `partial` modifier.

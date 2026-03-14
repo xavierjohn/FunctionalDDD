@@ -59,7 +59,7 @@ The analyzers help prevent common mistakes when working with `Result<T>`:
 ### Entity Framework Core Integration
 
 - **Use SaveChangesResult (TRLS020)** - Warns when `SaveChanges`/`SaveChangesAsync` is called directly instead of `SaveChangesResultUnitAsync` or `SaveChangesResultAsync`
-- **HasIndex with Maybe\<T\> (TRLS021)** - Warns when `HasIndex` lambda references a `Maybe<T>` property, which may not be translated correctly because Trellis EF Core maps `Maybe<T>` via nullable backing fields instead of the struct property
+- **HasIndex with Maybe\<T\> (TRLS021)** - Warns when `HasIndex` lambda references a `Maybe<T>` property because Trellis EF Core maps `Maybe<T>` via nullable backing fields; prefer `HasTrellisIndex` or use the backing field name directly
 
 ### Error Handling Best Practices
 

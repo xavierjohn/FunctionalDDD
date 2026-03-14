@@ -1359,6 +1359,12 @@ IndexBuilder<TEntity> HasTrellisIndex<TEntity>(
     this EntityTypeBuilder<TEntity> entityTypeBuilder,
     Expression<Func<TEntity, object?>> propertySelector)
 
+// Notes
+// - Accepts direct property access on the lambda parameter only
+// - Rejects nested selectors such as e => e.Customer.Phone
+// - Validates Maybe<T> backing fields exist on the CLR hierarchy or are already mapped
+// - Supports inherited Maybe<T> backing fields declared on base entity types
+
 // ExecuteUpdate helpers
 UpdateSettersBuilder<TEntity> SetMaybeValue<TEntity, TInner>(
     this UpdateSettersBuilder<TEntity> updateSettersBuilder,
@@ -1416,7 +1422,7 @@ Roslyn analyzers and code fixes for correct `Result<T>`, `Maybe<T>`, and ROP pip
 | `TRLS018` | Warning | Unsafe access to `.Value` in LINQ without filtering by success state |
 | `TRLS019` | Error | Combine chain exceeds maximum supported tuple size (9) |
 | `TRLS020` | Warning | Use `SaveChangesResultAsync` instead of `SaveChangesAsync` |
-| `TRLS021` | Warning | `HasIndex` references a `Maybe<T>` property — use backing field name instead |
+| `TRLS021` | Warning | `HasIndex` references a `Maybe<T>` property — prefer `HasTrellisIndex` or use the backing field name |
 
 Source generator diagnostics use a separate `TRLSGEN` prefix (see §3 and §12).
 
