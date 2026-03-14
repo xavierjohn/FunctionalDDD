@@ -186,6 +186,62 @@ public class MaybeQueryableExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task OrderByMaybeDescending_ReferenceTypeInner_ReturnsEntitiesOrderedDescendingByBackingField()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var alice = CreateCustomer("Alice", "+1-555-0100");
+        var charlie = CreateCustomer("Charlie", "+1-555-0300");
+        var bob = CreateCustomer("Bob", "+1-555-0200");
+
+        _context.Customers.AddRange(alice, charlie, bob);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Customers
+            .WhereHasValue(c => c.Phone)
+            .OrderByMaybeDescending(c => c.Phone)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Select(customer => customer.Name.Value).Should().Equal(["Charlie", "Bob", "Alice"]);
+    }
+
+    [Fact]
+    public async Task ThenByMaybe_ValueTypeInner_UsesBackingFieldForSecondaryOrdering()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Gamma");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var older = CreateOrder(customer.Id);
+        older.SubmittedAt = Maybe.From(new DateTime(2026, 1, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        var newer = CreateOrder(customer.Id);
+        newer.SubmittedAt = Maybe.From(new DateTime(2026, 3, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        var latest = CreateOrder(customer.Id);
+        latest.SubmittedAt = Maybe.From(new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        _context.Orders.AddRange(newer, latest, older);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Orders
+            .WhereHasValue(o => o.SubmittedAt)
+            .OrderBy(o => o.Amount)
+            .ThenByMaybe(o => o.SubmittedAt)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Select(order => order.Id).Should().Equal([older.Id, newer.Id, latest.Id]);
+    }
+
+    [Fact]
     public async Task ThenByMaybeDescending_ValueTypeInner_UsesBackingFieldForSecondaryOrdering()
     {
         // Arrange

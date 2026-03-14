@@ -17,8 +17,8 @@ public static class MaybeUpdateExtensions
     /// <param name="updateSettersBuilder">The update builder.</param>
     /// <param name="propertySelector">An expression selecting the <see cref="Maybe{T}"/> property.</param>
     /// <param name="value">The value to assign.</param>
-    /// <returns>The same update builder for chaining.</returns>
-    public static void SetMaybeValue<TEntity, TInner>(
+    /// <returns>The same update builder for chaining additional Maybe update helpers.</returns>
+    public static UpdateSettersBuilder<TEntity> SetMaybeValue<TEntity, TInner>(
         this UpdateSettersBuilder<TEntity> updateSettersBuilder,
         Expression<Func<TEntity, Maybe<TInner>>> propertySelector,
         TInner value)
@@ -30,6 +30,7 @@ public static class MaybeUpdateExtensions
         ArgumentNullException.ThrowIfNull(value);
 
         InvokeSetProperty(updateSettersBuilder, propertySelector, value, clearValue: false);
+        return updateSettersBuilder;
     }
 
     /// <summary>
@@ -39,8 +40,8 @@ public static class MaybeUpdateExtensions
     /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>.</typeparam>
     /// <param name="updateSettersBuilder">The update builder.</param>
     /// <param name="propertySelector">An expression selecting the <see cref="Maybe{T}"/> property.</param>
-    /// <returns>The same update builder for chaining.</returns>
-    public static void SetMaybeNone<TEntity, TInner>(
+    /// <returns>The same update builder for chaining additional Maybe update helpers.</returns>
+    public static UpdateSettersBuilder<TEntity> SetMaybeNone<TEntity, TInner>(
         this UpdateSettersBuilder<TEntity> updateSettersBuilder,
         Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
         where TEntity : class
@@ -50,6 +51,7 @@ public static class MaybeUpdateExtensions
         ArgumentNullException.ThrowIfNull(propertySelector);
 
         InvokeSetProperty<TEntity, TInner>(updateSettersBuilder, propertySelector, default, clearValue: true);
+        return updateSettersBuilder;
     }
 
     private static void InvokeSetProperty<TEntity, TInner>(
@@ -63,7 +65,7 @@ public static class MaybeUpdateExtensions
         var descriptor = MaybePropertyResolver.Resolve(propertySelector);
         var propertyLambda = MaybePropertyResolver.BuildBackingFieldLambda(propertySelector);
         var valueLambda = BuildValueLambda<TEntity, TInner>(propertySelector.Parameters[0], descriptor, value, clearValue);
-        var method = GetSetPropertyMethodDefinition<TEntity>().MakeGenericMethod(descriptor.StoreType);
+        var method = SetPropertyMethodCache<TEntity>.Definition.MakeGenericMethod(descriptor.StoreType);
 
         method.Invoke(updateSettersBuilder, [propertyLambda, valueLambda]);
     }
@@ -86,9 +88,9 @@ public static class MaybeUpdateExtensions
         return Expression.Lambda(delegateType, body, parameter);
     }
 
-    private static MethodInfo GetSetPropertyMethodDefinition<TEntity>()
-        where TEntity : class =>
-        typeof(UpdateSettersBuilder<TEntity>)
+    private static class SetPropertyMethodCache<TEntity> where TEntity : class
+    {
+        internal static readonly MethodInfo Definition = typeof(UpdateSettersBuilder<TEntity>)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Single(method =>
                 method.Name == nameof(UpdateSettersBuilder<TEntity>.SetProperty)
@@ -96,4 +98,5 @@ public static class MaybeUpdateExtensions
                 && method.GetParameters().Length == 2
                 && method.GetParameters()[1].ParameterType.IsGenericType
                 && method.GetParameters()[1].ParameterType.GetGenericTypeDefinition() == typeof(Expression<>));
+    }
 }

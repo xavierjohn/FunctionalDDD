@@ -54,6 +54,9 @@ public static class MaybeQueryableExtensions
         where TEntity : class
         where TInner : notnull
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
         var predicate = BuildNullCheck<TEntity, TInner>(propertySelector, isNullCheck: true);
         return source.Where(predicate);
     }
@@ -82,6 +85,9 @@ public static class MaybeQueryableExtensions
         where TEntity : class
         where TInner : notnull
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
         var predicate = BuildNullCheck<TEntity, TInner>(propertySelector, isNullCheck: false);
         return source.Where(predicate);
     }
@@ -216,8 +222,6 @@ public static class MaybeQueryableExtensions
         where TEntity : class
         where TInner : notnull
     {
-        ArgumentNullException.ThrowIfNull(propertySelector);
-
         var descriptor = MaybePropertyResolver.Resolve(propertySelector);
         var parameter = propertySelector.Parameters[0];
         var efProperty = MaybePropertyResolver.BuildEfPropertyAccess(parameter, descriptor);
