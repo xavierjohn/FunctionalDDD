@@ -338,6 +338,23 @@ public class MaybePropertyTests : IDisposable
             .Where(exception => exception.ParamName == "propertySelector");
     }
 
+    [Fact]
+    public void HasTrellisIndex_NestedMaybeSelector_ThrowsWithPropertySelectorParamName()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new NestedMaybeSelectorIndexedDbContext(
+            new DbContextOptionsBuilder<NestedMaybeSelectorIndexedDbContext>()
+                .UseSqlite(connection)
+                .Options);
+
+        var act = () => context.Model;
+
+        act.Should().Throw<ArgumentException>()
+            .Where(exception => exception.ParamName == "propertySelector");
+    }
+
     #endregion
 
     #region Navigation property with Include
@@ -487,6 +504,20 @@ public class MaybePropertyTests : IDisposable
             {
                 builder.HasKey(customer => customer.Id);
                 builder.HasTrellisIndex(customer => customer.Name.Value.Contains('a'));
+            });
+    }
+
+    private class NestedMaybeSelectorIndexedDbContext(DbContextOptions<NestedMaybeSelectorIndexedDbContext> options)
+        : DbContext(options)
+    {
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions(typeof(TestCustomerId).Assembly);
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<TestOrder>(builder =>
+            {
+                builder.HasKey(order => order.Id);
+                builder.HasTrellisIndex(order => order.Customer.Phone);
             });
     }
 

@@ -30,11 +30,13 @@ internal static class MaybePropertyResolver
 
     internal static MaybePropertyDescriptor Resolve(LambdaExpression propertySelector)
     {
-        if (TryGetProperty(propertySelector.Body, out var property) && IsMaybeProperty(property))
+        var parameter = propertySelector.Parameters.Single();
+
+        if (TryGetProperty(propertySelector.Body, parameter, out var property) && IsMaybeProperty(property))
             return CreateDescriptor(property);
 
         throw new ArgumentException(
-            "Expression must be a simple Maybe<T> property access (e.g., e => e.Phone).",
+            "Expression must be a direct Maybe<T> property access on the lambda parameter (e.g., e => e.Phone).",
             nameof(propertySelector));
     }
 
@@ -47,19 +49,16 @@ internal static class MaybePropertyResolver
     {
         var properties = new List<PropertyInfo>();
 
-        try
-        {
-            CollectReferencedProperties(propertySelector.Body, properties, nameof(propertySelector));
-        }
-        catch (ArgumentException exception) when (exception.ParamName == "expression")
-        {
-            throw new ArgumentException(exception.Message, nameof(propertySelector), exception);
-        }
+        CollectReferencedProperties(
+            propertySelector.Body,
+            propertySelector.Parameters.Single(),
+            properties,
+            nameof(propertySelector));
 
         if (properties.Count == 0)
         {
             throw new ArgumentException(
-                "Expression must be a property access or anonymous object of property accesses (e.g., e => e.Phone or e => new { e.Status, e.SubmittedAt }).",
+                "Expression must be a direct property access or anonymous object of direct property accesses on the lambda parameter (e.g., e => e.Phone or e => new { e.Status, e.SubmittedAt }).",
                 nameof(propertySelector));
         }
 
@@ -117,6 +116,7 @@ internal static class MaybePropertyResolver
 
     private static void CollectReferencedProperties(
         Expression expression,
+        ParameterExpression parameter,
         ICollection<PropertyInfo> properties,
         string parameterName)
     {
@@ -124,28 +124,33 @@ internal static class MaybePropertyResolver
 
         switch (expression)
         {
-            case MemberExpression { Member: PropertyInfo property }:
+            case MemberExpression { Member: PropertyInfo property } memberExpression
+                when IsDirectPropertyAccess(memberExpression, parameter, property):
                 properties.Add(property);
                 return;
 
             case NewExpression newExpression:
                 foreach (var argument in newExpression.Arguments)
-                    CollectReferencedProperties(argument, properties, parameterName);
+                    CollectReferencedProperties(argument, parameter, properties, parameterName);
 
                 return;
 
             default:
                 throw new ArgumentException(
-                    "Expression must be a property access or anonymous object of property accesses.",
+                    "Expression must be a direct property access or anonymous object of direct property accesses on the lambda parameter.",
                     parameterName);
         }
     }
 
-    private static bool TryGetProperty(Expression expression, out PropertyInfo property)
+    private static bool TryGetProperty(
+        Expression expression,
+        ParameterExpression parameter,
+        out PropertyInfo property)
     {
         expression = UnwrapConvert(expression);
 
-        if (expression is MemberExpression { Member: PropertyInfo propertyInfo })
+        if (expression is MemberExpression { Member: PropertyInfo propertyInfo } memberExpression
+            && IsDirectPropertyAccess(memberExpression, parameter, propertyInfo))
         {
             property = propertyInfo;
             return true;
@@ -153,6 +158,17 @@ internal static class MaybePropertyResolver
 
         property = null!;
         return false;
+    }
+
+    private static bool IsDirectPropertyAccess(
+        MemberExpression memberExpression,
+        ParameterExpression parameter,
+        PropertyInfo property)
+    {
+        var target = UnwrapConvert(memberExpression.Expression!);
+
+        return ReferenceEquals(target, parameter)
+               && property.DeclaringType?.IsAssignableFrom(parameter.Type) == true;
     }
 
     private static Expression UnwrapConvert(Expression expression)

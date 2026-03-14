@@ -111,6 +111,15 @@ public class MaybeQueryableExtensionsTests : IDisposable
         results.Should().BeEmpty();
     }
 
+    [Fact]
+    public void WhereHasValue_NestedMaybeSelector_ThrowsWithPropertySelectorParamName()
+    {
+        var act = () => _context.Orders.WhereHasValue(order => order.Customer.Phone);
+
+        act.Should().Throw<ArgumentException>()
+            .Where(exception => exception.ParamName == "propertySelector");
+    }
+
     #endregion
 
     #region WhereEquals — reference type inner (PhoneNumber)
@@ -160,7 +169,7 @@ public class MaybeQueryableExtensionsTests : IDisposable
 
     #endregion
 
-    #region OrderByMaybe / ThenByMaybeDescending
+    #region Maybe ordering helpers
 
     [Fact]
     public async Task OrderByMaybe_ReferenceTypeInner_ReturnsEntitiesOrderedByBackingField()
