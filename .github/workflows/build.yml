@@ -23,9 +23,9 @@ jobs:
         dotnet-version: '10.0.x'
         
     - name: Setup versioning
-      uses: dotnet/nbgv@master
-      with:
-        setAllVars: true
+      run: |
+        dotnet tool install --global nbgv
+        nbgv cloud
 
     - name: Cache NuGet packages
       uses: actions/cache@v5
@@ -79,7 +79,7 @@ jobs:
       run: dotnet pack --no-build --verbosity normal -c Release -o artifacts/
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: ${{ success() && !github.base_ref }}
       with:
         name: artifact

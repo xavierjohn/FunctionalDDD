@@ -28,9 +28,9 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Setup versioning
-      uses: dotnet/nbgv@master
-      with:
-        setAllVars: true
+      run: |
+        dotnet tool install --global nbgv
+        nbgv cloud
 
     - name: Cache NuGet packages
       uses: actions/cache@v5
@@ -100,7 +100,7 @@ jobs:
         ls -lh nupkgs/*.nupkg
 
     - name: Upload SBOMs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: sbom-spdx
         path: sbom/_manifest/**
