@@ -111,6 +111,15 @@ public class MaybeQueryableExtensionsTests : IDisposable
         results.Should().BeEmpty();
     }
 
+    [Fact]
+    public void WhereHasValue_NestedMaybeSelector_ThrowsWithPropertySelectorParamName()
+    {
+        var act = () => _context.Orders.WhereHasValue(order => order.Customer.Phone);
+
+        act.Should().Throw<ArgumentException>()
+            .Where(exception => exception.ParamName == "propertySelector");
+    }
+
     #endregion
 
     #region WhereEquals — reference type inner (PhoneNumber)
@@ -156,6 +165,122 @@ public class MaybeQueryableExtensionsTests : IDisposable
 
         // Assert
         results.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region Maybe ordering helpers
+
+    [Fact]
+    public async Task OrderByMaybe_ReferenceTypeInner_ReturnsEntitiesOrderedByBackingField()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var alice = CreateCustomer("Alice", "+1-555-0100");
+        var charlie = CreateCustomer("Charlie", "+1-555-0300");
+        var bob = CreateCustomer("Bob", "+1-555-0200");
+
+        _context.Customers.AddRange(charlie, bob, alice);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Customers
+            .WhereHasValue(c => c.Phone)
+            .OrderByMaybe(c => c.Phone)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Select(customer => customer.Name.Value).Should().Equal(["Alice", "Bob", "Charlie"]);
+    }
+
+    [Fact]
+    public async Task OrderByMaybeDescending_ReferenceTypeInner_ReturnsEntitiesOrderedDescendingByBackingField()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var alice = CreateCustomer("Alice", "+1-555-0100");
+        var charlie = CreateCustomer("Charlie", "+1-555-0300");
+        var bob = CreateCustomer("Bob", "+1-555-0200");
+
+        _context.Customers.AddRange(alice, charlie, bob);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Customers
+            .WhereHasValue(c => c.Phone)
+            .OrderByMaybeDescending(c => c.Phone)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Select(customer => customer.Name.Value).Should().Equal(["Charlie", "Bob", "Alice"]);
+    }
+
+    [Fact]
+    public async Task ThenByMaybe_ValueTypeInner_UsesBackingFieldForSecondaryOrdering()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Gamma");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var older = CreateOrder(customer.Id);
+        older.SubmittedAt = Maybe.From(new DateTime(2026, 1, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        var newer = CreateOrder(customer.Id);
+        newer.SubmittedAt = Maybe.From(new DateTime(2026, 3, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        var latest = CreateOrder(customer.Id);
+        latest.SubmittedAt = Maybe.From(new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        _context.Orders.AddRange(newer, latest, older);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Orders
+            .WhereHasValue(o => o.SubmittedAt)
+            .OrderBy(o => o.Amount)
+            .ThenByMaybe(o => o.SubmittedAt)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Select(order => order.Id).Should().Equal([older.Id, newer.Id, latest.Id]);
+    }
+
+    [Fact]
+    public async Task ThenByMaybeDescending_ValueTypeInner_UsesBackingFieldForSecondaryOrdering()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Delta");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var older = CreateOrder(customer.Id);
+        older.SubmittedAt = Maybe.From(new DateTime(2026, 1, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        var newer = CreateOrder(customer.Id);
+        newer.SubmittedAt = Maybe.From(new DateTime(2026, 3, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        var latest = CreateOrder(customer.Id);
+        latest.SubmittedAt = Maybe.From(new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        _context.Orders.AddRange(older, latest, newer);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var results = await _context.Orders
+            .WhereHasValue(o => o.SubmittedAt)
+            .OrderBy(o => o.Amount)
+            .ThenByMaybeDescending(o => o.SubmittedAt)
+            .ToListAsync(ct);
+
+        // Assert
+        results.Select(order => order.Id).Should().Equal([latest.Id, newer.Id, older.Id]);
     }
 
     #endregion
@@ -300,6 +425,63 @@ public class MaybeQueryableExtensionsTests : IDisposable
         // Assert
         results.Should().ContainSingle()
             .Which.Id.Should().Be(order1.Id);
+    }
+
+    #endregion
+
+    #region ExecuteUpdate helpers
+
+    [Fact]
+    public async Task SetMaybeValue_ExecuteUpdate_SetsMappedBackingField()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Echo");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var updatedPhone = PhoneNumber.Create("+1-555-0700");
+
+        // Act
+        await _context.Customers
+            .Where(c => c.Id == customer.Id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetMaybeValue(c => c.Phone, updatedPhone),
+                ct);
+
+        _context.ChangeTracker.Clear();
+        var loaded = await _context.Customers.FindAsync([customer.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.Phone.HasValue.Should().BeTrue();
+        loaded.Phone.Value.Value.Should().Be(updatedPhone.Value);
+    }
+
+    [Fact]
+    public async Task SetMaybeNone_ExecuteUpdate_ClearsMappedBackingField()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Foxtrot", "+1-555-0800");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Act
+        await _context.Customers
+            .Where(c => c.Id == customer.Id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetMaybeNone(c => c.Phone),
+                ct);
+
+        _context.ChangeTracker.Clear();
+        var loaded = await _context.Customers.FindAsync([customer.Id], ct);
+
+        // Assert
+        loaded.Should().NotBeNull();
+        loaded!.Phone.HasNoValue.Should().BeTrue();
     }
 
     #endregion

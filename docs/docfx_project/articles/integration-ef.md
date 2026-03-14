@@ -889,10 +889,42 @@ var withPhone = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(
 
 // WhereEquals — WHERE column = @value
 var matches = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+
+// OrderByMaybe — ORDER BY mapped backing field
+var ordered = await context.Customers
+    .WhereHasValue(c => c.Phone)
+    .OrderByMaybe(c => c.Phone)
+    .ToListAsync(ct);
 ```
 
 > [!WARNING]
 > Do not use direct property references like `.Where(c => c.Phone.HasValue)` — EF Core cannot translate them. Always use the query extensions above.
+
+### Indexing, Bulk Updates, and Diagnostics
+
+Use the CLR-property helpers when you need features that normally force you down to string-backed field names:
+
+```csharp
+modelBuilder.Entity<Customer>(builder =>
+{
+    builder.HasKey(c => c.Id);
+    builder.HasTrellisIndex(c => c.Phone);
+    builder.HasTrellisIndex(c => new { c.Name, c.SubmittedAt });
+});
+
+await context.Customers
+    .Where(c => c.Id == customerId)
+    .ExecuteUpdateAsync(setters => setters.SetMaybeValue(c => c.Phone, phone), ct);
+
+await context.Customers
+    .Where(c => c.Id == customerId)
+    .ExecuteUpdateAsync(setters => setters.SetMaybeNone(c => c.Phone), ct);
+
+var mappings = context.GetMaybePropertyMappings();
+var debugView = context.ToMaybeMappingDebugString();
+```
+
+`HasTrellisIndex` resolves `Maybe<T>` selectors to their mapped backing fields while leaving regular properties unchanged, so mixed composite indexes stay strongly typed.
 
 ### TRLSGEN100 Diagnostic
 

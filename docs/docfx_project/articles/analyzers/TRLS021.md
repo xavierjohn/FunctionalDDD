@@ -12,7 +12,7 @@ This rule fires as a **Warning** because the code compiles and runs without erro
 
 ## How to Fix Violations
 
-Replace the lambda-based `HasIndex` with a string-based overload that uses the backing field name.
+Replace the lambda-based `HasIndex` with `HasTrellisIndex`, or use the string-based overload with the mapped backing field name.
 
 ### Single property index
 
@@ -20,7 +20,10 @@ Replace the lambda-based `HasIndex` with a string-based overload that uses the b
 // ❌ Bad - index silently not created
 builder.HasIndex(e => e.SubmittedAt);
 
-// ✅ Good - uses backing field name
+// ✅ Preferred - resolves Maybe<T> to the mapped backing field for you
+builder.HasTrellisIndex(e => e.SubmittedAt);
+
+// ✅ Also valid - uses backing field name directly
 builder.HasIndex("_submittedAt");
 ```
 
@@ -30,7 +33,10 @@ builder.HasIndex("_submittedAt");
 // ❌ Bad - SubmittedAt part of index silently ignored
 builder.HasIndex(e => new { e.Status, e.SubmittedAt });
 
-// ✅ Good - uses string-based overload with backing field
+// ✅ Preferred - regular properties stay regular, Maybe<T> resolves automatically
+builder.HasTrellisIndex(e => new { e.Status, e.SubmittedAt });
+
+// ✅ Also valid - uses string-based overload with backing field
 builder.HasIndex("Status", "_submittedAt");
 ```
 
@@ -65,7 +71,7 @@ builder.HasIndex(e => new { e.Status, e.SubmittedAt }); // Only Status index mat
 #pragma warning restore TRLS021
 ```
 
-However, in this case it's clearer to remove the `Maybe<T>` property from the index expression entirely.
+However, in this case it's clearer to remove the `Maybe<T>` property from the index expression entirely or switch to `HasTrellisIndex`.
 
 ## See Also
 
