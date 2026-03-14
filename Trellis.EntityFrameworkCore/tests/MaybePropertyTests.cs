@@ -388,6 +388,21 @@ public class MaybePropertyTests : IDisposable
         act.Should().NotThrow("MaybeConvention should silently skip Maybe<T> properties without backing fields");
     }
 
+    [Fact]
+    public void HasTrellisIndex_NoBackingField_ThrowsClearException()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new NoBackingFieldIndexedDbContext(
+            new DbContextOptionsBuilder<NoBackingFieldIndexedDbContext>().UseSqlite(connection).Options);
+
+        var act = () => context.Model;
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Website*_website*");
+    }
+
     private class EntityWithoutBackingField
     {
         public Guid Id { get; set; }
@@ -404,6 +419,22 @@ public class MaybePropertyTests : IDisposable
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
             modelBuilder.Entity<EntityWithoutBackingField>(b => b.HasKey(e => e.Id));
+    }
+
+    private class NoBackingFieldIndexedDbContext(DbContextOptions<NoBackingFieldIndexedDbContext> options)
+        : DbContext(options)
+    {
+        public DbSet<EntityWithoutBackingField> Items => Set<EntityWithoutBackingField>();
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+            modelBuilder.Entity<EntityWithoutBackingField>(builder =>
+            {
+                builder.HasKey(entity => entity.Id);
+                builder.HasTrellisIndex(entity => entity.Website);
+            });
     }
 
     private class IndexedMaybeDbContext(DbContextOptions<IndexedMaybeDbContext> options)

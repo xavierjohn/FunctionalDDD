@@ -38,19 +38,24 @@ internal static class MaybePropertyResolver
             nameof(propertySelector));
     }
 
-    internal static IReadOnlyList<string> ResolveMappedPropertyNames(LambdaExpression propertySelector)
-    {
-        var propertyNames = new List<string>();
-        CollectMappedPropertyNames(propertySelector.Body, propertyNames);
+    internal static IReadOnlyList<string> ResolveMappedPropertyNames(LambdaExpression propertySelector) =>
+        ResolveReferencedProperties(propertySelector)
+            .Select(ResolveMappedPropertyName)
+            .ToArray();
 
-        if (propertyNames.Count == 0)
+    internal static IReadOnlyList<PropertyInfo> ResolveReferencedProperties(LambdaExpression propertySelector)
+    {
+        var properties = new List<PropertyInfo>();
+        CollectReferencedProperties(propertySelector.Body, properties);
+
+        if (properties.Count == 0)
         {
             throw new ArgumentException(
                 "Expression must be a property access or anonymous object of property accesses (e.g., e => e.Phone or e => new { e.Status, e.SubmittedAt }).",
                 nameof(propertySelector));
         }
 
-        return propertyNames;
+        return properties;
     }
 
     internal static LambdaExpression BuildBackingFieldLambda<TEntity, TInner>(
@@ -82,6 +87,9 @@ internal static class MaybePropertyResolver
             ? CreateDescriptor(property).BackingFieldName
             : property.Name;
 
+    internal static MaybePropertyDescriptor Describe(PropertyInfo property) =>
+        CreateDescriptor(property);
+
     private static readonly MethodInfo s_efPropertyMethodInfo =
         typeof(EF).GetMethod(nameof(EF.Property))!;
 
@@ -99,19 +107,19 @@ internal static class MaybePropertyResolver
         return new MaybePropertyDescriptor(property, property.Name, backingFieldName, innerType, storeType);
     }
 
-    private static void CollectMappedPropertyNames(Expression expression, ICollection<string> propertyNames)
+    private static void CollectReferencedProperties(Expression expression, ICollection<PropertyInfo> properties)
     {
         expression = UnwrapConvert(expression);
 
         switch (expression)
         {
             case MemberExpression { Member: PropertyInfo property }:
-                propertyNames.Add(ResolveMappedPropertyName(property));
+                properties.Add(property);
                 return;
 
             case NewExpression newExpression:
                 foreach (var argument in newExpression.Arguments)
-                    CollectMappedPropertyNames(argument, propertyNames);
+                    CollectReferencedProperties(argument, properties);
 
                 return;
 
