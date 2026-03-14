@@ -1324,11 +1324,59 @@ IQueryable<TEntity> WhereEquals<TEntity, TInner>(
     Expression<Func<TEntity, Maybe<TInner>>> propertySelector,
     TInner value)
 
+// OrderByMaybe — ORDER BY backing_field ASC
+IOrderedQueryable<TEntity> OrderByMaybe<TEntity, TInner>(
+    this IQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
+// OrderByMaybeDescending — ORDER BY backing_field DESC
+IOrderedQueryable<TEntity> OrderByMaybeDescending<TEntity, TInner>(
+    this IQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
+// ThenByMaybe — THEN BY backing_field ASC
+IOrderedQueryable<TEntity> ThenByMaybe<TEntity, TInner>(
+    this IOrderedQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
+// ThenByMaybeDescending — THEN BY backing_field DESC
+IOrderedQueryable<TEntity> ThenByMaybeDescending<TEntity, TInner>(
+    this IOrderedQueryable<TEntity> source,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
 // Usage
 var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
 var withPhone    = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
 var matches      = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+var ordered      = await context.Customers.WhereHasValue(c => c.Phone).OrderByMaybe(c => c.Phone).ToListAsync(ct);
 ```
+
+### Maybe\<T\> Index, Update, and Diagnostics Helpers
+
+```csharp
+// HasTrellisIndex — resolves Maybe<T> properties to mapped backing fields
+IndexBuilder<TEntity> HasTrellisIndex<TEntity>(
+    this EntityTypeBuilder<TEntity> entityTypeBuilder,
+    Expression<Func<TEntity, object?>> propertySelector)
+
+// ExecuteUpdate helpers
+void SetMaybeValue<TEntity, TInner>(
+    this UpdateSettersBuilder<TEntity> updateSettersBuilder,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector,
+    TInner value)
+
+void SetMaybeNone<TEntity, TInner>(
+    this UpdateSettersBuilder<TEntity> updateSettersBuilder,
+    Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+
+// Diagnostics
+IReadOnlyList<MaybePropertyMapping> GetMaybePropertyMappings(this IModel model)
+IReadOnlyList<MaybePropertyMapping> GetMaybePropertyMappings(this DbContext dbContext)
+string ToMaybeMappingDebugString(this IModel model)
+string ToMaybeMappingDebugString(this DbContext dbContext)
+```
+
+`MaybePropertyMapping` describes the entity type, CLR property name, generated backing field, nullable store type, column name, and resolved provider type for each discovered `Maybe<T>` mapping.
 
 ### Exception Classification
 

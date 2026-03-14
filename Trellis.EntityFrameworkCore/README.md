@@ -160,6 +160,43 @@ Because `MaybeConvention` ignores the `Maybe<T>` CLR property, use the query ext
 var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
 var withPhone    = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
 var matches      = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+
+var ordered      = await context.Customers
+    .WhereHasValue(c => c.Phone)
+    .OrderByMaybe(c => c.Phone)
+    .ToListAsync(ct);
+```
+
+### Indexing and Bulk Updates
+
+Use the CLR property helpers instead of string literals when you need indexes or `ExecuteUpdate` support:
+
+```csharp
+modelBuilder.Entity<Customer>(builder =>
+{
+    builder.HasKey(c => c.Id);
+    builder.HasTrellisIndex(c => c.Phone);
+    builder.HasTrellisIndex(c => new { c.Name, c.SubmittedAt });
+});
+
+await context.Customers
+    .Where(c => c.Id == customerId)
+    .ExecuteUpdateAsync(setters => setters.SetMaybeValue(c => c.Phone, phone), ct);
+
+await context.Customers
+    .Where(c => c.Id == customerId)
+    .ExecuteUpdateAsync(setters => setters.SetMaybeNone(c => c.Phone), ct);
+```
+
+`HasTrellisIndex` resolves `Maybe<T>` properties to their mapped backing fields while leaving regular properties unchanged, so mixed composite indexes stay strongly typed.
+
+### Mapping Diagnostics
+
+You can inspect resolved `Maybe<T>` mappings at runtime to verify the generated field, column name, and provider type:
+
+```csharp
+var mappings = context.GetMaybePropertyMappings();
+var debugView = context.ToMaybeMappingDebugString();
 ```
 
 ### TRLSGEN100

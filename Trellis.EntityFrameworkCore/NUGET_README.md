@@ -71,6 +71,20 @@ No `OnModelCreating` configuration needed. Querying uses dedicated extensions:
 var withoutPhone = await context.Customers.WhereNone(c => c.Phone).ToListAsync(ct);
 var withPhone    = await context.Customers.WhereHasValue(c => c.Phone).ToListAsync(ct);
 var matches      = await context.Customers.WhereEquals(c => c.Phone, phone).ToListAsync(ct);
+var ordered      = await context.Customers.WhereHasValue(c => c.Phone).OrderByMaybe(c => c.Phone).ToListAsync(ct);
+```
+
+Indexes, bulk updates, and diagnostics also stay strongly typed:
+
+```csharp
+modelBuilder.Entity<Customer>(builder => builder.HasTrellisIndex(c => c.Phone));
+
+await context.Customers
+    .Where(c => c.Id == customerId)
+    .ExecuteUpdateAsync(setters => setters.SetMaybeValue(c => c.Phone, phone), ct);
+
+var mappings = context.GetMaybePropertyMappings();
+var debugView = context.ToMaybeMappingDebugString();
 ```
 
 ## Result-Returning SaveChanges

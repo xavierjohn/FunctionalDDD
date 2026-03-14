@@ -46,8 +46,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 /// </remarks>
 internal sealed class MaybeConvention : IModelFinalizingConvention
 {
-    private static readonly Type s_maybeOpenGenericType = typeof(Maybe<>);
-
     /// <summary>
     /// After the model is built, discovers all <see cref="Maybe{T}"/> CLR properties on entity types
     /// and configures their backing fields as nullable database columns.
@@ -61,55 +59,33 @@ internal sealed class MaybeConvention : IModelFinalizingConvention
             if (entityType.ClrType is null)
                 continue;
 
-            var maybeProperties = entityType.ClrType
-                .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Where(IsMaybeProperty)
-                .ToList();
-
-            foreach (var clrProperty in maybeProperties)
+            foreach (var maybeProperty in MaybePropertyResolver.GetMaybeProperties(entityType.ClrType))
             {
-                var propertyName = clrProperty.Name;
-                var innerType = clrProperty.PropertyType.GetGenericArguments()[0];
-                var backingFieldName = MaybeFieldNaming.ToBackingFieldName(propertyName);
-
                 // Always ignore the Maybe<T> CLR property — EF Core cannot map structs as nullable
-                entityType.Builder.Ignore(propertyName);
+                entityType.Builder.Ignore(maybeProperty.PropertyName);
 
                 // Verify the backing field exists (source generator should have created it)
                 var backingField = entityType.ClrType.GetField(
-                    backingFieldName,
+                    maybeProperty.BackingFieldName,
                     BindingFlags.Instance | BindingFlags.NonPublic);
 
                 if (backingField is null)
                     continue; // No backing field — nothing to map
 
                 // Check if already configured explicitly
-                var existingBackingProp = entityType.FindProperty(backingFieldName);
+                var existingBackingProp = entityType.FindProperty(maybeProperty.BackingFieldName);
                 if (existingBackingProp is not null)
                     continue;
 
-                // Determine the nullable type for the backing field
-                var nullableType = innerType.IsValueType
-                    ? typeof(Nullable<>).MakeGenericType(innerType)
-                    : innerType;
-
                 // Map the backing field as a nullable property
-                var propertyBuilder = entityType.Builder.Property(nullableType, backingFieldName);
+                var propertyBuilder = entityType.Builder.Property(maybeProperty.StoreType, maybeProperty.BackingFieldName);
                 if (propertyBuilder is null)
                     continue;
 
                 propertyBuilder.UsePropertyAccessMode(PropertyAccessMode.Field);
                 propertyBuilder.IsRequired(false);
-                propertyBuilder.HasAnnotation(RelationalAnnotationNames.ColumnName, propertyName);
+                propertyBuilder.HasAnnotation(RelationalAnnotationNames.ColumnName, maybeProperty.PropertyName);
             }
         }
     }
-
-    private static bool IsMaybeProperty(PropertyInfo property)
-    {
-        var type = property.PropertyType;
-        return type.IsGenericType
-               && type.GetGenericTypeDefinition() == s_maybeOpenGenericType;
-    }
-
 }

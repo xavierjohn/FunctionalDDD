@@ -25,6 +25,11 @@ using Microsoft.EntityFrameworkCore;
 /// </remarks>
 public static class MaybeQueryableExtensions
 {
+    private static readonly MethodInfo OrderByMethodDefinition = GetQueryableOrderingMethod(nameof(Queryable.OrderBy));
+    private static readonly MethodInfo OrderByDescendingMethodDefinition = GetQueryableOrderingMethod(nameof(Queryable.OrderByDescending));
+    private static readonly MethodInfo ThenByMethodDefinition = GetQueryableOrderingMethod(nameof(Queryable.ThenBy));
+    private static readonly MethodInfo ThenByDescendingMethodDefinition = GetQueryableOrderingMethod(nameof(Queryable.ThenByDescending));
+
     /// <summary>
     /// Filters the query to entities where the <see cref="Maybe{T}"/> property has no value
     /// (backing field IS NULL).
@@ -108,18 +113,101 @@ public static class MaybeQueryableExtensions
         where TEntity : class
         where TInner : notnull
     {
-        var (backingFieldName, nullableType) = ResolveBackingField<TInner>(propertySelector);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
+        var descriptor = MaybePropertyResolver.Resolve(propertySelector);
         var parameter = propertySelector.Parameters[0];
-        var efProperty = BuildEfPropertyAccess(parameter, backingFieldName, nullableType);
+        var efProperty = MaybePropertyResolver.BuildEfPropertyAccess(parameter, descriptor);
 
         Expression valueExpr = typeof(TInner).IsValueType
-            ? Expression.Convert(Expression.Constant(value), nullableType)
-            : Expression.Constant(value, nullableType);
+            ? Expression.Convert(Expression.Constant(value), descriptor.StoreType)
+            : Expression.Constant(value, descriptor.StoreType);
 
         var equals = Expression.Equal(efProperty, valueExpr);
         var lambda = Expression.Lambda<Func<TEntity, bool>>(equals, parameter);
 
         return source.Where(lambda);
+    }
+
+    /// <summary>
+    /// Orders the query ascending by the mapped backing field for the selected <see cref="Maybe{T}"/> property.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>.</typeparam>
+    /// <param name="source">The queryable source.</param>
+    /// <param name="propertySelector">An expression selecting the <see cref="Maybe{T}"/> property.</param>
+    /// <returns>An ordered queryable.</returns>
+    public static IOrderedQueryable<TEntity> OrderByMaybe<TEntity, TInner>(
+        this IQueryable<TEntity> source,
+        Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+        where TEntity : class
+        where TInner : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
+        return ApplyOrdering(source, propertySelector, OrderByMethodDefinition);
+    }
+
+    /// <summary>
+    /// Orders the query descending by the mapped backing field for the selected <see cref="Maybe{T}"/> property.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>.</typeparam>
+    /// <param name="source">The queryable source.</param>
+    /// <param name="propertySelector">An expression selecting the <see cref="Maybe{T}"/> property.</param>
+    /// <returns>An ordered queryable.</returns>
+    public static IOrderedQueryable<TEntity> OrderByMaybeDescending<TEntity, TInner>(
+        this IQueryable<TEntity> source,
+        Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+        where TEntity : class
+        where TInner : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
+        return ApplyOrdering(source, propertySelector, OrderByDescendingMethodDefinition);
+    }
+
+    /// <summary>
+    /// Adds an ascending secondary ordering using the mapped backing field for the selected <see cref="Maybe{T}"/> property.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>.</typeparam>
+    /// <param name="source">The ordered queryable source.</param>
+    /// <param name="propertySelector">An expression selecting the <see cref="Maybe{T}"/> property.</param>
+    /// <returns>An ordered queryable.</returns>
+    public static IOrderedQueryable<TEntity> ThenByMaybe<TEntity, TInner>(
+        this IOrderedQueryable<TEntity> source,
+        Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+        where TEntity : class
+        where TInner : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
+        return ApplyOrdering(source, propertySelector, ThenByMethodDefinition);
+    }
+
+    /// <summary>
+    /// Adds a descending secondary ordering using the mapped backing field for the selected <see cref="Maybe{T}"/> property.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <typeparam name="TInner">The type wrapped in <see cref="Maybe{T}"/>.</typeparam>
+    /// <param name="source">The ordered queryable source.</param>
+    /// <param name="propertySelector">An expression selecting the <see cref="Maybe{T}"/> property.</param>
+    /// <returns>An ordered queryable.</returns>
+    public static IOrderedQueryable<TEntity> ThenByMaybeDescending<TEntity, TInner>(
+        this IOrderedQueryable<TEntity> source,
+        Expression<Func<TEntity, Maybe<TInner>>> propertySelector)
+        where TEntity : class
+        where TInner : notnull
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+
+        return ApplyOrdering(source, propertySelector, ThenByDescendingMethodDefinition);
     }
 
     private static Expression<Func<TEntity, bool>> BuildNullCheck<TEntity, TInner>(
@@ -128,11 +216,13 @@ public static class MaybeQueryableExtensions
         where TEntity : class
         where TInner : notnull
     {
-        var (backingFieldName, nullableType) = ResolveBackingField<TInner>(propertySelector);
-        var parameter = propertySelector.Parameters[0];
-        var efProperty = BuildEfPropertyAccess(parameter, backingFieldName, nullableType);
+        ArgumentNullException.ThrowIfNull(propertySelector);
 
-        var nullConstant = Expression.Constant(null, nullableType);
+        var descriptor = MaybePropertyResolver.Resolve(propertySelector);
+        var parameter = propertySelector.Parameters[0];
+        var efProperty = MaybePropertyResolver.BuildEfPropertyAccess(parameter, descriptor);
+
+        var nullConstant = Expression.Constant(null, descriptor.StoreType);
         var comparison = isNullCheck
             ? Expression.Equal(efProperty, nullConstant)
             : Expression.NotEqual(efProperty, nullConstant);
@@ -140,34 +230,24 @@ public static class MaybeQueryableExtensions
         return Expression.Lambda<Func<TEntity, bool>>(comparison, parameter);
     }
 
-    private static (string BackingFieldName, Type NullableType) ResolveBackingField<TInner>(
-        LambdaExpression propertySelector) where TInner : notnull
+    private static IOrderedQueryable<TEntity> ApplyOrdering<TEntity, TInner>(
+        IQueryable<TEntity> source,
+        Expression<Func<TEntity, Maybe<TInner>>> propertySelector,
+        MethodInfo methodDefinition)
+        where TEntity : class
+        where TInner : notnull
     {
-        if (propertySelector.Body is not MemberExpression { Member: PropertyInfo property })
-            throw new ArgumentException(
-                "Expression must be a simple property access (e.g., c => c.Phone).",
-                nameof(propertySelector));
+        var keySelector = MaybePropertyResolver.BuildBackingFieldLambda(propertySelector);
+        var method = methodDefinition.MakeGenericMethod(typeof(TEntity), keySelector.ReturnType);
 
-        var backingFieldName = MaybeFieldNaming.ToBackingFieldName(property.Name);
-        var innerType = typeof(TInner);
-        var nullableType = innerType.IsValueType
-            ? typeof(Nullable<>).MakeGenericType(innerType)
-            : innerType;
-
-        return (backingFieldName, nullableType);
+        return (IOrderedQueryable<TEntity>)method.Invoke(null, [source, keySelector])!;
     }
 
-    private static readonly MethodInfo EfPropertyMethodInfo =
-        typeof(EF).GetMethod(nameof(EF.Property))!;
-
-    private static MethodCallExpression BuildEfPropertyAccess(
-        ParameterExpression parameter, string backingFieldName, Type nullableType)
-    {
-        var genericMethod = EfPropertyMethodInfo.MakeGenericMethod(nullableType);
-
-        return Expression.Call(
-            genericMethod,
-            Expression.Convert(parameter, typeof(object)),
-            Expression.Constant(backingFieldName));
-    }
+    private static MethodInfo GetQueryableOrderingMethod(string methodName) =>
+        typeof(Queryable)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(method =>
+                method.Name == methodName
+                && method.IsGenericMethodDefinition
+                && method.GetParameters().Length == 2);
 }

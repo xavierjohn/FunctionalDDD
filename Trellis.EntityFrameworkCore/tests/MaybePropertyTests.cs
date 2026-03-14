@@ -239,6 +239,70 @@ public class MaybePropertyTests : IDisposable
         optionalStatusProp.IsNullable.Should().BeTrue("Maybe<TestOrderStatus> backing field should be nullable");
     }
 
+    [Fact]
+    public void GetMaybePropertyMappings_ReturnsResolvedMaybeMappings()
+    {
+        var mappings = _context.Model.GetMaybePropertyMappings();
+        var phoneMapping = mappings.Single(mapping =>
+            mapping.EntityClrType == typeof(TestCustomer)
+            && mapping.PropertyName == nameof(TestCustomer.Phone));
+
+        phoneMapping.BackingFieldName.Should().Be("_phone");
+        phoneMapping.ColumnName.Should().Be(nameof(TestCustomer.Phone));
+        phoneMapping.IsMapped.Should().BeTrue();
+        phoneMapping.IsNullable.Should().BeTrue();
+        phoneMapping.ProviderClrType.Should().Be<string>();
+    }
+
+    [Fact]
+    public void ToMaybeMappingDebugString_ContainsResolvedPropertyDetails()
+    {
+        var debugString = _context.ToMaybeMappingDebugString();
+
+        debugString.Should().Contain("TestCustomer.Phone => field=_phone");
+        debugString.Should().Contain("column=Phone");
+    }
+
+    #endregion
+
+    #region HasTrellisIndex
+
+    [Fact]
+    public void HasTrellisIndex_MaybeProperty_UsesBackingFieldName()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new IndexedMaybeDbContext(
+            new DbContextOptionsBuilder<IndexedMaybeDbContext>()
+                .UseSqlite(connection)
+                .Options);
+
+        var customerType = context.Model.FindEntityType(typeof(TestCustomer))!;
+        var index = customerType.GetIndexes()
+            .Single(candidate => candidate.Properties.Select(property => property.Name).SequenceEqual(["_phone"]));
+
+        index.Properties.Select(property => property.Name).Should().Equal(["_phone"]);
+    }
+
+    [Fact]
+    public void HasTrellisIndex_CompositeSelector_ResolvesMixedMaybeAndRegularProperties()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        using var context = new IndexedMaybeDbContext(
+            new DbContextOptionsBuilder<IndexedMaybeDbContext>()
+                .UseSqlite(connection)
+                .Options);
+
+        var orderType = context.Model.FindEntityType(typeof(TestOrder))!;
+        var index = orderType.GetIndexes()
+            .Single(candidate => candidate.Properties.Select(property => property.Name).SequenceEqual([nameof(TestOrder.Status), "_submittedAt"]));
+
+        index.Properties.Select(property => property.Name).Should().Equal([nameof(TestOrder.Status), "_submittedAt"]);
+    }
+
     #endregion
 
     #region Navigation property with Include
@@ -322,6 +386,28 @@ public class MaybePropertyTests : IDisposable
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
             modelBuilder.Entity<EntityWithoutBackingField>(b => b.HasKey(e => e.Id));
+    }
+
+    private class IndexedMaybeDbContext(DbContextOptions<IndexedMaybeDbContext> options)
+        : DbContext(options)
+    {
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+            configurationBuilder.ApplyTrellisConventions(typeof(TestCustomerId).Assembly);
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<TestCustomer>(builder =>
+            {
+                builder.HasKey(customer => customer.Id);
+                builder.HasTrellisIndex(customer => customer.Phone);
+            });
+
+            modelBuilder.Entity<TestOrder>(builder =>
+            {
+                builder.HasKey(order => order.Id);
+                builder.HasTrellisIndex(order => new { order.Status, order.SubmittedAt });
+            });
+        }
     }
 
     #endregion
