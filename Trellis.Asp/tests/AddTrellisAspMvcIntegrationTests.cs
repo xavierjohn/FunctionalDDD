@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.Options;
 using Trellis;
 using Trellis.Asp.ModelBinding;
 using Trellis.Asp.Validation;
+using Trellis.Primitives;
 
 /// <summary>
 /// Integration tests that verify <see cref="ServiceCollectionExtensions.AddTrellisAsp(IServiceCollection)"/>
@@ -165,10 +167,180 @@ public sealed class AddTrellisAspMvcIntegrationTests
             .SuppressModelStateInvalidFilter.Should().BeTrue();
     }
 
-    #endregion
+    [Fact]
+    public async Task AddTrellisAsp_with_controllers_composite_VO_failure_omits_phantom_parameter_entry()
+    {
+        // When a composite value object inside a [FromBody] request fails multi-field validation,
+        // the wire response must contain ONLY the per-field errors emitted by the converter.
+        // It must NOT include an extra entry keyed by the action parameter name (e.g., "request":
+        // ["The request field is required."]) — that entry comes from MVC's binding pipeline
+        // observing a null body parameter after the deserializer short-circuited, and it
+        // duplicates the same logical "input is bad" condition under a key the client cannot
+        // act on.
+        using var host = CreateHost();
+        using var client = host.GetTestClient();
+
+        // All three required string fields empty — composite TryCreate combines three
+        // FieldViolations into a single Error.UnprocessableContent.
+        var json = """{"address":{"street":"","city":"","state":""}}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        // The structured branch from CompositeValueObjectJsonConverter must surface per-leaf entries
+        // keyed by `<parentPath>.<leaf>` in MVC dot+bracket convention.
+        errors.TryGetProperty("address.street", out _).Should().BeTrue("per-leaf street error must be present");
+        errors.TryGetProperty("address.city", out _).Should().BeTrue("per-leaf city error must be present");
+        errors.TryGetProperty("address.state", out _).Should().BeTrue("per-leaf state error must be present");
+
+        // Old collapsed shape must be gone — `$.address` (or just `address`) carrying all
+        // leaf reasons joined into one string was the regression PR #474 introduced for the
+        // Minimal API path; this fix extends the per-leaf expansion to the MVC path.
+        errors.TryGetProperty("$.address", out _).Should().BeFalse(
+            "the old joined-leaves collapsed key must not appear");
+        errors.TryGetProperty("address", out _).Should().BeFalse(
+            "the old joined-leaves collapsed key must not appear under any casing");
+
+        // The phantom parameter-name entry must be gone.
+        errors.TryGetProperty("request", out _).Should().BeFalse(
+            "MVC's null-body-parameter ModelState entry must not appear alongside the structured per-field errors");
+    }
+
+    [Fact]
+    public async Task AddTrellisAsp_with_controllers_unstructured_composite_VO_failure_surfaces_curated_message()
+    {
+        // The composite-VO converter throws unstructured TrellisJsonValidationException
+        // (no UnprocessableContent) for shape/format mismatches — e.g. when the JSON
+        // value is not an object. Setting AllowInputFormatterExceptionMessages = false
+        // preserves the exception, but ModelStateDictionary stores an empty ErrorMessage
+        // for non-InputFormatterException entries; without dedicated handling, the
+        // curated converter message would be lost. The filter must surface tjx.Message
+        // under the JSON-path key for these cases too.
+        using var host = CreateHost();
+        using var client = host.GetTestClient();
+
+        // "address" is a string instead of an object — converter throws
+        // "Expected JSON object for TestAddress value." with no UnprocessableContent.
+        var json = """{"address":"not-an-object"}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        errors.TryGetProperty("address", out var addressErrors).Should().BeTrue(
+            "the unstructured Trellis JSON validation exception's curated message must surface under the JSON path key");
+        addressErrors.GetArrayLength().Should().BeGreaterThan(0);
+        addressErrors[0].GetString().Should().Contain("TestAddress");
+
+        errors.TryGetProperty("request", out _).Should().BeFalse(
+            "the phantom body-parameter entry must still be removed even on the unstructured path");
+    }
+
+    [Fact]
+    public async Task AddTrellisAsp_with_controllers_preserves_unrelated_required_errors_alongside_composite_VO_failure()
+    {
+        // The phantom-entry filter must NOT drop legitimate "is required" errors from
+        // unrelated ModelState entries — e.g. a missing required query parameter. Only
+        // the entry whose key matches a [FromBody] parameter name is the phantom; every
+        // other required-error must be carried forward to the response.
+        using var host = CreateHost();
+        using var client = host.GetTestClient();
+
+        // Body fails composite VO; "tenant" query parameter is omitted.
+        var json = """{"address":{"street":"","city":"","state":""}}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/composite-dto-with-query", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        errors.TryGetProperty("address.street", out _).Should().BeTrue();
+        errors.TryGetProperty("tenant", out _).Should().BeTrue(
+            "the missing query-parameter required-error must be preserved — only the phantom body-parameter entry should be filtered out");
+        errors.TryGetProperty("request", out _).Should().BeFalse();
+    }
+
+#endregion
 }
 
-#region Test fixtures (controller, DTO, scalar VOs)
+#region Composite VO test fixture (regression guard for phantom parameter-name entry)
+
+[JsonConverter(typeof(CompositeValueObjectJsonConverter<TestAddress>))]
+public sealed class TestAddress : ValueObject
+{
+    public string Street { get; private set; } = string.Empty;
+
+    public string City { get; private set; } = string.Empty;
+
+    public string State { get; private set; } = string.Empty;
+
+    private TestAddress() { }
+
+    private TestAddress(string street, string city, string state)
+    {
+        Street = street; City = city; State = state;
+    }
+
+    public static Result<TestAddress> TryCreate(string street, string city, string state, string? fieldName = null)
+    {
+        var violations = new System.Collections.Generic.List<FieldViolation>();
+        if (string.IsNullOrWhiteSpace(street))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("street"), "validation.error") { Detail = "Street is required." });
+        if (string.IsNullOrWhiteSpace(city))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("city"), "validation.error") { Detail = "City is required." });
+        if (string.IsNullOrWhiteSpace(state))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("state"), "validation.error") { Detail = "State is required." });
+
+        return violations.Count > 0
+            ? Result.Fail<TestAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            : Result.Ok(new TestAddress(street, city, state));
+    }
+
+    protected override System.Collections.Generic.IEnumerable<System.IComparable?> GetEqualityComponents()
+    {
+        yield return Street;
+        yield return City;
+        yield return State;
+    }
+}
+
+public sealed record CompositeDtoRequest
+{
+    public TestAddress Address { get; init; } = null!;
+}
+
+[ApiController]
+[Route("composite-dto")]
+public sealed class CompositeDtoController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Post([FromBody] CompositeDtoRequest request) => Ok(new { ok = true });
+}
+
+[ApiController]
+[Route("composite-dto-with-query")]
+public sealed class CompositeDtoWithQueryController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Post(
+        [FromQuery, BindRequired] string tenant,
+        [FromBody] CompositeDtoRequest request) => Ok(new { ok = true, tenant });
+}
 
 public sealed class TestPhone : ScalarValueObject<TestPhone, string>, IScalarValue<TestPhone, string>
 {

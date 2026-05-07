@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### MVC body-validation responses no longer include a phantom body-parameter entry and now expand composite value object failures into per-leaf entries
+
+When a controller action's `[FromBody]` parameter failed JSON deserialization, the 400 `ValidationProblemDetails` response contained two defects:
+
+1. A phantom `"<paramName>": ["The <paramName> field is required."]` entry, emitted by the model-binding layer after the input formatter recorded the deserialization error and the parameter bound to `null`.
+2. Composite value object validation failures landed under a single `$.<path>` key with all field-level reasons joined into one string — the per-leaf expansion added in the previous release only ran on the Minimal API path.
+
+Root cause for (2): MVC's `SystemTextJsonInputFormatter.WrapExceptionForModelState` wraps the original `JsonException` in an `InputFormatterException` when `JsonOptions.AllowInputFormatterExceptionMessages` is `true` (the framework default). `ModelStateDictionary.TryAddModelError` then takes its `InputFormatterException`/`ValueProviderException` shortcut that calls the string-only overload, dropping the exception object — so `TrellisJsonValidationException.UnprocessableContent` never reached the response writer.
+
+`AddTrellisAsp()` now sets `AllowInputFormatterExceptionMessages = false` so the original `TrellisJsonValidationException` is preserved in `ModelState` (the user-visible `ErrorMessage` text is unchanged either way). `ScalarValueValidationFilter` then unpacks any `TrellisJsonValidationException` it finds in `ModelState`, emits one entry per `FieldViolation` for the structured shape (or the curated exception message at the JSON path for the unstructured shape — missing required property, unsupported primitive, JSON shape mismatch), and drops the phantom body-parameter entry strictly by key match against the action's `[FromBody]` parameter name.
+
 #### `TRLS003` no longer flags multi-clause guarded `Maybe<T>.Value` access
 
 The `UnsafeMaybeValueAccess` analyzer recognized the short-circuit guard `m.HasValue && m.Value` only when the two clauses were the only operands of the `&&` expression. The natural multi-clause shape
