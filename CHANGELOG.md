@@ -18,7 +18,7 @@ When a controller action's `[FromBody]` parameter failed JSON deserialization, t
 
 Root cause for (2): MVC's `SystemTextJsonInputFormatter.WrapExceptionForModelState` wraps the original `JsonException` in an `InputFormatterException` when `JsonOptions.AllowInputFormatterExceptionMessages` is `true` (the framework default). `ModelStateDictionary.TryAddModelError` then takes its `InputFormatterException`/`ValueProviderException` shortcut that calls the string-only overload, dropping the exception object — so `TrellisJsonValidationException.UnprocessableContent` never reached the response writer.
 
-`AddTrellisAsp()` now sets `AllowInputFormatterExceptionMessages = false` so the original `TrellisJsonValidationException` is preserved in `ModelState` (the user-visible `ErrorMessage` text is unchanged either way). `ScalarValueValidationFilter` then unpacks any `TrellisJsonValidationException` it finds in `ModelState`, emits one entry per `FieldViolation`, and drops the body-parameter "is required" noise.
+`AddTrellisAsp()` now sets `AllowInputFormatterExceptionMessages = false` so the original `TrellisJsonValidationException` is preserved in `ModelState` (the user-visible `ErrorMessage` text is unchanged either way). `ScalarValueValidationFilter` then unpacks any `TrellisJsonValidationException` it finds in `ModelState`, emits one entry per `FieldViolation` for the structured shape (or the curated exception message at the JSON path for the unstructured shape — missing required property, unsupported primitive, JSON shape mismatch), and drops the phantom body-parameter entry strictly by key match against the action's `[FromBody]` parameter name.
 
 #### `TRLS003` no longer flags multi-clause guarded `Maybe<T>.Value` access
 

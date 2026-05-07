@@ -86,53 +86,64 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
 
     private static bool TryHandleStructuredModelStateErrors(ActionExecutingContext context)
     {
-        // Find any ModelState entry whose error carries a TrellisJsonValidationException with
-        // a structured UnprocessableContent. There can be more than one if the input formatter
-        // accumulated several JSON errors (rare in practice — the converter throws on first
-        // failure — but the loop is harmless).
-        Error.UnprocessableContent? structured = null;
-        string? structuredEntryParentPath = null;
-        var structuredEntryKeys = new System.Collections.Generic.List<string>();
+        // Find any ModelState entry whose error carries a TrellisJsonValidationException.
+        // Both shapes are handled:
+        //   - Structured: UnprocessableContent has at least one FieldViolation -> emit one
+        //     wire entry per violation under <parent>.<leaf> keys.
+        //   - Unstructured: no UnprocessableContent (e.g. missing required property,
+        //     unsupported primitive type, JSON shape mismatch) -> emit a single entry at the
+        //     translated JSON path with the exception's curated message. Without this branch
+        //     the message would be lost: ModelStateDictionary.TryAddModelError stores an empty
+        //     ErrorMessage when the recorded exception isn't an InputFormatterException, and
+        //     ValidationProblemDetails would render a generic placeholder.
+        TrellisJsonValidationException? trellisEx = null;
+        string? entryParentPath = null;
+        var trellisEntryKeys = new System.Collections.Generic.List<string>();
 
         foreach (var (key, entry) in context.ModelState)
         {
             foreach (var error in entry.Errors)
             {
-                if (error.Exception is TrellisJsonValidationException tjx
-                    && tjx.UnprocessableContent is { Fields.Length: > 0 } payload)
+                if (error.Exception is TrellisJsonValidationException tjx)
                 {
-                    // First match wins — additional structured exceptions in the same
-                    // request are treated as duplicates.
-                    structured ??= payload;
-                    structuredEntryParentPath ??= ScalarValueValidationMiddleware.JsonPathToMvcKey((error.Exception as System.Text.Json.JsonException)?.Path);
-                    structuredEntryKeys.Add(key);
+                    // First match wins — additional Trellis exceptions in the same request
+                    // are treated as duplicates (the converter throws on first failure).
+                    trellisEx ??= tjx;
+                    entryParentPath ??= ScalarValueValidationMiddleware.JsonPathToMvcKey(tjx.Path);
+                    trellisEntryKeys.Add(key);
                     break;
                 }
             }
         }
 
-        if (structured is null)
+        if (trellisEx is null)
             return false;
 
-        // Build a fresh ModelStateDictionary with one entry per FieldViolation.
         var freshModelState = new ModelStateDictionary();
-        foreach (var fv in structured.Fields)
+        if (trellisEx.UnprocessableContent is { Fields.Length: > 0 } structured)
         {
-            var leafKey = JsonPointerToMvc.Translate(fv.Field.Path);
-            var combined = ScalarValueValidationMiddleware.CombineMvcKeys(structuredEntryParentPath ?? string.Empty, leafKey);
-            var detail = !string.IsNullOrEmpty(fv.Detail) ? fv.Detail : fv.ReasonCode;
-            freshModelState.AddModelError(combined, detail);
+            foreach (var fv in structured.Fields)
+            {
+                var leafKey = JsonPointerToMvc.Translate(fv.Field.Path);
+                var combined = ScalarValueValidationMiddleware.CombineMvcKeys(entryParentPath ?? string.Empty, leafKey);
+                var detail = !string.IsNullOrEmpty(fv.Detail) ? fv.Detail : fv.ReasonCode;
+                freshModelState.AddModelError(combined, detail);
+            }
+        }
+        else
+        {
+            freshModelState.AddModelError(entryParentPath ?? string.Empty, trellisEx.Message);
         }
 
-        // Carry forward any other ModelState errors that were NOT the structured-payload entry
-        // and NOT MVC's body-parameter "is required" noise. The noise is identified by either:
-        // (a) the entry key matching an action [FromBody] parameter name, or
-        // (b) the entry text being the canonical "<X> field is required" string MVC emits when
-        // a body parameter binds to null.
+        // Carry forward any other ModelState errors that were neither the Trellis-exception
+        // entry nor the phantom body-parameter entry. The phantom entry is identified strictly
+        // by key match against an action [FromBody] parameter name — we do NOT filter on the
+        // "X field is required." text globally, because that would silently drop legitimate
+        // required errors from query/route/form parameters and other DataAnnotations failures.
         var bodyParameterNames = GetBodyParameterNames(context);
         foreach (var (key, entry) in context.ModelState)
         {
-            if (structuredEntryKeys.Contains(key))
+            if (trellisEntryKeys.Contains(key))
                 continue;
 
             if (bodyParameterNames.Contains(key))
@@ -141,11 +152,6 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             foreach (var error in entry.Errors)
             {
                 if (string.IsNullOrEmpty(error.ErrorMessage))
-                    continue;
-
-                // Skip MVC's "The X field is required." noise even if the key wasn't a body
-                // parameter (defense in depth — the localized message is the canonical form).
-                if (error.ErrorMessage.EndsWith(" field is required.", System.StringComparison.Ordinal))
                     continue;
 
                 freshModelState.AddModelError(key, error.ErrorMessage);

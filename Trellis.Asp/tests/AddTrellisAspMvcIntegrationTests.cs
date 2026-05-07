@@ -202,6 +202,65 @@ public sealed class AddTrellisAspMvcIntegrationTests
             "MVC's null-body-parameter ModelState entry must not appear alongside the structured per-field errors");
     }
 
+    [Fact]
+    public async Task AddTrellisAsp_with_controllers_unstructured_composite_VO_failure_surfaces_curated_message()
+    {
+        // The composite-VO converter throws unstructured TrellisJsonValidationException
+        // (no UnprocessableContent) for shape/format mismatches — e.g. when the JSON
+        // value is not an object. Setting AllowInputFormatterExceptionMessages = false
+        // preserves the exception, but ModelStateDictionary stores an empty ErrorMessage
+        // for non-InputFormatterException entries; without dedicated handling, the
+        // curated converter message would be lost. The filter must surface tjx.Message
+        // under the JSON-path key for these cases too.
+        using var host = CreateHost();
+        using var client = host.GetTestClient();
+
+        // "address" is a string instead of an object — converter throws
+        // "Expected JSON object for TestAddress value." with no UnprocessableContent.
+        var json = """{"address":"not-an-object"}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
+
+        var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        errors.TryGetProperty("address", out var addressErrors).Should().BeTrue(
+            "the unstructured Trellis JSON validation exception's curated message must surface under the JSON path key");
+        addressErrors.GetArrayLength().Should().BeGreaterThan(0);
+        addressErrors[0].GetString().Should().Contain("TestAddress");
+
+        errors.TryGetProperty("request", out _).Should().BeFalse(
+            "the phantom body-parameter entry must still be removed even on the unstructured path");
+    }
+
+    [Fact]
+    public async Task AddTrellisAsp_with_controllers_preserves_unrelated_required_errors_alongside_composite_VO_failure()
+    {
+        // The phantom-entry filter must NOT drop legitimate "is required" errors from
+        // unrelated ModelState entries — e.g. a missing required query parameter. Only
+        // the entry whose key matches a [FromBody] parameter name is the phantom; every
+        // other required-error must be carried forward to the response.
+        using var host = CreateHost();
+        using var client = host.GetTestClient();
+
+        // Body fails composite VO; "tenant" query parameter is omitted.
+        var json = """{"address":{"street":"","city":"","state":""}}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/composite-dto-with-query", content, TestContext.Current.CancellationToken);
+
+        var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        errors.TryGetProperty("address.street", out _).Should().BeTrue();
+        errors.TryGetProperty("tenant", out _).Should().BeTrue(
+            "the missing query-parameter required-error must be preserved — only the phantom body-parameter entry should be filtered out");
+        errors.TryGetProperty("request", out _).Should().BeFalse();
+    }
+
 #endregion
 }
 
@@ -257,6 +316,16 @@ public sealed class CompositeDtoController : ControllerBase
 {
     [HttpPost]
     public IActionResult Post([FromBody] CompositeDtoRequest request) => Ok(new { ok = true });
+}
+
+[ApiController]
+[Route("composite-dto-with-query")]
+public sealed class CompositeDtoWithQueryController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Post(
+        [FromQuery, BindRequired] string tenant,
+        [FromBody] CompositeDtoRequest request) => Ok(new { ok = true, tenant });
 }
 
 public sealed class TestPhone : ScalarValueObject<TestPhone, string>, IScalarValue<TestPhone, string>
