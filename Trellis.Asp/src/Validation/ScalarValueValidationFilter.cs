@@ -16,7 +16,11 @@ using Trellis.Asp.Validation;
 /// <summary>
 /// An action filter that checks for validation errors collected during JSON deserialization
 /// and validates <see cref="IScalarValue{TSelf, TPrimitive}"/> route/query parameters.
-/// Returns a 400 Bad Request response with validation problem details when validation fails.
+/// Returns a <c>ValidationProblemDetails</c> response — 422 Unprocessable Content for
+/// Trellis-driven semantic validation failures (composite VO converter, scalar VO TryCreate,
+/// <see cref="ValidationErrorsContext"/>-collected errors) per RFC 9110 §15.5.21, and
+/// 400 Bad Request for plain <see cref="System.Text.Json.JsonException"/>s where the bytes
+/// aren't valid JSON per RFC 9110 §15.5.1. When both occur on the same request, 400 wins.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -33,7 +37,8 @@ using Trellis.Asp.Validation;
 /// If validation errors are detected:
 /// <list type="bullet">
 /// <item>The action is short-circuited (not executed)</item>
-/// <item>A 400 Bad Request response with validation problem details is returned</item>
+/// <item>A <c>ValidationProblemDetails</c> response is returned — 422 for Trellis semantic
+///   validation failures, 400 for plain JSON syntax errors (with 400 winning on mixed requests)</item>
 /// <item>The response format matches ASP.NET Core's standard validation error format</item>
 /// </list>
 /// </para>

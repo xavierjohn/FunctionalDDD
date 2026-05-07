@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -59,7 +59,7 @@ public class ScalarValueValidationFilterTests
     }
 
     [Fact]
-    public void OnActionExecuting_WithValidationErrors_ShortCircuitsWithBadRequest()
+    public void OnActionExecuting_WithValidationErrors_ShortCircuitsWithUnprocessableContent()
     {
         // Arrange
         var filter = new ScalarValueValidationFilter();
@@ -77,11 +77,11 @@ public class ScalarValueValidationFilterTests
             context.Result.Should().NotBeNull();
             context.Result.Should().BeOfType<ObjectResult>();
 
-            var badRequestResult = (ObjectResult)context.Result!;
-            badRequestResult.StatusCode.Should().Be(422);
-            badRequestResult.Value.Should().BeOfType<ValidationProblemDetails>();
+            var unprocessableResult = (ObjectResult)context.Result!;
+            unprocessableResult.StatusCode.Should().Be(422);
+            unprocessableResult.Value.Should().BeOfType<ValidationProblemDetails>();
 
-            var problemDetails = (ValidationProblemDetails)badRequestResult.Value!;
+            var problemDetails = (ValidationProblemDetails)unprocessableResult.Value!;
             problemDetails.Status.Should().Be(422);
             problemDetails.Title.Should().Be("One or more validation errors occurred.");
             problemDetails.Errors.Should().HaveCount(2);
@@ -262,10 +262,10 @@ public class ScalarValueValidationFilterTests
             filter.OnActionExecuting(context);
 
             // Assert
-            var badRequestResult = context.Result as ObjectResult;
-            badRequestResult.Should().NotBeNull();
+            var unprocessableResult = context.Result as ObjectResult;
+            unprocessableResult.Should().NotBeNull();
 
-            var problemDetails = badRequestResult!.Value as ValidationProblemDetails;
+            var problemDetails = unprocessableResult!.Value as ValidationProblemDetails;
             problemDetails.Should().NotBeNull();
             problemDetails!.Type.Should().Be("https://tools.ietf.org/html/rfc4918#section-11.2");
             problemDetails.Title.Should().Be("One or more validation errors occurred.");
@@ -539,9 +539,9 @@ public class ScalarValueValidationFilterTests
     private static ValidationProblemDetails GetValidationProblemDetails(ActionExecutingContext context)
     {
         context.Result.Should().NotBeNull().And.BeOfType<ObjectResult>();
-        var badRequest = (ObjectResult)context.Result!;
-        badRequest.Value.Should().NotBeNull().And.BeOfType<ValidationProblemDetails>();
-        return (ValidationProblemDetails)badRequest.Value!;
+        var result = (ObjectResult)context.Result!;
+        result.Value.Should().NotBeNull().And.BeOfType<ValidationProblemDetails>();
+        return (ValidationProblemDetails)result.Value!;
     }
 
     private static ActionExecutingContext CreateActionExecutingContext()

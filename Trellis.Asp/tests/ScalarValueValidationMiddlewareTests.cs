@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using System;
 using System.IO;
@@ -336,7 +336,7 @@ public class ScalarValueValidationMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_BindingFailure_ForScalarValue_Returns400WithRichErrors()
+    public async Task InvokeAsync_BindingFailure_ForScalarValue_Returns422WithRichErrors()
     {
         // Arrange
         var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
@@ -360,7 +360,7 @@ public class ScalarValueValidationMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_BindingFailure_ForScalarValueWithQualifiedTypeName_Returns400WithRichErrors()
+    public async Task InvokeAsync_BindingFailure_ForScalarValueWithQualifiedTypeName_Returns422WithRichErrors()
     {
         // Arrange
         var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
@@ -384,7 +384,7 @@ public class ScalarValueValidationMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_BindingFailure_ForScalarValueWithNestedTypeName_Returns400WithRichErrors()
+    public async Task InvokeAsync_BindingFailure_ForScalarValueWithNestedTypeName_Returns422WithRichErrors()
     {
         // Arrange
         var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
@@ -408,7 +408,7 @@ public class ScalarValueValidationMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_BindingFailure_ForMaybeScalarValue_Returns400WithRichErrors()
+    public async Task InvokeAsync_BindingFailure_ForMaybeScalarValue_Returns422WithRichErrors()
     {
         // Arrange
         var paramInfo = typeof(ScalarValueValidationMiddlewareTests)
