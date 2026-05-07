@@ -191,11 +191,15 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 
     /// <summary>
     /// Returns <see langword="true"/> if two syntax expressions refer to the same logical
-    /// receiver. For instance members accessed through a chain of receivers, comparison is
-    /// structural: each chain segment must match in both the terminal symbol and the recursive
-    /// receiver. Implicit and explicit <c>this</c> are treated as equivalent (an unqualified
-    /// instance-member access and the same member explicitly qualified with <c>this.</c> name
-    /// the same thing). Static members and locals/parameters compare by symbol identity alone.
+    /// receiver. Only stable receiver forms are considered comparable: identifiers,
+    /// member-access chains, <c>this</c>, and <c>base</c>. For instance members accessed
+    /// through a chain of receivers, comparison is structural — each chain segment must match
+    /// in both the terminal symbol and the recursive receiver. Implicit and explicit
+    /// <c>this</c> are treated as equivalent (an unqualified instance-member access and the
+    /// same member explicitly qualified with <c>this.</c> name the same thing). Static
+    /// members and locals/parameters compare by symbol identity alone. Any other receiver
+    /// shape (invocation, element access, conditional access, cast, etc.) is conservatively
+    /// rejected because it cannot be structurally compared without evaluating runtime state.
     /// </summary>
     private static bool AreSameVariable(ExpressionSyntax expr1, ExpressionSyntax expr2, SemanticModel semanticModel)
     {
@@ -203,6 +207,10 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
             expr1 = p1.Expression;
         while (expr2 is ParenthesizedExpressionSyntax p2)
             expr2 = p2.Expression;
+
+        // Reject any receiver shape we cannot structurally compare.
+        if (!IsStableReceiverShape(expr1) || !IsStableReceiverShape(expr2))
+            return false;
 
         var symbol1 = semanticModel.GetSymbolInfo(expr1).Symbol;
         var symbol2 = semanticModel.GetSymbolInfo(expr2).Symbol;
@@ -223,12 +231,12 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 
         // Instance member: the same symbol on different receivers refers to different state.
         // Walk the receiver chains, treating implicit `this` (no receiver) and explicit
-        // `ThisExpressionSyntax` as equivalent.
+        // `this`/`base` as equivalent.
         var receiver1 = expr1 is MemberAccessExpressionSyntax m1 ? m1.Expression : null;
         var receiver2 = expr2 is MemberAccessExpressionSyntax m2 ? m2.Expression : null;
 
-        var isThis1 = receiver1 is null or ThisExpressionSyntax;
-        var isThis2 = receiver2 is null or ThisExpressionSyntax;
+        var isThis1 = receiver1 is null or ThisExpressionSyntax or BaseExpressionSyntax;
+        var isThis2 = receiver2 is null or ThisExpressionSyntax or BaseExpressionSyntax;
 
         if (isThis1 && isThis2)
             return true;
@@ -238,6 +246,12 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 
         return AreSameVariable(receiver1!, receiver2!, semanticModel);
     }
+
+    private static bool IsStableReceiverShape(ExpressionSyntax expr) =>
+        expr is IdentifierNameSyntax
+            or MemberAccessExpressionSyntax
+            or ThisExpressionSyntax
+            or BaseExpressionSyntax;
 
     private static bool IsInThenBranch(SyntaxNode node, IfStatementSyntax ifStatement) =>
         ifStatement.Statement.Contains(node);

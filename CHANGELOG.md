@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### `TRLS003` no longer flags multi-clause guarded `Maybe<T>.Value` access
 
-The `UnsafeMaybeValueAccess` analyzer recognised the short-circuit guard `m.HasValue && m.Value` only when the two clauses were the only operands of the `&&` expression. The natural multi-clause shape
+The `UnsafeMaybeValueAccess` analyzer recognized the short-circuit guard `m.HasValue && m.Value` only when the two clauses were the only operands of the `&&` expression. The natural multi-clause shape
 
 ```csharp
 order => order.Status == Submitted && order.SubmittedAt.HasValue && order.SubmittedAt.Value < cutoff
@@ -19,7 +19,7 @@ order => order.Status == Submitted && order.SubmittedAt.HasValue && order.Submit
 
 raised a false `TRLS003` because C# left-associates `a && b && c` as `(a && b) && c`, making the immediate left operand of the outermost `&&` a binary expression rather than the `HasValue` member access.
 
-The analyzer now recognises a `HasValue` guard anywhere in the connected `&&` subtree to the left of the `.Value` access, with parentheses transparent. Recursion stops at non-`&&` boundaries (`||`, `!`, ternary), so genuinely unguarded access — `m.Value < x && m.HasValue`, `m.HasValue || m.Value`, `!m.HasValue && m.Value` — still reports.
+The analyzer now recognizes a `HasValue` guard anywhere in the connected `&&` subtree to the left of the `.Value` access, with parentheses transparent. Recursion stops at non-`&&` boundaries (`||`, `!`, ternary), so genuinely unguarded access — `m.Value < x && m.HasValue`, `m.HasValue || m.Value`, `!m.HasValue && m.Value` — still reports.
 
 ### Changed
 

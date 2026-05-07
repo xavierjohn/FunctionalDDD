@@ -527,7 +527,7 @@ public class UnsafeValueAccessAnalyzerTests
     public async Task InstanceMember_MixedImplicitAndExplicitThis_NoDiagnostic()
     {
         // Mixing `this.X.HasValue && X.Value` (or any combination of implicit/explicit `this`)
-        // refers to the same instance member, so the guard must be recognised. The analyzer
+        // refers to the same instance member, so the guard must be recognized. The analyzer
         // must not falsely reject equivalent receivers when one side qualifies the member with
         // `this.` and the other does not.
         const string source = """
@@ -545,6 +545,45 @@ public class UnsafeValueAccessAnalyzerTests
             """;
 
         var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_DifferentInvocationReceivers_StillReportsDiagnostic()
+    {
+        // Negative case: invocation receivers (`primary.GetPhone()` vs `secondary.GetPhone()`)
+        // resolve to the same `GetPhone` method symbol but address different objects. The
+        // analyzer cannot structurally compare invocation receivers — it must reject this
+        // shape rather than treat them as the same variable.
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter()
+                {
+                    return e => e.Primary.GetPhone().HasValue && e.Secondary.GetPhone().Value.Length > 0;
+                }
+            }
+
+            public class Address
+            {
+                public Maybe<string> GetPhone() => Maybe<string>.None;
+            }
+
+            public class TestEntity
+            {
+                public Address Primary { get; set; } = new();
+                public Address Secondary { get; set; } = new();
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
+                .WithLocation(14, 77));
+
         await test.RunAsync();
     }
 
