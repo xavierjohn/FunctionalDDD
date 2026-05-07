@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+#### Cookbook Recipe 21 — Parallel independent loads in handlers (`Result.ParallelAsync` + `WhenAllAsync`)
+
+Added a dedicated cookbook recipe for the `Result.ParallelAsync(...).WhenAllAsync()` pattern in handlers that load multiple independent aggregates. The recipe shows the canonical handler shape, the matching anti-pattern (sequential `await` over independent loads), and the rule for "independent" (the second factory's body does not reference any value produced by the first).
+
+Empirical motivation: across two lab cycles and three AI models (Opus 4.7, GPT-5.5, Claude Sonnet), every `CreateDraftOrder`-style handler that loaded a customer plus a product was written sequentially — the framework's `ParallelAsync` API was discovered zero times out of six runs. The pattern was previously documented only by API reference (`trellis-api-core.md`) plus a one-line "Mistake-regression routing" pointer; that wasn't enough to surface the API at the moment of authoring.
+
+This release also:
+- adds the recipe to the Patterns Index `Task -> recipe lookup` table under "Load multiple independent aggregates in one handler";
+- replaces the Mistake-regression row's API-reference pointer with a direct Recipe 21 link;
+- cross-links from Recipe 2 (the canonical command/handler recipe) to Recipe 21 for the multi-load case;
+- adds a Cross-cutting tip listing the trigger ("two independent `await repo.X()` calls in a handler") so readers find the pattern by symptom even if they don't read recipes top-to-bottom;
+- ships a compiled `Examples/CookbookSnippets/Recipe21_ParallelAsync.cs` so the recipe code is verified at every CI build.
+
+The same recipe is mirrored into the ASP template's `.github/trellis-api-cookbook.md` and `template/.github/trellis-api-cookbook.md` copies so model labs that scaffold from the template see it.
+
 ### Changed (Breaking)
 
 #### Binder-level value object validation failures now return 422 (Unprocessable Content), aligning with domain handler failures

@@ -81,6 +81,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 |---|---|
 | Create or load an aggregate with value objects | [Recipe 1](#recipe-1--crud-aggregate-ddd-value-objects--entity--repository-contract) |
 | Write a command handler that validates and persists | [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), then [Recipe 16](#recipe-16--unit-of-work-in-handlers-add-staging-vs-immediate-saveasync) |
+| Load multiple independent aggregates in one handler | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) |
 | Add a paginated list query | [Recipe 3](#recipe-3--query-handler-returning-paget-paginated-list-with-cursor) |
 | Add Minimal API or MVC endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult) |
 | Map primitive DTO fields to value objects | [Recipe 18](#recipe-18--dto-primitives-to-value-object-command-no-test-only-unwrap) |
@@ -103,7 +104,7 @@ These rows route recurring LLM lab mistakes to the most relevant reference befor
 
 | If the task involves... | Read first | Why |
 |---|---|---|
-| Loading independent aggregates before creating a command result | [trellis-api-core.md](trellis-api-core.md#public-static-partial-class-result) for `ParallelAsync`, then [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence) | Avoid sequential load loops when the work is independent. |
+| Loading independent aggregates before creating a command result | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) | Sequential awaits over independent loads serialise latency. The framework idiom is `Result.ParallelAsync(...).WhenAllAsync()`. |
 | Overdue/date-filter queries over `Maybe<DateTime>` | [Recipe 15](#recipe-15--specifications-with-maybet-the-fakereal-divergence-trap), then [trellis-api-efcore.md](trellis-api-efcore.md#patterns-index) | Keep a typed specification and use `MaybeQueryableExtensions` in EF queries. |
 | State transitions on an aggregate | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult), then [trellis-api-statemachine.md](trellis-api-statemachine.md#patterns-index) | Keep transition methods consistent and put domain mutation after `FireResult` succeeds. |
 | Cross-aggregate mutation such as cancel/return releasing stock | [Recipe 1](#recipe-1--crud-aggregate-ddd-value-objects--entity--repository-contract), [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), and [trellis-api-core.md](trellis-api-core.md#domain-driven-design) | The application handler orchestrates multiple aggregates; an aggregate mutates only itself. |
@@ -265,6 +266,8 @@ public static class OrdersDi
 ```
 
 **What it shows.** The mediator pipeline already runs `ValidationBehavior<TMessage, TResponse>` before the handler — `AddTrellisFluentValidation` plugs every `IValidator<T>` into it via the open-generic `IMessageValidator<T>` adapter. `AddTrellisUnitOfWork<TContext>` registers `TransactionalCommandBehavior<,>` *after* the others, so it lands innermost and commits only when the handler returns success. The handler itself is pure: no `try`/`catch`, no primitive parsing, no `await db.SaveChangesAsync()` — that's the unit of work's job.
+
+> **Multiple independent loads in the handler?** Reach for [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) — `Result.ParallelAsync(...).WhenAllAsync()` is the framework idiom and is invisible at the call site if you don't know to look for it.
 
 > **Validation ownership.** Primitive→VO conversion happens at the transport seam. FluentValidation validates VO-shaped commands for cross-field rules and business invariants. Handlers receive value-object-shaped commands and must not parse primitives. See [Recipe 18](#recipe-18--dto-primitives-to-value-object-command-no-test-only-unwrap) for the canonical controller-seam adapter.
 
@@ -1568,9 +1571,76 @@ return rows.TraverseAll(row => EmailAddress.TryCreate(row.Email));
 
 ---
 
+## Recipe 21 — Parallel independent loads in handlers: `Result.ParallelAsync` + `WhenAllAsync`
+
+**Problem.** A handler needs two (or more) aggregates that are independent — a customer and a product, two upstream HTTP fetches, a user and that user's permissions. Written sequentially, each `await` blocks the next, so latency = sum of fetches. Written naively in parallel with `Task.WhenAll`, error handling falls back to throwing, you lose the `Result<T>` track, and the lab evidence shows that authors (human and AI) reach for the sequential form by default because it "looks correct" and the tests pass.
+
+`Result.ParallelAsync(...)` is the framework's opinionated entry point: factory-takes-no-args, eagerly invokes each factory so both tasks actually run concurrently, returns a tuple of `Task<Result<T>>` that the matching `.WhenAllAsync()` extension awaits with `Task.WhenAll` and folds via `Result.Combine` into a single `Result<(T1, T2, …)>`. Failures combine through `Error.Combine`, so two `Error.UnprocessableContent` failures merge their fields, heterogeneous failures become an `Error.Aggregate`.
+
+```csharp
+using System.Threading;
+using System.Threading.Tasks;
+using Mediator;
+using Trellis;
+
+public sealed record CreateDraftOrderCommand(CustomerId CustomerId, ProductId ProductId, int Quantity)
+    : ICommand<Result<DraftOrderId>>;
+
+public sealed class CreateDraftOrderHandler(
+    ICustomerRepository customers,
+    IProductRepository products,
+    IDraftOrderRepository orders) : ICommandHandler<CreateDraftOrderCommand, Result<DraftOrderId>>
+{
+    public ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, CancellationToken cancellationToken) =>
+        new(Result.ParallelAsync(
+                //  ↑ takes parameterless factory funcs — NOT pre-started tasks.
+                //    Each factory is invoked eagerly here so both loads execute concurrently.
+                () => customers.FindByIdAsync(command.CustomerId, cancellationToken),
+                () => products.FindByIdAsync(command.ProductId, cancellationToken))
+            .WhenAllAsync()
+            //  ↑ awaits Task.WhenAll, folds the two Result<T> into Result<(Customer, Product)>
+            //    via Result.Combine. Two Error.UnprocessableContent failures merge their
+            //    Fields/Rules; heterogeneous errors flatten into Error.Aggregate.
+            .BindAsync(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity))
+            .TapAsync(orders.Add)
+            .MapAsync(o => o.Id));
+}
+```
+
+**What it shows.**
+
+- `Result.ParallelAsync` takes `Func<Task<Result<T>>>` factories, NOT `Task<Result<T>>` instances. The factory shape is the API's only safeguard against the "I started the tasks before passing them in" mistake that makes them sequential anyway.
+- `.WhenAllAsync()` on the tuple is the matching extension. Without it, awaiting the tuple directly does nothing useful.
+- The combined `Result<(T1, T2)>` flows back into the standard ROP chain (`BindAsync`, `MapAsync`, `TapAsync`) — no `match` / `if (success)` branches.
+- `Result.ParallelAsync` ships overloads for 2–8 factories. For collections, prefer `TraverseAsync` ([Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall)) — it's the right tool when the count is dynamic.
+
+**When NOT to use it.** The second load depends on the first. If you need the customer's tenant id to fetch the product, the loads are not independent — keep the sequential `BindAsync` chain. The rule is mechanical: if the second factory's body references a value produced by the first, they're sequential.
+
+**Anti-pattern → fix.**
+
+```csharp
+// ❌ Sequential await: latency = customers.Find + products.Find. Tests pass; the bug is
+// invisible at the call site because the code "looks" correct.
+public async ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, CancellationToken cancellationToken)
+{
+    var customerResult = await customers.FindByIdAsync(command.CustomerId, cancellationToken);
+    var productResult  = await products.FindByIdAsync(command.ProductId, cancellationToken);  // serialised behind customer
+
+    return Result.Combine(customerResult, productResult)
+        .Bind(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity))
+        .Tap(orders.Add)
+        .Map(o => o.Id);
+}
+
+// ✅ Parallel with Result-track preserved — see the canonical example above.
+```
+
+---
+
 ## Cross-cutting tips
 
 - **Run analyzers in CI.** `Trellis.Analyzers` ships in the framework and runs as part of every `dotnet build`. Treat warnings as errors for `TRLS00x` once your codebase is clean.
+- **Two independent `await repo.X()` calls in a handler? Reach for `Result.ParallelAsync` + `WhenAllAsync`.** Sequential awaits over independent loads serialise latency to the sum instead of the max. The pattern is the same every time: paramless factories, `.WhenAllAsync()`, then back into the standard ROP chain. See [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync). The rule for "independent": the second factory's body does not reference any value produced by the first.
 - **Do not mix sync chain methods with async lambdas.** `result.Map(async v => …)` triggers `TRLS009`; use `MapAsync`. The fix provider can apply this rewrite automatically.
 - **Construct errors via the closed ADT.** `new Error.NotFound(ResourceRef.For<Order>(id))` — never `new Error("not_found", "...")`, which won't compile against the abstract base record.
 - **Use `Result.Combine` (or `EnsureAll`) for accumulating validation.** Manual `IsSuccess` checks across multiple results trigger `TRLS008`.
