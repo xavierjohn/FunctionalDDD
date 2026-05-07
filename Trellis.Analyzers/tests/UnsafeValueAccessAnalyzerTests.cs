@@ -454,8 +454,9 @@ public class UnsafeValueAccessAnalyzerTests
     [Fact]
     public async Task ExpressionTreeShortCircuit_HasValueOrValue_StillReportsDiagnostic()
     {
-        // Negative case: || does NOT short-circuit guard. If HasValue is false, the right side
-        // of || still evaluates and m.Value would throw.
+        // Negative case: `||` short-circuits when its left side is true, but a true `HasValue`
+        // does not prevent the right side from being evaluated when `HasValue` is false —
+        // exactly the case where `.Value` would throw. So `||` cannot be a guard.
         //     maybe.HasValue || maybe.Value < cutoff
         const string source = """
             using System;
@@ -519,6 +520,31 @@ public class UnsafeValueAccessAnalyzerTests
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
                 .WithLocation(14, 67));
 
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task InstanceMember_MixedImplicitAndExplicitThis_NoDiagnostic()
+    {
+        // Mixing `this.X.HasValue && X.Value` (or any combination of implicit/explicit `this`)
+        // refers to the same instance member, so the guard must be recognised. The analyzer
+        // must not falsely reject equivalent receivers when one side qualifies the member with
+        // `this.` and the other does not.
+        const string source = """
+            using System;
+
+            public class TestClass
+            {
+                public Maybe<int> Timestamp { get; set; }
+
+                public bool IsPositive()
+                {
+                    return this.Timestamp.HasValue && Timestamp.Value > 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
         await test.RunAsync();
     }
 

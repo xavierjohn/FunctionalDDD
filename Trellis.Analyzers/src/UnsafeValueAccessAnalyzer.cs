@@ -191,44 +191,52 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
 
     /// <summary>
     /// Returns <see langword="true"/> if two syntax expressions refer to the same logical
-    /// receiver. For member-access chains (<c>e.Customer.Phone</c>), comparison is structural:
-    /// each chain segment must match in both the terminal symbol and the recursive receiver.
-    /// This prevents false positives where two distinct instances of the same type (e.g.,
-    /// <c>e.Primary.Phone</c> and <c>e.Secondary.Phone</c>) share the same terminal member
-    /// symbol but address different objects.
+    /// receiver. For instance members accessed through a chain of receivers, comparison is
+    /// structural: each chain segment must match in both the terminal symbol and the recursive
+    /// receiver. Implicit and explicit <c>this</c> are treated as equivalent (an unqualified
+    /// instance-member access and the same member explicitly qualified with <c>this.</c> name
+    /// the same thing). Static members and locals/parameters compare by symbol identity alone.
     /// </summary>
     private static bool AreSameVariable(ExpressionSyntax expr1, ExpressionSyntax expr2, SemanticModel semanticModel)
     {
-        // Strip parentheses on either side — parens don't change identity.
         while (expr1 is ParenthesizedExpressionSyntax p1)
             expr1 = p1.Expression;
         while (expr2 is ParenthesizedExpressionSyntax p2)
             expr2 = p2.Expression;
 
-        // Member-access chain: compare terminal member symbols AND recursively compare receivers.
-        if (expr1 is MemberAccessExpressionSyntax ma1 && expr2 is MemberAccessExpressionSyntax ma2)
-        {
-            var name1 = semanticModel.GetSymbolInfo(ma1).Symbol;
-            var name2 = semanticModel.GetSymbolInfo(ma2).Symbol;
-            if (name1 == null || name2 == null)
-                return false;
-
-            return SymbolEqualityComparer.Default.Equals(name1, name2)
-                && AreSameVariable(ma1.Expression, ma2.Expression, semanticModel);
-        }
-
-        // Mixed shapes (one member access, one identifier) — not the same variable.
-        if (expr1 is MemberAccessExpressionSyntax || expr2 is MemberAccessExpressionSyntax)
-            return false;
-
-        // Plain identifier or `this` — fall back to symbol equality on the whole expression.
         var symbol1 = semanticModel.GetSymbolInfo(expr1).Symbol;
         var symbol2 = semanticModel.GetSymbolInfo(expr2).Symbol;
 
         if (symbol1 == null || symbol2 == null)
             return false;
 
-        return SymbolEqualityComparer.Default.Equals(symbol1, symbol2);
+        if (!SymbolEqualityComparer.Default.Equals(symbol1, symbol2))
+            return false;
+
+        // Static members, locals, parameters, type names — symbol identity is sufficient.
+        // The receivers (if any) cannot disambiguate them further.
+        if (symbol1.IsStatic ||
+            symbol1 is ILocalSymbol or IParameterSymbol or ITypeSymbol or INamespaceSymbol)
+        {
+            return true;
+        }
+
+        // Instance member: the same symbol on different receivers refers to different state.
+        // Walk the receiver chains, treating implicit `this` (no receiver) and explicit
+        // `ThisExpressionSyntax` as equivalent.
+        var receiver1 = expr1 is MemberAccessExpressionSyntax m1 ? m1.Expression : null;
+        var receiver2 = expr2 is MemberAccessExpressionSyntax m2 ? m2.Expression : null;
+
+        var isThis1 = receiver1 is null or ThisExpressionSyntax;
+        var isThis2 = receiver2 is null or ThisExpressionSyntax;
+
+        if (isThis1 && isThis2)
+            return true;
+
+        if (isThis1 != isThis2)
+            return false;
+
+        return AreSameVariable(receiver1!, receiver2!, semanticModel);
     }
 
     private static bool IsInThenBranch(SyntaxNode node, IfStatementSyntax ifStatement) =>
