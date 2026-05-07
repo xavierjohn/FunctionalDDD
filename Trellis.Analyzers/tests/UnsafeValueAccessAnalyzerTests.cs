@@ -328,6 +328,265 @@ public class UnsafeValueAccessAnalyzerTests
         await test.RunAsync();
     }
 
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_HasValueAndValue_WithLeadingClause_NoDiagnostic()
+    {
+        // The natural multi-clause specification shape:
+        //     status == X && maybe.HasValue && maybe.Value < cutoff
+        // C# left-associates this as ((status == X) && maybe.HasValue) && (maybe.Value < cutoff).
+        // The .Value access is short-circuit-guarded by HasValue regardless — the analyzer must
+        // recognize this, not just the two-clause shape.
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter(string status, DateTime cutoff)
+                {
+                    return e => e.Status == status && e.SubmittedAt.HasValue && e.SubmittedAt.Value < cutoff;
+                }
+            }
+
+            public class TestEntity
+            {
+                public string Status { get; set; } = "";
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_HasValueAndValue_WithMiddleClause_NoDiagnostic()
+    {
+        // HasValue first, an unrelated middle clause, Value last:
+        //     maybe.HasValue && other && maybe.Value < cutoff
+        // C# left-associates as ((maybe.HasValue && other) && (maybe.Value < cutoff));
+        // because && short-circuits left-to-right, .Value is still guarded by HasValue.
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter(string status, DateTime cutoff)
+                {
+                    return e => e.SubmittedAt.HasValue && e.Status == status && e.SubmittedAt.Value < cutoff;
+                }
+            }
+
+            public class TestEntity
+            {
+                public string Status { get; set; } = "";
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_HasValueAndValue_WithFourClauses_NoDiagnostic()
+    {
+        // Four-clause chain — verifies recursion through nested && operators.
+        //     a && b && maybe.HasValue && maybe.Value < cutoff
+        // C# left-associates as (((a && b) && maybe.HasValue) && (maybe.Value < cutoff)).
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter(string status, int min, DateTime cutoff)
+                {
+                    return e => e.Status == status && e.Count > min && e.SubmittedAt.HasValue && e.SubmittedAt.Value < cutoff;
+                }
+            }
+
+            public class TestEntity
+            {
+                public string Status { get; set; } = "";
+                public int Count { get; set; }
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_ValueBeforeHasValueGuard_StillReportsDiagnostic()
+    {
+        // Negative case: when .Value appears LEFT of .HasValue in the && chain, the guard is
+        // useless (.Value evaluates first). The analyzer must still report.
+        //     maybe.Value < cutoff && maybe.HasValue
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter(DateTime cutoff)
+                {
+                    return e => e.SubmittedAt.Value < cutoff && e.SubmittedAt.HasValue;
+                }
+            }
+
+            public class TestEntity
+            {
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
+                .WithLocation(14, 35));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_HasValueOrValue_StillReportsDiagnostic()
+    {
+        // Negative case: `||` short-circuits when its left side is true, but a true `HasValue`
+        // does not prevent the right side from being evaluated when `HasValue` is false —
+        // exactly the case where `.Value` would throw. So `||` cannot be a guard.
+        //     maybe.HasValue || maybe.Value < cutoff
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter(DateTime cutoff)
+                {
+                    return e => e.SubmittedAt.HasValue || e.SubmittedAt.Value < cutoff;
+                }
+            }
+
+            public class TestEntity
+            {
+                public Maybe<DateTime> SubmittedAt { get; set; }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
+                .WithLocation(14, 61));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_DifferentReceiverChainsWithSameMember_StillReportsDiagnostic()
+    {
+        // Negative case: two same-typed properties on the same parent (Primary, Secondary —
+        // both Address). e.Primary.Phone.HasValue does NOT guard e.Secondary.Phone.Value,
+        // even though both terminal members resolve to the same `Phone` symbol. The analyzer
+        // must compare the full receiver chain structurally.
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter()
+                {
+                    return e => e.Primary.Phone.HasValue && e.Secondary.Phone.Value.Length > 0;
+                }
+            }
+
+            public class Address
+            {
+                public Maybe<string> Phone { get; set; }
+            }
+
+            public class TestEntity
+            {
+                public Address Primary { get; set; } = new();
+                public Address Secondary { get; set; } = new();
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
+                .WithLocation(14, 67));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task InstanceMember_MixedImplicitAndExplicitThis_NoDiagnostic()
+    {
+        // Mixing `this.X.HasValue && X.Value` (or any combination of implicit/explicit `this`)
+        // refers to the same instance member, so the guard must be recognized. The analyzer
+        // must not falsely reject equivalent receivers when one side qualifies the member with
+        // `this.` and the other does not.
+        const string source = """
+            using System;
+
+            public class TestClass
+            {
+                public Maybe<int> Timestamp { get; set; }
+
+                public bool IsPositive()
+                {
+                    return this.Timestamp.HasValue && Timestamp.Value > 0;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<UnsafeValueAccessAnalyzer>(source);
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task ExpressionTreeShortCircuit_DifferentInvocationReceivers_StillReportsDiagnostic()
+    {
+        // Negative case: invocation receivers (`primary.GetPhone()` vs `secondary.GetPhone()`)
+        // resolve to the same `GetPhone` method symbol but address different objects. The
+        // analyzer cannot structurally compare invocation receivers — it must reject this
+        // shape rather than treat them as the same variable.
+        const string source = """
+            using System;
+            using System.Linq.Expressions;
+
+            public class TestClass
+            {
+                public Expression<Func<TestEntity, bool>> GetFilter()
+                {
+                    return e => e.Primary.GetPhone().HasValue && e.Secondary.GetPhone().Value.Length > 0;
+                }
+            }
+
+            public class Address
+            {
+                public Maybe<string> GetPhone() => Maybe<string>.None;
+            }
+
+            public class TestEntity
+            {
+                public Address Primary { get; set; } = new();
+                public Address Secondary { get; set; } = new();
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<UnsafeValueAccessAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.UnsafeMaybeValueAccess)
+                .WithLocation(14, 77));
+
+        await test.RunAsync();
+    }
+
     #endregion
 
     #region Reassignment invalidates guards
