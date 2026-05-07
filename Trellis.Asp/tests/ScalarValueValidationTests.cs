@@ -1,4 +1,4 @@
-﻿namespace Trellis.Asp.Tests;
+namespace Trellis.Asp.Tests;
 
 using System.Text.Json;
 using FluentAssertions;
@@ -427,7 +427,7 @@ public class ScalarValueValidationTests
             result.Should().BeAssignableTo<Microsoft.AspNetCore.Http.IResult>();
             var problemResult = result as Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult;
             problemResult.Should().NotBeNull();
-            problemResult!.StatusCode.Should().Be(400);
+            problemResult!.StatusCode.Should().Be(422);
         }
     }
 

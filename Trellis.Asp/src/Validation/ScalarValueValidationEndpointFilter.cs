@@ -41,7 +41,12 @@ public sealed class ScalarValueValidationEndpointFilter : IEndpointFilter
             var dictionary = validationError.Fields.Items
                 .GroupBy(fv => JsonPointerToMvc.Translate(fv.Field.Path))
                 .ToDictionary(g => g.Key, g => g.Select(fv => fv.Detail ?? fv.ReasonCode).ToArray());
-            return Results.ValidationProblem(dictionary);
+
+            // Trellis-driven scalar VO validation rejection — semantic per RFC 9110 §15.5.21.
+            // Aligns with the status code emitted by the rest of the framework
+            // (ResponseFailureWriter for domain handler failures, ScalarValueValidationFilter
+            // and ScalarValueValidationMiddleware for the same condition on other code paths).
+            return Results.ValidationProblem(dictionary, statusCode: StatusCodes.Status422UnprocessableEntity);
         }
 
         return await next(context).ConfigureAwait(false);

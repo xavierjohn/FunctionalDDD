@@ -1,4 +1,4 @@
-﻿namespace Trellis.Asp.Tests;
+namespace Trellis.Asp.Tests;
 
 using System;
 using System.Collections.Generic;
@@ -75,14 +75,14 @@ public class ScalarValueValidationFilterTests
 
             // Assert
             context.Result.Should().NotBeNull();
-            context.Result.Should().BeOfType<BadRequestObjectResult>();
+            context.Result.Should().BeOfType<ObjectResult>();
 
-            var badRequestResult = (BadRequestObjectResult)context.Result!;
-            badRequestResult.StatusCode.Should().Be(400);
+            var badRequestResult = (ObjectResult)context.Result!;
+            badRequestResult.StatusCode.Should().Be(422);
             badRequestResult.Value.Should().BeOfType<ValidationProblemDetails>();
 
             var problemDetails = (ValidationProblemDetails)badRequestResult.Value!;
-            problemDetails.Status.Should().Be(400);
+            problemDetails.Status.Should().Be(422);
             problemDetails.Title.Should().Be("One or more validation errors occurred.");
             problemDetails.Errors.Should().HaveCount(2);
             problemDetails.Errors["Email"].Should().Contain("Email is required.");
@@ -262,14 +262,14 @@ public class ScalarValueValidationFilterTests
             filter.OnActionExecuting(context);
 
             // Assert
-            var badRequestResult = context.Result as BadRequestObjectResult;
+            var badRequestResult = context.Result as ObjectResult;
             badRequestResult.Should().NotBeNull();
 
             var problemDetails = badRequestResult!.Value as ValidationProblemDetails;
             problemDetails.Should().NotBeNull();
-            problemDetails!.Type.Should().Be("https://tools.ietf.org/html/rfc9110#section-15.5.1");
+            problemDetails!.Type.Should().Be("https://tools.ietf.org/html/rfc4918#section-11.2");
             problemDetails.Title.Should().Be("One or more validation errors occurred.");
-            problemDetails.Status.Should().Be(400);
+            problemDetails.Status.Should().Be(422);
             problemDetails.Errors.Should().HaveCount(2);
             problemDetails.Errors.Should().ContainKey("Field1");
             problemDetails.Errors.Should().ContainKey("Field2");
@@ -293,7 +293,7 @@ public class ScalarValueValidationFilterTests
         filter.OnActionExecuting(context);
 
         // Assert - should get rich error from TryCreate
-        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        context.Result.Should().NotBeNull().And.BeOfType<ObjectResult>();
         var problemDetails = GetValidationProblemDetails(context);
         problemDetails.Errors.Should().ContainKey("code");
         problemDetails.Errors["code"].Should().Contain(e => e.Contains("ORD-"));
@@ -315,7 +315,7 @@ public class ScalarValueValidationFilterTests
         filter.OnActionExecuting(context);
 
         // Assert
-        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        context.Result.Should().NotBeNull().And.BeOfType<ObjectResult>();
         var problemDetails = GetValidationProblemDetails(context);
         problemDetails.Errors.Should().ContainKey("code");
         problemDetails.Errors["code"].Should().Contain(e => e.Contains("ORD-"));
@@ -394,7 +394,7 @@ public class ScalarValueValidationFilterTests
         filter.OnActionExecuting(context);
 
         // Assert
-        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        context.Result.Should().NotBeNull().And.BeOfType<ObjectResult>();
         var problemDetails = GetValidationProblemDetails(context);
         problemDetails.Errors.Should().ContainKey("code");
     }
@@ -415,7 +415,7 @@ public class ScalarValueValidationFilterTests
         filter.OnActionExecuting(context);
 
         // Assert - only the IScalarValue param should have an error
-        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
+        context.Result.Should().NotBeNull().And.BeOfType<ObjectResult>();
         var problemDetails = GetValidationProblemDetails(context);
         problemDetails.Errors.Should().ContainKey("code");
         problemDetails.Errors.Keys.Should().NotContain("id");
@@ -538,8 +538,8 @@ public class ScalarValueValidationFilterTests
 
     private static ValidationProblemDetails GetValidationProblemDetails(ActionExecutingContext context)
     {
-        context.Result.Should().NotBeNull().And.BeOfType<BadRequestObjectResult>();
-        var badRequest = (BadRequestObjectResult)context.Result!;
+        context.Result.Should().NotBeNull().And.BeOfType<ObjectResult>();
+        var badRequest = (ObjectResult)context.Result!;
         badRequest.Value.Should().NotBeNull().And.BeOfType<ValidationProblemDetails>();
         return (ValidationProblemDetails)badRequest.Value!;
     }

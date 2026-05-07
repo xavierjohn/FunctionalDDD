@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -100,6 +101,13 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         string? entryParentPath = null;
         var trellisEntryKeys = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
 
+        // Precedence guard: a plain JsonException in ModelState means the request body is
+        // not valid JSON — a more fundamental client error than any semantic failure that
+        // happened on the same request. The 400 path stays authoritative in that case so
+        // we don't promote a request with malformed bytes to 422 just because one segment
+        // of the input also failed Trellis validation.
+        var hasPlainJsonException = false;
+
         foreach (var (key, entry) in context.ModelState)
         {
             foreach (var error in entry.Errors)
@@ -113,10 +121,14 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
                     trellisEntryKeys.Add(key);
                     break;
                 }
+                else if (error.Exception is System.Text.Json.JsonException)
+                {
+                    hasPlainJsonException = true;
+                }
             }
         }
 
-        if (trellisEx is null)
+        if (trellisEx is null || hasPlainJsonException)
             return false;
 
         var freshModelState = new ModelStateDictionary();
@@ -159,8 +171,8 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         }
 
         var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, freshModelState, statusCode: 400);
-        context.Result = new BadRequestObjectResult(problemDetails);
+        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, freshModelState, statusCode: 422);
+        context.Result = new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status422UnprocessableEntity };
         return true;
     }
 
@@ -191,15 +203,15 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         }
 
         var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, modelState, statusCode: 400);
-        context.Result = new BadRequestObjectResult(problemDetails);
+        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, modelState, statusCode: 422);
+        context.Result = new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status422UnprocessableEntity };
     }
 
-    private static BadRequestObjectResult CreateValidationProblemResult(ActionExecutingContext context)
+    private static ObjectResult CreateValidationProblemResult(ActionExecutingContext context, int statusCode)
     {
         var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, statusCode: 400);
-        return new BadRequestObjectResult(problemDetails);
+        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, statusCode: statusCode);
+        return new ObjectResult(problemDetails) { StatusCode = statusCode };
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2072:Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.",
@@ -207,6 +219,14 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
     private static void ValidateScalarValueParameters(ActionExecutingContext context)
     {
         var actionParameters = context.ActionDescriptor.Parameters;
+
+        // Track whether THIS pass identified any scalar-value-object failures so the final
+        // result discrimination can choose the correct status code:
+        //   - Scalar VO failure (binder couldn't construct the value, or TryCreate rejected it)
+        //     → 422 Unprocessable Content (semantic per RFC 9110 §15.5.21).
+        //   - Pre-existing ModelState invalidity from non-Trellis sources (plain JsonException
+        //     for malformed JSON, [Required] field missing, type-conversion failures) → 400.
+        var addedScalarValueFailure = false;
 
         foreach (var parameter in actionParameters)
         {
@@ -219,21 +239,30 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             if (!ScalarValueTypeHelper.IsScalarValue(underlyingType))
                 continue;
 
-            // Check if the parameter value is null (indicates binding failure for non-nullable IScalarValue)
-            if (context.ActionArguments.TryGetValue(parameter.Name!, out var value) && value is null)
+            // A scalar-VO parameter has failed semantic validation in either of two shapes:
+            //   (a) binding succeeded but produced null (action argument is null);
+            //   (b) the binder rejected the value at bind-time and added a ModelState entry
+            //       under the parameter name (action argument absent from the dictionary).
+            // Both are semantic failures of the input value, not JSON syntax errors.
+            var hasArg = context.ActionArguments.TryGetValue(parameter.Name!, out var value);
+            var valueIsNull = hasArg && value is null;
+            var hasModelStateError = context.ModelState.TryGetValue(parameter.Name!, out var mse)
+                && mse is { Errors.Count: > 0 };
+
+            if (!valueIsNull && !hasModelStateError)
+                continue;
+
+            var rawValue = GetRawParameterValue(context, parameter.Name!);
+            if (rawValue is null)
+                continue;
+
+            if (ShouldTreatEmptyQueryValueAsMissing(context, parameter, rawValue))
+                continue;
+
+            // Only synthesize a TryCreate-derived error if the binder didn't already record
+            // one for this parameter — avoids duplicate entries on the wire.
+            if (!hasModelStateError)
             {
-                // Check whether a raw value was actually provided in the request.
-                // If no raw value exists in route data or query string, the parameter
-                // was simply not provided (e.g., optional query param like OrderState? state).
-                // Only validate when a raw value is present but binding produced null (invalid input).
-                var rawValue = GetRawParameterValue(context, parameter.Name!);
-                if (rawValue is null)
-                    continue;
-
-                if (ShouldTreatEmptyQueryValueAsMissing(context, parameter, rawValue))
-                    continue;
-
-                // Call TryCreate to get the real validation error (e.g., with valid values list)
                 var errors = ScalarValueTypeHelper.GetValidationErrors(underlyingType, rawValue, parameter.Name!);
 
                 if (errors is not null)
@@ -244,20 +273,53 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
                 }
                 else
                 {
-                    // Fallback if TryCreate method wasn't found
+                    // Fallback when TryCreate is not available. Avoid reflecting the raw
+                    // request value into the response so we don't leak unexpected user input
+                    // (XSS-adjacent surface even with JSON escaping; mirrors the middleware's
+                    // hardening on the same path).
                     var typeName = underlyingType.Name;
                     var errorMessage = string.IsNullOrEmpty(rawValue)
                         ? $"'{parameter.Name}' is required."
-                        : $"'{rawValue}' is not a valid {typeName}.";
+                        : $"'{parameter.Name}' is not in a valid format for {typeName}.";
 
                     context.ModelState.AddModelError(parameter.Name!, errorMessage);
                 }
             }
+
+            addedScalarValueFailure = true;
         }
 
-        // Return validation problem if any errors were added
-        if (!context.ModelState.IsValid)
-            context.Result = CreateValidationProblemResult(context);
+        if (addedScalarValueFailure)
+        {
+            // Precedence guard: if a plain JsonException is also present (the body had a JSON
+            // syntax error in the same request), 400 wins. The bytes weren't valid JSON, which
+            // is a more fundamental client error than a semantic failure on a route/query VO.
+            var hasPlainJsonException = false;
+            foreach (var (_, entry) in context.ModelState)
+            {
+                foreach (var error in entry.Errors)
+                {
+                    if (error.Exception is System.Text.Json.JsonException
+                        and not TrellisJsonValidationException)
+                    {
+                        hasPlainJsonException = true;
+                        break;
+                    }
+                }
+
+                if (hasPlainJsonException) break;
+            }
+
+            context.Result = CreateValidationProblemResult(
+                context,
+                statusCode: hasPlainJsonException
+                    ? StatusCodes.Status400BadRequest
+                    : StatusCodes.Status422UnprocessableEntity);
+        }
+        else if (!context.ModelState.IsValid)
+        {
+            context.Result = CreateValidationProblemResult(context, statusCode: StatusCodes.Status400BadRequest);
+        }
     }
 
     private static string? GetRawParameterValue(ActionExecutingContext context, string parameterName)

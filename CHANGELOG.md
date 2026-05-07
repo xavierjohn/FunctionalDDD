@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Breaking)
+
+#### Binder-level value object validation failures now return 422 (Unprocessable Content), aligning with domain handler failures
+
+The framework previously returned **400 Bad Request** for two distinct condition shapes:
+
+1. **Trellis-driven semantic validation failures during binding** — composite value object `TryCreate` failures inside `CompositeValueObjectJsonConverter`, missing required composite properties, unsupported primitive types, JSON shape mismatches, and scalar value object `TryCreate` failures on query/route parameters.
+2. **Plain JSON syntax errors** — malformed JSON tokens, unclosed braces, and other `System.Text.Json.JsonException`s that aren't a `TrellisJsonValidationException`.
+
+Domain handler failures returning `Result.Fail(Error.UnprocessableContent(...))` already returned **422 Unprocessable Content** via `ResponseFailureWriter`. Clients had to special-case both for the same logical "your input is invalid" condition.
+
+This release aligns the status code with the actual semantic distinction in RFC 9110 §15.5.21 ("well-formed but unable to be processed due to semantic errors"):
+
+- **422** — `TrellisJsonValidationException` from any source (composite VO converter, scalar VO TryCreate failure, `ValidationErrorsContext`-collected errors), via `ScalarValueValidationMiddleware`, `ScalarValueValidationFilter`, and `ScalarValueValidationEndpointFilter`.
+- **400** — plain `JsonException` (the bytes are not valid JSON, RFC 9110 §15.5.1).
+
+**Mixed-failure precedence**: when a request contains both a plain JSON syntax error AND a Trellis semantic failure (e.g., malformed body + invalid query scalar VO), 400 wins. The bytes weren't valid JSON, which is a more fundamental client error than any semantic failure on the same request.
+
+`ProblemDetails.Type`, `Title`, and `Status` populate via the framework defaults (no Trellis override) — `https://tools.ietf.org/html/rfc4918#section-11.2` for 422, `https://tools.ietf.org/html/rfc9110#section-15.5.1` for 400.
+
+**Migration**: clients with `if (statusCode == 400)` checks for input validation should switch to `if (statusCode == 400 || statusCode == 422)` or — better — handle both via the shared `ValidationProblemDetails.Errors` shape, which is unchanged.
+
 ### Fixed
 
 #### MVC body-validation responses no longer include a phantom body-parameter entry and now expand composite value object failures into per-leaf entries

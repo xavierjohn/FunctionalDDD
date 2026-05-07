@@ -1,4 +1,4 @@
-﻿namespace Trellis.Asp.Tests;
+namespace Trellis.Asp.Tests;
 
 using System;
 using System.IO;
@@ -352,7 +352,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("code")[0].GetString()
@@ -376,7 +376,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("code")[0].GetString()
@@ -400,7 +400,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("code")[0].GetString()
@@ -424,7 +424,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("code")[0].GetString()
@@ -488,7 +488,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("code")[0].GetString()
@@ -561,7 +561,7 @@ public class ScalarValueValidationMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         var errors = problem.GetProperty("errors");
@@ -672,7 +672,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert - falls through from the unusable string overload to primitive TryCreate.
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("val")[0].GetString()
@@ -696,7 +696,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("val")[0].GetString()
@@ -749,7 +749,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         body.Should().NotContain("<script>", "user input should not be reflected in error responses");
         body.Should().NotContain("alert", "user input should not be reflected in error responses");
@@ -772,7 +772,7 @@ public class ScalarValueValidationMiddlewareTests
         await middleware.InvokeAsync(context);
 
         // Assert
-        context.Response.StatusCode.Should().Be(400);
+        context.Response.StatusCode.Should().Be(422);
         var body = await ReadResponseBodyAsync(context);
         body.Should().NotContain("IntOnlyScalarValue", "internal type names should not be exposed to clients");
     }
