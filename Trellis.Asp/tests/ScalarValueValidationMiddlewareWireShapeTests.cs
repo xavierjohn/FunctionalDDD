@@ -62,7 +62,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
         errors.Should().ContainKey("items[0].amount");
@@ -80,7 +80,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
         errors.Should().ContainKey(string.Empty,
@@ -116,7 +116,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
         errors.Should().ContainKey("amount");
@@ -310,7 +310,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 
@@ -352,7 +352,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 
@@ -386,7 +386,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 
@@ -420,7 +420,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 
@@ -455,7 +455,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 
@@ -490,7 +490,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 
@@ -528,7 +528,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var middleware = new ScalarValueValidationMiddleware(_ => throw bre);
         await middleware.InvokeAsync(ctx);
 
-        ctx.Response.StatusCode.Should().Be(400);
+        ctx.Response.StatusCode.Should().Be(422);
         var problem = await ReadProblemAsync(ctx);
         var errors = ReadErrors(problem);
 

@@ -88,9 +88,9 @@ Accept: application/json
   "overdraftLimit":       { "amount":   0.00, "currency": "USD" }
 }
 
-### Open account — invalid Money (negative amount fails JSON deserialization → 400)
+### Open account — invalid Money (negative amount fails value-level validation → 422)
 ### @parity: status-only
-# @expect status: 400
+# @expect status: 422
 POST {{host}}/api/accounts
 Content-Type: application/json
 Accept: application/json

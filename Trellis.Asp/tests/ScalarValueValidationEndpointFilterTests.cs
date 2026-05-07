@@ -70,7 +70,7 @@ public class ScalarValueValidationEndpointFilterTests
             result.Should().BeOfType<ProblemHttpResult>();
 
             var validationProblem = (ProblemHttpResult)result!;
-            validationProblem.StatusCode.Should().Be(400);
+            validationProblem.StatusCode.Should().Be(422);
         }
     }
 
@@ -92,7 +92,7 @@ public class ScalarValueValidationEndpointFilterTests
             // Assert
             result.Should().BeOfType<ProblemHttpResult>();
             var validationProblem = (ProblemHttpResult)result!;
-            validationProblem.StatusCode.Should().Be(400);
+            validationProblem.StatusCode.Should().Be(422);
         }
     }
 
@@ -116,7 +116,7 @@ public class ScalarValueValidationEndpointFilterTests
             // Assert
             result.Should().BeOfType<ProblemHttpResult>();
             var validationProblem = (ProblemHttpResult)result!;
-            validationProblem.StatusCode.Should().Be(400);
+            validationProblem.StatusCode.Should().Be(422);
         }
     }
 
@@ -205,7 +205,7 @@ public class ScalarValueValidationEndpointFilterTests
             // Assert
             result.Should().BeOfType<ProblemHttpResult>();
             var validationProblem = (ProblemHttpResult)result!;
-            validationProblem.StatusCode.Should().Be(400);
+            validationProblem.StatusCode.Should().Be(422);
         }
     }
 
@@ -251,7 +251,7 @@ public class ScalarValueValidationEndpointFilterTests
         {
             result.Should().BeOfType<ProblemHttpResult>();
             var validationProblem = (ProblemHttpResult)result!;
-            validationProblem.StatusCode.Should().Be(400);
+            validationProblem.StatusCode.Should().Be(422);
         }
     }
 

@@ -1,0 +1,250 @@
+﻿namespace Trellis.Asp.Tests;
+
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Trellis;
+using Trellis.Primitives;
+
+/// <summary>
+/// Pins the status-code split between binder-level VO validation failures (semantic — RFC 9110
+/// §15.5.21 "Unprocessable Content", 422) and JSON syntax errors (RFC 9110 §15.5.1 "Bad Request",
+/// 400). Before this fix, every binder validation failure — including <see cref="TrellisJsonValidationException"/>
+/// thrown by <c>CompositeValueObjectJsonConverter</c> when value-level rules failed, and scalar-VO
+/// <c>TryCreate</c> failures on query/route parameters — surfaced as 400, while the same logical
+/// "input is invalid" failure occurring later in a domain handler returned 422 via
+/// <c>ResponseFailureWriter</c>. Clients had to special-case both. The failure shape is now
+/// status-aligned with the rest of the framework: only well-formed-bytes-but-invalid-JSON-tokens
+/// returns 400.
+/// </summary>
+public sealed class BinderValidationStatusCodeTests
+{
+    private static IHost CreateMvcHost()
+    {
+        var builder = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .ConfigureServices(s =>
+                {
+                    s.AddProblemDetails();
+                    s.AddTrellisAsp();
+                    s.AddControllers().AddApplicationPart(typeof(StatusCodeController).Assembly);
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(e => e.MapControllers());
+                }));
+        return builder.Start();
+    }
+
+    [Fact]
+    public async Task Mvc_CompositeVoValidationFailure_Returns422WithRfcCompliantProblemDetails()
+    {
+        using var host = CreateMvcHost();
+        using var client = host.GetTestClient();
+
+        var json = """{"address":{"street":"","city":"","state":""}}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/binder-status/composite", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422, expectedErrorKey: "address.street");
+    }
+
+    [Fact]
+    public async Task Mvc_ScalarVoQueryValidationFailure_Returns422()
+    {
+        using var host = CreateMvcHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync("/binder-status/scalar?value=", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422);
+    }
+
+    [Fact]
+    public async Task Mvc_MalformedJson_Returns400()
+    {
+        using var host = CreateMvcHost();
+        using var client = host.GetTestClient();
+
+        // Truncated/malformed JSON — System.Text.Json raises a plain JsonException, not a
+        // TrellisJsonValidationException. The bytes are not valid JSON, so 400 is correct
+        // per RFC 9110 §15.5.1 ("syntactically malformed message").
+        var json = "{not valid";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/binder-status/composite", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await AssertRfc9457ProblemDetails(resp, expectedStatus: 400);
+    }
+
+    [Fact]
+    public async Task Mvc_MaybeScalarVoQueryValidationFailure_Returns422()
+    {
+        // Maybe<TScalar> query parameters are bound by MaybeModelBinder. When binding fails
+        // (e.g., raw value provided but TryCreate rejected it), the failure must be classified
+        // as semantic (422), matching plain IScalarValue parameters and the Minimal API path.
+        using var host = CreateMvcHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync("/binder-status/maybe-scalar?value=bad", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422);
+    }
+
+    [Fact]
+    public async Task Mvc_MalformedJson_TakesPrecedenceOverQueryScalarVoFailure_Returns400()
+    {
+        // Mixed-failure precedence: when the body is not valid JSON AND a query scalar VO
+        // ALSO fails, the wire response must be 400. Malformed bytes is a more fundamental
+        // client error than any semantic value-level failure on the same request.
+        using var host = CreateMvcHost();
+        using var client = host.GetTestClient();
+
+        var json = "{not valid";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/binder-status/mixed?value=", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "malformed JSON body must dominate even when a query-bound scalar VO also fails on the same request");
+    }
+
+    private static async Task AssertRfc9457ProblemDetails(
+        HttpResponseMessage response,
+        int expectedStatus,
+        string? expectedErrorKey = null)
+    {
+        // RFC 9457 §3 mandates application/problem+json (or +xml) for the response media type.
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var bodyText = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var root = doc.RootElement;
+
+        // RFC 9457 §3.1 fields. `type`, `title`, `status` are the canonical members; framework
+        // defaults must populate them so clients can dispatch on `type` and display `title`
+        // without consulting the HTTP status line.
+        root.TryGetProperty("status", out var statusEl).Should().BeTrue("RFC 9457 §3.1 status member must be present");
+        statusEl.GetInt32().Should().Be(expectedStatus, "the body status field must match the HTTP status line");
+
+        root.TryGetProperty("title", out var titleEl).Should().BeTrue("RFC 9457 §3.1 title member must be present");
+        titleEl.GetString().Should().NotBeNullOrEmpty("title is a short human-readable summary; default suffices");
+
+        root.TryGetProperty("type", out var typeEl).Should().BeTrue("RFC 9457 §3.1 type member must be present");
+        var typeUri = typeEl.GetString();
+        typeUri.Should().NotBeNullOrEmpty("type defaults to about:blank but should never be missing");
+
+        if (expectedErrorKey is not null)
+        {
+            root.TryGetProperty("errors", out var errorsEl).Should().BeTrue();
+            errorsEl.TryGetProperty(expectedErrorKey, out _).Should().BeTrue(
+                $"per-leaf entry {expectedErrorKey} must be present on the validation problem");
+        }
+    }
+}
+
+[JsonConverter(typeof(CompositeValueObjectJsonConverter<StatusCodeAddress>))]
+public sealed class StatusCodeAddress : ValueObject
+{
+    public string Street { get; private set; } = string.Empty;
+
+    public string City { get; private set; } = string.Empty;
+
+    public string State { get; private set; } = string.Empty;
+
+    private StatusCodeAddress() { }
+
+    private StatusCodeAddress(string street, string city, string state)
+    {
+        Street = street;
+        City = city;
+        State = state;
+    }
+
+    public static Result<StatusCodeAddress> TryCreate(string street, string city, string state, string? fieldName = null)
+    {
+        var violations = new System.Collections.Generic.List<FieldViolation>();
+        if (string.IsNullOrWhiteSpace(street))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("street"), "validation.error") { Detail = "Street is required." });
+        if (string.IsNullOrWhiteSpace(city))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("city"), "validation.error") { Detail = "City is required." });
+        if (string.IsNullOrWhiteSpace(state))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("state"), "validation.error") { Detail = "State is required." });
+
+        return violations.Count > 0
+            ? Result.Fail<StatusCodeAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            : Result.Ok(new StatusCodeAddress(street, city, state));
+    }
+
+    protected override System.Collections.Generic.IEnumerable<System.IComparable?> GetEqualityComponents()
+    {
+        yield return Street;
+        yield return City;
+        yield return State;
+    }
+}
+
+public sealed record StatusCodeRequest
+{
+    public StatusCodeAddress Address { get; init; } = null!;
+}
+
+public sealed class StatusCodeScalar : ScalarValueObject<StatusCodeScalar, string>, IScalarValue<StatusCodeScalar, string>
+{
+    private StatusCodeScalar(string value) : base(value) { }
+
+    public static Result<StatusCodeScalar> TryCreate(string? value, string? fieldName = null)
+    {
+        var field = fieldName ?? "value";
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
+                new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} is required." })));
+        }
+
+        // Sentinel that lets tests force a TryCreate rejection even when the raw input is
+        // non-empty (e.g., for `Maybe<StatusCodeScalar>` parameters where empty would bind
+        // as None instead of triggering validation).
+        if (value == "bad")
+        {
+            return Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
+                new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} cannot be 'bad'." })));
+        }
+
+        return Result.Ok(new StatusCodeScalar(value));
+    }
+}
+
+[ApiController]
+[Route("binder-status")]
+public sealed class StatusCodeController : ControllerBase
+{
+    [HttpPost("composite")]
+    public IActionResult PostComposite([FromBody] StatusCodeRequest request) => Ok();
+
+    [HttpGet("scalar")]
+    public IActionResult GetScalar([FromQuery] StatusCodeScalar value) => Ok();
+
+    [HttpGet("maybe-scalar")]
+    public IActionResult GetMaybeScalar([FromQuery] Maybe<StatusCodeScalar> value) => Ok();
+
+    [HttpPost("mixed")]
+    public IActionResult PostMixed(
+        [FromQuery] StatusCodeScalar value,
+        [FromBody] StatusCodeRequest request) => Ok();
+}

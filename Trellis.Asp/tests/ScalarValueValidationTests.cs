@@ -427,7 +427,7 @@ public class ScalarValueValidationTests
             result.Should().BeAssignableTo<Microsoft.AspNetCore.Http.IResult>();
             var problemResult = result as Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult;
             problemResult.Should().NotBeNull();
-            problemResult!.StatusCode.Should().Be(400);
+            problemResult!.StatusCode.Should().Be(422);
         }
     }
 

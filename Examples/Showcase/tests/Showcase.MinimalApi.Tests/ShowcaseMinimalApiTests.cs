@@ -170,7 +170,7 @@ public class ShowcaseMinimalApiTests : IClassFixture<WebApplicationFactory<Progr
             content,
             Ct);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
         var body = await response.Content.ReadAsStringAsync(Ct);
         body.Should().NotContain("The request body contains invalid JSON",
             "the framework should surface the curated TrellisJsonValidationException message instead of the generic placeholder");

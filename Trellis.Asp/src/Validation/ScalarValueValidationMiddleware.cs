@@ -174,16 +174,28 @@ public sealed class ScalarValueValidationMiddleware
         HttpContext context,
         IDictionary<string, string[]> errors)
     {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        // Scalar value object TryCreate rejected the bound value — the request bytes were
+        // well-formed, but the value failed semantic validation. Per RFC 9110 §15.5.21 this
+        // is 422 ("Unprocessable Content"), aligning with the status emitted by Trellis
+        // domain handlers via ResponseFailureWriter for the same logical condition.
+        context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
 
-        // Use Results.ValidationProblem for consistent response format
-        var result = Results.ValidationProblem(errors);
+        var result = Results.ValidationProblem(errors, statusCode: StatusCodes.Status422UnprocessableEntity);
         await result.ExecuteAsync(context).ConfigureAwait(false);
     }
 
     private static async Task WriteJsonDeserializationErrorAsync(HttpContext context, BadHttpRequestException ex)
     {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        // Status-code split. TrellisJsonValidationException is thrown by Trellis converters
+        // when a value-level rule fails (e.g. composite VO TryCreate returned a violation,
+        // missing required property, unsupported primitive type, JSON shape mismatch). The
+        // bytes parsed as JSON; the *values* failed semantic validation → 422.
+        // Plain JsonException (from System.Text.Json's tokenizer/structure errors) means the
+        // bytes are not valid JSON → 400 per RFC 9110 §15.5.1.
+        var statusCode = ex.InnerException is TrellisJsonValidationException
+            ? StatusCodes.Status422UnprocessableEntity
+            : StatusCodes.Status400BadRequest;
+        context.Response.StatusCode = statusCode;
 
         // System.Text.Json populates JsonException.Path automatically as the deserializer
         // unwinds (e.g. "$.items[0].amount"). Pull it from any JsonException — both the
@@ -226,7 +238,7 @@ public sealed class ScalarValueValidationMiddleware
                 }
             }
 
-            var structuredResult = Results.ValidationProblem(perLeafErrors);
+            var structuredResult = Results.ValidationProblem(perLeafErrors, statusCode: statusCode);
             await structuredResult.ExecuteAsync(context).ConfigureAwait(false);
             return;
         }
@@ -246,7 +258,7 @@ public sealed class ScalarValueValidationMiddleware
             [key] = [message],
         };
 
-        var result = Results.ValidationProblem(errors);
+        var result = Results.ValidationProblem(errors, statusCode: statusCode);
         await result.ExecuteAsync(context).ConfigureAwait(false);
     }
 

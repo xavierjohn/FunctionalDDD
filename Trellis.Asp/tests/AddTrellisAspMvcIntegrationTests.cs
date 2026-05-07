@@ -187,7 +187,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
 
         var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
 
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
 
         var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(bodyText);
@@ -232,7 +232,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
 
         var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
 
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
 
         var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(bodyText);
@@ -263,7 +263,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
 
         var resp = await client.PostAsync("/composite-dto-with-query", content, TestContext.Current.CancellationToken);
 
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
 
         var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(bodyText);
