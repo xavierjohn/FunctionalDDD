@@ -240,9 +240,19 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             // Handle nullable types (e.g., OrderState?)
             var underlyingType = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
 
-            // Skip if not an IScalarValue type
-            if (!ScalarValueTypeHelper.IsScalarValue(underlyingType))
+            // Treat both raw IScalarValue and Maybe<IScalarValue> parameters as scalar-VO,
+            // so MaybeModelBinder failures land on the same 422 path as ScalarValueModelBinder
+            // failures (matches ScalarValueValidationMiddleware behavior on the Minimal API path).
+            var isScalarValue = ScalarValueTypeHelper.IsScalarValue(underlyingType);
+            var isMaybeScalarValue = ScalarValueTypeHelper.IsMaybeScalarValue(underlyingType);
+            if (!isScalarValue && !isMaybeScalarValue)
                 continue;
+
+            // The TryCreate helper expects the inner scalar VO type, so unwrap Maybe<T> when
+            // re-running validation to synthesize a structured error.
+            var validationType = isMaybeScalarValue
+                ? ScalarValueTypeHelper.GetMaybeInnerType(underlyingType)!
+                : underlyingType;
 
             // A scalar-VO parameter has failed semantic validation in either of two shapes:
             //   (a) binding succeeded but produced null (action argument is null);
@@ -268,7 +278,7 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             // one for this parameter — avoids duplicate entries on the wire.
             if (!hasModelStateError)
             {
-                var errors = ScalarValueTypeHelper.GetValidationErrors(underlyingType, rawValue, parameter.Name!);
+                var errors = ScalarValueTypeHelper.GetValidationErrors(validationType, rawValue, parameter.Name!);
 
                 if (errors is not null)
                 {
@@ -282,7 +292,7 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
                     // request value into the response so we don't leak unexpected user input
                     // (XSS-adjacent surface even with JSON escaping; mirrors the middleware's
                     // hardening on the same path).
-                    var typeName = underlyingType.Name;
+                    var typeName = validationType.Name;
                     var errorMessage = string.IsNullOrEmpty(rawValue)
                         ? $"'{parameter.Name}' is required."
                         : $"'{parameter.Name}' is not in a valid format for {typeName}.";

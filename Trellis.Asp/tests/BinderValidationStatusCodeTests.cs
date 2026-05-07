@@ -92,6 +92,21 @@ public sealed class BinderValidationStatusCodeTests
     }
 
     [Fact]
+    public async Task mvc_Maybe_scalar_VO_query_validation_failure_returns_422()
+    {
+        // Maybe<TScalar> query parameters are bound by MaybeModelBinder. When binding fails
+        // (e.g., raw value provided but TryCreate rejected it), the failure must be classified
+        // as semantic (422), matching plain IScalarValue parameters and the Minimal API path.
+        using var host = CreateMvcHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync("/binder-status/maybe-scalar?value=bad", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422);
+    }
+
+    [Fact]
     public async Task mvc_malformed_JSON_takes_precedence_over_query_scalar_VO_failure_returning_400()
     {
         // Mixed-failure precedence: when the body is not valid JSON AND a query scalar VO
@@ -196,10 +211,22 @@ public sealed class StatusCodeScalar : ScalarValueObject<StatusCodeScalar, strin
     public static Result<StatusCodeScalar> TryCreate(string? value, string? fieldName = null)
     {
         var field = fieldName ?? "value";
-        return string.IsNullOrWhiteSpace(value)
-            ? Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
-                new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} is required." })))
-            : Result.Ok(new StatusCodeScalar(value));
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
+                new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} is required." })));
+        }
+
+        // Sentinel that lets tests force a TryCreate rejection even when the raw input is
+        // non-empty (e.g., for `Maybe<StatusCodeScalar>` parameters where empty would bind
+        // as None instead of triggering validation).
+        if (value == "bad")
+        {
+            return Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
+                new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} cannot be 'bad'." })));
+        }
+
+        return Result.Ok(new StatusCodeScalar(value));
     }
 }
 
@@ -212,6 +239,9 @@ public sealed class StatusCodeController : ControllerBase
 
     [HttpGet("scalar")]
     public IActionResult GetScalar([FromQuery] StatusCodeScalar value) => Ok();
+
+    [HttpGet("maybe-scalar")]
+    public IActionResult GetMaybeScalar([FromQuery] Maybe<StatusCodeScalar> value) => Ok();
 
     [HttpPost("mixed")]
     public IActionResult PostMixed(
