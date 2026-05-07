@@ -189,8 +189,39 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> if two syntax expressions refer to the same logical
+    /// receiver. For member-access chains (<c>e.Customer.Phone</c>), comparison is structural:
+    /// each chain segment must match in both the terminal symbol and the recursive receiver.
+    /// This prevents false positives where two distinct instances of the same type (e.g.,
+    /// <c>e.Primary.Phone</c> and <c>e.Secondary.Phone</c>) share the same terminal member
+    /// symbol but address different objects.
+    /// </summary>
     private static bool AreSameVariable(ExpressionSyntax expr1, ExpressionSyntax expr2, SemanticModel semanticModel)
     {
+        // Strip parentheses on either side — parens don't change identity.
+        while (expr1 is ParenthesizedExpressionSyntax p1)
+            expr1 = p1.Expression;
+        while (expr2 is ParenthesizedExpressionSyntax p2)
+            expr2 = p2.Expression;
+
+        // Member-access chain: compare terminal member symbols AND recursively compare receivers.
+        if (expr1 is MemberAccessExpressionSyntax ma1 && expr2 is MemberAccessExpressionSyntax ma2)
+        {
+            var name1 = semanticModel.GetSymbolInfo(ma1).Symbol;
+            var name2 = semanticModel.GetSymbolInfo(ma2).Symbol;
+            if (name1 == null || name2 == null)
+                return false;
+
+            return SymbolEqualityComparer.Default.Equals(name1, name2)
+                && AreSameVariable(ma1.Expression, ma2.Expression, semanticModel);
+        }
+
+        // Mixed shapes (one member access, one identifier) — not the same variable.
+        if (expr1 is MemberAccessExpressionSyntax || expr2 is MemberAccessExpressionSyntax)
+            return false;
+
+        // Plain identifier or `this` — fall back to symbol equality on the whole expression.
         var symbol1 = semanticModel.GetSymbolInfo(expr1).Symbol;
         var symbol2 = semanticModel.GetSymbolInfo(expr2).Symbol;
 
@@ -360,9 +391,18 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
     }
 
     /// <summary>
-    /// Recognizes: x.HasValue &amp;&amp; x.Value in binary AND expressions (short-circuit).
-    /// Common in expression trees (Specifications).
+    /// Recognizes <c>x.HasValue &amp;&amp; ... &amp;&amp; x.Value</c> in a left-to-right
+    /// short-circuit chain. Common in expression trees (specifications) and any multi-clause
+    /// boolean filter.
     /// </summary>
+    /// <remarks>
+    /// C# left-associates <c>a &amp;&amp; b &amp;&amp; c</c> as <c>(a &amp;&amp; b) &amp;&amp; c</c>,
+    /// so the immediate left operand of the outermost <c>&amp;&amp;</c> is itself a binary
+    /// expression for any 3+ clause shape. To recognize the guard, recurse through nested
+    /// <c>&amp;&amp;</c> operators on the left side looking for a matching <c>HasValue</c>
+    /// access on the same receiver. <c>||</c>, <c>!</c>, ternary, and other operators stop the
+    /// recursion because they break the short-circuit guarantee.
+    /// </remarks>
     private static bool IsGuardedByShortCircuitAnd(
         MemberAccessExpressionSyntax memberAccess,
         SemanticModel semanticModel)
@@ -371,16 +411,47 @@ public sealed class UnsafeValueAccessAnalyzer : DiagnosticAnalyzer
         while (current != null)
         {
             if (current is BinaryExpressionSyntax binaryExpression &&
-                binaryExpression.IsKind(SyntaxKind.LogicalAndExpression))
+                binaryExpression.IsKind(SyntaxKind.LogicalAndExpression) &&
+                binaryExpression.Right.Contains(memberAccess) &&
+                ContainsHasValueGuard(binaryExpression.Left, memberAccess.Expression, semanticModel))
             {
-                if (binaryExpression.Right.Contains(memberAccess) &&
-                    binaryExpression.Left is MemberAccessExpressionSyntax leftMember &&
-                    leftMember.Name.Identifier.Text == "HasValue" &&
-                    AreSameVariable(leftMember.Expression, memberAccess.Expression, semanticModel))
-                    return true;
+                return true;
             }
 
             current = current.Parent;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if <paramref name="expr"/> is, or contains within a
+    /// connected <c>&amp;&amp;</c> subtree (with parentheses transparent), a <c>HasValue</c>
+    /// member access on the same receiver as <paramref name="targetReceiver"/>. Recursion stops
+    /// at non-<c>&amp;&amp;</c> boundaries so <c>||</c>, <c>!</c>, ternary, and other operators
+    /// do not falsely satisfy the guard.
+    /// </summary>
+    private static bool ContainsHasValueGuard(
+        ExpressionSyntax expr,
+        ExpressionSyntax targetReceiver,
+        SemanticModel semanticModel)
+    {
+        // Parentheses are transparent for short-circuit semantics.
+        while (expr is ParenthesizedExpressionSyntax paren)
+            expr = paren.Expression;
+
+        if (expr is MemberAccessExpressionSyntax member &&
+            member.Name.Identifier.Text == "HasValue" &&
+            AreSameVariable(member.Expression, targetReceiver, semanticModel))
+        {
+            return true;
+        }
+
+        if (expr is BinaryExpressionSyntax binExpr &&
+            binExpr.IsKind(SyntaxKind.LogicalAndExpression))
+        {
+            return ContainsHasValueGuard(binExpr.Left, targetReceiver, semanticModel)
+                || ContainsHasValueGuard(binExpr.Right, targetReceiver, semanticModel);
         }
 
         return false;
