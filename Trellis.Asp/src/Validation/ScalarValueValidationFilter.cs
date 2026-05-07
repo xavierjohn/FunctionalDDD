@@ -57,7 +57,9 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
     /// <inheritdoc />
     public void OnActionExecuting(ActionExecutingContext context)
     {
-        // First, check for validation errors from JSON deserialization
+        // First, check for validation errors from JSON deserialization that landed in
+        // the per-request collection scope (Trellis scalar VO converters that fail
+        // gracefully — e.g., MaybeScalarValueJsonConverter / ValidatingJsonConverter).
         var validationError = ValidationErrorsContext.GetUnprocessableContent();
         if (validationError is not null)
         {
@@ -65,8 +67,107 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             return;
         }
 
-        // Second, check for null IScalarValue route/query parameters (binding failures)
+        // Second, check for structured errors that propagated as exceptions through MVC's
+        // input formatter and landed in ModelState. Composite VO converters throw
+        // TrellisJsonValidationException with UnprocessableContent attached; the JSON input
+        // formatter catches it (as JsonException), records the message + JsonException.Path
+        // verbatim in ModelState, and the body parameter ends up null — which then prompts
+        // the model binder to add a parameter-name "request": ["The request field is required."]
+        // entry. Both shapes are wrong: the first collapses per-leaf violations into a joined
+        // string, and the second is binding-pipeline noise that duplicates the same logical
+        // condition under a key the client cannot act on. Replace both with per-leaf entries
+        // built from the structured payload.
+        if (TryHandleStructuredModelStateErrors(context))
+            return;
+
+        // Third, check for null IScalarValue route/query parameters (binding failures)
         ValidateScalarValueParameters(context);
+    }
+
+    private static bool TryHandleStructuredModelStateErrors(ActionExecutingContext context)
+    {
+        // Find any ModelState entry whose error carries a TrellisJsonValidationException with
+        // a structured UnprocessableContent. There can be more than one if the input formatter
+        // accumulated several JSON errors (rare in practice — the converter throws on first
+        // failure — but the loop is harmless).
+        Error.UnprocessableContent? structured = null;
+        string? structuredEntryParentPath = null;
+        var structuredEntryKeys = new System.Collections.Generic.List<string>();
+
+        foreach (var (key, entry) in context.ModelState)
+        {
+            foreach (var error in entry.Errors)
+            {
+                if (error.Exception is TrellisJsonValidationException tjx
+                    && tjx.UnprocessableContent is { Fields.Length: > 0 } payload)
+                {
+                    // First match wins — additional structured exceptions in the same
+                    // request are treated as duplicates.
+                    structured ??= payload;
+                    structuredEntryParentPath ??= ScalarValueValidationMiddleware.JsonPathToMvcKey((error.Exception as System.Text.Json.JsonException)?.Path);
+                    structuredEntryKeys.Add(key);
+                    break;
+                }
+            }
+        }
+
+        if (structured is null)
+            return false;
+
+        // Build a fresh ModelStateDictionary with one entry per FieldViolation.
+        var freshModelState = new ModelStateDictionary();
+        foreach (var fv in structured.Fields)
+        {
+            var leafKey = JsonPointerToMvc.Translate(fv.Field.Path);
+            var combined = ScalarValueValidationMiddleware.CombineMvcKeys(structuredEntryParentPath ?? string.Empty, leafKey);
+            var detail = !string.IsNullOrEmpty(fv.Detail) ? fv.Detail : fv.ReasonCode;
+            freshModelState.AddModelError(combined, detail);
+        }
+
+        // Carry forward any other ModelState errors that were NOT the structured-payload entry
+        // and NOT MVC's body-parameter "is required" noise. The noise is identified by either:
+        // (a) the entry key matching an action [FromBody] parameter name, or
+        // (b) the entry text being the canonical "<X> field is required" string MVC emits when
+        // a body parameter binds to null.
+        var bodyParameterNames = GetBodyParameterNames(context);
+        foreach (var (key, entry) in context.ModelState)
+        {
+            if (structuredEntryKeys.Contains(key))
+                continue;
+
+            if (bodyParameterNames.Contains(key))
+                continue;
+
+            foreach (var error in entry.Errors)
+            {
+                if (string.IsNullOrEmpty(error.ErrorMessage))
+                    continue;
+
+                // Skip MVC's "The X field is required." noise even if the key wasn't a body
+                // parameter (defense in depth — the localized message is the canonical form).
+                if (error.ErrorMessage.EndsWith(" field is required.", System.StringComparison.Ordinal))
+                    continue;
+
+                freshModelState.AddModelError(key, error.ErrorMessage);
+            }
+        }
+
+        var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, freshModelState, statusCode: 400);
+        context.Result = new BadRequestObjectResult(problemDetails);
+        return true;
+    }
+
+    private static System.Collections.Generic.HashSet<string> GetBodyParameterNames(ActionExecutingContext context)
+    {
+        var names = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
+        foreach (var parameter in context.ActionDescriptor.Parameters)
+        {
+            if (parameter.BindingInfo?.BindingSource is { Id: "Body" } && parameter.Name is { Length: > 0 })
+                names.Add(parameter.Name);
+        }
+
+        return names;
     }
 
     private static void HandleJsonValidationErrors(ActionExecutingContext context, Error.UnprocessableContent validationError)

@@ -292,7 +292,7 @@ public sealed class ScalarValueValidationMiddleware
     /// <c>extensions["rules"][n].fields[]</c>.
     /// </para>
     /// </remarks>
-    private static string JsonPathToMvcKey(string? jsonExceptionPath)
+    internal static string JsonPathToMvcKey(string? jsonExceptionPath)
     {
         if (string.IsNullOrEmpty(jsonExceptionPath) || jsonExceptionPath == "$")
             return string.Empty;
@@ -392,7 +392,7 @@ public sealed class ScalarValueValidationMiddleware
     /// inserted only when the leaf starts with a property segment (i.e., does NOT start with
     /// <c>'['</c>); for indexer leaves the separator is omitted.
     /// </remarks>
-    private static string CombineMvcKeys(string parent, string leaf)
+    internal static string CombineMvcKeys(string parent, string leaf)
     {
         if (string.IsNullOrEmpty(parent))
             return leaf;

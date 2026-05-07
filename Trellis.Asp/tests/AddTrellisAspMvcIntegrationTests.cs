@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.Options;
 using Trellis;
 using Trellis.Asp.ModelBinding;
 using Trellis.Asp.Validation;
+using Trellis.Primitives;
 
 /// <summary>
 /// Integration tests that verify <see cref="ServiceCollectionExtensions.AddTrellisAsp(IServiceCollection)"/>
@@ -165,10 +167,97 @@ public sealed class AddTrellisAspMvcIntegrationTests
             .SuppressModelStateInvalidFilter.Should().BeTrue();
     }
 
-    #endregion
+    [Fact]
+    public async Task AddTrellisAsp_with_controllers_composite_VO_failure_omits_phantom_parameter_entry()
+    {
+        // When a composite value object inside a [FromBody] request fails multi-field validation,
+        // the wire response must contain ONLY the per-field errors emitted by the converter.
+        // It must NOT include an extra entry keyed by the action parameter name (e.g., "request":
+        // ["The request field is required."]) — that entry comes from MVC's binding pipeline
+        // observing a null body parameter after the deserializer short-circuited, and it
+        // duplicates the same logical "input is bad" condition under a key the client cannot
+        // act on.
+        using var host = CreateHost();
+        using var client = host.GetTestClient();
+
+        // All three required string fields empty — composite TryCreate combines three
+        // FieldViolations into a single Error.UnprocessableContent.
+        var json = """{"address":{"street":"","city":"","state":""}}""";
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
+
+        var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(bodyText);
+        var errors = doc.RootElement.GetProperty("errors");
+
+        // The structured branch from CompositeValueObjectJsonConverter must surface per-leaf entries
+        // keyed by `<parentPath>.<leaf>` in MVC dot+bracket convention.
+        errors.TryGetProperty("address.street", out _).Should().BeTrue("per-leaf street error must be present");
+        errors.TryGetProperty("address.city", out _).Should().BeTrue("per-leaf city error must be present");
+        errors.TryGetProperty("address.state", out _).Should().BeTrue("per-leaf state error must be present");
+
+        // The phantom parameter-name entry must be gone.
+        errors.TryGetProperty("request", out _).Should().BeFalse(
+            "MVC's null-body-parameter ModelState entry must not appear alongside the structured per-field errors");
+    }
+
+#endregion
 }
 
-#region Test fixtures (controller, DTO, scalar VOs)
+#region Composite VO test fixture (regression guard for phantom parameter-name entry)
+
+[JsonConverter(typeof(CompositeValueObjectJsonConverter<TestAddress>))]
+public sealed class TestAddress : ValueObject
+{
+    public string Street { get; private set; } = string.Empty;
+
+    public string City { get; private set; } = string.Empty;
+
+    public string State { get; private set; } = string.Empty;
+
+    private TestAddress() { }
+
+    private TestAddress(string street, string city, string state)
+    {
+        Street = street; City = city; State = state;
+    }
+
+    public static Result<TestAddress> TryCreate(string street, string city, string state, string? fieldName = null)
+    {
+        var violations = new System.Collections.Generic.List<FieldViolation>();
+        if (string.IsNullOrWhiteSpace(street))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("street"), "validation.error") { Detail = "Street is required." });
+        if (string.IsNullOrWhiteSpace(city))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("city"), "validation.error") { Detail = "City is required." });
+        if (string.IsNullOrWhiteSpace(state))
+            violations.Add(new FieldViolation(InputPointer.ForProperty("state"), "validation.error") { Detail = "State is required." });
+
+        return violations.Count > 0
+            ? Result.Fail<TestAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            : Result.Ok(new TestAddress(street, city, state));
+    }
+
+    protected override System.Collections.Generic.IEnumerable<System.IComparable?> GetEqualityComponents()
+    {
+        yield return Street;
+        yield return City;
+        yield return State;
+    }
+}
+
+public sealed record CompositeDtoRequest
+{
+    public TestAddress Address { get; init; } = null!;
+}
+
+[ApiController]
+[Route("composite-dto")]
+public sealed class CompositeDtoController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Post([FromBody] CompositeDtoRequest request) => Ok(new { ok = true });
+}
 
 public sealed class TestPhone : ScalarValueObject<TestPhone, string>, IScalarValue<TestPhone, string>
 {
