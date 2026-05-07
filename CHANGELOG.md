@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-#### MVC body-validation 422 responses no longer include a phantom body-parameter entry and now expand composite value object failures into per-leaf entries
+#### MVC body-validation responses no longer include a phantom body-parameter entry and now expand composite value object failures into per-leaf entries
 
-When a controller action's `[FromBody]` parameter failed JSON deserialization, the wire response contained two defects:
+When a controller action's `[FromBody]` parameter failed JSON deserialization, the 400 `ValidationProblemDetails` response contained two defects:
 
 1. A phantom `"<paramName>": ["The <paramName> field is required."]` entry, emitted by the model-binding layer after the input formatter recorded the deserialization error and the parameter bound to `null`.
 2. Composite value object validation failures landed under a single `$.<path>` key with all field-level reasons joined into one string — the per-leaf expansion added in the previous release only ran on the Minimal API path.

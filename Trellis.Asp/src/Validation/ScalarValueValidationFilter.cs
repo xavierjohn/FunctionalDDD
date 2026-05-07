@@ -98,7 +98,7 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         //     ValidationProblemDetails would render a generic placeholder.
         TrellisJsonValidationException? trellisEx = null;
         string? entryParentPath = null;
-        var trellisEntryKeys = new System.Collections.Generic.List<string>();
+        var trellisEntryKeys = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
 
         foreach (var (key, entry) in context.ModelState)
         {
@@ -169,7 +169,8 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         var names = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
         foreach (var parameter in context.ActionDescriptor.Parameters)
         {
-            if (parameter.BindingInfo?.BindingSource is { Id: "Body" } && parameter.Name is { Length: > 0 })
+            if (parameter.BindingInfo?.BindingSource?.CanAcceptDataFrom(BindingSource.Body) == true
+                && parameter.Name is { Length: > 0 })
                 names.Add(parameter.Name);
         }
 

@@ -187,6 +187,8 @@ public sealed class AddTrellisAspMvcIntegrationTests
 
         var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
 
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
         var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(bodyText);
         var errors = doc.RootElement.GetProperty("errors");
@@ -196,6 +198,14 @@ public sealed class AddTrellisAspMvcIntegrationTests
         errors.TryGetProperty("address.street", out _).Should().BeTrue("per-leaf street error must be present");
         errors.TryGetProperty("address.city", out _).Should().BeTrue("per-leaf city error must be present");
         errors.TryGetProperty("address.state", out _).Should().BeTrue("per-leaf state error must be present");
+
+        // Old collapsed shape must be gone — `$.address` (or just `address`) carrying all
+        // leaf reasons joined into one string was the regression PR #474 introduced for the
+        // Minimal API path; this fix extends the per-leaf expansion to the MVC path.
+        errors.TryGetProperty("$.address", out _).Should().BeFalse(
+            "the old joined-leaves collapsed key must not appear");
+        errors.TryGetProperty("address", out _).Should().BeFalse(
+            "the old joined-leaves collapsed key must not appear under any casing");
 
         // The phantom parameter-name entry must be gone.
         errors.TryGetProperty("request", out _).Should().BeFalse(
@@ -221,6 +231,8 @@ public sealed class AddTrellisAspMvcIntegrationTests
         using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var resp = await client.PostAsync("/composite-dto", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(bodyText);
@@ -250,6 +262,8 @@ public sealed class AddTrellisAspMvcIntegrationTests
         using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var resp = await client.PostAsync("/composite-dto-with-query", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var bodyText = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         using var doc = JsonDocument.Parse(bodyText);

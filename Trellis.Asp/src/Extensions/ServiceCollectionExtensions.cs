@@ -366,7 +366,7 @@ public static class ServiceCollectionExtensions
         // exception object in ModelState. The user-visible ErrorMessage on the wire is
         // unchanged because ModelStateDictionary still derives it from exception.Message
         // when storing the exception.
-        services.Configure<JsonOptions>(options =>
+        services.Configure<MvcJsonOptions>(options =>
             options.AllowInputFormatterExceptionMessages = false);
 
         return services;
