@@ -47,7 +47,7 @@ public sealed class BinderValidationStatusCodeTests
     }
 
     [Fact]
-    public async Task mvc_composite_VO_validation_failure_returns_422_with_RFC_compliant_problem_details()
+    public async Task Mvc_CompositeVoValidationFailure_Returns422WithRfcCompliantProblemDetails()
     {
         using var host = CreateMvcHost();
         using var client = host.GetTestClient();
@@ -62,7 +62,7 @@ public sealed class BinderValidationStatusCodeTests
     }
 
     [Fact]
-    public async Task mvc_scalar_VO_query_validation_failure_returns_422()
+    public async Task Mvc_ScalarVoQueryValidationFailure_Returns422()
     {
         using var host = CreateMvcHost();
         using var client = host.GetTestClient();
@@ -74,7 +74,7 @@ public sealed class BinderValidationStatusCodeTests
     }
 
     [Fact]
-    public async Task mvc_malformed_JSON_returns_400()
+    public async Task Mvc_MalformedJson_Returns400()
     {
         using var host = CreateMvcHost();
         using var client = host.GetTestClient();
@@ -92,7 +92,7 @@ public sealed class BinderValidationStatusCodeTests
     }
 
     [Fact]
-    public async Task mvc_Maybe_scalar_VO_query_validation_failure_returns_422()
+    public async Task Mvc_MaybeScalarVoQueryValidationFailure_Returns422()
     {
         // Maybe<TScalar> query parameters are bound by MaybeModelBinder. When binding fails
         // (e.g., raw value provided but TryCreate rejected it), the failure must be classified
@@ -107,7 +107,7 @@ public sealed class BinderValidationStatusCodeTests
     }
 
     [Fact]
-    public async Task mvc_malformed_JSON_takes_precedence_over_query_scalar_VO_failure_returning_400()
+    public async Task Mvc_MalformedJson_TakesPrecedenceOverQueryScalarVoFailure_Returns400()
     {
         // Mixed-failure precedence: when the body is not valid JSON AND a query scalar VO
         // ALSO fails, the wire response must be 400. Malformed bytes is a more fundamental
