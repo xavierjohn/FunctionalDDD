@@ -25,7 +25,7 @@ Under query/header API versioning, `Location` headers from `CreatedAtRoute(...)`
 
 ## Key Features
 - Three overloads for multi-key, single-id, and explicit-version pinning scenarios
-- Per-request resolution via `httpContext.GetRequestedApiVersion()`, falling back to declared and default versions
+- Per-request resolution via `httpContext.RequestedApiVersion` (the `Asp.Versioning.Http` extension property), falling back to declared and default versions
 - Honours `[ApiVersionNeutral]` and URL-segment versioning by skipping injection
 - Throws on degenerate configurations (multi-version action with no client-requested version and no `DefaultApiVersion`) instead of silently picking
 

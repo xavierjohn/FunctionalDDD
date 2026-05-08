@@ -264,8 +264,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             case LocationKind.Route:
                 {
                     var lg = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
-                    var rv = _options.RouteValuesSelector!(domain);
-                    ApplyRouteValueResolvers(rv, httpContext);
+                    var rv = ApplyRouteValueResolvers(_options.RouteValuesSelector!(domain), httpContext);
                     return lg.GetUriByName(httpContext, _options.RouteName!, rv)
                         ?? lg.GetPathByName(httpContext, _options.RouteName!, rv);
                 }
@@ -278,17 +277,25 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         }
     }
 
-    private void ApplyRouteValueResolvers(Microsoft.AspNetCore.Routing.RouteValueDictionary routeValues, HttpContext httpContext)
+    private Microsoft.AspNetCore.Routing.RouteValueDictionary ApplyRouteValueResolvers(
+        Microsoft.AspNetCore.Routing.RouteValueDictionary routeValues,
+        HttpContext httpContext)
     {
         if (_options.RouteValueResolvers is null || _options.RouteValueResolvers.Count == 0)
-            return;
+            return routeValues;
 
+        // Clone before mutating: the user-supplied selector may return a cached/shared instance,
+        // so writing api-version (or any resolved key) directly into it would leak across
+        // requests and create thread-safety issues. The clone is per-request and short-lived.
+        var withResolved = new Microsoft.AspNetCore.Routing.RouteValueDictionary(routeValues);
         foreach (var (key, resolver) in _options.RouteValueResolvers)
         {
             var value = resolver(httpContext);
             if (value is not null)
-                routeValues[key] = value;
+                withResolved[key] = value;
         }
+
+        return withResolved;
     }
 
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("LocationKind.Action calls into MVC's ControllerLinkGeneratorExtensions which is not trim-safe. Use CreatedAtRoute (named routes) instead for AOT/trim scenarios.")]
@@ -307,8 +314,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         }
 
         var lg = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
-        var rv = _options.RouteValuesSelector!(domain);
-        ApplyRouteValueResolvers(rv, httpContext);
+        var rv = ApplyRouteValueResolvers(_options.RouteValuesSelector!(domain), httpContext);
         return lg.GetUriByAction(httpContext, _options.ActionName!, _options.ControllerName, rv)
             ?? lg.GetPathByAction(httpContext, _options.ActionName!, _options.ControllerName, rv);
     }

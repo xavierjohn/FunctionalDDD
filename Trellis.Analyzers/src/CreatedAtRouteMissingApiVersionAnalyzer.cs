@@ -91,8 +91,13 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
     {
         // Lambda body shapes we recognize:
         //   c => new RouteValueDictionary { ... }
-        //   c => new RouteValueDictionary(new { ... })
         //   c => { return new RouteValueDictionary { ... }; }
+        //
+        // We do NOT recognise `c => new RouteValueDictionary(new { ... })` (the constructor
+        // overload that takes an anonymous-object initializer): inspecting anonymous-type
+        // members is not implemented and would require its own visitor. That shape ends up as
+        // a false-negative — TRLS023 simply doesn't fire on it. The runtime helper migration
+        // remains the right answer there.
         if (arg.Expression is not LambdaExpressionSyntax lambda) return null;
 
         ExpressionSyntax? bodyExpr = lambda.Body switch

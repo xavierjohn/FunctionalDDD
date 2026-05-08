@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
+    <TrellisApiRefName>asp-apiversioning</TrellisApiRefName>
     <Description>API-versioning helpers for Trellis.Asp. Adds CreatedAtVersionedRoute extensions on HttpResponseOptionsBuilder that auto-inject the api-version route value into Location headers, so 201 Created responses round-trip the requested version under query/header API versioning. Skips injection for [ApiVersionNeutral] and URL-segment-versioned endpoints.</Description>
     <PackageTags>trellis;api-versioning;asp;versioning;result;railway-oriented;functional-programming</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
