@@ -90,10 +90,35 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
 
     private static bool HasUsing(CompilationUnitSyntax cu, string namespaceName)
     {
+        // Top-level usings (file-scoped or block-scoped) before any namespace declaration.
         foreach (var u in cu.Usings)
         {
             if (u.Name?.ToString() == namespaceName)
                 return true;
+        }
+
+        // Usings inside namespace declarations. The repo convention is file-scoped namespaces
+        // with usings *inside* the namespace block:
+        //
+        //     namespace Trellis.Foo;
+        //     using Bar;
+        //
+        // so cu.Usings is often empty even when `using Trellis.Asp.ApiVersioning;` is already
+        // in scope. Walk both NamespaceDeclarationSyntax and FileScopedNamespaceDeclarationSyntax.
+        foreach (var member in cu.Members)
+        {
+            var nsUsings = member switch
+            {
+                NamespaceDeclarationSyntax ns => ns.Usings,
+                FileScopedNamespaceDeclarationSyntax fs => fs.Usings,
+                _ => default,
+            };
+
+            foreach (var u in nsUsings)
+            {
+                if (u.Name?.ToString() == namespaceName)
+                    return true;
+            }
         }
 
         return false;

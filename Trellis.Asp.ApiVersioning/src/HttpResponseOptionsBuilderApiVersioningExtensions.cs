@@ -61,9 +61,9 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
         ArgumentNullException.ThrowIfNull(routeValues);
 
-        // Wrap the route-values selector so resolution happens per-request from HttpContext.
-        // The key is fixed at registration time to satisfy WithRouteValueResolver's contract;
-        // it's read from IOptions inside the resolver so it tracks runtime configuration.
+        // Resolution happens per-request from HttpContext (inside the resolver delegate);
+        // only the route-value key is fixed at registration time. The key is the constant
+        // `DefaultRouteValueKey` ("api-version") — no IOptions lookup is involved for the key.
         return builder
             .CreatedAtRoute(routeName, routeValues)
             .WithRouteValueResolver(

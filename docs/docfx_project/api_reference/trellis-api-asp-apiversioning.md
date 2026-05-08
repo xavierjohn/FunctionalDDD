@@ -29,13 +29,13 @@ See also: [trellis-api-asp.md](trellis-api-asp.md) — the underlying `HttpRespo
 | Return 201 Created with versioned Location | Replace `CreatedAtRoute(...)` with `CreatedAtVersionedRoute(...)` | [`HttpResponseOptionsBuilderApiVersioningExtensions`](#httpresponseoptionsbuilderapiversioningextensions) |
 | Single id route value | `CreatedAtVersionedRoute(routeName, x => x.Id)` (single-id overload) | [Single-id overload](#single-id-overload) |
 | Multi-key route values | `CreatedAtVersionedRoute(routeName, x => new RouteValueDictionary { ["tenantId"] = x.TenantId, ["id"] = x.Id })` | [Multi-key overload](#multi-key-overload) |
-| Pin Location to a specific version (rare) | `CreatedAtVersionedRoute(routeName, selector, apiVersion: "2026-12-01")` | [Explicit-version overload](#explicit-version-overload) |
+| Pin Location to a specific version (rare) | `CreatedAtVersionedRoute(routeName, selector, explicitVersion: new ApiVersion(new DateOnly(2026, 12, 1)))` | [Explicit-version overload](#explicit-version-overload) |
 | `[ApiVersionNeutral]` controller | Use `CreatedAtRoute` (no version injected); `CreatedAtVersionedRoute` short-circuits the resolver to a no-op when the endpoint is neutral | [Behavioral notes](#behavioral-notes) |
 | URL-segment versioning (`v{version:apiVersion}` in template) | Continue to use `CreatedAtRoute`; the segment is filled by the route template, not a query route value | [Behavioral notes](#behavioral-notes) |
 
 ## Common traps
 
-- Do **not** add `["api-version"] = …` manually inside the route values dictionary when you call `CreatedAtVersionedRoute` — the resolver does it. Manual entries override the resolver via last-writer-wins semantics, which silently defeats the helper.
+- Do **not** add `["api-version"] = …` manually inside the route values dictionary when you call `CreatedAtVersionedRoute`. The resolver runs *after* the route-values selector and **overwrites** any pre-existing `api-version` entry, so manual entries are silently discarded. Either trust the resolver, or use the `WithRouteValueResolver` hook directly with your own logic.
 - Do not assume `CreatedAtVersionedRoute` works for URL-segment versioning. URL-segment templates resolve the version from the route template parameter, not from a query/header route value; the helper intentionally skips injection in that case.
 - The route values selector should return a fresh `RouteValueDictionary` per call. The runtime clones the dictionary defensively before applying resolvers, but selectors that return a shared instance still cost an unnecessary allocation per request.
 - Configure `Asp.Versioning` with an explicit `DefaultApiVersion` if you support multiple declared versions on the same controller. With `AllowMultiple = true` `[ApiVersion]` and no client-supplied version, the resolver throws rather than silently picking one.
@@ -66,7 +66,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 | --- | --- | --- |
 | `CreatedAtVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, string routeName, Func<TDomain, RouteValueDictionary> routeValues)` | `HttpResponseOptionsBuilder<TDomain>` | Multi-key overload. Equivalent to `CreatedAtRoute(routeName, routeValues).WithRouteValueResolver("api-version", ResolveApiVersion)`. |
 | `CreatedAtVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id")` | `HttpResponseOptionsBuilder<TDomain>` | Single-id overload. Sugar for the common case where the new resource has a single `id` route parameter. |
-| `CreatedAtVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, string routeName, Func<TDomain, RouteValueDictionary> routeValues, string apiVersion)` | `HttpResponseOptionsBuilder<TDomain>` | Explicit-version overload. Pins the `api-version` route value to a literal instead of resolving from the request. Useful for redirects to a fixed version. |
+| `CreatedAtVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, string routeName, Func<TDomain, RouteValueDictionary> routeValues, ApiVersion explicitVersion)` | `HttpResponseOptionsBuilder<TDomain>` | Explicit-version overload. Pins the `api-version` route value to a specific `ApiVersion` instance (typically constructed as `new ApiVersion(new DateOnly(...))` for date-format versioning) instead of resolving from the request. Useful for redirects to a fixed version. |
 
 #### Behavioral notes
 
@@ -112,7 +112,7 @@ return result.ToHttpResponse(opts => opts
     .CreatedAtVersionedRoute(
         "Orders_GetById",
         o => new RouteValueDictionary { ["id"] = o.Id },
-        apiVersion: "2026-12-01"));
+        explicitVersion: new ApiVersion(new DateOnly(2026, 12, 1))));
 ```
 
 Pins the `Location` to `?api-version=2026-12-01` regardless of what the client requested. Use this only for redirects to a fixed version (deprecation flows, version migration). For the common case, prefer the request-driven overloads.

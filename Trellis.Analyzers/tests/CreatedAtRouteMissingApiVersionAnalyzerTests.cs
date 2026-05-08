@@ -19,7 +19,7 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
         namespace Microsoft.AspNetCore.Routing
         {
             using System.Collections.Generic;
-            public class RouteValueDictionary : Dictionary<string, object> { }
+            public partial class RouteValueDictionary : Dictionary<string, object> { }
         }
 
         namespace Asp.Versioning
@@ -253,6 +253,52 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
 
         var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
         test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAtRoute_with_anonymous_object_ctor_arg_produces_warning()
+    {
+        // C# property names cannot contain hyphens, so `new RouteValueDictionary(new { id = 1 })`
+        // can never carry an "api-version" key — the analyzer must fire.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary(new { id = c.Id }));
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(18, 9));
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        // The stubs declare RouteValueDictionary as inheriting from Dictionary<string,object>,
+        // which doesn't have an (object) constructor — extend the stub locally just for this test.
+        const string ctorStub = """
+            namespace Microsoft.AspNetCore.Routing
+            {
+                public partial class RouteValueDictionary
+                {
+                    public RouteValueDictionary(object values) { }
+                }
+            }
+            """;
+        test.TestState.Sources.Add(("CtorStub.cs", ctorStub));
 
         await test.RunAsync();
     }

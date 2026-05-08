@@ -57,15 +57,46 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         // Bail to false-negative (no warning) for non-literal forms like
         // `c => myComputedDictionary` — we can't tell what's inside.
         var routeValuesArg = inv.ArgumentList.Arguments[1];
-        var literal = ExtractRouteValueDictionaryInitializer(routeValuesArg);
-        if (literal is null) return;
+        var shape = ClassifyRouteValuesShape(routeValuesArg);
+        switch (shape.Kind)
+        {
+            case RouteValuesShapeKind.Unrecognized:
+                return;
 
-        if (RouteValueDictionaryContainsApiVersionKey(literal))
-            return;
+            case RouteValuesShapeKind.Initializer:
+                if (RouteValueDictionaryContainsApiVersionKey(shape.Initializer!))
+                    return;
+                break;
+
+            case RouteValuesShapeKind.AnonymousObjectCtorArg:
+                // C# property names cannot contain hyphens, so an anonymous-object route-values
+                // ctor argument can never carry an "api-version" property. The api-version key
+                // is necessarily missing — fall through to report the diagnostic.
+                break;
+        }
 
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.MissingApiVersionRouteValue,
             inv.GetLocation()));
+    }
+
+    private enum RouteValuesShapeKind
+    {
+        Unrecognized,
+        Initializer,
+        AnonymousObjectCtorArg,
+    }
+
+    private readonly struct RouteValuesShape
+    {
+        public RouteValuesShape(RouteValuesShapeKind kind, InitializerExpressionSyntax? initializer)
+        {
+            Kind = kind;
+            Initializer = initializer;
+        }
+
+        public RouteValuesShapeKind Kind { get; }
+        public InitializerExpressionSyntax? Initializer { get; }
     }
 
     private static bool HasAttribute(INamedTypeSymbol type, string attributeTypeName, string attributeNamespace)
@@ -87,18 +118,17 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static InitializerExpressionSyntax? ExtractRouteValueDictionaryInitializer(ArgumentSyntax arg)
+    private static RouteValuesShape ClassifyRouteValuesShape(ArgumentSyntax arg)
     {
         // Lambda body shapes we recognize:
-        //   c => new RouteValueDictionary { ... }
-        //   c => { return new RouteValueDictionary { ... }; }
+        //   c => new RouteValueDictionary { ... }            → Initializer
+        //   c => { return new RouteValueDictionary { ... }; }→ Initializer
+        //   c => new RouteValueDictionary(new { ... })       → AnonymousObjectCtorArg
         //
-        // We do NOT recognise `c => new RouteValueDictionary(new { ... })` (the constructor
-        // overload that takes an anonymous-object initializer): inspecting anonymous-type
-        // members is not implemented and would require its own visitor. That shape ends up as
-        // a false-negative — TRLS023 simply doesn't fire on it. The runtime helper migration
-        // remains the right answer there.
-        if (arg.Expression is not LambdaExpressionSyntax lambda) return null;
+        // Anything else (variable reference, computed dictionary, ctor with non-anonymous
+        // argument like an IDictionary) is Unrecognized — bail to false-negative.
+        if (arg.Expression is not LambdaExpressionSyntax lambda)
+            return new RouteValuesShape(RouteValuesShapeKind.Unrecognized, null);
 
         ExpressionSyntax? bodyExpr = lambda.Body switch
         {
@@ -110,10 +140,22 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
             _ => null,
         };
 
-        if (bodyExpr is BaseObjectCreationExpressionSyntax oce && oce.Initializer is { } init)
-            return init;
+        if (bodyExpr is BaseObjectCreationExpressionSyntax oce)
+        {
+            if (oce.Initializer is { } init)
+                return new RouteValuesShape(RouteValuesShapeKind.Initializer, init);
 
-        return null;
+            // No initializer block — look for an anonymous-object constructor argument.
+            // Anonymous-object property names are valid C# identifiers (no hyphens), so this
+            // shape definitionally cannot carry an "api-version" key.
+            if (oce.ArgumentList?.Arguments.Count == 1 &&
+                oce.ArgumentList.Arguments[0].Expression is AnonymousObjectCreationExpressionSyntax)
+            {
+                return new RouteValuesShape(RouteValuesShapeKind.AnonymousObjectCtorArg, null);
+            }
+        }
+
+        return new RouteValuesShape(RouteValuesShapeKind.Unrecognized, null);
     }
 
     private static bool RouteValueDictionaryContainsApiVersionKey(InitializerExpressionSyntax init)
