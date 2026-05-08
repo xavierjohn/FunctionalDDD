@@ -1,7 +1,6 @@
 ﻿// Cookbook Recipe 21 — Parallel independent loads in handlers using Result.ParallelAsync + WhenAllAsync.
 namespace CookbookSnippets.Recipe21;
 
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using global::Mediator;

@@ -22,7 +22,7 @@ This release also:
 - adds a Cross-cutting tip listing the trigger ("two independent `await repo.X()` calls in a handler") so readers find the pattern by symptom even if they don't read recipes top-to-bottom;
 - ships a compiled `Examples/CookbookSnippets/Recipe21_ParallelAsync.cs` so the recipe code is verified at every CI build.
 
-The same recipe is mirrored into the ASP template's `.github/trellis-api-cookbook.md` and `template/.github/trellis-api-cookbook.md` copies so model labs that scaffold from the template see it.
+The same recipe should also be mirrored into the ASP template's cookbook copies in the `xavierjohn/TrellisAspTemplate` repository — that's a separate follow-up because the template is its own repo.
 
 ### Changed (Breaking)
 

@@ -1610,9 +1610,9 @@ public sealed class CreateDraftOrderHandler(
 **What it shows.**
 
 - `Result.ParallelAsync` takes `Func<Task<Result<T>>>` factories, NOT `Task<Result<T>>` instances. The factory shape is the API's only safeguard against the "I started the tasks before passing them in" mistake that makes them sequential anyway.
-- `.WhenAllAsync()` on the tuple is the matching extension. Without it, awaiting the tuple directly does nothing useful.
+- `.WhenAllAsync()` on the tuple is the matching extension. Without it you still have a tuple of `Task<Result<T>>` — which isn't awaitable on its own; you'd have to await each task individually and combine the results by hand. `.WhenAllAsync()` is the one-line fold.
 - The combined `Result<(T1, T2)>` flows back into the standard ROP chain (`BindAsync`, `MapAsync`, `TapAsync`) — no `match` / `if (success)` branches.
-- `Result.ParallelAsync` ships overloads for 2–8 factories. For collections, prefer `TraverseAsync` ([Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall)) — it's the right tool when the count is dynamic.
+- `Result.ParallelAsync` ships overloads for 2–9 factories. For collections, prefer `TraverseAsync` ([Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall)) — it's the right tool when the count is dynamic.
 
 **When NOT to use it.** The second load depends on the first. If you need the customer's tenant id to fetch the product, the loads are not independent — keep the sequential `BindAsync` chain. The rule is mechanical: if the second factory's body references a value produced by the first, they're sequential.
 
