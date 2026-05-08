@@ -24,6 +24,23 @@ This release also:
 
 The same recipe should also be mirrored into the ASP template's cookbook copies in the `xavierjohn/TrellisAspTemplate` repository — that's a separate follow-up because the template is its own repo.
 
+#### Cookbook cleanup — retire Recipe 15, fold residual into Recipe 8, fix Recipe 11 TRLS001 / Recipe 14 wording
+
+Recipe 15 (*Specifications with `Maybe<T>`: the fake/real divergence trap*) taught a `GetValueOrDefault(SENTINEL)` workaround for a `TRLS003` false positive on multi-clause `Maybe<T>` predicates inside `Specification<T>.ToExpression()`. The false positive was fixed in the analyzer (`UnsafeMaybeValueAccess` now recognises the multi-clause guard), so the workaround is no longer needed. The recipe was actively misleading: it labelled the natural multi-clause shape as "❌ Wrong — outer `&&` hides the guard" and the sentinel as "✅ Correct — the analyzer-clean form". GPT-5.5's 2026-05-06 lab feedback explicitly called out the sentinel-as-guidance as a footgun adopted *because* Recipe 15 told them to.
+
+Recipe 15 is now a stub redirecting to Recipe 8. The recipe number is preserved so existing bookmark and search-index entries remain stable; future content should renumber from Recipe 22 rather than reusing 15.
+
+Recipe 8's "Filtering on `Maybe<T>` properties in LINQ and `Specification<T>`" subsection picks up the residual content: natural multi-clause guard as the canonical specification shape, sentinel as a still-working alternative for "absence acts as the most-permissive value", `AddTrellisInterceptors()` prerequisite, and the "share the same `Specification<T>` between EF and `FakeRepository` — never duplicate the predicate" rule.
+
+Also in this release:
+
+- **Recipe 11 TRLS001 fix corrected.** The previous "fix" suggested `PlaceOrder(cmd).Match(_ => 0, e => throw new("..."));` — but throwing inside `Match`'s failure callback is structurally identical to throwing inside `.Bind` and trips TRLS010, which the same recipe forbids four code blocks below. New fix offers two non-throwing alternatives: propagate up the ROP chain, or terminal `Match` with side-effects in both branches.
+- **Recipe 14 wording.** "the validation message produced by `PhoneNumber.Create`" → `PhoneNumber.TryCreate`. `Create` is the throwing factory; the validation message is produced by `TryCreate`.
+- **Patterns Index `Task -> recipe lookup` row** for "Map `Maybe<T>` or composite value objects with EF Core" no longer references Recipe 15.
+- **Mistake-regression routing row** for "Overdue/date-filter queries over `Maybe<DateTime>`" points at Recipe 8 directly.
+- **Cross-cutting tip** about `Maybe<T>.Value` inside expression trees rewritten to reflect TRLS003's post-fix recognition of multi-clause guards.
+- **Recipe 16's** cross-link "fake/real divergence trap from Recipe 15" → "Recipe 8".
+
 ### Changed (Breaking)
 
 #### Binder-level value object validation failures now return 422 (Unprocessable Content), aligning with domain handler failures
