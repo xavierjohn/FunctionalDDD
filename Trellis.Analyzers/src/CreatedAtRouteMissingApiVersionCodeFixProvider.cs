@@ -70,16 +70,7 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
         //    rather than a confusing "method not found" error.
         if (newRoot is CompilationUnitSyntax cu && !HasUsing(cu, ApiVersioningNamespace))
         {
-            // Match the existing usings' trailing newline style (CRLF on Windows-style files,
-            // LF on others) so we don't introduce a mixed-line-ending diff.
-            var trailingNewline = cu.Usings.Count > 0
-                ? cu.Usings[cu.Usings.Count - 1].GetTrailingTrivia()
-                : SyntaxFactory.TriviaList(SyntaxFactory.ElasticCarriageReturnLineFeed);
-
-            var usingDirective = SyntaxFactory.UsingDirective(
-                    SyntaxFactory.ParseName(ApiVersioningNamespace))
-                .WithTrailingTrivia(trailingNewline);
-            cu = cu.AddUsings(usingDirective);
+            cu = AddUsing(cu, ApiVersioningNamespace);
             return document.WithSyntaxRoot(cu);
         }
 
@@ -87,6 +78,86 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
     }
 
     private const string ApiVersioningNamespace = "Trellis.Asp.ApiVersioning";
+
+    /// <summary>
+    /// Adds <paramref name="namespaceName"/> as a <c>using</c> directive in the same scope where
+    /// existing usings live. The repo convention is file-scoped namespaces with usings *inside*
+    /// the namespace block, so adding to <see cref="CompilationUnitSyntax.Usings"/> would place
+    /// the new using above the namespace declaration — out of order with the existing usings,
+    /// and potentially flagged by IDE0065 (using directive placement).
+    /// </summary>
+    private static CompilationUnitSyntax AddUsing(CompilationUnitSyntax cu, string namespaceName)
+    {
+        // Locate where existing usings live, so we add the new using to the same scope.
+        var (fileScopedNs, blockScopedNs) = FindNamespaceWithUsings(cu);
+
+        if (fileScopedNs is not null)
+        {
+            var trailing = fileScopedNs.Usings.Count > 0
+                ? fileScopedNs.Usings[fileScopedNs.Usings.Count - 1].GetTrailingTrivia()
+                : SyntaxFactory.TriviaList(SyntaxFactory.ElasticCarriageReturnLineFeed);
+
+            var directive = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
+                .WithTrailingTrivia(trailing);
+            var updated = fileScopedNs.AddUsings(directive);
+            return cu.ReplaceNode(fileScopedNs, updated);
+        }
+
+        if (blockScopedNs is not null)
+        {
+            var trailing = blockScopedNs.Usings.Count > 0
+                ? blockScopedNs.Usings[blockScopedNs.Usings.Count - 1].GetTrailingTrivia()
+                : SyntaxFactory.TriviaList(SyntaxFactory.ElasticCarriageReturnLineFeed);
+
+            var directive = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
+                .WithTrailingTrivia(trailing);
+            var updated = blockScopedNs.AddUsings(directive);
+            return cu.ReplaceNode(blockScopedNs, updated);
+        }
+
+        // No namespace usings — fall back to top-level usings.
+        var topTrailing = cu.Usings.Count > 0
+            ? cu.Usings[cu.Usings.Count - 1].GetTrailingTrivia()
+            : SyntaxFactory.TriviaList(SyntaxFactory.ElasticCarriageReturnLineFeed);
+
+        var topDirective = SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(namespaceName))
+            .WithTrailingTrivia(topTrailing);
+        return cu.AddUsings(topDirective);
+    }
+
+    private static (FileScopedNamespaceDeclarationSyntax? FileScoped, NamespaceDeclarationSyntax? BlockScoped)
+        FindNamespaceWithUsings(CompilationUnitSyntax cu)
+    {
+        // Prefer a namespace that already declares usings (matches the existing scope). If none
+        // does, fall back to the first namespace declaration found (still keeps usings consistent
+        // with the file's namespace style).
+        FileScopedNamespaceDeclarationSyntax? firstFileScoped = null;
+        NamespaceDeclarationSyntax? firstBlockScoped = null;
+
+        foreach (var member in cu.Members)
+        {
+            switch (member)
+            {
+                case FileScopedNamespaceDeclarationSyntax fs:
+                    firstFileScoped ??= fs;
+                    if (fs.Usings.Count > 0)
+                        return (fs, null);
+                    break;
+                case NamespaceDeclarationSyntax ns:
+                    firstBlockScoped ??= ns;
+                    if (ns.Usings.Count > 0)
+                        return (null, ns);
+                    break;
+            }
+        }
+
+        // No namespace had usings. If the file uses namespace declarations at all, prefer adding
+        // there (consistent style); otherwise the caller falls back to top-level.
+        if (cu.Usings.Count > 0)
+            return (null, null);
+
+        return (firstFileScoped, firstBlockScoped);
+    }
 
     private static bool HasUsing(CompilationUnitSyntax cu, string namespaceName)
     {

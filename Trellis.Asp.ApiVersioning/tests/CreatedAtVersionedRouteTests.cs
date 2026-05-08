@@ -160,6 +160,22 @@ public sealed class CreatedAtVersionedRouteTests
         resp.Headers.Location.OriginalString.Should().Contain($"api-version={ApiVersionV1}");
     }
 
+    [Fact]
+    public async Task ApiVersionNeutral_controller_omits_api_version_from_Location()
+    {
+        // [ApiVersionNeutral] endpoints must not carry a version in their Location header
+        // (they're version-exempt by design — adding ?api-version=... would mislead clients).
+        // The resolver short-circuits to null, ApplyRouteValueResolvers writes nothing, and
+        // the resulting Location is the bare URI.
+        using var host = CreateSingleVersionHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/neutral?api-version={ApiVersionV1}", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().NotContain("api-version");
+    }
+
     private static StringContent JsonContent(string json) =>
         new(json, System.Text.Encoding.UTF8, "application/json");
 }
@@ -221,5 +237,23 @@ public sealed class MultiVersionController : ControllerBase
 public sealed record CreatedCustomer(int Id);
 
 public sealed record CreatedOrder(int Id);
+
+[ApiController]
+[ApiVersionNeutral]
+[Route("neutral")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
+public sealed class NeutralController : ControllerBase
+{
+    [HttpGet("{id:int}", Name = "Neutral_GetById")]
+    public IActionResult Get(int id) => Ok(new { id });
+
+    [HttpPost]
+    public ActionResult<CreatedCustomer> Post() =>
+        Result.Ok(new CreatedCustomer(7))
+            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
+                "Neutral_GetById",
+                c => new RouteValueDictionary { ["id"] = c.Id }))
+            .AsActionResult<CreatedCustomer>();
+}
 
 #endregion

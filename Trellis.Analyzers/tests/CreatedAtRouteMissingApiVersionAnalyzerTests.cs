@@ -302,4 +302,37 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
 
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task CreatedAtRoute_with_const_string_api_version_key_produces_no_warning()
+    {
+        // `[ApiVersionKey] = ...` where `ApiVersionKey = "api-version"` is a const string —
+        // the analyzer must resolve the constant value via the semantic model and treat it as
+        // satisfying the api-version requirement.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public const string ApiVersionKey = "api-version";
+
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id, [ApiVersionKey] = "2026-11-12" });
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
 }

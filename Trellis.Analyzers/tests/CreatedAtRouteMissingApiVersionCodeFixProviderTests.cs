@@ -244,4 +244,71 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProviderTests
 
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task Fix_adds_using_inside_file_scoped_namespace_when_existing_usings_live_there()
+    {
+        // Repo convention: file-scoped namespace declaration with usings *inside* the namespace
+        // block. The fix must add the new using to the same scope as the existing usings, not
+        // above the namespace declaration.
+        const string source = """
+            namespace TestNs;
+
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id });
+                }
+            }
+            """;
+
+        const string fixedSource = """
+            namespace TestNs;
+
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+            using Trellis.Asp.ApiVersioning;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtVersionedRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id });
+                }
+            }
+            """;
+
+        var test = new CSharpCodeFixTest<
+            CreatedAtRouteMissingApiVersionAnalyzer,
+            CreatedAtRouteMissingApiVersionCodeFixProvider,
+            DefaultVerifier>
+        {
+            TestCode = source,
+            FixedCode = fixedSource,
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80,
+        };
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+        test.FixedState.Sources.Add(("Stubs.cs", StubSource));
+        test.ExpectedDiagnostics.Add(
+            new DiagnosticResult(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(14, 9));
+
+        await test.RunAsync();
+    }
 }

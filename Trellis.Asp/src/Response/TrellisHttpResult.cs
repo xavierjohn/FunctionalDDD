@@ -284,18 +284,23 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         if (_options.RouteValueResolvers is null || _options.RouteValueResolvers.Count == 0)
             return routeValues;
 
-        // Clone before mutating: the user-supplied selector may return a cached/shared instance,
-        // so writing api-version (or any resolved key) directly into it would leak across
-        // requests and create thread-safety issues. The clone is per-request and short-lived.
-        var withResolved = new Microsoft.AspNetCore.Routing.RouteValueDictionary(routeValues);
+        // Defer cloning until we actually have a non-null resolver value to write. If every
+        // resolver returns null (e.g., api-version resolver short-circuits for [ApiVersionNeutral]
+        // or URL-segment versioning), we never allocate a clone — the original dictionary is
+        // returned unchanged. Cloning only when there's a value to write also preserves the
+        // cross-request leakage protection the previous unconditional clone provided.
+        Microsoft.AspNetCore.Routing.RouteValueDictionary? withResolved = null;
         foreach (var (key, resolver) in _options.RouteValueResolvers)
         {
             var value = resolver(httpContext);
-            if (value is not null)
-                withResolved[key] = value;
+            if (value is null)
+                continue;
+
+            withResolved ??= new Microsoft.AspNetCore.Routing.RouteValueDictionary(routeValues);
+            withResolved[key] = value;
         }
 
-        return withResolved;
+        return withResolved ?? routeValues;
     }
 
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("LocationKind.Action calls into MVC's ControllerLinkGeneratorExtensions which is not trim-safe. Use CreatedAtRoute (named routes) instead for AOT/trim scenarios.")]

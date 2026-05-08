@@ -64,7 +64,7 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
                 return;
 
             case RouteValuesShapeKind.Initializer:
-                if (RouteValueDictionaryContainsApiVersionKey(shape.Initializer!))
+                if (RouteValueDictionaryContainsApiVersionKey(shape.Initializer!, context.SemanticModel))
                     return;
                 break;
 
@@ -158,25 +158,31 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         return new RouteValuesShape(RouteValuesShapeKind.Unrecognized, null);
     }
 
-    private static bool RouteValueDictionaryContainsApiVersionKey(InitializerExpressionSyntax init)
+    private static bool RouteValueDictionaryContainsApiVersionKey(
+        InitializerExpressionSyntax init,
+        SemanticModel semanticModel)
     {
         // RouteValueDictionary uses case-insensitive key comparison at runtime. Match the same
         // semantics here so that {"API-VERSION"], ["Api-Version"], etc. are accepted as equivalent
         // to "api-version" — otherwise the analyzer fires on a literal that's already correct.
+        // Const-string identifiers are also accepted (e.g., `[ApiVersionKey] = ...` where
+        // `ApiVersionKey` is `const string ApiVersionKey = "api-version";`) — the semantic model
+        // resolves the constant value.
         foreach (var expr in init.Expressions)
         {
             // `["api-version"] = x` — collection-initializer assignment with bracket key.
             if (expr is AssignmentExpressionSyntax ae &&
                 ae.Left is ImplicitElementAccessSyntax iea)
             {
-                var key = TryGetStringLiteralKey(iea.ArgumentList.Arguments);
+                var key = TryGetStringKey(iea.ArgumentList.Arguments, semanticModel);
                 if (key is not null && string.Equals(key, "api-version", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
             // `{ "api-version", x }` — pre-C#6 collection-initializer-style dictionary entry.
             else if (expr is InitializerExpressionSyntax pair &&
-                     pair.Expressions.FirstOrDefault() is LiteralExpressionSyntax litKey &&
-                     string.Equals(litKey.Token.ValueText, "api-version", StringComparison.OrdinalIgnoreCase))
+                     pair.Expressions.FirstOrDefault() is { } first &&
+                     TryGetConstantStringValue(first, semanticModel) is { } pairKey &&
+                     string.Equals(pairKey, "api-version", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -185,11 +191,26 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static string? TryGetStringLiteralKey(SeparatedSyntaxList<ArgumentSyntax> args)
+    private static string? TryGetStringKey(
+        SeparatedSyntaxList<ArgumentSyntax> args,
+        SemanticModel semanticModel)
     {
         if (args.Count == 0) return null;
-        if (args[0].Expression is LiteralExpressionSyntax lit && lit.Token.IsKind(SyntaxKind.StringLiteralToken))
+        return TryGetConstantStringValue(args[0].Expression, semanticModel);
+    }
+
+    private static string? TryGetConstantStringValue(ExpressionSyntax expr, SemanticModel semanticModel)
+    {
+        // Direct string literal: cheap path, no semantic-model query.
+        if (expr is LiteralExpressionSyntax lit && lit.Token.IsKind(SyntaxKind.StringLiteralToken))
             return lit.Token.ValueText;
+
+        // Reference to a const string symbol (IdentifierNameSyntax / MemberAccessExpressionSyntax)
+        // — let the semantic model resolve the constant value at the call site.
+        var constant = semanticModel.GetConstantValue(expr);
+        if (constant.HasValue && constant.Value is string s)
+            return s;
+
         return null;
     }
 }
