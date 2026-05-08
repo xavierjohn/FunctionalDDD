@@ -81,6 +81,25 @@ public sealed class CreatedAtVersionedRouteTests
         return builder.Start();
     }
 
+    private static IHost CreateUrlSegmentHost()
+    {
+        var builder = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .ConfigureServices(s =>
+                {
+                    s.AddTrellisAsp();
+                    s.AddControllers().AddApplicationPart(typeof(SegmentVersionController).Assembly);
+                    s.AddApiVersioning(o => o.ApiVersionReader = new UrlSegmentApiVersionReader()).AddMvc();
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(e => e.MapControllers());
+                }));
+        return builder.Start();
+    }
+
     [Fact]
     public async Task Single_declared_version_with_client_request_echoes_version_in_Location()
     {
@@ -176,6 +195,26 @@ public sealed class CreatedAtVersionedRouteTests
         resp.Headers.Location!.OriginalString.Should().NotContain("api-version");
     }
 
+    [Fact]
+    public async Task UrlSegment_versioned_route_omits_api_version_query_from_Location()
+    {
+        // URL-segment versioning embeds the version in the route template (`v{version:apiVersion}`).
+        // The resolver detects the `:apiVersion` constraint and skips injecting api-version into the
+        // route-values dictionary — the segment is filled by ambient routing, and a query-string
+        // copy would create a redundant/conflicting parameter on the Location URI.
+        using var host = CreateUrlSegmentHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/v{ApiVersionV1}/segments", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        // The version is in the path, not the query. The Location should contain the segment but
+        // NOT a `?api-version=...` query parameter from the resolver.
+        resp.Headers.Location!.OriginalString.Should().Contain($"/v{ApiVersionV1}/segments/");
+        resp.Headers.Location.OriginalString.Should().NotContain("?api-version=");
+        resp.Headers.Location.OriginalString.Should().NotContain("&api-version=");
+    }
+
     private static StringContent JsonContent(string json) =>
         new(json, System.Text.Encoding.UTF8, "application/json");
 }
@@ -252,6 +291,24 @@ public sealed class NeutralController : ControllerBase
         Result.Ok(new CreatedCustomer(7))
             .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
                 "Neutral_GetById",
+                c => new RouteValueDictionary { ["id"] = c.Id }))
+            .AsActionResult<CreatedCustomer>();
+}
+
+[ApiController]
+[ApiVersion(CreatedAtVersionedRouteTests.ApiVersionV1)]
+[Route("v{version:apiVersion}/segments")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
+public sealed class SegmentVersionController : ControllerBase
+{
+    [HttpGet("{id:int}", Name = "Segments_GetById")]
+    public IActionResult Get(int id) => Ok(new { id });
+
+    [HttpPost]
+    public ActionResult<CreatedCustomer> Post() =>
+        Result.Ok(new CreatedCustomer(13))
+            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
+                "Segments_GetById",
                 c => new RouteValueDictionary { ["id"] = c.Id }))
             .AsActionResult<CreatedCustomer>();
 }
