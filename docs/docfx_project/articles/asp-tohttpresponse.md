@@ -191,7 +191,7 @@ app.MapPost("/orders", async (CreateOrder cmd, IOrderService svc, CancellationTo
 ```
 
 > [!IMPORTANT]
-> Under query-string API versioning, the `RouteValueDictionary` MUST include `["api-version"] = ApiVersion`; otherwise the emitted `Location` omits the version segment and `404`s on dereference.
+> Under query-string or header API versioning, the `RouteValueDictionary` MUST include `["api-version"] = ApiVersion`; otherwise the emitted `Location` omits the version segment and `404`s on dereference. Prefer `CreatedAtVersionedRoute(...)` from the [`Trellis.Asp.ApiVersioning`](integration-aspnet.md#api-version-aware-location-headers) package, which injects the version per request automatically. The [`TRLS023`](analyzers/TRLS023.md) analyzer catches missed migrations and the code fix rewrites the call.
 
 ### `WriteOutcome<T>` variants
 
