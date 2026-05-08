@@ -236,6 +236,13 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for chaining.</returns>
     /// <remarks>
     /// <para>
+    /// Despite the feature name (<i>resource authorization</i>), this extension lives in the
+    /// <c>Trellis.Mediator</c> namespace — not <c>Trellis.Authorization</c> — because the
+    /// resource is loaded by a Mediator pipeline behavior. Add
+    /// <c>using Trellis.Mediator;</c> in your composition root (e.g.,
+    /// <c>DependencyInjection.cs</c>) to bring this method into scope.
+    /// </para>
+    /// <para>
     /// Prefer <see cref="AddResourceAuthorization(IServiceCollection, Assembly[])"/> for automatic
     /// discovery. Use this explicit overload for AOT/trimming scenarios where assembly scanning
     /// is not available.
@@ -280,6 +287,13 @@ public static class ServiceCollectionExtensions
     /// (containing <see cref="IResourceLoader{TMessage, TResource}"/> implementations).</param>
     /// <returns>The service collection for chaining.</returns>
     /// <remarks>
+    /// <para>
+    /// Despite the feature name (<i>resource authorization</i>), this extension lives in the
+    /// <c>Trellis.Mediator</c> namespace — not <c>Trellis.Authorization</c> — because the
+    /// resource is loaded by a Mediator pipeline behavior. Add
+    /// <c>using Trellis.Mediator;</c> in your composition root (e.g.,
+    /// <c>DependencyInjection.cs</c>) to bring this method into scope.
+    /// </para>
     /// <para>
     /// For each concrete type that implements <see cref="IAuthorizeResource{TResource}"/>,
     /// the method extracts <c>TResource</c> and resolves <c>TResponse</c> from

@@ -277,6 +277,15 @@ public class Money : ValueObject
     /// <summary>
     /// Creates a zero-value Money instance for the specified currency.
     /// </summary>
+    /// <param name="currencyCode">ISO 4217 currency code. Defaults to <c>"USD"</c>.</param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> wrapping the constructed <see cref="Money"/>. Returns the
+    /// success branch when <paramref name="currencyCode"/> is a supported currency, and the
+    /// failure branch when it is not — the currency code is validated at construction time,
+    /// so this method is not a plain <see cref="Money"/> factory. Consumers must unwrap the
+    /// result (typically with <c>.TryGetValue(...)</c> or <c>.Match(...)</c>) before using
+    /// the value.
+    /// </returns>
     public static Result<Money> Zero(string currencyCode = "USD") => TryCreate(0, currencyCode);
 
     /// <summary>
