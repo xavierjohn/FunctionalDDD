@@ -25,6 +25,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     private string? _actionName;
     private string? _controllerName;
     private Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary>? _routeValuesSelector;
+    private Dictionary<string, Func<Microsoft.AspNetCore.Http.HttpContext, string?>>? _routeValueResolvers;
 
     private bool _evaluatePreconditions;
     private bool _honorPrefer;
@@ -156,6 +157,35 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     }
 
     /// <summary>
+    /// Registers a per-request resolver that injects (or overrides) a single route-value entry
+    /// at <c>Location</c>-header generation time. Invoked AFTER the
+    /// <see cref="CreatedAtRoute"/> / <see cref="CreatedAtAction"/> route-values selector runs;
+    /// if the resolver returns non-null, the value is set under <paramref name="key"/> in the
+    /// resulting <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> (overriding any
+    /// existing entry under the same key). If the resolver returns null, the entry is left
+    /// untouched.
+    /// </summary>
+    /// <param name="key">The route-value key to inject.</param>
+    /// <param name="resolver">The per-request resolver. Receives the active <see cref="Microsoft.AspNetCore.Http.HttpContext"/>; returns the value to inject, or null to skip.</param>
+    /// <remarks>
+    /// Designed for cross-cutting per-request concerns such as API versioning (a Location header
+    /// that round-trips the requested version), tenant id, or culture. Multiple resolvers can be
+    /// registered with distinct keys; calling this method again with the same key replaces the
+    /// previous resolver. Useful only with <see cref="CreatedAtRoute"/> /
+    /// <see cref="CreatedAtAction"/>; ignored by literal/selector Location modes.
+    /// </remarks>
+    public HttpResponseOptionsBuilder<TDomain> WithRouteValueResolver(
+        string key,
+        Func<Microsoft.AspNetCore.Http.HttpContext, string?> resolver)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentNullException.ThrowIfNull(resolver);
+        _routeValueResolvers ??= new Dictionary<string, Func<Microsoft.AspNetCore.Http.HttpContext, string?>>(StringComparer.OrdinalIgnoreCase);
+        _routeValueResolvers[key] = resolver;
+        return this;
+    }
+
+    /// <summary>
     /// Honors RFC 9110 conditional request headers (<c>If-Match</c>, <c>If-Unmodified-Since</c>,
     /// <c>If-None-Match</c>, <c>If-Modified-Since</c>) on the response side. Only meaningful for
     /// safe methods (GET/HEAD); on unsafe methods the precondition must be evaluated *before* the mutation.
@@ -224,6 +254,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         ActionName = _actionName,
         ControllerName = _controllerName,
         RouteValuesSelector = _routeValuesSelector,
+        RouteValueResolvers = _routeValueResolvers,
         EvaluatePreconditions = _evaluatePreconditions,
         HonorPrefer = _honorPrefer,
         RangeSelector = _rangeSelector,
@@ -251,6 +282,7 @@ internal sealed class HttpResponseOptions<TDomain>
     public string? ActionName { get; init; }
     public string? ControllerName { get; init; }
     public Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary>? RouteValuesSelector { get; init; }
+    public IReadOnlyDictionary<string, Func<Microsoft.AspNetCore.Http.HttpContext, string?>>? RouteValueResolvers { get; init; }
 
     public bool EvaluatePreconditions { get; init; }
     public bool HonorPrefer { get; init; }

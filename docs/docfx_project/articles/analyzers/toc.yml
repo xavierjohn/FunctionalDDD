@@ -32,3 +32,5 @@
   href: TRLS018.md
 - name: TRLS019 - Avoid default(Result/Maybe)
   href: TRLS019.md
+- name: TRLS023 - CreatedAtRoute missing api-version
+  href: TRLS023.md

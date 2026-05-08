@@ -264,7 +264,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             case LocationKind.Route:
                 {
                     var lg = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
-                    var rv = _options.RouteValuesSelector!(domain);
+                    var rv = ApplyRouteValueResolvers(_options.RouteValuesSelector!(domain), httpContext);
                     return lg.GetUriByName(httpContext, _options.RouteName!, rv)
                         ?? lg.GetPathByName(httpContext, _options.RouteName!, rv);
                 }
@@ -275,6 +275,33 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             default:
                 return null;
         }
+    }
+
+    private Microsoft.AspNetCore.Routing.RouteValueDictionary ApplyRouteValueResolvers(
+        Microsoft.AspNetCore.Routing.RouteValueDictionary routeValues,
+        HttpContext httpContext)
+    {
+        if (_options.RouteValueResolvers is null || _options.RouteValueResolvers.Count == 0)
+            return routeValues;
+
+        // Defer cloning until we actually have a non-null resolver value to write. If every
+        // resolver returns null (e.g., api-version resolver short-circuits for [ApiVersionNeutral]
+        // or URL-segment versioning), we never allocate a clone — the original dictionary is
+        // returned unchanged. The clone protects against cross-request leakage on user selectors
+        // that return cached/shared dictionary instances: writes go to the per-request copy, not
+        // the shared instance.
+        Microsoft.AspNetCore.Routing.RouteValueDictionary? withResolved = null;
+        foreach (var (key, resolver) in _options.RouteValueResolvers)
+        {
+            var value = resolver(httpContext);
+            if (value is null)
+                continue;
+
+            withResolved ??= new Microsoft.AspNetCore.Routing.RouteValueDictionary(routeValues);
+            withResolved[key] = value;
+        }
+
+        return withResolved ?? routeValues;
     }
 
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("LocationKind.Action calls into MVC's ControllerLinkGeneratorExtensions which is not trim-safe. Use CreatedAtRoute (named routes) instead for AOT/trim scenarios.")]
@@ -293,7 +320,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         }
 
         var lg = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
-        var rv = _options.RouteValuesSelector!(domain);
+        var rv = ApplyRouteValueResolvers(_options.RouteValuesSelector!(domain), httpContext);
         return lg.GetUriByAction(httpContext, _options.ActionName!, _options.ControllerName, rv)
             ?? lg.GetPathByAction(httpContext, _options.ActionName!, _options.ControllerName, rv);
     }

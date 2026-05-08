@@ -99,6 +99,28 @@ public sealed class HttpResponseOptionsBuilderTests
     }
 
     [Fact]
+    public void WithRouteValueResolver_validates_arguments()
+    {
+        var b = new HttpResponseOptionsBuilder<Thing>();
+        FluentActions.Invoking(() => b.WithRouteValueResolver(null!, _ => "v"))
+            .Should().Throw<ArgumentException>();
+        FluentActions.Invoking(() => b.WithRouteValueResolver("  ", _ => "v"))
+            .Should().Throw<ArgumentException>();
+        FluentActions.Invoking(() => b.WithRouteValueResolver("api-version", null!))
+            .Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void WithRouteValueResolver_returns_builder_for_chaining()
+    {
+        var b = new HttpResponseOptionsBuilder<Thing>();
+        b.CreatedAtRoute("Get", _ => new RouteValueDictionary())
+            .WithRouteValueResolver("api-version", _ => "2026-11-12")
+            .WithRouteValueResolver("tenant", _ => "acme")
+            .Should().BeSameAs(b);
+    }
+
+    [Fact]
     public void WithRange_selector_throws_on_null()
     {
         var b = new HttpResponseOptionsBuilder<Thing>();

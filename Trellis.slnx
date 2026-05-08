@@ -74,6 +74,10 @@
     <Project Path="Trellis.Asp/src/Trellis.Asp.csproj" />
     <Project Path="Trellis.Asp/tests/Trellis.Asp.Tests.csproj" />
   </Folder>
+  <Folder Name="/Trellis.Asp.ApiVersioning/">
+    <Project Path="Trellis.Asp.ApiVersioning/src/Trellis.Asp.ApiVersioning.csproj" />
+    <Project Path="Trellis.Asp.ApiVersioning/tests/Trellis.Asp.ApiVersioning.Tests.csproj" />
+  </Folder>
   <Folder Name="/Trellis.Authorization/">
     <Project Path="Trellis.Authorization/src/Trellis.Authorization.csproj" />
     <Project Path="Trellis.Authorization/tests/Trellis.Authorization.Tests.csproj" />

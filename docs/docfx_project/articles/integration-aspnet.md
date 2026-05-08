@@ -294,7 +294,51 @@ app.MapPost("/products", async (CreateProduct cmd, IProductWriter writer, Cancel
 ```
 
 > [!WARNING]
-> Under query-string API versioning, `CreatedAtRoute` route values **must** include `["api-version"] = ApiVersion`. Otherwise the emitted `Location` header omits the version and 404s on dereference (the response itself looks correct).
+> Under query-string or header API versioning, the route values dictionary **must** include `["api-version"] = ApiVersion`. Without it the emitted `Location` header omits the version and 404s on dereference (the response itself looks correct, so tests pass). The recommended path is the `CreatedAtVersionedRoute(...)` extensions in [`Trellis.Asp.ApiVersioning`](#api-version-aware-location-headers), which inject the version automatically. The [`TRLS023`](analyzers/TRLS023.md) analyzer warns on bare `CreatedAtRoute` calls inside `[ApiVersion]`-decorated controllers and offers a code fix that rewrites them to `CreatedAtVersionedRoute`.
+
+### API-version-aware `Location` headers
+
+The `Trellis.Asp.ApiVersioning` package adds `CreatedAtVersionedRoute(...)` extensions on `HttpResponseOptionsBuilder<T>` that inject the requested `api-version` into the generated `Location` URL automatically — eliminating the recurring "201 looks correct, GET 404s" bug under query/header versioning.
+
+```csharp
+using Trellis.Asp.ApiVersioning;
+
+[ApiController]
+[ApiVersion("2026-12-01")]
+[Route("api/orders")]
+public class OrdersController : ControllerBase
+{
+    [HttpGet("{id:int}", Name = "Orders_GetById")]
+    public IActionResult Get(int id) => Ok(...);
+
+    [HttpPost]
+    public ActionResult<Order> Create([FromBody] CreateOrderRequest req) =>
+        _mediator.Send(new CreateOrderCommand(req))
+            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
+                "Orders_GetById",
+                o => new RouteValueDictionary { ["id"] = o.Id }))
+            .AsActionResult<Order>();
+}
+```
+
+The resolver runs per request inside the `LinkGenerator` callback. Resolution order:
+
+1. **`HttpContext.RequestedApiVersion`** — primary signal; reflects whatever the configured `IApiVersionReader` parsed (query, header, media-type, composite).
+2. **Endpoint metadata** — when (1) is null and exactly one declared version exists, fall back to it.
+3. **`ApiVersioningOptions.DefaultApiVersion`** — final fallback. If a multi-version action has no client-supplied version and no default, the resolver throws rather than silently picking one.
+
+The resolver short-circuits to a no-op (no `api-version` injected) for `[ApiVersionNeutral]` endpoints and URL-segment versioning (route template contains `:apiVersion`). Three overloads:
+
+| Overload | Use case |
+|---|---|
+| `CreatedAtVersionedRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues)` | Multi-key route values. |
+| `CreatedAtVersionedRoute(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id")` | Sugar for the single-id case. |
+| `CreatedAtVersionedRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues, ApiVersion explicitVersion)` | Pin the `Location` to a specific `ApiVersion` regardless of client request — used for cross-version redirects on deprecated endpoints. |
+
+The underlying `WithRouteValueResolver(string key, Func<HttpContext, string?> resolver)` hook on `HttpResponseOptionsBuilder<T>` is also exposed publicly for any other cross-cutting per-request route-value injection (tenant id, request culture, etc.).
+
+> [!NOTE]
+> See [`trellis-api-asp-apiversioning.md`](../api_reference/trellis-api-asp-apiversioning.md) for the full LLM-targeted reference and [`TRLS023`](analyzers/TRLS023.md) for the analyzer that catches missed migrations.
 
 ### `WriteOutcome<T>`
 
@@ -549,7 +593,7 @@ When you genuinely need a custom payload shape (non-Problem-Details body, endpoi
 - **Document failure status codes.** Add `[ProducesResponseType<ProblemDetails>(...)]` for every spec-listed failure status (`422`, `409`, `403`, `404`, …). The `IEndpointMetadataProvider` on Trellis result types already declares the union of statuses the writer can emit (`200`, `201`, `206`, `304`, `400`, `404`, `412`, `500`); layer your spec-specific metadata on top.
 - **`Result<Unit>` for side-effect commands**. A successful `Result<Unit>` produces `204 No Content` with no body.
 - **Use typed ETag parsers.** `ETagHelper.ParseIfMatch` / `ParseIfNoneMatch` return `EntityTagValue[]?`, which feeds `OptionalETag` / `RequireETag` (Core) and `EnforceIfNoneMatchPrecondition` (Asp) directly.
-- **Versioned `Location` headers.** Under query-string API versioning, every `CreatedAtRoute` call must include `["api-version"] = ApiVersion` in the route values, otherwise the `Location` 404s on dereference and tests still pass.
+- **Versioned `Location` headers.** Under query-string or header API versioning, every `CreatedAtRoute` call must include `["api-version"] = ApiVersion` in the route values, otherwise the `Location` 404s on dereference and tests still pass. Prefer the `CreatedAtVersionedRoute` extensions from [`Trellis.Asp.ApiVersioning`](#api-version-aware-location-headers) — they inject the version per request automatically. The [`TRLS023`](analyzers/TRLS023.md) analyzer flags bare `CreatedAtRoute` inside `[ApiVersion]` controllers and the code fix rewrites them.
 - **Avoid controller-level `[Consumes("application/json")]`.** Trigger-style POSTs without bodies (e.g., `POST /orders/{id}/submission`) return `415` for any request without a `Content-Type`. Apply `[Consumes]` per body-bearing action.
 - **Prefer `CreatedAtRoute` over `CreatedAtAction`** for trim/AOT scenarios; `CreatedAtAction` is annotated `[RequiresUnreferencedCode]` / `[RequiresDynamicCode]`.
 - **Prove `422` mapping in integration tests.** Exception middleware does not map Trellis `Result` failures — assert at least one business-validation failure surfaces as `422` Problem Details end-to-end.
