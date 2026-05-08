@@ -736,12 +736,19 @@ PlaceOrder(cmd);                                   // TRLS001
 // FIX 1 — propagate up the ROP chain (preferred when the caller is itself in a Result pipeline).
 return PlaceOrder(cmd).Map(_ => Unit.Value);
 
-// FIX 2 — explicit terminal handling without throwing (compose with a Match that returns
-// a value or a side-effect; do not throw inside Match — that would trip TRLS010).
-PlaceOrder(cmd).Match(
-    _      => logger.LogInformation("Order placed."),
-    failure => logger.LogWarning("Order rejected: {Code}", failure.Code));
+// FIX 2 — terminal side-effect via Switch (void-returning; for fire-and-forget log/metric).
+PlaceOrder(cmd).Switch(
+    onSuccess: _       => logger.LogInformation("Order placed."),
+    onFailure: failure => logger.LogWarning("Order rejected: {Code}", failure.Code));
+
+// FIX 3 — terminal projection via Match (both branches return a value; use when the
+// caller needs an int/IActionResult/string back, not just a side effect).
+int statusCode = PlaceOrder(cmd).Match(
+    onSuccess: _       => 200,
+    onFailure: failure => 422);
 ```
+
+> Don't throw from inside `Match` / `Switch` to "handle" failure — it defeats the point of `Result<T>`. Use `Switch` for void side-effects and propagate the `Result` up the chain instead. (Note: TRLS010 only fires inside chain methods like `Bind`/`Map`/`Tap`/`Ensure` — not `Match` or `Switch` — so the analyzer won't catch this; it's a Result-discipline guideline, not an analyzer rule.)
 
 ### TRLS003 — Unsafe `Maybe.Value`
 

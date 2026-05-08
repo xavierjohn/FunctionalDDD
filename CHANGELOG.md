@@ -34,7 +34,7 @@ Recipe 8's "Filtering on `Maybe<T>` properties in LINQ and `Specification<T>`" s
 
 Also in this release:
 
-- **Recipe 11 TRLS001 fix corrected.** The previous "fix" suggested `PlaceOrder(cmd).Match(_ => 0, e => throw new("..."));` — but throwing inside `Match`'s failure callback is structurally identical to throwing inside `.Bind` and trips TRLS010, which the same recipe forbids four code blocks below. New fix offers two non-throwing alternatives: propagate up the ROP chain, or terminal `Match` with side-effects in both branches.
+- **Recipe 11 TRLS001 fix corrected.** The previous "fix" suggested `var _ = PlaceOrder(cmd).Match(_ => 0, e => throw new("..."));` — throwing from a terminal handler defeats the point of returning a `Result<T>` at all (the caller can no longer compose with the value). New guidance offers three alternatives: propagate up the ROP chain via `Map`, terminal side-effects via `Switch` (which is the void-returning sibling of `Match`), or terminal projection via `Match` returning a value from both branches. Note: TRLS010 only fires inside chain methods like `Bind`/`Map`/`Tap`/`Ensure` — not `Match` or `Switch` — so this is a Result-discipline guideline rather than an analyzer rule.
 - **Recipe 14 wording.** "the validation message produced by `PhoneNumber.Create`" → `PhoneNumber.TryCreate`. `Create` is the throwing factory; the validation message is produced by `TryCreate`.
 - **Patterns Index `Task -> recipe lookup` row** for "Map `Maybe<T>` or composite value objects with EF Core" no longer references Recipe 15.
 - **Mistake-regression routing row** for "Overdue/date-filter queries over `Maybe<DateTime>`" points at Recipe 8 directly.
