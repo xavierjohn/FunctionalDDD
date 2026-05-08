@@ -46,12 +46,23 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         if (containingType.ContainingNamespace?.ToDisplayString() != "Trellis.Asp") return;
 
         // Only fire inside a class that's api-versioned (has [ApiVersion]) and not [ApiVersionNeutral].
+        // [ApiVersionNeutral] is also valid on individual actions (AttributeTargets.Class | Method),
+        // so we additionally check the containing method symbol — a single [ApiVersionNeutral] action
+        // on an otherwise-versioned controller must not trigger TRLS023.
         var classDecl = inv.FirstAncestorOrSelf<ClassDeclarationSyntax>();
         if (classDecl is null) return;
         var classSymbol = context.SemanticModel.GetDeclaredSymbol(classDecl);
         if (classSymbol is null) return;
         if (!HasAttribute(classSymbol, "ApiVersionAttribute", "Asp.Versioning")) return;
         if (HasAttribute(classSymbol, "ApiVersionNeutralAttribute", "Asp.Versioning")) return;
+
+        var methodDecl = inv.FirstAncestorOrSelf<MethodDeclarationSyntax>();
+        if (methodDecl is not null &&
+            context.SemanticModel.GetDeclaredSymbol(methodDecl) is IMethodSymbol containingMethodSymbol &&
+            HasAttributeOnMethod(containingMethodSymbol, "ApiVersionNeutralAttribute", "Asp.Versioning"))
+        {
+            return;
+        }
 
         // Only fire when the route-values argument is a recognizable dictionary literal.
         // Bail to false-negative (no warning) for non-literal forms like
@@ -106,6 +117,21 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         // their own [ApiVersion] as versioned, which would produce a false positive that API
         // Versioning itself doesn't accept.
         foreach (var attr in type.GetAttributes())
+        {
+            var ac = attr.AttributeClass;
+            if (ac?.Name == attributeTypeName &&
+                ac.ContainingNamespace?.ToDisplayString() == attributeNamespace)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasAttributeOnMethod(IMethodSymbol method, string attributeTypeName, string attributeNamespace)
+    {
+        foreach (var attr in method.GetAttributes())
         {
             var ac = attr.AttributeClass;
             if (ac?.Name == attributeTypeName &&

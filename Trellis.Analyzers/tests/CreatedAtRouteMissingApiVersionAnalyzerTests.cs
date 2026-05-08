@@ -335,4 +335,36 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
 
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task CreatedAtRoute_on_method_level_ApiVersionNeutral_action_produces_no_warning()
+    {
+        // [ApiVersionNeutral] is valid on actions (AttributeTargets.Class | Method). A versioned
+        // controller may contain a single neutral action — TRLS023 must respect method-level
+        // neutrality and not fire on CreatedAtRoute calls inside that action.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                [ApiVersionNeutral]
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id });
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
 }
