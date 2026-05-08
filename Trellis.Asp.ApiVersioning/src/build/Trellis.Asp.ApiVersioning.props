@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Surface the <TrellisApiVersion> MSBuild property to the bundled
+    Trellis.Asp.ApiVersioning.SourceGenerator. Without CompilerVisibleProperty,
+    the generator's AnalyzerConfigOptionsProvider can't see the property even
+    when the consumer sets it in their .csproj or Directory.Build.props.
+  -->
+  <ItemGroup>
+    <CompilerVisibleProperty Include="TrellisApiVersion" />
+  </ItemGroup>
+</Project>

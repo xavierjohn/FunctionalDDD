@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
-    <Description>API-versioning helpers for Trellis.Asp. Adds CreatedAtVersionedRoute extensions on HttpResponseOptionsBuilder that auto-inject the api-version route value into Location headers, so 201 Created responses round-trip the requested version under query/header API versioning. Skips injection for [ApiVersionNeutral] and URL-segment-versioned endpoints.</Description>
+    <Description>API-versioning helpers for Trellis.Asp. Adds CreatedAtVersionedRoute extensions on HttpResponseOptionsBuilder that auto-inject the api-version route value into Location headers, so 201 Created responses round-trip the requested version under query/header API versioning. Skips injection for [ApiVersionNeutral] and URL-segment-versioned endpoints. Bundles a source generator that emits ApiVersionConstants from the &lt;TrellisApiVersion&gt; MSBuild property.</Description>
     <PackageTags>trellis;api-versioning;asp;versioning;result;railway-oriented;functional-programming</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -17,4 +17,49 @@
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
   </ItemGroup>
+
+  <!--
+    Bundle the ApiVersionConstantsGenerator (netstandard2.0) inside the runtime nupkg
+    so consumers get it transitively. Mirrors the Trellis.Asp/Trellis.AspSourceGenerator pattern.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\generator\Trellis.Asp.ApiVersioning.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="_GetApiVersioningGeneratorTargetPath" Returns="@(_ApiVersioningGeneratorTargetPath)">
+    <MSBuild Projects="..\generator\Trellis.Asp.ApiVersioning.SourceGenerator.csproj" Targets="GetTargetPath">
+      <Output TaskParameter="TargetOutputs" ItemName="_ApiVersioningGeneratorTargetPath" />
+    </MSBuild>
+  </Target>
+
+  <Target Name="_PackApiVersioningGenerator" BeforeTargets="_GetPackageFiles" DependsOnTargets="_GetApiVersioningGeneratorTargetPath">
+    <ItemGroup>
+      <None Include="@(_ApiVersioningGeneratorTargetPath)"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Ship a build/.props file in both `build/` and `buildTransitive/` so consumers (and any
+    package that depends on Trellis.Asp.ApiVersioning transitively) automatically get
+    CompilerVisibleProperty for TrellisApiVersion.
+  -->
+  <ItemGroup>
+    <None Include="build\Trellis.Asp.ApiVersioning.props" Pack="true" PackagePath="build\Trellis.Asp.ApiVersioning.props" />
+    <None Include="build\Trellis.Asp.ApiVersioning.props" Pack="true" PackagePath="buildTransitive\Trellis.Asp.ApiVersioning.props" />
+  </ItemGroup>
+
+  <!--
+    Surface the TrellisApiVersion MSBuild property to the generator. Without this entry the
+    generator's AnalyzerConfigOptionsProvider returns null for build_property.TrellisApiVersion
+    even when the property is set in the consuming project.
+  -->
+  <ItemGroup>
+    <CompilerVisibleProperty Include="TrellisApiVersion" />
+  </ItemGroup>
 </Project>
+

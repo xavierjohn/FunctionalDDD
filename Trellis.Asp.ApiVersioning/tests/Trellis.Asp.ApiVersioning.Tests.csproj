@@ -1,9 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      Set the MSBuild property the source generator reads, so the test project
+      gets a concrete ApiVersionConstants.Current to assert against in the
+      end-to-end "all three parts work together" tests.
+    -->
+    <TrellisApiVersion>2026-11-12</TrellisApiVersion>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\src\Trellis.Asp.ApiVersioning.csproj" />
     <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
+    <ProjectReference Include="..\..\Trellis.Analyzers\src\Trellis.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\generator\Trellis.Asp.ApiVersioning.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
+
+  <!--
+    Surface TrellisApiVersion to the source generator. (In a packaged consumer this
+    flows in via build/Trellis.Asp.ApiVersioning.props; for a source-tree test project
+    we declare it directly.)
+  -->
+  <ItemGroup>
+    <CompilerVisibleProperty Include="TrellisApiVersion" />
+  </ItemGroup>
 </Project>
+

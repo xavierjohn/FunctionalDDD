@@ -98,6 +98,9 @@ public static class TrellisDiagnosticIds
     /// <summary>TRLS022 — <c>[OwnedEntity]</c> property uses init-only setter; use <c>{ get; private set; }</c> instead.</summary>
     public const string OwnedEntityInitOnlyProperty = "TRLS022";
 
+    /// <summary>TRLS023 — <c>CreatedAtRoute</c> on a versioned controller is missing the <c>api-version</c> route value.</summary>
+    public const string MissingApiVersionRouteValue = "TRLS023";
+
     // ---- Generator IDs (Trellis.Core.Generator / Trellis.EntityFrameworkCore.Generator) ----
     // Renumbered from TRLSGEN### to TRLS###. Mapping:
     //   TRLSGEN001 → TRLS031   TRLSGEN002 → TRLS032
