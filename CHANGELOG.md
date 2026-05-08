@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### `Trellis.Asp.ApiVersioning` package — `CreatedAtVersionedRoute` for round-trip-correct `Location` headers
+
+New package `Trellis.Asp.ApiVersioning` adds three `CreatedAtVersionedRoute` extension overloads on `HttpResponseOptionsBuilder<TDomain>` that auto-inject the `api-version` route value at request time. Under query/header API versioning the resulting `Location` header echoes the version the client requested (or falls back to a declared/default version) instead of silently omitting it — eliminating the "201 Created with a Location that 404s on dereference" failure mode that was invisible without integration tests and recurred in every recent lab run.
+
+```csharp
+result.ToHttpResponse(opts => opts
+    .CreatedAtVersionedRoute("Customers_GetById", c => c.Id.Value));
+//   ↑ Location = /customers/{id}?api-version=<requested-version>
+```
+
+Per-request version resolution order:
+
+1. `HttpContext.RequestedApiVersion` (the parsed value from the configured `IApiVersionReader` chain — query, header, media-type, URL-segment, composite).
+2. Endpoint metadata's single declared version (when (1) is null and only one is declared).
+3. `ApiVersioningOptions.DefaultApiVersion`.
+4. Otherwise — throw `InvalidOperationException` rather than silently picking, since silent picking would resurrect the original 404 bug.
+
+Skips injection on `ApiVersion.Neutral` / `[ApiVersionNeutral]` endpoints and on URL-segment-versioned routes (those carry the version as a route token; ambient routing handles substitution). The route-value key is fixed at `"api-version"`, matching `QueryStringApiVersionReader.DefaultParameterName`.
+
+Three overloads:
+- `CreatedAtVersionedRoute(routeName, routeValues)` — multi-key route values.
+- `CreatedAtVersionedRoute(routeName, idSelector, idRouteKey = "id")` — single-id convenience.
+- `CreatedAtVersionedRoute(routeName, routeValues, ApiVersion explicitVersion)` — escape hatch for cross-version Location pinning (e.g. deprecation flows).
+
+This release also adds a small generic primitive on `Trellis.Asp` itself —
+`HttpResponseOptionsBuilder<TDomain>.WithRouteValueResolver(string key, Func<HttpContext, string?> resolver)` — that lets any caller register a per-request route-value injector for `Location`-header generation. The api-versioning package builds on top of this hook, but it's reusable for tenant id, culture code, or any other cross-cutting per-request concern.
+
+**Out of scope for this release** (deferred to follow-up PRs):
+- `TRLS_VER001` analyzer that warns on bare `CreatedAtRoute(...)` calls missing the api-version key (catches the regression at compile time even for code that hasn't migrated to `CreatedAtVersionedRoute`).
+- Build-time `ApiVersionConstants` literal-propagation generator (different problem; covers `.json`/`.http`/`.cs` synchronization on version bumps).
+- Custom route-value key configuration (hosts using a non-default reader parameter name should bypass the helper and call `WithRouteValueResolver` directly for now).
+
 ### Documentation
 
 #### Cookbook Recipe 21 — Parallel independent loads in handlers (`Result.ParallelAsync` + `WhenAllAsync`)

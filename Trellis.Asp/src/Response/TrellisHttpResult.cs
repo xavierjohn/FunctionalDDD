@@ -265,6 +265,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 {
                     var lg = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
                     var rv = _options.RouteValuesSelector!(domain);
+                    ApplyRouteValueResolvers(rv, httpContext);
                     return lg.GetUriByName(httpContext, _options.RouteName!, rv)
                         ?? lg.GetPathByName(httpContext, _options.RouteName!, rv);
                 }
@@ -274,6 +275,19 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
             default:
                 return null;
+        }
+    }
+
+    private void ApplyRouteValueResolvers(Microsoft.AspNetCore.Routing.RouteValueDictionary routeValues, HttpContext httpContext)
+    {
+        if (_options.RouteValueResolvers is null || _options.RouteValueResolvers.Count == 0)
+            return;
+
+        foreach (var (key, resolver) in _options.RouteValueResolvers)
+        {
+            var value = resolver(httpContext);
+            if (value is not null)
+                routeValues[key] = value;
         }
     }
 
@@ -294,6 +308,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
         var lg = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
         var rv = _options.RouteValuesSelector!(domain);
+        ApplyRouteValueResolvers(rv, httpContext);
         return lg.GetUriByAction(httpContext, _options.ActionName!, _options.ControllerName, rv)
             ?? lg.GetPathByAction(httpContext, _options.ActionName!, _options.ControllerName, rv);
     }
