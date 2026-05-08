@@ -335,7 +335,7 @@ The resolver short-circuits to a no-op (no `api-version` injected) for `[ApiVers
 | `CreatedAtVersionedRoute(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id")` | Sugar for the single-id case. |
 | `CreatedAtVersionedRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues, ApiVersion explicitVersion)` | Pin the `Location` to a specific `ApiVersion` regardless of client request — used for cross-version redirects on deprecated endpoints. |
 
-The underlying `WithRouteValueResolver(string key, Func<HttpContext, object?> resolver)` hook on `HttpResponseOptionsBuilder<T>` is also exposed publicly for any other cross-cutting per-request route-value injection (tenant id, request culture, etc.).
+The underlying `WithRouteValueResolver(string key, Func<HttpContext, string?> resolver)` hook on `HttpResponseOptionsBuilder<T>` is also exposed publicly for any other cross-cutting per-request route-value injection (tenant id, request culture, etc.).
 
 > [!NOTE]
 > See [`trellis-api-asp-apiversioning.md`](../api_reference/trellis-api-asp-apiversioning.md) for the full LLM-targeted reference and [`TRLS023`](analyzers/TRLS023.md) for the analyzer that catches missed migrations.

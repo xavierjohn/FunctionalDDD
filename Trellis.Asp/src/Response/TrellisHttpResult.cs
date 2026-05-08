@@ -287,8 +287,9 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         // Defer cloning until we actually have a non-null resolver value to write. If every
         // resolver returns null (e.g., api-version resolver short-circuits for [ApiVersionNeutral]
         // or URL-segment versioning), we never allocate a clone — the original dictionary is
-        // returned unchanged. Cloning only when there's a value to write also preserves the
-        // cross-request leakage protection the previous unconditional clone provided.
+        // returned unchanged. The clone protects against cross-request leakage on user selectors
+        // that return cached/shared dictionary instances: writes go to the per-request copy, not
+        // the shared instance.
         Microsoft.AspNetCore.Routing.RouteValueDictionary? withResolved = null;
         foreach (var (key, resolver) in _options.RouteValueResolvers)
         {
