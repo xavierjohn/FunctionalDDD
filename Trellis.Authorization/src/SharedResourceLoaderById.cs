@@ -40,6 +40,12 @@ public abstract class SharedResourceLoaderById<TResource, TId>
     /// Loads the resource by ID.
     /// Return <c>Result.Fail</c> with a <see cref="Error.NotFound"/> if the resource does not exist.
     /// </summary>
+    /// <remarks>
+    /// The method is named <c>GetByIdAsync</c> (not <c>LoadByIdAsync</c> as the class name might
+    /// suggest). The <c>Loader</c> in <see cref="SharedResourceLoaderById{TResource, TId}"/> refers
+    /// to the loader role in the authorization pipeline, while the actual fetch method follows
+    /// the canonical <c>GetByIdAsync</c> naming used by the rest of the framework.
+    /// </remarks>
     /// <param name="id">The resource identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
