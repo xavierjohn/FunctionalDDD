@@ -1,5 +1,6 @@
 ﻿namespace Trellis.Analyzers;
 
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -69,16 +70,17 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
 
     private static bool HasAttribute(INamedTypeSymbol type, string attributeTypeName, string attributeNamespace)
     {
-        for (var current = type; current is not null; current = current.BaseType)
+        // [ApiVersion] / [ApiVersionNeutral] are declared with Inherited = false, so look only at
+        // the immediate type. Walking the base-type chain would treat derived controllers without
+        // their own [ApiVersion] as versioned, which would produce a false positive that API
+        // Versioning itself doesn't accept.
+        foreach (var attr in type.GetAttributes())
         {
-            foreach (var attr in current.GetAttributes())
+            var ac = attr.AttributeClass;
+            if (ac?.Name == attributeTypeName &&
+                ac.ContainingNamespace?.ToDisplayString() == attributeNamespace)
             {
-                var ac = attr.AttributeClass;
-                if (ac?.Name == attributeTypeName &&
-                    ac.ContainingNamespace?.ToDisplayString() == attributeNamespace)
-                {
-                    return true;
-                }
+                return true;
             }
         }
 
@@ -111,19 +113,23 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
 
     private static bool RouteValueDictionaryContainsApiVersionKey(InitializerExpressionSyntax init)
     {
+        // RouteValueDictionary uses case-insensitive key comparison at runtime. Match the same
+        // semantics here so that {"API-VERSION"], ["Api-Version"], etc. are accepted as equivalent
+        // to "api-version" — otherwise the analyzer fires on a literal that's already correct.
         foreach (var expr in init.Expressions)
         {
             // `["api-version"] = x` — collection-initializer assignment with bracket key.
             if (expr is AssignmentExpressionSyntax ae &&
                 ae.Left is ImplicitElementAccessSyntax iea)
             {
-                if (TryGetStringLiteralKey(iea.ArgumentList.Arguments) is "api-version")
+                var key = TryGetStringLiteralKey(iea.ArgumentList.Arguments);
+                if (key is not null && string.Equals(key, "api-version", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
             // `{ "api-version", x }` — pre-C#6 collection-initializer-style dictionary entry.
             else if (expr is InitializerExpressionSyntax pair &&
                      pair.Expressions.FirstOrDefault() is LiteralExpressionSyntax litKey &&
-                     litKey.Token.ValueText == "api-version")
+                     string.Equals(litKey.Token.ValueText, "api-version", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

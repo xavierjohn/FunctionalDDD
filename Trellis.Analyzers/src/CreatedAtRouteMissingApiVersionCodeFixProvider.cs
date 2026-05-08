@@ -56,10 +56,46 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
         var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
         if (root is null) return document;
 
+        // 1. Rename the member: CreatedAtRoute → CreatedAtVersionedRoute.
         var newName = SyntaxFactory.IdentifierName("CreatedAtVersionedRoute")
             .WithTriviaFrom(memberAccess.Name);
         var newMemberAccess = memberAccess.WithName(newName);
         var newRoot = root.ReplaceNode(memberAccess, newMemberAccess);
+
+        // 2. Ensure `using Trellis.Asp.ApiVersioning;` is in scope. Without this the rewritten
+        //    extension call won't resolve and the code-fix produces uncompilable code. We don't
+        //    detect the package reference here (analyzers can't observe project metadata
+        //    reliably), so we always add the using if missing — if the package isn't referenced,
+        //    the user gets a clear "missing reference" build error pointing to the new namespace
+        //    rather than a confusing "method not found" error.
+        if (newRoot is CompilationUnitSyntax cu && !HasUsing(cu, ApiVersioningNamespace))
+        {
+            // Match the existing usings' trailing newline style (CRLF on Windows-style files,
+            // LF on others) so we don't introduce a mixed-line-ending diff.
+            var trailingNewline = cu.Usings.Count > 0
+                ? cu.Usings[cu.Usings.Count - 1].GetTrailingTrivia()
+                : SyntaxFactory.TriviaList(SyntaxFactory.ElasticCarriageReturnLineFeed);
+
+            var usingDirective = SyntaxFactory.UsingDirective(
+                    SyntaxFactory.ParseName(ApiVersioningNamespace))
+                .WithTrailingTrivia(trailingNewline);
+            cu = cu.AddUsings(usingDirective);
+            return document.WithSyntaxRoot(cu);
+        }
+
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private const string ApiVersioningNamespace = "Trellis.Asp.ApiVersioning";
+
+    private static bool HasUsing(CompilationUnitSyntax cu, string namespaceName)
+    {
+        foreach (var u in cu.Usings)
+        {
+            if (u.Name?.ToString() == namespaceName)
+                return true;
+        }
+
+        return false;
     }
 }

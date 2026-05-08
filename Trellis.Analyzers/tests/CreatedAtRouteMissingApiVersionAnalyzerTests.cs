@@ -194,4 +194,66 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
 
         await test.RunAsync();
     }
+
+    [Fact]
+    public async Task CreatedAtRoute_with_case_insensitive_api_version_key_produces_no_warning()
+    {
+        // RouteValueDictionary keys are case-insensitive at runtime — "API-VERSION" already
+        // satisfies the requirement, so the analyzer must not fire.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id, ["API-Version"] = "2026-11-12" });
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAtRoute_on_derived_controller_without_own_ApiVersion_produces_no_warning()
+    {
+        // [ApiVersion] is declared with Inherited = false. A derived class that doesn't carry
+        // its own [ApiVersion] is NOT versioned by API Versioning — the analyzer must match.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class BaseController { }
+
+            public class CustomersController : BaseController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id });
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
 }
