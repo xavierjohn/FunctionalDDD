@@ -151,7 +151,7 @@ public sealed partial class LoggingBehavior<TMessage, TResponse> : IPipelineBeha
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Logs start (Information), end with elapsed milliseconds (Information on success, Warning on failure). On failure emits `error.Code` only by default; the free-text `Error.Detail` is included only when `TrellisMediatorTelemetryOptions.IncludeErrorDetail` is `true`. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Logs start (Debug), end with elapsed milliseconds (Debug on success, Warning on failure). Per-call timing is at Debug so production at the default `Information` minimum stays quiet; raise via `"Trellis.Mediator": "Debug"` in logging configuration to opt back in. On failure emits `error.Code` only by default; the free-text `Error.Detail` is included only when `TrellisMediatorTelemetryOptions.IncludeErrorDetail` is `true`. |
 
 ### ResourceAuthorizationBehavior<TMessage, TResource, TResponse>
 **Declaration**
