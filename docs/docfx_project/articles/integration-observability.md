@@ -35,7 +35,7 @@ Trellis emits OpenTelemetry `Activity` spans and `ILogger` entries from three `A
 | Surface | Type / API | Emits | Subscribed via |
 |---|---|---|---|
 | Mediator tracing | `TracingBehavior<TMessage, TResponse>` (`Trellis.Mediator`) | One `Activity` per mediator message; tags `error.code`, `error.type`; `ActivityStatusCode.Ok` / `Error` | Registered by `AddTrellisBehaviors()`; subscribe with `tracing.AddSource(TracingBehavior<,>.ActivitySourceName)` (value: `"Trellis.Mediator"`) |
-| Mediator logging | `LoggingBehavior<TMessage, TResponse>` (`Trellis.Mediator`) | `Information` start, `Information` end (with elapsed ms), `Warning` on failure (with `Error.Code`) | Registered by `AddTrellisBehaviors()`; consumed by any `ILogger` provider |
+| Mediator logging | `LoggingBehavior<TMessage, TResponse>` (`Trellis.Mediator`) | `Debug` start, `Debug` end (with elapsed ms), `Warning` on failure (with `Error.Code`) | Registered by `AddTrellisBehaviors()`; consumed by any `ILogger` provider. Per-call timing is at Debug so production at the default `Information` minimum is quiet; raise via `"Trellis.Mediator": "Debug"` in logging configuration to opt back in. |
 | Redaction | `TrellisMediatorTelemetryOptions` (`Trellis.Mediator`) | Controls whether `Error.Detail` flows into the activity status description and log message | DI singleton, configured via `o.UseMediator(t => ...)` or `AddTrellisBehaviors(t => ...)` |
 | Primitive value-object tracing | `Trellis.Primitives` `ActivitySource` | One `Activity` per `TryCreate` / `Parse` on a `Required*<TSelf>` value object | `tracing.AddPrimitiveValueObjectInstrumentation()` |
 | Result / ROP tracing | `Trellis.Core` `ActivitySource` (`RopTrace.ActivitySourceName`) | Spans for individual `Result` operations — verbose; intended for diagnostics | `tracing.AddResultsInstrumentation()` |
@@ -161,9 +161,11 @@ builder.Services.AddOpenTelemetry()
 
 | Stage | Level | Template |
 |---|---|---|
-| Entry | `Information` | `Handling {MessageName}` |
-| Success exit | `Information` | `Handled {MessageName} in {ElapsedMs:0.00}ms` |
+| Entry | `Debug` | `Handling {MessageName}` |
+| Success exit | `Debug` | `Handled {MessageName} in {ElapsedMs:0.00}ms` |
 | Failure exit | `Warning` | `Handled {MessageName} in {ElapsedMs:0.00}ms — Failed: {ErrorSummary}` |
+
+> **Why Debug for the success path?** Cross-cutting per-message timing is observability noise, not a business event — at `Information` minimum (the ASP.NET Core default), every request would flood the log with at least two lines per mediator dispatch. Raise to `"Trellis.Mediator": "Debug"` in `appsettings.Development.json` (or any environment) to opt back in. Failures stay at `Warning` so they surface at the default minimum level even when Trellis.Mediator is filtered to Information.
 
 `{MessageName}` is `typeof(TMessage).Name`. `{ErrorSummary}` is `error.Code` by default; it becomes `error.GetDisplayMessage()` (which includes `Error.Detail`) only when `IncludeErrorDetail = true`. Because the log entries are written inside the mediator activity, every entry already carries the trace/span IDs propagated by your logging provider's OTel integration.
 

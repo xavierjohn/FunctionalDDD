@@ -8,10 +8,10 @@ using Trellis.Mediator.Tests.Helpers;
 /// </summary>
 public class LoggingBehaviorTests
 {
-    #region Successful handler — logs at Information level
+    #region Successful handler — logs at Debug level
 
     [Fact]
-    public async Task Handle_SuccessfulResult_LogsAtInformationLevel()
+    public async Task Handle_SuccessfulResult_LogsAtDebugLevel()
     {
         var logEntries = new List<(LogLevel Level, string Message)>();
         var logger = new FakeLogger<LoggingBehavior<TestCommand, Result<string>>>(logEntries);
@@ -24,16 +24,19 @@ public class LoggingBehaviorTests
 
         result.IsSuccess.Should().BeTrue();
         logEntries.Should().HaveCount(2);
-        logEntries[0].Level.Should().Be(LogLevel.Information);
+        // Debug, not Information: cross-cutting per-call timing should not flood production
+        // logs at the default minimum level. Consumers who want it opt in via
+        // "Trellis.Mediator": "Debug" in appsettings.
+        logEntries[0].Level.Should().Be(LogLevel.Debug);
         logEntries[0].Message.Should().Contain("TestCommand");
-        logEntries[1].Level.Should().Be(LogLevel.Information);
+        logEntries[1].Level.Should().Be(LogLevel.Debug);
         logEntries[1].Message.Should().Contain("TestCommand");
         logEntries[1].Message.Should().Contain("ms");
     }
 
     #endregion
 
-    #region Failed Result — logs at Warning level
+    #region Failed Result — start at Debug, failure exit at Warning
 
     [Fact]
     public async Task Handle_FailedResult_LogsAtWarningLevel()
@@ -49,7 +52,9 @@ public class LoggingBehaviorTests
 
         result.IsFailure.Should().BeTrue();
         logEntries.Should().HaveCount(2);
-        logEntries[0].Level.Should().Be(LogLevel.Information);
+        // Start line is Debug (cross-cutting), failure exit stays Warning so it surfaces
+        // at the default minimum level even when Trellis.Mediator is filtered to Information.
+        logEntries[0].Level.Should().Be(LogLevel.Debug);
         logEntries[1].Level.Should().Be(LogLevel.Warning);
         logEntries[1].Message.Should().Contain("TestCommand");
         // ga-12: Detail is redacted by default (it can contain user input/PII). Only the

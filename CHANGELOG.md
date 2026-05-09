@@ -70,6 +70,32 @@ Also in this release:
 
 ### Changed (Breaking)
 
+#### `Trellis.Mediator.LoggingBehavior` — per-message logs lowered from `Information` to `Debug`
+
+The mediator pipeline's `LoggingBehavior` previously emitted both the entry log (`Handling {MessageName}`) and the success-exit log (`Handled {MessageName} in {ElapsedMs:0.00}ms`) at `LogLevel.Information`. Under ASP.NET Core's default minimum log level (`Information`), every mediator dispatch produced two log lines per request — flooding production logs and burying the actual `Failed:` warnings during test runs.
+
+Per-call timing is cross-cutting observability noise, not a business event. This release lowers both the entry and success-exit lines to `LogLevel.Debug`. Failure exits stay at `LogLevel.Warning` so they continue to surface at the default minimum level. Failures that bypass mediator logging (exceptions in non-Trellis pipeline behaviors, etc.) are unaffected.
+
+| Stage | Before | After |
+|---|---|---|
+| `Handling {MessageName}` | `Information` | **`Debug`** |
+| `Handled {MessageName} in {…}ms` (success) | `Information` | **`Debug`** |
+| `Handled {…} — Failed: {ErrorSummary}` (failure) | `Warning` | `Warning` (unchanged) |
+
+**Migration**: consumers that depend on mediator timing in `Information`-level logs (dashboards, log aggregators, structured log queries on the `MessageName` template) must explicitly raise the level via `appsettings.json`:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Trellis.Mediator": "Debug"
+    }
+  }
+}
+```
+
+For most production services, the right path forward is to derive per-message latency from the `Trellis.Mediator` `Activity` source (already populated by `TracingBehavior<,>`) rather than from log lines — the activity carries the same elapsed-ms data plus structured tags and trace-correlation IDs.
+
 #### Binder-level value object validation failures now return 422 (Unprocessable Content), aligning with domain handler failures
 
 The framework previously returned **400 Bad Request** for two distinct condition shapes:

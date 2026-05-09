@@ -6,7 +6,11 @@ using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Pipeline behavior that logs command/query execution with duration and Result outcome.
-/// Logs at Information level for success, Warning level for failure.
+/// Logs at <see cref="LogLevel.Debug"/> for the per-message start/end pair (cross-cutting
+/// observability noise belongs at Debug, not Information; consumers who want per-call timing
+/// in production raise the level via <c>"Trellis.Mediator": "Debug"</c> in their logging
+/// configuration). Failures are logged at <see cref="LogLevel.Warning"/> regardless of
+/// configured minimum level so production logs surface them by default.
 /// </summary>
 /// <typeparam name="TMessage">The message type.</typeparam>
 /// <typeparam name="TResponse">The response type, constrained to <see cref="IResult"/>.</typeparam>
@@ -71,10 +75,10 @@ public sealed partial class LoggingBehavior<TMessage, TResponse>
         return response;
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Handling {MessageName}")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Handling {MessageName}")]
     private static partial void LogHandling(ILogger logger, string messageName);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Handled {MessageName} in {ElapsedMs:0.00}ms")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Handled {MessageName} in {ElapsedMs:0.00}ms")]
     private static partial void LogHandled(ILogger logger, string messageName, double elapsedMs);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Handled {MessageName} in {ElapsedMs:0.00}ms — Failed: {ErrorSummary}")]

@@ -525,7 +525,7 @@ On a failed result, both `LoggingBehavior` and `TracingBehavior` always emit:
 - `Error.Code` (operator-defined identifier, e.g., `"orders.cancel"`).
 - The stable `Error` type name (e.g., `Error.Forbidden`) on the activity as `error.type`.
 
-`LoggingBehavior` writes Information on success and Warning on failure; `TracingBehavior` sets `ActivityStatusCode.Error` on the failure path.
+`LoggingBehavior` writes Debug on success and Warning on failure; `TracingBehavior` sets `ActivityStatusCode.Error` on the failure path. Per-call timing is at Debug to keep production logs quiet at the default `Information` minimum; raise via `"Trellis.Mediator": "Debug"` in logging configuration to surface every dispatch.
 
 ### Telemetry redaction
 
