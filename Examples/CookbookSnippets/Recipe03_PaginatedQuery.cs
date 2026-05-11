@@ -47,3 +47,21 @@ public sealed class ListOrdersHandler(AppDbContext db)
             AppliedLimit: applied));
     }
 }
+internal static class Recipe3PageSurface
+{
+    public static void Page_RecordStructSurface()
+    {
+        Page<OrderListItem> capped = new(
+            Items: [],
+            Next: null,
+            Previous: null,
+            RequestedLimit: 100,
+            AppliedLimit: 25);
+
+        bool wasCapped = capped.WasCapped;
+        Page<OrderListItem> empty = Page.Empty<OrderListItem>(requestedLimit: 100, appliedLimit: 25);
+        IReadOnlyList<OrderListItem> defaultItems = default(Page<OrderListItem>).Items;
+
+        _ = (wasCapped, empty, defaultItems);
+    }
+}
