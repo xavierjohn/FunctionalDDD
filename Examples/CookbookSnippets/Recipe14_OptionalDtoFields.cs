@@ -17,8 +17,8 @@ public sealed partial class EmailAddress : RequiredString<EmailAddress>;
 public sealed partial class PhoneNumber : RequiredString<PhoneNumber>;
 
 // Pattern A — scalar Maybe<T> directly on the DTO.
-// AddTrellisAsp() registers MaybeScalarValueJsonConverterFactory, MaybeModelBinder, and
-// MaybeSuppressChildValidationMetadataProvider so this round-trips correctly.
+// AddTrellisAsp() registers MaybeScalarValueJsonConverterFactory and MaybeModelBinder;
+// MVC child-validation suppression is handled internally so this round-trips correctly.
 public sealed record CreateCustomerRequestA(
     EmailAddress Email,
     Maybe<PhoneNumber> PhoneNumber);
@@ -86,9 +86,6 @@ internal static class Recipe14OptionalDtoFieldsSurface
         bool compositeMaybe = factory.CanConvert(typeof(Maybe<ShippingAddress>));
 
         Type binderType = typeof(Trellis.Asp.ModelBinding.MaybeModelBinder<PhoneNumber, string>);
-
-        // COOKBOOK BUG: MaybeSuppressChildValidationMetadataProvider is internal, so an external
-        // compile-checked demonstrator cannot reference it; prose should avoid naming it as public API.
         _ = (scalarMaybe, compositeMaybe, binderType);
     }
 }
