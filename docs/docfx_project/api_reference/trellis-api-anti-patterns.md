@@ -1,3 +1,12 @@
+﻿---
+package: Trellis.Analyzers (applied form)
+namespaces: [Trellis, Trellis.Analyzers]
+types: [TRLS001, TRLS003, TRLS010, TRLS016, TRLS017, TRLS018, TRLS019]
+related_docs: [trellis-api-analyzers.md, trellis-api-cookbook.md]
+version: v3
+last_verified: 2026-05-10
+audience: [llm]
+---
 # Trellis Anti-Pattern → Fix Gallery
 
 > A condensed atlas mapping each common Trellis analyzer trigger to its idiomatic fix. **Read this file alongside `trellis-api-cookbook.md` whenever you are touching a Trellis pipeline.** Each section's WRONG/FIX pair captures the canonical control-flow shape the analyzer expects — preserve that shape and adapt identifiers, types, and error values to your caller. The snippets are pattern examples, not drop-in replacements.
@@ -8,7 +17,7 @@ This file is the canonical reference for analyzer-triggered anti-patterns. It us
 2. The reference list in `copilot-instructions.md` can name it directly, so AI sessions are more likely to load it.
 3. The cookbook's Patterns Index can route by symptom into this file when the symptom is "I am getting `TRLSxxx`."
 
-The analyzer rules themselves are documented in `trellis-api-analyzers.md` (severity, when they fire, suppression guidance). This file is the *applied* form — the snippets you copy.
+The analyzer rules themselves are documented in `trellis-api-analyzers.md` (severity, when they fire, suppression guidance). This file is the *applied* form — the snippets you adapt.
 
 ## TRLS001 — Result return value not handled
 

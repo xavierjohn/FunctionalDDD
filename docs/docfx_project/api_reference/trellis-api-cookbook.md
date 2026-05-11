@@ -57,7 +57,7 @@ Before writing Trellis code, choose the task in the lookup table below, then loa
 | Composition-root helpers (`AddTrellis`, `UseXxx`) | `trellis-api-cookbook.md`, `trellis-api-servicedefaults.md`, plus every package reference for selected modules | `TrellisServiceBuilder` preserves canonical order but does not register app-owned services like `DbContext` or Mediator handlers. |
 | HTTP client adapters | `trellis-api-cookbook.md`, `trellis-api-http.md`, `trellis-api-core.md` | The HTTP package maps upstream responses into Core `Result<T>` / `Maybe<T>` shapes. |
 | Tests | `trellis-api-testing-reference.md`; add `trellis-api-testing-aspnetcore.md` for `WebApplicationFactory` or `.http` replay | Unit/helper assertions and ASP integration helpers live in separate test packages. |
-| Analyzer diagnostics | `trellis-api-anti-patterns.md` first for the ready-to-apply WRONG/FIX shape, then `trellis-api-analyzers.md`, then the package reference named by the diagnostic category | Anti-pattern file shows the canonical fix to copy; analyzer docs explain the warning; the package reference gives the canonical API to use instead. |
+| Analyzer diagnostics | `trellis-api-anti-patterns.md` first for the canonical WRONG/FIX shape to adapt, then `trellis-api-analyzers.md`, then the package reference named by the diagnostic category | Anti-pattern file shows the canonical control-flow shape; analyzer docs explain the warning; the package reference gives the canonical API to use instead. |
 
 Measurable completion check for generated code: every Trellis method call should be traceable to a loaded package reference, every selected integration module should be wired in the documented order, and every public API or behavior change should update the matching package reference plus this cookbook when it affects a cross-package recipe.
 
@@ -175,7 +175,7 @@ public interface IOrderRepository
 
 `RequiredGuid<TSelf>` (and `RequiredString<TSelf>`) source-generate every primitive operation onto the partial class. After `public sealed partial class OrderId : RequiredGuid<OrderId>;` you already have:
 
-- `static Result<OrderId> TryCreate(Guid value, string? fieldName = null)` plus a `TryCreate(Guid? value, string? fieldName = null)` overload that explicitly rejects null, plus a `TryCreate(string? value, string? fieldName = null)` overload that parses a string and validates it. `RequiredString<T>` provides `TryCreate(string value)` and `TryCreate(string? value, string? fieldName = null)` instead.
+- `static Result<OrderId> TryCreate(Guid value, string? fieldName = null)` plus a `TryCreate(Guid? value, string? fieldName = null)` overload that explicitly rejects null, plus a `TryCreate(string? value, string? fieldName = null)` overload that parses a string and validates it. `RequiredString<T>` provides a single `TryCreate(string? value, string? fieldName = null)` overload.
 - `static OrderId Parse(string, IFormatProvider?)` and `static bool TryParse(string?, IFormatProvider?, out OrderId)`.
 - `static explicit operator OrderId(Guid value)` (for `RequiredGuid`) / `(string value)` (for `RequiredString`).
 - `Value` property, `Equals`/`GetHashCode`/`IComparable<TSelf>`, JSON converter, and EF Core converter.
