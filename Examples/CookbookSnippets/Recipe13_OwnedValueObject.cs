@@ -120,3 +120,56 @@ internal static class OverrideExample
             owned.HasIndex(a => a.Country);
         });
 }
+[OwnedEntity]
+public partial class LineItem : ValueObject
+{
+    public string Sku { get; private set; } = null!;
+    public int Quantity { get; private set; }
+
+    private LineItem(string sku, int quantity)
+    {
+        Sku = sku;
+        Quantity = quantity;
+    }
+
+    public static Result<LineItem> TryCreate(string sku, int quantity) =>
+        string.IsNullOrWhiteSpace(sku) || quantity <= 0
+            ? Result.Fail<LineItem>(Error.UnprocessableContent.ForRule("line.item.invalid"))
+            : Result.Ok(new LineItem(sku.Trim(), quantity));
+
+    protected override IEnumerable<IComparable?> GetEqualityComponents()
+    {
+        yield return Sku;
+        yield return Quantity;
+    }
+}
+
+public sealed partial class OrderId : RequiredGuid<OrderId>;
+
+public sealed class PurchaseOrder : Aggregate<OrderId>
+{
+    internal const string LineItemsField = nameof(_lineItems);
+    private readonly List<LineItem> _lineItems = [];
+
+    public IReadOnlyCollection<LineItem> LineItems => _lineItems.AsReadOnly();
+
+    private PurchaseOrder(OrderId id) : base(id) { }
+}
+
+internal static class Recipe13OwnedValueObjectSurface
+{
+    public static void ApplyTrellisConventions_ReflectionOverload(ModelConfigurationBuilder configurationBuilder)
+    {
+        ModelConfigurationBuilder builder = configurationBuilder.ApplyTrellisConventions(typeof(Customer).Assembly);
+        Type attributeType = typeof(OwnedEntityAttribute);
+
+        _ = (builder, attributeType);
+    }
+
+    public static void OwnedCollection_BackFieldSurface(EntityTypeBuilder<PurchaseOrder> builder) =>
+        builder.OwnsMany<LineItem>(PurchaseOrder.LineItemsField, owned =>
+        {
+            owned.WithOwner();
+            owned.Property(item => item.Sku).HasMaxLength(64);
+        });
+}

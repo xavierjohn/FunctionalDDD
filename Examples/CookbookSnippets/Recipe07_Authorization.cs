@@ -39,3 +39,45 @@ public static class AuthorizationDi
         return services;
     }
 }
+internal static class Recipe7AuthorizationSurface
+{
+    public static void AuthorizationBehavior_RegistrationSurface(IServiceCollection services, DeleteOrderCommand command)
+    {
+        services.AddTrellisBehaviors();
+        Type behaviorType = typeof(AuthorizationBehavior<,>);
+        IReadOnlyList<string> permissions = command.RequiredPermissions;
+
+        _ = (behaviorType, permissions);
+    }
+
+    public static async Task IResourceLoader_LoadAsyncSignature(UpdateOrderCommand command, CancellationToken cancellationToken)
+    {
+        IResourceLoader<UpdateOrderCommand, Order> loader = new PerCommandOrderLoader();
+        Result<Order> loaded = await loader.LoadAsync(command, cancellationToken);
+
+        _ = loaded;
+    }
+
+    public static async Task SharedResourceLoader_ByIdSurface(UpdateOrderCommand command, CancellationToken cancellationToken)
+    {
+        Type identifyResourceType = typeof(IIdentifyResource<Order, OrderId>);
+        OrderId id = command.GetResourceId();
+
+        SharedResourceLoaderById<Order, OrderId> loader = new SharedOrderLoader();
+        Result<Order> loaded = await loader.GetByIdAsync(id, cancellationToken);
+
+        _ = (identifyResourceType, loaded);
+    }
+
+    private sealed class PerCommandOrderLoader : IResourceLoader<UpdateOrderCommand, Order>
+    {
+        public Task<Result<Order>> LoadAsync(UpdateOrderCommand message, CancellationToken cancellationToken) =>
+            Task.FromResult(Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Order>(message.OrderId))));
+    }
+
+    private sealed class SharedOrderLoader : SharedResourceLoaderById<Order, OrderId>
+    {
+        public override Task<Result<Order>> GetByIdAsync(OrderId id, CancellationToken cancellationToken) =>
+            Task.FromResult(Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Order>(id))));
+    }
+}

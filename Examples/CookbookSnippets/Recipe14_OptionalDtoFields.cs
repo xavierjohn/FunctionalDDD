@@ -77,3 +77,18 @@ public static class WiringFix
         return services;
     }
 }
+internal static class Recipe14OptionalDtoFieldsSurface
+{
+    public static void PublicConverterAndBinderSurface()
+    {
+        var factory = new Trellis.Asp.Validation.MaybeScalarValueJsonConverterFactory();
+        bool scalarMaybe = factory.CanConvert(typeof(Maybe<PhoneNumber>));
+        bool compositeMaybe = factory.CanConvert(typeof(Maybe<ShippingAddress>));
+
+        Type binderType = typeof(Trellis.Asp.ModelBinding.MaybeModelBinder<PhoneNumber, string>);
+
+        // COOKBOOK BUG: MaybeSuppressChildValidationMetadataProvider is internal, so an external
+        // compile-checked demonstrator cannot reference it; prose should avoid naming it as public API.
+        _ = (scalarMaybe, compositeMaybe, binderType);
+    }
+}
