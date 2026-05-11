@@ -167,23 +167,43 @@ Result<int> result = await db.SaveChangesResultAsync(ct);
 
 ## TRLS020 — Composite value object DTO property missing `CompositeValueObjectJsonConverter`
 
-Composite value objects exposed through request/response DTOs must carry `[JsonConverter(typeof(CompositeValueObjectJsonConverter<T>))]` so JSON binding round-trips through `TryCreate`.
+Composite value objects exposed through request/response DTOs must carry `[JsonConverter(typeof(CompositeValueObjectJsonConverter<T>))]` on the value-object type so JSON binding round-trips through `TryCreate`. The analyzer only inspects DTOs that are visible through a controller `[FromBody]` parameter or response type, a minimal API endpoint handler parameter, or a Mediator message type — the DTO type alone is not enough to trip the rule.
 
 ```csharp
-// WRONG — DTO exposes a composite value object whose type has no converter
+// WRONG — composite [OwnedEntity] value object exposed as a [FromBody] DTO property without the converter
+[OwnedEntity]
+public sealed partial class Money : ValueObject
+{
+    public string Currency { get; }
+    public decimal Amount { get; }
+
+    protected override IEnumerable<IComparable?> GetEqualityComponents()
+    {
+        yield return Currency;
+        yield return Amount;
+    }
+}
+
 public sealed record CreateInvoiceRequest(Money Total);
+
+[ApiController]
+[Route("invoices")]
+public sealed class InvoicesController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult Create([FromBody] CreateInvoiceRequest request) => Ok();
+}
 
 // FIX 1 — put the converter on the composite value object type
 [JsonConverter(typeof(CompositeValueObjectJsonConverter<Money>))]
 [OwnedEntity]
 public sealed partial class Money : ValueObject
 {
+    // ...same body as above...
 }
-
-public sealed record CreateInvoiceRequest(Money Total);
 ```
 
-> The current TRLS020 analyzer checks the composite value object type for the converter attribute. A property-level `JsonConverter` may be a valid `System.Text.Json` technique, but it is not the analyzer-clean shape in the current source/tests.
+> The current TRLS020 analyzer checks the composite value object **type** for the converter attribute, not the DTO property. A property-level `JsonConverter` may be a valid `System.Text.Json` technique, but it is not the analyzer-clean shape in the current source/tests.
 
 ## TRLS036 — `[OwnedEntity]` type must be `partial`
 
