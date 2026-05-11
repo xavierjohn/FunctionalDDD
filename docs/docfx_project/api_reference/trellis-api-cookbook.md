@@ -492,6 +492,8 @@ services.AddClaimsActorProvider();               // ClaimsActorProvider for ASP.
 // ACL assembly, not the Application assembly — passing only the Application assembly will
 // register ResourceAuthorizationBehavior<,,> without discovering the shared loader and the
 // pipeline will fail at runtime when it cannot resolve IResourceLoader<TMessage, TResource>.
+// Note: the scanner does not de-duplicate assemblies; if the two layers happen to collapse
+// to one assembly, pass it once (or .Distinct() the array) to avoid registering the behavior twice.
 services.AddResourceAuthorization(
     typeof(UpdateOrderCommand).Assembly,        // Application assembly (commands + IAuthorizeResource)
     typeof(OrderResourceLoader).Assembly);      // ACL assembly (IResourceLoader<,> implementations)
