@@ -38,3 +38,40 @@ public sealed class DocumentService
         return result.Tap(newState => doc.State = newState);
     }
 }
+internal static class Recipe9StateMachineSurface
+{
+    public static void LazyStateMachine_FireResultSurface(Document document)
+    {
+        var machine = new LazyStateMachine<DocumentState, DocumentTrigger>(
+            () => document.State,
+            state => document.State = state,
+            Configure);
+
+        StateMachine<DocumentState, DocumentTrigger> stateless = machine.Machine;
+        Result<DocumentState> result = machine.FireResult(DocumentTrigger.Submit);
+
+        _ = (stateless, result);
+    }
+
+    public static void InvalidTransition_ErrorSurface()
+    {
+        var machine = new StateMachine<DocumentState, DocumentTrigger>(DocumentState.Draft);
+        machine.Configure(DocumentState.Draft).Permit(DocumentTrigger.Submit, DocumentState.Submitted);
+
+        Result<DocumentState> invalid = machine.FireResult(DocumentTrigger.Approve);
+        Error? error = invalid.Error;
+        Error.UnprocessableContent? unprocessable = error as Error.UnprocessableContent;
+        EquatableArray<RuleViolation> rules = unprocessable?.Rules ?? EquatableArray<RuleViolation>.Empty;
+        string reasonCode = rules.Items[0].ReasonCode;
+
+        _ = reasonCode;
+    }
+
+    private static void Configure(StateMachine<DocumentState, DocumentTrigger> machine)
+    {
+        machine.Configure(DocumentState.Draft).Permit(DocumentTrigger.Submit, DocumentState.Submitted);
+        machine.Configure(DocumentState.Submitted)
+               .Permit(DocumentTrigger.Approve, DocumentState.Approved)
+               .Permit(DocumentTrigger.Reject, DocumentState.Draft);
+    }
+}
