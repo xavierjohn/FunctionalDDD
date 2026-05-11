@@ -109,3 +109,43 @@ internal sealed class WrongHandler(
     }
 }
 #endif
+
+internal static class Recipe21ParallelAsyncSurface
+{
+    public static async Task ThreeFactoryArity()
+    {
+        var result = await Result.ParallelAsync(
+            LoadNumberAsync,
+            LoadNameAsync,
+            LoadAvailableAsync)
+            .WhenAllAsync();
+
+        _ = result;
+    }
+
+    public static async Task NineFactoryArity()
+    {
+        var result = await Result.ParallelAsync(
+            LoadNumberAsync,
+            LoadNameAsync,
+            LoadAvailableAsync,
+            LoadNumberAsync,
+            LoadNameAsync,
+            LoadAvailableAsync,
+            LoadNumberAsync,
+            LoadNameAsync,
+            LoadAvailableAsync)
+            .WhenAllAsync();
+
+        _ = result;
+    }
+
+    private static Task<Result<int>> LoadNumberAsync() =>
+        Task.FromResult(Result.Ok(1));
+
+    private static Task<Result<string>> LoadNameAsync() =>
+        Task.FromResult(Result.Ok("ready"));
+
+    private static Task<Result<bool>> LoadAvailableAsync() =>
+        Task.FromResult(Result.Ok(true));
+}

@@ -7,6 +7,7 @@ using CookbookSnippets.Recipe07;
 using CookbookSnippets.Stubs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Trellis.Asp.Authorization;
 using Trellis.Asp.Routing;
 using Trellis.EntityFrameworkCore;
 using Trellis.ServiceDefaults;
@@ -41,5 +42,27 @@ public static class CompositionRoot
         services.AddScoped<IOrderRepository, EfOrderRepository>();
 
         return services;
+    }
+}
+
+internal static class Recipe12CompositionSurface
+{
+    public static void AdditionalBuilderModules()
+    {
+        var entraServices = new ServiceCollection()
+            .AddTrellis(options => options.UseEntraActorProvider());
+
+        var developmentServices = new ServiceCollection()
+            .AddTrellis(options => options.UseDevelopmentActorProvider());
+
+        var cachedActorServices = new ServiceCollection()
+            .AddTrellis(options => options
+                .UseClaimsActorProvider()
+                .UseCachingActorProvider<ClaimsActorProvider>());
+
+        var domainEventServices = new ServiceCollection()
+            .AddTrellis(options => options.UseDomainEvents(typeof(CompositionRoot).Assembly));
+
+        _ = (entraServices, developmentServices, cachedActorServices, domainEventServices);
     }
 }

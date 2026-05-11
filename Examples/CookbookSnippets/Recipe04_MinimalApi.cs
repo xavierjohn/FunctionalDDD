@@ -37,3 +37,14 @@ public static class MinimalApiSample
         app.Run();
     }
 }
+
+internal static class Recipe4ResponseBuilderSurface
+{
+    public static void ToHttpResponseReturnsIResult()
+    {
+        Result<Order> result = default;
+        Microsoft.AspNetCore.Http.IResult response = result.ToHttpResponse();
+
+        _ = response;
+    }
+}

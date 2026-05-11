@@ -33,3 +33,33 @@ public static class ConditionalGetSample
                 .EvaluatePreconditions());
         });
 }
+
+internal static class Recipe6ConditionalGetSurface
+{
+    public static void ETagOverloads()
+    {
+        var weak = EntityTagValue.Weak("sha256-deadbeef");
+        var options = new HttpResponseOptionsBuilder<BlobContent>()
+            .WithETag(b => b.Sha256Hex)
+            .WithETag(_ => weak);
+
+        _ = (weak, options);
+    }
+
+    public static void RangeOutcomeCases()
+    {
+        RangeOutcome full = new RangeOutcome.FullRepresentation();
+        RangeOutcome partial = new RangeOutcome.PartialContent(0, 99, 100);
+        RangeOutcome notSatisfiable = new RangeOutcome.NotSatisfiable(100);
+
+        long completeLength = partial switch
+        {
+            RangeOutcome.FullRepresentation => 0,
+            RangeOutcome.PartialContent pc => pc.CompleteLength,
+            RangeOutcome.NotSatisfiable ns => ns.CompleteLength,
+            _ => 0,
+        };
+
+        _ = (full, partial, notSatisfiable, completeLength);
+    }
+}

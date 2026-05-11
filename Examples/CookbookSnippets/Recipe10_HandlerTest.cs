@@ -44,3 +44,38 @@ public class PlaceOrderHandlerTests
     }
 #pragma warning restore CA1707
 }
+
+internal static class Recipe10TestingSurface
+{
+    public static void ValidationAssertionSurface()
+    {
+        var error = Error.UnprocessableContent.ForField(
+            "currency",
+            "invalid_length",
+            "Currency must be 3 characters.");
+
+        ValidationErrorAssertions assertions = error.Should();
+        assertions
+            .HaveFieldErrorWithDetail("currency", "Currency must be 3 characters.")
+            .And.HaveFieldCount(1);
+
+        _ = assertions;
+    }
+
+    public static async Task AsyncResultAssertionSurface()
+    {
+        var idResult = Result.Ok(1);
+        var failureResult = Result.Fail<int>(new Error.Unexpected("async_assertion_failure"));
+        Task<Result<int>> taskResult = Task.FromResult(idResult);
+        ValueTask<Result<int>> valueTaskResult = new(idResult);
+        Task<Result<int>> failureTaskResult = Task.FromResult(failureResult);
+        ValueTask<Result<int>> failureValueTaskResult = new(failureResult);
+
+        var taskAssertion = await taskResult.BeSuccessAsync();
+        var valueTaskAssertion = await valueTaskResult.BeSuccessAsync();
+        var taskFailureAssertion = await failureTaskResult.BeFailureAsync();
+        var valueTaskFailureAssertion = await failureValueTaskResult.BeFailureAsync();
+
+        _ = (taskAssertion, valueTaskAssertion, taskFailureAssertion, valueTaskFailureAssertion);
+    }
+}
