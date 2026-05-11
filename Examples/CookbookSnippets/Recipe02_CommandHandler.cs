@@ -73,3 +73,15 @@ public static class FixPattern
                         ResourceRef.For<Order>(id), "already_exists")),
                     none: () => Result.Ok(id)));
 }
+
+internal static class Recipe2BehaviorSurface
+{
+    public static void PipelineBehaviorTypes()
+    {
+        Type validationBehaviorType = typeof(ValidationBehavior<,>);
+        Type messageValidatorType = typeof(IMessageValidator<>);
+        Type transactionalBehaviorType = typeof(TransactionalCommandBehavior<,>);
+
+        _ = (validationBehaviorType, messageValidatorType, transactionalBehaviorType);
+    }
+}
