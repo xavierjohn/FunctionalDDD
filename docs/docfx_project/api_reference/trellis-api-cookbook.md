@@ -487,7 +487,16 @@ public sealed record UpdateOrderCommand(OrderId OrderId, Money NewTotal)
 // DI wiring
 services.AddTrellisBehaviors();
 services.AddClaimsActorProvider();               // ClaimsActorProvider for ASP.NET Core
-services.AddResourceAuthorization(typeof(UpdateOrderCommand).Assembly);
+// Pass every assembly that contains command/query types AND every assembly that contains
+// IResourceLoader<,> implementations. In a layered app the loader typically lives in the
+// ACL assembly, not the Application assembly — passing only the Application assembly will
+// register ResourceAuthorizationBehavior<,,> without discovering the shared loader and the
+// pipeline will fail at runtime when it cannot resolve IResourceLoader<TMessage, TResource>.
+// Note: the scanner does not de-duplicate assemblies; if the two layers happen to collapse
+// to one assembly, pass it once (or .Distinct() the array) to avoid registering the behavior twice.
+services.AddResourceAuthorization(
+    typeof(UpdateOrderCommand).Assembly,        // Application assembly (commands + IAuthorizeResource)
+    typeof(OrderResourceLoader).Assembly);      // ACL assembly (IResourceLoader<,> implementations)
 ```
 
 **What it shows.** `IAuthorize` enforces an AND-permission gate via `AuthorizationBehavior<,>`. `IAuthorizeResource<TResource>` runs *after* `IResourceLoader<TMessage, TResource>` produces the loaded resource, then calls `Authorize(actor, resource)`. Combining `IAuthorizeResource<TResource>` with `IIdentifyResource<TResource, TId>` lets the framework reuse the shared `SharedResourceLoaderById<TResource, TId>` instead of requiring a per-command loader.
