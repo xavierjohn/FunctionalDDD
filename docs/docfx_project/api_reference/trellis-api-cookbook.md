@@ -173,22 +173,14 @@ public interface IOrderRepository
 
 **What it shows.** Each base class in this recipe supplies a complete surface — your derived type adds only domain-specific state. **Do not redeclare members that are already inherited**; that is the most common Recipe 1 mistake.
 
-`RequiredGuid<TSelf>` (and `RequiredString<TSelf>`) source-generate every primitive operation onto the partial class. After `public sealed partial class OrderId : RequiredGuid<OrderId>;` you already have:
+- `RequiredGuid<TSelf>` source-generates `TryCreate` overloads, `Parse`/`TryParse`, an explicit `Guid` → `TSelf` operator, the `Value` accessor, equality / `GetHashCode` / `IComparable`, JSON and EF Core converters, plus the `NewUniqueV4()` and `NewUniqueV7()` factories. Do not write your own `TryCreate`, equality members, parse/convert helpers, or JSON/EF converters.
+- `RequiredString<TSelf>` source-generates `TryCreate(string?, string?)`, `Parse`/`TryParse`, an explicit `string` → `TSelf` operator, the `Value` accessor, equality, JSON and EF Core converters, plus `Length`/`StartsWith`/`Contains`/`EndsWith` pass-throughs. Same rule applies: derived classes add only domain-specific helpers (e.g., a custom `TryCreateWithValidation` that layers extra rules on top of the generated `TryCreate`).
+- `ValueObject` (the base of `Money`, `Address`, etc.) supplies `Equals(object?)`, `Equals(ValueObject?)`, `GetHashCode`, `CompareTo`, and the `==`/`!=`/`<`/`<=`/`>`/`>=` operators — all derived from `GetEqualityComponents()`. Your derived type implements **only** `protected override IEnumerable<IComparable?> GetEqualityComponents()`. Do not override `Equals`/`GetHashCode`/`CompareTo` or write equality operators yourself — that breaks the contract the base class establishes. For `Maybe<T>` components, use the inherited `protected static IComparable? MaybeComponent<T>(Maybe<T>)` helper rather than unwrapping manually.
+- `Aggregate<TId>` already supplies inherited infrastructure members: `Id`, protected `DomainEvents`, persistence-managed `ETag`, and `IsChanged` based on pending domain events. Do not redeclare those members on every aggregate; use the inherited surface and add only domain-specific state. Domain events are added via `DomainEvents.Add(...)` from inside the aggregate; the public read-only view is `IAggregate.UncommittedEvents()`.
 
-- `static Result<OrderId> TryCreate(Guid value, string? fieldName = null)` plus a `TryCreate(Guid? value, string? fieldName = null)` overload that explicitly rejects null, plus a `TryCreate(string? value, string? fieldName = null)` overload that parses a string and validates it. `RequiredString<T>` provides a single `TryCreate(string? value, string? fieldName = null)` overload.
-- `static OrderId Parse(string, IFormatProvider?)` and `static bool TryParse(string?, IFormatProvider?, out OrderId)`.
-- `static explicit operator OrderId(Guid value)` (for `RequiredGuid`) / `(string value)` (for `RequiredString`).
-- `Value` property, `Equals`/`GetHashCode`/`IComparable<TSelf>`, JSON converter, and EF Core converter.
-- `RequiredGuid` only: `static OrderId NewUniqueV4()` (random) and `static OrderId NewUniqueV7()` (time-ordered) factories.
-- `RequiredString` only: `Length`, `StartsWith`, `Contains`, `EndsWith` pass-throughs.
-
-Do not write your own `TryCreate`, equality members, parse/convert helpers, or JSON/EF converters on the derived class. Add only domain-specific helpers (e.g., a custom `TryCreateWithValidation` that layers extra rules on top of the generated `TryCreate`).
+> **Compiled contract.** The exact signatures of every member listed above are exercised in `Examples/CookbookSnippets/Recipe01_CrudAggregate.cs` → `Recipe1InheritedSurface`. That file is compiled in CI, so if a signature changes in the framework, the build fails and this callout MUST be updated to match. When you need to confirm an exact overload, read the demonstrator — never paraphrase signatures from memory.
 
 `[StringLength]` and `[Range]` come from the **`Trellis` namespace** and are placed on the **class declaration** — using `System.ComponentModel.DataAnnotations` versions silently compiles but is ignored by the Trellis source generator (`TRLS017`).
-
-`ValueObject` (the base of `Money`, `Address`, etc.) supplies `Equals(object?)`, `Equals(ValueObject?)`, `GetHashCode`, `CompareTo`, and `==`/`!=`/`<`/`<=`/`>`/`>=` operators — all of them derived from `GetEqualityComponents()`. Your derived type implements **only** `protected override IEnumerable<IComparable?> GetEqualityComponents()`. Do not override `Equals`/`GetHashCode`/`CompareTo` or write equality operators yourself — that breaks the contract the base class establishes. For `Maybe<T>` components, use the inherited `protected static IComparable? MaybeComponent<T>(Maybe<T>)` helper rather than unwrapping manually.
-
-`Aggregate<TId>` already supplies inherited infrastructure members: `Id`, protected `DomainEvents`, persistence-managed `ETag`, and `IsChanged` based on pending domain events. Do not redeclare those members on every aggregate; use the inherited surface and add only domain-specific state.
 
 **Anti-pattern → fix (TRLS017).**
 
