@@ -175,7 +175,7 @@ public interface IOrderRepository
 
 `RequiredGuid<TSelf>` (and `RequiredString<TSelf>`) source-generate every primitive operation onto the partial class. After `public sealed partial class OrderId : RequiredGuid<OrderId>;` you already have:
 
-- `static Result<OrderId> TryCreate(Guid value)` and the `(Guid?, string? fieldName)` overload — and for `RequiredString<T>` the `(string?, string?)` overload.
+- `static Result<OrderId> TryCreate(Guid value, string? fieldName = null)` plus a `TryCreate(Guid? value, string? fieldName = null)` overload that explicitly rejects null, plus a `TryCreate(string? value, string? fieldName = null)` overload that parses a string and validates it. `RequiredString<T>` provides `TryCreate(string value)` and `TryCreate(string? value, string? fieldName = null)` instead.
 - `static OrderId Parse(string, IFormatProvider?)` and `static bool TryParse(string?, IFormatProvider?, out OrderId)`.
 - `static explicit operator OrderId(Guid value)` (for `RequiredGuid`) / `(string value)` (for `RequiredString`).
 - `Value` property, `Equals`/`GetHashCode`/`IComparable<TSelf>`, JSON converter, and EF Core converter.
