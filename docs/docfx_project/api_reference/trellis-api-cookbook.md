@@ -57,7 +57,7 @@ Before writing Trellis code, choose the task in the lookup table below, then loa
 | Composition-root helpers (`AddTrellis`, `UseXxx`) | `trellis-api-cookbook.md`, `trellis-api-servicedefaults.md`, plus every package reference for selected modules | `TrellisServiceBuilder` preserves canonical order but does not register app-owned services like `DbContext` or Mediator handlers. |
 | HTTP client adapters | `trellis-api-cookbook.md`, `trellis-api-http.md`, `trellis-api-core.md` | The HTTP package maps upstream responses into Core `Result<T>` / `Maybe<T>` shapes. |
 | Tests | `trellis-api-testing-reference.md`; add `trellis-api-testing-aspnetcore.md` for `WebApplicationFactory` or `.http` replay | Unit/helper assertions and ASP integration helpers live in separate test packages. |
-| Analyzer diagnostics | `trellis-api-analyzers.md`, then the package reference named by the diagnostic category | Analyzer docs explain the warning; the package reference gives the canonical API to use instead. |
+| Analyzer diagnostics | `trellis-api-anti-patterns.md` first for the ready-to-apply WRONG/FIX shape, then `trellis-api-analyzers.md`, then the package reference named by the diagnostic category | Anti-pattern file shows the canonical fix to copy; analyzer docs explain the warning; the package reference gives the canonical API to use instead. |
 
 Measurable completion check for generated code: every Trellis method call should be traceable to a loaded package reference, every selected integration module should be wired in the documented order, and every public API or behavior change should update the matching package reference plus this cookbook when it affects a cross-package recipe.
 
@@ -171,7 +171,22 @@ public interface IOrderRepository
 }
 ```
 
-**What it shows.** `RequiredGuid<TSelf>` and `RequiredString<TSelf>` deliver a complete strongly-typed primitive (parsing, equality, JSON, EF) once you mark the partial class. `[StringLength]` and `[Range]` come from the **`Trellis` namespace** and are placed on the **class declaration** — using `System.ComponentModel.DataAnnotations` versions silently compiles but is ignored by the Trellis source generator (`TRLS017`).
+**What it shows.** Each base class in this recipe supplies a complete surface — your derived type adds only domain-specific state. **Do not redeclare members that are already inherited**; that is the most common Recipe 1 mistake.
+
+`RequiredGuid<TSelf>` (and `RequiredString<TSelf>`) source-generate every primitive operation onto the partial class. After `public sealed partial class OrderId : RequiredGuid<OrderId>;` you already have:
+
+- `static Result<OrderId> TryCreate(Guid value)` and the `(Guid?, string? fieldName)` overload — and for `RequiredString<T>` the `(string?, string?)` overload.
+- `static OrderId Parse(string, IFormatProvider?)` and `static bool TryParse(string?, IFormatProvider?, out OrderId)`.
+- `static explicit operator OrderId(Guid value)` (for `RequiredGuid`) / `(string value)` (for `RequiredString`).
+- `Value` property, `Equals`/`GetHashCode`/`IComparable<TSelf>`, JSON converter, and EF Core converter.
+- `RequiredGuid` only: `static OrderId NewUniqueV4()` (random) and `static OrderId NewUniqueV7()` (time-ordered) factories.
+- `RequiredString` only: `Length`, `StartsWith`, `Contains`, `EndsWith` pass-throughs.
+
+Do not write your own `TryCreate`, equality members, parse/convert helpers, or JSON/EF converters on the derived class. Add only domain-specific helpers (e.g., a custom `TryCreateWithValidation` that layers extra rules on top of the generated `TryCreate`).
+
+`[StringLength]` and `[Range]` come from the **`Trellis` namespace** and are placed on the **class declaration** — using `System.ComponentModel.DataAnnotations` versions silently compiles but is ignored by the Trellis source generator (`TRLS017`).
+
+`ValueObject` (the base of `Money`, `Address`, etc.) supplies `Equals(object?)`, `Equals(ValueObject?)`, `GetHashCode`, `CompareTo`, and `==`/`!=`/`<`/`<=`/`>`/`>=` operators — all of them derived from `GetEqualityComponents()`. Your derived type implements **only** `protected override IEnumerable<IComparable?> GetEqualityComponents()`. Do not override `Equals`/`GetHashCode`/`CompareTo` or write equality operators yourself — that breaks the contract the base class establishes. For `Maybe<T>` components, use the inherited `protected static IComparable? MaybeComponent<T>(Maybe<T>)` helper rather than unwrapping manually.
 
 `Aggregate<TId>` already supplies inherited infrastructure members: `Id`, protected `DomainEvents`, persistence-managed `ETag`, and `IsChanged` based on pending domain events. Do not redeclare those members on every aggregate; use the inherited surface and add only domain-specific state.
 
@@ -725,100 +740,9 @@ public class PlaceOrderHandlerTests
 
 ## Recipe 11 — Anti-pattern → fix gallery (the analyzers in action)
 
-A condensed atlas showing each common analyzer trigger and its idiomatic Trellis fix.
+The anti-pattern catalog moved to its own file so that AI sessions and human readers can load it independently when debugging an analyzer warning. See **[`trellis-api-anti-patterns.md`](trellis-api-anti-patterns.md)** for each common analyzer trigger and its idiomatic Trellis fix (TRLS001, TRLS003, TRLS010, TRLS016, TRLS017, TRLS018, TRLS019).
 
-### TRLS001 — Result return value not handled
-
-```csharp
-// WRONG — Result<T> dropped on the floor
-PlaceOrder(cmd);                                   // TRLS001
-
-// FIX 1 — propagate up the ROP chain (preferred when the caller is itself in a Result pipeline).
-return PlaceOrder(cmd).Map(_ => Unit.Value);
-
-// FIX 2 — terminal side-effect via Switch (void-returning; for fire-and-forget log/metric).
-PlaceOrder(cmd).Switch(
-    onSuccess: _       => logger.LogInformation("Order placed."),
-    onFailure: failure => logger.LogWarning("Order rejected: {Code}", failure.Code));
-
-// FIX 3 — terminal projection via Match (both branches return a value; use when the
-// caller needs an int/IActionResult/string back, not just a side effect).
-int statusCode = PlaceOrder(cmd).Match(
-    onSuccess: _       => 200,
-    onFailure: failure => 422);
-```
-
-> Don't throw from inside `Match` / `Switch` to "handle" failure — it defeats the point of `Result<T>`. Use `Switch` for void side-effects and propagate the `Result` up the chain instead. (Note: TRLS010 only fires inside chain methods like `Bind`/`Map`/`Tap`/`Ensure` — not `Match` or `Switch` — so the analyzer won't catch this; it's a Result-discipline guideline, not an analyzer rule.)
-
-### TRLS003 — Unsafe `Maybe.Value`
-
-```csharp
-// WRONG
-string city = customer.Email.Value;                // TRLS003
-
-// FIX 1 — guard
-if (customer.Email.HasValue) { var v = customer.Email.Value; }
-
-// FIX 2 — convert to Result
-Result<EmailAddress> r = customer.Email.ToResult(new Error.NotFound(ResourceRef.For("Email", customer.Id)));
-```
-
-### TRLS010 — Throwing in a Result chain
-
-```csharp
-// WRONG
-.Bind(o => throw new InvalidOperationException("bad"))   // TRLS010
-
-// FIX
-.Bind(o => Result.Fail<Order>(new Error.Conflict(ResourceRef.For<Order>(o.Id), "invalid_state")))
-```
-
-### TRLS016 — `HasIndex` on a `Maybe<T>` property
-
-```csharp
-// WRONG
-b.HasIndex(c => c.Email);                          // TRLS016 — silently no-op
-
-// FIX
-b.HasTrellisIndex(c => new { c.Email });
-```
-
-### TRLS017 — Wrong attribute namespace on a value object
-
-```csharp
-// WRONG — System.ComponentModel.DataAnnotations
-[System.ComponentModel.DataAnnotations.StringLength(10)]    // TRLS017 — generator ignores it
-public sealed partial class CurrencyCode : RequiredString<CurrencyCode>;
-
-// FIX
-[Trellis.StringLength(10)]
-public sealed partial class CurrencyCode : RequiredString<CurrencyCode>;
-```
-
-### TRLS018 — Unsafe `Result<T>` deconstruction
-
-```csharp
-// WRONG
-var (ok, value, err) = result;
-SendEmail(value);                                  // TRLS018 — value is default on failure
-
-// FIX
-var (ok, value, err) = result;
-if (!ok) return err.ToHttpResponse();
-SendEmail(value);                                  // gated by !ok early-return
-```
-
-### TRLS019 — `default(Result)` / `default(Maybe<T>)`
-
-```csharp
-// WRONG
-return default;                                    // TRLS019 — typed FAILURE, not success
-return default(Maybe<Email>);                      // TRLS019 — equivalent to .None but obscure
-
-// FIX
-return Result.Ok();
-return Maybe<Email>.None;
-```
+If you are looking up a specific analyzer by ID, the standalone file is faster than scanning this cookbook. The cookbook recipes still link to the relevant sections of that file where they apply.
 
 ---
 

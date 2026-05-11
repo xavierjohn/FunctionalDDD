@@ -45,7 +45,19 @@ For any non-trivial Trellis work, load these **before** writing the first line o
 | Service defaults and composition root setup | `docs/docfx_project/api_reference/trellis-api-servicedefaults.md` |
 | Testing helpers | `docs/docfx_project/api_reference/trellis-api-testing-reference.md` |
 | ASP.NET Core integration-test helpers | `docs/docfx_project/api_reference/trellis-api-testing-aspnetcore.md` |
-| Analyzer rules and diagnostic IDs | `docs/docfx_project/api_reference/trellis-api-analyzers.md` |
+| Analyzer rules and diagnostic IDs | `docs/docfx_project/api_reference/trellis-api-anti-patterns.md` for ready-to-apply WRONG/FIX shapes, then `docs/docfx_project/api_reference/trellis-api-analyzers.md` for the formal spec |
+
+### Preflight verification — required before generating non-trivial code
+
+Reading the references is necessary but not sufficient. Before producing any non-trivial Trellis code, **explicitly answer these in your reasoning** (one or two lines is enough, but skipping the step is not allowed):
+
+1. **Which task am I doing?** Name the task in the cookbook's task-lookup table — verbatim if possible.
+2. **Which recipe applies?** Cite the recipe number (e.g. *"Recipe 1 — CRUD aggregate"* or *"Recipe 21 — Parallel independent loads"*). If no recipe applies, name the cookbook section or package reference that does.
+3. **Which inherited surface does my type already get?** For any type derived from `Aggregate<TId>`, `Entity<TId>`, `RequiredGuid<T>`, `RequiredString<T>`, `RequiredEnum<T>`, `RequiredNumeric<T>`, `ValueObject`, or `ScalarValueObject<TSelf, TValue>`, list the inherited members you will *not* redeclare (read Recipe 1 for the standard set). The most common Recipe 1 mistake is redeclaring `Id`, equality methods, or `TryCreate` that the base class already provides.
+4. **Am I about to invent an API?** If you cannot point at a specific reference file + line range for the method/extension/attribute you are about to use, stop and load that reference. Do not synthesize the signature from prior knowledge.
+5. **What does the analyzer say?** If the change is in a `Result`/`Maybe`/EF-Core/value-object pipeline, list which `TRLSxxx` IDs are relevant and cite the matching section in `trellis-api-anti-patterns.md`. Use the WRONG/FIX shape there verbatim.
+
+If you cannot answer any of these, stop and load the missing reference before continuing.
 
 ### Adding a new public registration API (`AddXxx` / `UseXxx`)
 
