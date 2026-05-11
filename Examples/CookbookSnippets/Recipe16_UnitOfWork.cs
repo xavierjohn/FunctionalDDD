@@ -11,6 +11,7 @@ using Trellis;
 using Trellis.EntityFrameworkCore;
 using Trellis.FluentValidation;
 using Trellis.Mediator;
+using Trellis.Testing;
 
 public sealed partial class OrderId : RequiredGuid<OrderId>;
 
@@ -78,6 +79,18 @@ internal static class Recipe16Demonstrator
     {
         Type behavior = typeof(TransactionalCommandBehavior<CreateOrderCommand, Result<OrderId>>);
         _ = behavior;
+    }
+
+    public static async Task FakeRepositorySetupAndConflictResult(Order order)
+    {
+        FakeRepository<Order, OrderId> orders =
+            new FakeRepository<Order, OrderId>()
+                .WithUniqueConstraint(o => o.Total);
+
+        orders.Add(order);
+
+        Result<Trellis.Unit> conflictResult = await orders.SaveAsync(order);
+        _ = conflictResult;
     }
 }
 

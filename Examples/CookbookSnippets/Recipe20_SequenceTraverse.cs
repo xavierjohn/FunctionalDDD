@@ -89,6 +89,11 @@ internal static class Recipe20Demonstrator
         accumulated = accumulated.Combine(first);
         return accumulated.Combine(second);
     }
+
+    public static Result<EmailAddress> EnsureAllPin(Result<EmailAddress> seed) =>
+        seed.EnsureAll(
+            (email => email.Value.Length > 0, new Error.BadRequest("empty")),
+            (email => email.Value.Contains('@'), new Error.BadRequest("missing_at")));
 }
 
 #if FALSE
