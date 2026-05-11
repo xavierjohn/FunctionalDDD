@@ -2,6 +2,7 @@
 namespace CookbookSnippets.Recipe07;
 
 using System.Collections.Generic;
+using System.Reflection;
 using CookbookSnippets.Recipe01;
 using global::Mediator;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,7 +36,13 @@ public static class AuthorizationDi
     {
         services.AddTrellisBehaviors();
         services.AddClaimsActorProvider();
-        services.AddResourceAuthorization(typeof(UpdateOrderCommand).Assembly);
+        // Pass both the assembly that holds command/query types AND the assembly that holds
+        // IResourceLoader<,> implementations (typically the ACL assembly). The demonstrator
+        // packs everything into CookbookSnippets, so the same reference appears twice here —
+        // in a real layered app these are two distinct assemblies.
+        Assembly applicationAssembly = typeof(UpdateOrderCommand).Assembly;
+        Assembly aclAssembly = typeof(AuthorizationDi).Assembly; // same assembly in this demo
+        services.AddResourceAuthorization(applicationAssembly, aclAssembly);
         return services;
     }
 }
