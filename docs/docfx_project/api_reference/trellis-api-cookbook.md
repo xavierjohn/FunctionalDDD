@@ -1552,10 +1552,12 @@ public sealed class CheckoutHandler(
 
 ```csharp
 // ❌ UNSAFE — two repository calls against repositories that share a scoped DbContext.
-// Looks "obviously parallelisable" but races the underlying EF context. Failure mode
-// is non-deterministic: usually InvalidOperationException("A second operation was
-// started..."), occasionally a partial response with data from one but not the other,
-// occasionally a successful run that lulls the author into thinking it's correct.
+// Looks "obviously parallelisable" but races the underlying EF context. `Task.WhenAll`
+// waits for both factories to complete (or one to throw), so the concrete failure mode
+// is an `InvalidOperationException("A second operation was started on this context...")`
+// thrown by EF Core when the second concurrent operation hits the shared connection.
+// Reproduction is timing-dependent: the throw is reliable under contention but can be
+// missed on a near-instant warm cache, which lulls authors into thinking it's correct.
 public ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, CancellationToken cancellationToken) =>
     new(Result.ParallelAsync(
             () => _customers.FindByIdAsync(command.CustomerId, cancellationToken),  // shared DbContext
@@ -1629,11 +1631,13 @@ public sealed class ReturnOrderHandler(
         // an in-memory mutation persists through the rest of the handler's object graph
         // even if a later failure rolls back the database commit, so partially-released
         // stock leaks into any subsequent read of the same aggregate within this scope.
+        // Report ALL missing ids in the detail (not just the first) — that's the whole
+        // point of preflighting: surface the full problem in one round-trip.
         var missing = productIds.Where(id => !byId.ContainsKey(id)).ToArray();
         if (missing.Length > 0)
             return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Product>(missing[0]))
             {
-                Detail = $"Product {missing[0]} referenced by line item is missing — cannot release stock.",
+                Detail = $"Products referenced by line items are missing — cannot release stock: {string.Join(", ", missing)}.",
             });
 
         // All related aggregates reachable. Safe to apply side effects.
