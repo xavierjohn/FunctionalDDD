@@ -1,0 +1,340 @@
+﻿namespace Trellis.Mediator.Tests;
+
+using global::Mediator;
+using Microsoft.Extensions.DependencyInjection;
+using Trellis.Authorization;
+using Trellis.Mediator.Tests.Helpers;
+using Trellis.Testing;
+
+/// <summary>
+/// Tests for the explicit (non-scanning) registration helper
+/// <see cref="ServiceCollectionExtensions.AddRelatedResourceAuthorization{TMessage, TLeaf, TLeafId, TOwner, TOwnerId, TResponse}"/>
+/// — the AOT path that does not depend on assembly scanning.
+/// </summary>
+public class AddRelatedResourceAuthorizationTests
+{
+    [Fact]
+    public async Task SingleHopOverload_RegistersBehaviorAndAuthorizesEndToEnd()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+        services.AddScoped<IActorProvider>(_ => FakeActorProvider.NoPermissions("actor-1"));
+
+        // Explicit loader registrations — no assembly scan.
+        var leafRepo = new ExplicitLeafRepo();
+        leafRepo.Add(new ExplicitLeaf("l-1", "owner-1"));
+        services.AddSingleton(leafRepo);
+        services.AddScoped<SharedResourceLoaderById<ExplicitLeaf, string>, ExplicitLeafLoader>();
+        services.AddSharedResourceLoader<ExplicitCommand, ExplicitLeaf, string>();
+
+        var ownerRepo = new ExplicitOwnerRepo();
+        ownerRepo.Add(new ExplicitOwner("owner-1", "actor-1"));
+        services.AddSingleton(ownerRepo);
+        services.AddScoped<SharedResourceLoaderById<ExplicitOwner, string>, ExplicitOwnerLoader>();
+
+        services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
+            leaf => leaf.OwnerId);
+
+        var sp = services.BuildServiceProvider();
+        var scope = sp.CreateScope();
+
+        var behavior = scope.ServiceProvider
+            .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();
+        var (next, tracker) = NextDelegate.TrackingAsync<ExplicitCommand, Result<string>>(
+            Result.Ok("Done"));
+
+        var result = await behavior.Handle(new ExplicitCommand("l-1"), next, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        tracker.WasInvoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SingleHopOverload_NullOwnerId_ShortCircuitsToForbidden()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+        services.AddScoped<IActorProvider>(_ => FakeActorProvider.NoPermissions("actor-1"));
+
+        var leafRepo = new ExplicitLeafRepo();
+        leafRepo.Add(new ExplicitLeaf("l-1", ownerId: null!));  // null id intentional
+        services.AddSingleton(leafRepo);
+        services.AddScoped<SharedResourceLoaderById<ExplicitLeaf, string>, ExplicitLeafLoader>();
+        services.AddSharedResourceLoader<ExplicitCommand, ExplicitLeaf, string>();
+
+        // Owner loader registered but won't be hit because extractor returns null.
+        services.AddScoped<SharedResourceLoaderById<ExplicitOwner, string>>(_ =>
+            new ExplicitOwnerLoader(new ExplicitOwnerRepo()));
+
+        services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
+            leaf => leaf.OwnerId);  // returns null, triggers Forbidden short-circuit
+
+        var sp = services.BuildServiceProvider();
+        var scope = sp.CreateScope();
+
+        var behavior = scope.ServiceProvider
+            .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();
+        var (next, tracker) = NextDelegate.TrackingAsync<ExplicitCommand, Result<string>>(
+            Result.Ok("should not reach"));
+
+        var result = await behavior.Handle(new ExplicitCommand("l-1"), next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.UnwrapError().Should().BeOfType<Error.Forbidden>();
+        result.UnwrapError().Code.Should().Be("resource.authorization-via.empty");
+        tracker.WasInvoked.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SingleHopOverload_LandsBeforeValidationBehavior()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+
+        services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
+            leaf => leaf.OwnerId);
+
+        // Find the indices of the registered closed-pipeline behavior and the open-generic
+        // ValidationBehavior to assert relative ordering. The via-behavior is registered with
+        // a TYPED ImplementationType (ResourceAuthorizationViaBehavior<,,,>).
+        var pipelineType = typeof(IPipelineBehavior<ExplicitCommand, Result<string>>);
+        var viaIndex = -1;
+        for (int i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == pipelineType
+                && services[i].ImplementationType is { IsGenericType: true } impl
+                && impl.GetGenericTypeDefinition() == typeof(ResourceAuthorizationViaBehavior<,,,>))
+            {
+                viaIndex = i;
+                break;
+            }
+        }
+
+        var validationIndex = -1;
+        for (int i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == typeof(IPipelineBehavior<,>)
+                && services[i].ImplementationType == typeof(ValidationBehavior<,>))
+            {
+                validationIndex = i;
+                break;
+            }
+        }
+
+        viaIndex.Should().BeGreaterThanOrEqualTo(0);
+        validationIndex.Should().BeGreaterThanOrEqualTo(0);
+        viaIndex.Should().BeLessThan(validationIndex,
+            "the via behavior must run before the validation behavior in the pipeline");
+    }
+
+    [Fact]
+    public void SingleHopOverload_RegistrationBeforeAddTrellisBehaviors_StillRelocatesBeforeValidation()
+    {
+        // Order-independence: explicit registration that happens BEFORE AddTrellisBehaviors
+        // should still land before ValidationBehavior after AddTrellisBehaviors runs.
+        var services = new ServiceCollection();
+
+        services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
+            leaf => leaf.OwnerId);
+
+        services.AddTrellisBehaviors();
+
+        var pipelineType = typeof(IPipelineBehavior<ExplicitCommand, Result<string>>);
+        var viaIndex = -1;
+        for (int i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == pipelineType
+                && services[i].ImplementationType is { IsGenericType: true } impl
+                && impl.GetGenericTypeDefinition() == typeof(ResourceAuthorizationViaBehavior<,,,>))
+            {
+                viaIndex = i;
+                break;
+            }
+        }
+
+        var validationIndex = -1;
+        for (int i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == typeof(IPipelineBehavior<,>)
+                && services[i].ImplementationType == typeof(ValidationBehavior<,>))
+            {
+                validationIndex = i;
+                break;
+            }
+        }
+
+        viaIndex.Should().BeGreaterThanOrEqualTo(0);
+        validationIndex.Should().BeGreaterThanOrEqualTo(0);
+        viaIndex.Should().BeLessThan(validationIndex);
+    }
+
+    [Fact]
+    public void Relocator_DoesNotMoveUnrelatedFactoryRegisteredPipelineBehaviors()
+    {
+        // A consumer may register their own closed-generic IPipelineBehavior<,> via a factory
+        // for unrelated reasons (e.g., a behavior that needs captured options). The relocator
+        // must NOT treat such descriptors as Trellis-owned and re-order them. Only descriptors
+        // tagged with ViaBehaviorRegistrationMarker (emitted by AddRelatedResourceAuthorization
+        // and the via-scanner) are relocated.
+        var services = new ServiceCollection();
+
+        // Register an UNRELATED closed-generic factory-based pipeline behavior BEFORE
+        // AddTrellisBehaviors so it appears earlier in the descriptor list than ValidationBehavior.
+        var unrelatedBehavior = new UnrelatedPipelineBehavior();
+        services.AddScoped<IPipelineBehavior<ExplicitCommand, Result<string>>>(_ => unrelatedBehavior);
+
+        // Snapshot the unrelated behavior's index before AddTrellisBehaviors runs.
+        var unrelatedIndexBefore = -1;
+        for (int i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == typeof(IPipelineBehavior<ExplicitCommand, Result<string>>)
+                && services[i].ImplementationFactory is not null)
+            {
+                unrelatedIndexBefore = i;
+                break;
+            }
+        }
+
+        services.AddTrellisBehaviors();
+
+        // After AddTrellisBehaviors, the unrelated factory descriptor must still be present.
+        // The relocator should NOT have moved it before ValidationBehavior just because it
+        // looks like a closed-generic factory-based IPipelineBehavior<,>.
+        var validationIndex = -1;
+        var unrelatedIndexAfter = -1;
+        for (int i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == typeof(IPipelineBehavior<ExplicitCommand, Result<string>>)
+                && services[i].ImplementationFactory is not null)
+                unrelatedIndexAfter = i;
+            if (services[i].ServiceType == typeof(IPipelineBehavior<,>)
+                && services[i].ImplementationType == typeof(ValidationBehavior<,>))
+                validationIndex = i;
+        }
+
+        unrelatedIndexAfter.Should().BeGreaterThanOrEqualTo(0, "the unrelated behavior must still be registered");
+        validationIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        // The relocator must NOT have touched the unrelated descriptor. It stays put at
+        // exactly where the consumer placed it (index 0 in this test, since it was added
+        // first before AddTrellisBehaviors ran). If the relocator had incorrectly classified
+        // it as Trellis-owned, it would have been pulled out and re-inserted just before
+        // ValidationBehavior (i.e. at validationIndex), not at its original position 0.
+        unrelatedIndexAfter.Should().Be(unrelatedIndexBefore,
+            "without a ViaBehaviorRegistrationMarker, the relocator must leave consumer-registered " +
+            "factory descriptors where they originally were.");
+    }
+
+    [Fact]
+    public async Task SingleHopOverload_OwnerLoaderMissing_Throws()
+    {
+        // Missing loader is a deployment bug, NOT an authorization denial.
+        // The behavior must throw InvalidOperationException, not return Forbidden,
+        // so persistent 403s caused by misconfiguration are not silently masked.
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+        services.AddScoped<IActorProvider>(_ => FakeActorProvider.NoPermissions("actor-1"));
+
+        var leafRepo = new ExplicitLeafRepo();
+        leafRepo.Add(new ExplicitLeaf("l-1", "owner-1"));
+        services.AddSingleton(leafRepo);
+        services.AddScoped<SharedResourceLoaderById<ExplicitLeaf, string>, ExplicitLeafLoader>();
+        services.AddSharedResourceLoader<ExplicitCommand, ExplicitLeaf, string>();
+
+        // INTENTIONALLY: no SharedResourceLoaderById<ExplicitOwner, string> registered.
+
+        services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
+            leaf => leaf.OwnerId);
+
+        var sp = services.BuildServiceProvider();
+        var scope = sp.CreateScope();
+
+        var behavior = scope.ServiceProvider
+            .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();
+        var (next, _) = NextDelegate.TrackingAsync<ExplicitCommand, Result<string>>(
+            Result.Ok("should not reach"));
+
+        Func<Task> act = async () =>
+            await behavior.Handle(new ExplicitCommand("l-1"), next, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*SharedResourceLoaderById<ExplicitOwner, String>*");
+    }
+}
+
+internal sealed class UnrelatedPipelineBehavior : IPipelineBehavior<ExplicitCommand, Result<string>>
+{
+    public ValueTask<Result<string>> Handle(ExplicitCommand message, MessageHandlerDelegate<ExplicitCommand, Result<string>> next, CancellationToken cancellationToken)
+        => next(message, cancellationToken);
+}
+
+#region Test fixtures
+
+internal sealed record ExplicitCommand(string LeafId)
+    : ICommand<Result<string>>,
+      IAuthorizeResourceVia<ExplicitOwner>,
+      IIdentifyResource<ExplicitLeaf, string>
+{
+    public string GetResourceId() => LeafId;
+
+    public IResult Authorize(Actor actor, IReadOnlyList<ExplicitOwner> owners) =>
+        owners.Any(o => o.CreatedByActorId == actor.Id)
+            ? Result.Ok()
+            : Result.Fail(new Error.Forbidden("not_owner"));
+}
+
+internal sealed class ExplicitLeaf(string id, string ownerId)
+    : IIdentifyRelatedResource<ExplicitOwner, string>
+{
+    public string Id { get; } = id;
+    public string OwnerId { get; } = ownerId;
+
+    // Declared so when other tests' assembly scans encounter ExplicitCommand
+    // (which implements IAuthorizeResourceVia<ExplicitOwner>), the path resolver can find
+    // a valid leaf→owner path and registration succeeds. The actual tests in this file use
+    // the explicit AddRelatedResourceAuthorization overload, not the scanner.
+    public string GetRelatedResourceId() => OwnerId;
+}
+
+internal sealed class ExplicitOwner(string id, string createdByActorId)
+{
+    public string Id { get; } = id;
+    public string CreatedByActorId { get; } = createdByActorId;
+}
+
+internal sealed class ExplicitLeafRepo
+{
+    private readonly Dictionary<string, ExplicitLeaf> _items = [];
+    public void Add(ExplicitLeaf l) => _items[l.Id] = l;
+    public Result<ExplicitLeaf> GetById(string id) => _items.TryGetValue(id, out var v)
+        ? Result.Ok(v)
+        : Result.Fail<ExplicitLeaf>(new Error.NotFound(new ResourceRef("ExplicitLeaf", id)));
+}
+
+internal sealed class ExplicitOwnerRepo
+{
+    private readonly Dictionary<string, ExplicitOwner> _items = [];
+    public void Add(ExplicitOwner o) => _items[o.Id] = o;
+    public Result<ExplicitOwner> GetById(string id) => _items.TryGetValue(id, out var v)
+        ? Result.Ok(v)
+        : Result.Fail<ExplicitOwner>(new Error.NotFound(new ResourceRef("ExplicitOwner", id)));
+}
+
+internal sealed class ExplicitLeafLoader(ExplicitLeafRepo repo) : SharedResourceLoaderById<ExplicitLeaf, string>
+{
+    public override Task<Result<ExplicitLeaf>> GetByIdAsync(string id, CancellationToken cancellationToken) =>
+        Task.FromResult(repo.GetById(id));
+}
+
+internal sealed class ExplicitOwnerLoader(ExplicitOwnerRepo repo) : SharedResourceLoaderById<ExplicitOwner, string>
+{
+    public override Task<Result<ExplicitOwner>> GetByIdAsync(string id, CancellationToken cancellationToken) =>
+        Task.FromResult(repo.GetById(id));
+}
+
+#endregion

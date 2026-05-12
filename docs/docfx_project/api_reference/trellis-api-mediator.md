@@ -153,6 +153,129 @@ public sealed partial class LoggingBehavior<TMessage, TResponse> : IPipelineBeha
 | --- | --- | --- |
 | `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Logs start (Debug), end with elapsed milliseconds (Debug on success, Warning on failure). Per-call timing is at Debug so production at the default `Information` minimum stays quiet; raise via `"Trellis.Mediator": "Debug"` in logging configuration to opt back in. On failure emits `error.Code` only by default; the free-text `Error.Detail` is included only when `TrellisMediatorTelemetryOptions.IncludeErrorDetail` is `true`. |
 
+### ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>
+**Declaration**
+
+```csharp
+public sealed class ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>
+    : IPipelineBehavior<TMessage, TResponse>
+    where TMessage : IAuthorizeResourceVia<TOwner>, global::Mediator.IMessage
+    where TResponse : IResult, IFailureFactory<TResponse>
+```
+
+Pipeline behavior implementing indirect (multi-hop) resource authorization. Loads the leaf via the existing `IResourceLoader<TMessage, TLeaf>` infrastructure (typically the `SharedResourceLoaderAdapter` bridge for messages also implementing `IIdentifyResource<TLeaf, TLeafId>`), then walks the pre-resolved `ResolvedAuthorizationPath` from leaf to owner, and finally invokes the command's `IAuthorizeResourceVia<TOwner>.Authorize(actor, IReadOnlyList<TOwner>)`.
+
+**Constructors**
+
+| Signature | Description |
+| --- | --- |
+| `public ResourceAuthorizationViaBehavior(IActorProvider actorProvider, IServiceProvider serviceProvider, ResolvedAuthorizationPathHolder<TMessage, TLeaf, TOwner, TResponse> pathHolder)` | DI-friendly constructor; the closed-generic holder is registered per via-command so DI naturally disambiguates. |
+| `public ResourceAuthorizationViaBehavior(IActorProvider actorProvider, IServiceProvider serviceProvider, ResolvedAuthorizationPath path)` | Test/manual constructor accepting a hand-built path. Validates `path.MessageType`/`LeafType`/`OwnerType` match the behavior's generic arguments. |
+
+**Methods**
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the actor first (throws on null — same ga-11 ordering as `ResourceAuthorizationBehavior`). Loads the leaf via `IResourceLoader<TMessage, TLeaf>` — leaf load failure bubbles verbatim. Walks the resolved path: per hop extracts IDs (de-duplicated, nulls filtered), loads each via the registered `SharedResourceLoaderById<TTo, TToId>` — intermediate/owner load failures collapse to `Error.Forbidden` (no existence leak); empty ID list at any hop short-circuits to `Error.Forbidden`. Finally calls `message.Authorize(actor, IReadOnlyList<TOwner>)` and returns its result, or invokes the handler when the authorization passes. |
+
+### ResolvedAuthorizationPath
+**Declaration**
+
+```csharp
+public sealed class ResolvedAuthorizationPath
+```
+
+Pre-built navigation path from leaf to owner used by `ResourceAuthorizationViaBehavior<,,,>`. Topology is validated at construction: `Hops` non-empty, `hops[0].FromType == LeafType`, terminal `hops[N].ToType == OwnerType`, adjacent hops chain (`hops[i].ToType == hops[i+1].FromType`), at most one plural hop and only at the terminal position. The `Hops` collection is defensively copied.
+
+**Constructors**
+
+| Signature | Description |
+| --- | --- |
+| `public ResolvedAuthorizationPath(Type messageType, Type leafType, Type ownerType, IReadOnlyList<ResolvedAuthorizationHop> hops)` | Builds the path; throws `ArgumentException` on invariant violations. |
+
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `MessageType` | `Type` | Command/query type this path serves. |
+| `LeafType` | `Type` | Leaf resource type the command identifies. |
+| `OwnerType` | `Type` | Owner resource type authorization is evaluated against. |
+| `Hops` | `IReadOnlyList<ResolvedAuthorizationHop>` | Ordered hops from leaf to owner. |
+
+### ResolvedAuthorizationHop
+**Declaration**
+
+```csharp
+public sealed class ResolvedAuthorizationHop
+```
+
+Single hop in an indirect authorization chain.
+
+**Constructors**
+
+| Signature | Description |
+| --- | --- |
+| `public ResolvedAuthorizationHop(Type fromType, Type toType, Type toIdType, Func<object, IReadOnlyList<object>> extractIds, Func<IServiceProvider, object, CancellationToken, Task<HopLoadResult>> loadAsync, bool isPlural)` | Builds the hop with typed extractor and loader delegates. |
+
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `FromType` | `Type` | Source resource type. |
+| `ToType` | `Type` | Destination resource type. |
+| `ToIdType` | `Type` | Identifier type for the destination resource. |
+| `ExtractIds` | `Func<object, IReadOnlyList<object>>` | Extracts related-resource IDs from a single source instance. |
+| `LoadAsync` | `Func<IServiceProvider, object, CancellationToken, Task<HopLoadResult>>` | Loads one resource by ID from the request-scoped service provider. |
+| `IsPlural` | `bool` | True when the hop is plural (only the terminal hop may be plural). |
+
+### HopLoadResult
+**Declaration**
+
+```csharp
+public readonly struct HopLoadResult
+```
+
+Result of loading a single related resource at one ID during a hop walk. Uses an explicit success flag — `default(HopLoadResult)` is a failure with a sentinel error, so a misconfigured hop loader cannot accidentally produce a "successful" result carrying `null`.
+
+**Methods**
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static HopLoadResult Success(object value)` | `HopLoadResult` | Throws `ArgumentNullException` on null. |
+| `public static HopLoadResult Failure(Error error)` | `HopLoadResult` | Throws `ArgumentNullException` on null. |
+
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `Value` | `object?` | The loaded value when successful; `null` when failed. |
+| `Error` | `Error?` | The loader's error when failed; `null` when successful. |
+| `IsSuccess` | `bool` | False for `default(HopLoadResult)` so misconfigured loaders cannot silently bypass short-circuits. |
+
+### ResolvedAuthorizationPathHolder<TMessage, TLeaf, TOwner, TResponse>
+**Declaration**
+
+```csharp
+public sealed class ResolvedAuthorizationPathHolder<TMessage, TLeaf, TOwner, TResponse>
+```
+
+Closed-generic carrier that lets DI naturally disambiguate the `ResolvedAuthorizationPath` per via-authorized command. Each via-command's path is registered as `Singleton<ResolvedAuthorizationPathHolder<TM, TL, TO, TR>>(holder)`. The matching `ResourceAuthorizationViaBehavior<TM, TL, TO, TR>` constructor takes the holder, so registration is a typed (not factory) descriptor — letting the relocator recognize Trellis-owned descriptors by `ImplementationType` alone without a factory-shape heuristic.
+
+### ResourceAuthorizationPathResolver
+**Declaration**
+
+```csharp
+public static class ResourceAuthorizationPathResolver
+```
+
+Resolves a `ResolvedAuthorizationPath` from a leaf type to an owner type by walking the entity graph defined by `IIdentifyRelatedResource<TRelated, TId>` and `IIdentifyRelatedResources<TRelated, TId>` declarations on candidate entity types.
+
+**Methods**
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `[RequiresUnreferencedCode] [RequiresDynamicCode] public static ResolvedAuthorizationPath Resolve(Type messageType, Type leafType, Type ownerType, IReadOnlyCollection<Type> candidateEntityTypes)` | `ResolvedAuthorizationPath` | DFS-enumerates distinct simple paths from `leafType` to `ownerType`. Throws `InvalidOperationException` when no path exists, when multiple distinct simple paths exist (lists all paths in the message), when a plural hop is non-terminal, or when `leafType == ownerType`. Cycles in the graph are tolerated (per-path visited-set); duplicate candidate types are deduplicated. Builds typed extractor + loader delegates so the runtime hot path has no `dynamic` and no per-call reflection. |
+
 ### ResourceAuthorizationBehavior<TMessage, TResource, TResponse>
 **Declaration**
 
@@ -202,9 +325,11 @@ No public constructors.
 | `public static IServiceCollection AddTrellisBehaviors(this IServiceCollection services)` | `IServiceCollection` | Registers the five open generic behaviors listed in `PipelineBehaviors` and a default `TrellisMediatorTelemetryOptions` singleton (Detail redacted). **Idempotent** — uses `TryAddEnumerable`/`TryAddSingleton` so repeat calls (e.g. from plug-in extensions like `AddTrellisFluentValidation`, `AddTrellisAsp`) do not duplicate registrations. |
 | `public static IServiceCollection AddTrellisBehaviors(this IServiceCollection services, Action<TrellisMediatorTelemetryOptions> configure)` | `IServiceCollection` | Same as the parameterless overload, but applies `configure` to the registered `TrellisMediatorTelemetryOptions` singleton. Replaces any prior options registration so this call wins regardless of ordering. |
 | `public static IServiceCollection AddResourceAuthorization<TMessage, TResource, TResponse>(this IServiceCollection services) where TMessage : IAuthorizeResource<TResource>, global::Mediator.IMessage where TResponse : IResult, IFailureFactory<TResponse>` | `IServiceCollection` | Registers `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` and inserts it immediately before `ValidationBehavior<,>` when validation is already registered. |
-| `[RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")] [RequiresDynamicCode("Constructs closed generic types at runtime. Use explicit registration for AOT scenarios.")] public static IServiceCollection AddResourceAuthorization(this IServiceCollection services, params Assembly[] assemblies)` | `IServiceCollection` | Scans assemblies for `IAuthorizeResource<TResource>` implementations, resolves `TResponse` from `ICommand<T>`, `IQuery<T>`, or `IRequest<T>`, registers closed `ResourceAuthorizationBehavior<,,>` instances, registers discovered `IResourceLoader<,>` implementations, registers discovered `SharedResourceLoaderById<,>` implementations, and bridges `IIdentifyResource<TResource, TId>` messages to shared loaders when no explicit loader is registered. **Throws `InvalidOperationException` at startup** when a discovered `IAuthorizeResource<TResource>` message's `TResponse` does not implement both `IResult` and `IFailureFactory<TResponse>` — fail-fast for security-marked commands so a misconfigured response type cannot silently ship without resource authorization. The exception names the offending message type, response type, and required interfaces. |
+| `[RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")] [RequiresDynamicCode("Constructs closed generic types at runtime. Use explicit registration for AOT scenarios.")] public static IServiceCollection AddResourceAuthorization(this IServiceCollection services, params Assembly[] assemblies)` | `IServiceCollection` | Scans assemblies for `IAuthorizeResource<TResource>` AND `IAuthorizeResourceVia<TOwner>` implementations, resolves `TResponse` from `ICommand<T>`, `IQuery<T>`, or `IRequest<T>`, registers closed `ResourceAuthorizationBehavior<,,>` / `ResourceAuthorizationViaBehavior<,,,>` instances, registers discovered `IResourceLoader<,>` and `SharedResourceLoaderById<,>` implementations, and bridges `IIdentifyResource<TResource, TId>` messages to shared loaders. For `IAuthorizeResourceVia<TOwner>` commands the scanner runs `ResourceAuthorizationPathResolver.Resolve(...)` over every scanned entity type and registers the closed `ResolvedAuthorizationPathHolder<,,,>` so the behavior receives its path via DI. **Throws `InvalidOperationException` at startup** when (a) any message's `TResponse` does not implement both `IResult` and `IFailureFactory<TResponse>` (security-marker fail-fast), (b) any message implements both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` (security primitives are never silently composed), (c) any `IAuthorizeResourceVia<TOwner>` command does not also implement `IIdentifyResource<TLeaf, TLeafId>` (silent skip would leave the via-marker unprotected at runtime), or (d) the path resolver finds zero or multiple distinct simple paths from leaf to owner. |
 | `[RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")] public static IServiceCollection AddResourceLoaders(this IServiceCollection services, Assembly assembly)` | `IServiceCollection` | Registers discovered `IResourceLoader<,>` implementations with `TryAddScoped`. |
-| `public static IServiceCollection AddSharedResourceLoader<TMessage, TResource, TId>(this IServiceCollection services) where TMessage : IAuthorizeResource<TResource>, IIdentifyResource<TResource, TId>` | `IServiceCollection` | Registers `SharedResourceLoaderAdapter<TMessage, TResource, TId>` as `IResourceLoader<TMessage, TResource>`. |
+| `public static IServiceCollection AddSharedResourceLoader<TMessage, TResource, TId>(this IServiceCollection services) where TMessage : IIdentifyResource<TResource, TId>` | `IServiceCollection` | Registers `SharedResourceLoaderAdapter<TMessage, TResource, TId>` as `IResourceLoader<TMessage, TResource>`. Constraint loosened from also requiring `IAuthorizeResource<TResource>` so via-commands (which use `IAuthorizeResourceVia<TOwner>` instead) can reuse the same bridging. |
+| `public static IServiceCollection AddRelatedResourceAuthorization<TMessage, TLeaf, TLeafId, TOwner, TOwnerId, TResponse>(this IServiceCollection services, Func<TLeaf, TOwnerId?> extractOwnerId) where TMessage : IAuthorizeResourceVia<TOwner>, IIdentifyResource<TLeaf, TLeafId>, global::Mediator.IMessage where TLeaf : class where TOwner : class where TOwnerId : notnull where TResponse : IResult, IFailureFactory<TResponse>` | `IServiceCollection` | Explicit single-hop registration for AOT / non-scanning consumers. Builds a `ResolvedAuthorizationPath` with one hop using `extractOwnerId` to extract the owner id from the loaded leaf, then registers `ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>` as a typed descriptor and `ResolvedAuthorizationPathHolder<TMessage, TLeaf, TOwner, TResponse>` as a singleton. Throws `InvalidOperationException` if `TMessage` also implements `IAuthorizeResource<T>` (dual-mode security primitives are never silently composed). The hop loader throws `InvalidOperationException` at request time if `SharedResourceLoaderById<TOwner, TOwnerId>` is not registered (deployment bug, not authorization denial). |
+| `public static IServiceCollection AddRelatedResourceAuthorization<TMessage, TLeaf, TOwner, TResponse>(this IServiceCollection services, ResolvedAuthorizationPath path) where TMessage : IAuthorizeResourceVia<TOwner>, global::Mediator.IMessage where TResponse : IResult, IFailureFactory<TResponse>` | `IServiceCollection` | Explicit registration accepting a hand-built `ResolvedAuthorizationPath` for shapes the single-hop overload cannot express (chains, plural-terminal fan-out, custom extractors). Same dual-mode rejection as the single-hop overload. |
 
 ### TracingBehavior<TMessage, TResponse>
 **Declaration**

@@ -178,7 +178,9 @@ public static class ServiceCollectionExtensions
         if (impl is null || !impl.IsGenericType || impl.IsGenericTypeDefinition)
             return false;
 
-        return impl.GetGenericTypeDefinition() == typeof(ResourceAuthorizationBehavior<,,>);
+        var def = impl.GetGenericTypeDefinition();
+        return def == typeof(ResourceAuthorizationBehavior<,,>)
+            || def == typeof(ResourceAuthorizationViaBehavior<,,,>);
     }
 
     /// <summary>
@@ -258,12 +260,24 @@ public static class ServiceCollectionExtensions
     /// services.AddScoped&lt;IResourceLoader&lt;CancelOrderCommand, Order&gt;, CancelOrderResourceLoader&gt;();
     /// </code>
     /// </example>
-    public static IServiceCollection AddResourceAuthorization<TMessage, TResource, TResponse>(
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2090:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method.",
+        Justification = "TMessage is annotated [DynamicallyAccessedMembers(Interfaces)] on the public surface; the suppression covers the call-site inside this method to GetInterfaces() reflectively.")]
+    public static IServiceCollection AddResourceAuthorization<
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)] TMessage,
+        TResource,
+        TResponse>(
         this IServiceCollection services)
         where TMessage : IAuthorizeResource<TResource>, global::Mediator.IMessage
         where TResponse : IResult, IFailureFactory<TResponse>
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        // Reject dual-mode commands here too — assembly scanning is not the only path that
+        // can register resource authorization, so the security invariant must guard every entry.
+        var ifaces = typeof(TMessage).GetInterfaces();
+        var authIface = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizeResource<>));
+        var viaIfaceCheck = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizeResourceVia<>));
+        EnsureNotDualSecurityMode(typeof(TMessage), authIface, viaIfaceCheck);
 
         InsertResourceAuthorizationBehavior(
             services,
@@ -339,11 +353,13 @@ public static class ServiceCollectionExtensions
         }
 
         var authorizeResourceDef = typeof(IAuthorizeResource<>);
+        var authorizeViaDef = typeof(IAuthorizeResourceVia<>);
         var loaderDef = typeof(IResourceLoader<,>);
         var sharedLoaderDef = typeof(SharedResourceLoaderById<,>);
         var identifyResourceDef = typeof(IIdentifyResource<,>);
         var adapterDef = typeof(SharedResourceLoaderAdapter<,,>);
         var behaviorDef = typeof(ResourceAuthorizationBehavior<,,>);
+        var viaBehaviorDef = typeof(ResourceAuthorizationViaBehavior<,,,>);
         var pipelineDef = typeof(IPipelineBehavior<,>);
 
         Type[] messageInterfaces =
@@ -356,12 +372,18 @@ public static class ServiceCollectionExtensions
         // Track shared loader availability and commands needing bridging
         var sharedLoaderTypes = new HashSet<Type>(); // closed SharedResourceLoaderById<TResource, TId> base types
         var commandsNeedingBridging = new List<(Type commandType, Type tResource, Type tResponse, Type identifyIface)>();
+        // Collected via-authorized commands (Pass 6). Path resolution runs after first sweep
+        // because the resolver needs every candidate entity type discovered across all assemblies.
+        var viaCommands = new List<(Type commandType, Type tLeaf, Type tOwner, Type tResponse, Type identifyIface)>();
+        var allCandidateEntities = new List<Type>();
 
         foreach (var assembly in assemblies)
             foreach (var type in GetLoadableTypes(assembly))
             {
                 if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)
                     continue;
+
+                allCandidateEntities.Add(type);
 
                 // Register IResourceLoader<,> implementations as scoped
                 // TryAdd ensures pre-registered loaders are not overridden
@@ -385,15 +407,19 @@ public static class ServiceCollectionExtensions
                     baseType = baseType.BaseType;
                 }
 
-                // Register ResourceAuthorizationBehavior for IAuthorizeResource<TResource> commands
+                // Check both authorization markers up-front so we can reject dual-mode commands
+                // before doing any registration work for either marker.
                 var authIface = type.GetInterfaces()
                     .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeResourceDef);
-                if (authIface is null)
+                var viaIface = type.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeViaDef);
+
+                if (authIface is null && viaIface is null)
                     continue;
 
-                var commandResource = authIface.GetGenericArguments()[0];
-
-                // Find TResponse from ICommand<TResponse>, IQuery<TResponse>, or IRequest<TResponse>
+                // Find TResponse from ICommand<TResponse>, IQuery<TResponse>, or IRequest<TResponse>.
+                // Types that don't implement a mediator message interface are skipped — they may
+                // be test fixtures or DTOs that incidentally declare an auth marker.
                 var tResponse = type.GetInterfaces()
                     .Where(i => i.IsGenericType)
                     .Select(i => (iface: i, def: i.GetGenericTypeDefinition()))
@@ -404,31 +430,68 @@ public static class ServiceCollectionExtensions
                 if (tResponse is null)
                     continue;
 
-                // TResponse must satisfy the behavior's constraints: IResult + IFailureFactory<TResponse>.
-                // Fail fast on misconfigured security-marked commands rather than silently
-                // skipping them — IAuthorizeResource<TResource> is a security marker and a
-                // resource-authorized command that is silently never wired up at startup is a
-                // dangerous failure mode (the command runs without resource authorization).
-                // Reported by GPT-5.5 review.
-                ValidateResourceAuthorizationResponseType(type, commandResource, tResponse);
+                // Dual-mode rejection runs only for types confirmed to be mediator messages. This
+                // avoids spurious failures from non-message fixtures that happen to declare both
+                // markers for testing purposes.
+                EnsureNotDualSecurityMode(type, authIface, viaIface);
 
-                // Register ResourceAuthorizationBehavior<TMessage, TResource, TResponse>
-                // as IPipelineBehavior<TMessage, TResponse>
-                var closedBehavior = behaviorDef.MakeGenericType(type, commandResource, tResponse);
-                var closedPipeline = pipelineDef.MakeGenericType(type, tResponse);
-                InsertResourceAuthorizationBehavior(
-                    services,
-                    ServiceDescriptor.Scoped(closedPipeline, closedBehavior));
-
-                // Check for IIdentifyResource<TResource, TId> for shared loader bridging
-                var identifyIface = type.GetInterfaces()
-                    .FirstOrDefault(i => i.IsGenericType
-                        && i.GetGenericTypeDefinition() == identifyResourceDef
-                        && i.GetGenericArguments()[0] == commandResource);
-
-                if (identifyIface is not null)
+                if (authIface is not null)
                 {
-                    commandsNeedingBridging.Add((type, commandResource, tResponse, identifyIface));
+                    var commandResource = authIface.GetGenericArguments()[0];
+
+                    // TResponse must satisfy the behavior's constraints: IResult + IFailureFactory<TResponse>.
+                    // Fail fast on misconfigured security-marked commands rather than silently
+                    // skipping them — IAuthorizeResource<TResource> is a security marker and a
+                    // resource-authorized command that is silently never wired up at startup is a
+                    // dangerous failure mode (the command runs without resource authorization).
+                    ValidateResourceAuthorizationResponseType(type, commandResource, tResponse);
+
+                    var closedBehavior = behaviorDef.MakeGenericType(type, commandResource, tResponse);
+                    var closedPipeline = pipelineDef.MakeGenericType(type, tResponse);
+                    InsertResourceAuthorizationBehavior(
+                        services,
+                        ServiceDescriptor.Scoped(closedPipeline, closedBehavior));
+
+                    var identifyIfaceForAuth = type.GetInterfaces()
+                        .FirstOrDefault(i => i.IsGenericType
+                            && i.GetGenericTypeDefinition() == identifyResourceDef
+                            && i.GetGenericArguments()[0] == commandResource);
+
+                    if (identifyIfaceForAuth is not null)
+                        commandsNeedingBridging.Add((type, commandResource, tResponse, identifyIfaceForAuth));
+                }
+                else
+                {
+                    var tOwner = viaIface!.GetGenericArguments()[0];
+
+                    // Via-commands declare their leaf via IIdentifyResource<TLeaf, TLeafId> so the
+                    // pipeline can load it before walking the navigation chain. Missing
+                    // IIdentifyResource on a via-command is a registration error: the security
+                    // marker is present but the framework cannot infer the leaf type for the
+                    // pipeline-behavior closed generic. Throw at startup rather than silently
+                    // skipping — a silently-skipped via-command would run unprotected at runtime.
+                    // Consumers needing a custom leaf source register via the explicit AOT helper
+                    // (AddRelatedResourceAuthorization), which bypasses the scanner.
+                    var identifyIfaceForVia = type.GetInterfaces()
+                        .FirstOrDefault(i => i.IsGenericType
+                            && i.GetGenericTypeDefinition() == identifyResourceDef);
+
+                    if (identifyIfaceForVia is null)
+                        throw new InvalidOperationException(
+                            $"{type.FullName ?? type.Name} implements IAuthorizeResourceVia<{tOwner.Name}> " +
+                            $"but does not implement IIdentifyResource<TLeaf, TLeafId>. Via-commands must declare " +
+                            $"their leaf resource so the pipeline can load it before walking the navigation chain. " +
+                            $"For non-IIdentifyResource leaf sources, register the via-behavior via the explicit " +
+                            $"AddRelatedResourceAuthorization helper (which bypasses assembly scanning).");
+
+                    var tLeaf = identifyIfaceForVia.GetGenericArguments()[0];
+
+                    // Same TResponse constraint as IAuthorizeResource<T>: IResult + IFailureFactory<TResponse>.
+                    ValidateResourceAuthorizationResponseType(type, tOwner, tResponse);
+
+                    viaCommands.Add((type, tLeaf, tOwner, tResponse, identifyIfaceForVia));
+                    // Leaf-loader bridging shares the same machinery as IAuthorizeResource<T>.
+                    commandsNeedingBridging.Add((type, tLeaf, tResponse, identifyIfaceForVia));
                 }
             }
 
@@ -449,6 +512,176 @@ public static class ServiceCollectionExtensions
             var closedAdapter = adapterDef.MakeGenericType(commandType, tResource, tId);
             services.TryAdd(ServiceDescriptor.Scoped(closedLoader, closedAdapter));
         }
+
+        // Resolve paths and register ResourceAuthorizationViaBehavior for via-commands.
+        // Path resolution is deferred until after the full entity sweep so the resolver
+        // sees every IIdentifyRelatedResource[s] declaration across all input assemblies.
+        var holderDef = typeof(ResolvedAuthorizationPathHolder<,,,>);
+        foreach (var (commandType, tLeaf, tOwner, tResponse, _) in viaCommands)
+        {
+            var path = ResourceAuthorizationPathResolver.Resolve(
+                commandType, tLeaf, tOwner, allCandidateEntities);
+
+            var closedHolder = holderDef.MakeGenericType(commandType, tLeaf, tOwner, tResponse);
+            var holderInstance = Activator.CreateInstance(closedHolder, path)
+                ?? throw new InvalidOperationException(
+                    $"Failed to construct {closedHolder.Name} for via-authorized command {commandType.Name}.");
+
+            // Per-command closed-generic holder — DI naturally disambiguates by closed type,
+            // so two via-commands cannot accidentally share a path.
+            services.TryAdd(ServiceDescriptor.Singleton(closedHolder, holderInstance));
+
+            var closedViaBehavior = viaBehaviorDef.MakeGenericType(commandType, tLeaf, tOwner, tResponse);
+            var closedPipeline = pipelineDef.MakeGenericType(commandType, tResponse);
+
+            // TYPED descriptor (not factory): the via-behavior's holder-taking constructor
+            // is selected by DI because the holder is registered and the alternate
+            // ResolvedAuthorizationPath ctor's parameter is not. Typed registration lets the
+            // relocator match descriptors by ImplementationType — no marker hack needed and
+            // no risk of misclassifying unrelated consumer factory-registered behaviors.
+            InsertResourceAuthorizationBehavior(
+                services,
+                ServiceDescriptor.Scoped(closedPipeline, closedViaBehavior));
+        }
+
+        return services;
+    }
+
+    /// <summary>
+    /// Explicitly registers indirect (multi-hop) resource authorization for a single
+    /// via-authorized command without assembly scanning. Use this in AOT / trimming scenarios
+    /// where <see cref="AddResourceAuthorization(IServiceCollection, Assembly[])"/> cannot
+    /// run. The single-hop arity covers the 80% case; consumers needing multi-hop chains
+    /// can either provide a fully-built <see cref="ResolvedAuthorizationPath"/> via
+    /// <see cref="AddRelatedResourceAuthorization{TMessage, TLeaf, TOwner, TResponse}(IServiceCollection, ResolvedAuthorizationPath)"/>
+    /// or drop to <see cref="IResourceLoader{TMessage, TResource}"/> with a projection type.
+    /// </summary>
+    /// <typeparam name="TMessage">The command type implementing <see cref="IAuthorizeResourceVia{TOwner}"/>.</typeparam>
+    /// <typeparam name="TLeaf">The leaf resource type.</typeparam>
+    /// <typeparam name="TLeafId">The leaf resource identifier type.</typeparam>
+    /// <typeparam name="TOwner">The owner resource type authorization is evaluated against.</typeparam>
+    /// <typeparam name="TOwnerId">The owner resource identifier type.</typeparam>
+    /// <typeparam name="TResponse">The response type returned by the message handler.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="extractOwnerId">
+    /// Delegate that, given a loaded <typeparamref name="TLeaf"/>, returns the
+    /// <typeparamref name="TOwnerId"/> identifying the owner to authorize against. Returning
+    /// <c>null</c> short-circuits authorization to <see cref="Error.Forbidden"/>.
+    /// </param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// This overload assumes the consumer has already registered:
+    /// <list type="bullet">
+    ///   <item><description><see cref="SharedResourceLoaderById{TLeaf, TLeafId}"/> for the leaf.</description></item>
+    ///   <item><description><see cref="SharedResourceLoaderById{TOwner, TOwnerId}"/> for the owner.</description></item>
+    ///   <item><description>An <see cref="IResourceLoader{TMessage, TLeaf}"/> for the command (typically via <see cref="AddSharedResourceLoader{TMessage, TResource, TId}"/>).</description></item>
+    /// </list>
+    /// The behavior fails fast at request time if any of these are missing.
+    /// </para>
+    /// </remarks>
+    public static IServiceCollection AddRelatedResourceAuthorization<
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)] TMessage,
+        TLeaf,
+        TLeafId,
+        TOwner,
+        TOwnerId,
+        TResponse>(
+        this IServiceCollection services,
+        Func<TLeaf, TOwnerId?> extractOwnerId)
+        where TMessage : IAuthorizeResourceVia<TOwner>, IIdentifyResource<TLeaf, TLeafId>, global::Mediator.IMessage
+        where TLeaf : class
+        where TOwner : class
+        where TOwnerId : notnull
+        where TResponse : IResult, IFailureFactory<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(extractOwnerId);
+
+        var hop = new ResolvedAuthorizationHop(
+            fromType: typeof(TLeaf),
+            toType: typeof(TOwner),
+            toIdType: typeof(TOwnerId),
+            extractIds: src =>
+            {
+                var id = extractOwnerId((TLeaf)src);
+                return id is null ? Array.Empty<object>() : new object[] { id };
+            },
+            loadAsync: async (sp, id, ct) =>
+            {
+                // Missing loader is a DEPLOYMENT bug — throw to fail loud rather than masking
+                // it as a 403 Forbidden. Persistent 403s caused by missing loader registrations
+                // are very hard to distinguish from real authorization denials in production.
+                var loader = sp.GetService<SharedResourceLoaderById<TOwner, TOwnerId>>()
+                    ?? throw new InvalidOperationException(
+                        $"ResourceAuthorizationViaBehavior<{typeof(TMessage).Name}, ...> requires a registered " +
+                        $"SharedResourceLoaderById<{typeof(TOwner).Name}, {typeof(TOwnerId).Name}> for the owner hop. " +
+                        $"Register one in the composition root.");
+
+                var result = await loader.GetByIdAsync((TOwnerId)id, ct).ConfigureAwait(false);
+                return result.TryGetValue(out var v, out var err)
+                    ? HopLoadResult.Success(v!)
+                    : HopLoadResult.Failure(err);
+            },
+            isPlural: false);
+
+        var path = new ResolvedAuthorizationPath(
+            messageType: typeof(TMessage),
+            leafType: typeof(TLeaf),
+            ownerType: typeof(TOwner),
+            hops: [hop]);
+
+        return AddRelatedResourceAuthorization<TMessage, TLeaf, TOwner, TResponse>(services, path);
+    }
+
+    /// <summary>
+    /// Explicitly registers indirect resource authorization with a fully-built
+    /// <see cref="ResolvedAuthorizationPath"/>. Use this when the single-hop overload
+    /// is insufficient (chains, plural-terminal fan-out, or composite shapes built by hand).
+    /// </summary>
+    /// <typeparam name="TMessage">The command type.</typeparam>
+    /// <typeparam name="TLeaf">The leaf resource type.</typeparam>
+    /// <typeparam name="TOwner">The owner resource type.</typeparam>
+    /// <typeparam name="TResponse">The response type returned by the message handler.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <param name="path">The resolved path. Must match the generic arguments on <see cref="ResolvedAuthorizationPath.MessageType"/>, <see cref="ResolvedAuthorizationPath.LeafType"/>, and <see cref="ResolvedAuthorizationPath.OwnerType"/>.</param>
+    /// <returns>The service collection for chaining.</returns>
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2090:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method.",
+        Justification = "TMessage is annotated [DynamicallyAccessedMembers(Interfaces)] on the public surface; the suppression covers the call-site inside this method to GetInterfaces() reflectively.")]
+    public static IServiceCollection AddRelatedResourceAuthorization<
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)] TMessage,
+        TLeaf,
+        TOwner,
+        TResponse>(
+        this IServiceCollection services,
+        ResolvedAuthorizationPath path)
+        where TMessage : IAuthorizeResourceVia<TOwner>, global::Mediator.IMessage
+        where TResponse : IResult, IFailureFactory<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(path);
+
+        // Reject dual-mode commands at every entry point. The scanner has its own check; this
+        // guard fires for AOT/explicit registration so the invariant cannot be bypassed.
+        // TMessage is annotated with [DynamicallyAccessedMembers(Interfaces)] so trimming
+        // preserves the interface metadata needed to detect a violating IAuthorizeResource<T>.
+        var ifaces = typeof(TMessage).GetInterfaces();
+        var authIface = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizeResource<>));
+        var viaIfaceCheck = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizeResourceVia<>));
+        EnsureNotDualSecurityMode(typeof(TMessage), authIface, viaIfaceCheck);
+
+        // Closed-generic holder so DI naturally disambiguates per via-authorized command.
+        services.TryAddSingleton(new ResolvedAuthorizationPathHolder<TMessage, TLeaf, TOwner, TResponse>(path));
+
+        // TYPED descriptor — the holder-taking constructor of ResourceAuthorizationViaBehavior
+        // is selected by DI because the holder is registered and the alternate path-taking
+        // ctor's parameter is not. Letting the relocator match by ImplementationType eliminates
+        // the previous factory-descriptor misclassification hazard.
+        InsertResourceAuthorizationBehavior(
+            services,
+            ServiceDescriptor.Scoped<
+                IPipelineBehavior<TMessage, TResponse>,
+                ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>>());
 
         return services;
     }
@@ -530,7 +763,7 @@ public static class ServiceCollectionExtensions
     /// </example>
     public static IServiceCollection AddSharedResourceLoader<TMessage, TResource, TId>(
         this IServiceCollection services)
-        where TMessage : IAuthorizeResource<TResource>, IIdentifyResource<TResource, TId>
+        where TMessage : IIdentifyResource<TResource, TId>
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -567,6 +800,30 @@ public static class ServiceCollectionExtensions
         }
 
         return -1;
+    }
+
+    /// <summary>
+    /// Throws <see cref="InvalidOperationException"/> when a command type implements both
+    /// <see cref="IAuthorizeResource{TResource}"/> and <see cref="IAuthorizeResourceVia{TOwner}"/>.
+    /// Security primitives are not silently composed; a command declares exactly one
+    /// resource-authorization mode. Internal so the rejection invariant can be unit-tested
+    /// directly without round-tripping through assembly scanning.
+    /// </summary>
+    /// <param name="messageType">The concrete message type discovered by the scanner.</param>
+    /// <param name="authIface">The closed <see cref="IAuthorizeResource{TResource}"/> interface on the message, or null.</param>
+    /// <param name="viaIface">The closed <see cref="IAuthorizeResourceVia{TOwner}"/> interface on the message, or null.</param>
+    /// <exception cref="InvalidOperationException">Thrown when both interfaces are present.</exception>
+    internal static void EnsureNotDualSecurityMode(Type messageType, Type? authIface, Type? viaIface)
+    {
+        if (authIface is null || viaIface is null)
+            return;
+
+        throw new InvalidOperationException(
+            $"{messageType.FullName ?? messageType.Name} implements both IAuthorizeResource<{authIface.GetGenericArguments()[0].Name}> " +
+            $"and IAuthorizeResourceVia<{viaIface.GetGenericArguments()[0].Name}>. " +
+            $"A command must declare exactly one resource-authorization mode; security primitives are not " +
+            $"silently composed. Pick one: use IAuthorizeResource<T> when authorization runs against the " +
+            $"resource the command identifies, or IAuthorizeResourceVia<T> when it runs against a related resource.");
     }
 
     /// <summary>
