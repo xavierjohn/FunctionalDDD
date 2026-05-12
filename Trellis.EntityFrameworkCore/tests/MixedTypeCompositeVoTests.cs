@@ -214,11 +214,13 @@ public class MixedTypeCompositeVoTests : IDisposable
     //
     // To answer the question "is a mixed VO possible at all?" — yes, when every field is
     // either a raw primitive from the converter's whitelist (string, decimal, int, long,
-    // short, byte, double, float, bool, Guid, DateTime, DateTimeOffset), a Trellis scalar
+    // short, byte, double, float, bool, Guid, DateTime, DateTimeOffset) or a Trellis scalar
     // value object that flattens to one of those primitives (RequiredEnum, RequiredGuid,
-    // RequiredString, PhoneNumber, EmailAddress, ...), or `Maybe<TScalarVO>` (handled by
-    // `MaybeScalarValueJsonConverterFactory`). The fixture below mixes all three classes
-    // and round-trips cleanly through both EF Core AND the composite JSON converter.
+    // RequiredString, PhoneNumber, EmailAddress, ...). The fixture below mixes both and
+    // round-trips cleanly through both EF Core AND the composite JSON converter. Note:
+    // any `Maybe<T>` property (including `Maybe<TScalarVO>`) is NOT supported by the
+    // composite converter — the converter never delegates property serialization to STJ,
+    // so factory-based scalar-Maybe handling does not engage here.
 
     private static JsonSerializerOptions SupportedMixedOptions()
     {
@@ -270,6 +272,62 @@ public class MixedTypeCompositeVoTests : IDisposable
 
         loaded.Should().NotBeNull();
         loaded.Should().Be(original);
+    }
+
+    [Fact]
+    public async Task SupportedMixed_EfRoundTrip_AllFieldsPopulated_RoundTripsCleanly()
+    {
+        // Mirrors the JSON happy-path test: same shape and values, but exercised through
+        // the EF Core persistence path. Proves the supported-mixed fixture works
+        // end-to-end across both wire and storage seams, matching the cookbook's
+        // "this is the canonical mixed VO shape" claim.
+        var ct = TestContext.Current.CancellationToken;
+        var original = TestSupportedMixedVo.Create(
+            TestOrderStatus.Shipped,
+            label: "alpha",
+            count: 7,
+            id: Guid.Parse("019e1942-1a4a-796c-856e-95f8996eacb3"),
+            createdAt: new DateTimeOffset(2026, 5, 11, 12, 0, 0, TimeSpan.Zero),
+            score: 99.5m,
+            isActive: true);
+
+        Context.SupportedEntities.Add(new SupportedMixedVoEntity { Id = 10, Mixed = original });
+        await Context.SaveChangesAsync(ct);
+        Context.ChangeTracker.Clear();
+
+        var loaded = await Context.SupportedEntities.FindAsync([10], ct);
+
+        loaded.Should().NotBeNull();
+        loaded!.Mixed.Status.Should().Be(TestOrderStatus.Shipped);
+        loaded.Mixed.Label.Should().Be("alpha");
+        loaded.Mixed.Count.Should().Be(7);
+        loaded.Mixed.Id.Should().Be(original.Id);
+        loaded.Mixed.CreatedAt.Should().Be(original.CreatedAt);
+        loaded.Mixed.Score.Should().Be(99.5m);
+        loaded.Mixed.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SupportedMixed_EfRoundTrip_BoundaryValues_RoundTripCleanly()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var original = TestSupportedMixedVo.Create(
+            TestOrderStatus.Draft,
+            label: string.Empty,
+            count: 0,
+            id: Guid.Empty,
+            createdAt: DateTimeOffset.MinValue,
+            score: 0m,
+            isActive: false);
+
+        Context.SupportedEntities.Add(new SupportedMixedVoEntity { Id = 11, Mixed = original });
+        await Context.SaveChangesAsync(ct);
+        Context.ChangeTracker.Clear();
+
+        var loaded = await Context.SupportedEntities.FindAsync([11], ct);
+
+        loaded.Should().NotBeNull();
+        loaded!.Mixed.Should().Be(original);
     }
 
     // -------- Probe 5: user-written custom converter rescues the broken shape ---------
@@ -376,6 +434,7 @@ internal sealed class MixedTypeVoEntity
 internal sealed class MixedTypeVoDbContext : DbContext
 {
     public DbSet<MixedTypeVoEntity> Entities => Set<MixedTypeVoEntity>();
+    public DbSet<SupportedMixedVoEntity> SupportedEntities => Set<SupportedMixedVoEntity>();
 
     public MixedTypeVoDbContext(DbContextOptions<MixedTypeVoDbContext> options) : base(options) { }
 

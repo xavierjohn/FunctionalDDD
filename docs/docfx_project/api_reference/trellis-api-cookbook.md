@@ -1022,7 +1022,7 @@ The string `"_lineItems"` is unfortunately part of the public mapping contract: 
 
 ### Supported property shapes inside a composite VO — when to map to a DTO instead
 
-`CompositeValueObjectJsonConverter<T>` is deliberately small. It supports a closed list of primitive types directly and routes Trellis scalar value objects through their underlying primitives. Anything else — including any `Maybe<T>`, arrays, collections, and nested composites without their own `[JsonConverter]` — throws `TrellisJsonValidationException` at the first JSON access. **EF Core persistence is more permissive** (`Maybe<T>`, arrays, and nested composites work) so the JSON gap only surfaces when the composite VO crosses an HTTP boundary.
+`CompositeValueObjectJsonConverter<T>` is deliberately small. It supports a closed list of primitive types directly and routes Trellis scalar value objects through their underlying primitives. Anything else — including any `Maybe<T>`, arrays, collections, and nested composite VO properties — throws `TrellisJsonValidationException` at the first JSON access. The converter never delegates property reads/writes back to `JsonSerializer`, so adding `[JsonConverter]` to an inner composite type does not rescue the nested case. **EF Core persistence is more permissive** (`Maybe<T>`, arrays, and nested composites work) so the JSON gap only surfaces when the composite VO crosses an HTTP boundary.
 
 The intentional split is: keep the framework converter simple; route consumers with richer shapes through a wire-shape DTO at the controller/endpoint seam (Recipe 14 generalised).
 
