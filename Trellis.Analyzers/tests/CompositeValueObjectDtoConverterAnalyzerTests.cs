@@ -442,7 +442,7 @@ public class CompositeValueObjectDtoConverterAnalyzerTests
     {
         // Maybe<TComposite> on a DTO is ALWAYS broken regardless of whether the inner composite
         // carries [JsonConverter]. Trellis ships no MaybeCompositeValueObjectJsonConverterFactory;
-        // the converter on TComposite doesn't cover Maybe<TComposite> deserialisation. The
+        // the converter on TComposite doesn't cover Maybe<TComposite> deserialization. The
         // supported transport per cookbook Recipe 14 is `TComposite?` + Maybe.From(...) at the
         // controller seam.
         const string source = """
@@ -488,11 +488,15 @@ public class CompositeValueObjectDtoConverterAnalyzerTests
     }
 
     [Fact]
-    public async Task FromBodyDto_WithMaybeScalarPrimitive_NoDiagnostic()
+    public async Task FromBodyDto_WithMaybePrimitiveInner_NoDiagnostic()
     {
-        // Maybe<int>, Maybe<string>, Maybe<Guid>, and Maybe<TScalarValueObject> are
-        // handled by MaybeScalarValueJsonConverterFactory; only Maybe<TComposite> bypasses
-        // TryCreate. The analyzer must not flag scalar-shaped Maybe<>.
+        // Scope-boundary regression guard: TRLS020 specifically targets owned composite
+        // value objects (`[OwnedEntity]` + `ValueObject`). Whether `Maybe<int>` / `Maybe<string>`
+        // / `Maybe<Guid>` on DTOs is itself supported is a separate question — primitive
+        // inner types are NOT handled by `MaybeScalarValueJsonConverterFactory` either (it
+        // only converts `Maybe<TScalarValueObject>` where the inner type implements
+        // `IScalarValue<,>`). This test only asserts that TRLS020 does not fire on
+        // non-composite inner types, regardless of whether the broader pattern is sound.
         const string source = """
             using Microsoft.AspNetCore.Mvc;
             using Trellis;

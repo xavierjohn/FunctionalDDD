@@ -272,18 +272,21 @@ public static class DiagnosticDescriptors
         helpLinkUri: HelpLinkBase + "TRLS019");
 
     /// <summary>
-    /// TRLS020: Composite value object DTO property is missing CompositeValueObjectJsonConverter.
+    /// TRLS020: Composite value object DTO property is not safely deserializable.
     /// </summary>
     public static readonly DiagnosticDescriptor CompositeValueObjectDtoMissingJsonConverter = new(
         id: TrellisDiagnosticIds.CompositeValueObjectDtoMissingJsonConverter,
-        title: "Composite value object DTO property is missing JSON converter",
-        messageFormat: "Composite value object '{0}' is exposed by DTO property '{1}' without CompositeValueObjectJsonConverter<T>. Model binding may bypass TryCreate validation.",
+        title: "Composite value object DTO property is not safely deserializable",
+        messageFormat: "Composite value object '{0}' is exposed by DTO property '{1}'. System.Text.Json may bypass TryCreate validation. For bare '{0}', add [JsonConverter(typeof(CompositeValueObjectJsonConverter<{0}>))] on the type; for Maybe<{0}>, use '{0}?' + Maybe.From(...) at the controller seam (cookbook Recipe 14).",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "Composite value objects exposed through request/response DTOs must carry " +
-                     "[JsonConverter(typeof(CompositeValueObjectJsonConverter<T>))]. Without it, System.Text.Json can " +
-                     "fall back to default construction and bypass TryCreate validation.",
+        description: "Composite value objects exposed through request/response DTOs must use a supported transport. " +
+                     "A bare composite property requires [JsonConverter(typeof(CompositeValueObjectJsonConverter<T>))] on the type. " +
+                     "Maybe<TComposite> on a DTO is never supported — Trellis ships no MaybeCompositeValueObjectJsonConverterFactory, " +
+                     "and [JsonConverter] on the inner composite does not cover the Maybe<> wrapper. Use TComposite? plus Maybe.From(...) " +
+                     "at the controller seam instead (cookbook Recipe 14). Otherwise System.Text.Json may fall back to default " +
+                     "construction and silently bypass TryCreate validation.",
         helpLinkUri: HelpLinkBase + "TRLS020");
 
     /// <summary>

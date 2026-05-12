@@ -351,7 +351,7 @@ This analyzer was deleted from the current API. The `result.IsSuccess ? result.V
 - This catches the silent JSON-binding failure where System.Text.Json can default-construct the composite value object and bypass `TryCreate` validation.
 - Does not flag domain model properties that are not exposed through DTO surfaces.
 - Does not flag bare composite value-object types that carry the matching `CompositeValueObjectJsonConverter<T>` attribute.
-- Does not flag `Maybe<TScalar>` where the inner type is a scalar value object or primitive (handled by `MaybeScalarValueJsonConverterFactory`).
+- Scope is bounded to owned composite value objects. `Maybe<TScalarValueObject>` (where `TScalarValueObject : IScalarValue<,>`) is handled by `MaybeScalarValueJsonConverterFactory` and is out of scope for this analyzer. `Maybe<int>` / `Maybe<string>` / `Maybe<Guid>` (primitive inner types) are also out of scope — they are a separate question from the composite-VO correctness bug class and no factory ships for them out of the box.
 - No code fix.
 
 #### `RedundantEfConfigurationAnalyzer` — `TRLS021`
