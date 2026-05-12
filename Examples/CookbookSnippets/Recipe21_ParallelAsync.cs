@@ -3,9 +3,10 @@
 // This snippet illustrates the call-site mechanics (factory shape, WhenAllAsync, fold via Combine).
 // The repository interfaces below are deliberately abstract — they do NOT pin a backing store.
 // Before using this shape against your own repositories, check Recipe 21's "When NOT to use it":
-// two repositories sharing a scoped EF Core DbContext (the default for AddTrellisUnitOfWork<TContext>())
-// will race and throw. Safe shapes: HTTP + DB, two distinct upstream services, or factory-created
-// independent DbContexts via IDbContextFactory<TContext>.
+// two repositories sharing a scoped EF Core DbContext (the typical setup, where the scoped
+// lifetime comes from services.AddDbContext<TContext>() — AddTrellisUnitOfWork<TContext>() then
+// consumes that scoped context) will race and throw. Safe shapes: HTTP + DB, two distinct
+// upstream services, or factory-created independent DbContexts via IDbContextFactory<TContext>.
 namespace CookbookSnippets.Recipe21;
 
 using System.Threading;

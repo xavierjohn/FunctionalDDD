@@ -83,7 +83,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Write a command handler that validates and persists | [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), then [Recipe 16](#recipe-16--unit-of-work-in-handlers-add-staging-vs-immediate-saveasync) |
 | Load multiple independent resources in one handler (HTTP + DB, two upstream services, factory-created `DbContext`s) | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) |
 | Multi-aggregate orchestration: side effect per element of a related-aggregate set | [Recipe 22](#recipe-22--multi-aggregate-orchestration-fail-loud-on-missing-related-aggregates) |
-| Concurrency control on mutating endpoints — when to require `If-Match` | [Recipe 23](#recipe-23--concurrency-control-on-aggregate-mutating-posts-when-to-require-if-match) |
+| Concurrency control on mutating endpoints — when to require `If-Match` | [Recipe 23](#recipe-23--concurrency-control-on-aggregate-mutating-endpoints-when-to-require-if-match) |
 | Add a paginated list query | [Recipe 3](#recipe-3--query-handler-returning-paget-paginated-list-with-cursor) |
 | Add Minimal API or MVC endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult) |
 | Map primitive DTO fields to value objects | [Recipe 18](#recipe-18--dto-primitives-to-value-object-command-no-test-only-unwrap) |
@@ -1545,7 +1545,7 @@ public sealed class CheckoutHandler(
 **When NOT to use it.**
 
 1. **Two or more repositories sharing the same scoped `DbContext`.** The most common case in a typical Trellis service. The repos look independent at the C# level, but they all resolve `IRepositoryBase<T, TId>` from the same scoped `TContext`. Parallelising them races the underlying connection and throws `InvalidOperationException`. **Keep sequential `Bind` for this case** — the savings vs the sum-of-fetches are negligible against a local DB anyway, and the integrity loss is real.
-2. **The second factory's body references a value produced by the first.** Not independent — keep the sequential `BindAsync` chain. The rule is mechanical: if you have to read `result.Value` from the first to construct the second's arguments, they're sequential.
+2. **The second factory's body references a value produced by the first.** Not independent — keep the sequential `BindAsync` chain. The rule is mechanical: if the second load requires data the first one produced (an id, a filter, a cursor), the two are sequential by definition.
 3. **Side-effecting writes.** `Result.ParallelAsync` is for reads. Parallel `repository.Add(...)` calls against a shared context have the same race as parallel reads, plus tracker contention; parallel writes against per-scope contexts need transaction coordination outside this helper.
 
 **Anti-pattern → fix.**
@@ -1601,7 +1601,9 @@ The wrong answer: `if (!dict.TryGetValue(id, out var related)) continue;` and mo
 The right answer: fail-loud. Return `Error.NotFound` referencing the missing related aggregate so the unit of work rolls back the primary aggregate's mutation. The invariant — "every line item resolves to a Product, or the command fails atomically" — is now enforced and observable.
 
 ```csharp
-using System.Globalization;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Mediator;
 using Trellis;
 
@@ -1727,42 +1729,40 @@ foreach (var li in order.LineItems)
 
 ---
 
-## Recipe 23 — Concurrency control on aggregate-mutating POSTs: when to require `If-Match`
+## Recipe 23 — Concurrency control on aggregate-mutating endpoints: when to require `If-Match`
 
-**Problem.** RFC 9110 §13.1.1 lets clients send `If-Match: "etag"` on unsafe methods to detect stale-read race conditions: if the resource's current ETag doesn't match, the server returns `412 Precondition Failed` instead of overwriting concurrent changes. The framework provides `WithETag(...).EvaluatePreconditions()` and `WithETag(...).RequireETag(...)` helpers. The decision question: which mutating endpoints actually need this?
+**Problem.** RFC 9110 §13.1.1 lets clients send `If-Match: "etag"` on unsafe methods to detect stale-read race conditions: if the resource's current ETag doesn't match, the server returns `412 Precondition Failed` instead of overwriting concurrent changes. For mutating handlers, the framework provides `ETagHelper.ParseIfMatch(request)` to extract the typed `EntityTagValue[]` from the incoming `If-Match` header, plus the `Result<T>.OptionalETag(...)` / `RequireETag(...)` extensions (and their `*Async` overloads) that evaluate the precondition at the read-modify-write boundary inside the handler chain. (`opts.WithETag(...).EvaluatePreconditions()` on the response builder is a different feature — it only runs on `GET` / `HEAD` for `If-None-Match` → `304` and `If-Match` → `412` on safe-method reads; it is **not** the mutation hook.) The decision question: which mutating endpoints actually need this?
 
-A blanket "wire `EvaluatePreconditions` on every mutation" rule is wrong — it adds ceremony to endpoints where there is no lost-update window to begin with. Use the decision table:
+A blanket "wire `RequireETag` on every mutation" rule is wrong — it adds ceremony to endpoints where there is no lost-update window to begin with. Use the decision table:
 
-| Endpoint shape | Lost-update window? | Use `If-Match` / `EvaluatePreconditions`? |
+| Endpoint shape | Lost-update window? | Use `If-Match`? |
 |---|---|---|
 | **Body-less state-transition POST** (`POST /orders/{id}/submit`, `.../approve`, `.../cancel`, `.../return`) | **No.** The state machine + transition guards check the current state. A stale client calling `.../approve` on an order that has already shipped gets `422 Unprocessable Content` from the transition guard; there is nothing to overwrite. | **No.** The state machine substitutes for the precondition. Ceremony without benefit. |
-| **Body-carrying full-update PUT/PATCH** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says 428 when missing, RFC 9110 says 412 when stale. |
+| **Body-carrying full-update PUT/PATCH** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says `428 Precondition Required` when missing, RFC 9110 says `412 Precondition Failed` when stale. |
 | **Body-carrying partial-update PATCH** with a JSON Patch / JSON Merge Patch document | **Yes.** Same overwrite risk as full update. | **Yes — `RequireETag`.** |
 | **Destructive `DELETE /resources/{id}`** | **Yes.** A stale client can delete a version it has not seen after another writer changed it. | **Yes — `RequireETag`** as the default. Drop the precondition only if the endpoint is explicitly modeled as a guarded state-machine transition with equivalent domain or EF concurrency-token protection. |
 | **Additive set operation** (`POST /orders/{id}/line-items`, `POST /products/{id}/stock-additions +5`) | **Maybe.** Depends on commutativity. Two concurrent `+5` calls produce `+10` correctly; "remove the last line item" against a stale read of "list has 2 items" can drop the wrong item. | **Case-by-case.** Commutative additive ops can stay precondition-free; remove-by-position or "remove the last X" operations should `OptionalETag`. |
 | **Resource creation** (`POST /customers`, `POST /products`) | **N/A.** No prior version to match against. | **No.** |
 
 ```csharp
+using Trellis;
 using Trellis.Asp;
+using Trellis.EntityFrameworkCore;
 
 // State-transition POST — no If-Match. The state machine guards the transition.
-[HttpPost("{id}/approve")]
-public Task<ActionResult<OrderResponse>> Approve(OrderId id, CancellationToken ct) =>
-    _sender.Send(new ApproveOrderCommand(id), ct)
-        .AsTask()
-        .ToHttpResponseAsync(OrderResponse.From)
-        .AsActionResultAsync<OrderResponse>();
+app.MapPost("/orders/{id:guid}/approve", (OrderId id, ISender sender, CancellationToken ct) =>
+    sender.Send(new ApproveOrderCommand(id), ct)
+        .ToHttpResponseAsync(OrderResponse.From));
 
-// Full-update PUT — RequireETag. Missing → 428; stale → 412; current → 200/204.
-[HttpPut("{id}")]
-public Task<ActionResult<OrderResponse>> Replace(OrderId id, [FromBody] ReplaceOrderRequest request, CancellationToken ct)
-{
-    var ifMatchETags = ETagHelper.ParseIfMatch(Request);
-    return ReplaceOrderCommand.TryCreate(id, request, ifMatchETags)
-        .BindAsync(cmd => _sender.Send(cmd, ct).AsTask())
-        .ToHttpResponseAsync(OrderResponse.From, opts => opts.HonorPrefer())
-        .AsActionResultAsync<OrderResponse>();
-}
+// Full-update PUT — RequireETag at the read-modify-write boundary.
+// Missing If-Match → 428; stale → 412; current → proceeds.
+app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, ProductDbContext db, HttpContext httpContext) =>
+    db.Orders
+        .FirstOrDefaultResultAsync(o => o.Id == id, new Error.NotFound(ResourceRef.For<Order>(id)))
+        .RequireETagAsync(ETagHelper.ParseIfMatch(httpContext.Request))
+        .BindAsync(o => o.Replace(request))
+        .CheckAsync(_ => db.SaveChangesResultUnitAsync())
+        .ToHttpResponseAsync(OrderResponse.From, opts => opts.HonorPrefer()));
 ```
 
 **Rationale.** The framework helper is fine; the decision is whether the endpoint's semantics admit a lost-update window. State machines, additive set operations, and resource creation each carry their own concurrency control inside the domain or in the absence of prior state. Only payload-carrying overwrites need explicit precondition checking.
