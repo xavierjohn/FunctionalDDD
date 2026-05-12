@@ -68,8 +68,17 @@ public partial class TestMixedTypeVo : ValueObject
         yield return Status.Value;
         yield return Count.HasValue ? (int?)Count.Value : null;
         yield return Label.HasValue ? Label.Value : null;
-        // Arrays do not implement IComparable; fold to a stable summary so the equality
-        // contract still gives a deterministic answer per array shape.
-        yield return Snapshots.HasValue ? Snapshots.Value.Length : 0;
+        // Yield each element so structural equality compares arrays element-wise
+        // (length-only comparison would let two arrays with the same length but
+        // different contents compare equal — wrong for a ValueObject).
+        if (Snapshots.HasValue)
+        {
+            foreach (var dt in Snapshots.Value)
+                yield return dt;
+        }
+        else
+        {
+            yield return null;
+        }
     }
 }

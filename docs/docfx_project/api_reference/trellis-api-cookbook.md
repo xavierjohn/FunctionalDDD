@@ -1032,7 +1032,7 @@ The intentional split is: keep the framework converter simple; route consumers w
 | `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool` | ✅ Supported as-is | Use directly. |
 | `Guid`, `DateTime`, `DateTimeOffset` | ✅ Supported as-is | Use directly. |
 | Trellis scalar VO (`RequiredString<>`, `RequiredInt<>`, `RequiredGuid<>`, `RequiredEnum<>`, `RequiredDateTime<>`, …) — and shipped concretes like `EmailAddress`, `PhoneNumber`, `Money.Currency` | ✅ Flattens to underlying primitive on the wire | Use directly. The composite converter detects `IScalarValue<,>` and reads/writes the inner primitive. |
-| Nested composite owned VO (e.g., `Money` inside an aggregate response) | ❌ **Not supported** — `CompositeValueObjectJsonConverter<TOuter>` does not delegate back to `JsonSerializer` for nested objects, so an inner `[JsonConverter(typeof(CompositeValueObjectJsonConverter<TInner>))]` does not engage; the outer converter trips on the unsupported "primitive" type at first access. | **Map to a DTO** — declare the nested VO as a separate property on the wire-shape DTO (each composite VO has its own `[JsonConverter]` engagement only when STJ sees the type at the top of a property — not when it's owned by another composite converter). |
+| Nested composite owned VO (e.g., a nested `Money` or `ShippingAddress` as a property of another composite VO) | ❌ **Not supported.** `CompositeValueObjectJsonConverter<TOuter>` does not delegate to `JsonSerializer` for property values — it only reads/writes its own primitive whitelist directly. Adding `[JsonConverter]` to the inner type does not help, because the outer converter never asks STJ for an inner converter; it tries to treat the nested type as one of its primitives and trips on the first access. | **Map to a DTO** — declare each nested composite as its own property on the wire-shape DTO. Nested composite VOs serialize correctly only when STJ sees them at the top of a property of a non-Trellis-composite-converter type (i.e., a plain record/class with `[JsonConverter]` on the nested VO type itself). |
 | `Maybe<T>` for any T (primitive, scalar VO, composite VO, array) | ❌ **Not supported.** Throws `TrellisJsonValidationException: "Unsupported primitive type 'Maybe`1...'"` regardless of value (`Some` or `None`). | **Map to a wire-shape DTO.** See Recipe 14 — the same `T?` + adapt-at-the-seam pattern applies whether the optional is on the DTO itself or inside a composite VO. |
 | Array (`T[]`), collection (`List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`) | ❌ Not supported. | **Map to a DTO** with the array on the wire-shape type. |
 
@@ -1043,7 +1043,7 @@ The intentional split is: keep the framework converter simple; route consumers w
 [OwnedEntity]
 public partial class CustomerProfile : ValueObject
 {
-    public TestOrderStatus Status { get; private set; } = null!;
+    public OrderStatus Status { get; private set; } = null!;
     public partial Maybe<int> AgeYears { get; private set; }             // not JSON-serializable on this VO
     public partial Maybe<string> Nickname { get; private set; }          // not JSON-serializable
     public partial Maybe<DateTime[]> LoginHistory { get; private set; }  // not JSON-serializable

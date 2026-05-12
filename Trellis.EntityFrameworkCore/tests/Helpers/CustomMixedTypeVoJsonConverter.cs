@@ -112,6 +112,15 @@ public sealed class CustomMixedTypeVoJsonConverter : JsonConverter<TestMixedType
                             list.Add(reader.GetDateTime());
                         snapshots = Maybe.From(list.ToArray());
                     }
+                    else
+                    {
+                        // Any other token (string, number, object, …) is invalid for
+                        // 'snapshots'. Throw rather than silently leaving the reader at
+                        // a non-PropertyName position, which would cause the outer loop
+                        // to start treating that token's children as top-level properties.
+                        throw new JsonException(
+                            $"Property 'snapshots' expects a JSON array or null; got token {reader.TokenType}.");
+                    }
 
                     break;
                 default:
