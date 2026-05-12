@@ -116,10 +116,19 @@ public sealed class CompositeValueObjectDtoConverterAnalyzer : DiagnosticAnalyze
             if (property.Type is not INamedTypeSymbol propertyType)
                 continue;
 
-            if (!IsOwnedCompositeValueObject(propertyType))
+            var compositeType = UnwrapMaybe(propertyType, out var wasMaybe);
+
+            if (!IsOwnedCompositeValueObject(compositeType))
                 continue;
 
-            if (HasCompositeValueObjectJsonConverter(propertyType))
+            // Maybe<TComposite> on a DTO is always reported: Trellis ships no
+            // MaybeCompositeValueObjectJsonConverterFactory, so STJ falls back to default
+            // construction and silently bypasses TryCreate. [JsonConverter] on the inner
+            // composite does NOT cover Maybe<TComposite>; the supported transport per
+            // cookbook Recipe 14 is `TComposite?` plus `Maybe.From(...)` at the controller seam.
+            //
+            // Bare TComposite is the historical case: the inner [JsonConverter] DOES cover it.
+            if (!wasMaybe && HasCompositeValueObjectJsonConverter(compositeType))
                 continue;
 
             if (!TryMarkReported(property, reportedProperties))
@@ -128,9 +137,24 @@ public sealed class CompositeValueObjectDtoConverterAnalyzer : DiagnosticAnalyze
             reportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.CompositeValueObjectDtoMissingJsonConverter,
                 GetDiagnosticLocation(property, dtoType),
-                propertyType.Name,
+                compositeType.Name,
                 $"{dtoType.Name}.{property.Name}"));
         }
+    }
+
+    private static INamedTypeSymbol UnwrapMaybe(INamedTypeSymbol type, out bool wasMaybe)
+    {
+        if (type.Name == "Maybe" &&
+            type.TypeArguments.Length == 1 &&
+            type.ContainingNamespace?.ToDisplayString() == "Trellis" &&
+            type.TypeArguments[0] is INamedTypeSymbol inner)
+        {
+            wasMaybe = true;
+            return inner;
+        }
+
+        wasMaybe = false;
+        return type;
     }
 
     private static Location GetDiagnosticLocation(IPropertySymbol property, INamedTypeSymbol dtoType)
