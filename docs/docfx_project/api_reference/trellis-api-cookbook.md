@@ -1741,10 +1741,11 @@ A blanket "wire `RequireETag` on every mutation" rule is wrong — it adds cerem
 | **Body-carrying full-update PUT/PATCH** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says `428 Precondition Required` when missing, RFC 9110 says `412 Precondition Failed` when stale. |
 | **Body-carrying partial-update PATCH** with a JSON Patch / JSON Merge Patch document | **Yes.** Same overwrite risk as full update. | **Yes — `RequireETag`.** |
 | **Destructive `DELETE /resources/{id}`** | **Yes.** A stale client can delete a version it has not seen after another writer changed it. | **Yes — `RequireETag`** as the default. Drop the precondition only if the endpoint is explicitly modeled as a guarded state-machine transition with equivalent domain or EF concurrency-token protection. |
-| **Additive set operation** (`POST /orders/{id}/line-items`, `POST /products/{id}/stock-additions +5`) | **Maybe.** Depends on commutativity. Two concurrent `+5` calls produce `+10` correctly; "remove the last line item" against a stale read of "list has 2 items" can drop the wrong item. | **Case-by-case.** Commutative additive ops can stay precondition-free; remove-by-position or "remove the last X" operations should `OptionalETag`. |
+| **Additive set operation** (`POST /orders/{id}/line-items`, `POST /products/{id}/stock-additions +5`) | **Maybe.** Depends on commutativity. Two concurrent `+5` calls produce `+10` correctly; "remove the last line item" against a stale read of "list has 2 items" can drop the wrong item. | **Case-by-case.** Commutative additive ops can stay precondition-free; remove-by-position or "remove the last X" operations should `RequireETag` (or `OptionalETag` only when the endpoint deliberately admits unconditional callers). |
 | **Resource creation** (`POST /customers`, `POST /products`) | **N/A.** No prior version to match against. | **No.** |
 
 ```csharp
+using Mediator;
 using Trellis;
 using Trellis.Asp;
 using Trellis.EntityFrameworkCore;
@@ -1756,7 +1757,7 @@ app.MapPost("/orders/{id:guid}/approve", (OrderId id, ISender sender, Cancellati
 
 // Full-update PUT — RequireETag at the read-modify-write boundary.
 // Missing If-Match → 428; stale → 412; current → proceeds.
-app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, ProductDbContext db, HttpContext httpContext) =>
+app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, OrderDbContext db, HttpContext httpContext) =>
     db.Orders
         .FirstOrDefaultResultAsync(o => o.Id == id, new Error.NotFound(ResourceRef.For<Order>(id)))
         .RequireETagAsync(ETagHelper.ParseIfMatch(httpContext.Request))
