@@ -135,7 +135,22 @@ public sealed class CustomMixedTypeVoJsonConverter : JsonConverter<TestMixedType
                     {
                         var list = new List<DateTime>();
                         while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-                            list.Add(reader.GetDateTime());
+                        {
+                            if (reader.TokenType != JsonTokenType.String)
+                                throw new JsonException(
+                                    $"Property 'snapshots' array elements must be JSON strings; got token {reader.TokenType}.");
+
+                            try
+                            {
+                                list.Add(reader.GetDateTime());
+                            }
+                            catch (FormatException ex)
+                            {
+                                throw new JsonException(
+                                    "Property 'snapshots' contains an invalid date-time string.", ex);
+                            }
+                        }
+
                         snapshots = Maybe.From(list.ToArray());
                     }
                     else
