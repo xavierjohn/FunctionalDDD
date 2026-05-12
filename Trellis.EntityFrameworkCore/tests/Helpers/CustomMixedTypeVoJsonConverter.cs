@@ -81,22 +81,48 @@ public sealed class CustomMixedTypeVoJsonConverter : JsonConverter<TestMixedType
             switch (name)
             {
                 case "status":
+                    if (reader.TokenType != JsonTokenType.String)
+                        throw new JsonException(
+                            $"Property 'status' expects a JSON string; got token {reader.TokenType}.");
                     status = reader.GetString();
                     break;
                 case "count":
-                    count = reader.TokenType == JsonTokenType.Null
-                        ? Maybe<int>.None
-                        : Maybe.From(reader.GetInt32());
+                    if (reader.TokenType == JsonTokenType.Null)
+                    {
+                        count = Maybe<int>.None;
+                    }
+                    else if (reader.TokenType == JsonTokenType.Number)
+                    {
+                        try
+                        {
+                            count = Maybe.From(reader.GetInt32());
+                        }
+                        catch (FormatException ex)
+                        {
+                            throw new JsonException("Property 'count' is not a valid integer.", ex);
+                        }
+                    }
+                    else
+                    {
+                        throw new JsonException(
+                            $"Property 'count' expects a JSON number or null; got token {reader.TokenType}.");
+                    }
+
                     break;
                 case "label":
                     if (reader.TokenType == JsonTokenType.Null)
                     {
                         label = Maybe<string>.None;
                     }
-                    else
+                    else if (reader.TokenType == JsonTokenType.String)
                     {
                         var s = reader.GetString();
                         label = s is null ? Maybe<string>.None : Maybe.From(s);
+                    }
+                    else
+                    {
+                        throw new JsonException(
+                            $"Property 'label' expects a JSON string or null; got token {reader.TokenType}.");
                     }
 
                     break;
