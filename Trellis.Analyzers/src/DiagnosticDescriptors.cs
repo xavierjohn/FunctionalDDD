@@ -277,7 +277,7 @@ public static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor CompositeValueObjectDtoMissingJsonConverter = new(
         id: TrellisDiagnosticIds.CompositeValueObjectDtoMissingJsonConverter,
         title: "Composite value object DTO property is not safely deserializable",
-        messageFormat: "Composite value object '{0}' is exposed by DTO property '{1}'. System.Text.Json may bypass TryCreate validation. For bare '{0}', add [JsonConverter(typeof(CompositeValueObjectJsonConverter<{0}>))] on the type; for Maybe<{0}>, use '{0}?' + Maybe.From(...) at the controller seam (cookbook Recipe 14).",
+        messageFormat: "Composite value object '{0}' is exposed by DTO property '{1}'. System.Text.Json may bypass TryCreate validation. For bare '{0}', add [JsonConverter(typeof(CompositeValueObjectJsonConverter<{0}>))] on the type; for Maybe<{0}>, use '{0}?' + Maybe.From(...) at the endpoint/API seam (cookbook Recipe 14).",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
@@ -285,7 +285,8 @@ public static class DiagnosticDescriptors
                      "A bare composite property requires [JsonConverter(typeof(CompositeValueObjectJsonConverter<T>))] on the type. " +
                      "Maybe<TComposite> on a DTO is never supported — Trellis ships no MaybeCompositeValueObjectJsonConverterFactory, " +
                      "and [JsonConverter] on the inner composite does not cover the Maybe<> wrapper. Use TComposite? plus Maybe.From(...) " +
-                     "at the controller seam instead (cookbook Recipe 14). Otherwise System.Text.Json may fall back to default " +
+                     "at the endpoint/API seam instead — applicable to controller actions, Minimal API handlers, and Mediator " +
+                     "message-construction sites (cookbook Recipe 14). Otherwise System.Text.Json may fall back to default " +
                      "construction and silently bypass TryCreate validation.",
         helpLinkUri: HelpLinkBase + "TRLS020");
 
