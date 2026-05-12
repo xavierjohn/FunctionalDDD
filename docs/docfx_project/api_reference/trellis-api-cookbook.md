@@ -1020,6 +1020,58 @@ The string `"_lineItems"` is unfortunately part of the public mapping contract: 
 
 **Why no `[OwnedEntity]`-style convention for collections (yet).** `[OwnedEntity]` + `CompositeValueObjectConvention` discovers composite owned *value objects* by attribute. An equivalent collection convention would need to walk every aggregate, find `IReadOnlyList<T>` / `IReadOnlyCollection<T>` properties whose `T` is an entity, locate a matching `_camelCase` backing field, and register the `OwnsMany` against it. This is on the roadmap (tracked as the analogue of `MaybeConvention` for collections); for now the cookbook pattern above is the supported approach.
 
+### Supported property shapes inside a composite VO — when to map to a DTO instead
+
+`CompositeValueObjectJsonConverter<T>` is deliberately small. It supports a closed list of primitive types directly and routes Trellis scalar value objects through their underlying primitives. Anything else — including any `Maybe<T>`, arrays, collections, and nested composite VO properties — throws `TrellisJsonValidationException` at the first JSON access. The converter never delegates property reads/writes back to `JsonSerializer`, so adding `[JsonConverter]` to an inner composite type does not rescue the nested case. **EF Core persistence is more permissive** (`Maybe<T>`, arrays, and nested composites work) so the JSON gap only surfaces when the composite VO crosses an HTTP boundary.
+
+The intentional split is: keep the framework converter simple; route consumers with richer shapes through a wire-shape DTO at the controller/endpoint seam (Recipe 14 generalised).
+
+| Property type on a composite VO interior | JSON via `CompositeValueObjectJsonConverter`? | Recommended path |
+|---|---|---|
+| `string` | ✅ Supported as-is | Use directly. |
+| `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool` | ✅ Supported as-is | Use directly. |
+| `Guid`, `DateTime`, `DateTimeOffset` | ✅ Supported as-is | Use directly. |
+| Trellis scalar VO (`RequiredString<>`, `RequiredInt<>`, `RequiredGuid<>`, `RequiredEnum<>`, `RequiredDateTime<>`, …) — and shipped concretes like `EmailAddress`, `PhoneNumber`, `Money.Currency` | ✅ Flattens to underlying primitive on the wire | Use directly. The composite converter detects `IScalarValue<,>` and reads/writes the inner primitive. |
+| Nested composite owned VO (e.g., a nested `Money` or `ShippingAddress` as a property of another composite VO) | ❌ **Not supported.** `CompositeValueObjectJsonConverter<TOuter>` does not delegate to `JsonSerializer` for property values — it only reads/writes its own primitive whitelist directly. Adding `[JsonConverter]` to the inner type does not help, because the outer converter never asks STJ for an inner converter; it tries to treat the nested type as one of its primitives and trips on the first access. | **Map to a DTO** — declare each nested composite as its own property on the wire-shape DTO. Nested composite VOs serialize correctly only when STJ sees them at the top of a property of a non-Trellis-composite-converter type (i.e., a plain record/class with `[JsonConverter]` on the nested VO type itself). |
+| `Maybe<T>` for any T (primitive, scalar VO, composite VO, array) | ❌ **Not supported.** Throws `TrellisJsonValidationException: "Unsupported primitive type 'Maybe`1...'"` regardless of value (`Some` or `None`). | **Map to a wire-shape DTO.** See Recipe 14 — the same `T?` + adapt-at-the-seam pattern applies whether the optional is on the DTO itself or inside a composite VO. |
+| Array (`T[]`), collection (`List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`) | ❌ Not supported. | **Map to a DTO** with the array on the wire-shape type. |
+
+**When to use a DTO at the seam (the general rule).** If a composite VO's interior holds any property shape outside the supported list — most commonly `Maybe<TPrimitive>` or arrays — keep the VO clean as a domain type and declare a wire-shape DTO at the controller/endpoint:
+
+```csharp
+// Domain VO: clean, persists fine via EF Core, but cannot serialize as-is.
+[OwnedEntity]
+public partial class CustomerProfile : ValueObject
+{
+    public OrderStatus Status { get; private set; } = null!;
+    public partial Maybe<int> AgeYears { get; private set; }             // not JSON-serializable on this VO
+    public partial Maybe<string> Nickname { get; private set; }          // not JSON-serializable
+    public partial Maybe<DateTime[]> LoginHistory { get; private set; }  // not JSON-serializable
+    // ...TryCreate, GetEqualityComponents...
+}
+
+// Wire-shape DTO at the API seam: everything as nullable transports the converter can serialize.
+public sealed record CustomerProfileDto(string Status, int? AgeYears, string? Nickname, DateTime[]? LoginHistory)
+{
+    public Result<CustomerProfile> ToDomain() =>
+        CustomerProfile.TryCreate(
+            Status,
+            AgeYears.AsMaybe(),
+            Nickname is null ? Maybe<string>.None : Maybe.From(Nickname),
+            LoginHistory is null ? Maybe<DateTime[]>.None : Maybe.From(LoginHistory));
+
+    public static CustomerProfileDto From(CustomerProfile vo) =>
+        new(vo.Status.Value,
+            vo.AgeYears.AsNullable(),
+            vo.Nickname.HasValue ? vo.Nickname.Value : null,
+            vo.LoginHistory.HasValue ? vo.LoginHistory.Value : null);
+}
+```
+
+The controller takes `CustomerProfileDto` on inbound requests, calls `.ToDomain()` to lift to the domain VO, and projects back via `CustomerProfileDto.From(...)` on responses. The Trellis scalar `Maybe<>` extensions (`AsMaybe` / `AsNullable`) and `Maybe.From` handle the lift cleanly.
+
+**Last-resort escape hatch — write your own `JsonConverter<TComposite>`.** If a service genuinely cannot tolerate the DTO indirection (rare — usually a sign the design wants tightening), the language's standard mechanism still applies: declare `[JsonConverter(typeof(YourCustomConverter))]` on the composite VO and implement `Read`/`Write` directly. The framework does not provide help for this path; the trade-off is more code per-VO in exchange for putting the domain shape directly on the wire. This is not the recommended path — favour the DTO seam unless there is a concrete reason not to.
+
 ---
 
 ## Recipe 14 — Optional fields in request DTOs: `Maybe<TScalar>` vs nullable transport
@@ -1032,6 +1084,9 @@ The answer depends on whether the inner type is a **scalar** (single-primitive) 
 |---|---|---|
 | `Maybe<TScalar>` where `TScalar : IScalarValue<TScalar, TPrimitive>` (e.g., `Maybe<EmailAddress>`, `Maybe<PhoneNumber>`) | **Use `Maybe<T>` directly on the DTO.** | `AddTrellisAsp()` registers `MaybeScalarValueJsonConverterFactory` (JSON) and `MaybeModelBinder<T,P>` (route/query/header); MVC child-validation suppression for `None` scalar-maybe values is handled internally by the Trellis MVC integration. Call `AddTrellisAsp(...)` before MVC model binding is configured. `null`/missing → `None`; valid → `Maybe.From(validated)`; invalid → ProblemDetails with the same field path the domain emits. |
 | `Maybe<TComposite>` where `TComposite : ValueObject` with multiple fields (e.g., `Maybe<ShippingAddress>`) | **Use a nullable transport (`TComposite?`) and adapt at the controller seam.** | No `MaybeCompositeValueObjectJsonConverterFactory` ships today — System.Text.Json would default-construct the inner type, bypassing `TryCreate`. Wrap with `Maybe.From(...)` inside the controller. |
+| `Maybe<TPrimitive>` (e.g., `Maybe<int>`, `Maybe<string>`, `Maybe<Guid>`) | **Use `TPrimitive?` on the DTO and `.AsMaybe()` at the seam.** | No JSON converter ships for arbitrary primitive `Maybe<>` — `MaybeScalarValueJsonConverterFactory` only handles `Maybe<T>` where `T : IScalarValue<,>`. If the primitive carries domain meaning, prefer wrapping it in a scalar value object (e.g., `Age : RequiredInt<Age>`) and using `Maybe<Age>` — that shape *is* factory-handled. |
+
+> **The same DTO pattern applies inside a composite VO.** If a *composite value object's interior* contains `Maybe<TPrimitive>` / arrays / collections, `CompositeValueObjectJsonConverter` rejects them too (see Recipe 13 §"Supported property shapes inside a composite VO"). Keep the composite VO clean as a domain type and declare a wire-shape DTO with nullable transports, then lift on inbound (`.AsMaybe()` / `Maybe.From(...)`) and project on outbound (`.AsNullable()`).
 
 ### Pattern A — scalar `Maybe<T>` directly on the DTO
 
