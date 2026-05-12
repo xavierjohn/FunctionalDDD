@@ -81,7 +81,9 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 |---|---|
 | Create or load an aggregate with value objects | [Recipe 1](#recipe-1--crud-aggregate-ddd-value-objects--entity--repository-contract) |
 | Write a command handler that validates and persists | [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), then [Recipe 16](#recipe-16--unit-of-work-in-handlers-add-staging-vs-immediate-saveasync) |
-| Load multiple independent aggregates in one handler | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) |
+| Load multiple independent resources in one handler (HTTP + DB, two upstream services, factory-created `DbContext`s) | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) |
+| Multi-aggregate orchestration: side effect per element of a related-aggregate set | [Recipe 22](#recipe-22--multi-aggregate-orchestration-fail-loud-on-missing-related-aggregates) |
+| Concurrency control on mutating endpoints — when to require `If-Match` | [Recipe 23](#recipe-23--concurrency-control-on-aggregate-mutating-posts-when-to-require-if-match) |
 | Add a paginated list query | [Recipe 3](#recipe-3--query-handler-returning-paget-paginated-list-with-cursor) |
 | Add Minimal API or MVC endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult) |
 | Map primitive DTO fields to value objects | [Recipe 18](#recipe-18--dto-primitives-to-value-object-command-no-test-only-unwrap) |
@@ -104,7 +106,7 @@ These rows route recurring LLM lab mistakes to the most relevant reference befor
 
 | If the task involves... | Read first | Why |
 |---|---|---|
-| Loading independent aggregates before creating a command result | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) | Sequential awaits over independent loads serialise latency. The framework idiom is `Result.ParallelAsync(...).WhenAllAsync()`. |
+| Loading independent resources before creating a command result | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) | Sequential awaits over genuinely independent loads (HTTP + DB, two upstream services) serialise latency. `Result.ParallelAsync(...).WhenAllAsync()` is the framework idiom. **Do NOT use against repositories sharing a scoped `DbContext`** — that races EF Core and throws; sequential is correct there. |
 | Overdue/date-filter queries over `Maybe<DateTime>` | [Recipe 8](#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects), then [trellis-api-efcore.md](trellis-api-efcore.md#patterns-index) | Keep a typed specification and use `MaybeQueryableExtensions` in EF queries. |
 | State transitions on an aggregate | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult), then [trellis-api-statemachine.md](trellis-api-statemachine.md#patterns-index) | Keep transition methods consistent and put domain mutation after `FireResult` succeeds. |
 | Cross-aggregate mutation such as cancel/return releasing stock | [Recipe 1](#recipe-1--crud-aggregate-ddd-value-objects--entity--repository-contract), [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), and [trellis-api-core.md](trellis-api-core.md#domain-driven-design) | The application handler orchestrates multiple aggregates; an aggregate mutates only itself. |
@@ -274,7 +276,7 @@ public static class OrdersDi
 
 **What it shows.** The mediator pipeline already runs `ValidationBehavior<TMessage, TResponse>` before the handler — `AddTrellisFluentValidation` plugs every `IValidator<T>` into it via the open-generic `IMessageValidator<T>` adapter. `AddTrellisUnitOfWork<TContext>` registers `TransactionalCommandBehavior<,>` *after* the others, so it lands innermost and commits only when the handler returns success. The handler itself is pure: no `try`/`catch`, no primitive parsing, no `await db.SaveChangesAsync()` — that's the unit of work's job.
 
-> **Multiple independent loads in the handler?** Reach for [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) — `Result.ParallelAsync(...).WhenAllAsync()` is the framework idiom and is invisible at the call site if you don't know to look for it.
+> **Multiple independent resources in the handler?** Reach for [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) when the loads hit *different* stores (HTTP + DB, two upstream services, factory-created `DbContext`s). For two repository reads against the same scoped `DbContext`, stay sequential — that case races EF Core. The Recipe explains the rule and shows both shapes.
 
 > **Validation ownership.** Primitive→VO conversion happens at the transport seam. FluentValidation validates VO-shaped commands for cross-field rules and business invariants. Handlers receive value-object-shaped commands and must not parse primitives. See [Recipe 18](#recipe-18--dto-primitives-to-value-object-command-no-test-only-unwrap) for the canonical controller-seam adapter.
 
@@ -1498,9 +1500,11 @@ return rows.TraverseAll(row => EmailAddress.TryCreate(row.Email));
 
 ## Recipe 21 — Parallel independent loads in handlers: `Result.ParallelAsync` + `WhenAllAsync`
 
-**Problem.** A handler needs two (or more) aggregates that are independent — a customer and a product, two upstream HTTP fetches, a user and that user's permissions. Written sequentially, each `await` blocks the next, so latency = sum of fetches. Written naively in parallel with `Task.WhenAll`, error handling falls back to throwing, you lose the `Result<T>` track, and the lab evidence shows that authors (human and AI) reach for the sequential form by default because it "looks correct" and the tests pass.
+**Problem.** A handler needs two (or more) loads that are *genuinely* independent — a customer record from one upstream service, a product record from another; an HTTP call to authn plus a DB read for profile; or two reads against two distinct EF Core `DbContext` instances. Written sequentially, each `await` blocks the next, so latency = sum of fetches. Written naively in parallel with `Task.WhenAll`, error handling falls back to throwing, you lose the `Result<T>` track, and the lab evidence shows that authors (human and AI) reach for the sequential form by default because it "looks correct" and the tests pass.
 
 `Result.ParallelAsync(...)` is the framework's opinionated entry point: factory-takes-no-args, eagerly invokes each factory so both tasks actually run concurrently, returns a tuple of `Task<Result<T>>` that the matching `.WhenAllAsync()` extension awaits with `Task.WhenAll` and folds via `Result.Combine` into a single `Result<(T1, T2, …)>`. Failures combine through `Error.Combine`, so two `Error.UnprocessableContent` failures merge their fields, heterogeneous failures become an `Error.Aggregate`.
+
+> 🛑 **Danger — `Result.ParallelAsync` against repositories that share a scoped `DbContext` will race and throw.** EF Core's `DbContext` is documented as not thread-safe; two concurrent operations on a single context throw `InvalidOperationException: A second operation was started on this context instance before a previous operation completed.` The typical Trellis EF wiring is `services.AddDbContext<TContext>(...)` (whose default lifetime is scoped) plus `services.AddTrellisUnitOfWork<TContext>()` (which registers `IUnitOfWork` as scoped and consumes the scoped `TContext`), so **every repository resolved from the same request scope shares one `DbContext`**. In that configuration, the two loads must execute sequentially regardless of independence — see "When NOT to use it" below. `Result.ParallelAsync` is for genuinely cross-resource concurrency (HTTP + DB, two distinct upstream services, factory-created independent contexts), not for two repository reads against the same store.
 
 ```csharp
 using System.Threading;
@@ -1508,27 +1512,26 @@ using System.Threading.Tasks;
 using Mediator;
 using Trellis;
 
-public sealed record CreateDraftOrderCommand(CustomerId CustomerId, ProductId ProductId, int Quantity)
-    : ICommand<Result<DraftOrderId>>;
+public sealed record CheckoutCommand(UserId UserId, ProductSku Sku) : ICommand<Result<CheckoutQuote>>;
 
-public sealed class CreateDraftOrderHandler(
-    ICustomerRepository customers,
-    IProductRepository products,
-    IDraftOrderRepository orders) : ICommandHandler<CreateDraftOrderCommand, Result<DraftOrderId>>
+// Genuinely cross-resource: one upstream HTTP call + one read against a DIFFERENT
+// store (a pricing cache). These have no shared state and run safely in parallel.
+public sealed class CheckoutHandler(
+    IUserDirectoryClient directory,   // outbound HTTP
+    IPricingCache pricing)            // independent in-memory store
+    : ICommandHandler<CheckoutCommand, Result<CheckoutQuote>>
 {
-    public ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, CancellationToken cancellationToken) =>
+    public ValueTask<Result<CheckoutQuote>> Handle(CheckoutCommand command, CancellationToken cancellationToken) =>
         new(Result.ParallelAsync(
                 //  ↑ takes parameterless factory funcs — NOT pre-started tasks.
-                //    Each factory is invoked eagerly here so both loads execute concurrently.
-                () => customers.FindByIdAsync(command.CustomerId, cancellationToken),
-                () => products.FindByIdAsync(command.ProductId, cancellationToken))
+                //    Each factory is invoked eagerly here so both fetches execute concurrently.
+                () => directory.FindUserAsync(command.UserId, cancellationToken),
+                () => pricing.GetQuoteAsync(command.Sku, cancellationToken))
             .WhenAllAsync()
-            //  ↑ awaits Task.WhenAll, folds the two Result<T> into Result<(Customer, Product)>
+            //  ↑ awaits Task.WhenAll, folds the two Result<T> into Result<(User, Quote)>
             //    via Result.Combine. Two Error.UnprocessableContent failures merge their
             //    Fields/Rules; heterogeneous errors flatten into Error.Aggregate.
-            .BindAsync(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity))
-            .TapAsync(orders.Add)
-            .MapAsync(o => o.Id));
+            .BindAsync(t => CheckoutQuote.Create(t.Item1, t.Item2, command.Sku)));
 }
 ```
 
@@ -1539,33 +1542,237 @@ public sealed class CreateDraftOrderHandler(
 - The combined `Result<(T1, T2)>` flows back into the standard ROP chain (`BindAsync`, `MapAsync`, `TapAsync`) — no `match` / `if (success)` branches.
 - `Result.ParallelAsync` ships overloads for 2–9 factories. For collections, prefer `TraverseAsync` ([Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall)) — it's the right tool when the count is dynamic.
 
-**When NOT to use it.** The second load depends on the first. If you need the customer's tenant id to fetch the product, the loads are not independent — keep the sequential `BindAsync` chain. The rule is mechanical: if the second factory's body references a value produced by the first, they're sequential.
+**When NOT to use it.**
+
+1. **Two or more repositories sharing the same scoped `DbContext`.** The most common case in a typical Trellis service. The repos look independent at the C# level, but they all resolve `IRepositoryBase<T, TId>` from the same scoped `TContext`. Parallelising them races the underlying connection and throws `InvalidOperationException`. **Keep sequential `Bind` for this case** — the savings vs the sum-of-fetches are negligible against a local DB anyway, and the integrity loss is real.
+2. **The second factory's body references a value produced by the first.** Not independent — keep the sequential `BindAsync` chain. The rule is mechanical: if you have to read `result.Value` from the first to construct the second's arguments, they're sequential.
+3. **Side-effecting writes.** `Result.ParallelAsync` is for reads. Parallel `repository.Add(...)` calls against a shared context have the same race as parallel reads, plus tracker contention; parallel writes against per-scope contexts need transaction coordination outside this helper.
 
 **Anti-pattern → fix.**
 
 ```csharp
-// ❌ Sequential await: latency = customers.Find + products.Find. Tests pass; the bug is
-// invisible at the call site because the code "looks" correct.
+// ❌ UNSAFE — two repository calls against repositories that share a scoped DbContext.
+// Looks "obviously parallelisable" but races the underlying EF context. Failure mode
+// is non-deterministic: usually InvalidOperationException("A second operation was
+// started..."), occasionally a partial response with data from one but not the other,
+// occasionally a successful run that lulls the author into thinking it's correct.
+public ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, CancellationToken cancellationToken) =>
+    new(Result.ParallelAsync(
+            () => _customers.FindByIdAsync(command.CustomerId, cancellationToken),  // shared DbContext
+            () => _products.FindByIdAsync(command.ProductId, cancellationToken))    // shared DbContext
+        .WhenAllAsync()
+        .BindAsync(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity)));
+
+// ✅ Sequential against a shared DbContext — correct by construction. The latency
+// cost is the sum of two local reads, which is negligible in practice.
 public async ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, CancellationToken cancellationToken)
 {
-    var customerResult = await customers.FindByIdAsync(command.CustomerId, cancellationToken);
-    var productResult  = await products.FindByIdAsync(command.ProductId, cancellationToken);  // serialised behind customer
+    var customerResult = await _customers.FindByIdAsync(command.CustomerId, cancellationToken);
+    var productResult  = await _products.FindByIdAsync(command.ProductId, cancellationToken);
 
     return Result.Combine(customerResult, productResult)
         .Bind(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity))
-        .Tap(orders.Add)
+        .Tap(_orders.Add)
         .Map(o => o.Id);
 }
 
-// ✅ Parallel with Result-track preserved — see the canonical example above.
+// ✅ Truly parallel — only when the two loads hit independent resources. The HTTP
+// call and the in-memory cache have no shared state; ParallelAsync is safe here.
+//
+// For two EF reads in genuine parallel, inject `IDbContextFactory<TContext>` and
+// open two short-lived contexts inside the handler:
+//
+//   await using var aCtx = await _factory.CreateDbContextAsync(ct);
+//   await using var bCtx = await _factory.CreateDbContextAsync(ct);
+//   // ... use aCtx and bCtx independently inside ParallelAsync factories ...
+//
+// The trade-off: two extra contexts and their connections per request, in exchange
+// for parallel reads. Worth it only when the queries are slow.
 ```
+
+---
+
+## Recipe 22 — Multi-aggregate orchestration: fail-loud on missing related aggregates
+
+**Problem.** A command needs to mutate one primary aggregate (an Order) and trigger a side effect on each element of a related-aggregate set (release reserved stock on every Product referenced by the Order's line items). The naive shape is a `foreach` with a dictionary lookup of the related aggregate by id. If a referenced related aggregate is missing from that lookup — invariant violation; under normal flow it should never happen — what is the correct behaviour?
+
+The wrong answer: `if (!dict.TryGetValue(id, out var related)) continue;` and move on. The handler appears to succeed, the primary aggregate transitions, the unit of work commits, and the side effect is silently skipped for the missing element. The orchestration has broken its own post-condition ("stock is released for every line item") with no signal to the caller and no rollback.
+
+The right answer: fail-loud. Return `Error.NotFound` referencing the missing related aggregate so the unit of work rolls back the primary aggregate's mutation. The invariant — "every line item resolves to a Product, or the command fails atomically" — is now enforced and observable.
+
+```csharp
+using System.Globalization;
+using Mediator;
+using Trellis;
+
+public sealed class ReturnOrderHandler(
+    IOrderRepository orders,
+    IProductRepository products,
+    TimeProvider timeProvider) : ICommandHandler<ReturnOrderCommand, Result<Order>>
+{
+    public async ValueTask<Result<Order>> Handle(ReturnOrderCommand command, CancellationToken cancellationToken)
+    {
+        var orderMaybe = await orders.FindByIdAsync(command.OrderId, cancellationToken);
+        if (!orderMaybe.TryGetValue(out var order))
+            return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Order>(command.OrderId)));
+
+        var productIds = order.LineItems.Select(li => li.ProductId).Distinct().ToArray();
+        var loaded = await products.GetByIdsAsync(productIds, cancellationToken);
+        var byId = loaded.ToDictionary(p => p.Id);
+
+        // Preflight: prove EVERY related aggregate is reachable BEFORE any side effect.
+        // A missing product is a fatal invariant violation: fail-loud so neither the
+        // Order transition nor any per-line stock release runs. NEVER `continue` past a
+        // missing related aggregate, and NEVER mutate before the set is fully reachable —
+        // an in-memory mutation persists through the rest of the handler's object graph
+        // even if a later failure rolls back the database commit, so partially-released
+        // stock leaks into any subsequent read of the same aggregate within this scope.
+        var missing = productIds.Where(id => !byId.ContainsKey(id)).ToArray();
+        if (missing.Length > 0)
+            return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Product>(missing[0]))
+            {
+                Detail = $"Product {missing[0]} referenced by line item is missing — cannot release stock.",
+            });
+
+        // All related aggregates reachable. Safe to apply side effects.
+        foreach (var li in order.LineItems)
+        {
+            var product = byId[li.ProductId];
+            var release = product.ReleaseStock(li.Quantity);
+            if (release.Error is { } err)
+                return Result.Fail<Order>(err);
+        }
+
+        return order.Return(command.Reason, timeProvider.GetUtcNow().UtcDateTime).Map(_ => order);
+    }
+}
+```
+
+**The test-design principle: Partial-Failure Atomicity.**
+
+> For every post-condition phrased as *"X is done for every Y in a set,"* write a test where one Y is unreachable at operation time. The post-condition must hold under one of two regimes:
+>
+> 1. **All-or-nothing:** the operation fails atomically; no X is performed.
+> 2. **Best-effort with explicit signal:** every reachable Y has X performed; every unreachable Y produces a recorded error in the result.
+>
+> The implementation must pick one explicitly. If a "for every" handler silently `continue`s past an unreachable Y with neither failure nor signal, it has broken the post-condition and the unit of work has committed an inconsistent state.
+>
+> The test must hold the related-aggregate's pre-operation state and assert that no partial side-effect leaked through.
+
+The generator test (the one a coverage-driven author would never produce from a happy-path-only mental model):
+
+```csharp
+[Fact]
+public async Task Return_with_missing_product_fails_atomically_and_does_not_release_stock()
+{
+    // Seed two products A and B; build a Delivered order with line items referencing both.
+    var (order, productA, productB) = await SeedDeliveredWithTwoProductsAsync();
+    var aStockBefore = productA.StockQuantity;
+    var bStockBefore = productB.StockQuantity;
+
+    // Disrupt the universally-quantified set: drop productB from the repository.
+    _products.Remove(productB);
+
+    var r = await _sender.Send(new ReturnOrderCommand(order.Id, _reason), cancellationToken);
+
+    // The orchestration MUST be atomic: either every line item's stock is released,
+    // or the operation fails and NOTHING is released.
+    r.Should().BeFailureOfType<Error.NotFound>();
+    productA.StockQuantity.Should().Be(aStockBefore);  // A NOT partially released
+    order.Status.Should().Be(OrderStatus.Delivered);    // Order NOT transitioned (UoW rolls back)
+}
+```
+
+**Generalisation.** Anywhere a handler does:
+
+```csharp
+foreach (var x in someSet)
+{
+    if (!cache.TryGetValue(x.RelatedId, out var related))
+        continue;                              // ❌ silent skip — see anti-pattern below
+    related.SideEffect(x.Args);
+}
+```
+
+…there is a hidden missing-related-aggregate path. Apply the Partial-Failure Atomicity test pattern to every such loop. Failing tests will not be caught by a happy-path-only suite because every test sets up a known-good related-aggregate set.
+
+**Anti-pattern → fix.**
+
+```csharp
+// ❌ Silent skip — passes every happy-path test, but if a Product disappears between
+// the order being created and the return being processed (or if a future refactor
+// adds a DeleteProduct endpoint), the return "succeeds" with a partially-released
+// stock state. No exception, no Result failure, no log entry. Data corruption.
+foreach (var li in order.LineItems)
+{
+    if (!byId.TryGetValue(li.ProductId, out var product))
+        continue;                              // ← invariant violation hidden here
+    product.ReleaseStock(li.Quantity);
+}
+
+// ✅ Fail-loud — invariant violation surfaces as Error.NotFound; UoW rolls back.
+foreach (var li in order.LineItems)
+{
+    if (!byId.TryGetValue(li.ProductId, out var product))
+        return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Product>(li.ProductId))
+        {
+            Detail = $"Product {li.ProductId} referenced by line item is missing — cannot release stock.",
+        });
+
+    var release = product.ReleaseStock(li.Quantity);
+    if (release.Error is { } err)
+        return Result.Fail<Order>(err);
+}
+```
+
+---
+
+## Recipe 23 — Concurrency control on aggregate-mutating POSTs: when to require `If-Match`
+
+**Problem.** RFC 9110 §13.1.1 lets clients send `If-Match: "etag"` on unsafe methods to detect stale-read race conditions: if the resource's current ETag doesn't match, the server returns `412 Precondition Failed` instead of overwriting concurrent changes. The framework provides `WithETag(...).EvaluatePreconditions()` and `WithETag(...).RequireETag(...)` helpers. The decision question: which mutating endpoints actually need this?
+
+A blanket "wire `EvaluatePreconditions` on every mutation" rule is wrong — it adds ceremony to endpoints where there is no lost-update window to begin with. Use the decision table:
+
+| Endpoint shape | Lost-update window? | Use `If-Match` / `EvaluatePreconditions`? |
+|---|---|---|
+| **Body-less state-transition POST** (`POST /orders/{id}/submit`, `.../approve`, `.../cancel`, `.../return`) | **No.** The state machine + transition guards check the current state. A stale client calling `.../approve` on an order that has already shipped gets `422 Unprocessable Content` from the transition guard; there is nothing to overwrite. | **No.** The state machine substitutes for the precondition. Ceremony without benefit. |
+| **Body-carrying full-update PUT/PATCH** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says 428 when missing, RFC 9110 says 412 when stale. |
+| **Body-carrying partial-update PATCH** with a JSON Patch / JSON Merge Patch document | **Yes.** Same overwrite risk as full update. | **Yes — `RequireETag`.** |
+| **Destructive `DELETE /resources/{id}`** | **Yes.** A stale client can delete a version it has not seen after another writer changed it. | **Yes — `RequireETag`** as the default. Drop the precondition only if the endpoint is explicitly modeled as a guarded state-machine transition with equivalent domain or EF concurrency-token protection. |
+| **Additive set operation** (`POST /orders/{id}/line-items`, `POST /products/{id}/stock-additions +5`) | **Maybe.** Depends on commutativity. Two concurrent `+5` calls produce `+10` correctly; "remove the last line item" against a stale read of "list has 2 items" can drop the wrong item. | **Case-by-case.** Commutative additive ops can stay precondition-free; remove-by-position or "remove the last X" operations should `OptionalETag`. |
+| **Resource creation** (`POST /customers`, `POST /products`) | **N/A.** No prior version to match against. | **No.** |
+
+```csharp
+using Trellis.Asp;
+
+// State-transition POST — no If-Match. The state machine guards the transition.
+[HttpPost("{id}/approve")]
+public Task<ActionResult<OrderResponse>> Approve(OrderId id, CancellationToken ct) =>
+    _sender.Send(new ApproveOrderCommand(id), ct)
+        .AsTask()
+        .ToHttpResponseAsync(OrderResponse.From)
+        .AsActionResultAsync<OrderResponse>();
+
+// Full-update PUT — RequireETag. Missing → 428; stale → 412; current → 200/204.
+[HttpPut("{id}")]
+public Task<ActionResult<OrderResponse>> Replace(OrderId id, [FromBody] ReplaceOrderRequest request, CancellationToken ct)
+{
+    var ifMatchETags = ETagHelper.ParseIfMatch(Request);
+    return ReplaceOrderCommand.TryCreate(id, request, ifMatchETags)
+        .BindAsync(cmd => _sender.Send(cmd, ct).AsTask())
+        .ToHttpResponseAsync(OrderResponse.From, opts => opts.HonorPrefer())
+        .AsActionResultAsync<OrderResponse>();
+}
+```
+
+**Rationale.** The framework helper is fine; the decision is whether the endpoint's semantics admit a lost-update window. State machines, additive set operations, and resource creation each carry their own concurrency control inside the domain or in the absence of prior state. Only payload-carrying overwrites need explicit precondition checking.
 
 ---
 
 ## Cross-cutting tips
 
 - **Run analyzers in CI.** `Trellis.Analyzers` ships in the framework and runs as part of every `dotnet build`. Treat warnings as errors for `TRLS00x` once your codebase is clean.
-- **Two independent `await repo.X()` calls in a handler? Reach for `Result.ParallelAsync` + `WhenAllAsync`.** Sequential awaits over independent loads serialise latency to the sum instead of the max. The pattern is the same every time: paramless factories, `.WhenAllAsync()`, then back into the standard ROP chain. See [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync). The rule for "independent": the second factory's body does not reference any value produced by the first.
+- **Two independent `await` calls in a handler?** `Result.ParallelAsync` + `WhenAllAsync` is the framework idiom — **but only when the loads hit different resources**. Two repository reads against the same scoped `DbContext` (the typical Trellis setup with `AddTrellisUnitOfWork<TContext>()`) race EF Core and throw `InvalidOperationException`; keep those sequential. The recipe spells out the safe shapes (HTTP + DB, two distinct upstream services, factory-created `DbContext`s via `IDbContextFactory<T>`) and the anti-pattern. See [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync). The rule for "independent": the second factory's body does not reference any value produced by the first **and** the two factories hit distinct underlying resources.
 - **Do not mix sync chain methods with async lambdas.** `result.Map(async v => …)` triggers `TRLS009`; use `MapAsync`. The fix provider can apply this rewrite automatically.
 - **Construct errors via the closed ADT.** `new Error.NotFound(ResourceRef.For<Order>(id))` — never `new Error("not_found", "...")`, which won't compile against the abstract base record.
 - **Use `Result.Combine` (or `EnsureAll`) for accumulating validation.** Manual `IsSuccess` checks across multiple results trigger `TRLS008`.
