@@ -693,6 +693,28 @@ public class MaybeScalarValueJsonConverterTests
         result.Should().BeFalse("string is not a scalar value object");
     }
 
+    [Theory]
+    [InlineData(typeof(Maybe<int>))]
+    [InlineData(typeof(Maybe<long>))]
+    [InlineData(typeof(Maybe<Guid>))]
+    [InlineData(typeof(Maybe<DateTime>))]
+    [InlineData(typeof(Maybe<DateTimeOffset>))]
+    [InlineData(typeof(Maybe<bool>))]
+    [InlineData(typeof(Maybe<decimal>))]
+    public void Factory_CanConvert_MaybePrimitive_ReturnsFalse(Type maybePrimitive)
+    {
+        // Documents the boundary: MaybeScalarValueJsonConverterFactory only handles
+        // Maybe<T> where T implements IScalarValue<,>. Raw C# primitives never satisfy
+        // that constraint. A user who declares Maybe<int> / Maybe<Guid> / etc. on a DTO
+        // gets no Trellis converter — see the "Maybe<TPrimitive>" pattern in maybe-type.md:
+        // use `T?` on the DTO and `.AsMaybe()` at the endpoint/API seam, or wrap the
+        // primitive in a scalar value object (e.g., `Age : RequiredInt<Age>`).
+        var factory = new MaybeScalarValueJsonConverterFactory();
+
+        factory.CanConvert(maybePrimitive)
+            .Should().BeFalse("primitive inner types do not implement IScalarValue<,>");
+    }
+
     [Fact]
     public void Factory_CanConvert_PlainInt_ReturnsFalse()
     {
@@ -855,6 +877,129 @@ public class MaybeScalarValueJsonConverterTests
             dto.Should().NotBeNull();
             dto!.OptionalAge.HasNoValue.Should().BeTrue();
         }
+    }
+
+    #endregion
+
+    #region Recommended `Maybe<TPrimitive>` DTO pattern: `T?` on the wire, `.AsMaybe()` at the seam
+
+    // The framework ships no JSON converter for arbitrary primitive Maybe<T> (Maybe<int>,
+    // Maybe<string>, Maybe<Guid>, etc.) — `MaybeScalarValueJsonConverterFactory` rejects
+    // these inner types because they do not implement `IScalarValue<,>` (see the boundary
+    // tests earlier in this file). The supported pattern (documented in maybe-type.md
+    // §"Interop with nullable" and "Optional nullable primitives on DTOs, keep using T?")
+    // is: declare the DTO property as `T?`, then lift to `Maybe<T>` at the endpoint/API
+    // seam via `Trellis.AsMaybeExtensions.AsMaybe()`. These tests document that pattern
+    // end-to-end so future framework changes cannot drift it silently.
+
+    private static readonly JsonSerializerOptions OptionalDtoOptions = new();
+
+    public sealed record AgeOptionalRequest(int? Age);
+
+    public sealed record NicknameOptionalRequest(string? Nickname);
+
+    public sealed record OrderIdOptionalRequest(Guid? OrderId);
+
+    [Fact]
+    public void NullableInt_PresentValue_RoundTripsAndLiftsToMaybeSome()
+    {
+        // Wire shape: `int?` on the DTO. Lifted to Maybe<int> at the seam.
+        var dto = JsonSerializer.Deserialize<AgeOptionalRequest>("""{"Age":42}""", OptionalDtoOptions);
+
+        dto.Should().NotBeNull();
+        dto!.Age.Should().Be(42);
+        dto.Age.AsMaybe().Should().HaveValueEqualTo(42);
+    }
+
+    [Fact]
+    public void NullableInt_NullValue_LiftsToMaybeNone()
+    {
+        var dto = JsonSerializer.Deserialize<AgeOptionalRequest>("""{"Age":null}""", OptionalDtoOptions);
+
+        dto.Should().NotBeNull();
+        dto!.Age.Should().BeNull();
+        dto.Age.AsMaybe().Should().BeNone();
+    }
+
+    [Fact]
+    public void NullableInt_MissingProperty_LiftsToMaybeNone()
+    {
+        // The wire shape allows the property to be entirely absent; `int?` still
+        // deserializes to null, lifting to None.
+        var dto = JsonSerializer.Deserialize<AgeOptionalRequest>("""{}""", OptionalDtoOptions);
+
+        dto.Should().NotBeNull();
+        dto!.Age.Should().BeNull();
+        dto.Age.AsMaybe().Should().BeNone();
+    }
+
+    [Fact]
+    public void NullableInt_RoundTripsBackToJson()
+    {
+        var json = JsonSerializer.Serialize(new AgeOptionalRequest(42), OptionalDtoOptions);
+
+        json.Should().Contain("\"Age\":42");
+    }
+
+    [Fact]
+    public void NullableInt_NoneRoundTripsBackAsJsonNull()
+    {
+        // A handler that started with Maybe<int>.None converts back to int? via
+        // AsNullable() for response shaping; JSON serializes null as the JSON null literal.
+        var maybe = Maybe<int>.None;
+        var nullable = maybe.AsNullable();
+
+        var json = JsonSerializer.Serialize(new AgeOptionalRequest(nullable), OptionalDtoOptions);
+
+        json.Should().Contain("\"Age\":null");
+    }
+
+    [Fact]
+    public void NullableString_PresentValue_LiftsToMaybeSome()
+    {
+        // Same pattern works for reference-typed primitives. AsMaybe() handles
+        // `string?` through Maybe.From's nullable overload.
+        var dto = JsonSerializer.Deserialize<NicknameOptionalRequest>(
+            """{"Nickname":"ada"}""", OptionalDtoOptions);
+
+        var lifted = Maybe.From(dto!.Nickname);
+        lifted.Should().HaveValueEqualTo("ada");
+    }
+
+    [Fact]
+    public void NullableString_NullValue_LiftsToMaybeNone()
+    {
+        var dto = JsonSerializer.Deserialize<NicknameOptionalRequest>(
+            """{"Nickname":null}""", OptionalDtoOptions);
+
+        var lifted = Maybe.From(dto!.Nickname);
+        lifted.Should().BeNone();
+    }
+
+    [Fact]
+    public void NullableGuid_PresentValue_LiftsToMaybeSome()
+    {
+        // Demonstrates the recommended pattern is uniform across primitive value-types
+        // — it does not depend on the inner type being a Trellis scalar value object.
+        var guid = Guid.Parse("019e1942-1a4a-796c-856e-95f8996eacb3");
+
+        var dto = JsonSerializer.Deserialize<OrderIdOptionalRequest>(
+            $$"""{"OrderId":"{{guid}}"}""", OptionalDtoOptions);
+
+        dto!.OrderId.AsMaybe().Should().HaveValueEqualTo(guid);
+    }
+
+    [Fact]
+    public void MaybeIntDirectlyOnDto_HasNoFrameworkConverter_DocumentsTheGap()
+    {
+        // Negative-symptom regression guard. If a future change ever ships a factory
+        // for arbitrary primitive Maybe<>, this assertion will flip and the regression
+        // guard fires — at which point the cookbook + maybe-type.md guidance ("use T?
+        // for primitives") needs to be updated.
+        var factory = new MaybeScalarValueJsonConverterFactory();
+
+        factory.CanConvert(typeof(Maybe<int>))
+            .Should().BeFalse("primitive Maybe<int> is not factory-handled; use `int?` + `.AsMaybe()` on DTOs instead");
     }
 
     #endregion

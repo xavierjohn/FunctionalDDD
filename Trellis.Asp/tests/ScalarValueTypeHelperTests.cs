@@ -566,6 +566,22 @@ public class ScalarValueTypeHelperTests
         result.Should().BeFalse("string is not a scalar value object");
     }
 
+    [Theory]
+    [InlineData(typeof(Maybe<int>))]
+    [InlineData(typeof(Maybe<long>))]
+    [InlineData(typeof(Maybe<Guid>))]
+    [InlineData(typeof(Maybe<DateTime>))]
+    [InlineData(typeof(Maybe<DateTimeOffset>))]
+    [InlineData(typeof(Maybe<bool>))]
+    [InlineData(typeof(Maybe<decimal>))]
+    public void IsMaybeScalarValue_MaybePrimitive_ReturnsFalse(Type maybePrimitive) =>
+        // Boundary regression guard parallel to the converter-factory test:
+        // primitive inner types never implement IScalarValue<,>, so IsMaybeScalarValue
+        // must return false. Any future broadening of this predicate would silently
+        // bless primitive Maybe<> on DTOs in places that downstream check it.
+        ScalarValueTypeHelper.IsMaybeScalarValue(maybePrimitive)
+            .Should().BeFalse("primitive inner types do not implement IScalarValue<,>");
+
     [Fact]
     public void IsMaybeScalarValue_DirectValueObject_ReturnsFalse()
     {

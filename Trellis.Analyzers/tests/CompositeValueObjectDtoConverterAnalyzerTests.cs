@@ -384,4 +384,137 @@ public class CompositeValueObjectDtoConverterAnalyzerTests
 
         await test.RunAsync();
     }
+
+    // ---- Maybe<TComposite> coverage (TRLS020 extension) ----------------------
+    //
+    // The cookbook (trellis-api-cookbook.md:1097) calls Maybe<TComposite> on DTOs
+    // a "correctness bug, not just an ergonomics one" — `MaybeScalarValueJsonConverterFactory`
+    // refuses to convert when the inner T isn't `IScalarValue<,>`, so STJ falls back to
+    // default construction of the composite, bypassing TryCreate validation.
+    //
+    // The bare composite case is already covered above. These tests extend the analyzer
+    // to also flag Maybe<TComposite> on DTO surfaces.
+
+    [Fact]
+    public async Task FromBodyDto_WithMaybeOwnedValueObjectMissingConverter_ReportsDiagnostic()
+    {
+        const string source = """
+            using Microsoft.AspNetCore.Mvc;
+            using Trellis;
+            using Trellis.EntityFrameworkCore;
+
+            [OwnedEntity]
+            public partial class ShippingAddress : ValueObject
+            {
+                public string Street { get; }
+                public string City { get; }
+
+                protected override System.Collections.Generic.IEnumerable<System.IComparable?> GetEqualityComponents()
+                {
+                    yield return Street;
+                    yield return City;
+                }
+            }
+
+            public sealed record CreateCustomerRequest(Maybe<ShippingAddress> ShippingAddress);
+
+            [ApiController]
+            [Route("customers")]
+            public sealed class CustomersController : ControllerBase
+            {
+                [HttpPost]
+                public void Create([FromBody] CreateCustomerRequest request) { }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CompositeValueObjectDtoConverterAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.CompositeValueObjectDtoMissingJsonConverter)
+                .WithLocation(24, 67)
+                .WithArguments("ShippingAddress", "CreateCustomerRequest.ShippingAddress"));
+        test.TestState.Sources.Add(("AspAndTrellisStubs.cs", AspAndTrellisStubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task FromBodyDto_WithMaybeOwnedValueObjectEvenWithInnerConverter_StillReportsDiagnostic()
+    {
+        // Maybe<TComposite> on a DTO is ALWAYS broken regardless of whether the inner composite
+        // carries [JsonConverter]. Trellis ships no MaybeCompositeValueObjectJsonConverterFactory;
+        // the converter on TComposite doesn't cover Maybe<TComposite> deserialization. The
+        // supported transport per cookbook Recipe 14 is `TComposite?` + Maybe.From(...) at the
+        // controller seam.
+        const string source = """
+            using Microsoft.AspNetCore.Mvc;
+            using System.Text.Json.Serialization;
+            using Trellis;
+            using Trellis.EntityFrameworkCore;
+            using Trellis.Primitives;
+
+            [OwnedEntity]
+            [JsonConverter(typeof(CompositeValueObjectJsonConverter<ShippingAddress>))]
+            public partial class ShippingAddress : ValueObject
+            {
+                public string Street { get; }
+                public string City { get; }
+
+                protected override System.Collections.Generic.IEnumerable<System.IComparable?> GetEqualityComponents()
+                {
+                    yield return Street;
+                    yield return City;
+                }
+            }
+
+            public sealed record CreateCustomerRequest(Maybe<ShippingAddress> ShippingAddress);
+
+            [ApiController]
+            [Route("customers")]
+            public sealed class CustomersController : ControllerBase
+            {
+                [HttpPost]
+                public void Create([FromBody] CreateCustomerRequest request) { }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CompositeValueObjectDtoConverterAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.CompositeValueObjectDtoMissingJsonConverter)
+                .WithLocation(27, 67)
+                .WithArguments("ShippingAddress", "CreateCustomerRequest.ShippingAddress"));
+        test.TestState.Sources.Add(("AspAndTrellisStubs.cs", AspAndTrellisStubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task FromBodyDto_WithMaybePrimitiveInner_NoDiagnostic()
+    {
+        // Scope-boundary regression guard: TRLS020 specifically targets owned composite
+        // value objects (`[OwnedEntity]` + `ValueObject`). Whether `Maybe<int>` / `Maybe<string>`
+        // / `Maybe<Guid>` on DTOs is itself supported is a separate question — primitive
+        // inner types are NOT handled by `MaybeScalarValueJsonConverterFactory` either (it
+        // only converts `Maybe<TScalarValueObject>` where the inner type implements
+        // `IScalarValue<,>`). This test only asserts that TRLS020 does not fire on
+        // non-composite inner types, regardless of whether the broader pattern is sound.
+        const string source = """
+            using Microsoft.AspNetCore.Mvc;
+            using Trellis;
+
+            public sealed record CreateCustomerRequest(Maybe<int> Age, Maybe<string> Nickname);
+
+            [ApiController]
+            [Route("customers")]
+            public sealed class CustomersController : ControllerBase
+            {
+                [HttpPost]
+                public void Create([FromBody] CreateCustomerRequest request) { }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CompositeValueObjectDtoConverterAnalyzer>(source);
+        test.TestState.Sources.Add(("AspAndTrellisStubs.cs", AspAndTrellisStubSource));
+
+        await test.RunAsync();
+    }
 }

@@ -408,6 +408,26 @@ public class MaybeModelBinderTests
         binder.Should().BeNull("Maybe<string> is not wrapping a scalar value object");
     }
 
+    [Theory]
+    [InlineData(typeof(Maybe<int>))]
+    [InlineData(typeof(Maybe<long>))]
+    [InlineData(typeof(Maybe<Guid>))]
+    [InlineData(typeof(Maybe<DateTime>))]
+    [InlineData(typeof(Maybe<DateTimeOffset>))]
+    [InlineData(typeof(Maybe<bool>))]
+    [InlineData(typeof(Maybe<decimal>))]
+    public void Provider_MaybePrimitive_ReturnsNull(Type maybePrimitive)
+    {
+        // Boundary regression guard: route/query/header binding of primitive Maybe<T>
+        // is not supported (no scalar VO behind it). Consumers route/query-binding an
+        // optional primitive should accept `T?` and lift with `.AsMaybe()` in the handler.
+        var provider = new ScalarValueModelBinderProvider();
+        var context = CreateBinderProviderContext(maybePrimitive);
+
+        provider.GetBinder(context)
+            .Should().BeNull("primitive Maybe<T> is not wrapping a scalar value object");
+    }
+
     [Fact]
     public void Provider_DirectValueObject_ReturnsScalarBinder()
     {
