@@ -215,6 +215,22 @@ public static class ResourceAuthorizationPathResolver
     [RequiresDynamicCode("Constructs typed delegates via MakeGenericMethod.")]
     private static ResolvedAuthorizationHop BuildHop(Edge edge)
     {
+        // Nullable<T> is unsupported as TId because the SingularExtractorImpl /
+        // PluralExtractorImpl helpers carry `where TId : notnull` — a Nullable<T>
+        // would otherwise fail with a confusing reflection error at MakeGenericMethod
+        // time. Reject only for hops on the *resolved* path so that unrelated entities
+        // declaring optional navigations do not crash the scanner for via-commands that
+        // never traverse them.
+        if (edge.ToIdType.IsGenericType && edge.ToIdType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            throw new InvalidOperationException(
+                $"{edge.FromType.Name} declares a related-resource hop to {edge.ToType.Name} " +
+                $"with a Nullable<{Nullable.GetUnderlyingType(edge.ToIdType)!.Name}> identifier, " +
+                $"which is not supported on a resolved authorization path. Use the non-nullable " +
+                $"underlying type ({Nullable.GetUnderlyingType(edge.ToIdType)!.Name}) and model the " +
+                $"absence of a relationship by omitting the IIdentifyRelatedResource[s] declaration " +
+                $"on instances that have no related resource — for plural relationships, return an " +
+                $"empty list from GetRelatedResourceIds (which short-circuits authorization to Forbidden).");
+
         var extractIds = edge.IsPlural
             ? BuildPluralExtractor(edge.FromType, edge.ToIdType, edge.GetMethod)
             : BuildSingularExtractor(edge.FromType, edge.ToIdType, edge.GetMethod);

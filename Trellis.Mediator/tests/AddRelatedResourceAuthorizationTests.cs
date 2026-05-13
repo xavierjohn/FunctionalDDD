@@ -88,6 +88,53 @@ public class AddRelatedResourceAuthorizationTests
     }
 
     [Fact]
+    public async Task SingleHopOverload_OwnerLoaderReturnsSuccessWithNullPayload_CollapsesToForbidden()
+    {
+        // Defense-in-depth: a SharedResourceLoaderById that violates its Result<T> contract
+        // by returning Result.Ok carrying a null value must NOT crash the AOT registration
+        // path with ArgumentNullException from HopLoadResult.Success — mirrors the same
+        // defense in ResourceAuthorizationPathResolver so both the assembly-scan path and
+        // the AOT helper preserve the documented "intermediate / owner load failure
+        // collapses to Forbidden" invariant.
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+        services.AddScoped<IActorProvider>(_ => FakeActorProvider.NoPermissions("actor-1"));
+
+        var leafRepo = new ExplicitLeafRepo();
+        leafRepo.Add(new ExplicitLeaf("l-1", "owner-1"));
+        services.AddSingleton(leafRepo);
+        services.AddScoped<SharedResourceLoaderById<ExplicitLeaf, string>, ExplicitLeafLoader>();
+        services.AddSharedResourceLoader<ExplicitCommand, ExplicitLeaf, string>();
+
+        // Owner loader returns Result.Ok(null) — contract violation that must fail closed.
+        services.AddScoped<SharedResourceLoaderById<ExplicitOwner, string>, NullPayloadOwnerLoader>();
+
+        services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
+            leaf => leaf.OwnerId);
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        var behavior = scope.ServiceProvider
+            .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();
+        var (next, tracker) = NextDelegate.TrackingAsync<ExplicitCommand, Result<string>>(
+            Result.Ok("should not reach"));
+
+        var result = await behavior.Handle(new ExplicitCommand("l-1"), next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        var error = result.UnwrapError();
+        error.Should().BeOfType<Error.Forbidden>();
+        // The via behavior masks the hop's inner sentinel ("null-payload") with the generic
+        // "load-failed" code so the response does not leak which hop failed; what matters
+        // here is that the pipeline FAILS CLOSED (Forbidden) instead of throwing
+        // ArgumentNullException → 500 from HopLoadResult.Success(null!).
+        error.Code.Should().Be("resource.authorization-via.load-failed");
+        tracker.WasInvoked.Should().BeFalse();
+    }
+
+    [Fact]
     public void SingleHopOverload_LandsBeforeValidationBehavior()
     {
         var services = new ServiceCollection();
@@ -339,6 +386,14 @@ internal sealed class ExplicitOwnerLoader(ExplicitOwnerRepo repo) : SharedResour
 {
     public override Task<Result<ExplicitOwner>> GetByIdAsync(string id, CancellationToken cancellationToken) =>
         Task.FromResult(repo.GetById(id));
+}
+
+internal sealed class NullPayloadOwnerLoader : SharedResourceLoaderById<ExplicitOwner, string>
+{
+    // Violates the Result<T> contract by returning Result.Ok carrying a null payload.
+    // Used to assert the AOT helper's defense-in-depth fail-closed mapping to Forbidden.
+    public override Task<Result<ExplicitOwner>> GetByIdAsync(string id, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Ok<ExplicitOwner>(null!));
 }
 
 #endregion

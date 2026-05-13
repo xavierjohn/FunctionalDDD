@@ -137,7 +137,20 @@ public sealed class ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TR
         if (!leafResult.TryGetValue(out var leaf, out var leafError))
             return TResponse.CreateFailure(leafError);
 
-        List<object> current = [leaf!];
+        // Defense-in-depth: a leaf loader that violates its Result<T> contract by returning
+        // a successful Result carrying a null payload must NOT crash the pipeline with
+        // NullReferenceException from a downstream ExtractIds cast — fail closed with
+        // Forbidden so the documented "load failure collapses to a fail-closed result"
+        // posture also covers this corner. Leaf-load *errors* (TryGetValue=false) bubble
+        // verbatim per the documented zero-hop semantics; only the null-success corner is
+        // collapsed here.
+        if (leaf is null)
+            return TResponse.CreateFailure(new Error.Forbidden("resource.authorization-via.null-payload")
+            {
+                Detail = "The leaf resource loader returned a successful result with a null value.",
+            });
+
+        List<object> current = [leaf];
         for (var hopIndex = 0; hopIndex < _path.Hops.Count; hopIndex++)
         {
             var hop = _path.Hops[hopIndex];

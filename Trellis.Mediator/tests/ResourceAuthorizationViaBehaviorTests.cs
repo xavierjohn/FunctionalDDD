@@ -106,6 +106,44 @@ public class ResourceAuthorizationViaBehaviorTests
         tracker.WasInvoked.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task Handle_LeafLoaderReturnsSuccessWithNullPayload_CollapsesToForbidden()
+    {
+        // Defense-in-depth: a leaf loader that violates its Result<T> contract by returning
+        // Result.Ok carrying a null value must NOT crash the pipeline (NullReferenceException
+        // when ExtractIds casts the leaf to TLeaf or accesses its members) and bubble as 500.
+        // The pipeline must fail closed with a Forbidden result.
+        var ownerRepo = new InMemoryRepo<TestOwner>(o => o.Id);
+
+        var actorProvider = FakeActorProvider.NoPermissions("actor-1");
+        var services = new ServiceCollection();
+        services.AddScoped<IResourceLoader<SingleHopCommand, TestLeaf>>(_ => new NullPayloadLeafLoader<SingleHopCommand, TestLeaf>());
+        var sp = services.BuildServiceProvider();
+        var path = BuildLeafToOwnerPath(ownerRepo);
+
+        var behavior = new ResourceAuthorizationViaBehavior<SingleHopCommand, TestLeaf, TestOwner, Result<string>>(
+            actorProvider, sp, path);
+
+        var command = new SingleHopCommand("any-leaf");
+        var (next, tracker) = NextDelegate.TrackingAsync<SingleHopCommand, Result<string>>(
+            Result.Ok("should not reach"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        var error = result.UnwrapError();
+        error.Should().BeOfType<Error.Forbidden>();
+        error.Code.Should().Be("resource.authorization-via.null-payload");
+        tracker.WasInvoked.Should().BeFalse();
+    }
+
+    private sealed class NullPayloadLeafLoader<TMsg, TLeaf> : IResourceLoader<TMsg, TLeaf>
+        where TLeaf : class
+    {
+        public Task<Result<TLeaf>> LoadAsync(TMsg message, CancellationToken cancellationToken)
+            => Task.FromResult(Result.Ok<TLeaf>(null!));
+    }
+
     #endregion
 
     #region Plural terminal — cricket fan-out (Match -> {Team1, Team2}, OR-ownership)

@@ -247,6 +247,43 @@ public class ResourceAuthorizationPathResolverTests
 
     #endregion
 
+    #region Hop loader — nullable TId rejection
+
+    [Fact]
+    public void Resolve_NullableTId_ThrowsClearStartupError()
+    {
+        // Nullable<T> as TId would crash MakeGenericMethod on the `where TId : notnull`
+        // constraint in SingularExtractorImpl with a confusing reflection error. The resolver
+        // detects this at startup and throws an InvalidOperationException naming the offending
+        // type and explaining the supported shape. The candidate type must NOT escape this
+        // class so other tests' assembly-scan registrations do not see it.
+        var act = () => ResourceAuthorizationPathResolver.Resolve(
+            messageType: typeof(NullableIdCommand),
+            leafType: typeof(NullableIdLeaf),
+            ownerType: typeof(NullableIdOwner),
+            candidateEntityTypes: [typeof(NullableIdLeaf), typeof(NullableIdOwner)]);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Nullable<*>*not supported*");
+    }
+
+    // Nested-private fixtures: assembly scanning enumerates *public* types only, so these
+    // private types cannot be picked up by AddResourceAuthorization(Assembly) in unrelated
+    // tests and crash their resolver passes via the new Nullable<TId> rejection.
+    private sealed class NullableIdOwner
+    {
+        public string Id { get; } = "";
+    }
+
+    private sealed class NullableIdLeaf : IIdentifyRelatedResource<NullableIdOwner, Guid?>
+    {
+        public Guid? GetRelatedResourceId() => null;
+    }
+
+    private sealed record NullableIdCommand(string Id) { }
+
+    #endregion
+
     #region Test fixtures — entities and commands
 
     /// <summary>Owner aggregate (terminal target for most tests).</summary>

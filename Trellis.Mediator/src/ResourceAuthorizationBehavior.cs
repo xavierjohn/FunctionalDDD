@@ -97,6 +97,18 @@ public sealed class ResourceAuthorizationBehavior<TMessage, TResource, TResponse
         if (!loadResult.TryGetValue(out var resource, out var loadError))
             return TResponse.CreateFailure(loadError);
 
+        // Defense-in-depth: an IResourceLoader that violates its Result<T> contract by
+        // returning Result.Ok carrying a null payload must NOT pass null through to
+        // message.Authorize where a downstream member access would NRE and bubble as 500.
+        // Mirrors the leaf-loader / hop-loader null-payload defense in the via-authorization
+        // path so all resource-authorization entry points fail closed (Forbidden) when the
+        // loaded resource is unexpectedly null.
+        if (resource is null)
+            return TResponse.CreateFailure(new Error.Forbidden("resource.authorization.null-payload")
+            {
+                Detail = "The resource loader returned a successful result with a null value.",
+            });
+
         // 4. Authorize against the loaded resource
         var authResult = message.Authorize(actor, resource);
         if (authResult.TryGetError(out var authError))

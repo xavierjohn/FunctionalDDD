@@ -1,7 +1,6 @@
 ﻿namespace Trellis.Mediator;
 
 using Microsoft.Extensions.DependencyInjection;
-using Trellis.Authorization;
 
 /// <summary>
 /// Closed-generic carrier for a <see cref="ResolvedAuthorizationPath"/> registered per
