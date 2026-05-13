@@ -1504,7 +1504,7 @@ return rows.TraverseAll(row => EmailAddress.TryCreate(row.Email));
 
 `Result.ParallelAsync(...)` is the framework's opinionated entry point: factory-takes-no-args, eagerly invokes each factory so both tasks actually run concurrently, returns a tuple of `Task<Result<T>>` that the matching `.WhenAllAsync()` extension awaits with `Task.WhenAll` and folds via `Result.Combine` into a single `Result<(T1, T2, …)>`. Failures combine through `Error.Combine`, so two `Error.UnprocessableContent` failures merge their fields, heterogeneous failures become an `Error.Aggregate`.
 
-> 🛑 **Danger — `Result.ParallelAsync` against repositories that share a scoped `DbContext` will race and throw.** EF Core's `DbContext` is documented as not thread-safe; two concurrent operations on a single context throw `InvalidOperationException: A second operation was started on this context instance before a previous operation completed.` The typical Trellis EF wiring is `services.AddDbContext<TContext>(...)` (whose default lifetime is scoped) plus `services.AddTrellisUnitOfWork<TContext>()` (which registers `IUnitOfWork` as scoped and consumes the scoped `TContext`), so **every repository resolved from the same request scope shares one `DbContext`**. In that configuration, the two loads must execute sequentially regardless of independence — see "When NOT to use it" below. `Result.ParallelAsync` is for genuinely cross-resource concurrency (HTTP + DB, two distinct upstream services, factory-created independent contexts), not for two repository reads against the same store.
+> 🛑 **Danger — `Result.ParallelAsync` against repositories that share a `DbContext` instance will race and throw.** The hard rule, independent of DI: **never start a second operation on a `DbContext` before the first one has completed.** EF Core's `DbContext` is documented as not thread-safe; the second concurrent operation throws `InvalidOperationException: A second operation was started on this context instance before a previous operation completed.` The typical Trellis EF wiring triggers this case by construction: `services.AddDbContext<TContext>(...)` registers the context with its default scoped lifetime (this is the default of the parameterless overload — `AddDbContext<TContext>(..., ServiceLifetime)` can override it), and `services.AddTrellisUnitOfWork<TContext>()` registers `IUnitOfWork` as scoped and consumes the scoped `TContext`. So **every repository resolved from the same request scope shares one `DbContext` instance**, and parallelising two repository reads parallelises two operations on that one context. Keep them sequential — see "When NOT to use it" below. `Result.ParallelAsync` is for genuinely cross-resource concurrency (HTTP + DB, two distinct upstream services, factory-created independent contexts), not for two repository reads against the same store.
 
 ```csharp
 using System.Threading;
@@ -1631,14 +1631,24 @@ public sealed class ReturnOrderHandler(
         // an in-memory mutation persists through the rest of the handler's object graph
         // even if a later failure rolls back the database commit, so partially-released
         // stock leaks into any subsequent read of the same aggregate within this scope.
-        // Report ALL missing ids in the detail (not just the first) — that's the whole
-        // point of preflighting: surface the full problem in one round-trip.
+        // Report ALL missing ids — that's the whole point of preflighting: surface the
+        // full problem in one round-trip. Compose the failure as `Error.Aggregate` so
+        // each missing id keeps its own structured `ResourceRef`, not just a Detail
+        // string. Note: this recipe assumes the API's threat model treats product ids
+        // as non-sensitive (typical for commerce). If ids leak information you don't
+        // want to disclose, drop the per-id refs and emit a single generic NotFound.
         var missing = productIds.Where(id => !byId.ContainsKey(id)).ToArray();
-        if (missing.Length > 0)
+        if (missing.Length == 1)
             return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Product>(missing[0]))
             {
-                Detail = $"Products referenced by line items are missing — cannot release stock: {string.Join(", ", missing)}.",
+                Detail = "Product referenced by line item is missing — cannot release stock.",
             });
+        if (missing.Length > 1)
+            return Result.Fail<Order>(new Error.Aggregate(
+                missing.Select(id => (Error)new Error.NotFound(ResourceRef.For<Product>(id))
+                {
+                    Detail = "Product referenced by line item is missing — cannot release stock.",
+                }).ToArray()));
 
         // All related aggregates reachable. Safe to apply side effects.
         foreach (var li in order.LineItems)
@@ -1742,7 +1752,7 @@ A blanket "wire `RequireETag` on every mutation" rule is wrong — it adds cerem
 | Endpoint shape | Lost-update window? | Use `If-Match`? |
 |---|---|---|
 | **Body-less state-transition POST** (`POST /orders/{id}/submit`, `.../approve`, `.../cancel`, `.../return`) | **No.** The state machine + transition guards check the current state. A stale client calling `.../approve` on an order that has already shipped gets `422 Unprocessable Content` from the transition guard; there is nothing to overwrite. | **No.** The state machine substitutes for the precondition. Ceremony without benefit. |
-| **Body-carrying full-update PUT/PATCH** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says `428 Precondition Required` when missing, RFC 9110 says `412 Precondition Failed` when stale. |
+| **Body-carrying full-update PUT** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says `428 Precondition Required` when missing, RFC 9110 says `412 Precondition Failed` when stale. |
 | **Body-carrying partial-update PATCH** with a JSON Patch / JSON Merge Patch document | **Yes.** Same overwrite risk as full update. | **Yes — `RequireETag`.** |
 | **Destructive `DELETE /resources/{id}`** | **Yes.** A stale client can delete a version it has not seen after another writer changed it. | **Yes — `RequireETag`** as the default. Drop the precondition only if the endpoint is explicitly modeled as a guarded state-machine transition with equivalent domain or EF concurrency-token protection. |
 | **Additive set operation** (`POST /orders/{id}/line-items`, `POST /products/{id}/stock-additions +5`) | **Maybe.** Depends on commutativity. Two concurrent `+5` calls produce `+10` correctly; "remove the last line item" against a stale read of "list has 2 items" can drop the wrong item. | **Case-by-case.** Commutative additive ops can stay precondition-free; remove-by-position or "remove the last X" operations should `RequireETag` (or `OptionalETag` only when the endpoint deliberately admits unconditional callers). |
