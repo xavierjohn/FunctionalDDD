@@ -1616,10 +1616,15 @@ public sealed class ReturnOrderHandler(
 {
     public async ValueTask<Result<Order>> Handle(ReturnOrderCommand command, CancellationToken cancellationToken)
     {
-        var orderMaybe = await orders.FindByIdAsync(command.OrderId, cancellationToken);
-        if (!orderMaybe.TryGetValue(out var order))
-            return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Order>(command.OrderId)));
+        // Repository find returns Result<T> — matches Recipe 21's repository shape;
+        // .TryGetValue extracts the success value or short-circuits on the existing Error.
+        var orderResult = await orders.FindByIdAsync(command.OrderId, cancellationToken);
+        if (!orderResult.TryGetValue(out var order))
+            return orderResult;
 
+        // Batch fetch returns what it found — finding a strict subset is normal, NOT an
+        // error per element. The preflight below diffs the requested set against the
+        // returned set; that's the canonical orchestrator job, not the repository's.
         var productIds = order.LineItems.Select(li => li.ProductId).Distinct().ToArray();
         var loaded = await products.GetByIdsAsync(productIds, cancellationToken);
         var byId = loaded.ToDictionary(p => p.Id);
@@ -1637,18 +1642,15 @@ public sealed class ReturnOrderHandler(
         // string. Note: this recipe assumes the API's threat model treats product ids
         // as non-sensitive (typical for commerce). If ids leak information you don't
         // want to disclose, drop the per-id refs and emit a single generic NotFound.
-        var missing = productIds.Where(id => !byId.ContainsKey(id)).ToArray();
+        static Error NotFoundFor(ProductId id) => new Error.NotFound(ResourceRef.For<Product>(id))
+        {
+            Detail = "Product referenced by line item is missing — cannot release stock.",
+        };
+        var missing = productIds.Except(byId.Keys).ToArray();
         if (missing.Length == 1)
-            return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Product>(missing[0]))
-            {
-                Detail = "Product referenced by line item is missing — cannot release stock.",
-            });
+            return Result.Fail<Order>(NotFoundFor(missing[0]));
         if (missing.Length > 1)
-            return Result.Fail<Order>(new Error.Aggregate(
-                missing.Select(id => (Error)new Error.NotFound(ResourceRef.For<Product>(id))
-                {
-                    Detail = "Product referenced by line item is missing — cannot release stock.",
-                }).ToArray()));
+            return Result.Fail<Order>(new Error.Aggregate(missing.Select(NotFoundFor).ToArray()));
 
         // All related aggregates reachable. Safe to apply side effects.
         foreach (var li in order.LineItems)
@@ -1695,6 +1697,7 @@ public async Task Return_with_missing_product_fails_atomically_and_does_not_rele
     // or the operation fails and NOTHING is released.
     r.Should().BeFailureOfType<Error.NotFound>();
     productA.StockQuantity.Should().Be(aStockBefore);  // A NOT partially released
+    productB.StockQuantity.Should().Be(bStockBefore);  // B unmutated (the handler never reached it)
     order.Status.Should().Be(OrderStatus.Delivered);    // Order NOT transitioned (UoW rolls back)
 }
 ```
@@ -1779,6 +1782,8 @@ app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, OrderD
         .CheckAsync(_ => db.SaveChangesResultUnitAsync(ct))
         .ToHttpResponseAsync(OrderResponse.From, opts => opts.HonorPrefer()));
 ```
+
+> **Direct `DbContext` in the Minimal API lambda vs command handler via Mediator.** Both shapes are canonical Trellis. This recipe shows the direct-`DbContext` shape because the precondition (`RequireETag`) belongs at the *read-modify-write* boundary — the same atomic unit where the read happens. If you prefer to dispatch through a command handler, move the same chain (`db.Orders.FirstOrDefaultResultAsync(...).RequireETagAsync(...).BindAsync(...).CheckAsync(_ => db.SaveChangesResultUnitAsync(ct))`) into the handler body; `TransactionalCommandBehavior` then owns the commit, and `db.SaveChangesResultUnitAsync(...)` becomes redundant (drop the `.CheckAsync` step). The precondition placement does not change — it still wraps the freshly-loaded aggregate and runs before any mutation.
 
 **Rationale.** The framework helper is fine; the decision is whether the endpoint's semantics admit a lost-update window. State machines, additive set operations, and resource creation each carry their own concurrency control inside the domain or in the absence of prior state. Only payload-carrying overwrites need explicit precondition checking.
 
