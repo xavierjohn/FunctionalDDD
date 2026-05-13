@@ -298,9 +298,22 @@ public static class ResourceAuthorizationPathResolver
                     $"AddResourceAuthorization(...).");
 
             var result = await loader.GetByIdAsync((TId)id, ct).ConfigureAwait(false);
-            return result.TryGetValue(out var v, out var err)
-                ? HopLoadResult.Success(v!)
-                : HopLoadResult.Failure(err);
+            if (!result.TryGetValue(out var v, out var err))
+                return HopLoadResult.Failure(err);
+
+            // Defense-in-depth: a SharedResourceLoaderById that violates its Result<T>
+            // contract by returning a successful result carrying a null payload must NOT
+            // crash the pipeline with ArgumentNullException from HopLoadResult.Success —
+            // that would bubble as an unhandled exception and violate the documented
+            // "intermediate / owner load failure collapses to Forbidden" invariant on
+            // ResourceAuthorizationViaBehavior. Fail closed instead.
+            if (v is null)
+                return HopLoadResult.Failure(new Error.Forbidden("resource.authorization-via.null-payload")
+                {
+                    Detail = "A related resource loader returned a successful result with a null value.",
+                });
+
+            return HopLoadResult.Success(v);
         };
 
     private static string FormatPath(Type leafType, List<Edge> edges)

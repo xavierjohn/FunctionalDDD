@@ -1,5 +1,6 @@
 ﻿namespace Trellis.Mediator.Tests;
 
+using Microsoft.Extensions.DependencyInjection;
 using Trellis.Authorization;
 
 /// <summary>
@@ -203,6 +204,45 @@ public class ResourceAuthorizationPathResolverTests
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*Use IAuthorizeResource<LeafSingular>*");
+    }
+
+    #endregion
+
+    #region Hop loader — null-payload defense
+
+    [Fact]
+    public async Task ResolvedHop_LoaderReturnsSuccessWithNullValue_CollapsesToForbidden()
+    {
+        // Defense-in-depth: a SharedResourceLoaderById that violates its Result<T> contract
+        // by returning a successful Result carrying a null value must NOT crash the
+        // authorization pipeline with ArgumentNullException from HopLoadResult.Success.
+        // The documented invariant on ResourceAuthorizationViaBehavior is "intermediate /
+        // owner load failures collapse to Error.Forbidden"; that guarantee must hold even
+        // when the loader's success contract is broken, otherwise an internal exception
+        // bubbles as a 500 instead of a 403.
+        var path = ResourceAuthorizationPathResolver.Resolve(
+            messageType: typeof(SingleHopCommand),
+            leafType: typeof(LeafSingular),
+            ownerType: typeof(Owner),
+            candidateEntityTypes: [typeof(LeafSingular), typeof(Owner)]);
+
+        var services = new ServiceCollection();
+        services.AddScoped<SharedResourceLoaderById<Owner, string>>(_ => new NullPayloadOwnerLoader());
+        var sp = services.BuildServiceProvider();
+
+        var hop = path.Hops[0];
+        var outcome = await hop.LoadAsync(sp, "any-owner-id", CancellationToken.None);
+
+        outcome.IsSuccess.Should().BeFalse();
+        outcome.Error.Should().BeOfType<Error.Forbidden>();
+        outcome.Error!.Code.Should().Be("resource.authorization-via.null-payload");
+        outcome.Value.Should().BeNull();
+    }
+
+    private sealed class NullPayloadOwnerLoader : SharedResourceLoaderById<Owner, string>
+    {
+        public override Task<Result<Owner>> GetByIdAsync(string id, CancellationToken cancellationToken)
+            => Task.FromResult(Result.Ok<Owner>(null!));
     }
 
     #endregion
