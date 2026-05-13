@@ -1771,12 +1771,12 @@ app.MapPost("/orders/{id:guid}/approve", (OrderId id, ISender sender, Cancellati
 
 // Full-update PUT — RequireETag at the read-modify-write boundary.
 // Missing If-Match → 428; stale → 412; current → proceeds.
-app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, OrderDbContext db, HttpContext httpContext) =>
+app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, OrderDbContext db, HttpContext httpContext, CancellationToken ct) =>
     db.Orders
-        .FirstOrDefaultResultAsync(o => o.Id == id, new Error.NotFound(ResourceRef.For<Order>(id)))
+        .FirstOrDefaultResultAsync(o => o.Id == id, new Error.NotFound(ResourceRef.For<Order>(id)), ct)
         .RequireETagAsync(ETagHelper.ParseIfMatch(httpContext.Request))
         .BindAsync(o => o.Replace(request))
-        .CheckAsync(_ => db.SaveChangesResultUnitAsync())
+        .CheckAsync(_ => db.SaveChangesResultUnitAsync(ct))
         .ToHttpResponseAsync(OrderResponse.From, opts => opts.HonorPrefer()));
 ```
 
