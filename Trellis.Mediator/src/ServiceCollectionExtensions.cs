@@ -444,7 +444,9 @@ public static class ServiceCollectionExtensions
                     // skipping them — IAuthorizeResource<TResource> is a security marker and a
                     // resource-authorized command that is silently never wired up at startup is a
                     // dangerous failure mode (the command runs without resource authorization).
-                    ValidateResourceAuthorizationResponseType(type, commandResource, tResponse);
+                    ValidateResourceAuthorizationResponseType(type, commandResource, tResponse,
+                        markerInterfaceName: "IAuthorizeResource",
+                        behaviorTypeName: "ResourceAuthorizationBehavior<TMessage, TResource, TResponse>");
 
                     var closedBehavior = behaviorDef.MakeGenericType(type, commandResource, tResponse);
                     var closedPipeline = pipelineDef.MakeGenericType(type, tResponse);
@@ -468,26 +470,25 @@ public static class ServiceCollectionExtensions
                     // pipeline can load it before walking the navigation chain. Missing
                     // IIdentifyResource on a via-command is a registration error: the security
                     // marker is present but the framework cannot infer the leaf type for the
-                    // pipeline-behavior closed generic. Throw at startup rather than silently
-                    // skipping — a silently-skipped via-command would run unprotected at runtime.
-                    // Consumers needing a custom leaf source register via the explicit AOT helper
+                    // pipeline-behavior closed generic. Multiple IIdentifyResource<,>
+                    // declarations on one via-command are also rejected — leaf selection would
+                    // be ambiguous and could authorize the wrong resource chain. Throw at
+                    // startup rather than silently skipping or picking the first. Consumers
+                    // needing a custom leaf source register via the explicit AOT helper
                     // (AddRelatedResourceAuthorization), which bypasses the scanner.
-                    var identifyIfaceForVia = type.GetInterfaces()
-                        .FirstOrDefault(i => i.IsGenericType
-                            && i.GetGenericTypeDefinition() == identifyResourceDef);
+                    var identifyIfacesForVia = type.GetInterfaces()
+                        .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == identifyResourceDef)
+                        .ToList();
 
-                    if (identifyIfaceForVia is null)
-                        throw new InvalidOperationException(
-                            $"{type.FullName ?? type.Name} implements IAuthorizeResourceVia<{tOwner.Name}> " +
-                            $"but does not implement IIdentifyResource<TLeaf, TLeafId>. Via-commands must declare " +
-                            $"their leaf resource so the pipeline can load it before walking the navigation chain. " +
-                            $"For non-IIdentifyResource leaf sources, register the via-behavior via the explicit " +
-                            $"AddRelatedResourceAuthorization helper (which bypasses assembly scanning).");
+                    EnsureExactlyOneIIdentifyResourceForVia(type, viaIface!, identifyIfacesForVia);
 
+                    var identifyIfaceForVia = identifyIfacesForVia[0];
                     var tLeaf = identifyIfaceForVia.GetGenericArguments()[0];
 
                     // Same TResponse constraint as IAuthorizeResource<T>: IResult + IFailureFactory<TResponse>.
-                    ValidateResourceAuthorizationResponseType(type, tOwner, tResponse);
+                    ValidateResourceAuthorizationResponseType(type, tOwner, tResponse,
+                        markerInterfaceName: "IAuthorizeResourceVia",
+                        behaviorTypeName: "ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>");
 
                     viaCommands.Add((type, tLeaf, tOwner, tResponse, identifyIfaceForVia));
                     // Leaf-loader bridging shares the same machinery as IAuthorizeResource<T>.
@@ -827,20 +828,70 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Throws <see cref="InvalidOperationException"/> when a via-authorized command does not
+    /// declare exactly one <see cref="IIdentifyResource{TResource, TId}"/>. Zero identify
+    /// interfaces leaves the marker unprotected at runtime; two or more makes leaf selection
+    /// ambiguous and could authorize the wrong resource chain. Internal so the rejection
+    /// invariant can be unit-tested directly without round-tripping through assembly scanning.
+    /// </summary>
+    /// <param name="messageType">The concrete via-command type.</param>
+    /// <param name="viaIface">The closed <see cref="IAuthorizeResourceVia{TOwner}"/> interface on the message.</param>
+    /// <param name="identifyIfaces">All closed <see cref="IIdentifyResource{TResource, TId}"/> interfaces the message declares.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <paramref name="identifyIfaces"/> is empty (no leaf) or contains more than
+    /// one entry (ambiguous leaf).
+    /// </exception>
+    internal static void EnsureExactlyOneIIdentifyResourceForVia(
+        Type messageType,
+        Type viaIface,
+        IReadOnlyList<Type> identifyIfaces)
+    {
+        var tOwner = viaIface.GetGenericArguments()[0];
+
+        if (identifyIfaces.Count == 0)
+            throw new InvalidOperationException(
+                $"{messageType.FullName ?? messageType.Name} implements IAuthorizeResourceVia<{tOwner.Name}> " +
+                $"but does not implement IIdentifyResource<TLeaf, TLeafId>. Via-commands must declare " +
+                $"their leaf resource so the pipeline can load it before walking the navigation chain. " +
+                $"For non-IIdentifyResource leaf sources, register the via-behavior via the explicit " +
+                $"AddRelatedResourceAuthorization helper (which bypasses assembly scanning).");
+
+        if (identifyIfaces.Count > 1)
+            throw new InvalidOperationException(
+                $"{messageType.FullName ?? messageType.Name} implements IAuthorizeResourceVia<{tOwner.Name}> " +
+                $"and {identifyIfaces.Count} IIdentifyResource<,> interfaces — leaf selection " +
+                $"would be ambiguous and could authorize the wrong resource chain. Candidates: " +
+                string.Join(", ", identifyIfaces.Select(i =>
+                    $"IIdentifyResource<{i.GetGenericArguments()[0].Name}, {i.GetGenericArguments()[1].Name}>")) +
+                $". Declare exactly one IIdentifyResource<TLeaf, TLeafId> matching the via-authorization " +
+                $"chain, or register the via-behavior via the explicit AddRelatedResourceAuthorization helper.");
+    }
+
+    /// <summary>
     /// Validates that a message-implemented <c>TResponse</c> can satisfy the
-    /// <see cref="ResourceAuthorizationBehavior{TMessage, TResource, TResponse}"/> constraints
-    /// (<see cref="IResult"/> + <see cref="IFailureFactory{TSelf}"/>). Throws
-    /// <see cref="InvalidOperationException"/> with a diagnostic message naming the message
-    /// type, resource type, and response type when the constraints are not met. Internal so
-    /// the assembly scanner's fail-fast contract can be unit-tested without round-tripping
-    /// through a synthetic assembly.
+    /// resource-authorization behaviors' constraints (<see cref="IResult"/> +
+    /// <see cref="IFailureFactory{TSelf}"/>). Throws <see cref="InvalidOperationException"/>
+    /// with a diagnostic message naming the message type, the relevant authorization-marker
+    /// interface (so the error points at the actual culprit for via-authorized commands),
+    /// and the response type when the constraints are not met. Internal so the assembly
+    /// scanner's fail-fast contract can be unit-tested without round-tripping through a
+    /// synthetic assembly.
     /// </summary>
     /// <param name="messageType">The concrete message type discovered by the scanner.</param>
-    /// <param name="resourceType">The closed <c>TResource</c> from the message's
-    /// <see cref="IAuthorizeResource{TResource}"/> interface.</param>
+    /// <param name="resourceType">For <see cref="IAuthorizeResource{TResource}"/>: the closed <c>TResource</c>. For <see cref="IAuthorizeResourceVia{TOwner}"/>: the closed <c>TOwner</c>.</param>
     /// <param name="responseType">The closed response type from the message's
     /// <c>ICommand&lt;TResponse&gt;</c> / <c>IQuery&lt;TResponse&gt;</c> /
     /// <c>IRequest&lt;TResponse&gt;</c> interface.</param>
+    /// <param name="markerInterfaceName">
+    /// Display name of the security-marker interface the message implements — either
+    /// <c>"IAuthorizeResource"</c> or <c>"IAuthorizeResourceVia"</c>. Used so the
+    /// diagnostic points at the actual interface the consumer declared rather than
+    /// always claiming <c>IAuthorizeResource</c>.
+    /// </param>
+    /// <param name="behaviorTypeName">
+    /// Display name of the pipeline behavior that consumes this message — either
+    /// <c>"ResourceAuthorizationBehavior"</c> or <c>"ResourceAuthorizationViaBehavior"</c>.
+    /// </param>
     /// <exception cref="InvalidOperationException">Thrown when <paramref name="responseType"/>
     /// does not implement <see cref="IResult"/> or <see cref="IFailureFactory{TSelf}"/>
     /// closed over itself.</exception>
@@ -848,16 +899,18 @@ public static class ServiceCollectionExtensions
         Type messageType,
         Type resourceType,
         [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]
-        Type responseType)
+        Type responseType,
+        string markerInterfaceName = "IAuthorizeResource",
+        string behaviorTypeName = "ResourceAuthorizationBehavior<TMessage, TResource, TResponse>")
     {
         if (!typeof(IResult).IsAssignableFrom(responseType))
             throw new InvalidOperationException(
-                $"{messageType.FullName ?? messageType.Name} implements IAuthorizeResource<{resourceType.Name}> " +
+                $"{messageType.FullName ?? messageType.Name} implements {markerInterfaceName}<{resourceType.Name}> " +
                 $"and {responseType.FullName ?? responseType.Name} via the message-marker interface, but " +
                 $"{responseType.FullName ?? responseType.Name} does not implement IResult. " +
-                $"ResourceAuthorizationBehavior<TMessage, TResource, TResponse> requires TResponse : IResult, IFailureFactory<TResponse>. " +
+                $"{behaviorTypeName} requires TResponse : IResult, IFailureFactory<TResponse>. " +
                 $"Use a result type that satisfies both constraints — e.g. Result<{resourceType.Name}>, Result<string>, Result<Unit>, " +
-                $"or any other Result<T> the message handler can return; alternatively, remove IAuthorizeResource<{resourceType.Name}> " +
+                $"or any other Result<T> the message handler can return; alternatively, remove {markerInterfaceName}<{resourceType.Name}> " +
                 $"from the message.");
 
         // IFailureFactory<TSelf> is F-bounded (where TSelf : IFailureFactory<TSelf>), so we
@@ -879,12 +932,12 @@ public static class ServiceCollectionExtensions
 
         if (!implementsFailureFactory)
             throw new InvalidOperationException(
-                $"{messageType.FullName ?? messageType.Name} implements IAuthorizeResource<{resourceType.Name}> " +
+                $"{messageType.FullName ?? messageType.Name} implements {markerInterfaceName}<{resourceType.Name}> " +
                 $"and {responseType.FullName ?? responseType.Name} via the message-marker interface, but " +
                 $"{responseType.FullName ?? responseType.Name} does not implement IFailureFactory<{responseType.Name}>. " +
-                $"ResourceAuthorizationBehavior<TMessage, TResource, TResponse> requires TResponse : IResult, IFailureFactory<TResponse>. " +
+                $"{behaviorTypeName} requires TResponse : IResult, IFailureFactory<TResponse>. " +
                 $"Use a result type that satisfies both constraints — e.g. Result<{resourceType.Name}>, Result<string>, Result<Unit>, " +
-                $"or any other Result<T> the message handler can return; alternatively, remove IAuthorizeResource<{resourceType.Name}> " +
+                $"or any other Result<T> the message handler can return; alternatively, remove {markerInterfaceName}<{resourceType.Name}> " +
                 $"from the message.");
     }
 }

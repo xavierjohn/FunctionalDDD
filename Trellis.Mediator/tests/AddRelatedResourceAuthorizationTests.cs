@@ -36,8 +36,8 @@ public class AddRelatedResourceAuthorizationTests
             ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
             leaf => leaf.OwnerId);
 
-        var sp = services.BuildServiceProvider();
-        var scope = sp.CreateScope();
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
 
         var behavior = scope.ServiceProvider
             .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();
@@ -71,8 +71,8 @@ public class AddRelatedResourceAuthorizationTests
             ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
             leaf => leaf.OwnerId);  // returns null, triggers Forbidden short-circuit
 
-        var sp = services.BuildServiceProvider();
-        var scope = sp.CreateScope();
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
 
         var behavior = scope.ServiceProvider
             .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();
@@ -177,9 +177,11 @@ public class AddRelatedResourceAuthorizationTests
     {
         // A consumer may register their own closed-generic IPipelineBehavior<,> via a factory
         // for unrelated reasons (e.g., a behavior that needs captured options). The relocator
-        // must NOT treat such descriptors as Trellis-owned and re-order them. Only descriptors
-        // tagged with ViaBehaviorRegistrationMarker (emitted by AddRelatedResourceAuthorization
-        // and the via-scanner) are relocated.
+        // must NOT treat such descriptors as Trellis-owned and re-order them. The relocator
+        // identifies Trellis-owned descriptors by ImplementationType
+        // (ResourceAuthorizationBehavior<,,> or ResourceAuthorizationViaBehavior<,,,>) and
+        // inherently ignores factory descriptors, so a consumer's factory-registered
+        // IPipelineBehavior<,> with no ImplementationType is left alone.
         var services = new ServiceCollection();
 
         // Register an UNRELATED closed-generic factory-based pipeline behavior BEFORE
@@ -203,7 +205,7 @@ public class AddRelatedResourceAuthorizationTests
 
         // After AddTrellisBehaviors, the unrelated factory descriptor must still be present.
         // The relocator should NOT have moved it before ValidationBehavior just because it
-        // looks like a closed-generic factory-based IPipelineBehavior<,>.
+        // looks like a closed-generic IPipelineBehavior<,>.
         var validationIndex = -1;
         var unrelatedIndexAfter = -1;
         for (int i = 0; i < services.Count; i++)
@@ -222,11 +224,13 @@ public class AddRelatedResourceAuthorizationTests
         // The relocator must NOT have touched the unrelated descriptor. It stays put at
         // exactly where the consumer placed it (index 0 in this test, since it was added
         // first before AddTrellisBehaviors ran). If the relocator had incorrectly classified
-        // it as Trellis-owned, it would have been pulled out and re-inserted just before
-        // ValidationBehavior (i.e. at validationIndex), not at its original position 0.
+        // it as Trellis-owned (e.g., by matching factory descriptors), it would have been
+        // pulled out and re-inserted just before ValidationBehavior (i.e. at validationIndex),
+        // not at its original position 0.
         unrelatedIndexAfter.Should().Be(unrelatedIndexBefore,
-            "without a ViaBehaviorRegistrationMarker, the relocator must leave consumer-registered " +
-            "factory descriptors where they originally were.");
+            "the relocator only moves descriptors whose ImplementationType is " +
+            "ResourceAuthorizationBehavior<,,> or ResourceAuthorizationViaBehavior<,,,>; " +
+            "consumer factory-registered descriptors must be left where they were.");
     }
 
     [Fact]
@@ -251,8 +255,8 @@ public class AddRelatedResourceAuthorizationTests
             ExplicitCommand, ExplicitLeaf, string, ExplicitOwner, string, Result<string>>(
             leaf => leaf.OwnerId);
 
-        var sp = services.BuildServiceProvider();
-        var scope = sp.CreateScope();
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
 
         var behavior = scope.ServiceProvider
             .GetRequiredService<IPipelineBehavior<ExplicitCommand, Result<string>>>();

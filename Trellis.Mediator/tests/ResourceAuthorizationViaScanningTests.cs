@@ -84,8 +84,8 @@ public class ResourceAuthorizationViaScanningTests
 
         services.AddResourceAuthorization(typeof(ScanCricketCommand).Assembly);
 
-        var sp = services.BuildServiceProvider();
-        var scope = sp.CreateScope();
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
 
         var behavior = scope.ServiceProvider
             .GetRequiredService<IPipelineBehavior<ScanCricketCommand, Result<string>>>();
@@ -135,9 +135,67 @@ public class ResourceAuthorizationViaScanningTests
             .WithMessage("*both IAuthorizeResource*and IAuthorizeResourceVia*");
     }
 
-    #region Test fixtures (top-level so assembly scan picks them up cleanly)
+    [Fact]
+    public void EnsureExactlyOneIIdentifyResourceForVia_ZeroIdentify_Throws()
+    {
+        // No IIdentifyResource on a via-command would silently leave the marker unprotected
+        // at runtime; fail loud at scan time.
+        var viaIface = typeof(IAuthorizeResourceVia<ScanTeam>);
 
-    #endregion
+        var act = () => ServiceCollectionExtensions.EnsureExactlyOneIIdentifyResourceForVia(
+            typeof(ScanCricketCommand),
+            viaIface,
+            identifyIfaces: []);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*does not implement IIdentifyResource<TLeaf, TLeafId>*");
+    }
+
+    [Fact]
+    public void EnsureExactlyOneIIdentifyResourceForVia_TwoIdentify_Throws()
+    {
+        // Multiple IIdentifyResource on one via-command makes leaf selection ambiguous —
+        // picking the first arbitrarily could authorize the wrong resource chain. Fail
+        // loud at scan time with both candidates named.
+        var viaIface = typeof(IAuthorizeResourceVia<ScanTeam>);
+        var ifaces = new[]
+        {
+            typeof(IIdentifyResource<ScanMatch, string>),
+            typeof(IIdentifyResource<ScanTeam, string>),
+        };
+
+        var act = () => ServiceCollectionExtensions.EnsureExactlyOneIIdentifyResourceForVia(
+            typeof(ScanCricketCommand),
+            viaIface,
+            ifaces);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*2 IIdentifyResource<,> interfaces*IIdentifyResource<ScanMatch, String>*IIdentifyResource<ScanTeam, String>*");
+    }
+
+    [Fact]
+    public void EnsureExactlyOneIIdentifyResourceForVia_ExactlyOne_DoesNotThrow()
+        => ServiceCollectionExtensions.EnsureExactlyOneIIdentifyResourceForVia(
+            typeof(ScanCricketCommand),
+            typeof(IAuthorizeResourceVia<ScanTeam>),
+            identifyIfaces: [typeof(IIdentifyResource<ScanMatch, string>)]);
+
+    [Fact]
+    public void ValidateResourceAuthorizationResponseType_ViaCommand_BadResponse_ErrorNamesViaMarker()
+    {
+        // The diagnostic must point at IAuthorizeResourceVia and ResourceAuthorizationViaBehavior
+        // for via-commands so consumers fix the right marker. The previously-hardcoded
+        // "implements IAuthorizeResource<...>" text was misleading.
+        var act = () => ServiceCollectionExtensions.ValidateResourceAuthorizationResponseType(
+            messageType: typeof(ScanCricketCommand),
+            resourceType: typeof(ScanTeam),
+            responseType: typeof(string),  // not IResult / IFailureFactory
+            markerInterfaceName: "IAuthorizeResourceVia",
+            behaviorTypeName: "ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>");
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*IAuthorizeResourceVia<ScanTeam>*ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>*");
+    }
 }
 
 #region Top-level entity fixtures

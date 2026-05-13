@@ -30,7 +30,11 @@ using Trellis.Authorization;
 /// <para>
 /// The resolver uses reflection to enumerate interface declarations and to construct typed
 /// delegates. It is <b>not</b> AOT-safe; consumers targeting Native AOT should use an explicit
-/// registration helper instead (see Trellis.Mediator pass 7).
+/// registration helper instead — see
+/// <c>ServiceCollectionExtensions.AddRelatedResourceAuthorization&lt;TMessage, TLeaf, TLeafId, TOwner, TOwnerId, TResponse&gt;(extractOwnerId)</c>
+/// for the single-hop case or
+/// <c>ServiceCollectionExtensions.AddRelatedResourceAuthorization&lt;TMessage, TLeaf, TOwner, TResponse&gt;(path)</c>
+/// when accepting a hand-built path.
 /// </para>
 /// </remarks>
 public static class ResourceAuthorizationPathResolver

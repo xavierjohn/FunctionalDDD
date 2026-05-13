@@ -89,8 +89,10 @@ public sealed class ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TR
             throw new ArgumentException(
                 $"Resolved authorization path is for {path.MessageType.Name} but behavior is closed over " +
                 $"TMessage = {typeof(TMessage).Name}. Each via-authorized command must receive its own " +
-                $"ResolvedAuthorizationPath; do not register ResolvedAuthorizationPath as an unkeyed DI service " +
-                $"— capture it per-command via a factory closure on the closed-generic IPipelineBehavior registration.",
+                $"ResolvedAuthorizationPath; register the path via " +
+                $"ResolvedAuthorizationPathHolder<TMessage, TLeaf, TOwner, TResponse> (the typed-registration " +
+                $"pattern used by AddResourceAuthorization assembly scanning and AddRelatedResourceAuthorization) " +
+                $"so DI naturally disambiguates per command.",
                 nameof(path));
 
         if (path.LeafType != typeof(TLeaf))

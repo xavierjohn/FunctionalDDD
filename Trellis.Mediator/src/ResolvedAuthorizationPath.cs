@@ -80,16 +80,21 @@ public readonly struct HopLoadResult
 /// <b>Per-message registration.</b> Each command has its own <see cref="ResolvedAuthorizationPath"/>.
 /// Do <b>not</b> register <see cref="ResolvedAuthorizationPath"/> as an unkeyed DI service —
 /// that would silently share a single path across all via-authorized commands, allowing one
-/// command's authorization rules to apply to another. Instead, capture the path in the
-/// behavior's registration via a factory closure, e.g.:
-/// <code>
-/// services.Add(ServiceDescriptor.Scoped(
-///     typeof(IPipelineBehavior&lt;TMessage, TResponse&gt;),
-///     sp =&gt; new ResourceAuthorizationViaBehavior&lt;TMessage, TLeaf, TOwner, TResponse&gt;(
-///         sp.GetRequiredService&lt;IActorProvider&gt;(),
-///         sp,
-///         capturedPath)));
-/// </code>
+/// command's authorization rules to apply to another. Use one of the supported registration
+/// paths instead:
+/// <list type="bullet">
+///   <item><description><b>Assembly scanning</b>:
+///   <c>services.AddResourceAuthorization(typeof(MyCommand).Assembly)</c> discovers
+///   via-commands, runs the resolver, and registers each path as a typed
+///   <see cref="ResolvedAuthorizationPathHolder{TMessage, TLeaf, TOwner, TResponse}"/>.</description></item>
+///   <item><description><b>Explicit (AOT-friendly)</b>:
+///   <c>services.AddRelatedResourceAuthorization&lt;TMessage, TLeaf, TLeafId, TOwner, TOwnerId, TResponse&gt;(extractOwnerId)</c>
+///   for single-hop, or <c>services.AddRelatedResourceAuthorization&lt;TMessage, TLeaf, TOwner, TResponse&gt;(path)</c>
+///   accepting a hand-built path. Both overloads register the path as a closed-generic
+///   <see cref="ResolvedAuthorizationPathHolder{TMessage, TLeaf, TOwner, TResponse}"/> and the
+///   behavior as a typed descriptor — preserving relocation before
+///   <c>ValidationBehavior</c>.</description></item>
+/// </list>
 /// As a defense-in-depth measure, the behavior's constructor validates that the path's
 /// <see cref="MessageType"/>, <see cref="LeafType"/>, and <see cref="OwnerType"/> agree with
 /// its own generic arguments and fails fast when they do not.
