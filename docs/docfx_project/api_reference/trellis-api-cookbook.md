@@ -1189,7 +1189,7 @@ o => o.Status == OrderStatus.Submitted
 
 is now both readable AND analyzer-clean inside any expression tree (specifications, FluentValidation, EF). The residual EF-Core/`FakeRepository` parity guidance — `AddTrellisInterceptors()`, `ApplyTrellisConventions`, and "share the same `Specification<T>` between EF and `FakeRepository` — never duplicate the predicate" — has moved into [Recipe 8](#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects). Ad-hoc query operators (`WhereLessThan`, `WhereHasValue`, etc.) live in [trellis-api-efcore.md](trellis-api-efcore.md).
 
-The recipe number is preserved as a stub so existing bookmark and search-index entries remain stable; future content should renumber from Recipe 22 rather than reusing 15.
+The recipe number is preserved as a stub so existing bookmark and search-index entries remain stable; future content should renumber from Recipe 24 rather than reusing 15.
 
 ---
 
@@ -1563,7 +1563,9 @@ public ValueTask<Result<DraftOrderId>> Handle(CreateDraftOrderCommand command, C
             () => _customers.FindByIdAsync(command.CustomerId, cancellationToken),  // shared DbContext
             () => _products.FindByIdAsync(command.ProductId, cancellationToken))    // shared DbContext
         .WhenAllAsync()
-        .BindAsync(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity)));
+        .BindAsync(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity))
+        .TapAsync(_orders.Add)
+        .MapAsync(o => o.Id));
 
 // ✅ Sequential against a shared DbContext — correct by construction. The latency
 // cost is the sum of two local reads, which is negligible in practice.
@@ -1722,15 +1724,21 @@ foreach (var li in order.LineItems)
     product.ReleaseStock(li.Quantity);
 }
 
-// ✅ Fail-loud — invariant violation surfaces as Error.NotFound; UoW rolls back.
+// ✅ Fail-loud with full preflight — same shape as the worked example above.
+// Compute the missing set BEFORE any side effect; only enter the release loop
+// when every related aggregate is reachable.
+var missing = order.LineItems.Select(li => li.ProductId).Distinct()
+    .Where(id => !byId.ContainsKey(id))
+    .ToArray();
+if (missing.Length > 0)
+    return Result.Fail<Order>(missing.Length == 1
+        ? new Error.NotFound(ResourceRef.For<Product>(missing[0]))
+        : new Error.Aggregate(missing.Select(id =>
+            (Error)new Error.NotFound(ResourceRef.For<Product>(id))).ToArray()));
+
 foreach (var li in order.LineItems)
 {
-    if (!byId.TryGetValue(li.ProductId, out var product))
-        return Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Product>(li.ProductId))
-        {
-            Detail = $"Product {li.ProductId} referenced by line item is missing — cannot release stock.",
-        });
-
+    var product = byId[li.ProductId];
     var release = product.ReleaseStock(li.Quantity);
     if (release.Error is { } err)
         return Result.Fail<Order>(err);
@@ -1750,7 +1758,7 @@ A blanket "wire `RequireETag` on every mutation" rule is wrong — it adds cerem
 | **Body-less state-transition POST** (`POST /orders/{id}/submit`, `.../approve`, `.../cancel`, `.../return`) | **No.** The state machine + transition guards check the current state. A stale client calling `.../approve` on an order that has already shipped gets `422 Unprocessable Content` from the transition guard; there is nothing to overwrite. | **No.** The state machine substitutes for the precondition. Ceremony without benefit. |
 | **Body-carrying full-update PUT** (`PUT /orders/{id}` with a full replacement body) | **Yes.** The body silently overwrites whatever the concurrent edit wrote. | **Yes — `RequireETag`.** RFC 6585 says `428 Precondition Required` when missing, RFC 9110 says `412 Precondition Failed` when stale. |
 | **Body-carrying partial-update PATCH** with a JSON Patch / JSON Merge Patch document | **Yes.** Same overwrite risk as full update. | **Yes — `RequireETag`.** |
-| **Destructive `DELETE /resources/{id}`** | **Yes.** A stale client can delete a version it has not seen after another writer changed it. | **Yes — `RequireETag`** as the default. Drop the precondition only if the endpoint is explicitly modeled as a guarded state-machine transition with equivalent domain or EF concurrency-token protection. |
+| **Destructive `DELETE /resources/{id}`** | **Yes.** A stale client can delete a version it has not seen after another writer changed it. | **Yes — `RequireETag`** as the default. EF Core's row-version concurrency tokens are **not** an equivalent substitute: they catch concurrent *writes* racing after the row was loaded by the handler, not stale-client reads from before the request. Drop the precondition only if the endpoint is explicitly modeled as a guarded state-machine transition where a stale caller's intent is already invalid by construction. |
 | **Additive set operation** (`POST /orders/{id}/line-items`, `POST /products/{id}/stock-additions +5`) | **Maybe.** Depends on commutativity. Two concurrent `+5` calls produce `+10` correctly; "remove the last line item" against a stale read of "list has 2 items" can drop the wrong item. | **Case-by-case.** Commutative additive ops can stay precondition-free; remove-by-position or "remove the last X" operations should `RequireETag` (or `OptionalETag` only when the endpoint deliberately admits unconditional callers). |
 | **Resource creation** (`POST /customers`, `POST /products`) | **N/A.** No prior version to match against. | **No.** |
 
