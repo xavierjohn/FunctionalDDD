@@ -1639,7 +1639,7 @@ public sealed class ReturnOrderHandler(
         {
             Detail = "Product referenced by line item is missing — cannot release stock.",
         };
-        var missing = productIds.Except(byId.Keys).ToArray();
+        var missing = productIds.Where(id => !byId.ContainsKey(id)).ToArray();
         if (missing.Length == 1)
             return Result.Fail<Order>(NotFoundFor(missing[0]));
         if (missing.Length > 1)
@@ -1654,7 +1654,7 @@ public sealed class ReturnOrderHandler(
                 return Result.Fail<Order>(err);
         }
 
-        return order.Return(command.Reason, timeProvider.GetUtcNow().UtcDateTime).Map(_ => order);
+        return order.Return(command.Reason, timeProvider.GetUtcNow()).Map(_ => order);
     }
 }
 ```
