@@ -368,4 +368,41 @@ public class ResourceAuthorizationBehaviorTests
     }
 
     #endregion
+
+    #region Loader returns Result.Ok with null payload — fail closed
+
+    [Fact]
+    public async Task Handle_LoaderReturnsSuccessWithNullPayload_CollapsesToForbidden()
+    {
+        // Defense-in-depth: an IResourceLoader that violates its Result<T> contract by
+        // returning Result.Ok carrying a null value must NOT pass null through to
+        // message.Authorize where a downstream member access would NRE and bubble as 500.
+        // The pipeline must fail closed with a Forbidden response.
+        var loader = new NullPayloadResourceLoader<ResourceOwnerCommand>();
+        var services = new ServiceCollection();
+        services.AddScoped<IResourceLoader<ResourceOwnerCommand, TestResource>>(_ => loader);
+        var sp = services.BuildServiceProvider();
+
+        var behavior = new ResourceAuthorizationBehavior<ResourceOwnerCommand, TestResource, Result<string>>(
+            FakeActorProvider.NoPermissions("owner-1"), sp);
+        var command = new ResourceOwnerCommand("res-1");
+        var (next, tracker) = NextDelegate.TrackingAsync<ResourceOwnerCommand, Result<string>>(
+            Result.Ok("should not reach"));
+
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        var error = result.UnwrapError();
+        error.Should().BeOfType<Error.Forbidden>();
+        error.Code.Should().Be("resource.authorization.null-payload");
+        tracker.WasInvoked.Should().BeFalse();
+    }
+
+    private sealed class NullPayloadResourceLoader<TMessage> : IResourceLoader<TMessage, TestResource>
+    {
+        public Task<Result<TestResource>> LoadAsync(TMessage message, CancellationToken cancellationToken)
+            => Task.FromResult(Result.Ok<TestResource>(null!));
+    }
+
+    #endregion
 }

@@ -88,6 +88,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Add Minimal API or MVC endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult) |
 | Map primitive DTO fields to value objects | [Recipe 18](#recipe-18--dto-primitives-to-value-object-command-no-test-only-unwrap) |
 | Add resource authorization | [Recipe 7](#recipe-7--authorization-iactorprovider--iauthorize--resource-based-auth) |
+| Authorize against a related resource one or more navigation hops away (cricket-style fan-out, owner chains) | [Recipe 24](#recipe-24--indirect-multi-hop-resource-authorization) |
 | Map `Maybe<T>` or composite value objects with EF Core | [Recipe 8](#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects), [Recipe 13](#recipe-13--composite-value-object-end-to-end-domain--api-json-binding--ef-core-ownership) |
 | Add optional request/response fields | [Recipe 14](#recipe-14--optional-fields-in-request-dtos-maybetscalar-vs-nullable-transport) |
 | Read optional HTTP resources where 404 means absent | [Recipe 19](#recipe-19--http-client-result-safety-and-optional-reads) |
@@ -1803,6 +1804,152 @@ app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, OrderD
 - **Only the `Trellis` namespace is auto-imported.** The template's implicit usings include `Trellis` (which exposes `Result`, `Result<T>`, `Error`, `Maybe<T>`, `RequiredString<T>`, `RequiredGuid<T>`, `RequiredInt<T>`, `RequiredDecimal<T>`, `RequiredDateTime<T>`, etc.). Every other Trellis namespace requires an explicit `using` per file — e.g. `using Trellis.Primitives;` for `Money` / `EmailAddress` / `PhoneNumber` / `MonetaryAmount` / `CurrencyCode` / `CountryCode` / etc., `using Stateless;` for the upstream `StateMachine<TState, TTrigger>` type plus `using Trellis.StateMachine;` for the Trellis `FireResult` extension and `LazyStateMachine<TState, TTrigger>`, `using Trellis.Authorization;` for permission types. This is intentional: implicit usings cannot be added at the template level without breaking services that don't reference the package.
 - **Accessing `Maybe<T>.Value` inside `Expression<Func<...>>` lambdas (EF Core `Where`/`Select`, FluentValidation `RuleFor`, Specifications):** TRLS003 still applies inside expression trees, but it now recognises the multi-clause guard — `e => e.Status == X && e.Y.HasValue && e.Y.Value == y` is analyzer-clean, and `MaybeQueryInterceptor` translates each clause faithfully to SQL when `AddTrellisInterceptors()` is wired. Hoist into a guarded variable for projections that the interceptor doesn't cover. Do not suppress with `#pragma warning disable TRLS003`. See [Recipe 8](#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects) for the full Specification walkthrough.
 - **`EquatableArray<T>` does not implement `IEnumerable<T>` — project through `.Items` for LINQ / FluentAssertions / `string.Join`.** The sequence-equality wrapper exposes a duck-typed `GetEnumerator()` for allocation-free `foreach` but deliberately does not implement `IEnumerable<T>`. LINQ extension methods (`Select`, `Where`, `Any`, `ToList`) and FluentAssertions extensions (`Should().ContainSingle()`, `Should().HaveCount(...)`, `Should().BeEquivalentTo(...)`) bind on `IEnumerable<T>` and will not compile against the raw wrapper. Call `.Items` first — it returns the wrapped `ImmutableArray<T>`, which IS `IEnumerable<T>`. This shows up most often in test assertions on `Error.UnprocessableContent.Fields` / `.Rules` and in error-rendering helpers. See [`EquatableArray<T>`](trellis-api-core.md#public-readonly-struct-equatablearrayt--iequatableequatablearrayt) in the Core reference for the worked example.
+
+---
+
+## Recipe 24 — Indirect (multi-hop) resource authorization
+
+**Problem.** A command identifies a "leaf" resource by id (e.g. `MatchId`) but ownership/authorization is determined by a different resource one or more navigation hops away. Examples:
+
+- **Cricket fan-out**: actor must own home OR away team to upload a scorecard. `Match → {HomeTeam, AwayTeam}`, OR-ownership.
+- **Owner chain**: `Match → Team → Tournament` — authorize against tournament owner.
+- **Org hierarchy**: `Document → Folder` where `Folder` carries the org-unit owning the document.
+
+The naive workaround is a per-handler ownership guard (e.g. cricket's old `MatchOwnershipGuard`). It runs inside the handler body **after** the framework authorization pipeline has already passed, must be remembered in every handler, and is easy to forget — making it a recurring source of authorization gaps. `IAuthorizeResourceVia<TOwner>` moves the check into the framework pipeline as a declarative interface.
+
+**Decision table.**
+
+| Scenario | Recipe |
+|---|---|
+| Authorize against the resource the command identifies | `IAuthorizeResource<T>` (Recipe 7) |
+| Authorize against a single related resource one FK hop away | `IAuthorizeResourceVia<TOwner>` + `IIdentifyRelatedResource<TOwner, TOwnerId>` on the leaf |
+| Authorize against a set of related resources (cricket fan-out, OR-ownership) | `IAuthorizeResourceVia<TOwner>` + `IIdentifyRelatedResources<TOwner, TOwnerId>` on the leaf |
+| Authorize against a resource at the end of a chain (`Match → Team → Tournament`) | `IAuthorizeResourceVia<TFinalOwner>` + `IIdentifyRelatedResource<,>` declared on each intermediate entity |
+| Authorize against a recursive hierarchy (org-unit ancestors, comment-thread parents) | Materialize the ancestor chain on the loaded aggregate (closure-table projection) and use zero-hop `IAuthorizeResource<T>`; OR a custom `IResourceLoader<TMessage, TProjection>` |
+| Authorize against a composite shape (joins, projections, conditional paths, plural-in-middle) | `IResourceLoader<TMessage, TProjection>` returning a custom projection; put `IAuthorizeResource<TProjection>` on the command |
+
+### Cricket fan-out — end to end
+
+```csharp
+using Trellis;
+using Trellis.Authorization;
+
+public sealed partial class MatchId : RequiredGuid<MatchId>;
+public sealed partial class TeamId  : RequiredGuid<TeamId>;
+
+public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResources<Team, TeamId>
+{
+    public TeamId HomeTeamId { get; }
+    public TeamId AwayTeamId { get; }
+    public IReadOnlyList<TeamId> GetRelatedResourceIds() => [HomeTeamId, AwayTeamId];
+}
+
+public sealed class Team : Aggregate<TeamId>
+{
+    public string CreatedByActorId { get; }
+}
+
+public sealed record UploadScorecardCommand(MatchId MatchId, /* fields */)
+    : ICommand<Result<Unit>>,
+      IAuthorizeResourceVia<Team>,
+      IIdentifyResource<Match, MatchId>
+{
+    public MatchId GetResourceId() => MatchId;
+
+    public IResult Authorize(Actor actor, IReadOnlyList<Team> owners) =>
+        Result.Ensure(
+            owners.Any(t => t.CreatedByActorId == actor.Id),
+            new Error.Forbidden("match.upload-scorecard")
+                { Detail = "Actor does not own either match team." });
+}
+
+// Composition root — assembly scan registers everything.
+services.AddTrellisBehaviors();
+services.AddResourceAuthorization(typeof(UploadScorecardCommand).Assembly);
+```
+
+The pipeline:
+1. Resolves the actor.
+2. Loads the `Match` via the existing `SharedResourceLoaderById<Match, MatchId>` (bridged automatically because the command implements `IIdentifyResource<Match, MatchId>`).
+3. Calls `match.GetRelatedResourceIds()` → `[home, away]`, deduplicates, loads each via `SharedResourceLoaderById<Team, TeamId>`.
+4. Calls `command.Authorize(actor, [homeTeam, awayTeam])`.
+5. On any leaf-load failure, the loader's error bubbles. On any **intermediate** or owner-load failure, the pipeline collapses to `Error.Forbidden` (no existence leak). Empty ID list at any hop short-circuits to `Forbidden` without invoking `Authorize`.
+
+### Chain — `Match → Team → Tournament`
+
+```csharp
+public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResource<Team, TeamId>
+{
+    public TeamId TeamId { get; }
+    public TeamId GetRelatedResourceId() => TeamId;
+}
+
+public sealed class Team : Aggregate<TeamId>, IIdentifyRelatedResource<Tournament, TournamentId>
+{
+    public TournamentId TournamentId { get; }
+    public TournamentId GetRelatedResourceId() => TournamentId;
+}
+
+public sealed record CancelMatchCommand(MatchId MatchId)
+    : ICommand<Result<Unit>>,
+      IAuthorizeResourceVia<Tournament>,
+      IIdentifyResource<Match, MatchId>
+{
+    public MatchId GetResourceId() => MatchId;
+
+    public IResult Authorize(Actor actor, IReadOnlyList<Tournament> owners) =>
+        Result.Ensure(
+            owners[0].OwnerActorId == actor.Id,
+            new Error.Forbidden("match.cancel"));
+}
+```
+
+The resolver discovers the path `Match → Team → Tournament` at registration time using the entity-side `IIdentifyRelatedResource<,>` declarations. **Singular chains always pass `IReadOnlyList<TOwner>` of size 1** — index `[0]` is safe.
+
+### AOT / explicit registration
+
+`AddResourceAuthorization(Assembly[])` uses reflection. For Native AOT or trimming-strict deployments, register each via-command explicitly. The single-hop overload covers a leaf with one foreign key to its owner (singular extractor). It does **not** support fan-out — for that, drop to the hand-built `ResolvedAuthorizationPath` overload.
+
+```csharp
+// Single-hop scenario: Match has one Team FK; the actor must own that team.
+public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResource<Team, TeamId>
+{
+    public TeamId TeamId { get; }
+    public TeamId GetRelatedResourceId() => TeamId;
+}
+
+public sealed record DeleteMatchCommand(MatchId MatchId)
+    : ICommand<Result<Unit>>,
+      IAuthorizeResourceVia<Team>,
+      IIdentifyResource<Match, MatchId>
+{
+    public MatchId GetResourceId() => MatchId;
+
+    public IResult Authorize(Actor actor, IReadOnlyList<Team> owners) =>
+        Result.Ensure(
+            owners[0].CreatedByActorId == actor.Id,
+            new Error.Forbidden("match.delete"));
+}
+
+services.AddRelatedResourceAuthorization<
+    DeleteMatchCommand, Match, MatchId, Team, TeamId, Result<Unit>>(
+    extractOwnerId: match => match.TeamId);  // single-hop selector
+```
+
+For chains (`Match → Team → Tournament`) or fan-out (cricket `Match → {HomeTeam, AwayTeam}`), the single-hop overload cannot express the path. Build a `ResolvedAuthorizationPath` manually and use the `(this IServiceCollection, ResolvedAuthorizationPath)` overload — the hand-built path can carry multiple hops and a plural terminal hop.
+
+### What the framework rejects at startup
+
+- **Dual-mode commands** — implementing both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` on one command. Security primitives are never silently composed.
+- **Via-command without `IIdentifyResource<TLeaf, TLeafId>`** — the scanner cannot infer the leaf, so a silent skip would leave the via-marker unprotected. Throws naming the offending command.
+- **Multiple distinct simple paths** from leaf to owner (ambiguous). Throws listing every discovered path; disambiguate by removing an `IIdentifyRelatedResource[s]` declaration or by switching to the explicit `IResourceLoader<TMessage, TProjection>` escape hatch.
+- **Plural hop in a non-terminal position** — fan-out cartesian expansion is intentionally out of scope for v1.
+- **No path** from leaf to owner — declare an `IIdentifyRelatedResource[s]<TOwner, ...>` somewhere along the chain or use the escape hatch.
+- **Missing `SharedResourceLoaderById<TTo, TToId>`** registration for any hop — throws `InvalidOperationException` at request time (deployment bug, not authorization denial).
+
+### TOCTOU note
+
+Resource authorization loads happen outside the handler's transaction. Multi-hop widens that window: ownership can change after auth but before handler state changes. If transactional consistency is required, drop to a custom `IResourceLoader<TMessage, TProjection>` that runs inside the handler's transaction or enforce ownership in the handler/repository layer.
 
 ---
 

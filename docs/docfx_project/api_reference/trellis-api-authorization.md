@@ -31,6 +31,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Authorize against a loaded resource | Implement `IAuthorizeResource<TResource>.Authorize(actor, resource)` | [`IAuthorizeResource<TResource>`](#iauthorizeresourcetresource) |
 | Write owner/admin resource guards | `Result.Ensure(condition, new Error.Forbidden(...))` | [`IAuthorizeResource<TResource>`](#iauthorizeresourcetresource), [Core `Result.Ensure`](trellis-api-core.md#public-static-partial-class-result) |
 | Identify a resource by id for shared loading | `IIdentifyResource<TResource, TId>` | [`IIdentifyResource<TResource, TId>`](#iidentifyresourcetresource-tid) |
+| Authorize against a related resource one or more navigation hops away (cricket-style fan-out, owner chains) | Implement `IAuthorizeResourceVia<TOwner>` on the command + `IIdentifyRelatedResource<TRelated, TId>` (singular) or `IIdentifyRelatedResources<TRelated, TId>` (terminal plural) on entities along the path | [`IAuthorizeResourceVia<TOwner>`](#iauthorizeresourceviatowner), [`IIdentifyRelatedResource<TRelated, TId>`](#iidentifyrelatedresourcetrelated-tid), [`IIdentifyRelatedResources<TRelated, TId>`](#iidentifyrelatedresourcestrelated-tid) |
 
 ## Common traps
 
@@ -163,6 +164,63 @@ Companion to `IAuthorizeResource<TResource>` that exposes a typed resource ident
 | --- | --- | --- |
 | `TId GetResourceId()` | `TId` | Extracts the typed resource ID from the message. |
 
+### `IAuthorizeResourceVia<TOwner>`
+
+**Declaration**
+
+```csharp
+public interface IAuthorizeResourceVia<TOwner>
+```
+
+Declares resource-based authorization against a resource that is **not** the leaf the command identifies, but is reachable via one or more `IIdentifyRelatedResource[s]<,>` declarations on entities along the navigation chain. The originating motivation is the cricket-style "actor owns Team1 OR Team2" pattern: command identifies a `Match`, authorization is evaluated against the set of teams it points at.
+
+The pipeline always passes `IReadOnlyList<TOwner>` to `Authorize` — size 1 for chains terminating in a singular hop, size N for chains terminating in a plural hop (cricket fan-out). The framework does not impose the operator over the list; the command picks `Any`, `All`, or any other shape inside `Authorize`.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `IResult Authorize(Actor actor, IReadOnlyList<TOwner> owners)` | `IResult` | Returns success to proceed or a failure (typically `Error.Forbidden`) to short-circuit. The `owners` list is non-null and non-empty; an empty plural navigation short-circuits to `Error.Forbidden` before `Authorize` is called. |
+
+**Failure semantics**:
+
+- **Leaf load failure** — the loader's error bubbles verbatim (matches existing `IAuthorizeResource<T>` semantics for the resource the command identifies).
+- **Intermediate or owner load failure** — collapsed to `Error.Forbidden` to avoid leaking existence of related resources whose presence/absence the actor may not be authorized to learn.
+- **Empty result at any hop** (singular extract returning 0 IDs or plural extract returning 0 IDs) — short-circuits to `Error.Forbidden` without invoking `Authorize`.
+- **Missing `SharedResourceLoaderById<TTo, TToId>`** at any hop — throws `InvalidOperationException` (deployment bug, not authorization denial).
+
+A command may implement either `IAuthorizeResource<T>` **or** `IAuthorizeResourceVia<TOwner>`, never both. Registration throws at startup if both are present — security primitives are not silently composed.
+
+### `IIdentifyRelatedResource<TRelated, TId>`
+
+**Declaration**
+
+```csharp
+public interface IIdentifyRelatedResource<TRelated, out TId>
+```
+
+Entity-side declaration of a single outbound foreign-key navigation. Used by the resolver to walk the navigation chain at registration time. Implement on aggregate roots whose authorization is evaluated against a different aggregate one or more hops away.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `TId GetRelatedResourceId()` | `TId` | Returns the identifier of the related resource of type `TRelated`. |
+
+For two distinct outbound navigations to the same `TRelated` (cricket `Match.HomeTeamId` / `Match.AwayTeamId`), use [`IIdentifyRelatedResources<TRelated, TId>`](#iidentifyrelatedresourcestrelated-tid) instead — C# disallows declaring the same generic interface twice on a single type.
+
+### `IIdentifyRelatedResources<TRelated, TId>`
+
+**Declaration**
+
+```csharp
+public interface IIdentifyRelatedResources<TRelated, TId>
+```
+
+Entity-side declaration of a plural outbound navigation (fan-out). Used at the **terminal** hop of an authorization chain to express OR-style / candidate-set authorization (cricket `Match → {HomeTeam, AwayTeam}`).
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `IReadOnlyList<TId> GetRelatedResourceIds()` | `IReadOnlyList<TId>` | Returns the identifiers of all related resources of type `TRelated`. Non-null. Duplicates are de-duplicated by the pipeline before loading; an empty list short-circuits to `Error.Forbidden`. Order is not significant. |
+
+Plural-in-middle (fan-out cartesian expansion) is intentionally out of scope for v1 and rejected at registration time. For chains needing a plural intermediate hop, drop to `IResourceLoader<TMessage, TProjection>` with a projection type.
+
 ### `IResourceLoader<TMessage, TResource>`
 
 **Declaration**
@@ -270,6 +328,53 @@ public sealed class OrderResourceLoader(IOrderRepository repo)
         (await repo.GetByIdAsync(id, ct)).ToResult(new Error.NotFound(ResourceRef.For<Order>(id)));
 }
 ```
+
+### Indirect (multi-hop) resource authorization — cricket fan-out
+
+Authorize a `UploadScorecardCommand` against the actor owning **either** the home or away team of the match. The command identifies the leaf (`Match`); `Match` declares its plural outbound navigation to `Team`; the command's `Authorize` runs against the loaded list.
+
+```csharp
+using Trellis;
+using Trellis.Authorization;
+
+public sealed partial class MatchId : RequiredGuid<MatchId>;
+public sealed partial class TeamId : RequiredGuid<TeamId>;
+
+public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResources<Team, TeamId>
+{
+    public TeamId HomeTeamId { get; }
+    public TeamId AwayTeamId { get; }
+    public IReadOnlyList<TeamId> GetRelatedResourceIds() => [HomeTeamId, AwayTeamId];
+}
+
+public sealed class Team : Aggregate<TeamId>
+{
+    public string CreatedByActorId { get; }
+}
+
+public sealed record UploadScorecardCommand(MatchId MatchId, /* fields */)
+    : ICommand<Result<Unit>>,
+      IAuthorizeResourceVia<Team>,
+      IIdentifyResource<Match, MatchId>
+{
+    public MatchId GetResourceId() => MatchId;
+
+    public IResult Authorize(Actor actor, IReadOnlyList<Team> owners) =>
+        Result.Ensure(
+            owners.Any(t => t.CreatedByActorId == actor.Id),
+            new Error.Forbidden("match.upload-scorecard")
+                { Detail = "Actor does not own either match team." });
+}
+
+// Composition root: assembly scan registers the via-behavior, the leaf-loader bridge,
+// and the SharedResourceLoaderById<Match,MatchId> + SharedResourceLoaderById<Team,TeamId>.
+services.AddTrellisBehaviors();
+services.AddResourceAuthorization(typeof(UploadScorecardCommand).Assembly);
+```
+
+For chains (e.g. `Match → Team → Tournament`), declare `IIdentifyRelatedResource<Team, TeamId>` on `Match` and `IIdentifyRelatedResource<Tournament, TournamentId>` on `Team`, then set `IAuthorizeResourceVia<Tournament>` on the command.
+
+For shapes the navigation-chain model can't express (composite keys, conditional/data-dependent paths, recursive hierarchies, projections, joins, plural-in-middle), drop to an explicit `IResourceLoader<TMessage, TProjection>` returning a custom projection, and put `IAuthorizeResource<TProjection>` on the command.
 
 ### Constructing an `Actor` directly (tests, custom providers)
 
