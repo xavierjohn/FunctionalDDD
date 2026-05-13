@@ -167,8 +167,8 @@ public sealed class ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TR
             var loaded = new List<object>(idList.Count);
             foreach (var id in idList)
             {
-                var loadResult = await hop.LoadAsync(_serviceProvider, id, cancellationToken).ConfigureAwait(false);
-                if (!loadResult.IsSuccess)
+                var hopOutcome = await hop.LoadAsync(_serviceProvider, id, cancellationToken).ConfigureAwait(false);
+                if (!hopOutcome.IsSuccess)
                 {
                     return TResponse.CreateFailure(new Error.Forbidden("resource.authorization-via.load-failed")
                     {
@@ -176,7 +176,7 @@ public sealed class ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TR
                     });
                 }
 
-                loaded.Add(loadResult.Value!);
+                loaded.Add(hopOutcome.Value!);
             }
 
             current = loaded;
