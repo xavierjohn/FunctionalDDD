@@ -32,6 +32,29 @@ public class ResourceAuthorizationViaScanningTests
     }
 
     [Fact]
+    public void Scanning_SameAssemblyPassedMultipleTimes_RegistersBehaviorOnce()
+    {
+        // Duplicate assemblies in the params array must be deduplicated. Without dedup the
+        // scanner would `services.Insert(...)` a second closed-generic IPipelineBehavior
+        // descriptor for the same (TMessage, TResponse), causing the resource-authorization
+        // behavior to run twice per request (and the via-behavior to load the leaf twice,
+        // re-walk the path, etc.).
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+        services.AddScoped<IActorProvider>(_ => FakeActorProvider.NoPermissions("a"));
+
+        var assembly = typeof(ScanCricketCommand).Assembly;
+        services.AddResourceAuthorization(assembly, assembly, assembly);
+
+        var descriptors = services.Where(d =>
+            d.ServiceType == typeof(IPipelineBehavior<ScanCricketCommand, Result<string>>))
+            .ToList();
+
+        descriptors.Should().ContainSingle(
+            "duplicate assemblies must not produce duplicate closed-generic pipeline behaviors");
+    }
+
+    [Fact]
     public void EnsureNotDualSecurityMode_BothInterfacesPresent_Throws()
     {
         // A command implementing BOTH IAuthorizeResource<T> AND IAuthorizeResourceVia<TOwner>

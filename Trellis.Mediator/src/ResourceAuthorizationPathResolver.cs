@@ -87,8 +87,14 @@ public static class ResourceAuthorizationPathResolver
                 $"Cannot resolve via-authorization path for {messageType.Name}: no path exists from " +
                 $"{leafType.Name} to {ownerType.Name}. Declare IIdentifyRelatedResource<{ownerType.Name}, ...> " +
                 $"on {leafType.Name} (single FK) or IIdentifyRelatedResources<{ownerType.Name}, ...> " +
-                $"(fan-out, terminal-only), or implement IResourceLoader<{messageType.Name}, {ownerType.Name}> " +
-                $"for a custom load.");
+                $"(fan-out, terminal-only) somewhere on the leaf-to-owner navigation chain. For shapes " +
+                $"the resolver cannot infer (composite joins, projections, conditional paths, runtime " +
+                $"queries), drop to the documented escape hatch: register a custom " +
+                $"IResourceLoader<{messageType.Name}, TProjection> that returns the desired shape and " +
+                $"put IAuthorizeResource<TProjection> on the command (zero-hop authorization against the " +
+                $"projection), or call AddRelatedResourceAuthorization<{messageType.Name}, {leafType.Name}, " +
+                $"{ownerType.Name}, TResponse>(this IServiceCollection, ResolvedAuthorizationPath) with a " +
+                $"hand-built path.");
 
         if (paths.Count > 1)
             throw new InvalidOperationException(
@@ -97,7 +103,9 @@ public static class ResourceAuthorizationPathResolver
                 $"Discovered paths:" + Environment.NewLine +
                 string.Join(Environment.NewLine, paths.Select((p, i) => $"  [{i}] {FormatPath(leafType, p)}")) +
                 Environment.NewLine + "Disambiguate by removing an IIdentifyRelatedResource[s] declaration, " +
-                $"changing the command's TOwner, or dropping to IResourceLoader<{messageType.Name}, ...>.");
+                $"changing the command's TOwner, or dropping to a custom " +
+                $"IResourceLoader<{messageType.Name}, TProjection> + IAuthorizeResource<TProjection> for a " +
+                $"shape the resolver cannot disambiguate automatically.");
 
         var winning = paths[0];
 
@@ -108,7 +116,8 @@ public static class ResourceAuthorizationPathResolver
                     $"Cannot resolve via-authorization path for {messageType.Name}: hop {i} " +
                     $"({winning[i].FromType.Name} -> {winning[i].ToType.Name}) is plural but is not the " +
                     $"terminal hop. Plural-in-middle (fan-out cartesian expansion) is intentionally out of " +
-                    $"scope for v1; use IResourceLoader<{messageType.Name}, TProjection> with a projection type.");
+                    $"scope for v1; flatten the chain into a custom IResourceLoader<{messageType.Name}, " +
+                    $"TProjection> and authorize via IAuthorizeResource<TProjection>.");
         }
 
         var hops = new ResolvedAuthorizationHop[winning.Count];
@@ -225,11 +234,15 @@ public static class ResourceAuthorizationPathResolver
             throw new InvalidOperationException(
                 $"{edge.FromType.Name} declares a related-resource hop to {edge.ToType.Name} " +
                 $"with a Nullable<{Nullable.GetUnderlyingType(edge.ToIdType)!.Name}> identifier, " +
-                $"which is not supported on a resolved authorization path. Use the non-nullable " +
-                $"underlying type ({Nullable.GetUnderlyingType(edge.ToIdType)!.Name}) and model the " +
-                $"absence of a relationship by omitting the IIdentifyRelatedResource[s] declaration " +
-                $"on instances that have no related resource — for plural relationships, return an " +
-                $"empty list from GetRelatedResourceIds (which short-circuits authorization to Forbidden).");
+                $"which is not supported on a resolved authorization path. Change the interface " +
+                $"declaration to the non-nullable underlying type ({Nullable.GetUnderlyingType(edge.ToIdType)!.Name}). " +
+                $"To model an optional relationship: for *plural* navigations, return an empty list " +
+                $"from GetRelatedResourceIds when no related resource is present — this short-circuits " +
+                $"authorization to Forbidden. For *optional singular* navigations the resolver cannot " +
+                $"automatically express the \"no related resource\" case; drop to the documented escape " +
+                $"hatch — a custom IResourceLoader<TMessage, TProjection> + IAuthorizeResource<TProjection>, " +
+                $"or AddRelatedResourceAuthorization(..., ResolvedAuthorizationPath) with a hand-built " +
+                $"path whose loader handles the absent-related-resource case explicitly.");
 
         var extractIds = edge.IsPlural
             ? BuildPluralExtractor(edge.FromType, edge.ToIdType, edge.GetMethod)

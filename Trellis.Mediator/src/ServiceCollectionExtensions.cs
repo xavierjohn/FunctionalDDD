@@ -352,6 +352,24 @@ public static class ServiceCollectionExtensions
                 throw new ArgumentException($"Assembly at index [{i}] is null.", nameof(assemblies));
         }
 
+        // Deduplicate the assemblies parameter so a consumer passing the same assembly
+        // twice (e.g. via `typeof(X).Assembly, typeof(Y).Assembly` where X and Y live in the
+        // same assembly, or via overlapping library + application-level scan calls) does not
+        // cause closed-generic IPipelineBehavior<TMessage,TResponse> descriptors to be inserted
+        // twice. The IResourceLoader and SharedResourceLoaderById registrations are already
+        // idempotent via TryAddScoped, but the pipeline-behavior Insert is not — duplicate
+        // entries would cause the authorization behavior to run multiple times per request.
+        // Preserve first-seen order so the precedence of TryAdd-style loader registrations
+        // remains deterministic and matches the consumer's input order (HashSet alone would
+        // not guarantee enumeration order).
+        var seenAssemblies = new HashSet<Assembly>(assemblies.Length);
+        var distinctAssemblies = new List<Assembly>(assemblies.Length);
+        for (var i = 0; i < assemblies.Length; i++)
+        {
+            if (seenAssemblies.Add(assemblies[i]))
+                distinctAssemblies.Add(assemblies[i]);
+        }
+
         var authorizeResourceDef = typeof(IAuthorizeResource<>);
         var authorizeViaDef = typeof(IAuthorizeResourceVia<>);
         var loaderDef = typeof(IResourceLoader<,>);
@@ -377,7 +395,7 @@ public static class ServiceCollectionExtensions
         var viaCommands = new List<(Type commandType, Type tLeaf, Type tOwner, Type tResponse, Type identifyIface)>();
         var allCandidateEntities = new List<Type>();
 
-        foreach (var assembly in assemblies)
+        foreach (var assembly in distinctAssemblies)
             foreach (var type in GetLoadableTypes(assembly))
             {
                 if (type.IsAbstract || type.IsInterface || type.IsGenericTypeDefinition)

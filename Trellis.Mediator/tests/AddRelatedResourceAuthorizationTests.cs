@@ -316,6 +316,95 @@ public class AddRelatedResourceAuthorizationTests
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*SharedResourceLoaderById<ExplicitOwner, String>*");
     }
+
+    [Fact]
+    public void PathOverload_MismatchedMessageType_ThrowsAtRegistration()
+    {
+        // A hand-built ResolvedAuthorizationPath whose MessageType does not match the
+        // AddRelatedResourceAuthorization<TMessage,...> generic argument must fail FAST at
+        // registration time (not later when the behavior is constructed during the first
+        // request). The validation lives in ResolvedAuthorizationPathHolder's constructor,
+        // and the holder is constructed eagerly by AddRelatedResourceAuthorization.
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+
+        var pathWithWrongMessage = new ResolvedAuthorizationPath(
+            messageType: typeof(string),  // wrong — should be ExplicitCommand
+            leafType: typeof(ExplicitLeaf),
+            ownerType: typeof(ExplicitOwner),
+            hops:
+            [
+                new ResolvedAuthorizationHop(
+                    fromType: typeof(ExplicitLeaf),
+                    toType: typeof(ExplicitOwner),
+                    toIdType: typeof(string),
+                    extractIds: _ => Array.Empty<object>(),
+                    loadAsync: (_, _, _) => Task.FromResult(HopLoadResult.Failure(new Error.Forbidden("x"))),
+                    isPlural: false),
+            ]);
+
+        var act = () => services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, ExplicitOwner, Result<string>>(pathWithWrongMessage);
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*MessageType*String*ExplicitCommand*");
+    }
+
+    [Fact]
+    public void PathOverload_MismatchedLeafType_ThrowsAtRegistration()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+
+        var pathWithWrongLeaf = new ResolvedAuthorizationPath(
+            messageType: typeof(ExplicitCommand),
+            leafType: typeof(string),  // wrong — should be ExplicitLeaf
+            ownerType: typeof(ExplicitOwner),
+            hops:
+            [
+                new ResolvedAuthorizationHop(
+                    fromType: typeof(string),
+                    toType: typeof(ExplicitOwner),
+                    toIdType: typeof(string),
+                    extractIds: _ => Array.Empty<object>(),
+                    loadAsync: (_, _, _) => Task.FromResult(HopLoadResult.Failure(new Error.Forbidden("x"))),
+                    isPlural: false),
+            ]);
+
+        var act = () => services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, ExplicitOwner, Result<string>>(pathWithWrongLeaf);
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*LeafType*String*ExplicitLeaf*");
+    }
+
+    [Fact]
+    public void PathOverload_MismatchedOwnerType_ThrowsAtRegistration()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellisBehaviors();
+
+        var pathWithWrongOwner = new ResolvedAuthorizationPath(
+            messageType: typeof(ExplicitCommand),
+            leafType: typeof(ExplicitLeaf),
+            ownerType: typeof(string),  // wrong — should be ExplicitOwner
+            hops:
+            [
+                new ResolvedAuthorizationHop(
+                    fromType: typeof(ExplicitLeaf),
+                    toType: typeof(string),
+                    toIdType: typeof(string),
+                    extractIds: _ => Array.Empty<object>(),
+                    loadAsync: (_, _, _) => Task.FromResult(HopLoadResult.Failure(new Error.Forbidden("x"))),
+                    isPlural: false),
+            ]);
+
+        var act = () => services.AddRelatedResourceAuthorization<
+            ExplicitCommand, ExplicitLeaf, ExplicitOwner, Result<string>>(pathWithWrongOwner);
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*OwnerType*String*ExplicitOwner*");
+    }
 }
 
 internal sealed class UnrelatedPipelineBehavior : IPipelineBehavior<ExplicitCommand, Result<string>>

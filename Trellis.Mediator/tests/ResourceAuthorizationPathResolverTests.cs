@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Trellis.Authorization;
 
 /// <summary>
-/// Tests for <see cref="ResourceAuthorizationPathResolver"/>. Verifies the BFS/DFS path
+/// Tests for <see cref="ResourceAuthorizationPathResolver"/>. Verifies the DFS path
 /// enumeration, distinct-simple-path counting, and the registration-time invariants
 /// (no path, ambiguous paths, plural-in-middle, cycle tolerance, identity-leaf-owner reject).
 /// </summary>
