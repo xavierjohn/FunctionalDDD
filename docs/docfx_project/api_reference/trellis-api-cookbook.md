@@ -1602,6 +1602,11 @@ The wrong answer: `if (!dict.TryGetValue(id, out var related)) continue;` and mo
 
 The right answer: fail-loud. Return `Error.NotFound` referencing the missing related aggregate so the unit of work rolls back the primary aggregate's mutation. The invariant — "every line item resolves to a Product, or the command fails atomically" — is now enforced and observable.
 
+Two operating principles drive the snippet below:
+
+- **Preflight before mutating, not during.** An in-memory aggregate mutation persists through the rest of the handler's object graph even if the later database commit rolls back. So a release-then-discover pattern leaks partially-released stock into any subsequent read of the same aggregate within the request scope. Compute the missing-set *before* any side effect.
+- **Report the full problem.** That's the value of preflighting — surface every missing id in one round-trip via `Error.Aggregate`, with each missing id keeping its own structured `ResourceRef`. (This recipe assumes product ids are non-sensitive; if your threat model differs, drop the per-id refs and emit a single generic `NotFound`.)
+
 ```csharp
 using System.Linq;
 using System.Threading;
@@ -1622,26 +1627,14 @@ public sealed class ReturnOrderHandler(
         if (!orderResult.TryGetValue(out var order))
             return orderResult;
 
-        // Batch fetch returns what it found — finding a strict subset is normal, NOT an
-        // error per element. The preflight below diffs the requested set against the
-        // returned set; that's the canonical orchestrator job, not the repository's.
+        // Batch fetch returns what it found — the set-difference is the orchestrator's job.
         var productIds = order.LineItems.Select(li => li.ProductId).Distinct().ToArray();
         var loaded = await products.GetByIdsAsync(productIds, cancellationToken);
         var byId = loaded.ToDictionary(p => p.Id);
 
         // Preflight: prove EVERY related aggregate is reachable BEFORE any side effect.
-        // A missing product is a fatal invariant violation: fail-loud so neither the
-        // Order transition nor any per-line stock release runs. NEVER `continue` past a
-        // missing related aggregate, and NEVER mutate before the set is fully reachable —
-        // an in-memory mutation persists through the rest of the handler's object graph
-        // even if a later failure rolls back the database commit, so partially-released
-        // stock leaks into any subsequent read of the same aggregate within this scope.
-        // Report ALL missing ids — that's the whole point of preflighting: surface the
-        // full problem in one round-trip. Compose the failure as `Error.Aggregate` so
-        // each missing id keeps its own structured `ResourceRef`, not just a Detail
-        // string. Note: this recipe assumes the API's threat model treats product ids
-        // as non-sensitive (typical for commerce). If ids leak information you don't
-        // want to disclose, drop the per-id refs and emit a single generic NotFound.
+        // NEVER `continue` past a missing related aggregate, and NEVER mutate before the
+        // set is fully reachable. Report ALL missing ids via Error.Aggregate.
         static Error NotFoundFor(ProductId id) => new Error.NotFound(ResourceRef.For<Product>(id))
         {
             Detail = "Product referenced by line item is missing — cannot release stock.",
