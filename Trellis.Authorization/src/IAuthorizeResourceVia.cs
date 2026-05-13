@@ -54,7 +54,7 @@
 ///
 ///     public IResult Authorize(Actor actor, IReadOnlyList&lt;Team&gt; teams) =&gt;
 ///         Result.Ensure(
-///             teams.Any(t =&gt; t.CreatedByActorId == actor.UserId),
+///             teams.Any(t =&gt; t.CreatedByActorId == actor.Id),
 ///             new Error.Forbidden("not_team_owner"));
 /// }
 /// </code>

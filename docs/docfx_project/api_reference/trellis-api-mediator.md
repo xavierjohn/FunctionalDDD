@@ -176,7 +176,7 @@ Pipeline behavior implementing indirect (multi-hop) resource authorization. Load
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the actor first (throws on null — same ga-11 ordering as `ResourceAuthorizationBehavior`). Loads the leaf via `IResourceLoader<TMessage, TLeaf>` — leaf load failure bubbles verbatim. Walks the resolved path: per hop extracts IDs (de-duplicated, nulls filtered), loads each via the registered `SharedResourceLoaderById<TTo, TToId>` — intermediate/owner load failures collapse to `Error.Forbidden` (no existence leak); empty ID list at any hop short-circuits to `Error.Forbidden`. Finally calls `message.Authorize(actor, IReadOnlyList<TOwner>)` and returns its result, or invokes the handler when the authorization passes. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the actor first (throws on null — same ga-11 ordering as `ResourceAuthorizationBehavior`). Loads the leaf via `IResourceLoader<TMessage, TLeaf>` — leaf load failure bubbles verbatim. Walks the resolved path: per hop extracts IDs (de-duplicated, nulls filtered), loads each via the registered `SharedResourceLoaderById<TTo, TToId>` — intermediate/owner load failures collapse to `Error.Forbidden` (no existence leak); empty ID list at any hop short-circuits to `Error.Forbidden`. Finally calls `message.Authorize(actor, IReadOnlyList<TOwner>)` and returns its result, or invokes the handler when the authorization passes. **Null-payload defense.** A loader that violates its `Result<T>` contract by returning `Result.Ok(null)` is treated as fail-closed rather than crashing the pipeline: a leaf null-payload short-circuits to `Error.Forbidden` with code `resource.authorization-via.null-payload` (caller-visible). A hop null-success is treated internally as a hop failure and — like every other intermediate/owner load failure — collapses to `Error.Forbidden` with code `resource.authorization-via.load-failed` (the underlying null-payload code is intentionally not surfaced, mirroring the existence-leak protection on hop failures generally). |
 
 ### ResolvedAuthorizationPath
 **Declaration**
@@ -299,7 +299,7 @@ public sealed class ResourceAuthorizationBehavior<TMessage, TResource, TResponse
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the actor from `IActorProvider` first (throws `InvalidOperationException` when null — fail fast before doing any I/O). Then resolves `IResourceLoader<TMessage, TResource>` from the current scope, returns loader failures directly, and finally calls `message.Authorize(actor, loadResult.Unwrap())` before invoking the handler. This behavior is only active when registered explicitly or via `AddResourceAuthorization(...)`; it is not included in `AddTrellisBehaviors()` or `PipelineBehaviors`. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the actor from `IActorProvider` first (throws `InvalidOperationException` when null — fail fast before doing any I/O). Then resolves `IResourceLoader<TMessage, TResource>` from the current scope, returns loader failures directly, and finally calls `message.Authorize(actor, loadResult.Unwrap())` before invoking the handler. **Null-payload defense.** A loader that violates its `Result<T>` contract by returning `Result.Ok(null)` is treated as fail-closed: the behavior short-circuits to `Error.Forbidden` with code `resource.authorization.null-payload` rather than letting a downstream `NullReferenceException` from `message.Authorize` bubble as a 500. This behavior is only active when registered explicitly or via `AddResourceAuthorization(...)`; it is not included in `AddTrellisBehaviors()` or `PipelineBehaviors`. |
 
 ### ServiceCollectionExtensions
 **Declaration**
@@ -516,7 +516,7 @@ public static IServiceCollection AddResourceAuthorization<TMessage, TResource, T
 public static IServiceCollection AddResourceAuthorization(this IServiceCollection services, params Assembly[] assemblies)
 [RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use explicit registration for AOT/trimming scenarios.")]
 public static IServiceCollection AddResourceLoaders(this IServiceCollection services, Assembly assembly)
-public static IServiceCollection AddSharedResourceLoader<TMessage, TResource, TId>(this IServiceCollection services) where TMessage : IAuthorizeResource<TResource>, IIdentifyResource<TResource, TId>
+public static IServiceCollection AddSharedResourceLoader<TMessage, TResource, TId>(this IServiceCollection services) where TMessage : IIdentifyResource<TResource, TId>
 ```
 
 ### Trellis.Mediator.DomainEventDispatchServiceCollectionExtensions

@@ -181,6 +181,62 @@ public class ResourceAuthorizationViaScanningTests
             identifyIfaces: [typeof(IIdentifyResource<ScanMatch, string>)]);
 
     [Fact]
+    public void EnsureAtMostOneClosedAuthorizationMarker_TwoClosedAuthResource_Throws()
+    {
+        // A scanned mediator message that implements IAuthorizeResource<A> AND
+        // IAuthorizeResource<B> would, under the prior FirstOrDefault scan, register the
+        // closed-generic ResourceAuthorizationBehavior for only one of the two resources
+        // and silently ignore the other — a security marker would never fire. Reject at
+        // scan time.
+        var ifaces = new[]
+        {
+            typeof(IAuthorizeResource<ScanTeam>),
+            typeof(IAuthorizeResource<ScanMatch>),
+        };
+
+        var act = () => ServiceCollectionExtensions.EnsureAtMostOneClosedAuthorizationMarker(
+            typeof(MultiClosedAuthResourceFixture),
+            ifaces,
+            markerInterfaceName: "IAuthorizeResource");
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MultiClosedAuthResourceFixture*IAuthorizeResource*ScanTeam*ScanMatch*");
+    }
+
+    [Fact]
+    public void EnsureAtMostOneClosedAuthorizationMarker_TwoClosedAuthorizeResourceVia_Throws()
+    {
+        // Symmetric rejection for via-commands.
+        var ifaces = new[]
+        {
+            typeof(IAuthorizeResourceVia<ScanTeam>),
+            typeof(IAuthorizeResourceVia<ScanMatch>),
+        };
+
+        var act = () => ServiceCollectionExtensions.EnsureAtMostOneClosedAuthorizationMarker(
+            typeof(MultiClosedViaFixture),
+            ifaces,
+            markerInterfaceName: "IAuthorizeResourceVia");
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*MultiClosedViaFixture*IAuthorizeResourceVia*ScanTeam*ScanMatch*");
+    }
+
+    [Fact]
+    public void EnsureAtMostOneClosedAuthorizationMarker_OneClosed_DoesNotThrow()
+        => ServiceCollectionExtensions.EnsureAtMostOneClosedAuthorizationMarker(
+            typeof(object),
+            [typeof(IAuthorizeResource<ScanTeam>)],
+            markerInterfaceName: "IAuthorizeResource");
+
+    [Fact]
+    public void EnsureAtMostOneClosedAuthorizationMarker_Zero_DoesNotThrow()
+        => ServiceCollectionExtensions.EnsureAtMostOneClosedAuthorizationMarker(
+            typeof(object),
+            [],
+            markerInterfaceName: "IAuthorizeResource");
+
+    [Fact]
     public void ValidateResourceAuthorizationResponseType_ViaCommand_BadResponse_ErrorNamesViaMarker()
     {
         // The diagnostic must point at IAuthorizeResourceVia and ResourceAuthorizationViaBehavior
@@ -286,6 +342,33 @@ internal sealed record DualModeNonCommand(string Id)
 {
     public IResult Authorize(Actor actor, ScanTeam resource) => Result.Ok();
     public IResult Authorize(Actor actor, IReadOnlyList<ScanTeam> owners) => Result.Ok();
+}
+
+/// <summary>
+/// Fixture that closes <see cref="IAuthorizeResource{T}"/> over two distinct resource types.
+/// Used to verify the scanner rejects multi-closed-marker messages instead of silently
+/// registering authorization for only the first one discovered. Not a mediator message so
+/// assembly scans triggered by other tests in this file skip it.
+/// </summary>
+internal sealed record MultiClosedAuthResourceFixture(string Id)
+    : IAuthorizeResource<ScanTeam>,
+      IAuthorizeResource<ScanMatch>
+{
+    IResult IAuthorizeResource<ScanTeam>.Authorize(Actor actor, ScanTeam resource) => Result.Ok();
+    IResult IAuthorizeResource<ScanMatch>.Authorize(Actor actor, ScanMatch resource) => Result.Ok();
+}
+
+/// <summary>
+/// Fixture that closes <see cref="IAuthorizeResourceVia{TOwner}"/> over two distinct owner
+/// types. Symmetric to <see cref="MultiClosedAuthResourceFixture"/>; verifies the scanner
+/// rejects ambiguous via-markers.
+/// </summary>
+internal sealed record MultiClosedViaFixture(string Id)
+    : IAuthorizeResourceVia<ScanTeam>,
+      IAuthorizeResourceVia<ScanMatch>
+{
+    IResult IAuthorizeResourceVia<ScanTeam>.Authorize(Actor actor, IReadOnlyList<ScanTeam> owners) => Result.Ok();
+    IResult IAuthorizeResourceVia<ScanMatch>.Authorize(Actor actor, IReadOnlyList<ScanMatch> owners) => Result.Ok();
 }
 
 #endregion

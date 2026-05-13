@@ -267,9 +267,14 @@ public class ResourceAuthorizationPathResolverTests
             .WithMessage("*Nullable<*>*not supported*");
     }
 
-    // Nested-private fixtures: assembly scanning enumerates *public* types only, so these
-    // private types cannot be picked up by AddResourceAuthorization(Assembly) in unrelated
-    // tests and crash their resolver passes via the new Nullable<TId> rejection.
+    // Nested-private fixtures. `Assembly.GetTypes()` (used by `GetLoadableTypes`) does return
+    // non-public types, so these CAN be enumerated by `AddResourceAuthorization(Assembly)` in
+    // unrelated tests. The actual reason they don't crash other tests' resolver passes is
+    // structural: `ResourceAuthorizationPathResolver.BuildHop` rejects `Nullable<TId>` only for
+    // hops on the *resolved* path (see resolver source for the explicit comment), not at
+    // graph-build time, so an unrelated entity declaring an optional navigation never causes a
+    // resolver pass for a different command to fail. Keeping the fixtures private is purely
+    // for namespace hygiene.
     private sealed class NullableIdOwner
     {
         public string Id { get; } = "";

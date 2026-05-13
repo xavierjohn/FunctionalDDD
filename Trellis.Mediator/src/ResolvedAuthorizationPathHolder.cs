@@ -1,7 +1,5 @@
 ﻿namespace Trellis.Mediator;
 
-using Microsoft.Extensions.DependencyInjection;
-
 /// <summary>
 /// Closed-generic carrier for a <see cref="ResolvedAuthorizationPath"/> registered per
 /// via-authorized command. Used so DI naturally disambiguates the path per command (each
@@ -9,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// <see cref="ResourceAuthorizationViaBehavior{TMessage, TLeaf, TOwner, TResponse}"/> can be
 /// registered as a TYPED descriptor (not a factory descriptor), letting
 /// <see cref="ServiceCollectionExtensions"/>'s relocator recognize it by
-/// <see cref="ServiceDescriptor.ImplementationType"/> alone.
+/// <see cref="Microsoft.Extensions.DependencyInjection.ServiceDescriptor.ImplementationType"/> alone.
 /// </summary>
 /// <typeparam name="TMessage">The command type.</typeparam>
 /// <typeparam name="TLeaf">The leaf resource type.</typeparam>

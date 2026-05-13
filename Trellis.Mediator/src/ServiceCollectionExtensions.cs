@@ -408,13 +408,21 @@ public static class ServiceCollectionExtensions
                 }
 
                 // Check both authorization markers up-front so we can reject dual-mode commands
-                // before doing any registration work for either marker.
-                var authIface = type.GetInterfaces()
-                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeResourceDef);
-                var viaIface = type.GetInterfaces()
-                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeViaDef);
+                // before doing any registration work for either marker. Enumerate ALL closed forms
+                // of each marker (not FirstOrDefault) so a message that incorrectly closes the
+                // same marker over multiple resource types is rejected rather than silently having
+                // authorization registered for only one of the closed forms. The closed-form
+                // ambiguity check runs AFTER the mediator-message guard below so non-message
+                // fixtures that happen to declare multiple closed markers for testing purposes
+                // don't trigger spurious failures.
+                var authIfaces = type.GetInterfaces()
+                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeResourceDef)
+                    .ToList();
+                var viaIfaces = type.GetInterfaces()
+                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == authorizeViaDef)
+                    .ToList();
 
-                if (authIface is null && viaIface is null)
+                if (authIfaces.Count == 0 && viaIfaces.Count == 0)
                     continue;
 
                 // Find TResponse from ICommand<TResponse>, IQuery<TResponse>, or IRequest<TResponse>.
@@ -429,6 +437,16 @@ public static class ServiceCollectionExtensions
 
                 if (tResponse is null)
                     continue;
+
+                // Closed-marker ambiguity rejection runs only for types confirmed to be mediator
+                // messages. Mirrors the dual-mode rejection's "message-only" scope (line ~456) so
+                // non-message fixtures that happen to declare multiple closed markers for testing
+                // purposes don't trigger spurious failures.
+                EnsureAtMostOneClosedAuthorizationMarker(type, authIfaces, "IAuthorizeResource");
+                EnsureAtMostOneClosedAuthorizationMarker(type, viaIfaces, "IAuthorizeResourceVia");
+
+                var authIface = authIfaces.Count == 1 ? authIfaces[0] : null;
+                var viaIface = viaIfaces.Count == 1 ? viaIfaces[0] : null;
 
                 // Dual-mode rejection runs only for types confirmed to be mediator messages. This
                 // avoids spurious failures from non-message fixtures that happen to declare both
@@ -755,8 +773,13 @@ public static class ServiceCollectionExtensions
     /// Use this for AOT/trimming scenarios where assembly scanning is not available.
     /// </summary>
     /// <typeparam name="TMessage">
-    /// The command type implementing <see cref="IAuthorizeResource{TResource}"/>
-    /// and <see cref="IIdentifyResource{TResource, TId}"/>.
+    /// The command type implementing <see cref="IIdentifyResource{TResource, TId}"/>. The
+    /// constraint is intentionally limited to <see cref="IIdentifyResource{TResource, TId}"/>
+    /// only — both <see cref="IAuthorizeResource{TResource}"/> commands (where
+    /// <typeparamref name="TResource"/> is the resource the command authorizes against) and
+    /// <see cref="IAuthorizeResourceVia{TOwner}"/> via-commands (where
+    /// <typeparamref name="TResource"/> is the via-command's leaf resource type) reuse this
+    /// bridge.
     /// </typeparam>
     /// <typeparam name="TResource">The resource type.</typeparam>
     /// <typeparam name="TId">The identifier type.</typeparam>
@@ -814,6 +837,47 @@ public static class ServiceCollectionExtensions
         }
 
         return -1;
+    }
+
+    /// <summary>
+    /// Throws <see cref="InvalidOperationException"/> when a scanned message closes the same
+    /// authorization marker (<see cref="IAuthorizeResource{T}"/> or
+    /// <see cref="IAuthorizeResourceVia{T}"/>) over more than one resource type. The assembly
+    /// scanner registers a closed-generic pipeline behavior per closed marker, so a multi-closed
+    /// message would silently have authorization registered for only the first discovered
+    /// closed form and the remaining marker(s) would be effectively ignored at runtime — a
+    /// dangerous failure mode for a security marker. Internal so the rejection invariant can be
+    /// unit-tested directly without round-tripping through assembly scanning.
+    /// </summary>
+    /// <param name="messageType">The concrete message type discovered by the scanner.</param>
+    /// <param name="markerIfaces">All closed forms of the marker found on <paramref name="messageType"/>.</param>
+    /// <param name="markerInterfaceName">
+    /// Display name of the security-marker interface — either <c>"IAuthorizeResource"</c> or
+    /// <c>"IAuthorizeResourceVia"</c>. Used so the diagnostic names the actual marker the
+    /// consumer declared.
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <paramref name="markerIfaces"/> contains more than one entry.
+    /// </exception>
+    internal static void EnsureAtMostOneClosedAuthorizationMarker(
+        Type messageType,
+        IReadOnlyList<Type> markerIfaces,
+        string markerInterfaceName)
+    {
+        if (markerIfaces.Count <= 1)
+            return;
+
+        throw new InvalidOperationException(
+            $"{messageType.FullName ?? messageType.Name} implements {markerIfaces.Count} closed forms of " +
+            $"{markerInterfaceName}<> — assembly scanning would register the closed-generic authorization " +
+            $"behavior for only one of them and silently leave the remaining marker(s) unenforced at runtime. " +
+            $"Closed markers: " +
+            string.Join(", ", markerIfaces.Select(i =>
+                $"{markerInterfaceName}<{i.GetGenericArguments()[0].Name}>")) +
+            $". Declare exactly one closed {markerInterfaceName}<> per command, or register the additional " +
+            $"closed forms via the explicit AddResourceAuthorization<TMessage, TResource, TResponse>() / " +
+            $"AddRelatedResourceAuthorization<...>() helpers (which bypass assembly scanning and require " +
+            $"the consumer to opt in explicitly per closed form).");
     }
 
     /// <summary>

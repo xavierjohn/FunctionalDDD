@@ -1908,15 +1908,35 @@ The resolver discovers the path `Match → Team → Tournament` at registration 
 
 ### AOT / explicit registration
 
-`AddResourceAuthorization(Assembly[])` uses reflection. For Native AOT or trimming-strict deployments, register each via-command explicitly:
+`AddResourceAuthorization(Assembly[])` uses reflection. For Native AOT or trimming-strict deployments, register each via-command explicitly. The single-hop overload covers a leaf with one foreign key to its owner (singular extractor). It does **not** support fan-out — for that, drop to the hand-built `ResolvedAuthorizationPath` overload.
 
 ```csharp
+// Single-hop scenario: Match has one Team FK; the actor must own that team.
+public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResource<Team, TeamId>
+{
+    public TeamId TeamId { get; }
+    public TeamId GetRelatedResourceId() => TeamId;
+}
+
+public sealed record DeleteMatchCommand(MatchId MatchId)
+    : ICommand<Result<Unit>>,
+      IAuthorizeResourceVia<Team>,
+      IIdentifyResource<Match, MatchId>
+{
+    public MatchId GetResourceId() => MatchId;
+
+    public IResult Authorize(Actor actor, IReadOnlyList<Team> owners) =>
+        Result.Ensure(
+            owners[0].CreatedByActorId == actor.Id,
+            new Error.Forbidden("match.delete"));
+}
+
 services.AddRelatedResourceAuthorization<
-    UploadScorecardCommand, Match, MatchId, Team, TeamId, Result<Unit>>(
-    extractOwnerId: match => match.PrimaryTeamId);  // single-hop selector
+    DeleteMatchCommand, Match, MatchId, Team, TeamId, Result<Unit>>(
+    extractOwnerId: match => match.TeamId);  // single-hop selector
 ```
 
-The single-hop overload is canonical for the 80% case. For chains or fan-out, build a `ResolvedAuthorizationPath` manually and use the `(this IServiceCollection, ResolvedAuthorizationPath)` overload.
+For chains (`Match → Team → Tournament`) or fan-out (cricket `Match → {HomeTeam, AwayTeam}`), the single-hop overload cannot express the path. Build a `ResolvedAuthorizationPath` manually and use the `(this IServiceCollection, ResolvedAuthorizationPath)` overload — the hand-built path can carry multiple hops and a plural terminal hop.
 
 ### What the framework rejects at startup
 
