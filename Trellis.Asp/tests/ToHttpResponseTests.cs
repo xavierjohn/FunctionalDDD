@@ -75,14 +75,17 @@ public sealed class ToHttpResponseTests
     }
 
     [Fact]
-    public async Task Result_failure_422_UnprocessableContent_uses_problem_plus_json()
+    public async Task Result_failure_422_UnprocessableContent_uses_problem_plus_json_and_populates_instance()
     {
         // RFC 9457 §3 mandates application/problem+json for problem responses. The 422 path
         // must align with the rest of the framework's error surface (404, 403, 409, etc.),
-        // which all emit problem+json. Pinning here prevents a future regression where MVC's
-        // default ValidationProblemDetails path could be re-enabled and silently swap to
-        // application/json.
+        // which all emit problem+json. The instance assertion here specifically pins the
+        // ResponseFailureWriter ValidationProblem branch (Error.UnprocessableContent with
+        // field violations), distinct from the Results.Problem(...) branch exercised by the
+        // NotFound test below.
         var ctx = NewContext();
+        ctx.Request.Path = "/api/customers";
+        ctx.Request.QueryString = new QueryString("?api-version=2026-11-12");
         var r = Result.Fail<Todo>(
             Error.UnprocessableContent.ForField("title", "required", "Title is required."));
 
@@ -90,6 +93,9 @@ public sealed class ToHttpResponseTests
 
         ctx.Response.StatusCode.Should().Be(422);
         ctx.Response.ContentType.Should().StartWith("application/problem+json");
+        ctx.Response.Body.Position = 0;
+        var body = await new StreamReader(ctx.Response.Body).ReadToEndAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("\"instance\":\"/api/customers?api-version=2026-11-12\"");
     }
 
     [Fact]
