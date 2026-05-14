@@ -381,21 +381,78 @@ public class ClaimsActorProviderTests
             "no fallback log should fire when the configured claim resolves literally, even if a counterpart also contributes");
     }
 
-    [Fact]
-    public async Task GetCurrentActorAsync_ActorIdClaim_OidShortFormConfigured_FallsBackToObjectIdentifierLongForm()
+    #endregion
+
+    #region MapInboundClaims fallback — extended Microsoft-identity short↔long mappings
+
+    /// <summary>
+    /// Table-driven coverage for every extended short↔long entry added beyond the RFC 7519 /
+    /// OIDC standard subset. Each case configures <see cref="ClaimsActorOptions.ActorIdClaim"/>
+    /// to the short form, supplies the long form on the identity (the
+    /// <c>MapInboundClaims = true</c> shape), and asserts the fallback resolves. The dataset
+    /// pins the literal long-form URN strings on the source table — a typo or unintended
+    /// edit fails here rather than silently disabling the fallback in production. Also
+    /// includes the reverse direction (configured long form, identity carrying the short).
+    /// </summary>
+    public static TheoryData<string, string> ExtendedShortLongPairs() => new()
     {
-        // The Entra objectidentifier case for ActorIdClaim. Consumer configures
-        // ActorIdClaim = "oid" expecting MapInboundClaims = false; under the
-        // ASP.NET Core default the "oid" claim is remapped onto the Microsoft
-        // long form, and without this fallback the actor id wouldn't resolve.
-        var user = AuthenticatedUser(
-            new Claim("http://schemas.microsoft.com/identity/claims/objectidentifier", "11111111-2222-3333-4444-555555555555"));
-        var options = new ClaimsActorOptions { ActorIdClaim = "oid" };
+        // Forward direction will be tested with these (configured = Item1, identity-claim = Item2).
+        // Reverse direction with the same pair (configured = Item2, identity-claim = Item1).
+        { "upn", ClaimTypes.Upn },
+        { "oid", "http://schemas.microsoft.com/identity/claims/objectidentifier" },
+        { "tid", "http://schemas.microsoft.com/identity/claims/tenantid" },
+        { "idp", "http://schemas.microsoft.com/identity/claims/identityprovider" },
+        { "acr", "http://schemas.microsoft.com/claims/authnclassreference" },
+        { "amr", "http://schemas.microsoft.com/claims/authnmethodsreferences" },
+    };
+
+    [Theory]
+    [MemberData(nameof(ExtendedShortLongPairs))]
+    public async Task GetCurrentActorAsync_ActorIdClaim_ExtendedShortFormConfigured_FallsBackToLongForm(string shortForm, string longForm)
+    {
+        // Forward direction: consumer configures the short form, identity (post-
+        // MapInboundClaims = true) carries the long form. Without the fallback,
+        // identity.FindFirst(shortForm) returns null and the request 401s.
+        var user = AuthenticatedUser(new Claim(longForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = shortForm };
 
         var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("11111111-2222-3333-4444-555555555555",
-            "configured 'oid' must fall back to the Microsoft-identity 'objectidentifier' long form");
+        actor.Id.Should().Be($"value-{shortForm}",
+            $"configured '{shortForm}' must fall back to long-form '{longForm}' when MapInboundClaims = true remaps it");
+    }
+
+    [Theory]
+    [MemberData(nameof(ExtendedShortLongPairs))]
+    public async Task GetCurrentActorAsync_ActorIdClaim_ExtendedLongFormConfigured_FallsBackToShortForm(string shortForm, string longForm)
+    {
+        // Reverse direction: consumer configures the long form, identity carries the
+        // short. Pins that the symmetry holds for every extended entry.
+        var user = AuthenticatedUser(new Claim(shortForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = longForm };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Id.Should().Be($"value-{shortForm}",
+            $"configured '{longForm}' must fall back to short form '{shortForm}'");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_AmrLongFormConfigured_MultipleShortValuesAllContribute()
+    {
+        // Pins the multi-valued case for the extended set: "amr" is commonly emitted as
+        // multiple Claim instances (e.g. ["pwd", "mfa"]). When PermissionsClaim is
+        // configured as the long form, every short-variant value must contribute.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("amr", "pwd"),
+            new Claim("amr", "mfa"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "http://schemas.microsoft.com/claims/authnmethodsreferences" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["pwd", "mfa"],
+            "multi-valued 'amr' claims must all contribute when configured as the long form authnmethodsreferences URN");
     }
 
     #endregion

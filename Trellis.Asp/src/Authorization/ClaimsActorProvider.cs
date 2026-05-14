@@ -176,16 +176,16 @@ public class ClaimsActorProvider : IActorProvider
     /// in years.
     /// </para>
     /// <para>
-    /// Scope: this table covers the OAuth2 / OIDC / Microsoft-identity subset of the
-    /// JWT inbound map — every claim type a consumer might realistically configure
-    /// as <see cref="ClaimsActorOptions.ActorIdClaim"/> or
-    /// <see cref="ClaimsActorOptions.PermissionsClaim"/> (subject identifier,
-    /// permissions/scopes, tenant, UPN, group/role, AuthN context, identity
-    /// provider). Operational / transport / device / certificate metadata claims
-    /// from the inbound map (<c>clientip</c>, <c>cert*</c>, <c>device*</c>, etc.)
-    /// are intentionally omitted: they are not authentication state and configuring
-    /// them as an actor id or permission would be a misconfiguration in its own
-    /// right.
+    /// Scope: this table covers the curated OAuth2 / OIDC / Microsoft-identity subset
+    /// of the JWT inbound map — every claim type a consumer might realistically
+    /// configure as <see cref="ClaimsActorOptions.ActorIdClaim"/> or
+    /// <see cref="ClaimsActorOptions.PermissionsClaim"/> (subject identifier, roles,
+    /// tenant, UPN, AuthN context, identity provider). The OAuth scope claim
+    /// <c>scp</c> is intentionally omitted (see the inline comment on the table for
+    /// the rationale). Operational / transport / device / certificate metadata claims
+    /// from the inbound map (<c>clientip</c>, <c>cert*</c>, <c>device*</c>, etc.) are
+    /// intentionally omitted: they are not authentication state and configuring them
+    /// as an actor id or permission would be a misconfiguration in its own right.
     /// </para>
     /// </remarks>
     private static readonly FrozenDictionary<string, string> KnownShortToLongClaimNames =
@@ -206,14 +206,18 @@ public class ClaimsActorProvider : IActorProvider
             ["website"] = ClaimTypes.Webpage,
             ["actort"] = ClaimTypes.Actor,
             ["upn"] = ClaimTypes.Upn,
-            // Microsoft identity platform claims (Entra v1.0 / v2.0). All single-valued.
-            // The OAuth scope claim "scp" is intentionally NOT included: its value is
-            // space-delimited (RFC 6749 §3.3, e.g. "orders.read orders.write") and the
-            // provider snapshots claim values verbatim into a FrozenSet, so wiring the
-            // fallback would still leave Actor.HasPermission("orders.read") returning
-            // false. OAuth scope-as-permission requires a custom provider that splits
-            // the value (or the consumer setting MapInboundClaims = false and configuring
-            // their own scope-splitting subclass).
+            // Microsoft identity platform claims (Entra v1.0 / v2.0). Most are
+            // single-valued (oid, tid, idp, acr); "amr" is commonly multi-valued
+            // (e.g. ["pwd", "mfa"]) and that case is handled by the multi-valued
+            // ResolveAllClaimsWithFallback path.
+            //
+            // The OAuth scope claim "scp" is intentionally NOT included: its value
+            // is space-delimited (RFC 6749 §3.3, e.g. "orders.read orders.write")
+            // and the provider snapshots claim values verbatim into a FrozenSet, so
+            // wiring the fallback would still leave Actor.HasPermission("orders.read")
+            // returning false. OAuth scope-as-permission requires a custom provider
+            // that splits the value (or the consumer setting MapInboundClaims = false
+            // and configuring their own scope-splitting subclass).
             ["oid"] = "http://schemas.microsoft.com/identity/claims/objectidentifier",
             ["tid"] = "http://schemas.microsoft.com/identity/claims/tenantid",
             ["idp"] = "http://schemas.microsoft.com/identity/claims/identityprovider",
@@ -323,8 +327,8 @@ public class ClaimsActorProvider : IActorProvider
 
     /// <summary>
     /// Multi-valued sibling of <see cref="ResolveClaimWithFallback"/>. Yields every claim on
-    /// the identity that matches the configured claim name OR any well-known short↔long
-    /// counterpart from the JWT inbound claim-name map. Used for permissions resolution,
+    /// the identity that matches the configured claim name OR any counterpart in the curated
+    /// <see cref="KnownShortToLongClaimNames"/> mapping table. Used for permissions resolution,
     /// where every contributing claim must be included in the resulting set; the caller's
     /// <see cref="FrozenSet{T}"/> construction dedupes overlapping values.
     /// </summary>

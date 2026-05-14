@@ -41,7 +41,7 @@ audience: [developer]
 | `AddDevelopmentActorProvider(this IServiceCollection, Action<DevelopmentActorOptions>?)` | DI extension | Scoped `IActorProvider` → `DevelopmentActorProvider`; reads `X-Test-Actor` JSON header; throws outside `IsDevelopment()`. |
 | `AddCachingActorProvider<T>(this IServiceCollection)` where `T : class, IActorProvider` | DI extension | Wraps `T` in `CachingActorProvider` so a single resolution task is shared per request. |
 | `EntraActorOptions` | Options | `IdClaimType`, `MapPermissions`, `MapForbiddenPermissions`, `MapAttributes`. |
-| `ClaimsActorOptions` | Options | `ActorIdClaim` (default `"sub"`), `PermissionsClaim` (default `"permissions"`). `Claim.Type` literal match, plus a bidirectional fallback to the well-known short↔long counterpart from the JWT inbound claim-name map (`"sub"` ↔ `ClaimTypes.NameIdentifier`, `"role"`/`"roles"` ↔ `ClaimTypes.Role`, etc.). |
+| `ClaimsActorOptions` | Options | `ActorIdClaim` (default `"sub"`), `PermissionsClaim` (default `"permissions"`). `Claim.Type` literal match, plus a bidirectional fallback through the provider's curated short↔long mapping table (`"sub"` ↔ `ClaimTypes.NameIdentifier`, `"role"`/`"roles"` ↔ `ClaimTypes.Role`, etc.). |
 | `DevelopmentActorOptions` | Options | `DefaultActorId`, `DefaultPermissions`, `ThrowOnMalformedHeader`. |
 | `ActorAttributes` (in `Trellis.Authorization`) | Constants | Well-known attribute keys: `TenantId`, `PreferredUsername`, `AuthorizedParty`, `AuthorizedPartyAcr`, `AuthContextClassReference`, `IpAddress`, `MfaAuthenticated`. |
 
@@ -194,7 +194,7 @@ If the token only proves identity (Google is the canonical case), `Actor.Permiss
 
 ### Nested-claim providers
 
-`ClaimsActorOptions` matches `Claim.Type` literally first, then falls back to the well-known short↔long counterpart from the JWT inbound claim-name map (e.g. `"sub"` ↔ `ClaimTypes.NameIdentifier`, `"role"`/`"roles"` ↔ `ClaimTypes.Role`) — no JSON-path traversal. When a token contains a nested object (e.g. Keycloak's `{ "realm_access": { "roles": [...] } }`), the JWT handler stores the value as a raw JSON string under claim type `"realm_access"`, which is not in the inbound claim-name map. Subclass `ClaimsActorProvider` to project it.
+`ClaimsActorOptions` matches `Claim.Type` literally first, then falls back through the provider's curated short↔long mapping table (e.g. `"sub"` ↔ `ClaimTypes.NameIdentifier`, `"role"`/`"roles"` ↔ `ClaimTypes.Role`) — no JSON-path traversal. When a token contains a nested object (e.g. Keycloak's `{ "realm_access": { "roles": [...] } }`), the JWT handler stores the value as a raw JSON string under claim type `"realm_access"`, which is not in the mapping table. Subclass `ClaimsActorProvider` to project it.
 
 ```csharp
 using System;
@@ -296,7 +296,7 @@ Each provider exposes a small surface of mapping options. The full default table
 
 ### Synthesizing app permissions during token validation
 
-When the IdP only issues identity, add permission claims in `OnTokenValidated`. `ClaimsActorProvider` aggregates every `Claim` whose `Type` matches `PermissionsClaim` (or its well-known short↔long counterpart from the JWT inbound claim-name map) via `FindAll`, so multiple `Claim` instances of the same type — and matches across both forms — are flattened into a deduplicated set automatically.
+When the IdP only issues identity, add permission claims in `OnTokenValidated`. `ClaimsActorProvider` aggregates every `Claim` whose `Type` matches `PermissionsClaim` (or its counterpart in the provider's curated short↔long mapping table) via `FindAll`, so multiple `Claim` instances of the same type — and matches across both forms — are flattened into a deduplicated set automatically.
 
 ```csharp
 using System;
