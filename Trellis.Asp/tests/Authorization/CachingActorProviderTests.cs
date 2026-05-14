@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Trellis.Authorization;
+using Trellis.Testing;
 
 /// <summary>
 /// Tests for <see cref="CachingActorProvider"/> — the caching decorator for actor providers.
@@ -23,7 +24,7 @@ public class CachingActorProviderTests
         var result1 = await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken);
         var result2 = await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken);
 
-        result1.Should().BeSameAs(result2);
+        result1.Unwrap().Should().BeSameAs(result2.Unwrap());
         callCount.Should().Be(1, "inner provider should only be called once");
     }
 
@@ -34,7 +35,7 @@ public class CachingActorProviderTests
         var inner = new CountingActorProvider(actor, () => { });
         var caching = new CachingActorProvider(inner, s_nullAccessor);
 
-        var result = await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var result = (await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         result.Id.Should().Be("user-1");
         result.HasPermission("Write").Should().BeTrue();
@@ -79,23 +80,63 @@ public class CachingActorProviderTests
 
     #endregion
 
+    #region Failure caching
+
+    [Fact]
+    public async Task GetCurrentActorAsync_InnerThrowsSynchronously_FailureIsCachedAndReplayed()
+    {
+        // The XML doc on CachingActorProvider promises that failures from the inner provider
+        // are cached for the request scope so subsequent behaviors in the pipeline don't
+        // re-run expensive prerequisites (e.g. DB lookups) that already failed. Synchronous
+        // throws (typical of providers that validate prerequisites before returning a Task)
+        // must be cached the same way as faulted Tasks.
+        var callCount = 0;
+        var inner = new ThrowingSyncProvider(() =>
+        {
+            callCount++;
+            throw new InvalidOperationException("boom");
+        });
+        var caching = new CachingActorProvider(inner, s_nullAccessor);
+
+        var act1 = async () => await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var act2 = async () => await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        await act1.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
+        await act2.Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");
+
+        callCount.Should().Be(1,
+            "synchronous failures from the inner provider must be cached for the request scope, "
+            + "matching the contract documented on CachingActorProvider");
+    }
+
+    #endregion
+
     #region Helpers
 
     private sealed class CountingActorProvider(Actor actor, Action onCall) : IActorProvider
     {
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
         {
             onCall();
-            return Task.FromResult(actor);
+            return Task.FromResult(Maybe.From(actor));
         }
     }
 
     private sealed class TokenCapturingProvider(Actor actor, Action<CancellationToken> onCall) : IActorProvider
     {
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
         {
             onCall(cancellationToken);
-            return Task.FromResult(actor);
+            return Task.FromResult(Maybe.From(actor));
+        }
+    }
+
+    private sealed class ThrowingSyncProvider(Action onCall) : IActorProvider
+    {
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        {
+            onCall();
+            return Task.FromResult(Maybe<Actor>.None); // unreachable — onCall throws
         }
     }
 

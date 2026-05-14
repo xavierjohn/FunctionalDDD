@@ -78,7 +78,7 @@ public sealed class AuthorizationBehavior<TMessage, TResponse>(IActorProvider ac
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the current actor, checks `RequiredPermissions` with `HasAllPermissions`, and returns `TResponse.CreateFailure(new Error.Forbidden("authorization.insufficient.permissions") { Detail = "Insufficient permissions." })` when authorization fails. Throws `InvalidOperationException` when no actor can be resolved. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the current actor via `IActorProvider`. When the provider returns `Maybe<Actor>.None`, short-circuits with `TResponse.CreateFailure(new Error.Unauthorized { Detail = "Authentication required." })` (HTTP 401, RFC 9110 §15.5.2). When the actor is present but lacks one of `RequiredPermissions`, short-circuits with `TResponse.CreateFailure(new Error.Forbidden("authorization.insufficient.permissions") { Detail = "Insufficient permissions." })` (HTTP 403). The 401 vs 403 distinction is shared with `ResourceAuthorizationBehavior` and `ResourceAuthorizationViaBehavior` via the internal `ActorResolution.TryResolveAsync` / `ActorResolution.AuthenticationRequired()` helpers; provider-side `InvalidOperationException` (genuine bugs — no `HttpContext`, mapping delegate threw, etc.) propagates uncaught and surfaces as `Error.InternalServerError` (HTTP 500) via `ExceptionBehavior`. |
 
 ### ExceptionBehavior<TMessage, TResponse>
 **Declaration**
@@ -613,8 +613,8 @@ public sealed class OrderResourceLoader : SharedResourceLoaderById<Order, OrderI
 
 public sealed class StaticActorProvider : IActorProvider
 {
-    public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult(Actor.Create("user-1", new HashSet<string> { "orders:read" }));
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(Maybe.From(Actor.Create("user-1", new HashSet<string> { "orders:read" })));
 }
 ```
 

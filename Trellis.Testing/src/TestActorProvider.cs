@@ -45,8 +45,8 @@ public sealed class TestActorProvider : IActorProvider
     }
 
     /// <inheritdoc />
-    public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(_asyncLocalActor.Value ?? _defaultActor);
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(Maybe.From(_asyncLocalActor.Value ?? _defaultActor));
 
     /// <summary>
     /// Temporarily replaces the current actor for the current async flow.

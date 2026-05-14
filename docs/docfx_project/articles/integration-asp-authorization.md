@@ -87,7 +87,10 @@ app.UseAuthorization();
 
 app.MapGet("/me", [Authorize] async (IActorProvider actorProvider, CancellationToken ct) =>
 {
-    var actor = await actorProvider.GetCurrentActorAsync(ct);
+    var maybeActor = await actorProvider.GetCurrentActorAsync(ct);
+    if (!maybeActor.TryGetValue(out var actor))
+        return Results.Unauthorized();
+
     return Results.Ok(new
     {
         actor.Id,
@@ -112,7 +115,7 @@ app.Run();
 | `EntraActorOptions.MapForbiddenPermissions` | empty `HashSet<string>` | Project a deny-list claim or DB lookup. |
 | `EntraActorOptions.MapAttributes` | extracts `tid`, `preferred_username`, `azp`, `azpacr`, `acrs`; adds `ip_address` from `Connection.RemoteIpAddress` and `mfa = "true"\|"false"` from any `amr` claim equal to `"mfa"` | Add tenant-scoped or request-scoped attributes. |
 
-`EntraActorProvider` throws `InvalidOperationException` when no `HttpContext` is available, no authenticated `ClaimsIdentity` exists, or the configured `IdClaimType` is missing (and the short `oid` fallback also misses). Any exception thrown by `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` is rewrapped in `InvalidOperationException` naming the failing delegate.
+`EntraActorProvider` returns `Maybe<Actor>.None` when no authenticated `ClaimsIdentity` exists or the configured `IdClaimType` is missing (and the short `oid` fallback also misses); the mediator authorization pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). It throws `InvalidOperationException` only when invoked outside an HTTP request scope (no `HttpContext`) — a configuration bug that surfaces as HTTP 500. Any exception thrown by `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` is rewrapped in `InvalidOperationException` naming the failing delegate.
 
 ## Generic claims provider
 
@@ -192,13 +195,21 @@ public sealed class DatabaseActorProvider(
     IHttpContextAccessor httpContextAccessor,
     IPermissionStore permissionStore) : IActorProvider
 {
-    public async Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    public async Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
-        var userId = httpContextAccessor.HttpContext?.User.FindFirst("sub")?.Value
-            ?? throw new InvalidOperationException("Missing user id.");
+        // HttpContext missing is a configuration bug, not authentication state — throw
+        // so it surfaces as HTTP 500 rather than masquerading as a 401.
+        var httpContext = httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("No HttpContext available.");
+
+        // No authenticated identity / missing id claim → no usable actor → Maybe.None,
+        // which the mediator pipeline maps to Error.Unauthorized (HTTP 401).
+        var userId = httpContext.User.FindFirst("sub")?.Value;
+        if (userId is null)
+            return Maybe<Actor>.None;
 
         var permissions = await permissionStore.GetPermissionsAsync(userId, cancellationToken);
-        return Actor.Create(userId, permissions);
+        return Maybe.From(Actor.Create(userId, permissions));
     }
 }
 
@@ -414,7 +425,9 @@ public static class DocumentService
         string id,
         CancellationToken ct)
     {
-        var actor = await actors.GetCurrentActorAsync(ct);
+        var maybeActor = await actors.GetCurrentActorAsync(ct);
+        if (!maybeActor.TryGetValue(out var actor))
+            return Result.Fail<Document>(new Error.Unauthorized { Detail = "Authentication required." });
 
         return await repo.GetByIdAsync(id, ct)
             .EnsureAsync(

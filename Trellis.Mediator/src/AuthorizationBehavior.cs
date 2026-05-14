@@ -34,17 +34,9 @@ public sealed class AuthorizationBehavior<TMessage, TResponse>
         MessageHandlerDelegate<TMessage, TResponse> next,
         CancellationToken cancellationToken)
     {
-        var actor = await _actorProvider.GetCurrentActorAsync(cancellationToken).ConfigureAwait(false);
-
-        // The IActorProvider contract requires implementations to throw when no authenticated
-        // actor exists; returning null is a contract violation. Defense-in-depth: surface the
-        // violation here rather than letting it escape as a NullReferenceException from the
-        // permission check below.
+        var actor = await ActorResolution.TryResolveAsync(_actorProvider, cancellationToken).ConfigureAwait(false);
         if (actor is null)
-            throw new InvalidOperationException(
-                "IActorProvider.GetCurrentActorAsync returned null. The contract requires "
-                + "implementations to throw when no authenticated actor exists; returning null is a "
-                + "violation of the IActorProvider contract.");
+            return TResponse.CreateFailure(ActorResolution.AuthenticationRequired());
 
         if (!actor.HasAllPermissions(message.RequiredPermissions))
         {

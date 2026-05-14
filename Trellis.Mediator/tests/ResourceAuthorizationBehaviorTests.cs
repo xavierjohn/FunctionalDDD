@@ -151,28 +151,27 @@ public class ResourceAuthorizationBehaviorTests
     #region Actor checked before resource load
 
     [Fact]
-    public async Task Handle_NullActor_ThrowsBeforeResourceLoaderIsCalled()
+    public async Task Handle_NoActor_EmitsUnauthorizedBeforeResourceLoaderIsCalled()
     {
         // ga-11: the resource loader must not run when the caller is unauthenticated.
         // Loader I/O is expensive (DB) and can leak existence by timing — gate on actor first.
+        // "No authenticated actor" is modelled as Maybe<Actor>.None on IActorProvider; the
+        // pipeline maps it to Error.Unauthorized (HTTP 401).
         var loader = new FakeResourceLoader<ResourceOwnerCommand>(new TestResource("res-1", "owner-1"));
         var services = new ServiceCollection();
         services.AddScoped<IResourceLoader<ResourceOwnerCommand, TestResource>>(_ => loader);
         var sp = services.BuildServiceProvider();
 
         var behavior = new ResourceAuthorizationBehavior<ResourceOwnerCommand, TestResource, Result<string>>(
-            new NullActorProvider(), sp);
+            new NoActorProvider(), sp);
 
         var command = new ResourceOwnerCommand("res-1");
         var next = NextDelegate.ReturningAsync<ResourceOwnerCommand, Result<string>>(Result.Ok("Done"));
 
-        // Lock in the new contract-violation message so a regression cannot restore the
-        // misleading "Ensure an IActorProvider is configured" guidance (m-3 from PR #459).
-        await FluentActions.Invoking(() => behavior.Handle(command, next, CancellationToken.None).AsTask())
-            .Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*IActorProvider.GetCurrentActorAsync returned null*")
-            .WithMessage("*violation of the IActorProvider contract*");
+        var result = await behavior.Handle(command, next, CancellationToken.None);
 
+        result.IsFailure.Should().BeTrue();
+        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
         loader.WasCalled.Should().BeFalse();
     }
 
@@ -217,24 +216,22 @@ public class ResourceAuthorizationBehaviorTests
     }
 
     [Fact]
-    public async Task Handle_ActorProviderReturnsNull_ThrowsInvalidOperationException()
+    public async Task Handle_ActorProviderReturnsNone_EmitsUnauthorized()
     {
         var services = new ServiceCollection();
         services.AddScoped<IResourceLoader<ResourceOwnerCommand, TestResource>>(_ =>
             new FakeResourceLoader<ResourceOwnerCommand>(new TestResource("res-1", "owner-1")));
         var behavior = new ResourceAuthorizationBehavior<ResourceOwnerCommand, TestResource, Result<string>>(
-            new NullActorProvider(),
+            new NoActorProvider(),
             services.BuildServiceProvider());
         var command = new ResourceOwnerCommand("res-1");
         var next = NextDelegate.ReturningAsync<ResourceOwnerCommand, Result<string>>(
             Result.Ok("should not reach"));
 
-        var act = async () => await behavior.Handle(command, next, CancellationToken.None);
+        var result = await behavior.Handle(command, next, CancellationToken.None);
 
-        // Lock in the new contract-violation message wording (m-3 from PR #459).
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*IActorProvider.GetCurrentActorAsync returned null*")
-            .WithMessage("*violation of the IActorProvider contract*");
+        result.IsFailure.Should().BeTrue();
+        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
     }
 
     #endregion
@@ -323,10 +320,10 @@ public class ResourceAuthorizationBehaviorTests
         }
     }
 
-    private sealed class NullActorProvider : IActorProvider
+    private sealed class NoActorProvider : IActorProvider
     {
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult<Actor>(null!);
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(Maybe<Actor>.None);
     }
 
     /// <summary>
@@ -336,10 +333,10 @@ public class ResourceAuthorizationBehaviorTests
     {
         public CancellationToken LastCancellationToken { get; private set; }
 
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
         {
             LastCancellationToken = cancellationToken;
-            return Task.FromResult(actor);
+            return Task.FromResult(Maybe.From(actor));
         }
     }
 

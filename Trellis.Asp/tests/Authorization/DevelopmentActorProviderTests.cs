@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Trellis.Testing;
 
 /// <summary>
 /// Tests for <see cref="DevelopmentActorProvider"/> — the development/testing actor provider
@@ -121,7 +122,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("user-1");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read"]);
@@ -134,7 +135,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.ForbiddenPermissions.Should().Contain("orders:delete");
         actor.HasPermission("orders:delete").Should().BeFalse("deny overrides allow");
@@ -148,7 +149,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.GetAttribute("tid").Should().Be("tenant-1");
         actor.GetAttribute("region").Should().Be("us-west");
@@ -161,7 +162,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("user-1");
         actor.Permissions.Should().BeEmpty();
@@ -174,7 +175,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("minimal-user");
         actor.Permissions.Should().BeEmpty();
@@ -192,7 +193,7 @@ public class DevelopmentActorProviderTests
         var context = new DefaultHttpContext();
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
         actor.Permissions.Should().BeEmpty();
@@ -209,7 +210,7 @@ public class DevelopmentActorProviderTests
         };
         var provider = CreateProvider(context, options: options);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("admin");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read"]);
@@ -220,7 +221,7 @@ public class DevelopmentActorProviderTests
     {
         var provider = CreateProvider(httpContext: null);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
     }
@@ -232,7 +233,7 @@ public class DevelopmentActorProviderTests
         context.Request.Headers[DevelopmentActorProvider.HeaderName] = "";
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
     }
@@ -247,7 +248,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader("not valid json {{{");
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
     }
@@ -258,7 +259,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader("""{"Permissions":["orders:read"]}""");
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
     }
@@ -269,7 +270,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader("""{"Id":"","Permissions":["orders:read"]}""");
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
     }
@@ -306,7 +307,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader("""{"Id":"user-1","Permissions":[123,true]}""");
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("development");
     }
@@ -330,7 +331,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("round-trip-user");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read", "products:manage-stock"]);
@@ -347,7 +348,7 @@ public class DevelopmentActorProviderTests
         var context = CreateHttpContextWithHeader(header);
         var provider = CreateProvider(context);
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("case-user");
         actor.Permissions.Should().Contain("orders:read");

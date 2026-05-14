@@ -120,7 +120,11 @@ public interface IActorProvider
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Actor>` | Returns the current authenticated actor. Implementations must throw `InvalidOperationException` (or a more specific subclass) when the request is unauthenticated or the actor cannot be resolved. Register as scoped. |
+| `Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Maybe<Actor>>` | Returns the current authenticated actor wrapped in `Maybe.From(...)`, or `Maybe<Actor>.None` when the request has no usable authenticated actor. The mediator authorization pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401) per RFC 9110 §15.5.2. Implementations should throw `InvalidOperationException` only for genuine infrastructure or configuration failures (no `HttpContext`, mapping delegate threw, etc.) — those still surface as `Error.InternalServerError` (HTTP 500). "No actor" is client-error state, not an exception. Register as scoped. |
+
+**401 vs 500 contract.** `Maybe<Actor>.None` means the framework cannot identify an actor for the request — typically the request lacks credentials, the auth middleware did not produce an authenticated identity, or the configured actor-id claim is missing from an otherwise authenticated identity. All three are classes of client error and the mediator pipeline emits HTTP 401. A thrown `InvalidOperationException` means the provider itself cannot operate (no `HttpContext`, malformed configuration, mapping delegate failure) — that's a server bug and surfaces as HTTP 500.
+
+> ⚠️ **`WWW-Authenticate` header on the 401.** RFC 9110 §11.6.1 requires `WWW-Authenticate` on 401 responses. The mediator-emitted `Error.Unauthorized` carries an empty `Challenges` array by default, deferring the header to the configured ASP.NET Core authentication handler (which knows the scheme name and parameters; the mediator layer does not). Consumers needing strict §11.6.1 compliance should ensure their auth handler writes `WWW-Authenticate` on 401 responses. The framework's bundled `ClaimsActorProvider`/`EntraActorProvider` follow this layering: the auth handler owns the challenge.
 
 ### `IAuthorize`
 

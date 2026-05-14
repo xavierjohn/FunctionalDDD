@@ -79,20 +79,24 @@ public sealed class DatabaseActorProvider(
     IHttpContextAccessor accessor,
     IPermissionRepository repo) : IActorProvider
 {
-    public async Task<Actor> GetCurrentActorAsync(CancellationToken ct = default)
+    public async Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken ct = default)
     {
+        // Missing HttpContext is a configuration bug (provider invoked outside an HTTP
+        // request scope) — throw so it surfaces as HTTP 500 rather than masquerading as 401.
         var principal = accessor.HttpContext?.User
             ?? throw new InvalidOperationException("No HttpContext is available.");
 
+        // Unauthenticated request → no usable actor → Maybe.None → mediator pipeline
+        // emits Error.Unauthorized (HTTP 401).
         if (principal.Identity?.IsAuthenticated != true)
-            throw new InvalidOperationException("The current request is not authenticated.");
+            return Maybe<Actor>.None;
 
-        var externalId = principal.FindFirstValue("oid")
-            ?? principal.FindFirstValue("sub")
-            ?? throw new InvalidOperationException("No 'oid' or 'sub' claim was found.");
+        var externalId = principal.FindFirstValue("oid") ?? principal.FindFirstValue("sub");
+        if (externalId is null)
+            return Maybe<Actor>.None;
 
         var permissions = await repo.GetPermissionsForUserAsync(externalId, ct).ConfigureAwait(false);
-        return Actor.Create(externalId, permissions);
+        return Maybe.From(Actor.Create(externalId, permissions));
     }
 }
 
@@ -229,7 +233,7 @@ The provider in [Quick start](#quick-start) is the canonical shape. It does thre
 | Extract `oid` (then fall back to `sub`) | Matches the `EntraActorProvider` precedence; both Entra v1.0 and v2.0 tokens resolve. |
 | Call the repository, then `Actor.Create(...)` | `Actor.Create` snapshots permissions into a `FrozenSet<string>` for O(1) lookups. |
 
-Throwing `InvalidOperationException` on missing context / unauthenticated requests follows the contract documented for `IActorProvider.GetCurrentActorAsync` ([`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md#iactorprovider)).
+Returning `Maybe<Actor>.None` for unauthenticated requests and throwing `InvalidOperationException` only for missing-`HttpContext` configuration bugs follows the contract documented for `IActorProvider.GetCurrentActorAsync` ([`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md#iactorprovider)). The mediator authorization pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2); the throw surfaces as `Error.InternalServerError` (HTTP 500), which is correct because it is a bug rather than authentication state.
 
 ## Carrying ABAC attributes
 
@@ -244,15 +248,18 @@ public sealed class TenantAwareActorProvider(
     IHttpContextAccessor accessor,
     IPermissionRepository repo) : IActorProvider
 {
-    public async Task<Actor> GetCurrentActorAsync(CancellationToken ct = default)
+    public async Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken ct = default)
     {
         var ctx = accessor.HttpContext
             ?? throw new InvalidOperationException("No HttpContext is available.");
         var principal = ctx.User;
 
-        var externalId = principal.FindFirstValue("oid")
-            ?? principal.FindFirstValue("sub")
-            ?? throw new InvalidOperationException("No 'oid' or 'sub' claim was found.");
+        if (principal.Identity?.IsAuthenticated != true)
+            return Maybe<Actor>.None;
+
+        var externalId = principal.FindFirstValue("oid") ?? principal.FindFirstValue("sub");
+        if (externalId is null)
+            return Maybe<Actor>.None;
 
         var permissions = await repo
             .GetPermissionsForUserAsync(externalId, ct)
@@ -264,11 +271,11 @@ public sealed class TenantAwareActorProvider(
         if (ctx.Connection.RemoteIpAddress is { } ip)
             attributes[ActorAttributes.IpAddress] = ip.ToString();
 
-        return new Actor(
+        return Maybe.From(new Actor(
             id: externalId,
             permissions: permissions,
             forbiddenPermissions: new HashSet<string>(StringComparer.Ordinal),
-            attributes: attributes);
+            attributes: attributes));
     }
 }
 ```
