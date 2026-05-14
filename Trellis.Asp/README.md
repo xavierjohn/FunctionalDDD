@@ -24,6 +24,7 @@ app.MapGet("/widgets/{id}", (string id) =>
 - Convert `Result<T>` and `Error` values into consistent HTTP responses.
 - Validate Trellis scalar values during model binding and JSON deserialization.
 - Support controller and minimal API styles, including AOT-friendly setups.
+- Emit [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details with `instance` populated from the request path so clients can correlate failures with the originating request.
 
 ## Documentation
 - [Full documentation](https://xavierjohn.github.io/Trellis/articles/integration-aspnet.html)
