@@ -202,8 +202,10 @@ public class ClaimsActorProvider : IActorProvider
     /// <param name="httpContextAccessor">Accessor for the current request's <see cref="HttpContext"/>.</param>
     /// <param name="options">Claim-name mapping options.</param>
     /// <param name="logger">
-    /// Optional logger; when supplied, emits a debug-level message the first time the
-    /// short↔long claim-name fallback fires for a given request. Helpful for diagnosing
+    /// Optional logger; when supplied, emits a debug-level message each time the
+    /// short↔long claim-name fallback resolves the actor id (no per-request
+    /// deduplication — the fallback runs at most once per request today, so the
+    /// log fires at most once per request as a consequence). Helpful for diagnosing
     /// "always 401" issues caused by <c>JwtBearerOptions.MapInboundClaims = true</c>.
     /// </param>
     public ClaimsActorProvider(
