@@ -14,6 +14,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     private Func<TDomain, EntityTagValue?>? _eTagSelector;
     private Func<TDomain, DateTimeOffset?>? _lastModifiedSelector;
     private List<string>? _vary;
+    private bool _varyForActor;
     private List<string>? _contentLanguage;
     private Func<TDomain, string?>? _contentLocationSelector;
     private string? _acceptRanges;
@@ -68,6 +69,27 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         foreach (var h in headers)
             if (!string.IsNullOrWhiteSpace(h))
                 _vary.Add(h);
+        return this;
+    }
+
+    /// <summary>
+    /// Appends the request header(s) that contribute to actor identity for the registered
+    /// <c>IActorProvider</c> to the response <c>Vary</c> header. The provider must
+    /// implement <c>IProvideActorVaryHeaders</c>; without that implementation the call
+    /// throws at apply time (fail-closed) rather than emit an incorrect or incomplete
+    /// <c>Vary</c> header that would allow intermediate caches to serve actor A's response
+    /// to actor B.
+    /// </summary>
+    /// <remarks>
+    /// For the framework-bundled providers: <c>ClaimsActorProvider</c> /
+    /// <c>EntraActorProvider</c> emit <c>Authorization</c> (JWT-bearer assumption — override
+    /// <c>VaryByHeaders</c> in a subclass if your service uses cookies, mTLS, or another
+    /// non-bearer scheme); <c>DevelopmentActorProvider</c> emits the test header
+    /// (<c>X-Test-Actor</c>); <c>CachingActorProvider</c> delegates to the wrapped provider.
+    /// </remarks>
+    public HttpResponseOptionsBuilder<TDomain> VaryForActor()
+    {
+        _varyForActor = true;
         return this;
     }
 
@@ -244,6 +266,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         ETagSelector = _eTagSelector,
         LastModifiedSelector = _lastModifiedSelector,
         Vary = _vary,
+        VaryForActor = _varyForActor,
         ContentLanguage = _contentLanguage,
         ContentLocationSelector = _contentLocationSelector,
         AcceptRanges = _acceptRanges,
@@ -271,6 +294,7 @@ internal sealed class HttpResponseOptions<TDomain>
     public Func<TDomain, EntityTagValue?>? ETagSelector { get; init; }
     public Func<TDomain, DateTimeOffset?>? LastModifiedSelector { get; init; }
     public List<string>? Vary { get; init; }
+    public bool VaryForActor { get; init; }
     public List<string>? ContentLanguage { get; init; }
     public Func<TDomain, string?>? ContentLocationSelector { get; init; }
     public string? AcceptRanges { get; init; }
@@ -298,6 +322,7 @@ internal sealed class HttpResponseOptions<TDomain>
 public sealed class HttpResponseOptionsBuilder
 {
     private List<string>? _vary;
+    private bool _varyForActor;
     private bool _honorPrefer;
     private Func<Error, int>? _errorMapper;
     private Dictionary<Type, int>? _errorOverrides;
@@ -310,6 +335,17 @@ public sealed class HttpResponseOptionsBuilder
         foreach (var h in headers)
             if (!string.IsNullOrWhiteSpace(h))
                 _vary.Add(h);
+        return this;
+    }
+
+    /// <summary>
+    /// Appends the request header(s) that contribute to actor identity for the registered
+    /// <c>IActorProvider</c> to the response <c>Vary</c> header. See
+    /// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> for the contract.
+    /// </summary>
+    public HttpResponseOptionsBuilder VaryForActor()
+    {
+        _varyForActor = true;
         return this;
     }
 
@@ -339,6 +375,7 @@ public sealed class HttpResponseOptionsBuilder
     internal HttpResponseOptions<object> Build() => new()
     {
         Vary = _vary,
+        VaryForActor = _varyForActor,
         HonorPrefer = _honorPrefer,
         ErrorMapper = _errorMapper,
         ErrorOverrides = _errorOverrides,

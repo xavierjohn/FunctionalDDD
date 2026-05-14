@@ -69,6 +69,16 @@ All nine `Trellis.Asp` ProblemDetails emission sites now populate `ProblemDetail
 
 ### Added
 
+#### `VaryForActor()` on `HttpResponseOptionsBuilder<T>` + `IProvideActorVaryHeaders`
+
+New fluent helper for partitioning intermediate-cache entries by actor without consumers having to remember which header(s) the registered `IActorProvider` actually depends on. Calling `o.VaryForActor()` on the response builder resolves the registered provider, checks for the new `IProvideActorVaryHeaders` capability interface, and appends each declared header (e.g. `Authorization` for the bundled `ClaimsActorProvider` / `EntraActorProvider`; `X-Test-Actor` for `DevelopmentActorProvider`) to the response `Vary` header. Closes a real cache-poisoning class of bug — a forgotten `Vary: Authorization` lets a misbehaving intermediate cache serve actor A's response to actor B.
+
+Fail-closed: when the registered `IActorProvider` does not implement `IProvideActorVaryHeaders`, or when the implementation returns an empty `VaryByHeaders` collection, `VaryForActor()` throws `InvalidOperationException` at apply time rather than silently emit an incorrect or incomplete `Vary` header. Consumers with custom providers must implement `IProvideActorVaryHeaders` explicitly to opt into the helper; consumers whose actor identity is derived from request data that cannot be cleanly named by a single HTTP header (mTLS, IP-based, etc.) should use `Cache-Control: private, no-store` for those endpoints instead.
+
+The bundled `ClaimsActorProvider` returns `["Authorization"]` as the JWT-bearer assumption baked into `AddClaimsActorProvider` / `AddEntraActorProvider`. Services that authenticate with cookies, mTLS, forwarded headers, or another non-bearer scheme must subclass `ClaimsActorProvider` and override the `virtual VaryByHeaders` property to declare the correct header(s) — failing to do so allows the same cache-poisoning that `VaryForActor()` exists to prevent. `DevelopmentActorProvider` returns `[HeaderName]` (the test-actor header). `CachingActorProvider` delegates to the wrapped provider's `VaryByHeaders`; if the wrapped provider does not implement the interface, the caching wrapper surfaces an empty collection so `VaryForActor()` throws fail-closed pointing at the underlying provider as the remediation site.
+
+The helper plugs into both `TrellisHttpResult` (the standard `Result<T>` success path) and `TrellisWriteOutcomeResult` (the `Result<WriteOutcome<T>>` Created/Updated/Accepted success path), so endpoints returning either shape get consistent cache-partitioning behavior.
+
 #### `Trellis.Asp.ApiVersioning` package — `CreatedAtVersionedRoute` helpers + `TRLS023` analyzer
 
 New package `Trellis.Asp.ApiVersioning` ships two integrated parts that close the "201 Created Location header omits api-version → 404 on dereference" failure mode that recurred in every recent lab cycle.

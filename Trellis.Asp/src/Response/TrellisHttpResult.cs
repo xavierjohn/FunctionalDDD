@@ -83,6 +83,9 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         if (_options.HonorPrefer)
             AppendVaryUnique(response, "Prefer");
 
+        if (_options.VaryForActor)
+            AppendActorVaryHeaders(httpContext);
+
         // No-payload Result<Unit> success — emit 204 No Content.
         // ETag/LastModified/Vary/ContentLanguage/Prefer headers (above) still apply.
         if (s_isUnit)
@@ -213,6 +216,41 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         }
 
         response.Headers.Append("Vary", headerName);
+    }
+
+    /// <summary>
+    /// Resolves the registered <c>IActorProvider</c> and appends its
+    /// <c>VaryByHeaders</c> entries to the response <c>Vary</c> header. Throws
+    /// <see cref="InvalidOperationException"/> when no provider is registered or the
+    /// registered provider does not implement <c>IProvideActorVaryHeaders</c> —
+    /// fail-closed rather than silently emit an incorrect or incomplete <c>Vary</c>
+    /// header that would let intermediate caches serve actor A's response to actor B.
+    /// </summary>
+    internal static void AppendActorVaryHeaders(HttpContext httpContext)
+    {
+        var provider = httpContext.RequestServices?.GetService<Trellis.Authorization.IActorProvider>()
+            ?? throw new InvalidOperationException(
+                "VaryForActor() requires an IActorProvider in the request scope but none is registered. " +
+                "Register a provider via AddClaimsActorProvider/AddEntraActorProvider/AddDevelopmentActorProvider, " +
+                "or call .Vary(\"...\") explicitly with the headers that contribute to actor identity.");
+
+        if (provider is not Trellis.Asp.Authorization.IProvideActorVaryHeaders vary)
+            throw new InvalidOperationException(
+                $"VaryForActor() requires the registered IActorProvider ('{provider.GetType().FullName}') to implement " +
+                "IProvideActorVaryHeaders, but it does not. Either implement IProvideActorVaryHeaders on the provider " +
+                "(returning the HTTP request headers that contribute to actor identity, e.g. [\"Authorization\"] for " +
+                "bearer auth), or call .Vary(\"...\") explicitly with the relevant headers.");
+
+        var headers = vary.VaryByHeaders;
+        if (headers.Count == 0)
+            throw new InvalidOperationException(
+                $"VaryForActor() called against IActorProvider '{provider.GetType().FullName}' whose VaryByHeaders is empty. " +
+                "An empty collection means the provider derives actor identity from request data that cannot be " +
+                "cleanly named by a single HTTP header (e.g. mTLS); such endpoints should not be cacheable across actors. " +
+                "Use Cache-Control: private, no-store instead of VaryForActor().");
+
+        foreach (var h in headers)
+            AppendVaryUnique(httpContext.Response, h);
     }
 
     private (long From, long To, long Total, Error? Error)? TryEvaluateRange(TDomain domain)

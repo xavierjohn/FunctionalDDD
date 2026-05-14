@@ -48,6 +48,9 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
         if (_options.HonorPrefer)
             TrellisHttpResult<TDomain, TBody>.AppendVaryUnique(response, "Prefer");
 
+        if (_options.VaryForActor)
+            TrellisHttpResult<TDomain, TBody>.AppendActorVaryHeaders(httpContext);
+
         ApplyBuilderMetadata(response, outcome);
 
         // RFC 7240 Prefer is opt-in: only inspect/honor the request header and emit
