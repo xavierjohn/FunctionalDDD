@@ -1,5 +1,6 @@
 ﻿namespace Trellis.Asp.Tests;
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.Json;
@@ -24,6 +25,52 @@ public sealed class ResponseFailureWriterTests
         var ctx = new DefaultHttpContext { RequestServices = services.BuildServiceProvider() };
         ctx.Response.Body = new MemoryStream();
         return ctx;
+    }
+
+    /// <summary>
+    /// Builds an HttpContext whose RequestServices include a stub <see cref="IAuthenticationSchemeProvider"/>
+    /// reporting <paramref name="defaultChallengeScheme"/> as the default challenge scheme. Used to exercise
+    /// the synthesis path in <see cref="ResponseFailureWriter"/> without spinning up the real
+    /// ASP.NET Core authentication subsystem.
+    /// </summary>
+    private static DefaultHttpContext NewAuthContext(string defaultChallengeScheme)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IProblemDetailsService, NoopPds>();
+        services.AddSingleton<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>(
+            new StubAuthSchemeProvider(defaultChallengeScheme));
+        var ctx = new DefaultHttpContext { RequestServices = services.BuildServiceProvider() };
+        ctx.Response.Body = new MemoryStream();
+        return ctx;
+    }
+
+    private sealed class StubAuthSchemeProvider(string defaultChallengeScheme)
+        : Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider
+    {
+        private readonly Microsoft.AspNetCore.Authentication.AuthenticationScheme _scheme =
+            new(defaultChallengeScheme, defaultChallengeScheme,
+                typeof(Microsoft.AspNetCore.Authentication.IAuthenticationHandler));
+
+        public void AddScheme(Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme) { }
+        public Task<IEnumerable<Microsoft.AspNetCore.Authentication.AuthenticationScheme>> GetAllSchemesAsync()
+            => Task.FromResult<IEnumerable<Microsoft.AspNetCore.Authentication.AuthenticationScheme>>([_scheme]);
+        public Task<Microsoft.AspNetCore.Authentication.AuthenticationScheme?> GetDefaultAuthenticateSchemeAsync()
+            => Task.FromResult<Microsoft.AspNetCore.Authentication.AuthenticationScheme?>(_scheme);
+        public Task<Microsoft.AspNetCore.Authentication.AuthenticationScheme?> GetDefaultChallengeSchemeAsync()
+            => Task.FromResult<Microsoft.AspNetCore.Authentication.AuthenticationScheme?>(_scheme);
+        public Task<Microsoft.AspNetCore.Authentication.AuthenticationScheme?> GetDefaultForbidSchemeAsync()
+            => Task.FromResult<Microsoft.AspNetCore.Authentication.AuthenticationScheme?>(_scheme);
+        public Task<Microsoft.AspNetCore.Authentication.AuthenticationScheme?> GetDefaultSignInSchemeAsync()
+            => Task.FromResult<Microsoft.AspNetCore.Authentication.AuthenticationScheme?>(_scheme);
+        public Task<Microsoft.AspNetCore.Authentication.AuthenticationScheme?> GetDefaultSignOutSchemeAsync()
+            => Task.FromResult<Microsoft.AspNetCore.Authentication.AuthenticationScheme?>(_scheme);
+        public Task<IEnumerable<Microsoft.AspNetCore.Authentication.AuthenticationScheme>> GetRequestHandlerSchemesAsync()
+            => Task.FromResult<IEnumerable<Microsoft.AspNetCore.Authentication.AuthenticationScheme>>([]);
+        public Task<Microsoft.AspNetCore.Authentication.AuthenticationScheme?> GetSchemeAsync(string name)
+            => Task.FromResult<Microsoft.AspNetCore.Authentication.AuthenticationScheme?>(
+                name == defaultChallengeScheme ? _scheme : null);
+        public void RemoveScheme(string name) { }
     }
 
     private sealed class NoopPds : IProblemDetailsService
@@ -103,13 +150,12 @@ public sealed class ResponseFailureWriterTests
     }
 
     [Fact]
-    public async Task Unauthorized_without_challenges_emits_no_WwwAuthenticate_header()
+    public async Task Unauthorized_without_challenges_and_no_auth_configured_emits_no_WwwAuthenticate_header()
     {
-        // Trellis only emits the header when the caller supplies challenges. RFC 9110
-        // requires 401 responses to carry the header but does not specify the source —
-        // standard ASP.NET authentication handlers (JwtBearerHandler, etc.) own that flow
-        // when configured. When application code returns an empty Error.Unauthorized,
-        // leave the header to the auth pipeline rather than synthesise one.
+        // Service without ASP.NET Core authentication registered: no IAuthenticationSchemeProvider,
+        // no default challenge scheme. Synthesizing "Bearer" against a service that does not use
+        // Bearer (or any auth) would mislead clients. Skip synthesis and preserve the current
+        // behavior for services that do not wire authentication.
         var ctx = NewContext();
         var r = Result.Fail<T>(new Error.Unauthorized());
 
@@ -117,7 +163,105 @@ public sealed class ResponseFailureWriterTests
 
         ctx.Response.StatusCode.Should().Be(401);
         ctx.Response.Headers.ContainsKey("WWW-Authenticate")
-            .Should().BeFalse("no challenges → no WWW-Authenticate header from the writer");
+            .Should().BeFalse("no challenges + no auth configured → no synthesized header");
+    }
+
+    [Fact]
+    public async Task Unauthorized_without_challenges_synthesizes_default_challenge_scheme_from_AuthenticationSchemeProvider()
+    {
+        // RFC 9110 §11.6.1: every 401 response MUST carry WWW-Authenticate. The mediator
+        // authorization pipeline emits Error.Unauthorized with empty Challenges (it does not
+        // know the configured scheme); when the ASP.NET Core authentication subsystem is
+        // configured, ResponseFailureWriter resolves the default challenge scheme via
+        // IAuthenticationSchemeProvider and synthesizes a scheme-only challenge. Without this,
+        // a mediator-emitted 401 on an anonymous-tolerant route (where the auth handler is
+        // never invoked) would ship out with no challenge header — strictly RFC-non-compliant.
+        var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
+        var r = Result.Fail<T>(new Error.Unauthorized());
+
+        await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(401);
+        var values = ctx.Response.Headers["WWW-Authenticate"];
+        values.Count.Should().Be(1);
+        values.ToString().Should().Be("Bearer",
+            "synthesized challenge must use the default challenge scheme registered with ASP.NET Core authentication");
+    }
+
+    [Fact]
+    public async Task Unauthorized_without_challenges_synthesizes_using_configured_challenge_scheme_name()
+    {
+        // The synthesized challenge uses the scheme NAME registered with AddAuthentication.
+        // Consumers who call AddJwtBearer("ApiJwt", ...) get "ApiJwt" rather than the wire token
+        // "Bearer". This matches the registered name and is documented as the behavior. Consumers
+        // needing a different wire token (e.g., a policy scheme that forwards to Bearer but should
+        // emit "Bearer" on the wire) should populate Error.Unauthorized.Challenges explicitly —
+        // the writer treats supplied Challenges as authoritative and skips synthesis.
+        var ctx = NewAuthContext(defaultChallengeScheme: "ApiJwt");
+        var r = Result.Fail<T>(new Error.Unauthorized());
+
+        await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+
+        var values = ctx.Response.Headers["WWW-Authenticate"];
+        values.ToString().Should().Be("ApiJwt",
+            "synthesized challenge uses the registered default-challenge scheme name verbatim");
+    }
+
+    [Fact]
+    public async Task Unauthorized_with_explicit_challenges_does_not_synthesize()
+    {
+        // When the caller populates Error.Unauthorized.Challenges, that takes precedence —
+        // the writer emits exactly what was provided and does not also synthesize. The
+        // explicit shape (with realm/scope/error_description parameters) is the authoritative
+        // one; synthesis is only a fallback for the empty-Challenges mediator-emitted path.
+        var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
+        var challenge = new AuthChallenge(
+            "Bearer",
+            ImmutableDictionary<string, string>.Empty.Add("realm", "explicit"));
+        var r = Result.Fail<T>(new Error.Unauthorized(EquatableArray.Create(challenge)));
+
+        await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+
+        var values = ctx.Response.Headers["WWW-Authenticate"];
+        values.Count.Should().Be(1);
+        values.ToString().Should().Contain("realm=\"explicit\"",
+            "supplied Challenges are authoritative; synthesis must not double-emit");
+    }
+
+    [Fact]
+    public async Task Unauthorized_synthesis_skipped_when_response_already_carries_WwwAuthenticate()
+    {
+        // Defense against double-emission: if middleware or upstream code already set a
+        // WWW-Authenticate header on the response (e.g., a custom auth pipeline already wrote
+        // its challenge), the synthesized scheme-only fallback would be redundant and could
+        // confuse clients that parse only the first header. Preserve what is already there.
+        var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
+        ctx.Response.Headers["WWW-Authenticate"] = "Bearer realm=\"upstream\"";
+        var r = Result.Fail<T>(new Error.Unauthorized());
+
+        await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+
+        var values = ctx.Response.Headers["WWW-Authenticate"];
+        values.Count.Should().Be(1);
+        values.ToString().Should().Be("Bearer realm=\"upstream\"",
+            "existing header must not be overwritten or appended-to by synthesis");
+    }
+
+    [Fact]
+    public async Task Unauthorized_without_challenges_and_non_401_mapped_status_does_not_synthesize()
+    {
+        // Same status-aware gating as the explicit-challenges path: WWW-Authenticate is bound
+        // to 401 per RFC 9110 §11.6.1. If WithErrorMapping promotes Error.Unauthorized to a
+        // non-401 status, suppress synthesis along with the explicit-challenge emission.
+        var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
+        var r = Result.Fail<T>(new Error.Unauthorized());
+
+        await r.ToHttpResponse(t => t, o => o.WithErrorMapping<Error.Unauthorized>(500))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(500);
+        ctx.Response.Headers.ContainsKey("WWW-Authenticate")
+            .Should().BeFalse("WWW-Authenticate is bound to 401; no synthesis on remapped statuses");
     }
 
     [Fact]
