@@ -205,9 +205,8 @@ public class ClaimsActorProvider : IActorProvider
             ["birthdate"] = ClaimTypes.DateOfBirth,
             ["website"] = ClaimTypes.Webpage,
             ["actort"] = ClaimTypes.Actor,
-            ["upn"] = ClaimTypes.Upn,
-            // Microsoft identity platform claims (Entra v1.0 / v2.0). Most are
-            // single-valued (oid, tid, idp, acr); "amr" is commonly multi-valued
+            // Microsoft identity platform claims (Entra v1.0 / v2.0, AD FS). Most are
+            // single-valued (oid, tid, upn, idp, acr); "amr" is commonly multi-valued
             // (e.g. ["pwd", "mfa"]) and that case is handled by the multi-valued
             // ResolveAllClaimsWithFallback path.
             //
@@ -218,6 +217,7 @@ public class ClaimsActorProvider : IActorProvider
             // returning false. OAuth scope-as-permission requires a custom provider
             // that splits the value (or the consumer setting MapInboundClaims = false
             // and configuring their own scope-splitting subclass).
+            ["upn"] = ClaimTypes.Upn,
             ["oid"] = "http://schemas.microsoft.com/identity/claims/objectidentifier",
             ["tid"] = "http://schemas.microsoft.com/identity/claims/tenantid",
             ["idp"] = "http://schemas.microsoft.com/identity/claims/identityprovider",
