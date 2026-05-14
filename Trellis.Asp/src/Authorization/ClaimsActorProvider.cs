@@ -434,10 +434,15 @@ public class ClaimsActorProvider : IActorProvider
             new EventId(1, nameof(ClaimsActorProvider)),
             "ClaimsActorProvider resolved a claim via short<->long claim-name fallback. " +
             "Configured claim '{ConfiguredClaim}' was not present on the authenticated " +
-            "identity; resolved via the well-known counterpart '{ResolvedClaim}'. This typically " +
-            "indicates JwtBearerOptions.MapInboundClaims = true (the ASP.NET Core default); " +
-            "set MapInboundClaims = false to keep claim names round-tripping with their RFC 7519 / " +
-            "OIDC names. The fallback continues to accept both forms.");
+            "identity; resolved via the well-known counterpart '{ResolvedClaim}'. This " +
+            "indicates a mismatch between the configured claim name and " +
+            "JwtBearerOptions.MapInboundClaims: a configured short / RFC 7519 / OIDC name " +
+            "that resolved to a long-form URN means MapInboundClaims = true (the ASP.NET " +
+            "Core default) remapped the inbound short name; a configured long-form URN " +
+            "that resolved to a short name means MapInboundClaims = false left the short " +
+            "name on the identity. Align the configured claim name with the JwtBearer " +
+            "setting (or rely on this fallback) to keep diagnostics quiet. The fallback " +
+            "continues to accept both forms.");
 
     private static void LogClaimNameFallback(ILogger<ClaimsActorProvider>? logger, string configured, string resolved)
     {
