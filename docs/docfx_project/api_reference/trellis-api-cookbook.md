@@ -83,6 +83,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Write a command handler that validates and persists | [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), then [Recipe 16](#recipe-16--unit-of-work-in-handlers-add-staging-vs-immediate-saveasync) |
 | Load multiple independent resources in one handler (HTTP + DB, two upstream services, factory-created `DbContext`s) | [Recipe 21](#recipe-21--parallel-independent-loads-in-handlers-resultparallelasync--whenallasync) |
 | Multi-aggregate orchestration: side effect per element of a related-aggregate set | [Recipe 22](#recipe-22--multi-aggregate-orchestration-fail-loud-on-missing-related-aggregates) |
+| Apply an operation to every element of a related-aggregate set where per-element validation can fail (reserve stock per line item, etc.) — avoid partial mutation | [Recipe 25](#recipe-25--two-pass-validate-then-mutate-over-a-collection-of-related-aggregates) |
 | Concurrency control on mutating endpoints — when to require `If-Match` | [Recipe 23](#recipe-23--concurrency-control-on-aggregate-mutating-endpoints-when-to-require-if-match) |
 | Add a paginated list query | [Recipe 3](#recipe-3--query-handler-returning-paget-paginated-list-with-cursor) |
 | Add Minimal API or MVC endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult) |
@@ -111,6 +112,7 @@ These rows route recurring LLM lab mistakes to the most relevant reference befor
 | Overdue/date-filter queries over `Maybe<DateTime>` | [Recipe 8](#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects), then [trellis-api-efcore.md](trellis-api-efcore.md#patterns-index) | Keep a typed specification and use `MaybeQueryableExtensions` in EF queries. |
 | State transitions on an aggregate | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult), then [trellis-api-statemachine.md](trellis-api-statemachine.md#patterns-index) | Keep transition methods consistent and put domain mutation after `FireResult` succeeds. |
 | Cross-aggregate mutation such as cancel/return releasing stock | [Recipe 1](#recipe-1--crud-aggregate-ddd-value-objects--entity--repository-contract), [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), and [trellis-api-core.md](trellis-api-core.md#domain-driven-design) | The application handler orchestrates multiple aggregates; an aggregate mutates only itself. |
+| Single-loop mutate-as-you-validate over a collection of related aggregates (reserve stock per line item, etc.) | [Recipe 25](#recipe-25--two-pass-validate-then-mutate-over-a-collection-of-related-aggregates) | A later element's validation failure leaves earlier elements partially mutated in memory. Validate every fallible domain check across every participating aggregate before the first state-changing call. |
 | Result-returning ASP endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult), then [trellis-api-asp.md](trellis-api-asp.md#patterns-index) | `AddTrellisAsp()` is required for Result-to-HTTP mapping; exception middleware is not the mapper. |
 | Failure-code OpenAPI metadata or `.http` examples | [trellis-api-asp.md](trellis-api-asp.md#endpoint-checklist-for-generated-apis), [trellis-api-testing-aspnetcore.md](trellis-api-testing-aspnetcore.md#api-failure-path-test-checklist) | Generated APIs need failure paths, not happy-path-only docs/tests. |
 | Resource authorization guards | [Recipe 7](#recipe-7--authorization-iactorprovider--iauthorize--resource-based-auth), then [trellis-api-authorization.md](trellis-api-authorization.md#patterns-index) | Use `Result.Ensure` for owner/admin boolean guards. |
@@ -1950,6 +1952,220 @@ For chains (`Match → Team → Tournament`) or fan-out (cricket `Match → {Hom
 ### TOCTOU note
 
 Resource authorization loads happen outside the handler's transaction. Multi-hop widens that window: ownership can change after auth but before handler state changes. If transactional consistency is required, drop to a custom `IResourceLoader<TMessage, TProjection>` that runs inside the handler's transaction or enforce ownership in the handler/repository layer.
+
+---
+
+## Recipe 25 — Two-pass validate-then-mutate over a collection of related aggregates
+
+**Problem.** A handler iterates a collection that maps one-to-many onto related aggregates and applies an operation that can fail per element (e.g., `SubmitOrderCommand` reserves stock on the `Product` referenced by every `LineItem`). The naïve single-loop shape — call the mutating operation, check the `Result`, return on failure — is the lab convergent miss across two cycles (`findings-2026-04-30.md §3.4`): two out of three models shipped this shape, and the bug only surfaces on tests that arrange a *later* element to fail.
+
+```csharp
+// ❌ Single-loop mutate-as-you-validate. Line 1 reserves; line 3 fails InsufficientStock;
+// line 1's product is left in the reserved state with no compensating rollback.
+foreach (var li in order.LineItems)
+{
+    var r = byId[li.ProductId].Reserve(li.Quantity);
+    if (r.Error is { } err)
+        return Result.Fail<Order>(err);
+}
+return order.Submit();
+```
+
+`TransactionalCommandBehavior` rolls the DB commit back on failure, but the in-memory aggregate state stays mutated for the rest of the request — visible to any subsequent code that reads the same aggregate within the request scope, and outright observable in unit tests that arrange the same `Product` instance and assert on its post-handler state.
+
+**The invariant the recipe teaches.**
+
+> Every fallible domain check across every participating aggregate must succeed BEFORE the first state-changing call. A "fallible domain check" is any `Result<T>`-returning operation that can encode a domain rejection. After validation succeeds, every Pass 2 call has a matching `Can*` predicate from Pass 1, so the mutation is provably non-failing — no compensating-rollback machinery required.
+
+**Two design moves make this work.**
+
+- **Pure `Can*` predicate alongside the mutator.** The aggregate exposes a side-effect-free `CanReserve(qty) → Result<Trellis.Unit>` that returns the same domain error the mutator would, and a `Reserve(qty)` that internally delegates to `CanReserve` before mutating. Same shape as Recipe 9's state-machine `CanFire`+`Fire`/`FireResult` pattern, lifted from "single transition on one aggregate" to "collection of operations across many aggregates."
+- **Mutation-plan grouping for duplicate keys.** If the input collection can name the same related aggregate twice (e.g., two line items with the same `ProductId`), aggregate the duplicates into a single `(Product, totalQuantity)` plan entry before validating. Validating each line independently against unchanged stock is **not** equivalent to mutating them sequentially: two `CanReserve(3)` calls against `Stock=5` both pass, but the second `Reserve(3)` then fails. Grouping eliminates the aliasing.
+
+> ⚠️ **Per-line invariants must be enforced before grouping.** The plan step (`g.Sum(li => li.Quantity)`) preserves the aggregated quantity but destroys per-line identity. If `LineItem.Quantity` could be `-4`, then a `(5, -4)` pair would group to a valid `1`, slipping a negative quantity past `CanReserve`. In Trellis services per-line invariants are typically enforced at line-item construction (value-object `Quantity : RequiredInt<Quantity>` validating `> 0`, or a private constructor + `TryCreate` factory). If your per-line invariants don't aggregate cleanly into a sum — e.g., "no single line may exceed 100 units" rather than "the total across lines must not exceed available stock" — add an explicit per-line validation pass *before* the grouping step and `Sequence` its results into Pass 1. Production code should also cap each line's `Quantity` (and/or the order's line count) so a sequence of valid positives cannot overflow `int` inside `g.Sum(...)`; `Sum` throws `OverflowException` rather than producing a `Result` failure, which would bypass the pipeline.
+
+**Worked example.**
+
+```csharp
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Mediator;
+using Trellis;
+
+public sealed class Product : Aggregate<ProductId>
+{
+    public int Stock { get; private set; }
+
+    // Pure predicate — runs in Pass 1, mutates nothing.
+    public Result<Trellis.Unit> CanReserve(int quantity) =>
+        Result.Ensure(
+            quantity > 0 && quantity <= Stock,
+            Error.UnprocessableContent.ForRule(
+                "stock.insufficient",
+                $"Cannot reserve {quantity} from stock of {Stock}."));
+
+    // Mutator — re-checks via CanReserve as defense in depth so it is safe to call
+    // outside the two-pass orchestration. When called after a matching Pass 1 CanReserve
+    // succeeded in a single-threaded handler with no intervening mutations, Reserve is
+    // provably non-failing.
+    public Result<Trellis.Unit> Reserve(int quantity) =>
+        CanReserve(quantity).Tap(() => Stock -= quantity);
+}
+
+public sealed class Order : Aggregate<OrderId>
+{
+    public IReadOnlyList<LineItem> LineItems { get; }
+    public bool IsSubmitted { get; private set; }
+
+    public Result<Trellis.Unit> CanSubmit() =>
+        Result.Ensure(
+            LineItems.Count > 0,
+            Error.UnprocessableContent.ForRule(
+                "order.empty",
+                "Order must have at least one line item to submit."));
+
+    public Result<Order> Submit() =>
+        CanSubmit().Tap(() => IsSubmitted = true).Map(_ => this);
+}
+
+public sealed class SubmitOrderHandler(
+    IOrderRepository orders,
+    IProductRepository products) : ICommandHandler<SubmitOrderCommand, Result<Order>>
+{
+    public async ValueTask<Result<Order>> Handle(SubmitOrderCommand command, CancellationToken cancellationToken)
+    {
+        var orderResult = await orders.FindByIdAsync(command.OrderId, cancellationToken);
+        if (!orderResult.TryGetValue(out var order))
+            return orderResult;
+
+        // Recipe 22 preflight (presence check). Every line-item ProductId must resolve
+        // BEFORE the plan step, otherwise byId[g.Key] would throw KeyNotFoundException
+        // and bypass the Result pipeline. Truncated here for focus — see Recipe 22 for the
+        // full Error.Aggregate-per-missing-id shape.
+        var productIds = order.LineItems.Select(li => li.ProductId).Distinct().ToArray();
+        var loaded = await products.GetByIdsAsync(productIds, cancellationToken);
+        var byId = loaded.ToDictionary(p => p.Id);
+        var missing = productIds.Where(id => !byId.ContainsKey(id)).ToArray();
+        if (missing.Length > 0)
+            return Result.Fail<Order>(missing.Length == 1
+                ? new Error.NotFound(ResourceRef.For<Product>(missing[0]))
+                : new Error.Aggregate(missing.Select(id =>
+                    (Error)new Error.NotFound(ResourceRef.For<Product>(id))).ToArray()));
+
+        // Aggregate duplicate line items into one reservation per product so the
+        // CanReserve checks operate on the same quantity the matching Reserve will deduct.
+        var plan = order.LineItems
+            .GroupBy(li => li.ProductId)
+            .Select(g => (Product: byId[g.Key], Quantity: g.Sum(li => li.Quantity)))
+            .ToArray();
+
+        // PASS 1 — validate every fallible domain check across every aggregate. No mutations.
+        // SequenceAll accumulates every violation so the response enumerates them rather than
+        // reporting only the first; use .Sequence() for fail-fast semantics (see Recipe 20
+        // for the decision criteria).
+        var validation = plan
+            .Select(p => p.Product.CanReserve(p.Quantity))
+            .Append(order.CanSubmit())
+            .SequenceAll();
+
+        if (validation.Error is { } err)
+            return Result.Fail<Order>(err);
+
+        // PASS 2 — apply every mutation. Each call is provably non-failing because its
+        // matched Can* predicate already passed in Pass 1 AND nothing has mutated the
+        // in-memory aggregate state between passes (single-threaded handler). Discard() is
+        // the idiomatic acknowledged-discard that suppresses TRLS001.
+        foreach (var (product, quantity) in plan)
+            product.Reserve(quantity).Discard();
+
+        return order.Submit();
+    }
+}
+```
+
+The complete compile-checked snippet (with duplicate-product-aware test stubs and the anti-pattern `WrongHandler` under `#if FALSE`) lives at `Examples/CookbookSnippets/Recipe25_TwoPassValidateThenMutate.cs` in the framework repository.
+
+**The Pass-2-cannot-fail invariant — what makes it hold.**
+
+The recipe's correctness rests on two preconditions:
+
+1. **Every Pass 2 call has a matching `Can*` in Pass 1.** This is a static property of the handler shape — every mutator invoked after the validation `if (validation.Error is { } err) return ...` boundary must have appeared, by name and arguments, in the Pass 1 expression.
+2. **Nothing mutates the participating aggregates between passes.** Trivially satisfied for a single-threaded async handler operating on aggregates loaded into the request scope. **Not satisfied** if Pass 1 and Pass 2 are split across threads, if another handler runs concurrently against the same instances, or if a Pass-1 callback (e.g., a logger) is allowed to mutate state. Do not parallelize the mutation pass.
+
+When both preconditions hold, `Discard()` on each Pass 2 mutator call is correct: TRLS001 is suppressed and the result really cannot fail. If you cannot prove (1) or (2) in your context, you are no longer using the two-pass pattern — you are doing transactional compensation, which needs explicit rollback machinery and is out of scope for this recipe.
+
+**Choosing fail-fast vs accumulating for the validation pass.**
+
+The worked example uses `SequenceAll()` so the response enumerates every violation (typical for form-style and stock-style invariants where the user benefits from seeing all problems at once). Switch to `Sequence()` for fail-fast semantics when later checks are expensive and a single failure is sufficient. See [Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall) for the full decision criteria. Both forms short-circuit on the same boundary: nothing in Pass 2 runs until validation returns `Ok`.
+
+**How this fits with sibling recipes.**
+
+- [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult) — single-aggregate single-transition variant of the same `Can*`+`*` shape. Recipe 25 generalizes it across many aggregates and many operations.
+- [Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall) — the `Sequence`/`SequenceAll` choice for the validation pass.
+- [Recipe 22](#recipe-22--multi-aggregate-orchestration-fail-loud-on-missing-related-aggregates) — presence preflight for *missing* related aggregates (a different failure mode from per-element invariants). The two preflights compose: Recipe 22 runs first (every required aggregate exists), then Recipe 25 (every present aggregate's invariants admit the operation).
+
+**Anti-pattern → fix.**
+
+```csharp
+// ❌ Single-loop mutate-as-you-validate. The bug is invisible to happy-path tests because
+// every test sets up a fully-satisfiable order. A test that arranges line 3 to fail —
+// e.g., line 3's product has Stock=0 — reveals that line 1's product is left reserved.
+foreach (var li in order.LineItems)
+{
+    var r = byId[li.ProductId].Reserve(li.Quantity);
+    if (r.Error is { } err)
+        return Result.Fail<Order>(err);
+}
+return order.Submit();
+
+// ✅ Two-pass validate-then-mutate — same shape as the worked example above. Pass 1
+// proves every Can* succeeds across every participating aggregate; Pass 2 then calls
+// the matching mutators with provably-non-failing semantics.
+var plan = order.LineItems
+    .GroupBy(li => li.ProductId)
+    .Select(g => (Product: byId[g.Key], Quantity: g.Sum(li => li.Quantity)))
+    .ToArray();
+
+var validation = plan
+    .Select(p => p.Product.CanReserve(p.Quantity))
+    .Append(order.CanSubmit())
+    .SequenceAll();
+if (validation.Error is { } err)
+    return Result.Fail<Order>(err);
+
+foreach (var (product, quantity) in plan)
+    product.Reserve(quantity).Discard();
+
+return order.Submit();
+```
+
+**Partial-Failure Atomicity test (the test the bug-shipping models never wrote).**
+
+Every two-pass handler needs a test where a *later* element of the collection is unsatisfiable while *earlier* elements are. Happy-path tests cannot reveal the partial-mutation bug.
+
+```csharp
+[Fact]
+public async Task Submit_with_one_unsatisfiable_line_does_not_reserve_any_stock()
+{
+    // Two line items; line 2 cannot be reserved (stock=0).
+    var (order, productA, productB) = SeedOrderWithTwoLineItemsAsync(
+        stockA: 10, qtyA: 3,   // line 1 satisfiable
+        stockB: 0,  qtyB: 1);  // line 2 unsatisfiable
+    var aStockBefore = productA.Stock;
+    var bStockBefore = productB.Stock;
+
+    var r = await _sender.Send(new SubmitOrderCommand(order.Id), cancellationToken);
+
+    r.Should().BeFailureOfType<Error.UnprocessableContent>();
+    productA.Stock.Should().Be(aStockBefore);   // NOT partially reserved
+    productB.Stock.Should().Be(bStockBefore);
+    order.IsSubmitted.Should().BeFalse();        // primary aggregate not transitioned
+}
+```
+
+Together with the duplicate-product case (two lines for the same product whose summed quantity exceeds available stock), these are the two failure-mode tests that catch every form of this bug.
 
 ---
 
