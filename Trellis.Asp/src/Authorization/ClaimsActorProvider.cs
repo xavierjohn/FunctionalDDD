@@ -206,16 +206,19 @@ public class ClaimsActorProvider : IActorProvider
             ["website"] = ClaimTypes.Webpage,
             ["actort"] = ClaimTypes.Actor,
             ["upn"] = ClaimTypes.Upn,
-            // Microsoft identity platform claims (Entra v1.0 / v2.0)
+            // Microsoft identity platform claims (Entra v1.0 / v2.0). All single-valued.
+            // The OAuth scope claim "scp" is intentionally NOT included: its value is
+            // space-delimited (RFC 6749 §3.3, e.g. "orders.read orders.write") and the
+            // provider snapshots claim values verbatim into a FrozenSet, so wiring the
+            // fallback would still leave Actor.HasPermission("orders.read") returning
+            // false. OAuth scope-as-permission requires a custom provider that splits
+            // the value (or the consumer setting MapInboundClaims = false and configuring
+            // their own scope-splitting subclass).
             ["oid"] = "http://schemas.microsoft.com/identity/claims/objectidentifier",
-            ["scp"] = "http://schemas.microsoft.com/identity/claims/scope",
             ["tid"] = "http://schemas.microsoft.com/identity/claims/tenantid",
             ["idp"] = "http://schemas.microsoft.com/identity/claims/identityprovider",
             ["acr"] = "http://schemas.microsoft.com/claims/authnclassreference",
             ["amr"] = "http://schemas.microsoft.com/claims/authnmethodsreferences",
-            // AD FS legacy aliases (same long form as their OIDC counterparts)
-            ["adfs1email"] = ClaimTypes.Email,
-            ["adfs1upn"] = ClaimTypes.Upn,
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -245,11 +248,17 @@ public class ClaimsActorProvider : IActorProvider
     /// <param name="httpContextAccessor">Accessor for the current request's <see cref="HttpContext"/>.</param>
     /// <param name="options">Claim-name mapping options.</param>
     /// <param name="logger">
-    /// Optional logger; when supplied, emits a debug-level message each time the
-    /// short↔long claim-name fallback resolves the actor id (no per-request
-    /// deduplication — the fallback runs at most once per request today, so the
-    /// log fires at most once per request as a consequence). Helpful for diagnosing
-    /// "always 401" issues caused by <c>JwtBearerOptions.MapInboundClaims = true</c>.
+    /// Optional logger; when supplied, emits a debug-level message naming the configured
+    /// claim and the resolved counterpart each time the short↔long claim-name fallback
+    /// resolves a value (either the actor id or one or more permission claims) that the
+    /// configured literal claim name did not produce. Logging is suppressed when the
+    /// configured claim resolves literally — the diagnostic targets the silent-401 /
+    /// silent-403 footgun caused by <c>JwtBearerOptions.MapInboundClaims = true</c>;
+    /// the merge case where both forms contribute is normal operation and would only
+    /// add noise. The actor-id resolution emits at most one entry per request; the
+    /// permissions resolution may emit one entry per resolved counterpart (forward
+    /// long-form match, plus one per matched reverse short form) — typically zero or
+    /// one, capped by the size of the well-known map.
     /// </param>
     public ClaimsActorProvider(
         IHttpContextAccessor httpContextAccessor,

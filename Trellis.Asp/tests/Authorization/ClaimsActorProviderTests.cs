@@ -382,26 +382,6 @@ public class ClaimsActorProviderTests
     }
 
     [Fact]
-    public async Task GetCurrentActorAsync_PermissionsClaim_ScpShortFormConfigured_FallsBackToScopeLongForm()
-    {
-        // Pins the OAuth-scope variant of the silent-403 footgun: consumer configures
-        // PermissionsClaim = "scp" (the RFC 8693 / Microsoft access-token scope claim).
-        // Under JwtBearerOptions.MapInboundClaims = true, JwtBearer remaps "scp" onto
-        // "http://schemas.microsoft.com/identity/claims/scope". Without the fallback,
-        // identity.FindAll("scp") finds nothing -> Actor.Permissions is empty -> every
-        // scope-gated command 403s. Same shape as the "roles" case above.
-        var user = AuthenticatedUser(
-            new Claim("sub", "user-1"),
-            new Claim("http://schemas.microsoft.com/identity/claims/scope", "orders.read orders.write"));
-        var options = new ClaimsActorOptions { PermissionsClaim = "scp" };
-
-        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
-
-        actor.Permissions.Should().BeEquivalentTo(["orders.read orders.write"],
-            "configured 'scp' must fall back to the Microsoft-identity 'scope' long form when MapInboundClaims = true remaps it");
-    }
-
-    [Fact]
     public async Task GetCurrentActorAsync_ActorIdClaim_OidShortFormConfigured_FallsBackToObjectIdentifierLongForm()
     {
         // The Entra objectidentifier case for ActorIdClaim. Consumer configures
