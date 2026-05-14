@@ -14,10 +14,15 @@ public class UnsafeValueInLinqAnalyzerTests
         var message = DiagnosticDescriptors.UnsafeMaybeValueInLinq.MessageFormat.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         message.Should().Contain(".Where(x => x.HasValue)");
+        message.Should().Contain(".Match(...)");
         message.Should().Contain("MaybeQueryableExtensions");
-        message.Should().Contain("WhereHasValue");
         message.Should().Contain("IQueryable");
+        message.Should().Contain("WhereHasValue");
+        message.Should().Contain("WhereNone");
+        message.Should().Contain("OrderByMaybe");
+        message.Should().Contain("ThenByMaybe");
     }
+
     [Fact]
     public async Task Select_MaybeValue_WithoutWhere_ReportsDiagnostic()
     {
