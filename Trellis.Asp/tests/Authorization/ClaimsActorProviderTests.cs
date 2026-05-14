@@ -201,14 +201,19 @@ public class ClaimsActorProviderTests
         // Default PermissionsClaim = "permissions" is NOT in the JWT inbound claim map —
         // the JwtBearerHandler does not remap it. Literal-only lookup is correct here;
         // no fallback fires. Regression guard against accidentally introducing a fallback
-        // for an unmapped name.
+        // for an unmapped name. We seed an unrelated mapped claim (ClaimTypes.Role) with a
+        // distinctive value so that if a future change accidentally widened the fallback
+        // (e.g. by treating "permissions" as a synonym for any role-like claim), this test
+        // would observe the leak as an extra entry in the resulting permission set.
         var user = AuthenticatedUser(
             new Claim("sub", "user-1"),
-            new Claim("permissions", "orders:read"));
+            new Claim("permissions", "orders:read"),
+            new Claim(ClaimTypes.Role, "should-not-leak-via-permissions-fallback"));
 
         var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Permissions.Should().BeEquivalentTo(["orders:read"]);
+        actor.Permissions.Should().BeEquivalentTo(["orders:read"],
+            "the default 'permissions' claim is not in the JWT short<->long map, so no fallback should add ClaimTypes.Role values to the permission set");
     }
 
     [Fact]

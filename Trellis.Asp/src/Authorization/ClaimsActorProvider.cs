@@ -96,9 +96,19 @@ public class ClaimsActorOptions
     /// Defaults to <c>"permissions"</c> (common convention in OIDC/JWT tokens).
     /// </summary>
     /// <remarks>
-    /// Matched against <see cref="System.Security.Claims.Claim.Type"/> verbatim;
-    /// every matching claim contributes one entry. See the
-    /// <see cref="ClaimsActorOptions"/> remarks for nested-claim guidance.
+    /// <para>
+    /// Matched against <see cref="System.Security.Claims.Claim.Type"/> first; every matching
+    /// claim contributes one entry. <see cref="ClaimsActorProvider"/> additionally queries the
+    /// well-known short↔long counterpart from the JWT inbound claim-name map (<c>role</c>/
+    /// <c>roles</c> ↔ <see cref="System.Security.Claims.ClaimTypes.Role"/>, etc.) and merges
+    /// every match into a deduplicated set, so configurations like
+    /// <c>PermissionsClaim = "roles"</c> or <c>PermissionsClaim = ClaimTypes.Role</c>
+    /// just-work against either <c>JwtBearerOptions.MapInboundClaims = true</c> or
+    /// <c>false</c>. The default <c>"permissions"</c> is not in the JWT inbound map, so its
+    /// resolution remains literal-only. The fallback emits a debug-level log entry when it
+    /// fires (i.e. when the configured name resolves nothing but a counterpart does). See
+    /// the <see cref="ClaimsActorOptions"/> remarks for nested-claim guidance.
+    /// </para>
     /// </remarks>
     public string PermissionsClaim { get; set; } = "permissions";
 }
@@ -376,8 +386,8 @@ public class ClaimsActorProvider : IActorProvider
         LoggerMessage.Define<string, string>(
             LogLevel.Debug,
             new EventId(1, nameof(ClaimsActorProvider)),
-            "ClaimsActorProvider resolved actor id via short<->long claim-name fallback. " +
-            "Configured ActorIdClaim '{ConfiguredClaim}' was not present on the authenticated " +
+            "ClaimsActorProvider resolved a claim via short<->long claim-name fallback. " +
+            "Configured claim '{ConfiguredClaim}' was not present on the authenticated " +
             "identity; resolved via the well-known counterpart '{ResolvedClaim}'. This typically " +
             "indicates JwtBearerOptions.MapInboundClaims = true (the ASP.NET Core default); " +
             "set MapInboundClaims = false to keep claim names round-tripping with their RFC 7519 / " +
