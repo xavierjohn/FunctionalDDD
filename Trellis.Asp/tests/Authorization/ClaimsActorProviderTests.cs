@@ -2,6 +2,7 @@
 
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Trellis.Testing;
 
@@ -12,18 +13,34 @@ public class ClaimsActorProviderTests
 {
     private static ClaimsActorProvider CreateProvider(
         ClaimsPrincipal user,
-        ClaimsActorOptions? options = null)
+        ClaimsActorOptions? options = null,
+        ILogger<ClaimsActorProvider>? logger = null)
     {
         var httpContext = new DefaultHttpContext { User = user };
         var accessor = new HttpContextAccessor { HttpContext = httpContext };
         var opts = Options.Create(options ?? new ClaimsActorOptions());
-        return new ClaimsActorProvider(accessor, opts);
+        return new ClaimsActorProvider(accessor, opts, logger);
     }
 
     private static ClaimsPrincipal AuthenticatedUser(params Claim[] claims)
     {
         var identity = new ClaimsIdentity(claims, "Bearer");
         return new ClaimsPrincipal(identity);
+    }
+
+    /// <summary>
+    /// Minimal fake logger that captures log entries for assertion. Mirrors the helper in
+    /// Trellis.Mediator's LoggingBehaviorTests; copied locally to keep the test assembly
+    /// dependency-free.
+    /// </summary>
+    private sealed class FakeLogger(List<(LogLevel Level, EventId EventId, string Message)> entries) : ILogger<ClaimsActorProvider>
+    {
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => entries.Add((logLevel, eventId, formatter(state, exception)));
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
     }
 
     #region Default claim mapping (sub + permissions)
@@ -189,6 +206,253 @@ public class ClaimsActorProviderTests
         maybeActor.HasValue.Should().BeTrue(
             $"reverse fallback for ClaimTypes.Role must accept any of its mapped short forms — including '{shortForm}'");
         maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+    }
+
+    #endregion
+
+    #region MapInboundClaims fallback — PermissionsClaim multi-valued lookup
+
+    [Fact]
+    public async Task GetCurrentActorAsync_DefaultPermissionsClaim_NotInJwtMap_HasNoFallback()
+    {
+        // Default PermissionsClaim = "permissions" is NOT in the JWT inbound claim map —
+        // the JwtBearerHandler does not remap it. Literal-only lookup is correct here;
+        // no fallback fires. Regression guard against accidentally introducing a fallback
+        // for an unmapped name. We seed an unrelated mapped claim (ClaimTypes.Role) with a
+        // distinctive value so that if a future change accidentally widened the fallback
+        // (e.g. by treating "permissions" as a synonym for any role-like claim), this test
+        // would observe the leak as an extra entry in the resulting permission set.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("permissions", "orders:read"),
+            new Claim(ClaimTypes.Role, "should-not-leak-via-permissions-fallback"));
+
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["orders:read"],
+            "the default 'permissions' claim is not in the JWT short<->long map, so no fallback should add ClaimTypes.Role values to the permission set");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_ShortFormConfigured_FallsBackToLongForm()
+    {
+        // Consumer configures PermissionsClaim = "roles" (the RFC/Entra App Roles short
+        // name). Under JwtBearerOptions.MapInboundClaims = true (the ASP.NET Core default),
+        // the JWT "roles" claim is remapped onto ClaimTypes.Role. Without the fallback,
+        // identity.FindAll("roles") finds nothing → Actor.Permissions is empty → every
+        // IAuthorize command 403s on a valid token. Forward direction of the same footgun
+        // that PR #498 fixed for ActorIdClaim.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim(ClaimTypes.Role, "Editor"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor"],
+            "forward fallback: configured short-form 'roles' should also accept long-form ClaimTypes.Role claims");
+    }
+
+    [Theory]
+    [InlineData("role")]
+    [InlineData("roles")]
+    public async Task GetCurrentActorAsync_PermissionsClaim_LongFormConfigured_FallsBackToEveryShortFormThatMapsToIt(string shortForm)
+    {
+        // Reverse direction. Consumer configures PermissionsClaim = ClaimTypes.Role (e.g.,
+        // to match older code) and the token carries EITHER "role" or "roles" short forms.
+        // Both must resolve — same multi-short-form coverage as the ActorIdClaim reverse
+        // tests (collision pair "role"/"roles" → ClaimTypes.Role).
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim(shortForm, "Admin"),
+            new Claim(shortForm, "Editor"));
+        var options = new ClaimsActorOptions { PermissionsClaim = ClaimTypes.Role };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor"],
+            $"reverse fallback for ClaimTypes.Role must accept any of its mapped short forms — including '{shortForm}'");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_BothLiteralAndFallbackPresent_MergesAndDedupes()
+    {
+        // Token carries claims under BOTH the literal "roles" name AND the long-form
+        // ClaimTypes.Role URN (real-world: a token issued by an IdP that emits both, or
+        // a JwtBearer config with MapInboundClaims = true but additional claims added
+        // post-validation that use the short form). Permissions are multi-valued — both
+        // sources must contribute. The FrozenSet construction dedupes overlapping values.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("roles", "Admin"),                // short form
+            new Claim("roles", "Editor"),               // short form
+            new Claim(ClaimTypes.Role, "Editor"),       // long form, duplicate of "Editor"
+            new Claim(ClaimTypes.Role, "Reviewer"));    // long form, unique
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor", "Reviewer"],
+            "permissions from both forms must merge into one set; duplicate values dedupe");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_LongFormConfigured_BothShortVariantsContribute()
+    {
+        // ClaimTypes.Role is the long-form counterpart of two short-form names: "role"
+        // (singular legacy) and "roles" (modern multi-valued). When PermissionsClaim is
+        // configured as the long form ClaimTypes.Role and the token happens to carry
+        // claims under both short variants, every variant must contribute. Real-world: an
+        // IdP that emits both "role" and "roles" claims under MapInboundClaims = false.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("role", "FromRoleSingular"),
+            new Claim("roles", "FromRolesPlural"));
+        var options = new ClaimsActorOptions { PermissionsClaim = ClaimTypes.Role };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["FromRoleSingular", "FromRolesPlural"],
+            "every short form mapped to the configured long form must contribute its claims");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_NotInKnownMapping_LiteralOnly()
+    {
+        // Custom permissions claim name not in the JWT well-known map. Literal lookup only
+        // — no fuzzy matching against unrelated claims. Regression guard parallel to the
+        // ActorIdClaim NotInKnownMapping test.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("scope", "should-not-resolve"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "tenant-custom-permissions" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEmpty(
+            "custom permissions claim names not in the JWT well-known mapping table get literal-only lookup");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_ShortFormConfigured_LiteralAbsent_LogsCounterpartFallback()
+    {
+        // Pins the documented diagnostic: when the configured PermissionsClaim resolves
+        // nothing on the identity but a well-known counterpart does, the provider emits a
+        // debug-level log entry naming both the configured claim and the resolved
+        // counterpart. This is the operator-facing signal for the silent-403 footgun
+        // (PermissionsClaim = "roles" against an identity carrying ClaimTypes.Role under
+        // MapInboundClaims = true). Without this assertion the diagnostic could regress
+        // while every permission-resolution test still passes.
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim(ClaimTypes.Role, "Admin"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        _ = (await CreateProvider(user, options, logger).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        entries.Should().ContainSingle(e =>
+            e.Level == LogLevel.Debug
+            && e.Message.Contains("'roles'")
+            && e.Message.Contains($"'{ClaimTypes.Role}'"),
+            "the fallback must emit one debug entry naming the configured claim ('roles') and the resolved counterpart (ClaimTypes.Role) so operators can spot the MapInboundClaims = true footgun");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_LiteralPresent_DoesNotLogFallback()
+    {
+        // Negative pin for the same diagnostic: when the configured PermissionsClaim
+        // resolves literally, no fallback log fires, even if a counterpart claim is also
+        // present and contributes to the merged set. Logging on every counterpart match
+        // would flood normal operation; we only want the silent-403-likely case to log.
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("roles", "Admin"),
+            new Claim(ClaimTypes.Role, "Editor"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        _ = (await CreateProvider(user, options, logger).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        entries.Should().BeEmpty(
+            "no fallback log should fire when the configured claim resolves literally, even if a counterpart also contributes");
+    }
+
+    #endregion
+
+    #region MapInboundClaims fallback — extended Microsoft-identity short↔long mappings
+
+    /// <summary>
+    /// Table-driven coverage for every extended short↔long entry added beyond the RFC 7519 /
+    /// OIDC standard subset. Each case configures <see cref="ClaimsActorOptions.ActorIdClaim"/>
+    /// to the short form, supplies the long form on the identity (the
+    /// <c>MapInboundClaims = true</c> shape), and asserts the fallback resolves. The dataset
+    /// pins the literal long-form URN strings on the source table — a typo or unintended
+    /// edit fails here rather than silently disabling the fallback in production. Also
+    /// includes the reverse direction (configured long form, identity carrying the short).
+    /// </summary>
+    public static TheoryData<string, string> ExtendedShortLongPairs() => new()
+    {
+        // Forward direction will be tested with these (configured = Item1, identity-claim = Item2).
+        // Reverse direction with the same pair (configured = Item2, identity-claim = Item1).
+        { "upn", ClaimTypes.Upn },
+        { "oid", "http://schemas.microsoft.com/identity/claims/objectidentifier" },
+        { "tid", "http://schemas.microsoft.com/identity/claims/tenantid" },
+        { "idp", "http://schemas.microsoft.com/identity/claims/identityprovider" },
+        { "acr", "http://schemas.microsoft.com/claims/authnclassreference" },
+        { "amr", "http://schemas.microsoft.com/claims/authnmethodsreferences" },
+    };
+
+    [Theory]
+    [MemberData(nameof(ExtendedShortLongPairs))]
+    public async Task GetCurrentActorAsync_ActorIdClaim_ExtendedShortFormConfigured_FallsBackToLongForm(string shortForm, string longForm)
+    {
+        // Forward direction: consumer configures the short form, identity (post-
+        // MapInboundClaims = true) carries the long form. Without the fallback,
+        // identity.FindFirst(shortForm) returns null and the request 401s.
+        var user = AuthenticatedUser(new Claim(longForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = shortForm };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Id.Should().Be($"value-{shortForm}",
+            $"configured '{shortForm}' must fall back to long-form '{longForm}' when MapInboundClaims = true remaps it");
+    }
+
+    [Theory]
+    [MemberData(nameof(ExtendedShortLongPairs))]
+    public async Task GetCurrentActorAsync_ActorIdClaim_ExtendedLongFormConfigured_FallsBackToShortForm(string shortForm, string longForm)
+    {
+        // Reverse direction: consumer configures the long form, identity carries the
+        // short. Pins that the symmetry holds for every extended entry.
+        var user = AuthenticatedUser(new Claim(shortForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = longForm };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Id.Should().Be($"value-{shortForm}",
+            $"configured '{longForm}' must fall back to short form '{shortForm}'");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_AmrLongFormConfigured_MultipleShortValuesAllContribute()
+    {
+        // Pins the multi-valued case for the extended set: "amr" is commonly emitted as
+        // multiple Claim instances (e.g. ["pwd", "mfa"]). When PermissionsClaim is
+        // configured as the long form, every short-variant value must contribute.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("amr", "pwd"),
+            new Claim("amr", "mfa"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "http://schemas.microsoft.com/claims/authnmethodsreferences" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["pwd", "mfa"],
+            "multi-valued 'amr' claims must all contribute when configured as the long form authnmethodsreferences URN");
     }
 
     #endregion

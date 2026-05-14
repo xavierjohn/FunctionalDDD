@@ -80,9 +80,16 @@ public class ClaimsActorOptions
     /// before they reach <see cref="System.Security.Claims.ClaimsIdentity"/>. If the
     /// configured <see cref="ActorIdClaim"/> is not found literally,
     /// <see cref="ClaimsActorProvider"/> automatically falls back to the well-known
-    /// short↔long counterpart from the JWT inbound claim-name map (<c>sub</c> ↔
-    /// <c>NameIdentifier</c>, <c>email</c> ↔ <c>Email</c>, <c>role</c>/<c>roles</c> ↔
-    /// <c>Role</c>, <c>name</c>/<c>unique_name</c> ↔ <c>Name</c>, etc.) so the default
+    /// short↔long counterpart from the JWT inbound claim-name map — covering the
+    /// OAuth2 / OIDC / Microsoft-identity subset that consumers realistically
+    /// configure as an actor id (<c>sub</c>/<c>nameid</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.NameIdentifier"/>, <c>oid</c> ↔
+    /// the Microsoft objectidentifier URN, <c>upn</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.Upn"/>, <c>email</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.Email"/>, <c>role</c>/
+    /// <c>roles</c> ↔ <see cref="System.Security.Claims.ClaimTypes.Role"/>,
+    /// <c>name</c>/<c>unique_name</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.Name"/>, etc.) — so the default
     /// configuration just-works with either <c>MapInboundClaims = true</c> or
     /// <c>MapInboundClaims = false</c>. The fallback emits a debug-level log entry
     /// when it fires. Recommended for new services: set <c>MapInboundClaims = false</c>
@@ -96,9 +103,19 @@ public class ClaimsActorOptions
     /// Defaults to <c>"permissions"</c> (common convention in OIDC/JWT tokens).
     /// </summary>
     /// <remarks>
-    /// Matched against <see cref="System.Security.Claims.Claim.Type"/> verbatim;
-    /// every matching claim contributes one entry. See the
-    /// <see cref="ClaimsActorOptions"/> remarks for nested-claim guidance.
+    /// <para>
+    /// Matched against <see cref="System.Security.Claims.Claim.Type"/> first; every matching
+    /// claim contributes one entry. <see cref="ClaimsActorProvider"/> additionally queries the
+    /// well-known short↔long counterpart from the JWT inbound claim-name map (<c>role</c>/
+    /// <c>roles</c> ↔ <see cref="System.Security.Claims.ClaimTypes.Role"/>, etc.) and merges
+    /// every match into a deduplicated set, so configurations like
+    /// <c>PermissionsClaim = "roles"</c> or <c>PermissionsClaim = ClaimTypes.Role</c>
+    /// just-work against either <c>JwtBearerOptions.MapInboundClaims = true</c> or
+    /// <c>false</c>. The default <c>"permissions"</c> is not in the JWT inbound map, so its
+    /// resolution remains literal-only. The fallback emits a debug-level log entry when it
+    /// fires (i.e. when the configured name resolves nothing but a counterpart does). See
+    /// the <see cref="ClaimsActorOptions"/> remarks for nested-claim guidance.
+    /// </para>
     /// </remarks>
     public string PermissionsClaim { get; set; } = "permissions";
 }
@@ -150,16 +167,31 @@ public class ClaimsActorProvider : IActorProvider
     /// <see cref="EntraActorProvider"/> uses for its <c>oid</c> lookup).
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Bidirectional lookup is performed in <see cref="ResolveClaimWithFallback"/>:
     /// configured short → mapped long, configured long → mapped short.
     /// Hardcoded to avoid taking a dependency on
     /// <c>System.IdentityModel.Tokens.Jwt</c> from this package; the mapping table is
     /// effectively frozen — no new entries have been added to the JWT inbound map
     /// in years.
+    /// </para>
+    /// <para>
+    /// Scope: this table covers the curated OAuth2 / OIDC / Microsoft-identity subset
+    /// of the JWT inbound map — every claim type a consumer might realistically
+    /// configure as <see cref="ClaimsActorOptions.ActorIdClaim"/> or
+    /// <see cref="ClaimsActorOptions.PermissionsClaim"/> (subject identifier, roles,
+    /// tenant, UPN, AuthN context, identity provider). The OAuth scope claim
+    /// <c>scp</c> is intentionally omitted (see the inline comment on the table for
+    /// the rationale). Operational / transport / device / certificate metadata claims
+    /// from the inbound map (<c>clientip</c>, <c>cert*</c>, <c>device*</c>, etc.) are
+    /// intentionally omitted: they are not authentication state and configuring them
+    /// as an actor id or permission would be a misconfiguration in its own right.
+    /// </para>
     /// </remarks>
     private static readonly FrozenDictionary<string, string> KnownShortToLongClaimNames =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            // RFC 7519 / OIDC standard claims
             ["sub"] = ClaimTypes.NameIdentifier,
             ["nameid"] = ClaimTypes.NameIdentifier,
             ["name"] = ClaimTypes.Name,
@@ -173,6 +205,24 @@ public class ClaimsActorProvider : IActorProvider
             ["birthdate"] = ClaimTypes.DateOfBirth,
             ["website"] = ClaimTypes.Webpage,
             ["actort"] = ClaimTypes.Actor,
+            // Microsoft identity platform claims (Entra v1.0 / v2.0, AD FS). Most are
+            // single-valued (oid, tid, upn, idp, acr); "amr" is commonly multi-valued
+            // (e.g. ["pwd", "mfa"]) and that case is handled by the multi-valued
+            // ResolveAllClaimsWithFallback path.
+            //
+            // The OAuth scope claim "scp" is intentionally NOT included: its value
+            // is space-delimited (RFC 6749 §3.3, e.g. "orders.read orders.write")
+            // and the provider snapshots claim values verbatim into a FrozenSet, so
+            // wiring the fallback would still leave Actor.HasPermission("orders.read")
+            // returning false. OAuth scope-as-permission requires a custom provider
+            // that splits the value (or the consumer setting MapInboundClaims = false
+            // and configuring their own scope-splitting subclass).
+            ["upn"] = ClaimTypes.Upn,
+            ["oid"] = "http://schemas.microsoft.com/identity/claims/objectidentifier",
+            ["tid"] = "http://schemas.microsoft.com/identity/claims/tenantid",
+            ["idp"] = "http://schemas.microsoft.com/identity/claims/identityprovider",
+            ["acr"] = "http://schemas.microsoft.com/claims/authnclassreference",
+            ["amr"] = "http://schemas.microsoft.com/claims/authnmethodsreferences",
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
@@ -202,11 +252,17 @@ public class ClaimsActorProvider : IActorProvider
     /// <param name="httpContextAccessor">Accessor for the current request's <see cref="HttpContext"/>.</param>
     /// <param name="options">Claim-name mapping options.</param>
     /// <param name="logger">
-    /// Optional logger; when supplied, emits a debug-level message each time the
-    /// short↔long claim-name fallback resolves the actor id (no per-request
-    /// deduplication — the fallback runs at most once per request today, so the
-    /// log fires at most once per request as a consequence). Helpful for diagnosing
-    /// "always 401" issues caused by <c>JwtBearerOptions.MapInboundClaims = true</c>.
+    /// Optional logger; when supplied, emits a debug-level message naming the configured
+    /// claim and the resolved counterpart each time the short↔long claim-name fallback
+    /// resolves a value (either the actor id or one or more permission claims) that the
+    /// configured literal claim name did not produce. Logging is suppressed when the
+    /// configured claim resolves literally — the diagnostic targets the silent-401 /
+    /// silent-403 footgun caused by <c>JwtBearerOptions.MapInboundClaims = true</c>;
+    /// the merge case where both forms contribute is normal operation and would only
+    /// add noise. The actor-id resolution emits at most one entry per request; the
+    /// permissions resolution may emit one entry per resolved counterpart (forward
+    /// long-form match, plus one per matched reverse short form) — typically zero or
+    /// one, capped by the size of the well-known map.
     /// </param>
     public ClaimsActorProvider(
         IHttpContextAccessor httpContextAccessor,
@@ -261,12 +317,66 @@ public class ClaimsActorProvider : IActorProvider
         if (actorId is null)
             return Task.FromResult(Maybe<Actor>.None);
 
-        var permissions = identity.FindAll(Options.PermissionsClaim)
+        var permissions = ResolveAllClaimsWithFallback(identity, Options.PermissionsClaim)
             .Select(c => c.Value)
             .ToFrozenSet();
 
         var actor = Actor.Create(actorId, permissions);
         return Task.FromResult(Maybe.From(actor));
+    }
+
+    /// <summary>
+    /// Multi-valued sibling of <see cref="ResolveClaimWithFallback"/>. Yields every claim on
+    /// the identity that matches the configured claim name OR any counterpart in the curated
+    /// <see cref="KnownShortToLongClaimNames"/> mapping table. Used for permissions resolution,
+    /// where every contributing claim must be included in the resulting set; the caller's
+    /// <see cref="FrozenSet{T}"/> construction dedupes overlapping values.
+    /// </summary>
+    /// <remarks>
+    /// Logs a debug-level entry once per counterpart that fired (literal not found, fallback
+    /// did find claims) so the diagnostic remains useful when the consumer has configured a
+    /// claim name that's subject to <c>JwtBearerOptions.MapInboundClaims</c> remapping.
+    /// </remarks>
+    private IEnumerable<Claim> ResolveAllClaimsWithFallback(ClaimsIdentity identity, string configuredClaim)
+    {
+        var literalFound = false;
+        foreach (var c in identity.FindAll(configuredClaim))
+        {
+            literalFound = true;
+            yield return c;
+        }
+
+        // Forward direction: configured short form → its single long-form counterpart.
+        if (KnownShortToLongClaimNames.TryGetValue(configuredClaim, out var longForm))
+        {
+            var counterpartFound = false;
+            foreach (var c in identity.FindAll(longForm))
+            {
+                counterpartFound = true;
+                yield return c;
+            }
+
+            if (counterpartFound && !literalFound)
+                LogClaimNameFallback(_logger, configuredClaim, longForm);
+        }
+
+        // Reverse direction: configured long form → iterate every short form that maps to it.
+        // Same "iterate every candidate" rule as ResolveClaimWithFallback.
+        if (KnownLongToShortClaimNames.TryGetValue(configuredClaim, out var shortForms))
+        {
+            foreach (var shortForm in shortForms)
+            {
+                var counterpartFound = false;
+                foreach (var c in identity.FindAll(shortForm))
+                {
+                    counterpartFound = true;
+                    yield return c;
+                }
+
+                if (counterpartFound && !literalFound)
+                    LogClaimNameFallback(_logger, configuredClaim, shortForm);
+            }
+        }
     }
 
     /// <summary>
@@ -322,12 +432,17 @@ public class ClaimsActorProvider : IActorProvider
         LoggerMessage.Define<string, string>(
             LogLevel.Debug,
             new EventId(1, nameof(ClaimsActorProvider)),
-            "ClaimsActorProvider resolved actor id via short<->long claim-name fallback. " +
-            "Configured ActorIdClaim '{ConfiguredClaim}' was not present on the authenticated " +
-            "identity; resolved via the well-known counterpart '{ResolvedClaim}'. This typically " +
-            "indicates JwtBearerOptions.MapInboundClaims = true (the ASP.NET Core default); " +
-            "set MapInboundClaims = false to keep claim names round-tripping with their RFC 7519 / " +
-            "OIDC names. The fallback continues to accept both forms.");
+            "ClaimsActorProvider resolved a claim via short<->long claim-name fallback. " +
+            "Configured claim '{ConfiguredClaim}' was not present on the authenticated " +
+            "identity; resolved via the well-known counterpart '{ResolvedClaim}'. This " +
+            "indicates a mismatch between the configured claim name and " +
+            "JwtBearerOptions.MapInboundClaims: a configured short / RFC 7519 / OIDC name " +
+            "that resolved to a long-form URN means MapInboundClaims = true (the ASP.NET " +
+            "Core default) remapped the inbound short name; a configured long-form URN " +
+            "that resolved to a short name means MapInboundClaims = false left the short " +
+            "name on the identity. Align the configured claim name with the JwtBearer " +
+            "setting (or rely on this fallback) to keep diagnostics quiet. The fallback " +
+            "continues to accept both forms.");
 
     private static void LogClaimNameFallback(ILogger<ClaimsActorProvider>? logger, string configured, string resolved)
     {

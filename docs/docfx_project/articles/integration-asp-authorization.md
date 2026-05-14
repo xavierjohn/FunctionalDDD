@@ -41,7 +41,7 @@ audience: [developer]
 | `AddClaimsActorProvider(this IServiceCollection, Action<ClaimsActorOptions>?)` | DI extension | Scoped `IActorProvider` → `ClaimsActorProvider` | Generic flat-claim mapping (configurable `ActorIdClaim`, `PermissionsClaim`). |
 | `AddDevelopmentActorProvider(this IServiceCollection, Action<DevelopmentActorOptions>?)` | DI extension | Scoped `IActorProvider` → `DevelopmentActorProvider` | Reads `X-Test-Actor` JSON header; throws outside `IsDevelopment()`. |
 | `AddCachingActorProvider<T>(this IServiceCollection)` | DI extension | Scoped `IActorProvider` → `CachingActorProvider` wrapping `T` | Caches one resolution task per request scope. |
-| `ClaimsActorProvider` | Class | Scoped, virtual `GetCurrentActorAsync` | Subclass for custom flat-claim providers. Permissions collected via `FindAll(PermissionsClaim)`. |
+| `ClaimsActorProvider` | Class | Scoped, virtual `GetCurrentActorAsync` | Subclass for custom flat-claim providers. Permissions resolved via literal `FindAll(PermissionsClaim)` plus the well-known short↔long counterpart from the JWT inbound claim-name map; matches are merged into a deduplicated `FrozenSet<string>`. |
 | `EntraActorProvider` | Class | Scoped, sealed | Falls back to short `oid` when `IdClaimType` is the default; rewraps mapper exceptions in `InvalidOperationException`. |
 | `DevelopmentActorProvider` | Class | Scoped, sealed partial | Logs a warning and falls back when the header is malformed (unless `ThrowOnMalformedHeader = true`). |
 | `CachingActorProvider` | Class | Scoped, sealed | Uses `LazyInitializer.EnsureInitialized` + `HttpContext.RequestAborted`; honors per-call `CancellationToken` via `Task.WaitAsync`. |
@@ -124,7 +124,7 @@ For any flat-claim OIDC token where you can name the id and permissions claim ty
 | Member | Default | Notes |
 |---|---|---|
 | `ClaimsActorOptions.ActorIdClaim` | `"sub"` (RFC 7519 / OIDC subject claim) | Literal `Claim.Type` match first; if not found, falls back to the well-known short↔long counterpart (e.g., `"sub"` ↔ `ClaimTypes.NameIdentifier`) so the default just-works against either `JwtBearerOptions.MapInboundClaims = true` or `false`. Emits a debug-level log entry when the fallback fires. No JSON-path traversal. |
-| `ClaimsActorOptions.PermissionsClaim` | `"permissions"` | Multi-valued JWT claims arrive as repeated `Claim` instances and are aggregated via `FindAll`. Literal-only (no short↔long fallback) — see options table in [trellis-api-asp.md](../api_reference/trellis-api-asp.md#claimsactoroptions). |
+| `ClaimsActorOptions.PermissionsClaim` | `"permissions"` | Multi-valued JWT claims arrive as repeated `Claim` instances and are aggregated via `FindAll`. Same curated short↔long mapping table as `ActorIdClaim`: literal match first, then every counterpart in the table is also queried and merged into a deduplicated set, so `"role"`/`"roles"`/`ClaimTypes.Role` all just-work against `JwtBearerOptions.MapInboundClaims = true` or `false`. The default `"permissions"` is not in the mapping table, so it resolves by literal match only. Emits a debug-level log entry when the fallback fires. |
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
