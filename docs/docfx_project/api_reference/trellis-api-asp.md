@@ -414,8 +414,8 @@ public class ClaimsActorOptions
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ActorIdClaim` | `string` | Claim type used for `Actor.Id`. Default: `"sub"`. Matched verbatim against `Claim.Type`; no dotted/JSON-path traversal. |
-| `PermissionsClaim` | `string` | Claim type used for permissions. Default: `"permissions"`. Multi-valued JWT claims arrive as repeated `Claim` instances and are aggregated via `FindAll`. |
+| `ActorIdClaim` | `string` | Claim type used for `Actor.Id`. Default: `"sub"` (RFC 7519 / OIDC subject claim). Matched against `Claim.Type` literally first; if the configured name is not found, falls back to its well-known short↔long counterpart from the JWT inbound claim-name map (e.g., `"sub"` ↔ `ClaimTypes.NameIdentifier`, `"email"` ↔ `ClaimTypes.Email`, `"role"`/`"roles"` ↔ `ClaimTypes.Role`, `"name"`/`"unique_name"` ↔ `ClaimTypes.Name`). The bidirectional fallback makes the default just-work against both `JwtBearerOptions.MapInboundClaims = true` (ASP.NET default, remaps short → long-form URN) and `MapInboundClaims = false`. The fallback emits a debug-level log entry when it fires. No dotted/JSON-path traversal. |
+| `PermissionsClaim` | `string` | Claim type used for permissions. Default: `"permissions"`. Multi-valued JWT claims arrive as repeated `Claim` instances and are aggregated via `FindAll`. Literal-match only — does **not** use the short↔long fallback (the most common permissions claim shape, `"permissions"`, is not in the JWT inbound map; for `"roles"`/`"role"` consumers should either set `MapInboundClaims = false` on `AddJwtBearer` or configure `PermissionsClaim = ClaimTypes.Role` explicitly). |
 
 ### `ClaimsActorProvider`
 

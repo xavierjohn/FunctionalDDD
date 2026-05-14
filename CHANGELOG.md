@@ -45,6 +45,16 @@ The mediator-emitted 401 carries an empty `Error.Unauthorized.Challenges` array,
 
 ### Fixed
 
+#### `ClaimsActorProvider` short↔long claim-name fallback for `JwtBearer.MapInboundClaims`
+
+`ClaimsActorProvider` previously did literal-match lookup of `ClaimsActorOptions.ActorIdClaim` against `ClaimsIdentity`. Combined with ASP.NET Core's `JwtBearerOptions.MapInboundClaims = true` default — which remaps RFC 7519 short claim names (e.g. `"sub"`) onto WS-* long-form URNs (e.g. `ClaimTypes.NameIdentifier`) before the principal reaches Trellis — the default `ActorIdClaim = "sub"` couldn't find the (now-remapped) claim, returned `Maybe<Actor>.None`, and the mediator emitted **401 on every authenticated request** with no diagnostic. The most common Trellis + JwtBearer integration footgun.
+
+`ClaimsActorProvider` now performs the literal lookup first, then falls back to the well-known short↔long counterpart from the JWT inbound claim-name map (`"sub"` ↔ `NameIdentifier`, `"email"` ↔ `Email`, `"role"`/`"roles"` ↔ `Role`, `"name"`/`"unique_name"` ↔ `Name`, `"family_name"` ↔ `Surname`, `"given_name"` ↔ `GivenName`, `"gender"` ↔ `Gender`, `"birthdate"` ↔ `DateOfBirth`, `"website"` ↔ `Webpage`, `"actort"` ↔ `Actor`, `"nameid"` ↔ `NameIdentifier`). Bidirectional — works under both `MapInboundClaims = true` and `MapInboundClaims = false`. The literal match takes precedence when both forms are present. The fallback fires a debug-level log entry naming the resolved counterpart, so operators can spot the `MapInboundClaims = true` default in their pipeline.
+
+Same Postel's-law robustness pattern `EntraActorProvider` has used for its `oid` ↔ `objectidentifier` lookup since the package shipped.
+
+`ClaimsActorProvider`'s constructor gained an optional `ILogger<ClaimsActorProvider>` parameter. The default `AddClaimsActorProvider(...)` registration extension wires it automatically; manual constructions pass `null` for no logging. `EntraActorProvider` (which subclasses `ClaimsActorProvider`) is unaffected — its `GetCurrentActorAsync` override does its own claim resolution.
+
 #### `ProblemDetails.Instance` populated from request URL ([#496](https://github.com/xavierjohn/Trellis/pull/496))
 
 All nine `Trellis.Asp` ProblemDetails emission sites now populate `ProblemDetails.Instance` from `HttpContext.Request.GetEncodedPathAndQuery()` per RFC 9457 §3.1: `ResponseFailureWriter` (both `Results.Problem` and `Results.ValidationProblem` branches), `ScalarValueValidationEndpointFilter` (Minimal API), three sites in `ScalarValueValidationFilter` (MVC), and four sites in `ScalarValueValidationMiddleware`. Server-relative form (path + query, percent-encoded) avoids host disclosure for services behind reverse proxies. The shipped contract documented in `trellis-api-core.md`, `trellis-api-asp.md`, `trellis-api-testing-reference.md`, `integration-aspnet.md`, `integration-testing.md`, `migration.md`, `Trellis.Asp/README.md`, and `Trellis.Asp/NUGET_README.md` is aligned with this behavior. `ResourceRef` integration into `Instance` (using the typed payload's resource identity when the request URL doesn't carry it) is tracked as a follow-up.

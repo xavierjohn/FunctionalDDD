@@ -123,8 +123,8 @@ For any flat-claim OIDC token where you can name the id and permissions claim ty
 
 | Member | Default | Notes |
 |---|---|---|
-| `ClaimsActorOptions.ActorIdClaim` | `"sub"` | Verbatim claim-type match — no JSON-path traversal. |
-| `ClaimsActorOptions.PermissionsClaim` | `"permissions"` | Multi-valued JWT claims arrive as repeated `Claim` instances and are aggregated via `FindAll`. |
+| `ClaimsActorOptions.ActorIdClaim` | `"sub"` (RFC 7519 / OIDC subject claim) | Literal `Claim.Type` match first; if not found, falls back to the well-known short↔long counterpart (e.g., `"sub"` ↔ `ClaimTypes.NameIdentifier`) so the default just-works against either `JwtBearerOptions.MapInboundClaims = true` or `false`. Emits a debug-level log entry when the fallback fires. No JSON-path traversal. |
+| `ClaimsActorOptions.PermissionsClaim` | `"permissions"` | Multi-valued JWT claims arrive as repeated `Claim` instances and are aggregated via `FindAll`. Literal-only (no short↔long fallback) — see options table in [trellis-api-asp.md](../api_reference/trellis-api-asp.md#claimsactoroptions). |
 
 ```csharp
 using Microsoft.Extensions.DependencyInjection;
@@ -136,6 +136,8 @@ builder.Services.AddClaimsActorProvider(options =>
     options.PermissionsClaim = "permissions";
 });
 ```
+
+> **JwtBearer integration tip.** ASP.NET Core's `AddJwtBearer(...)` defaults to `MapInboundClaims = true`, which remaps the JWT `"sub"` claim onto the WS-* long-form URN (`http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier`) before the principal reaches Trellis. `ClaimsActorProvider`'s short↔long claim-name fallback hides this from you — the default `ActorIdClaim = "sub"` resolves the actor correctly under either setting. New services should set `MapInboundClaims = false` on `AddJwtBearer(...)` to keep claim names round-tripping with their RFC 7519 names; the fallback continues to accept both forms.
 
 `ClaimsActorProvider.GetCurrentActorAsync` is `virtual` — subclass it to compute permissions from nested claims, look them up in a store, etc., then register your subclass via `AddCachingActorProvider<TYourProvider>()` to amortize the cost across the request.
 

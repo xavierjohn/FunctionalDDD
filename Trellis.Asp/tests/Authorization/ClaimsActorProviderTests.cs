@@ -63,6 +63,82 @@ public class ClaimsActorProviderTests
 
     #endregion
 
+    #region MapInboundClaims fallback — JwtBearerHandler default-config compatibility
+
+    [Fact]
+    public async Task GetCurrentActorAsync_DefaultActorIdClaim_FallsBackToLongFormUrn_WhenJwtMapInboundClaimsRemappedSub()
+    {
+        // ASP.NET Core's JwtBearerHandler defaults to MapInboundClaims = true, which remaps
+        // the RFC 7519 / OIDC short claim name "sub" onto the WS-* long-form URN
+        // ClaimTypes.NameIdentifier. With the default ClaimsActorOptions.ActorIdClaim = "sub",
+        // the literal lookup fails and the provider returns Maybe.None — the mediator then
+        // emits 401 on every authenticated request, indistinguishable from "no token". This
+        // is the most common Trellis + JwtBearer integration footgun.
+        //
+        // The fallback resolves the actor id from the long-form WS-* URN counterpart when
+        // the configured short-form claim is not found (and vice versa) — same Postel's-law
+        // robustness pattern EntraActorProvider already uses for its oid lookup.
+        var user = AuthenticatedUser(new Claim(ClaimTypes.NameIdentifier, "user-sub-123"));
+
+        var maybeActor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.HasValue.Should().BeTrue(
+            "ClaimsActorProvider should resolve actor id via the WS-* long-form URN fallback when JwtBearerHandler's default MapInboundClaims has remapped the 'sub' claim");
+        maybeActor.Unwrap().Id.Should().Be("user-sub-123");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_CustomActorIdClaim_FallsBackToShortForm_WhenLongFormConfiguredButShortFormPresent()
+    {
+        // Reverse direction: consumer explicitly set ActorIdClaim to the long-form URN
+        // (e.g., to match older code) but the token's identity carries the short-form claim
+        // (because MapInboundClaims = false was set on JwtBearerHandler). The fallback runs
+        // bidirectionally so both configurations resolve.
+        var user = AuthenticatedUser(new Claim("sub", "user-sub-456"));
+        var options = new ClaimsActorOptions { ActorIdClaim = ClaimTypes.NameIdentifier };
+
+        var maybeActor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.HasValue.Should().BeTrue(
+            "fallback is bidirectional — configured long-form should also try the short-form counterpart");
+        maybeActor.Unwrap().Id.Should().Be("user-sub-456");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_ActorIdClaim_PrefersLiteralMatchOverFallback_WhenBothShortAndLongFormPresent()
+    {
+        // When the configured claim matches a real claim on the identity, the literal match
+        // wins — no fallback is consulted. Defensive case for tokens that carry both forms
+        // (e.g., MapInboundClaims true + an explicit "sub" claim added by the IdP); we want
+        // the user's configured intent to drive resolution.
+        var user = AuthenticatedUser(
+            new Claim("sub", "literal-match"),
+            new Claim(ClaimTypes.NameIdentifier, "fallback-match"));
+
+        var maybeActor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.Unwrap().Id.Should().Be("literal-match",
+            "the literal match on the configured claim name takes precedence over the fallback");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_ActorIdClaim_NotInKnownMapping_DoesNotFireFallback()
+    {
+        // The fallback only covers the specific short↔long claim names that JwtBearerHandler's
+        // DefaultInboundClaimTypeMap remaps. Arbitrary custom claim names (consumer-supplied,
+        // not in the well-known JWT inbound mapping) get literal-only lookup — no fuzzy
+        // matching against unrelated claims.
+        var user = AuthenticatedUser(new Claim("some-other-claim", "value"));
+        var options = new ClaimsActorOptions { ActorIdClaim = "tenant-custom-id" };
+
+        var maybeActor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.HasValue.Should().BeFalse(
+            "custom claim names not in the JWT well-known mapping table get literal lookup only — no fallback");
+    }
+
+    #endregion
+
     #region Custom claim mapping
 
     [Fact]
