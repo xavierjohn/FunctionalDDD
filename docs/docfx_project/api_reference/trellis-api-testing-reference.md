@@ -236,7 +236,7 @@ public class ErrorAssertions : ReferenceTypeAssertions<Error, ErrorAssertions>
 }
 ```
 
-> **Note:** The `HaveInstance(...)` assertion was removed. `Error.Instance` is no longer part of the closed-ADT base — the ASP wire layer synthesizes `ProblemDetails.Instance` from the request URL plus any `ResourceRef` carried by the typed payload (e.g. `Error.NotFound.Resource`). Assert against `ResourceRef` directly via `BeOfType<Error.NotFound>().Which.Resource`.
+> **Note:** The `HaveInstance(...)` assertion was removed. `Error.Instance` is no longer part of the closed-ADT base — the ASP wire layer populates `ProblemDetails.Instance` from the server-relative request path+query, and typed payloads expose `ResourceRef` (e.g. `Error.NotFound.Resource`) directly for assertion via `BeOfType<Error.NotFound>().Which.Resource`.
 
 #### `ValidationErrorAssertionsExtensions`
 ```csharp
