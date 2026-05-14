@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Trellis;
 
 /// <summary>
@@ -19,6 +20,13 @@ internal static class ResponseFailureWriter
     {
         EmitCompanionHeaders(error, httpContext.Response, statusCode);
 
+        // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem.
+        // Emitting the server-relative path+query (rather than the absolute URL) avoids host
+        // disclosure while still letting clients correlate the response with the request that
+        // produced it. Matches what public APIs and the System.Net.Http.Json ProblemDetails
+        // round-trip convention expect.
+        var instance = httpContext.Request.GetEncodedPathAndQuery();
+
         Microsoft.AspNetCore.Http.IResult inner;
         if (error is Error.UnprocessableContent unprocessable
             && (unprocessable.Fields.Items.Length > 0 || unprocessable.Rules.Items.Length > 0))
@@ -31,7 +39,7 @@ internal static class ResponseFailureWriter
             inner = Microsoft.AspNetCore.Http.Results.ValidationProblem(
                 errors,
                 validationDetail,
-                instance: null,
+                instance,
                 statusCode,
                 extensions: BuildExtensions(error, unprocessable.Rules));
         }
@@ -41,7 +49,7 @@ internal static class ResponseFailureWriter
             var rules = error is Error.UnprocessableContent uc ? uc.Rules : default;
             inner = Microsoft.AspNetCore.Http.Results.Problem(
                 detail,
-                instance: null,
+                instance,
                 statusCode,
                 extensions: BuildExtensions(error, rules));
         }

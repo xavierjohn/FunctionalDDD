@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Metadata;
 using Trellis;
 using Trellis.Asp.Validation;
@@ -96,7 +97,9 @@ public sealed class ScalarValueValidationMiddleware
             [string.Empty] = ["The request was invalid."]
         };
 
-        var result = Results.ValidationProblem(errors);
+        var result = Results.ValidationProblem(
+            errors,
+            instance: context.Request.GetEncodedPathAndQuery());
         await result.ExecuteAsync(context).ConfigureAwait(false);
     }
 
@@ -180,7 +183,10 @@ public sealed class ScalarValueValidationMiddleware
         // domain handlers via ResponseFailureWriter for the same logical condition.
         context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
 
-        var result = Results.ValidationProblem(errors, statusCode: StatusCodes.Status422UnprocessableEntity);
+        var result = Results.ValidationProblem(
+            errors,
+            instance: context.Request.GetEncodedPathAndQuery(),
+            statusCode: StatusCodes.Status422UnprocessableEntity);
         await result.ExecuteAsync(context).ConfigureAwait(false);
     }
 
@@ -238,7 +244,10 @@ public sealed class ScalarValueValidationMiddleware
                 }
             }
 
-            var structuredResult = Results.ValidationProblem(perLeafErrors, statusCode: statusCode);
+            var structuredResult = Results.ValidationProblem(
+                perLeafErrors,
+                instance: context.Request.GetEncodedPathAndQuery(),
+                statusCode: statusCode);
             await structuredResult.ExecuteAsync(context).ConfigureAwait(false);
             return;
         }
@@ -258,7 +267,10 @@ public sealed class ScalarValueValidationMiddleware
             [key] = [message],
         };
 
-        var result = Results.ValidationProblem(errors, statusCode: statusCode);
+        var result = Results.ValidationProblem(
+            errors,
+            instance: context.Request.GetEncodedPathAndQuery(),
+            statusCode: statusCode);
         await result.ExecuteAsync(context).ConfigureAwait(false);
     }
 

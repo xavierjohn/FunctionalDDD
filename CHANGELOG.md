@@ -673,7 +673,7 @@ Key changes:
 - **`Detail` and `Cause` on the base.** Set them via object initializer; equality compares discriminator + payload + `Detail` (Cause excluded).
 - **`Result.Error` is now `public Error?`** (null on success, never throws). `Result<T>.Value` was removed; extract success values with `TryGetValue`, `Match`, `Deconstruct`, or `GetValueOrDefault`. See [ADR-001](docs/docfx_project/adr/ADR-001-result-api-surface.md) for the full design rationale.
 - **`Result<Unit>` collapsed to non-generic `Result`.** `Unit` is retained internally for tuple-result interop only.
-- **Removed:** `MatchError`, `SwitchError`, `FlattenValidationErrors` extensions; `ValidationError`/`NotFoundError`/`ConflictError`/etc. concrete subclasses; `Error.Instance` field. The ASP wire layer synthesizes `ProblemDetails.Instance` from request URL + `ResourceRef`.
+- **Removed:** `MatchError`, `SwitchError`, `FlattenValidationErrors` extensions; `ValidationError`/`NotFoundError`/`ConflictError`/etc. concrete subclasses; `Error.Instance` field. The ASP wire layer populates `ProblemDetails.Instance` from the server-relative request path+query (RFC 9457 §3.1); typed payloads expose `ResourceRef` (e.g. `Error.NotFound.Resource`) directly for callers that need to assert on the resource identity.
 - **Renamed wire identifiers.** Default `Code` values changed from `"validation.error"`/`"not.found.error"`/etc. to the IANA-aligned slugs `"unprocessable-content"`/`"not-found"`/etc.
 - **TRLS005 analyzer (`UseMatchErrorAnalyzer`) removed** — the C# compiler now provides exhaustiveness for free.
 

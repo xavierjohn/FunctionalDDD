@@ -251,7 +251,7 @@ Failures are emitted as `application/problem+json`. Companion headers are added 
 | `Error.TooManyRequests` / `Error.ServiceUnavailable` | `Retry-After` (when configured) |
 | `Error.RangeNotSatisfiable` | `Content-Range: {Unit} */{CompleteLength}` |
 
-Extensions always carry `code` and `kind`. `Error.InternalServerError` adds `faultId`. Rule violations land under `rules`. **For any `5xx`, `Detail` is replaced with `"An internal error occurred."`** so internal diagnostics never leak.
+Extensions always carry `code` and `kind`. `Error.InternalServerError` adds `faultId`. Rule violations land under `rules`. Every response also carries `instance` (RFC 9457 §3.1) populated from the server-relative request path+query so clients can correlate the problem with the originating request without consulting access logs. **For any `5xx`, `Detail` is replaced with `"An internal error occurred."`** so internal diagnostics never leak.
 
 `Error.UnprocessableContent` is routed to `Results.ValidationProblem(...)`:
 
@@ -262,6 +262,7 @@ Content-Type: application/problem+json
 {
   "title": "One or more validation errors occurred.",
   "status": 422,
+  "instance": "/api/customers?api-version=2026-11-12",
   "code": "unprocessable-content",
   "kind": "unprocessable-content",
   "errors": {

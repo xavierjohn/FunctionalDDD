@@ -58,7 +58,11 @@ public sealed class BinderValidationStatusCodeTests
         var resp = await client.PostAsync("/binder-status/composite", content, TestContext.Current.CancellationToken);
 
         resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
-        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422, expectedErrorKey: "address.street");
+        await AssertRfc9457ProblemDetails(
+            resp,
+            expectedStatus: 422,
+            expectedErrorKey: "address.street",
+            expectedInstance: "/binder-status/composite");
     }
 
     [Fact]
@@ -70,7 +74,10 @@ public sealed class BinderValidationStatusCodeTests
         var resp = await client.GetAsync("/binder-status/scalar?value=", TestContext.Current.CancellationToken);
 
         resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
-        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422);
+        await AssertRfc9457ProblemDetails(
+            resp,
+            expectedStatus: 422,
+            expectedInstance: "/binder-status/scalar?value=");
     }
 
     [Fact]
@@ -88,7 +95,10 @@ public sealed class BinderValidationStatusCodeTests
         var resp = await client.PostAsync("/binder-status/composite", content, TestContext.Current.CancellationToken);
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        await AssertRfc9457ProblemDetails(resp, expectedStatus: 400);
+        await AssertRfc9457ProblemDetails(
+            resp,
+            expectedStatus: 400,
+            expectedInstance: "/binder-status/composite");
     }
 
     [Fact]
@@ -103,7 +113,10 @@ public sealed class BinderValidationStatusCodeTests
         var resp = await client.GetAsync("/binder-status/maybe-scalar?value=bad", TestContext.Current.CancellationToken);
 
         resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
-        await AssertRfc9457ProblemDetails(resp, expectedStatus: 422);
+        await AssertRfc9457ProblemDetails(
+            resp,
+            expectedStatus: 422,
+            expectedInstance: "/binder-status/maybe-scalar?value=bad");
     }
 
     [Fact]
@@ -127,7 +140,8 @@ public sealed class BinderValidationStatusCodeTests
     private static async Task AssertRfc9457ProblemDetails(
         HttpResponseMessage response,
         int expectedStatus,
-        string? expectedErrorKey = null)
+        string? expectedErrorKey = null,
+        string? expectedInstance = null)
     {
         // RFC 9457 §3 mandates application/problem+json (or +xml) for the response media type.
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
@@ -148,6 +162,16 @@ public sealed class BinderValidationStatusCodeTests
         root.TryGetProperty("type", out var typeEl).Should().BeTrue("RFC 9457 §3.1 type member must be present");
         var typeUri = typeEl.GetString();
         typeUri.Should().NotBeNullOrEmpty("type defaults to about:blank but should never be missing");
+
+        if (expectedInstance is not null)
+        {
+            // RFC 9457 §3.1 — "instance" identifies the specific occurrence of the problem.
+            // Trellis emits the server-relative path+query so clients can correlate the
+            // response with the request that produced it.
+            root.TryGetProperty("instance", out var instanceEl).Should().BeTrue(
+                "RFC 9457 §3.1 instance must be populated on Trellis-emitted ProblemDetails responses");
+            instanceEl.GetString().Should().Be(expectedInstance);
+        }
 
         if (expectedErrorKey is not null)
         {

@@ -181,7 +181,7 @@ error.Should().HaveDetailContaining("123");
 ```
 
 > [!NOTE]
-> `Error.Instance` was removed in v3. The ASP wire layer synthesizes `ProblemDetails.Instance` from the request URL plus any `ResourceRef` carried by the typed payload. Assert against `Error.NotFound.Resource` (or the equivalent typed field), not a string `Instance`.
+> `Error.Instance` was removed in v3. The ASP wire layer populates `ProblemDetails.Instance` from the server-relative request path+query, and typed payloads expose `ResourceRef` (e.g. `Error.NotFound.Resource`) directly. Assert against the typed `ResourceRef` field, not a string `Instance` on the `Error`.
 
 ### Validation error assertions
 

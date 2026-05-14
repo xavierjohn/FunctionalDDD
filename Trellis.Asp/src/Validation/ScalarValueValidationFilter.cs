@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -176,7 +177,11 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         }
 
         var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, freshModelState, statusCode: 422);
+        var problemDetails = factory.CreateValidationProblemDetails(
+            context.HttpContext,
+            freshModelState,
+            statusCode: 422,
+            instance: context.HttpContext.Request.GetEncodedPathAndQuery());
         context.Result = new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status422UnprocessableEntity };
         return true;
     }
@@ -208,14 +213,22 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         }
 
         var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, modelState, statusCode: 422);
+        var problemDetails = factory.CreateValidationProblemDetails(
+            context.HttpContext,
+            modelState,
+            statusCode: 422,
+            instance: context.HttpContext.Request.GetEncodedPathAndQuery());
         context.Result = new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status422UnprocessableEntity };
     }
 
     private static ObjectResult CreateValidationProblemResult(ActionExecutingContext context, int statusCode)
     {
         var factory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        var problemDetails = factory.CreateValidationProblemDetails(context.HttpContext, context.ModelState, statusCode: statusCode);
+        var problemDetails = factory.CreateValidationProblemDetails(
+            context.HttpContext,
+            context.ModelState,
+            statusCode: statusCode,
+            instance: context.HttpContext.Request.GetEncodedPathAndQuery());
         return new ObjectResult(problemDetails) { StatusCode = statusCode };
     }
 

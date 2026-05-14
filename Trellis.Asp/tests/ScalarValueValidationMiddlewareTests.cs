@@ -344,6 +344,7 @@ public class ScalarValueValidationMiddlewareTests
             .GetParameters()[0];
 
         var context = CreateContextWithEndpointMetadata(paramInfo, "code", "INVALID");
+        context.Request.Path = "/middleware-binding-422";
 
         var middleware = new ScalarValueValidationMiddleware(_ =>
             throw new BadHttpRequestException("""Failed to bind parameter "OrderCode code" from "INVALID".""", 400));
@@ -357,6 +358,11 @@ public class ScalarValueValidationMiddlewareTests
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty("code")[0].GetString()
             .Should().Contain("ORD-", "should contain the rich validation error from TryCreate");
+
+        // RFC 9457 §3.1: instance is populated from the request path on the binder-level
+        // 422 branch (WriteValidationProblemAsync). Pins the middleware emission point
+        // independently of the JSON-deserialization branches.
+        problem.GetProperty("instance").GetString().Should().Be("/middleware-binding-422");
     }
 
     [Fact]
@@ -456,6 +462,7 @@ public class ScalarValueValidationMiddlewareTests
     {
         // Arrange - no endpoint set on context
         var context = CreateHttpContextWithServices();
+        context.Request.Path = "/middleware-generic-400";
 
         var middleware = new ScalarValueValidationMiddleware(_ =>
             throw new BadHttpRequestException("""Failed to bind parameter "OrderCode code" from "INVALID".""", 400));
@@ -469,6 +476,12 @@ public class ScalarValueValidationMiddlewareTests
         var problem = JsonSerializer.Deserialize<JsonElement>(body);
         problem.GetProperty("errors").GetProperty(string.Empty)[0].GetString()
             .Should().Be("The request was invalid.");
+
+        // RFC 9457 §3.1: instance is populated from the request path on the generic-400
+        // fallback branch (WriteGenericBadRequestAsync). Pins the last of the four
+        // middleware emission points so a regression is caught independently of the other
+        // three branches and of the MVC filter and ResponseFailureWriter coverage.
+        problem.GetProperty("instance").GetString().Should().Be("/middleware-generic-400");
     }
 
     [Fact]

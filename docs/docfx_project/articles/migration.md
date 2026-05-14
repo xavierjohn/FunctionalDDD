@@ -23,7 +23,7 @@ A package- and namespace-rename combined with a tightened public surface. Per-pa
 | `Error` open class hierarchy + `Error.X("msg")` factories | `Error` closed ADT + `new Error.X(payload) { Detail = "msg" }` | [Error becomes a closed ADT](#error-becomes-a-closed-adt) |
 | `MatchErrorExtensions.MatchError(...)` | `Match(...)` + `switch` over the closed ADT | [Removed extensions](#removed-extensions) |
 | `FlattenValidationErrorsExtensions` | `Combine` (auto-merges `Error.UnprocessableContent.Fields` / `.Rules`) | [Removed extensions](#removed-extensions) |
-| `Error.Instance` field | Synthesized by ASP wire layer from request URL + `ResourceRef` | [Removed extensions](#removed-extensions) |
+| `Error.Instance` field | ASP wire layer populates `ProblemDetails.Instance` from the request path+query; typed `ResourceRef` is exposed on the payload (e.g. `Error.NotFound.Resource`) for direct assertion | [Removed extensions](#removed-extensions) |
 | `Trellis.Asp.WriteOutcome<T>` | `Trellis.WriteOutcome<T>` (in `Trellis.Core`) | [ASP.NET Core (Trellis.Asp)](#aspnet-core-trellisasp) |
 | `Trellis.Stateless` package + namespace | `Trellis.StateMachine` package + namespace | [State machine (Trellis.StateMachine)](#state-machine-trellisstatemachine) |
 | `ReadResultFromJsonAsync<T>` | `ReadJsonAsync<T>` | [HTTP (Trellis.Http)](#http-trellishttp) |
@@ -157,7 +157,7 @@ C# verifies exhaustiveness against the closed catalog when you `switch` on the c
 |---|---|
 | `result.MatchError(onValidation: ..., onNotFound: ..., onUnexpected: ...)` | `result.Match(_ => ..., e => e switch { Error.NotFound nf => ..., Error.UnprocessableContent uc => ..., _ => ... })` |
 | `result.FlattenValidationErrors()` | `Result.Combine(...)` automatically merges `Error.UnprocessableContent.Fields` and `.Rules` |
-| `error.Instance` field | Synthesized by the ASP wire layer from request URL + any `ResourceRef` carried by the typed payload |
+| `error.Instance` field | ASP wire layer populates `ProblemDetails.Instance` from the request path+query; typed `ResourceRef` is exposed on the payload (e.g. `Error.NotFound.Resource`) for direct assertion |
 
 ### Non-generic Result removed (ADR-005)
 
