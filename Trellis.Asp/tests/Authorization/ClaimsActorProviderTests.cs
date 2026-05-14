@@ -193,6 +193,127 @@ public class ClaimsActorProviderTests
 
     #endregion
 
+    #region MapInboundClaims fallback — PermissionsClaim multi-valued lookup
+
+    [Fact]
+    public async Task GetCurrentActorAsync_DefaultPermissionsClaim_NotInJwtMap_HasNoFallback()
+    {
+        // Default PermissionsClaim = "permissions" is NOT in the JWT inbound claim map —
+        // the JwtBearerHandler does not remap it. Literal-only lookup is correct here;
+        // no fallback fires. Regression guard against accidentally introducing a fallback
+        // for an unmapped name.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("permissions", "orders:read"));
+
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["orders:read"]);
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_ShortFormConfigured_FallsBackToLongForm()
+    {
+        // Consumer configures PermissionsClaim = "roles" (the RFC/Entra App Roles short
+        // name). Under JwtBearerOptions.MapInboundClaims = true (the ASP.NET Core default),
+        // the JWT "roles" claim is remapped onto ClaimTypes.Role. Without the fallback,
+        // identity.FindAll("roles") finds nothing → Actor.Permissions is empty → every
+        // IAuthorize command 403s on a valid token. Forward direction of the same footgun
+        // that PR #498 fixed for ActorIdClaim.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim(ClaimTypes.Role, "Editor"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor"],
+            "forward fallback: configured short-form 'roles' should also accept long-form ClaimTypes.Role claims");
+    }
+
+    [Theory]
+    [InlineData("role")]
+    [InlineData("roles")]
+    public async Task GetCurrentActorAsync_PermissionsClaim_LongFormConfigured_FallsBackToEveryShortFormThatMapsToIt(string shortForm)
+    {
+        // Reverse direction. Consumer configures PermissionsClaim = ClaimTypes.Role (e.g.,
+        // to match older code) and the token carries EITHER "role" or "roles" short forms.
+        // Both must resolve — same multi-short-form coverage as the ActorIdClaim reverse
+        // tests (collision pair "role"/"roles" → ClaimTypes.Role).
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim(shortForm, "Admin"),
+            new Claim(shortForm, "Editor"));
+        var options = new ClaimsActorOptions { PermissionsClaim = ClaimTypes.Role };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor"],
+            $"reverse fallback for ClaimTypes.Role must accept any of its mapped short forms — including '{shortForm}'");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_BothLiteralAndFallbackPresent_MergesAndDedupes()
+    {
+        // Token carries claims under BOTH the literal "roles" name AND the long-form
+        // ClaimTypes.Role URN (real-world: a token issued by an IdP that emits both, or
+        // a JwtBearer config with MapInboundClaims = true but additional claims added
+        // post-validation that use the short form). Permissions are multi-valued — both
+        // sources must contribute. The FrozenSet construction dedupes overlapping values.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("roles", "Admin"),                // short form
+            new Claim("roles", "Editor"),               // short form
+            new Claim(ClaimTypes.Role, "Editor"),       // long form, duplicate of "Editor"
+            new Claim(ClaimTypes.Role, "Reviewer"));    // long form, unique
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor", "Reviewer"],
+            "permissions from both forms must merge into one set; duplicate values dedupe");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_AllThreeCollisionShortForms_AllContribute()
+    {
+        // ClaimTypes.Role is mapped to from BOTH "role" and "roles" short forms. When
+        // PermissionsClaim is configured as ClaimTypes.Role and the token happens to carry
+        // claims under both short variants, all variants must contribute. Real-world: an
+        // IdP that emits both "role" (singular legacy) and "roles" (modern multi-valued)
+        // claims under MapInboundClaims = false.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("role", "FromRoleSingular"),
+            new Claim("roles", "FromRolesPlural"));
+        var options = new ClaimsActorOptions { PermissionsClaim = ClaimTypes.Role };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["FromRoleSingular", "FromRolesPlural"],
+            "every short form mapped to the configured long form must contribute its claims");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_NotInKnownMapping_LiteralOnly()
+    {
+        // Custom permissions claim name not in the JWT well-known map. Literal lookup only
+        // — no fuzzy matching against unrelated claims. Regression guard parallel to the
+        // ActorIdClaim NotInKnownMapping test.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("scope", "should-not-resolve"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "tenant-custom-permissions" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEmpty(
+            "custom permissions claim names not in the JWT well-known mapping table get literal-only lookup");
+    }
+
+    #endregion
+
     #region Custom claim mapping
 
     [Fact]

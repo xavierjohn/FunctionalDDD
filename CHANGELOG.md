@@ -45,6 +45,12 @@ The mediator-emitted 401 carries an empty `Error.Unauthorized.Challenges` array,
 
 ### Fixed
 
+#### `ClaimsActorProvider` short↔long claim-name fallback extended to `PermissionsClaim`
+
+`ClaimsActorProvider`'s `PermissionsClaim` resolution previously did literal-match lookup only. Once the `ActorIdClaim` fallback shipped (above), the same `JwtBearerOptions.MapInboundClaims = true` footgun moved one step down the stack: an authenticated actor whose permissions claim was remapped (e.g., `PermissionsClaim = "roles"` against a JWT whose `"roles"` claim had been remapped to `ClaimTypes.Role`) would resolve to an `Actor` with an empty permission set and produce silent 403s instead of silent 401s — still indistinguishable from "real" missing permissions.
+
+`ClaimsActorProvider` now applies the same bidirectional short↔long fallback to `PermissionsClaim` as to `ActorIdClaim`: literal match first, then every well-known counterpart from the JWT inbound claim-name map (`"role"`/`"roles"` ↔ `ClaimTypes.Role`, etc.) is also queried and merged into a single `FrozenSet<string>` (which dedupes overlapping values). The fallback fires a debug-level log entry once per counterpart that resolves it. The default `PermissionsClaim = "permissions"` is not in the JWT inbound map, so its resolution remains literal-only (regression-safe).
+
 #### `ClaimsActorProvider` short↔long claim-name fallback for `JwtBearer.MapInboundClaims`
 
 `ClaimsActorProvider` previously did literal-match lookup of `ClaimsActorOptions.ActorIdClaim` against `ClaimsIdentity`. Combined with ASP.NET Core's `JwtBearerOptions.MapInboundClaims = true` default — which remaps RFC 7519 short claim names (e.g. `"sub"`) onto WS-* long-form URNs (e.g. `ClaimTypes.NameIdentifier`) before the principal reaches Trellis — the default `ActorIdClaim = "sub"` couldn't find the (now-remapped) claim, returned `Maybe<Actor>.None`, and the mediator emitted **401 on every authenticated request** with no diagnostic. The most common Trellis + JwtBearer integration footgun.

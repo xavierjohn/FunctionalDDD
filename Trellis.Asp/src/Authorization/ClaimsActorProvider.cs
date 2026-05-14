@@ -261,12 +261,66 @@ public class ClaimsActorProvider : IActorProvider
         if (actorId is null)
             return Task.FromResult(Maybe<Actor>.None);
 
-        var permissions = identity.FindAll(Options.PermissionsClaim)
+        var permissions = ResolveAllClaimsWithFallback(identity, Options.PermissionsClaim)
             .Select(c => c.Value)
             .ToFrozenSet();
 
         var actor = Actor.Create(actorId, permissions);
         return Task.FromResult(Maybe.From(actor));
+    }
+
+    /// <summary>
+    /// Multi-valued sibling of <see cref="ResolveClaimWithFallback"/>. Yields every claim on
+    /// the identity that matches the configured claim name OR any well-known short↔long
+    /// counterpart from the JWT inbound claim-name map. Used for permissions resolution,
+    /// where every contributing claim must be included in the resulting set; the caller's
+    /// <see cref="FrozenSet{T}"/> construction dedupes overlapping values.
+    /// </summary>
+    /// <remarks>
+    /// Logs a debug-level entry once per counterpart that fired (literal not found, fallback
+    /// did find claims) so the diagnostic remains useful when the consumer has configured a
+    /// claim name that's subject to <c>JwtBearerOptions.MapInboundClaims</c> remapping.
+    /// </remarks>
+    private IEnumerable<Claim> ResolveAllClaimsWithFallback(ClaimsIdentity identity, string configuredClaim)
+    {
+        var literalFound = false;
+        foreach (var c in identity.FindAll(configuredClaim))
+        {
+            literalFound = true;
+            yield return c;
+        }
+
+        // Forward direction: configured short form → its single long-form counterpart.
+        if (KnownShortToLongClaimNames.TryGetValue(configuredClaim, out var longForm))
+        {
+            var counterpartFound = false;
+            foreach (var c in identity.FindAll(longForm))
+            {
+                counterpartFound = true;
+                yield return c;
+            }
+
+            if (counterpartFound && !literalFound)
+                LogClaimNameFallback(_logger, configuredClaim, longForm);
+        }
+
+        // Reverse direction: configured long form → iterate every short form that maps to it.
+        // Same "iterate every candidate" rule as ResolveClaimWithFallback.
+        if (KnownLongToShortClaimNames.TryGetValue(configuredClaim, out var shortForms))
+        {
+            foreach (var shortForm in shortForms)
+            {
+                var counterpartFound = false;
+                foreach (var c in identity.FindAll(shortForm))
+                {
+                    counterpartFound = true;
+                    yield return c;
+                }
+
+                if (counterpartFound && !literalFound)
+                    LogClaimNameFallback(_logger, configuredClaim, shortForm);
+            }
+        }
     }
 
     /// <summary>
