@@ -1,6 +1,7 @@
 ﻿namespace Trellis.Asp;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Trellis;
 
 /// <summary>
@@ -46,7 +47,11 @@ public sealed class ScalarValueValidationEndpointFilter : IEndpointFilter
             // Aligns with the status code emitted by the rest of the framework
             // (ResponseFailureWriter for domain handler failures, ScalarValueValidationFilter
             // and ScalarValueValidationMiddleware for the same condition on other code paths).
-            return Results.ValidationProblem(dictionary, statusCode: StatusCodes.Status422UnprocessableEntity);
+            // instance: RFC 9457 §3.1 — server-relative path+query per ResponseFailureWriter convention.
+            return Results.ValidationProblem(
+                dictionary,
+                instance: context.HttpContext.Request.GetEncodedPathAndQuery(),
+                statusCode: StatusCodes.Status422UnprocessableEntity);
         }
 
         return await next(context).ConfigureAwait(false);

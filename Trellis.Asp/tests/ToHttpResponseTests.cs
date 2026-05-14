@@ -75,6 +75,44 @@ public sealed class ToHttpResponseTests
     }
 
     [Fact]
+    public async Task Result_failure_422_UnprocessableContent_uses_problem_plus_json()
+    {
+        // RFC 9457 §3 mandates application/problem+json for problem responses. The 422 path
+        // must align with the rest of the framework's error surface (404, 403, 409, etc.),
+        // which all emit problem+json. Pinning here prevents a future regression where MVC's
+        // default ValidationProblemDetails path could be re-enabled and silently swap to
+        // application/json.
+        var ctx = NewContext();
+        var r = Result.Fail<Todo>(
+            Error.UnprocessableContent.ForField("title", "required", "Title is required."));
+
+        await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(422);
+        ctx.Response.ContentType.Should().StartWith("application/problem+json");
+    }
+
+    [Fact]
+    public async Task Result_failure_populates_instance_from_request_url()
+    {
+        // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem,
+        // conventionally the request URI. Trellis emits the server-relative path+query
+        // (no host leak; matches what most public APIs do).
+        var ctx = NewContext();
+        ctx.Request.Path = "/api/orders/123";
+        ctx.Request.QueryString = new QueryString("?api-version=2026-11-12");
+
+        var r = Result.Fail<Todo>(new Error.NotFound(new ResourceRef("Todo", "1")));
+
+        await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(404);
+        ctx.Response.Body.Position = 0;
+        var body = await new StreamReader(ctx.Response.Body).ReadToEndAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("\"instance\":\"/api/orders/123?api-version=2026-11-12\"");
+    }
+
+    [Fact]
     public async Task Result_NonGeneric_success_writes_204()
     {
         var ctx = NewContext();

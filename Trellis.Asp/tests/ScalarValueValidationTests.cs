@@ -414,12 +414,18 @@ public class ScalarValueValidationTests
             return ValueTask.FromResult<object?>("success");
         };
 
+        // Minimal EndpointFilterInvocationContext with an HttpContext so the filter can read
+        // the request path for the RFC 9457 §3.1 ProblemDetails.instance value.
+        var httpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        httpContext.Request.Path = "/scalar-endpoint-test";
+        var invocationContext = Microsoft.AspNetCore.Http.EndpointFilterInvocationContext.Create(httpContext);
+
         using (ValidationErrorsContext.BeginScope())
         {
             ValidationErrorsContext.AddError("Email", "Email is required");
 
             // Act
-            var result = await filter.InvokeAsync(null!, next);
+            var result = await filter.InvokeAsync(invocationContext, next);
 
             // Assert
             nextCalled.Should().BeFalse();
@@ -428,6 +434,8 @@ public class ScalarValueValidationTests
             var problemResult = result as Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult;
             problemResult.Should().NotBeNull();
             problemResult!.StatusCode.Should().Be(422);
+            problemResult.ProblemDetails.Instance.Should().Be("/scalar-endpoint-test",
+                "RFC 9457 §3.1 instance must be populated from the request path");
         }
     }
 
