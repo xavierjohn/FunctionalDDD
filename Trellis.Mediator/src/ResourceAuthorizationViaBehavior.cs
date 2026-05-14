@@ -118,12 +118,12 @@ public sealed class ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TR
         MessageHandlerDelegate<TMessage, TResponse> next,
         CancellationToken cancellationToken)
     {
-        var actor = await _actorProvider.GetCurrentActorAsync(cancellationToken).ConfigureAwait(false);
+        // "No authenticated actor" is client-error state per RFC 9110 §15.5.2; route to 401.
+        // Genuine provider failures (missing HttpContext, mapping delegate threw, etc.) still
+        // throw plain InvalidOperationException and surface as 500 via ExceptionBehavior.
+        var actor = await ActorResolution.TryResolveAsync(_actorProvider, cancellationToken).ConfigureAwait(false);
         if (actor is null)
-            throw new InvalidOperationException(
-                "IActorProvider.GetCurrentActorAsync returned null. The contract requires "
-                + "implementations to throw when no authenticated actor exists; returning null is a "
-                + "violation of the IActorProvider contract.");
+            return TResponse.CreateFailure(ActorResolution.AuthenticationRequired());
 
         var leafLoader = _serviceProvider.GetService<IResourceLoader<TMessage, TLeaf>>()
             ?? throw new InvalidOperationException(

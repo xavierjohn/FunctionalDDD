@@ -89,7 +89,7 @@ public sealed class Order : Aggregate<OrderId>
 }
 
 var actorProvider = new TestActorProvider("user-1", "Orders.Read", "Orders.Write");
-var actor = await actorProvider.GetCurrentActorAsync();
+var actor = (await actorProvider.GetCurrentActorAsync()).GetValueOrThrow();
 
 actor.HasPermission("Orders.Read").Should().BeTrue();
 
@@ -269,7 +269,7 @@ var provider = new TestActorProvider("admin", "Orders.Read", "Orders.Write");
 
 await using (provider.WithActor("user-1", "Orders.Read"))
 {
-    var actor = await provider.GetCurrentActorAsync();
+    var actor = (await provider.GetCurrentActorAsync()).GetValueOrThrow();
     actor.Id.Should().Be("user-1");
     actor.HasPermission("Orders.Read").Should().BeTrue();
     actor.HasPermission("Orders.Write").Should().BeFalse();
@@ -283,7 +283,7 @@ var richActor = new Actor(
 
 await using (provider.WithActor(richActor))
 {
-    var actor = await provider.GetCurrentActorAsync();
+    var actor = (await provider.GetCurrentActorAsync()).GetValueOrThrow();
     actor.Attributes["tenant"].Should().Be("acme");
 }
 ```
@@ -401,7 +401,9 @@ public sealed class PlaceOrderHandler(FakeRepository<Order, OrderId> repo, TestA
 {
     public async Task<Result<OrderId>> HandleAsync(PlaceOrder cmd, CancellationToken ct)
     {
-        var actor = await actors.GetCurrentActorAsync(ct);
+        var maybeActor = await actors.GetCurrentActorAsync(ct);
+        if (!maybeActor.TryGetValue(out var actor))
+            return Result.Fail<OrderId>(new Error.Unauthorized { Detail = "Authentication required." });
         if (!actor.HasPermission("Orders.Write"))
             return Result.Fail<OrderId>(new Error.Forbidden("Orders.Write"));
 

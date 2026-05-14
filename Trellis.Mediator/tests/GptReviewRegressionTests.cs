@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Trellis.Authorization;
 using Trellis.Mediator.Tests.Helpers;
+using Trellis.Testing;
 
 /// <summary>
 /// Regression tests for the three findings surfaced by the GPT-5.5 review of
@@ -37,7 +38,7 @@ public class GptReviewRegressionTests
     /// <c>LoadAsync</c> wasn't called — not that the factory wasn't invoked.
     /// </summary>
     [Fact]
-    public async Task ResourceAuthorization_NullActor_DoesNotInvokeLoaderDIFactory()
+    public async Task ResourceAuthorization_NoActor_DoesNotInvokeLoaderDIFactory()
     {
         var factoryInvocations = 0;
 
@@ -49,14 +50,16 @@ public class GptReviewRegressionTests
         });
 
         var behavior = new ResourceAuthorizationBehavior<ResourceOwnerCommand, TestResource, Result<string>>(
-            actorProvider: new NullActorProvider(),
+            actorProvider: new NoActorProvider(),
             serviceProvider: services.BuildServiceProvider());
 
         var command = new ResourceOwnerCommand("res-1");
         var next = NextDelegate.ReturningAsync<ResourceOwnerCommand, Result<string>>(Result.Ok("Done"));
 
-        await FluentActions.Invoking(() => behavior.Handle(command, next, CancellationToken.None).AsTask())
-            .Should().ThrowAsync<InvalidOperationException>();
+        var result = await behavior.Handle(command, next, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
 
         factoryInvocations.Should().Be(0,
             "ga-11 requires that no I/O — including DI factory invocations — runs when the caller is unauthenticated. "
@@ -237,14 +240,15 @@ public class GptReviewRegressionTests
     }
 
     /// <summary>
-    /// Actor provider whose <see cref="GetCurrentActorAsync"/> returns null — simulates a
-    /// misbehaving <see cref="IActorProvider"/> implementation that violates the contract by
-    /// returning null instead of throwing. Used by the ga-11 regression test.
+    /// Actor provider whose <see cref="GetCurrentActorAsync"/> returns
+    /// <see cref="Maybe{T}.None"/> — represents an unauthenticated request. The authorization
+    /// pipeline must short-circuit with <see cref="Error.Unauthorized"/> before the resource
+    /// loader runs. Used by the ga-11 regression test.
     /// </summary>
-    private sealed class NullActorProvider : IActorProvider
+    private sealed class NoActorProvider : IActorProvider
     {
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<Actor>(null!);
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(Maybe<Actor>.None);
     }
 
     /// <summary>

@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### `IActorProvider.GetCurrentActorAsync` returns `Task<Maybe<Actor>>` (breaking)
+
+`IActorProvider.GetCurrentActorAsync` now returns `Task<Maybe<Actor>>` instead of `Task<Actor>`. "No authenticated actor on this request" is client-error state expressed via `Maybe<Actor>.None`; the mediator authorization pipeline maps it to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). Provider implementations should throw `InvalidOperationException` only for genuine infrastructure or configuration failures (no `HttpContext`, mapping delegate threw, option misconfigured); those still surface as `Error.InternalServerError` (HTTP 500), which is correct because they are bugs rather than authentication state.
+
+Before this change the framework returned HTTP 500 in the "no actor" case (provider threw → `ExceptionBehavior` caught → `Error.InternalServerError`) instead of the RFC-correct 401, conflating client-error state with server bugs.
+
+**Migration for custom `IActorProvider` implementations:**
+
+```csharp
+// Before
+public Task<Actor> GetCurrentActorAsync(CancellationToken ct = default)
+{
+    if (httpContext.User.Identity?.IsAuthenticated != true)
+        throw new InvalidOperationException("No authenticated user...");
+    return Task.FromResult(BuildActor(httpContext.User));
+}
+
+// After
+public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken ct = default)
+{
+    if (httpContext.User.Identity?.IsAuthenticated != true)
+        return Task.FromResult(Maybe<Actor>.None);
+    return Task.FromResult(Maybe.From(BuildActor(httpContext.User)));
+}
+```
+
+The framework providers (`ClaimsActorProvider`, `EntraActorProvider`, `DevelopmentActorProvider`, `CachingActorProvider`, `TestActorProvider`) are migrated. The bundled `AuthorizationBehavior`, `ResourceAuthorizationBehavior`, and `ResourceAuthorizationViaBehavior` share an internal `ActorResolution.TryResolveAsync` helper that maps `Maybe<Actor>.None` → `Error.Unauthorized` consistently across all three.
+
+The mediator-emitted 401 carries an empty `Error.Unauthorized.Challenges` array, deferring the `WWW-Authenticate` header to the configured ASP.NET Core authentication handler (which knows the scheme and parameters). RFC 9110 §11.6.1 strict compliance still requires the auth handler to write the challenge.
+
+#### `CachingActorProvider` now caches synchronous failures from the inner provider
+
+`CachingActorProvider` previously documented "the failure is cached for the remainder of the request scope; subsequent calls re-throw the same exception." That contract held only for asynchronous (faulted-task) failures — synchronous throws from the inner provider escaped `LazyInitializer.EnsureInitialized` without setting `_cachedTask`, so subsequent calls in the same request retried the inner provider. The wrapper now converts synchronous throws into `Task.FromException<Maybe<Actor>>(ex)` before caching, matching the documented contract for both sync and async failure shapes.
+
+### Fixed
+
+#### `ProblemDetails.Instance` populated from request URL ([#496](https://github.com/xavierjohn/Trellis/pull/496))
+
+All nine `Trellis.Asp` ProblemDetails emission sites now populate `ProblemDetails.Instance` from `HttpContext.Request.GetEncodedPathAndQuery()` per RFC 9457 §3.1: `ResponseFailureWriter` (both `Results.Problem` and `Results.ValidationProblem` branches), `ScalarValueValidationEndpointFilter` (Minimal API), three sites in `ScalarValueValidationFilter` (MVC), and four sites in `ScalarValueValidationMiddleware`. Server-relative form (path + query, percent-encoded) avoids host disclosure for services behind reverse proxies. The shipped contract documented in `trellis-api-core.md`, `trellis-api-asp.md`, `trellis-api-testing-reference.md`, `integration-aspnet.md`, `integration-testing.md`, `migration.md`, `Trellis.Asp/README.md`, and `Trellis.Asp/NUGET_README.md` is aligned with this behavior. `ResourceRef` integration into `Instance` (using the typed payload's resource identity when the request URL doesn't carry it) is tracked as a follow-up.
+
 ### Added
 
 #### `Trellis.Asp.ApiVersioning` package — `CreatedAtVersionedRoute` helpers + `TRLS023` analyzer

@@ -227,7 +227,7 @@ public class ServiceCollectionExtensionsTests
 
     private sealed class FakeActorProvider : IActorProvider
     {
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(Actor.Create("test", new HashSet<string>()));
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(Maybe.From(Actor.Create("test", new HashSet<string>())));
     }
 }

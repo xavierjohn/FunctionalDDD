@@ -46,7 +46,7 @@ public sealed partial class DevelopmentActorProvider(
     internal const string HeaderName = "X-Test-Actor";
 
     /// <inheritdoc />
-    public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -55,15 +55,20 @@ public sealed partial class DevelopmentActorProvider(
                 "DevelopmentActorProvider is not allowed outside Development environments. " +
                 "Use AddClaimsActorProvider or AddEntraActorProvider for production.");
 
+        // DevelopmentActorProvider always yields a usable actor (default or parsed) — never
+        // Maybe.None. That preserves the development convenience of running test requests
+        // without sending an explicit X-Test-Actor header. Production providers (Claims/Entra)
+        // return Maybe.None for the unauthenticated case; the development provider intentionally
+        // does not, so dev workflows are unaffected by the 401 contract.
         var httpContext = httpContextAccessor.HttpContext;
         if (httpContext is null)
-            return Task.FromResult(CreateDefaultActor());
+            return Task.FromResult(Maybe.From(CreateDefaultActor()));
 
         var headerValue = httpContext.Request.Headers[HeaderName].FirstOrDefault();
         if (string.IsNullOrEmpty(headerValue))
-            return Task.FromResult(CreateDefaultActor());
+            return Task.FromResult(Maybe.From(CreateDefaultActor()));
 
-        return Task.FromResult(ParseActorFromHeader(headerValue));
+        return Task.FromResult(Maybe.From(ParseActorFromHeader(headerValue)));
     }
 
     private Actor ParseActorFromHeader(string headerValue)

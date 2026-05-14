@@ -104,23 +104,20 @@ public class AuthorizationBehaviorTests
     }
 
     [Fact]
-    public async Task Handle_ActorProviderReturnsNull_ThrowsInvalidOperationException()
+    public async Task Handle_ActorProviderReturnsNone_EmitsUnauthorized()
     {
-        var behavior = new AuthorizationBehavior<AdminCommand, Result<string>>(new NullActorProvider());
+        // "No authenticated actor" is modelled as Maybe<Actor>.None on the IActorProvider
+        // contract — client-error state, not an exception. The authorization pipeline must
+        // short-circuit with Error.Unauthorized (HTTP 401) and must not invoke the handler.
+        var behavior = new AuthorizationBehavior<AdminCommand, Result<string>>(new NoActorProvider());
         var command = new AdminCommand("data");
         var (next, tracker) = NextDelegate.TrackingAsync<AdminCommand, Result<string>>(
             Result.Ok("should not reach"));
 
-        var act = async () => await behavior.Handle(command, next, CancellationToken.None);
+        var result = await behavior.Handle(command, next, CancellationToken.None);
 
-        // Assert on the contract-violation message (ga-11 / m-3): the previous error message
-        // misleadingly suggested "Ensure an IActorProvider is configured" when really the
-        // IActorProvider implementation is the contractual party that should have thrown.
-        // The assertion locks in the new wording so a regression cannot silently restore the
-        // misleading guidance.
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*IActorProvider.GetCurrentActorAsync returned null*")
-            .WithMessage("*violation of the IActorProvider contract*");
+        result.IsFailure.Should().BeTrue();
+        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
         tracker.WasInvoked.Should().BeFalse();
     }
 
@@ -166,10 +163,14 @@ public class AuthorizationBehaviorTests
 
     #endregion
 
-    private sealed class NullActorProvider : IActorProvider
+    /// <summary>
+    /// Actor provider that returns <see cref="Maybe{T}.None"/> — represents an unauthenticated
+    /// request. The authorization pipeline maps this to <see cref="Error.Unauthorized"/> (HTTP 401).
+    /// </summary>
+    private sealed class NoActorProvider : IActorProvider
     {
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult<Actor>(null!);
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(Maybe<Actor>.None);
     }
 
     /// <summary>
@@ -177,10 +178,10 @@ public class AuthorizationBehaviorTests
     /// </summary>
     private sealed class DelayedActorProvider(Actor actor, TimeSpan delay) : IActorProvider
     {
-        public async Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        public async Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
         {
             await Task.Delay(delay, cancellationToken);
-            return actor;
+            return Maybe.From(actor);
         }
     }
 
@@ -191,10 +192,10 @@ public class AuthorizationBehaviorTests
     {
         public CancellationToken LastCancellationToken { get; private set; }
 
-        public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
         {
             LastCancellationToken = cancellationToken;
-            return Task.FromResult(actor);
+            return Task.FromResult(Maybe.From(actor));
         }
     }
 }

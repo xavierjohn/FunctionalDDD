@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Trellis.Authorization;
 
 namespace SsoExample.Controllers;
@@ -10,7 +11,10 @@ public class MeController(IActorProvider actorProvider) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct)
     {
-        var actor = await actorProvider.GetCurrentActorAsync(ct);
+        var maybeActor = await actorProvider.GetCurrentActorAsync(ct);
+        if (!maybeActor.TryGetValue(out var actor))
+            return Unauthorized();
+
         return Ok(new
         {
             actor.Id,

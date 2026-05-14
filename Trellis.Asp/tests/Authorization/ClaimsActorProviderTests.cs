@@ -3,6 +3,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Trellis.Testing;
 
 /// <summary>
 /// Tests for <see cref="ClaimsActorProvider"/> — the generic OIDC/JWT claims-based actor provider.
@@ -32,7 +33,7 @@ public class ClaimsActorProviderTests
     {
         var user = AuthenticatedUser(new Claim("sub", "user-sub-123"));
 
-        var actor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("user-sub-123");
     }
@@ -45,7 +46,7 @@ public class ClaimsActorProviderTests
             new Claim("permissions", "orders:read"),
             new Claim("permissions", "orders:write"));
 
-        var actor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Permissions.Should().BeEquivalentTo(["orders:read", "orders:write"]);
     }
@@ -55,7 +56,7 @@ public class ClaimsActorProviderTests
     {
         var user = AuthenticatedUser(new Claim("sub", "user-1"));
 
-        var actor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Permissions.Should().BeEmpty();
     }
@@ -70,7 +71,7 @@ public class ClaimsActorProviderTests
         var user = AuthenticatedUser(new Claim("oid", "user-oid-456"));
         var options = new ClaimsActorOptions { ActorIdClaim = "oid" };
 
-        var actor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("user-oid-456");
     }
@@ -84,7 +85,7 @@ public class ClaimsActorProviderTests
             new Claim("roles", "Editor"));
         var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
 
-        var actor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Permissions.Should().BeEquivalentTo(["Admin", "Editor"]);
     }
@@ -106,26 +107,29 @@ public class ClaimsActorProviderTests
     }
 
     [Fact]
-    public async Task GetCurrentActorAsync_NotAuthenticated_ThrowsInvalidOperationException()
+    public async Task GetCurrentActorAsync_NotAuthenticated_ReturnsNone()
     {
+        // No authenticated identity is client-error state, not infrastructure failure.
+        // The provider returns Maybe<Actor>.None and the mediator pipeline emits HTTP 401.
         var user = new ClaimsPrincipal(new ClaimsIdentity()); // no auth type
         var provider = CreateProvider(user);
 
-        Func<Task> act = async () => await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var result = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*authenticated*");
+        result.HasNoValue.Should().BeTrue();
     }
 
     [Fact]
-    public async Task GetCurrentActorAsync_MissingActorIdClaim_ThrowsInvalidOperationException()
+    public async Task GetCurrentActorAsync_MissingActorIdClaim_ReturnsNone()
     {
+        // Authenticated identity is present but the configured ActorIdClaim is missing.
+        // From the framework's POV the actor is unidentifiable — same client-facing outcome
+        // as no identity. Provider returns Maybe<Actor>.None; mediator emits HTTP 401.
         var user = AuthenticatedUser(new Claim("oid", "user-1")); // has oid but not sub
 
-        Func<Task> act = async () => await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var result = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*sub*not found*");
+        result.HasNoValue.Should().BeTrue();
     }
 
     #endregion
@@ -144,7 +148,7 @@ public class ClaimsActorProviderTests
             new Claim("app_metadata", nested));
         var options = new ClaimsActorOptions { PermissionsClaim = "app_metadata" };
 
-        var actor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Permissions.Should().BeEquivalentTo([nested],
             "the default provider returns the raw claim value verbatim and does not parse JSON");
@@ -162,7 +166,7 @@ public class ClaimsActorProviderTests
         var accessor = new HttpContextAccessor { HttpContext = httpContext };
         var provider = new NestedJsonRolesActorProvider(accessor, Options.Create(new ClaimsActorOptions()));
 
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Id.Should().Be("user-1");
         actor.Permissions.Should().BeEquivalentTo(["orders:read", "orders:write"]);
@@ -172,7 +176,7 @@ public class ClaimsActorProviderTests
         IHttpContextAccessor httpContextAccessor,
         IOptions<ClaimsActorOptions> options) : ClaimsActorProvider(httpContextAccessor, options)
     {
-        public override Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+        public override Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -189,7 +193,7 @@ public class ClaimsActorProviderTests
                     .Select(e => e.GetString()!)
                     .ToHashSet();
 
-            return Task.FromResult(Actor.Create(id, permissions));
+            return Task.FromResult(Maybe.From(Actor.Create(id, permissions)));
         }
     }
 
@@ -218,7 +222,7 @@ public class ClaimsActorProviderTests
         var provider = CreateProvider(principal);
 
         // Act
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         // Assert — actor should ONLY have claims from the authenticated identity
         actor.Id.Should().Be("real-user-123", "should read from authenticated identity, not spoofed");
@@ -249,7 +253,7 @@ public class ClaimsActorProviderTests
         var provider = CreateProvider(principal);
 
         // Act
-        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         // Assert
         actor.Id.Should().Be("real-user-123", "should ignore unauthenticated identity even when listed first");
@@ -267,7 +271,7 @@ public class ClaimsActorProviderTests
     {
         var user = AuthenticatedUser(new Claim("sub", "user-1"));
 
-        var actor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.ForbiddenPermissions.Should().BeEmpty();
     }
@@ -277,7 +281,7 @@ public class ClaimsActorProviderTests
     {
         var user = AuthenticatedUser(new Claim("sub", "user-1"));
 
-        var actor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Attributes.Should().BeEmpty();
     }

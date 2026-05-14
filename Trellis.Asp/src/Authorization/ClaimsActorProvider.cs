@@ -96,8 +96,14 @@ public class ClaimsActorOptions
 /// Claim mapping is controlled by <see cref="ClaimsActorOptions"/>.
 /// </para>
 /// <para>
-/// This provider assumes authentication has already occurred. It throws
-/// <see cref="InvalidOperationException"/> if no authenticated user exists.
+/// This provider assumes authentication has already occurred. It returns
+/// <see cref="Maybe{T}.None"/> when the request has no usable authenticated actor —
+/// no authenticated <see cref="System.Security.Claims.ClaimsIdentity"/>, or the configured
+/// <see cref="ClaimsActorOptions.ActorIdClaim"/> is missing from the authenticated identity —
+/// and the mediator authorization pipeline maps that to <see cref="Error.Unauthorized"/>
+/// (HTTP 401). It throws <see cref="InvalidOperationException"/> only when invoked outside
+/// an HTTP request scope (no <c>HttpContext</c>); that is a configuration bug, not
+/// authentication state, and surfaces as HTTP 500.
 /// </para>
 /// <para>
 /// <b>Extending for nested or computed claims.</b> The default mapping is flat
@@ -125,27 +131,38 @@ public class ClaimsActorProvider(
     protected ClaimsActorOptions Options { get; } = options.Value;
 
     /// <inheritdoc />
-    public virtual Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    public virtual Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // HttpContext missing is genuinely exceptional: the provider was invoked outside an
+        // HTTP request scope (e.g., from a background worker or test bootstrap). That's a
+        // configuration bug, not authentication state — throw rather than return None, which
+        // would mask the bug as a 401.
         var httpContext = HttpContextAccessor.HttpContext
             ?? throw new InvalidOperationException(
                 "No HttpContext available. Ensure this is called within an HTTP request scope.");
 
-        var identity = httpContext.User.Identities.FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity
-            ?? throw new InvalidOperationException(
-                "No authenticated user. Ensure authentication middleware runs before actor resolution.");
+        // The request has no authenticated identity (no Authorization header, anonymous-tolerant
+        // endpoint, expired/invalid token accepted as anonymous, etc.). Client-error state →
+        // Maybe.None → the mediator pipeline emits 401.
+        var identity = httpContext.User.Identities.FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity;
+        if (identity is null)
+            return Task.FromResult(Maybe<Actor>.None);
 
-        var actorId = identity.FindFirst(Options.ActorIdClaim)?.Value
-            ?? throw new InvalidOperationException(
-                $"Claim '{Options.ActorIdClaim}' not found in the authenticated user's claims.");
+        // Authenticated identity is present but the configured ActorIdClaim is missing. From
+        // the framework's POV we can't identify the actor — same client-facing outcome as no
+        // identity. (Whether this is a token-shape issue or a server-side option misconfig
+        // is indistinguishable here; both want a 401 retry by the client.)
+        var actorId = identity.FindFirst(Options.ActorIdClaim)?.Value;
+        if (actorId is null)
+            return Task.FromResult(Maybe<Actor>.None);
 
         var permissions = identity.FindAll(Options.PermissionsClaim)
             .Select(c => c.Value)
             .ToFrozenSet();
 
         var actor = Actor.Create(actorId, permissions);
-        return Task.FromResult(actor);
+        return Task.FromResult(Maybe.From(actor));
     }
 }

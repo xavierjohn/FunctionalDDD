@@ -24,7 +24,7 @@ public sealed class CachingActorProvider : IActorProvider
 {
     private readonly IActorProvider _inner;
     private readonly CancellationToken _requestAborted;
-    private Task<Actor>? _cachedTask;
+    private Task<Maybe<Actor>>? _cachedTask;
 
     /// <summary>
     /// Initializes a new <see cref="CachingActorProvider"/>.
@@ -38,14 +38,32 @@ public sealed class CachingActorProvider : IActorProvider
     }
 
     /// <inheritdoc />
-    public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
         // The shared resolution uses HttpContext.RequestAborted so expensive work
         // (e.g., DB queries) is canceled when the HTTP request ends, but individual
         // callers' tokens don't cancel the shared task for other callers.
+        //
+        // LazyInitializer.EnsureInitialized leaves _cachedTask unset when the factory throws
+        // synchronously (e.g., the inner provider throws InvalidOperationException before
+        // returning a Task — typical of providers that validate prerequisites synchronously).
+        // Without the try/catch wrapper the next call would retry the inner provider, which
+        // breaks the documented "failure cached for the remainder of the request" contract
+        // and re-runs expensive synchronous prerequisites for every behavior in the pipeline.
+        // Wrapping converts synchronous throws into a faulted Task that gets cached.
         var task = LazyInitializer.EnsureInitialized(
             ref _cachedTask,
-            () => _inner.GetCurrentActorAsync(_requestAborted));
+            () =>
+            {
+                try
+                {
+                    return _inner.GetCurrentActorAsync(_requestAborted);
+                }
+                catch (Exception ex)
+                {
+                    return Task.FromException<Maybe<Actor>>(ex);
+                }
+            });
 
         // If the caller's token differs and is cancelable, apply it to the await only.
         return cancellationToken.CanBeCanceled && cancellationToken != _requestAborted
@@ -53,7 +71,7 @@ public sealed class CachingActorProvider : IActorProvider
             : task!;
     }
 
-    private static async Task<Actor> WaitWithCancellation(Task<Actor> task, CancellationToken ct)
+    private static async Task<Maybe<Actor>> WaitWithCancellation(Task<Maybe<Actor>> task, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         return await task.WaitAsync(ct).ConfigureAwait(false);

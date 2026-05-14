@@ -71,18 +71,14 @@ public sealed class ResourceAuthorizationBehavior<TMessage, TResource, TResponse
         //    the resource loader from DI. The DI factory or constructor for a custom
         //    IResourceLoader<TMessage, TResource> is arbitrary user code (e.g. it may open a
         //    DbContext or pre-fetch state during construction), so loader *resolution* itself
-        //    counts as I/O for the ga-11 guarantee. The IActorProvider contract requires
-        //    implementations to throw when no authenticated actor exists; the explicit
-        //    null-check is defense-in-depth so a misbehaving provider that returns null
-        //    cannot silently bypass the actor-first ordering (ga-11). Reported by GPT-5.5
-        //    review: the previous order (resolve loader → resolve actor) let an unauthenticated
+        //    counts as I/O for the ga-11 guarantee. "No authenticated actor" is client-error
+        //    state per RFC 9110 §15.5.2; route it to 401 via Error.Unauthorized rather than
+        //    letting it fall through to the resource-load path. Reported by GPT-5.5 review:
+        //    the previous order (resolve loader → resolve actor) let an unauthenticated
         //    caller trigger loader-side effects via the DI factory before the actor check.
-        var actor = await _actorProvider.GetCurrentActorAsync(cancellationToken).ConfigureAwait(false);
+        var actor = await ActorResolution.TryResolveAsync(_actorProvider, cancellationToken).ConfigureAwait(false);
         if (actor is null)
-            throw new InvalidOperationException(
-                "IActorProvider.GetCurrentActorAsync returned null. The contract requires "
-                + "implementations to throw when no authenticated actor exists; returning null is a "
-                + "violation of the IActorProvider contract.");
+            return TResponse.CreateFailure(ActorResolution.AuthenticationRequired());
 
         // 2. Resolve the scoped loader per-request (like middleware resolving scoped services).
         var loader = _serviceProvider.GetService<IResourceLoader<TMessage, TResource>>()

@@ -91,7 +91,10 @@ app.UseAuthorization();
 
 app.MapGet("/me", [Authorize] async (IActorProvider actorProvider, CancellationToken ct) =>
 {
-    var actor = await actorProvider.GetCurrentActorAsync(ct);
+    var maybeActor = await actorProvider.GetCurrentActorAsync(ct);
+    if (!maybeActor.TryGetValue(out var actor))
+        return Results.Unauthorized();
+
     return Results.Ok(new
     {
         actor.Id,
@@ -217,16 +220,24 @@ public sealed class KeycloakActorProvider(
     IHttpContextAccessor accessor,
     IOptions<ClaimsActorOptions> options) : ClaimsActorProvider(accessor, options)
 {
-    public override Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    public override Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var identity = HttpContextAccessor.HttpContext?.User.Identities
-            .FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity
-            ?? throw new InvalidOperationException("No authenticated user.");
+        // No HttpContext is a configuration bug → throw → HTTP 500.
+        var httpContext = HttpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("No HttpContext available.");
 
-        var sub = identity.FindFirst(Options.ActorIdClaim)?.Value
-            ?? throw new InvalidOperationException($"Claim '{Options.ActorIdClaim}' missing.");
+        // No authenticated identity / missing id claim → no usable actor → Maybe.None,
+        // which the mediator pipeline maps to Error.Unauthorized (HTTP 401).
+        var identity = httpContext.User.Identities
+            .FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity;
+        if (identity is null)
+            return Task.FromResult(Maybe<Actor>.None);
+
+        var sub = identity.FindFirst(Options.ActorIdClaim)?.Value;
+        if (sub is null)
+            return Task.FromResult(Maybe<Actor>.None);
 
         var raw = identity.FindFirst("realm_access")?.Value;
         var roles = raw is null
@@ -234,7 +245,7 @@ public sealed class KeycloakActorProvider(
             : (JsonSerializer.Deserialize(raw, KeycloakJsonContext.Default.RealmAccess)?.Roles
                 ?? Array.Empty<string>()).ToFrozenSet();
 
-        return Task.FromResult(Actor.Create(sub, roles));
+        return Task.FromResult(Maybe.From(Actor.Create(sub, roles)));
     }
 }
 
@@ -255,7 +266,7 @@ Trellis does not own JWT validation — that lives in `Microsoft.AspNetCore.Auth
 
 | `JwtBearerOptions` setting | Effect on Trellis |
 |---|---|
-| `Authority` | Determines OIDC discovery / signing keys. If validation fails, `HttpContext.User` is unauthenticated and any actor provider throws `InvalidOperationException("No authenticated user.")`. |
+| `Authority` | Determines OIDC discovery / signing keys. If validation fails, `HttpContext.User` is unauthenticated and the actor provider returns `Maybe<Actor>.None`, which the mediator pipeline maps to `Error.Unauthorized` (HTTP 401). |
 | `Audience` (or `TokenValidationParameters.ValidAudiences`) | Must match the token `aud`. Mismatched audiences never reach the actor provider — the request is rejected with `401`. |
 | `TokenValidationParameters.ValidIssuers` | Required when `Authority` does not match the literal `iss` claim (Google emits both `https://accounts.google.com` and `accounts.google.com`). |
 | `TokenValidationParameters.ValidateIssuer = false` | Multi-tenant Entra requires this; tenant pinning then lives in `MapAttributes` or a custom validator. See [Multi-tenant Entra](#multi-tenant-entra). |

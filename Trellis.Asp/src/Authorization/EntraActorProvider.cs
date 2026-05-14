@@ -18,8 +18,14 @@ using Trellis.Authorization;
 /// </para>
 /// <para>
 /// This provider assumes authentication has already occurred (e.g., via
-/// <c>AddMicrosoftIdentityWebApi</c>). It throws
-/// <see cref="InvalidOperationException"/> if no authenticated user exists.
+/// <c>AddMicrosoftIdentityWebApi</c>). It returns <see cref="Maybe{T}.None"/> when the
+/// request has no usable authenticated actor — no authenticated
+/// <see cref="System.Security.Claims.ClaimsIdentity"/>, or the configured
+/// <see cref="EntraActorOptions.IdClaimType"/> is missing (and the short <c>oid</c>
+/// fallback also misses) — and the mediator authorization pipeline maps that to
+/// <see cref="Error.Unauthorized"/> (HTTP 401). It throws
+/// <see cref="InvalidOperationException"/> only for genuine configuration failures
+/// (no <c>HttpContext</c>, or a <c>Map*</c> delegate threw); those surface as HTTP 500.
 /// </para>
 /// </remarks>
 public sealed class EntraActorProvider : ClaimsActorProvider
@@ -46,26 +52,31 @@ public sealed class EntraActorProvider : ClaimsActorProvider
         _entraOptions = options.Value;
 
     /// <inheritdoc />
-    public override Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    public override Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // HttpContext missing is a configuration bug, not authentication state. Throw to
+        // surface as 500; do not mask as 401 via Maybe.None.
         var httpContext = HttpContextAccessor.HttpContext
             ?? throw new InvalidOperationException(
                 "No HttpContext available. Ensure this is called within an HTTP request scope.");
 
         var user = httpContext.User;
 
-        var identity = user.Identities.FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity
-            ?? throw new InvalidOperationException(
-                "No authenticated user. Ensure authentication middleware runs before actor resolution.");
+        // No authenticated identity → client-error state → Maybe.None → 401.
+        var identity = user.Identities.FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity;
+        if (identity is null)
+            return Task.FromResult(Maybe<Actor>.None);
 
         var claims = identity.Claims;
 
-        var id = ResolveActorId(identity, _entraOptions)
-            ?? throw new InvalidOperationException(
-                $"Claim '{_entraOptions.IdClaimType}' not found in the authenticated user's claims. " +
-                "Verify the token configuration or set EntraActorOptions.IdClaimType.");
+        // Authenticated identity present but the configured ID claim is missing — client
+        // can't be identified, treat as unauthenticated for the response. (Token-shape vs
+        // server-side misconfig is indistinguishable here; same 401 outcome serves both.)
+        var id = ResolveActorId(identity, _entraOptions);
+        if (id is null)
+            return Task.FromResult(Maybe<Actor>.None);
 
         var permissions = InvokeMapping(
             "MapPermissions",
@@ -80,7 +91,7 @@ public sealed class EntraActorProvider : ClaimsActorProvider
             () => _entraOptions.MapAttributes(claims, httpContext));
 
         var actor = new Actor(id, permissions, forbiddenPermissions, attributes);
-        return Task.FromResult(actor);
+        return Task.FromResult(Maybe.From(actor));
     }
 
     private static string? ResolveActorId(ClaimsIdentity identity, EntraActorOptions config)

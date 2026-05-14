@@ -436,7 +436,7 @@ Hydrates an `Actor` from the current `HttpContext.User` using flat JWT/OIDC clai
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public virtual Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Actor>` | Throws `InvalidOperationException` when `HttpContext` is missing, no authenticated identity exists, or the configured `ActorIdClaim` is missing. Permissions come from `FindAll(PermissionsClaim)` snapshotted into a `FrozenSet<string>`; `Actor.Create(actorId, permissions)` is used so forbidden permissions and attributes default to empty. |
+| `public virtual Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Maybe<Actor>>` | Returns `Maybe<Actor>.None` when no authenticated identity exists or the configured `ActorIdClaim` is missing from the authenticated identity — the mediator pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401). Throws `InvalidOperationException` only when `HttpContext` is missing (configuration bug, surfaces as HTTP 500). On success, permissions come from `FindAll(PermissionsClaim)` snapshotted into a `FrozenSet<string>` and the result is wrapped via `Maybe.From(Actor.Create(actorId, permissions))` so forbidden permissions and attributes default to empty. |
 
 ### `EntraActorOptions`
 
@@ -464,7 +464,7 @@ public sealed class EntraActorProvider : ClaimsActorProvider
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public EntraActorProvider(IHttpContextAccessor httpContextAccessor, IOptions<EntraActorOptions> options)` | — | Builds the Entra-specific provider; passes `ActorIdClaim = options.Value.IdClaimType` and `PermissionsClaim = "roles"` to the base. |
-| `public override Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Actor>` | Throws the same missing-context / missing-identity failures as `ClaimsActorProvider`. When `IdClaimType` is the long objectidentifier claim, falls back to the short `"oid"` claim before failing. Wraps any exception from `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` in `InvalidOperationException`. |
+| `public override Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Maybe<Actor>>` | Returns `Maybe<Actor>.None` when no authenticated identity exists or the configured ID claim is missing — the mediator pipeline maps that to `Error.Unauthorized` (HTTP 401). When `IdClaimType` is the long objectidentifier claim, falls back to the short `"oid"` claim before returning `None`. Throws `InvalidOperationException` only when `HttpContext` is missing (configuration bug, surfaces as HTTP 500); any exception from `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` is rewrapped in `InvalidOperationException` naming the failing delegate. |
 
 ### `DevelopmentActorOptions`
 
@@ -496,7 +496,7 @@ Reads the `X-Test-Actor` header (JSON: `{ "Id": ..., "Permissions": [...], "Forb
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Actor>` | Throws `InvalidOperationException` whenever `!hostEnvironment.IsDevelopment()`, regardless of header presence. In Development, returns `Actor.Create(DefaultActorId, DefaultPermissions)` when `HttpContext` is null or the header is missing/empty. Malformed JSON logs a warning and falls back unless `ThrowOnMalformedHeader` is `true`. |
+| `public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Maybe<Actor>>` | Throws `InvalidOperationException` whenever `!hostEnvironment.IsDevelopment()`, regardless of header presence. In Development, always returns `Maybe.From(actor)` — never `Maybe.None` — so dev workflows are unaffected by the 401 contract: `Maybe.From(Actor.Create(DefaultActorId, DefaultPermissions))` when `HttpContext` is null or the header is missing/empty, otherwise the parsed actor wrapped via `Maybe.From`. Malformed JSON logs a warning and falls back unless `ThrowOnMalformedHeader` is `true`. |
 
 ### `CachingActorProvider`
 
@@ -511,7 +511,7 @@ Decorator that caches the inner provider's resolution task per request scope usi
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public CachingActorProvider(IActorProvider inner, IHttpContextAccessor httpContextAccessor)` | — | `inner` cannot be null. |
-| `public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Actor>` | Returns the cached task; if `cancellationToken` differs from `RequestAborted`, applies it via `Task.WaitAsync`. |
+| `public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)` | `Task<Maybe<Actor>>` | Returns the cached task — including a cached `Maybe<Actor>.None` when the inner provider resolved no authenticated actor — so the inner provider runs once per request scope. If `cancellationToken` differs from `RequestAborted`, applies it via `Task.WaitAsync`. |
 
 ### Namespace `Trellis.Asp.ModelBinding`
 

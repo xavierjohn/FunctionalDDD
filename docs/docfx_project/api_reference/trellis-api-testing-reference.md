@@ -402,7 +402,7 @@ public sealed class TestActorProvider : IActorProvider
     public TestActorProvider(Actor actor);
     public TestActorProvider(string userId, params string[] permissions);
 
-    public Task<Actor> GetCurrentActorAsync(CancellationToken cancellationToken = default);
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default);
 
     public TestActorScope WithActor(Actor actor);
     public TestActorScope WithActor(string userId, params string[] permissions);
