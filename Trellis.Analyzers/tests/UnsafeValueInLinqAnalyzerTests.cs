@@ -9,6 +9,16 @@ using Xunit;
 public class UnsafeValueInLinqAnalyzerTests
 {
     [Fact]
+    public void MessageFormat_names_MaybeQueryableExtensions_for_IQueryable_path()
+    {
+        var message = DiagnosticDescriptors.UnsafeMaybeValueInLinq.MessageFormat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        message.Should().Contain(".Where(x => x.HasValue)");
+        message.Should().Contain("MaybeQueryableExtensions");
+        message.Should().Contain("WhereHasValue");
+        message.Should().Contain("IQueryable");
+    }
+    [Fact]
     public async Task Select_MaybeValue_WithoutWhere_ReportsDiagnostic()
     {
         const string source = """
