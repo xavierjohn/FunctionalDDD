@@ -2,6 +2,7 @@
 
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Trellis.Testing;
 
@@ -12,18 +13,34 @@ public class ClaimsActorProviderTests
 {
     private static ClaimsActorProvider CreateProvider(
         ClaimsPrincipal user,
-        ClaimsActorOptions? options = null)
+        ClaimsActorOptions? options = null,
+        ILogger<ClaimsActorProvider>? logger = null)
     {
         var httpContext = new DefaultHttpContext { User = user };
         var accessor = new HttpContextAccessor { HttpContext = httpContext };
         var opts = Options.Create(options ?? new ClaimsActorOptions());
-        return new ClaimsActorProvider(accessor, opts);
+        return new ClaimsActorProvider(accessor, opts, logger);
     }
 
     private static ClaimsPrincipal AuthenticatedUser(params Claim[] claims)
     {
         var identity = new ClaimsIdentity(claims, "Bearer");
         return new ClaimsPrincipal(identity);
+    }
+
+    /// <summary>
+    /// Minimal fake logger that captures log entries for assertion. Mirrors the helper in
+    /// Trellis.Mediator's LoggingBehaviorTests; copied locally to keep the test assembly
+    /// dependency-free.
+    /// </summary>
+    private sealed class FakeLogger(List<(LogLevel Level, EventId EventId, string Message)> entries) : ILogger<ClaimsActorProvider>
+    {
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => entries.Add((logLevel, eventId, formatter(state, exception)));
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
     }
 
     #region Default claim mapping (sub + permissions)
@@ -281,13 +298,13 @@ public class ClaimsActorProviderTests
     }
 
     [Fact]
-    public async Task GetCurrentActorAsync_PermissionsClaim_AllThreeCollisionShortForms_AllContribute()
+    public async Task GetCurrentActorAsync_PermissionsClaim_LongFormConfigured_BothShortVariantsContribute()
     {
-        // ClaimTypes.Role is mapped to from BOTH "role" and "roles" short forms. When
-        // PermissionsClaim is configured as ClaimTypes.Role and the token happens to carry
-        // claims under both short variants, all variants must contribute. Real-world: an
-        // IdP that emits both "role" (singular legacy) and "roles" (modern multi-valued)
-        // claims under MapInboundClaims = false.
+        // ClaimTypes.Role is the long-form counterpart of two short-form names: "role"
+        // (singular legacy) and "roles" (modern multi-valued). When PermissionsClaim is
+        // configured as the long form ClaimTypes.Role and the token happens to carry
+        // claims under both short variants, every variant must contribute. Real-world: an
+        // IdP that emits both "role" and "roles" claims under MapInboundClaims = false.
         var user = AuthenticatedUser(
             new Claim("sub", "user-1"),
             new Claim("role", "FromRoleSingular"),
@@ -315,6 +332,53 @@ public class ClaimsActorProviderTests
 
         actor.Permissions.Should().BeEmpty(
             "custom permissions claim names not in the JWT well-known mapping table get literal-only lookup");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_ShortFormConfigured_LiteralAbsent_LogsCounterpartFallback()
+    {
+        // Pins the documented diagnostic: when the configured PermissionsClaim resolves
+        // nothing on the identity but a well-known counterpart does, the provider emits a
+        // debug-level log entry naming both the configured claim and the resolved
+        // counterpart. This is the operator-facing signal for the silent-403 footgun
+        // (PermissionsClaim = "roles" against an identity carrying ClaimTypes.Role under
+        // MapInboundClaims = true). Without this assertion the diagnostic could regress
+        // while every permission-resolution test still passes.
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim(ClaimTypes.Role, "Admin"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        _ = (await CreateProvider(user, options, logger).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        entries.Should().ContainSingle(e =>
+            e.Level == LogLevel.Debug
+            && e.Message.Contains("'roles'")
+            && e.Message.Contains($"'{ClaimTypes.Role}'"),
+            "the fallback must emit one debug entry naming the configured claim ('roles') and the resolved counterpart (ClaimTypes.Role) so operators can spot the MapInboundClaims = true footgun");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_LiteralPresent_DoesNotLogFallback()
+    {
+        // Negative pin for the same diagnostic: when the configured PermissionsClaim
+        // resolves literally, no fallback log fires, even if a counterpart claim is also
+        // present and contributes to the merged set. Logging on every counterpart match
+        // would flood normal operation; we only want the silent-403-likely case to log.
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("roles", "Admin"),
+            new Claim(ClaimTypes.Role, "Editor"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "roles" };
+
+        _ = (await CreateProvider(user, options, logger).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        entries.Should().BeEmpty(
+            "no fallback log should fire when the configured claim resolves literally, even if a counterpart also contributes");
     }
 
     #endregion
