@@ -145,7 +145,13 @@ public static class DiagnosticDescriptors
         id: TrellisDiagnosticIds.UnsafeMaybeValueInLinq,
         title: "Unsafe access to Maybe.Value in LINQ projection",
         messageFormat: "Accessing '{0}' in a LINQ projection without filtering by {1} first may throw at runtime. " +
-                       "Filter via .Where(x => x.HasValue) before the projection, or use .Match.",
+                       "Filter via .Where(x => x.HasValue) before the projection (or use .Match(...)) to clear this warning. " +
+                       "For EF Core IQueryable, prefer composing the query with " +
+                       "Trellis.EntityFrameworkCore.MaybeQueryableExtensions: " +
+                       "predicate helpers WhereHasValue / WhereNone / WhereEquals / " +
+                       "WhereLessThan / WhereLessThanOrEqual / WhereGreaterThan / WhereGreaterThanOrEqual, " +
+                       "and ordering helpers OrderByMaybe / OrderByMaybeDescending / ThenByMaybe / ThenByMaybeDescending, " +
+                       "so .Value never appears in the chain.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
