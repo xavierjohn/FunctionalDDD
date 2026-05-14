@@ -53,6 +53,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
     public async Task TrellisJsonValidationException_with_nested_path_emits_MVC_dot_bracket_key()
     {
         var ctx = NewContext();
+        ctx.Request.Path = "/middleware-structured-json";
         var inner = new TrellisJsonValidationException("Amount cannot be negative.");
         // System.Text.Json's JsonException.Path uses JSON Path notation: "$.foo[0].bar".
         // Set the protected setter via reflection.
@@ -67,6 +68,12 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var errors = ReadErrors(problem);
         errors.Should().ContainKey("items[0].amount");
         errors.Should().NotContainKey("$.items[0].amount", "JSON Path '$.' prefix must be stripped on the wire");
+
+        // RFC 9457 §3.1: instance is populated from the request path+query on the
+        // structured JSON-deserialization branch (WriteJsonDeserializationErrorAsync /
+        // structuredResult). Pinning the middleware-emitted shape independently of the
+        // ResponseFailureWriter and MVC filter paths.
+        problem.GetProperty("instance").GetString().Should().Be("/middleware-structured-json");
     }
 
     [Fact]
@@ -92,6 +99,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
     public async Task plain_JsonException_emits_empty_key_for_invalid_body()
     {
         var ctx = NewContext();
+        ctx.Request.Path = "/middleware-unstructured-json";
         var inner = new JsonException("Unexpected token");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
 
@@ -103,6 +111,10 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         var errors = ReadErrors(problem);
         errors.Should().ContainKey(string.Empty);
         errors.Should().NotContainKey("$");
+
+        // RFC 9457 §3.1: instance is populated from the request path on the unstructured
+        // JSON-deserialization branch (plain JsonException → 400 path).
+        problem.GetProperty("instance").GetString().Should().Be("/middleware-unstructured-json");
     }
 
     [Fact]
