@@ -381,6 +381,43 @@ public class ClaimsActorProviderTests
             "no fallback log should fire when the configured claim resolves literally, even if a counterpart also contributes");
     }
 
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaim_ScpShortFormConfigured_FallsBackToScopeLongForm()
+    {
+        // Pins the OAuth-scope variant of the silent-403 footgun: consumer configures
+        // PermissionsClaim = "scp" (the RFC 8693 / Microsoft access-token scope claim).
+        // Under JwtBearerOptions.MapInboundClaims = true, JwtBearer remaps "scp" onto
+        // "http://schemas.microsoft.com/identity/claims/scope". Without the fallback,
+        // identity.FindAll("scp") finds nothing -> Actor.Permissions is empty -> every
+        // scope-gated command 403s. Same shape as the "roles" case above.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("http://schemas.microsoft.com/identity/claims/scope", "orders.read orders.write"));
+        var options = new ClaimsActorOptions { PermissionsClaim = "scp" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Permissions.Should().BeEquivalentTo(["orders.read orders.write"],
+            "configured 'scp' must fall back to the Microsoft-identity 'scope' long form when MapInboundClaims = true remaps it");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_ActorIdClaim_OidShortFormConfigured_FallsBackToObjectIdentifierLongForm()
+    {
+        // The Entra objectidentifier case for ActorIdClaim. Consumer configures
+        // ActorIdClaim = "oid" expecting MapInboundClaims = false; under the
+        // ASP.NET Core default the "oid" claim is remapped onto the Microsoft
+        // long form, and without this fallback the actor id wouldn't resolve.
+        var user = AuthenticatedUser(
+            new Claim("http://schemas.microsoft.com/identity/claims/objectidentifier", "11111111-2222-3333-4444-555555555555"));
+        var options = new ClaimsActorOptions { ActorIdClaim = "oid" };
+
+        var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Id.Should().Be("11111111-2222-3333-4444-555555555555",
+            "configured 'oid' must fall back to the Microsoft-identity 'objectidentifier' long form");
+    }
+
     #endregion
 
     #region Custom claim mapping

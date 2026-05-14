@@ -80,9 +80,16 @@ public class ClaimsActorOptions
     /// before they reach <see cref="System.Security.Claims.ClaimsIdentity"/>. If the
     /// configured <see cref="ActorIdClaim"/> is not found literally,
     /// <see cref="ClaimsActorProvider"/> automatically falls back to the well-known
-    /// short↔long counterpart from the JWT inbound claim-name map (<c>sub</c> ↔
-    /// <c>NameIdentifier</c>, <c>email</c> ↔ <c>Email</c>, <c>role</c>/<c>roles</c> ↔
-    /// <c>Role</c>, <c>name</c>/<c>unique_name</c> ↔ <c>Name</c>, etc.) so the default
+    /// short↔long counterpart from the JWT inbound claim-name map — covering the
+    /// OAuth2 / OIDC / Microsoft-identity subset that consumers realistically
+    /// configure as an actor id (<c>sub</c>/<c>nameid</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.NameIdentifier"/>, <c>oid</c> ↔
+    /// the Microsoft objectidentifier URN, <c>upn</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.Upn"/>, <c>email</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.Email"/>, <c>role</c>/
+    /// <c>roles</c> ↔ <see cref="System.Security.Claims.ClaimTypes.Role"/>,
+    /// <c>name</c>/<c>unique_name</c> ↔
+    /// <see cref="System.Security.Claims.ClaimTypes.Name"/>, etc.) — so the default
     /// configuration just-works with either <c>MapInboundClaims = true</c> or
     /// <c>MapInboundClaims = false</c>. The fallback emits a debug-level log entry
     /// when it fires. Recommended for new services: set <c>MapInboundClaims = false</c>
@@ -160,16 +167,31 @@ public class ClaimsActorProvider : IActorProvider
     /// <see cref="EntraActorProvider"/> uses for its <c>oid</c> lookup).
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Bidirectional lookup is performed in <see cref="ResolveClaimWithFallback"/>:
     /// configured short → mapped long, configured long → mapped short.
     /// Hardcoded to avoid taking a dependency on
     /// <c>System.IdentityModel.Tokens.Jwt</c> from this package; the mapping table is
     /// effectively frozen — no new entries have been added to the JWT inbound map
     /// in years.
+    /// </para>
+    /// <para>
+    /// Scope: this table covers the OAuth2 / OIDC / Microsoft-identity subset of the
+    /// JWT inbound map — every claim type a consumer might realistically configure
+    /// as <see cref="ClaimsActorOptions.ActorIdClaim"/> or
+    /// <see cref="ClaimsActorOptions.PermissionsClaim"/> (subject identifier,
+    /// permissions/scopes, tenant, UPN, group/role, AuthN context, identity
+    /// provider). Operational / transport / device / certificate metadata claims
+    /// from the inbound map (<c>clientip</c>, <c>cert*</c>, <c>device*</c>, etc.)
+    /// are intentionally omitted: they are not authentication state and configuring
+    /// them as an actor id or permission would be a misconfiguration in its own
+    /// right.
+    /// </para>
     /// </remarks>
     private static readonly FrozenDictionary<string, string> KnownShortToLongClaimNames =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            // RFC 7519 / OIDC standard claims
             ["sub"] = ClaimTypes.NameIdentifier,
             ["nameid"] = ClaimTypes.NameIdentifier,
             ["name"] = ClaimTypes.Name,
@@ -183,6 +205,17 @@ public class ClaimsActorProvider : IActorProvider
             ["birthdate"] = ClaimTypes.DateOfBirth,
             ["website"] = ClaimTypes.Webpage,
             ["actort"] = ClaimTypes.Actor,
+            ["upn"] = ClaimTypes.Upn,
+            // Microsoft identity platform claims (Entra v1.0 / v2.0)
+            ["oid"] = "http://schemas.microsoft.com/identity/claims/objectidentifier",
+            ["scp"] = "http://schemas.microsoft.com/identity/claims/scope",
+            ["tid"] = "http://schemas.microsoft.com/identity/claims/tenantid",
+            ["idp"] = "http://schemas.microsoft.com/identity/claims/identityprovider",
+            ["acr"] = "http://schemas.microsoft.com/claims/authnclassreference",
+            ["amr"] = "http://schemas.microsoft.com/claims/authnmethodsreferences",
+            // AD FS legacy aliases (same long form as their OIDC counterparts)
+            ["adfs1email"] = ClaimTypes.Email,
+            ["adfs1upn"] = ClaimTypes.Upn,
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
