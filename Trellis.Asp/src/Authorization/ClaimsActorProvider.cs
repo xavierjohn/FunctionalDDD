@@ -175,11 +175,24 @@ public class ClaimsActorProvider : IActorProvider
             ["actort"] = ClaimTypes.Actor,
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
-    /// <summary>Inverse lookup table built from <see cref="KnownShortToLongClaimNames"/>.</summary>
-    private static readonly FrozenDictionary<string, string> KnownLongToShortClaimNames =
+    /// <summary>
+    /// Inverse lookup table built from <see cref="KnownShortToLongClaimNames"/>: each long-form
+    /// URN maps to the <em>set</em> of short forms that alias to it. Multi-valued because
+    /// several short forms can collapse onto the same long form (e.g. <c>"sub"</c> and
+    /// <c>"nameid"</c> both alias to <see cref="ClaimTypes.NameIdentifier"/>; <c>"name"</c> and
+    /// <c>"unique_name"</c> both alias to <see cref="ClaimTypes.Name"/>; <c>"role"</c> and
+    /// <c>"roles"</c> both alias to <see cref="ClaimTypes.Role"/>). The reverse fallback must
+    /// iterate every candidate short form — picking only one canonical short form would
+    /// silently fail to resolve tokens carrying the alternate short variant and reproduce
+    /// the same silent-401 footgun this fallback exists to prevent.
+    /// </summary>
+    private static readonly FrozenDictionary<string, FrozenSet<string>> KnownLongToShortClaimNames =
         KnownShortToLongClaimNames
             .GroupBy(kvp => kvp.Value, StringComparer.Ordinal)
-            .ToFrozenDictionary(g => g.Key, g => g.First().Key, StringComparer.Ordinal);
+            .ToFrozenDictionary(
+                g => g.Key,
+                g => g.Select(kvp => kvp.Key).ToFrozenSet(StringComparer.Ordinal),
+                StringComparer.Ordinal);
 
     private readonly ILogger<ClaimsActorProvider>? _logger;
 
@@ -256,31 +269,51 @@ public class ClaimsActorProvider : IActorProvider
 
     /// <summary>
     /// Looks up <paramref name="configuredClaim"/> on the identity; if not found, tries the
-    /// well-known short↔long counterpart from <see cref="KnownShortToLongClaimNames"/>.
+    /// well-known short↔long counterpart(s) from <see cref="KnownShortToLongClaimNames"/>.
     /// Returns the resolved value, or <see langword="null"/> when neither form is present.
     /// </summary>
+    /// <remarks>
+    /// The forward direction (configured short → long) has a single counterpart per short
+    /// form. The reverse direction (configured long → short) iterates every short form that
+    /// aliases to the long form (e.g., <c>NameIdentifier</c> ← {<c>sub</c>, <c>nameid</c>};
+    /// <c>Name</c> ← {<c>name</c>, <c>unique_name</c>}; <c>Role</c> ← {<c>role</c>,
+    /// <c>roles</c>}) — picking only one short form would silently fail to resolve tokens
+    /// that carry the alternate variant.
+    /// </remarks>
     private string? ResolveClaimWithFallback(ClaimsIdentity identity, string configuredClaim)
     {
         var literal = identity.FindFirst(configuredClaim)?.Value;
         if (literal is not null)
             return literal;
 
-        // The configured claim wasn't found literally. Try the well-known counterpart.
-        string? counterpart = null;
+        // Forward direction: configured short form → its single long-form counterpart.
         if (KnownShortToLongClaimNames.TryGetValue(configuredClaim, out var longForm))
-            counterpart = longForm;
-        else if (KnownLongToShortClaimNames.TryGetValue(configuredClaim, out var shortForm))
-            counterpart = shortForm;
+        {
+            var forward = identity.FindFirst(longForm)?.Value;
+            if (forward is not null)
+            {
+                LogClaimNameFallback(_logger, configuredClaim, longForm);
+                return forward;
+            }
+        }
 
-        if (counterpart is null)
-            return null;
+        // Reverse direction: configured long form → iterate every short form that maps to it.
+        // Picking only one canonical short would miss tokens carrying the alternate variant
+        // (e.g., "nameid" instead of "sub" for ClaimTypes.NameIdentifier).
+        if (KnownLongToShortClaimNames.TryGetValue(configuredClaim, out var shortForms))
+        {
+            foreach (var shortForm in shortForms)
+            {
+                var reverse = identity.FindFirst(shortForm)?.Value;
+                if (reverse is not null)
+                {
+                    LogClaimNameFallback(_logger, configuredClaim, shortForm);
+                    return reverse;
+                }
+            }
+        }
 
-        var fallback = identity.FindFirst(counterpart)?.Value;
-        if (fallback is null)
-            return null;
-
-        LogClaimNameFallback(_logger, configuredClaim, counterpart);
-        return fallback;
+        return null;
     }
 
     private static readonly Action<ILogger, string, string, Exception?> _logClaimNameFallback =

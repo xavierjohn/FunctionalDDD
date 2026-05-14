@@ -137,6 +137,60 @@ public class ClaimsActorProviderTests
             "custom claim names not in the JWT well-known mapping table get literal lookup only — no fallback");
     }
 
+    [Theory]
+    [InlineData("nameid")]
+    [InlineData("sub")]
+    public async Task GetCurrentActorAsync_LongFormConfigured_FallsBackToAnyShortFormThatMapsToIt_NameIdentifier(string shortForm)
+    {
+        // Multiple short forms can map to the same long form: both "sub" and "nameid" alias
+        // to ClaimTypes.NameIdentifier in the JWT inbound map. When the consumer configures
+        // the long form and the token carries EITHER short variant, the fallback must try
+        // every candidate short form — not just one canonical pick — otherwise the same
+        // silent-401 footgun reappears for the long-form-configured branch.
+        var user = AuthenticatedUser(new Claim(shortForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = ClaimTypes.NameIdentifier };
+
+        var maybeActor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.HasValue.Should().BeTrue(
+            $"reverse fallback for ClaimTypes.NameIdentifier must accept any of its mapped short forms — including '{shortForm}'");
+        maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+    }
+
+    [Theory]
+    [InlineData("name")]
+    [InlineData("unique_name")]
+    public async Task GetCurrentActorAsync_LongFormConfigured_FallsBackToAnyShortFormThatMapsToIt_Name(string shortForm)
+    {
+        // Same coverage for the "name" / "unique_name" → ClaimTypes.Name collision pair.
+        var user = AuthenticatedUser(new Claim(shortForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = ClaimTypes.Name };
+
+        var maybeActor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.HasValue.Should().BeTrue(
+            $"reverse fallback for ClaimTypes.Name must accept any of its mapped short forms — including '{shortForm}'");
+        maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+    }
+
+    [Theory]
+    [InlineData("role")]
+    [InlineData("roles")]
+    public async Task GetCurrentActorAsync_LongFormConfigured_FallsBackToAnyShortFormThatMapsToIt_Role(string shortForm)
+    {
+        // Same coverage for the "role" / "roles" → ClaimTypes.Role collision pair.
+        // Completes the matrix: every long-form key in KnownLongToShortClaimNames that has
+        // more than one short-form mapping is exercised in both directions.
+        var user = AuthenticatedUser(new Claim(shortForm, $"value-{shortForm}"));
+        var options = new ClaimsActorOptions { ActorIdClaim = ClaimTypes.Role };
+
+        var maybeActor = await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        maybeActor.HasValue.Should().BeTrue(
+            $"reverse fallback for ClaimTypes.Role must accept any of its mapped short forms — including '{shortForm}'");
+        maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+    }
+
     #endregion
 
     #region Custom claim mapping
