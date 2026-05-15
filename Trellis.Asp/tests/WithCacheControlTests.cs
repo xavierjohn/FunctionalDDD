@@ -267,6 +267,69 @@ public sealed class WithCacheControlTests
         cc.Should().Contain("private").And.Contain("max-age=7");
     }
 
+    // Value-type TDomain pin: `default(TDomain) is null` is false for record structs.
+    // Used to verify the no-payload WriteOutcome cases never invoke a domain-dependent
+    // selector against a default-constructed value.
+    private readonly record struct StructTodo(int Id);
+
+    [Fact]
+    public async Task Selector_does_not_fire_on_UpdatedNoContent_for_struct_domain()
+    {
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<StructTodo>.UpdatedNoContent();
+        var r = Result.Ok<WriteOutcome<StructTodo>>(outcome);
+        var selectorCalled = false;
+
+        await r.ToHttpResponse<StructTodo>(o => o.WithCacheControl(_ =>
+        {
+            selectorCalled = true;
+            return new CacheControlHeaderValue { Private = true, MaxAge = TimeSpan.FromMinutes(5) };
+        })).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(204);
+        selectorCalled.Should().BeFalse(
+            "no-payload write outcomes (UpdatedNoContent / AcceptedNoContent) carry no TDomain — " +
+            "a domain-dependent selector must never run against default(TDomain)");
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty(
+            "no domain means no selector-derived header on this response");
+    }
+
+    [Fact]
+    public async Task Selector_does_not_fire_on_AcceptedNoContent_for_struct_domain()
+    {
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<StructTodo>.AcceptedNoContent();
+        var r = Result.Ok<WriteOutcome<StructTodo>>(outcome);
+        var selectorCalled = false;
+
+        await r.ToHttpResponse<StructTodo>(o => o.WithCacheControl(_ =>
+        {
+            selectorCalled = true;
+            return new CacheControlHeaderValue { Private = true, MaxAge = TimeSpan.FromMinutes(5) };
+        })).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(202);
+        selectorCalled.Should().BeFalse();
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Static_value_still_emits_on_UpdatedNoContent_for_struct_domain()
+    {
+        // The static value is set in ExecuteAsync before the WriteOutcome switch, so it
+        // applies to all WriteOutcome cases including the no-payload ones.
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<StructTodo>.UpdatedNoContent();
+        var r = Result.Ok<WriteOutcome<StructTodo>>(outcome);
+
+        await r.ToHttpResponse<StructTodo>(
+            o => o.WithCacheControl(CacheControl.NoStore()))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(204);
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
+    }
+
     [Fact]
     public async Task Selector_returning_null_falls_back_to_static_value()
     {

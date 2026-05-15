@@ -143,13 +143,30 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
 
     private void ApplyBuilderMetadata(HttpResponse response, WriteOutcome<TDomain> outcome)
     {
-        var domain = outcome switch
+        // Track payload presence explicitly: `default(TDomain) is null` is false for value-type
+        // TDomain (record struct VOs, primitive id types, etc.), which would otherwise let
+        // selectors run against a fake default value on UpdatedNoContent / AcceptedNoContent.
+        bool hasDomain;
+        TDomain domain;
+        switch (outcome)
         {
-            WriteOutcome<TDomain>.Created c => c.Value,
-            WriteOutcome<TDomain>.Updated u => u.Value,
-            WriteOutcome<TDomain>.Accepted a => a.StatusBody,
-            _ => default,
-        };
+            case WriteOutcome<TDomain>.Created c:
+                hasDomain = true;
+                domain = c.Value;
+                break;
+            case WriteOutcome<TDomain>.Updated u:
+                hasDomain = true;
+                domain = u.Value;
+                break;
+            case WriteOutcome<TDomain>.Accepted a:
+                hasDomain = true;
+                domain = a.StatusBody;
+                break;
+            default:
+                hasDomain = false;
+                domain = default!;
+                break;
+        }
 
         if (_options.Vary is { Count: > 0 })
         {
@@ -157,7 +174,7 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
                 TrellisHttpResult<TDomain, TBody>.AppendVaryUnique(response, v);
         }
 
-        if (domain is null)
+        if (!hasDomain)
             return;
 
         if (_options.ETagSelector is { } et)
