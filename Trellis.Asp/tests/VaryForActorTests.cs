@@ -454,21 +454,85 @@ public sealed class VaryForActorTests
         vary.Should().Contain("Authorization");
     }
 
-    [Fact]
-    public async Task VaryForActor_applies_to_206_PartialContent_response()
+    /// <summary>
+    /// Non-delegating decorator: implements IDecoratingActorProvider (so the chain unwraps)
+    /// but deliberately does NOT implement IProvideActorVaryHeaders. Realistic shape for
+    /// cross-cutting wrappers (logging, metrics) that have nothing to say about how the
+    /// actor maps to HTTP request headers.
+    /// </summary>
+    private sealed class LoggingDecoratorProvider(IActorProvider inner) : IActorProvider, IDecoratingActorProvider
     {
-        // 206 Partial Content responses are cacheable per RFC 9111 §3.3 and must partition
-        // by actor too — an actor-scoped chunked download must not leak chunks across
-        // actors. Pins that the .WithRange success path picks up VaryForActor.
-        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        public IActorProvider Inner => inner;
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+            => inner.GetCurrentActorAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Decorator that legitimately augments the inner provider's Vary headers (e.g.
+    /// tenant-scoping wrapper that adds X-Tenant). Implements BOTH the unwrap interface
+    /// and IProvideActorVaryHeaders so its outer set wins.
+    /// </summary>
+    private sealed class HeaderAugmentingDecoratorProvider(IActorProvider inner)
+        : IActorProvider, IDecoratingActorProvider, IProvideActorVaryHeaders
+    {
+        public IActorProvider Inner => inner;
+        public IReadOnlyCollection<string> VaryByHeaders { get; } = ["Authorization", "X-Tenant"];
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+            => inner.GetCurrentActorAsync(cancellationToken);
+    }
+
+    [Fact]
+    public async Task VaryForActor_uses_inner_capability_when_decorator_does_not_implement_IProvideActorVaryHeaders()
+    {
+        // Realistic shape: a non-delegating decorator (logging/metrics) wraps a real provider
+        // that DOES implement IProvideActorVaryHeaders. The framework must unwrap past the
+        // decorator and use the inner provider's headers, not throw "decorator doesn't
+        // implement IProvideActorVaryHeaders". The wrapper has nothing to say about HTTP
+        // headers; the inner provider has the contract.
+        var ctx = NewContext(new LoggingDecoratorProvider(new TestActorProvider(["Authorization"])));
         var r = Result.Ok(new Thing(1, "x"));
 
-        await r.ToHttpResponse(t => t, o => o
-            .WithRange(0, 99, 1000)
-            .VaryForActor()).ExecuteAsync(ctx);
+        await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
 
         var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
         vary.Should().Contain("Authorization",
-            "206 Partial Content must carry actor-vary headers");
+            "the framework must walk past IDecoratingActorProvider wrappers without IProvideActorVaryHeaders and read the inner provider's headers");
+    }
+
+    [Fact]
+    public async Task VaryForActor_outermost_capability_in_chain_wins_so_decorators_can_augment_headers()
+    {
+        // Legitimate composition: a tenant-scoping decorator adds X-Tenant alongside the
+        // inner bearer provider's Authorization. The outer wrapper's IProvideActorVaryHeaders
+        // implementation is the authoritative one (it knows the full set required for cache
+        // partitioning given its own behavior), not the inner provider's. The framework
+        // honors the outermost capability in the chain.
+        var ctx = NewContext(new HeaderAugmentingDecoratorProvider(new TestActorProvider(["Authorization"])));
+        var r = Result.Ok(new Thing(1, "x"));
+
+        await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization").And.Contain("X-Tenant",
+            "the outermost IProvideActorVaryHeaders in the decorator chain is authoritative; both Authorization (from the augmenting wrapper) and X-Tenant (added by the wrapper) must be emitted");
+    }
+
+    [Fact]
+    public async Task VaryForActor_fails_closed_naming_innermost_when_no_layer_implements_capability()
+    {
+        // Non-delegating decorator wrapping a custom provider that ALSO lacks the
+        // capability. Walk the entire chain, find no IProvideActorVaryHeaders anywhere,
+        // and surface the innermost provider as the remediation site (that's where the
+        // capability should go).
+        var ctx = NewContext(new LoggingDecoratorProvider(new ProviderWithoutVaryCapability()));
+        var r = Result.Ok(new Thing(1, "x"));
+
+        var act = async () => await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var ex = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
+        ex.Message.Should().Contain(typeof(ProviderWithoutVaryCapability).FullName!,
+            "the diagnostic must name the innermost provider when no layer in the chain implements IProvideActorVaryHeaders");
+        ex.Message.Should().NotContain(nameof(LoggingDecoratorProvider),
+            "intermediate non-capability wrappers are not the remediation site");
     }
 }

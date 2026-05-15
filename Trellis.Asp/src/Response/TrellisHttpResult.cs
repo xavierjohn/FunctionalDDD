@@ -226,13 +226,16 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     /// <summary>
     /// Resolves the registered <c>IActorProvider</c> and appends its
     /// <c>VaryByHeaders</c> entries to the response <c>Vary</c> header. Throws
-    /// <see cref="InvalidOperationException"/> when no provider is registered or the
-    /// registered provider does not implement <c>IProvideActorVaryHeaders</c> —
+    /// <see cref="InvalidOperationException"/> when no provider is registered or no
+    /// provider in the decorator chain implements <c>IProvideActorVaryHeaders</c> —
     /// fail-closed rather than silently emit an incorrect or incomplete <c>Vary</c>
     /// header that would let intermediate caches serve actor A's response to actor B.
     /// Decorating providers (such as <c>CachingActorProvider</c>) are unwrapped via
-    /// <c>IDecoratingActorProvider</c> so the diagnostic names the actual inner provider
-    /// the consumer needs to fix.
+    /// <c>IDecoratingActorProvider</c>: the OUTERMOST <c>IProvideActorVaryHeaders</c>
+    /// in the chain wins (so a wrapper that legitimately augments the headers is
+    /// honored), and unwrapping continues past wrappers without the capability so the
+    /// fail-closed diagnostic names the innermost provider that needs the
+    /// implementation.
     /// </summary>
     internal static void AppendActorVaryHeaders(HttpContext httpContext)
     {
@@ -242,31 +245,40 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 "Register a provider via AddClaimsActorProvider/AddEntraActorProvider/AddDevelopmentActorProvider, " +
                 "or call .Vary(\"...\") explicitly with the headers that contribute to actor identity.");
 
-        // Unwrap decorating providers (e.g. CachingActorProvider) so error messages name the
-        // actual inner provider that needs the IProvideActorVaryHeaders implementation.
-        // Bounded against self-referencing or cyclic decorator chains: a malicious or
-        // accidentally-cyclic IDecoratingActorProvider.Inner that returns the same instance
-        // or forms an A→B→A loop would otherwise hang the request thread or stack-overflow.
-        // Legitimate decorator depth is 1–2 (CachingActorProvider wrapping a real provider);
-        // a small bound of 16 leaves comfortable headroom for nested compositions while
-        // still failing fast on cycles.
+        // Walk the decorator chain. The outermost IProvideActorVaryHeaders wins so a custom
+        // wrapper that adds its own headers (e.g. a tenant-scoping decorator that appends
+        // X-Tenant to the inner provider's headers) is honored rather than silently bypassed.
+        // Keep unwrapping past wrappers that don't implement the capability so the fail-closed
+        // diagnostic, when no capability is found anywhere in the chain, names the innermost
+        // provider that the consumer must fix — not an intermediate wrapper. Bounded against
+        // self-referencing or cyclic IDecoratingActorProvider.Inner chains.
+        const int MaxDecoratorDepth = 16;
+        Trellis.Asp.Authorization.IProvideActorVaryHeaders? vary = null;
         var underlying = provider;
         var depth = 0;
-        const int MaxDecoratorDepth = 16;
-        while (underlying is Trellis.Asp.Authorization.IDecoratingActorProvider decorator)
+        while (true)
         {
-            if (++depth > MaxDecoratorDepth)
-                throw new InvalidOperationException(
-                    $"IDecoratingActorProvider chain rooted at '{provider.GetType().FullName}' exceeded the maximum unwrap depth ({MaxDecoratorDepth}). " +
-                    "This usually means a decorator's Inner property returns itself or forms a cycle. Fix the offending IDecoratingActorProvider implementation.");
-            underlying = decorator.Inner;
+            if (vary is null && underlying is Trellis.Asp.Authorization.IProvideActorVaryHeaders v)
+                vary = v;
+
+            if (underlying is Trellis.Asp.Authorization.IDecoratingActorProvider decorator)
+            {
+                if (++depth > MaxDecoratorDepth)
+                    throw new InvalidOperationException(
+                        $"IDecoratingActorProvider chain rooted at '{provider.GetType().FullName}' exceeded the maximum unwrap depth ({MaxDecoratorDepth}). " +
+                        "This usually means a decorator's Inner property returns itself or forms a cycle. Fix the offending IDecoratingActorProvider implementation.");
+                underlying = decorator.Inner;
+                continue;
+            }
+
+            break;
         }
 
-        if (provider is not Trellis.Asp.Authorization.IProvideActorVaryHeaders vary)
+        if (vary is null)
             throw new InvalidOperationException(
                 $"VaryForActor() requires the registered IActorProvider " +
-                $"('{underlying.GetType().FullName}') to implement IProvideActorVaryHeaders, but it does not. " +
-                "Either implement IProvideActorVaryHeaders on the provider " +
+                $"('{underlying.GetType().FullName}') to implement IProvideActorVaryHeaders, but neither it " +
+                "nor any IDecoratingActorProvider in its chain does. Either implement IProvideActorVaryHeaders on the provider " +
                 "(returning the HTTP request headers that contribute to actor identity, e.g. [\"Authorization\"] for " +
                 "bearer auth), or call .Vary(\"...\") explicitly with the relevant headers.");
 
