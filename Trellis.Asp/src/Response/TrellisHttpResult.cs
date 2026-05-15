@@ -76,6 +76,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         if (_options.VaryForActor)
             AppendActorVaryHeaders(httpContext);
 
+        // Static Cache-Control applies to both success and failure: a sensitive endpoint
+        // declaring `WithCacheControl(CacheControl.NoStore())` should not leak its 404 / 403
+        // through an intermediate cache any more than its 200. The selector overload (which
+        // needs a domain value) only fires on the success path inside ApplyMetadata.
+        if (_options.CacheControl is { } staticCc)
+            httpContext.Response.Headers["Cache-Control"] = staticCc.ToString();
+
         return _result.IsSuccess
             ? ExecuteSuccessAsync(httpContext)
             : ResponseFailureWriter.WriteAsync(httpContext, _result.Error!, ResolveErrorStatusCode(httpContext, _result.Error!, _options));
@@ -203,6 +210,17 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
         if (!string.IsNullOrEmpty(_options.AcceptRanges))
             response.Headers["Accept-Ranges"] = _options.AcceptRanges;
+
+        // The per-domain selector overrides the static value set in ExecuteAsync (overwriting
+        // the header via indexer assignment). A selector returning null is "no header for this
+        // domain value" and leaves whatever the static path wrote in place — that's the natural
+        // composition: static value is the floor, selector refines per response.
+        if (_options.CacheControlSelector is { } ccSel)
+        {
+            var v = ccSel(domain);
+            if (v is not null)
+                response.Headers["Cache-Control"] = v.ToString();
+        }
     }
 
     internal static void AppendVaryUnique(HttpResponse response, string headerName)

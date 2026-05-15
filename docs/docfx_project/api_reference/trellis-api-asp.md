@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Asp
 namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
-types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
+types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
 version: v3
 last_verified: 2026-05-01
 audience: [llm]
@@ -12,7 +12,7 @@ audience: [llm]
 **Namespaces:** `Trellis.Asp`, `Trellis.Asp.Authorization`, `Trellis.Asp.ModelBinding`, `Trellis.Asp.Routing`, `Trellis.Asp.Validation`
 **Purpose:** ASP.NET Core integration for mapping Trellis `Result`/`Result<T>`/`WriteOutcome<T>`/`Page<T>` values to HTTP responses, evaluating HTTP preconditions / ranges / `Prefer` preferences, hydrating actors from JWT claims, validating scalar value objects in MVC and Minimal APIs, and emitting AOT-friendly `JsonConverter`s for Trellis scalar values.
 
-The single supported response verb is `result.ToHttpResponse(...)`. It returns `Microsoft.AspNetCore.Http.IResult` and works in both Minimal API and MVC hosts (.NET 7+ executes `IResult` natively in MVC). For typed `ActionResult<T>` signatures, chain `.AsActionResult<T>()`. Configure protocol semantics via the fluent `HttpResponseOptionsBuilder<T>` (`WithETag`, `WithLastModified`, `Vary`, `Created`/`CreatedAtRoute`/`CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, `WithErrorMapping`, …).
+The single supported response verb is `result.ToHttpResponse(...)`. It returns `Microsoft.AspNetCore.Http.IResult` and works in both Minimal API and MVC hosts (.NET 7+ executes `IResult` natively in MVC). For typed `ActionResult<T>` signatures, chain `.AsActionResult<T>()`. Configure protocol semantics via the fluent `HttpResponseOptionsBuilder<T>` (`WithETag`, `WithLastModified`, `Vary`, `WithCacheControl`, `Created`/`CreatedAtRoute`/`CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, `WithErrorMapping`, …).
 
 See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package.
 
@@ -35,6 +35,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Override failure mapping for one endpoint | `.WithErrorMapping(...)` / `.WithErrorMapping<TError>(statusCode)` | [`HttpResponseOptionsBuilder<TDomain>`](#httpresponseoptionsbuildertdomain) |
 | Document endpoint failure codes | Add ASP.NET response metadata for every spec-listed failure status (`422`, `409`, `403`, `404`, etc.) in addition to happy-path metadata. | [Code examples](#code-examples) |
 | Add ETag / conditional GET | `.WithETag(...)`, `.WithLastModified(...)`, `.EvaluatePreconditions()` | [`HttpResponseOptionsBuilder<TDomain>`](#httpresponseoptionsbuildertdomain), [`ETagHelper`](#etaghelper) |
+| Add `Cache-Control` directive (per endpoint) | `.WithCacheControl(CacheControl.NoStore())` / `.WithCacheControl(CacheControl.Public(TimeSpan.FromMinutes(5)))` / `.WithCacheControl(t => …)` | [`HttpResponseOptionsBuilder<TDomain>`](#httpresponseoptionsbuildertdomain), [`CacheControl`](#cachecontrol) |
 | Honor `Prefer: return=minimal` | `.HonorPrefer()` on write responses | [`HttpResponseOptionsBuilder<TDomain>`](#httpresponseoptionsbuildertdomain) |
 | Return paginated list responses | `Result<Page<T>>.ToHttpResponse(nextUrlBuilder, bodySelector, ...)` | [`PagedResponse<TResponse>`](#pagedresponsetresponse) |
 | Resolve actors from requests | `AddClaimsActorProvider`, `AddEntraActorProvider`, or `AddDevelopmentActorProvider` | [`Trellis.Asp.Authorization`](#namespace-trellisaspauthorization) |
@@ -103,6 +104,8 @@ Fluent options builder used by every generic `ToHttpResponse` overload. Selector
 | `WithContentLanguage(params string[] languages)` | `HttpResponseOptionsBuilder<TDomain>` | Joins values into `Content-Language`. |
 | `WithContentLocation(Func<TDomain, string> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Sets the `Content-Location` header. |
 | `WithAcceptRanges(string acceptRanges)` | `HttpResponseOptionsBuilder<TDomain>` | Sets `Accept-Ranges` (e.g. `"bytes"` or `"none"`). |
+| `WithCacheControl(CacheControlHeaderValue value)` | `HttpResponseOptionsBuilder<TDomain>` | Sets the `Cache-Control` response header to the supplied directive. Applies to success responses (200 / 201 / 204 / 304), `WriteOutcome` (Created / Updated / Accepted), paged responses, AND failure responses — so `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 422 from intermediate-cache leakage just as much as the 200. Throws `ArgumentNullException` on null. Use the [`CacheControl`](#cachecontrol) presets (`NoStore()`, `NoCache()`, `Public(TimeSpan)`, `Private(TimeSpan)`, `Immutable(TimeSpan)`) for common shapes; each call returns a fresh `CacheControlHeaderValue` so mutation cannot leak across responses. |
+| `WithCacheControl(Func<TDomain, CacheControlHeaderValue?> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Sets `Cache-Control` from a selector run against the success-path domain value. Applies to the success path only (failures carry no domain value). Returning `null` from the selector omits the header on that response (falls back to the static-value overload if both are configured; otherwise no header is emitted). |
 | `Created(string locationLiteral)` | `HttpResponseOptionsBuilder<TDomain>` | Returns `201 Created` with a literal `Location` header. |
 | `Created(Func<TDomain, string> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Returns `201 Created` with a `Location` derived from the value. |
 | `CreatedAtRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues)` | `HttpResponseOptionsBuilder<TDomain>` | Returns `201 Created` with a `Location` generated via `LinkGenerator.GetUriByName` (resolved from `HttpContext.RequestServices` at execute time). AOT-safe. **Under query-string / header API versioning**, the route values dictionary MUST include `["api-version"] = ApiVersion` — otherwise `Location` headers omit the version and 404 on dereference. The recommended path is the `CreatedAtVersionedRoute(...)` extensions in [Trellis.Asp.ApiVersioning](trellis-api-asp-apiversioning.md), which inject the version automatically. The `TRLS023` analyzer warns on bare `CreatedAtRoute` calls inside `[ApiVersion]` controllers and offers a code fix that rewrites them to `CreatedAtVersionedRoute`. |
@@ -130,6 +133,7 @@ Non-generic builder used for the value-less `Result` overload.
 | `Vary(params string[] headers)` | `HttpResponseOptionsBuilder` | Appends headers to `Vary`. |
 | `VaryForActor()` | `HttpResponseOptionsBuilder` | Same contract as the generic builder's `VaryForActor()`. Applied by `Error.ToHttpResponse(...)` (the only consumer of the non-generic builder), so standalone error responses emitted via this verb partition by actor too. |
 | `HonorPrefer()` | `HttpResponseOptionsBuilder` | Always emits `Vary: Prefer`. |
+| `WithCacheControl(CacheControlHeaderValue value)` | `HttpResponseOptionsBuilder` | Same contract as the generic builder's static-value overload. Applies to both `204 No Content` success and failure responses, so `Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))` keeps the response out of intermediate caches. |
 | `WithErrorMapping(Func<Error, int> mapper)` | `HttpResponseOptionsBuilder` | Per-call mapper for failure responses. |
 | `WithErrorMapping<TError>(int statusCode) where TError : Error` | `HttpResponseOptionsBuilder` | Per-call override for a single error type. |
 
@@ -403,6 +407,48 @@ The bundled providers implement this:
 - `CachingActorProvider` — delegates to the wrapped provider's `VaryByHeaders`; surfaces an empty collection when the wrapped provider does not implement the interface, so `VaryForActor()` throws fail-closed pointing at the inner provider as the remediation site (the writer unwraps caching wrappers via the internal `IDecoratingActorProvider` interface so the diagnostic names the right type).
 
 Custom providers that derive actor identity from request data that cannot be cleanly named by an HTTP header (mTLS, IP-based, etc.) should NOT implement this interface; consumers using such providers must mark cache-eligible endpoints with `Cache-Control: private, no-store` instead of calling `VaryForActor()`.
+
+### `CacheControl`
+
+**Declaration**
+
+```csharp
+public static class CacheControl
+{
+    public static CacheControlHeaderValue NoStore();
+    public static CacheControlHeaderValue NoCache();
+    public static CacheControlHeaderValue Public(TimeSpan maxAge);
+    public static CacheControlHeaderValue Private(TimeSpan maxAge);
+    public static CacheControlHeaderValue Immutable(TimeSpan maxAge);
+}
+```
+
+Preset `System.Net.Http.Headers.CacheControlHeaderValue` builders for the common directives, designed for use with [`HttpResponseOptionsBuilder<TDomain>.WithCacheControl`](#httpresponseoptionsbuildertdomain).
+
+| Preset | Emits | When to use |
+|---|---|---|
+| `CacheControl.NoStore()` | `Cache-Control: no-store` | Responses that contain personal data, secrets, or per-user state. Use on `Error.ToHttpResponse` and `Result.ToHttpResponse(opts => opts.WithCacheControl(...))` for sensitive endpoints; the static-value overload propagates to failure responses too so 404 / 403 / 422 cannot leak through intermediate caches. |
+| `CacheControl.NoCache()` | `Cache-Control: no-cache` | Caches may store the response but must revalidate with the origin before serving. Different from `no-store`: revalidation is allowed, storage is not forbidden. |
+| `CacheControl.Public(TimeSpan)` | `Cache-Control: public, max-age={seconds}` | Public, cacheable read endpoints (catalog data, public reference data). Shared caches may store and serve to any consumer for the lifetime. |
+| `CacheControl.Private(TimeSpan)` | `Cache-Control: private, max-age={seconds}` | Per-user representations safe to cache in the user agent only. Compose with `VaryForActor()` if any intermediate (CDN, reverse proxy) is in the path. |
+| `CacheControl.Immutable(TimeSpan)` | `Cache-Control: public, max-age={seconds}, immutable` | RFC 8246 — the response will not change for the freshness lifetime. Clients should not revalidate. Use for content-addressed or versioned assets. The `immutable` directive is appended via the BCL type's `Extensions` collection because `CacheControlHeaderValue` has no dedicated property for it. |
+
+**Fresh-instance guarantee.** Every preset returns a new `CacheControlHeaderValue` on each call. `CacheControlHeaderValue` is mutable; if the presets returned a shared instance, a single caller mutating one returned value could corrupt every subsequent call. Test pinning: `CacheControl_presets_return_fresh_instances` in `WithCacheControlTests`.
+
+**Directive coverage outside the presets.** Pass a hand-built `CacheControlHeaderValue` directly to `WithCacheControl(...)` when you need a directive not covered by a preset (`s-maxage`, `proxy-revalidate`, `stale-while-revalidate` via `Extensions`, etc.):
+
+```csharp
+opts.WithCacheControl(new CacheControlHeaderValue
+{
+    Public = true,
+    MaxAge = TimeSpan.FromMinutes(5),
+    SharedMaxAge = TimeSpan.FromMinutes(15),
+    MustRevalidate = true,
+});
+```
+
+**Composition with `VaryForActor()`.** Cache-Control and `Vary` are orthogonal — the former says "is this cacheable, and for how long"; the latter says "by which request dimensions does the cache key vary." For per-user representations served behind a shared cache, combine: `opts.WithCacheControl(CacheControl.Private(TimeSpan.FromMinutes(5))).VaryForActor()`.
+
 
 ### `ServiceCollectionExtensions`
 

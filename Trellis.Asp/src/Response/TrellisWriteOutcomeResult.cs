@@ -45,6 +45,11 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
         if (_options.VaryForActor)
             TrellisHttpResult<TDomain, TBody>.AppendActorVaryHeaders(httpContext);
 
+        // Static Cache-Control applies to both success and failure outcomes — same contract
+        // as TrellisHttpResult.ExecuteAsync. Selector overlap is handled in ApplyBuilderMetadata.
+        if (_options.CacheControl is { } staticCc)
+            httpContext.Response.Headers["Cache-Control"] = staticCc.ToString();
+
         if (!_result.TryGetValue(out var outcome, out var outcomeError))
         {
             var sc = TrellisHttpResult<TDomain, TBody>.ResolveErrorStatusCode(httpContext, outcomeError, _options);
@@ -180,6 +185,13 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
 
         if (!string.IsNullOrEmpty(_options.AcceptRanges))
             response.Headers["Accept-Ranges"] = _options.AcceptRanges;
+
+        if (_options.CacheControlSelector is { } ccSel)
+        {
+            var v = ccSel(domain);
+            if (v is not null)
+                response.Headers["Cache-Control"] = v.ToString();
+        }
     }
 
     public static void PopulateMetadata(System.Reflection.MethodInfo method, EndpointBuilder builder)

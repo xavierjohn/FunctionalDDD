@@ -18,6 +18,8 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     private List<string>? _contentLanguage;
     private Func<TDomain, string?>? _contentLocationSelector;
     private string? _acceptRanges;
+    private System.Net.Http.Headers.CacheControlHeaderValue? _cacheControl;
+    private Func<TDomain, System.Net.Http.Headers.CacheControlHeaderValue?>? _cacheControlSelector;
 
     private LocationKind _locationKind;
     private string? _locationLiteral;
@@ -117,6 +119,43 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(acceptRanges);
         _acceptRanges = acceptRanges;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the <c>Cache-Control</c> response header from the supplied directive. Applied to
+    /// success responses (including 304 Not Modified) AND to failure responses, so a sensitive
+    /// endpoint declaring <c>WithCacheControl(CacheControl.NoStore())</c> protects 404 / 403 /
+    /// validation responses from intermediate-cache leakage, not just the success-path
+    /// representation. Use the selector overload when the directive depends on the domain value
+    /// (e.g. a TTL derived from the resource).
+    /// </summary>
+    /// <param name="value">The <see cref="System.Net.Http.Headers.CacheControlHeaderValue"/> whose <see cref="object.ToString"/> is written to <c>Cache-Control</c>.</param>
+    /// <remarks>
+    /// Use the framework-provided <see cref="CacheControl"/> presets for common shapes:
+    /// <c>CacheControl.NoStore()</c>, <c>CacheControl.NoCache()</c>,
+    /// <c>CacheControl.Public(TimeSpan)</c>, <c>CacheControl.Private(TimeSpan)</c>,
+    /// <c>CacheControl.Immutable(TimeSpan)</c>. Each call returns a fresh instance so a consumer
+    /// mutating one value does not corrupt a later call.
+    /// </remarks>
+    public HttpResponseOptionsBuilder<TDomain> WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        _cacheControl = value;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the <c>Cache-Control</c> response header from a selector run against the domain value.
+    /// Applies to success responses only — the failure path has no domain value. Returning
+    /// <see langword="null"/> from the selector omits the header on that response, regardless of
+    /// any value supplied via the non-selector overload.
+    /// </summary>
+    /// <param name="selector">Selector invoked with the success-path domain value. May return null to skip the header.</param>
+    public HttpResponseOptionsBuilder<TDomain> WithCacheControl(Func<TDomain, System.Net.Http.Headers.CacheControlHeaderValue?> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+        _cacheControlSelector = selector;
         return this;
     }
 
@@ -270,6 +309,8 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         ContentLanguage = _contentLanguage,
         ContentLocationSelector = _contentLocationSelector,
         AcceptRanges = _acceptRanges,
+        CacheControl = _cacheControl,
+        CacheControlSelector = _cacheControlSelector,
         LocationKind = _locationKind,
         LocationLiteral = _locationLiteral,
         LocationSelector = _locationSelector,
@@ -298,6 +339,8 @@ internal sealed class HttpResponseOptions<TDomain>
     public List<string>? ContentLanguage { get; init; }
     public Func<TDomain, string?>? ContentLocationSelector { get; init; }
     public string? AcceptRanges { get; init; }
+    public System.Net.Http.Headers.CacheControlHeaderValue? CacheControl { get; init; }
+    public Func<TDomain, System.Net.Http.Headers.CacheControlHeaderValue?>? CacheControlSelector { get; init; }
 
     public LocationKind LocationKind { get; init; }
     public string? LocationLiteral { get; init; }
@@ -324,6 +367,7 @@ public sealed class HttpResponseOptionsBuilder
     private List<string>? _vary;
     private bool _varyForActor;
     private bool _honorPrefer;
+    private System.Net.Http.Headers.CacheControlHeaderValue? _cacheControl;
     private Func<Error, int>? _errorMapper;
     private Dictionary<Type, int>? _errorOverrides;
 
@@ -356,6 +400,19 @@ public sealed class HttpResponseOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the <c>Cache-Control</c> response header from the supplied directive. Applied to
+    /// success (204) AND failure responses. See
+    /// <see cref="HttpResponseOptionsBuilder{TDomain}.WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue)"/>
+    /// for full semantics.
+    /// </summary>
+    public HttpResponseOptionsBuilder WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        _cacheControl = value;
+        return this;
+    }
+
     /// <summary>Per-call override mapper for failure responses.</summary>
     public HttpResponseOptionsBuilder WithErrorMapping(Func<Error, int> mapper)
     {
@@ -377,6 +434,7 @@ public sealed class HttpResponseOptionsBuilder
         Vary = _vary,
         VaryForActor = _varyForActor,
         HonorPrefer = _honorPrefer,
+        CacheControl = _cacheControl,
         ErrorMapper = _errorMapper,
         ErrorOverrides = _errorOverrides,
     };
