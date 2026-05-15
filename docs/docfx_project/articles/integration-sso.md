@@ -321,7 +321,7 @@ func callTrellisApi(idToken: String, fullName: PersonNameComponents?, email: Str
 
 ### Android app
 
-An Android app authenticates the user against an OIDC provider on the device, obtains an ID token, and sends it to the Trellis backend as a bearer token. The **backend wiring is identical to the IdP-specific recipe above** — the choice of `Authority` and `Audience` is dictated by which IdP the app signed in with (Google, Microsoft Entra, Auth0, your own OIDC server). What changes on Android is the client-side library and a few audience-naming quirks.
+An Android app authenticates the user against an OIDC provider on the device, obtains a bearer token (an OIDC ID token from Google's Credential Manager / Apple, or an OAuth 2.0 access token from MSAL; AppAuth can return either), and sends it to the Trellis backend as `Authorization: Bearer <token>`. The **backend wiring is identical to the IdP-specific recipe above** — the choice of `Authority` and `Audience` is dictated by which IdP the app signed in with (Google, Microsoft Entra, Auth0, your own OIDC server) and by which token type that flow produces. What changes on Android is the client-side library and a few audience-naming quirks.
 
 | IdP from the Android app | Recommended client library | Backend recipe |
 |---|---|---|
@@ -479,6 +479,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Trellis;
 using Trellis.Asp.Authorization;
 using Trellis.Authorization;
 
@@ -609,6 +610,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Trellis;
 using Trellis.Asp.Authorization;
 using Trellis.Authorization;
 
