@@ -362,4 +362,113 @@ public sealed class VaryForActorTests
         ex.Message.Should().NotContain(nameof(CachingActorProvider),
             "the wrapper itself isn't the remediation site");
     }
+
+    private sealed class SelfReferencingDecoratorProvider : IActorProvider, IDecoratingActorProvider, IProvideActorVaryHeaders
+    {
+        private static readonly System.Collections.Frozen.FrozenSet<string> EmptyPermissions =
+            System.Collections.Frozen.FrozenSet<string>.Empty;
+
+        public IReadOnlyCollection<string> VaryByHeaders { get; } = [];
+        IActorProvider IDecoratingActorProvider.Inner => this;
+        public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(Maybe.From(Actor.Create("test-actor", EmptyPermissions)));
+    }
+
+    [Fact]
+    public async Task VaryForActor_throws_on_self_referencing_decorator_chain()
+    {
+        // Critical fail-closed guard: a malicious or accidentally-cyclic
+        // IDecoratingActorProvider.Inner that returns itself would otherwise loop forever
+        // inside AppendActorVaryHeaders' unwrap. The depth bound surfaces it as an
+        // actionable error rather than a hung request thread.
+        var ctx = NewContext(new SelfReferencingDecoratorProvider());
+        var r = Result.Ok(new Thing(1, "x"));
+
+        var act = async () => await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var ex = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
+        ex.Message.Should().Contain("decorator").And.Contain("cycle");
+    }
+
+    [Fact]
+    public async Task VaryForActor_unwraps_multi_level_decorator_chain_to_innermost_provider()
+    {
+        // Legitimate composition: someone wraps a CachingActorProvider in another caching /
+        // diagnostic decorator. The unwrap loop must traverse the whole chain and name the
+        // innermost provider in fail-closed diagnostics, not an intermediate wrapper.
+        var inner = new ProviderWithoutVaryCapability();
+        var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
+        var firstCache = new CachingActorProvider(inner, httpContextAccessor);
+        var outerCache = new CachingActorProvider(firstCache, httpContextAccessor);
+        var ctx = NewContext(outerCache);
+        var r = Result.Ok(new Thing(1, "x"));
+
+        var act = async () => await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var ex = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
+        ex.Message.Should().Contain(typeof(ProviderWithoutVaryCapability).FullName!,
+            "the diagnostic must traverse every IDecoratingActorProvider hop and name the innermost provider that needs IProvideActorVaryHeaders");
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_to_304_NotModified_response()
+    {
+        // 304 responses are cacheable and partition by actor too — a successful conditional
+        // request from actor A must not return 304 to actor B who has never made a matching
+        // request. VaryForActor must apply before the precondition evaluation branch.
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        ctx.Request.Method = "GET";
+        ctx.Request.Headers["If-None-Match"] = "\"abc123\"";
+        var r = Result.Ok(new Thing(1, "x"));
+
+        await r.ToHttpResponse(t => t, o => o
+            .WithETag(_ => "abc123")
+            .EvaluatePreconditions()
+            .VaryForActor()).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(304);
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization",
+            "304 Not Modified must carry actor-vary headers to partition cached conditional-request responses by actor");
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_to_412_PreconditionFailed_response()
+    {
+        // 412 from a failed If-Match is a typical concurrency-control response. While 412s
+        // aren't commonly cached, the fail-closed validation must still run (a 412 emitted
+        // without the right Vary on a cache-eligible URL could still pollute if some
+        // intermediate caches the negative result).
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        ctx.Request.Method = "GET";
+        ctx.Request.Headers["If-Match"] = "\"wrong-etag\"";
+        var r = Result.Ok(new Thing(1, "x"));
+
+        await r.ToHttpResponse(t => t, o => o
+            .WithETag(_ => "correct-etag")
+            .EvaluatePreconditions()
+            .VaryForActor()).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(412);
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization");
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_to_206_PartialContent_response()
+    {
+        // 206 Partial Content responses are cacheable per RFC 9111 §3.3 and must partition
+        // by actor too — an actor-scoped chunked download must not leak chunks across
+        // actors. Pins that the .WithRange success path picks up VaryForActor.
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        var r = Result.Ok(new Thing(1, "x"));
+
+        await r.ToHttpResponse(t => t, o => o
+            .WithRange(0, 99, 1000)
+            .VaryForActor()).ExecuteAsync(ctx);
+
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization",
+            "206 Partial Content must carry actor-vary headers");
+    }
 }
