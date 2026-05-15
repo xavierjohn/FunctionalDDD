@@ -94,7 +94,7 @@ flowchart TD
     Q4b -- No --> IAuthResProj["IAuthorizeResource&lt;TProjection&gt;<br/>+ custom IResourceLoader&lt;TMessage, TProjection&gt;<br/>(cartesian joins, recursive hierarchies, conditional paths)"]
     Q3 -- No --> Q5
     Q5 -- Yes --> InHandler["Inject IActorProvider<br/>+ Result.Ensure inside the handler"]
-    Q5 -- No --> NoInterface["No authorization interface needed<br/>(authenticated endpoint with no permission rule)"]
+    Q5 -- No --> NoInterface["No Trellis authorization interface needed<br/>Use [Authorize] or RequireAuthorization<br/>at the endpoint to enforce authentication"]
 ```
 
 Pick one **primary** authorization shape per command. The framework allows an `IAuthorize` static gate to coexist with `IAuthorizeResource<T>` or `IAuthorizeResourceVia<TOwner>` (both run, either denial produces 403) — that composition is common for a coarse "must have this permission" gate plus a fine "and must own the resource" check. The only combination rejected at startup is **dual-mode resource authorization** (a command carrying both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` simultaneously) — pick one path-resolution shape, not both.
@@ -367,6 +367,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Trellis;
 using Trellis.Asp.Authorization;
 using Trellis.Authorization;
 
@@ -397,7 +398,7 @@ public sealed class DatabaseActorProvider(
     }
 }
 
-builder.Services.AddSingleton<IPermissionStore, MyPermissionStore>();
+builder.Services.AddSingleton<IPermissionStore, MyPermissionStore>(); // MyPermissionStore is your IPermissionStore implementation.
 builder.Services.AddCachingActorProvider<DatabaseActorProvider>();
 ```
 
@@ -432,23 +433,26 @@ ASP.NET Core's `JwtBearerOptions.MapInboundClaims` defaults to `true`. The handl
 | `"acr"` | `http://schemas.microsoft.com/claims/authnclassreference` |
 | `"amr"` | `http://schemas.microsoft.com/claims/authnmethodsreferences` |
 
-The fallback is **bidirectional**: literal `Claim.Type` match first; if neither the configured name nor a counterpart resolves, both `ActorIdClaim` and `PermissionsClaim` fall back through the table. Configuring `ActorIdClaim = "sub"` or `ActorIdClaim = ClaimTypes.NameIdentifier` both work, against either `MapInboundClaims = true` or `false`. The provider emits a debug-level log entry naming the configured claim and the resolved counterpart whenever the fallback fires — useful for diagnosing "always 401" issues in production. The default `PermissionsClaim = "permissions"` is NOT in the inbound map, so its resolution remains literal-only (regression-safe).
+The fallback shape differs by claim. **`ActorIdClaim`** resolves with literal-first then mapped counterpart: the literal `Claim.Type` lookup is tried first; if absent, the counterpart from the table is tried. **`PermissionsClaim`** aggregates: literal matches and mapped-counterpart matches are both yielded and merged into the deduplicated permission set. The mapping is **bidirectional** — configuring short forms (`"sub"`, `"roles"`) works against either `MapInboundClaims = true` or `false`; configuring long forms (`ClaimTypes.NameIdentifier`, `ClaimTypes.Role`) reverses through the same table. The provider emits a debug-level log entry naming the configured claim and the resolved counterpart only when the configured literal had no matches but a counterpart did — useful for diagnosing "always 401" issues in production. The default `PermissionsClaim = "permissions"` is NOT in the inbound map, so its resolution remains literal-only (regression-safe).
 
 > [!CAUTION]
 > The OAuth scope claim `"scp"` is intentionally NOT in the fallback table. Its value is space-delimited per RFC 6749 §3.3 (e.g. `"orders.read orders.write"`); the provider snapshots claim values verbatim into the permission set, so a fallback for `scp` would still leave `Actor.HasPermission("orders.read")` returning `false` (the permission set would contain the single string `"orders.read orders.write"`). OAuth scope-as-permission requires a custom subclass that splits the value on whitespace.
 
 > [!TIP]
-> **Recommended for new services:** `services.AddAuthentication().AddJwtBearer(o => { o.MapInboundClaims = false; ... })`. Claim names then round-trip with their OIDC / RFC 7519 short names; with `ClaimsActorOptions` left on its short-form defaults (`"sub"`, `"permissions"`, `"roles"`, etc.) the `ClaimsActorProvider` shared short↔long fallback never fires — keeping the production log quiet and the failure mode (`Maybe<Actor>.None`) tied to genuinely missing claims, not handler-side rename surprises. If you instead configure long-form values (`ActorIdClaim = ClaimTypes.NameIdentifier`, etc.) the fallback still runs in reverse against the same table. `EntraActorProvider`'s own `oid` ↔ long-form fallback (documented below) is unaffected and covers the v2.0 default regardless of `MapInboundClaims`.
+> **Recommended for new services:** `services.AddAuthentication().AddJwtBearer(o => { o.MapInboundClaims = false; ... })`. Claim names then round-trip with their OIDC / RFC 7519 short names; with `ClaimsActorOptions` left on its defaults (`ActorIdClaim = "sub"`, `PermissionsClaim = "permissions"`) the `ClaimsActorProvider` shared short↔long fallback never fires — keeping the production log quiet and the failure mode (`Maybe<Actor>.None`) tied to genuinely missing claims, not handler-side rename surprises. If you configure a different name on either side (long-form `ClaimTypes.NameIdentifier` or another mapped short form like `"roles"`) the fallback still runs through the same table. `EntraActorProvider`'s own `oid` ↔ long-form fallback (documented below) is unaffected and covers the v2.0 default regardless of `MapInboundClaims`.
 
 > [!NOTE]
-> **`EntraActorProvider` does not inherit this fallback** — it overrides `GetCurrentActorAsync` and resolves the actor id with a single-purpose `oid` ↔ `http://schemas.microsoft.com/identity/claims/objectidentifier` fallback (covering the v2.0-default case). Permissions are mapped via the configured `MapPermissions` delegate against the raw claim list, not through the shared table. If you set `EntraActorOptions.IdClaimType` to a non-default short claim (`"sub"`, `"upn"`, etc.) AND your `JwtBearer` keeps `MapInboundClaims = true`, set `MapInboundClaims = false` or configure `IdClaimType` to the mapped long form explicitly — the shared fallback only applies under `ClaimsActorProvider`.
+> **`EntraActorProvider` does not inherit this fallback** — it overrides `GetCurrentActorAsync` and resolves the actor id with a single-purpose `oid` ↔ `http://schemas.microsoft.com/identity/claims/objectidentifier` fallback (covering the v2.0-default case). Permissions are mapped via the configured `MapPermissions` delegate against the `ClaimsIdentity` claim list (after `JwtBearer` claim mapping has already run), not through the shared table. If you set `EntraActorOptions.IdClaimType` to a non-default short claim (`"sub"`, `"upn"`, etc.) AND your `JwtBearer` keeps `MapInboundClaims = true`, set `MapInboundClaims = false` or configure `IdClaimType` to the mapped long form explicitly — the shared fallback only applies under `ClaimsActorProvider`.
 
 ### Flatten Entra roles into application permissions
+
+This sample assumes `MapInboundClaims = false` (as the Quick start recommends). If you leave the ASP.NET Core default of `true`, replace `"roles"` with `ClaimTypes.Role` OR include both, otherwise the mapped role claim will be silently dropped.
 
 ```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis.Asp.Authorization;
 
@@ -461,7 +465,8 @@ builder.Services.AddEntraActorProvider(options =>
     };
 
     options.MapPermissions = claims => claims
-        .Where(c => string.Equals(c.Type, "roles", StringComparison.OrdinalIgnoreCase))
+        .Where(c => string.Equals(c.Type, "roles", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(c.Type, ClaimTypes.Role, StringComparison.OrdinalIgnoreCase))
         .SelectMany(c => rolePermissionMap.TryGetValue(c.Value, out var perms) ? perms : Array.Empty<string>())
         .ToHashSet(StringComparer.Ordinal);
 });
@@ -778,7 +783,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 These providers compose three ways:
 
 - **Provider stack.** `AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code.
-- **Mediator pipeline.** Once an `IActorProvider` is registered alongside the corresponding mediator behaviors, `IAuthorize` (static) runs inside `AuthorizationBehavior`, `IAuthorizeResource<T>` runs inside `ResourceAuthorizationBehavior`, and `IAuthorizeResourceVia<TOwner>` runs inside `ResourceAuthorizationViaBehavior`. Resource behaviors are wired by `AddResourceAuthorization(...)` (explicit overload per-message + assembly-scanning overload — see the [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) sections above). The static behavior emits `Error.Unauthorized` when no actor is resolved and `Error.Forbidden` when a required permission is missing; the resource behaviors emit `Error.Forbidden` on rule denial. ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps `Unauthorized` to RFC 9110 `401` and `Forbidden` to RFC 7807 `403`.
+- **Mediator pipeline.** All three authorization behaviors (`AuthorizationBehavior` for `IAuthorize`, `ResourceAuthorizationBehavior` for `IAuthorizeResource<T>`, `ResourceAuthorizationViaBehavior` for `IAuthorizeResourceVia<TOwner>`) share an internal `ActorResolution.TryResolveAsync` helper that calls the registered `IActorProvider` and short-circuits the pipeline with `Error.Unauthorized` when no actor is resolved. Each behavior then runs its own denial check and emits `Error.Forbidden` (static permission missing for `AuthorizationBehavior`; resource-rule denial for the two resource behaviors). Resource behaviors are wired by `AddResourceAuthorization(...)` (explicit overload per-message + assembly-scanning overload — see the [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) sections above). ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps `Unauthorized` to RFC 9110 `401` and `Forbidden` to RFC 7807 `403`.
 - **Result pipelines.** Inside handlers, `Actor` predicates return `bool`, so `Result.Ensure(actor.HasPermission(...), new Error.Forbidden(...))` plugs straight into `Bind` / `Map` chains.
 
 ```csharp
