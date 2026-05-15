@@ -530,7 +530,7 @@ services.AddCachingActorProvider<KeycloakActorProvider>();
 
 ## Multiple IdPs in one API
 
-A single Trellis service can validate tokens from multiple IdPs at once — a typical "web frontend with Microsoft *and* Google sign-in buttons, plus iOS / Android apps signing in with Apple or Google" deployment. This is plain ASP.NET Core multi-scheme authentication: register one `AddJwtBearer("<scheme>", ...)` per issuer and let `JwtBearerHandler` pick the scheme whose `Authority` / `Audience` matches each incoming token.
+A single Trellis service can validate tokens from multiple IdPs at once — a typical "web frontend with Microsoft *and* Google sign-in buttons, plus iOS / Android apps signing in with Apple or Google" deployment. This is plain ASP.NET Core multi-scheme authentication: register one `AddJwtBearer("<scheme>", ...)` per issuer and list every scheme in the authorization policy so each is invoked per request.
 
 ### Register one scheme per IdP
 
@@ -580,7 +580,7 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
-For each request, ASP.NET Core's `PolicyEvaluator` invokes every scheme listed in the policy and merges the successful principals into `HttpContext.User`. With a single bearer token the issuer/audience match makes exactly one scheme succeed; the others return `AuthenticateResult.NoResult` and contribute nothing. The downstream actor provider sees one validated principal regardless of which scheme matched.
+For each request, ASP.NET Core's `PolicyEvaluator` invokes every scheme listed in the policy and merges the successful principals into `HttpContext.User`. With a single bearer token, the non-matching `JwtBearerHandler`s return `AuthenticateResult.Fail(...)` (token signature / issuer / audience validation failed against that scheme's configuration); `PolicyEvaluator` ignores those failures and the policy succeeds as long as one scheme produced a principal. The downstream actor provider sees one validated principal regardless of which scheme matched.
 
 > [!NOTE]
 > If your authorization policy does **not** list every scheme, only the default scheme runs and tokens from the other IdPs come back 401. The pattern above sidesteps that by enumerating all schemes in the policy. As an alternative, a [forwarding scheme](https://learn.microsoft.com/aspnet/core/security/authentication/policyschemes) (`AddPolicyScheme(...)` with a `ForwardDefaultSelector` that picks per-request based on token `iss`) lets you keep a single default scheme.
@@ -615,7 +615,7 @@ using Trellis.Authorization;
 public sealed class IssuerRoutingActorProvider(
     IHttpContextAccessor accessor,
     EntraActorProvider entra,
-    ClaimsActorProvider generic) : IActorProvider
+    ClaimsActorProvider generic) : IActorProvider, IProvideActorVaryHeaders
 {
     public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
     {
@@ -626,6 +626,12 @@ public sealed class IssuerRoutingActorProvider(
             ? entra.GetCurrentActorAsync(cancellationToken)
             : generic.GetCurrentActorAsync(cancellationToken);
     }
+
+    // CachingActorProvider only delegates IProvideActorVaryHeaders to its directly wrapped
+    // inner. Without this, VaryForActor() output-cache partitioning fails closed because
+    // the wrapped router exposes no vary headers. Every Trellis-supported bearer-token IdP
+    // partitions on the same header.
+    public IReadOnlyCollection<string> VaryByHeaders { get; } = ["Authorization"];
 }
 
 // Register both inner providers as concrete types, then expose the router as IActorProvider.
