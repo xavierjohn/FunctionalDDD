@@ -94,7 +94,7 @@ flowchart TD
     Q4b -- No --> IAuthResProj["IAuthorizeResource&lt;TProjection&gt;<br/>+ custom IResourceLoader&lt;TMessage, TProjection&gt;<br/>(cartesian joins, recursive hierarchies, conditional paths)"]
     Q3 -- No --> Q5
     Q5 -- Yes --> InHandler["Inject IActorProvider<br/>+ Result.Ensure inside the handler"]
-    Q5 -- No --> IAuth
+    Q5 -- No --> NoInterface["No authorization interface needed<br/>(authenticated endpoint with no permission rule)"]
 ```
 
 Pick one **primary** authorization shape per command. The framework allows an `IAuthorize` static gate to coexist with `IAuthorizeResource<T>` or `IAuthorizeResourceVia<TOwner>` (both run, either denial produces 403) — that composition is common for a coarse "must have this permission" gate plus a fine "and must own the resource" check. The only combination rejected at startup is **dual-mode resource authorization** (a command carrying both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` simultaneously) — pick one path-resolution shape, not both.
@@ -124,7 +124,7 @@ sequenceDiagram
     end
 ```
 
-Two 401 sources, one wire shape. The mediator-emitted 401 (right branch) is the path the framework controls; consumers populate `Error.Unauthorized.Challenges` explicitly when they need a parametrized challenge (with `realm`, `scope`, etc.).
+Same 401 status and `WWW-Authenticate` contract from both paths, different challenge details (the JwtBearer challenge carries scheme-specific `error="invalid_token"` parameters; the synthesized challenge is scheme-only). The mediator-emitted 401 (right branch) is the path the framework controls; consumers populate `Error.Unauthorized.Challenges` explicitly when they need a parametrized challenge (with `realm`, `scope`, etc.).
 
 ### Anatomy of a 403
 
@@ -438,7 +438,7 @@ The fallback is **bidirectional**: literal `Claim.Type` match first; if neither 
 > The OAuth scope claim `"scp"` is intentionally NOT in the fallback table. Its value is space-delimited per RFC 6749 §3.3 (e.g. `"orders.read orders.write"`); the provider snapshots claim values verbatim into the permission set, so a fallback for `scp` would still leave `Actor.HasPermission("orders.read")` returning `false` (the permission set would contain the single string `"orders.read orders.write"`). OAuth scope-as-permission requires a custom subclass that splits the value on whitespace.
 
 > [!TIP]
-> **Recommended for new services:** `services.AddAuthentication().AddJwtBearer(o => { o.MapInboundClaims = false; ... })`. Claim names then round-trip with their OIDC / RFC 7519 short names and the **`ClaimsActorProvider` shared short↔long fallback** never fires — keeping the production log quiet and the failure mode (`Maybe<Actor>.None`) tied to genuinely missing claims, not handler-side rename surprises. `EntraActorProvider`'s own `oid` ↔ long-form fallback (documented below) is unaffected; it covers the v2.0 default and runs whether or not `MapInboundClaims` is set.
+> **Recommended for new services:** `services.AddAuthentication().AddJwtBearer(o => { o.MapInboundClaims = false; ... })`. Claim names then round-trip with their OIDC / RFC 7519 short names; with `ClaimsActorOptions` left on its short-form defaults (`"sub"`, `"permissions"`, `"roles"`, etc.) the `ClaimsActorProvider` shared short↔long fallback never fires — keeping the production log quiet and the failure mode (`Maybe<Actor>.None`) tied to genuinely missing claims, not handler-side rename surprises. If you instead configure long-form values (`ActorIdClaim = ClaimTypes.NameIdentifier`, etc.) the fallback still runs in reverse against the same table. `EntraActorProvider`'s own `oid` ↔ long-form fallback (documented below) is unaffected and covers the v2.0 default regardless of `MapInboundClaims`.
 
 > [!NOTE]
 > **`EntraActorProvider` does not inherit this fallback** — it overrides `GetCurrentActorAsync` and resolves the actor id with a single-purpose `oid` ↔ `http://schemas.microsoft.com/identity/claims/objectidentifier` fallback (covering the v2.0-default case). Permissions are mapped via the configured `MapPermissions` delegate against the raw claim list, not through the shared table. If you set `EntraActorOptions.IdClaimType` to a non-default short claim (`"sub"`, `"upn"`, etc.) AND your `JwtBearer` keeps `MapInboundClaims = true`, set `MapInboundClaims = false` or configure `IdClaimType` to the mapped long form explicitly — the shared fallback only applies under `ClaimsActorProvider`.
@@ -545,7 +545,7 @@ var mfaPassed = actor.GetAttribute(ActorAttributes.MfaAuthenticated) == "true";
 
 ## Mediator integration
 
-When a request flows through `Trellis.Mediator`, prefer pipeline behaviors over per-handler permission checks. `AuthorizationBehavior<TMessage, TResponse>` (see [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md)) calls `IActorProvider.GetCurrentActorAsync` and short-circuits the pipeline with `Error.Unauthorized` when no actor is resolved, or `Error.Forbidden` when a required permission is missing.
+When a request flows through `Trellis.Mediator`, prefer pipeline behaviors over per-handler permission checks. All three authorization behaviors — `AuthorizationBehavior<TMessage, TResponse>` (for `IAuthorize`), `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` (for `IAuthorizeResource<T>`), and `ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>` (for `IAuthorizeResourceVia<TOwner>`) — share an internal `ActorResolution.TryResolveAsync` helper that calls `IActorProvider.GetCurrentActorAsync` and short-circuits with `Error.Unauthorized` when no actor is resolved. Each behavior then runs its own denial check and emits `Error.Forbidden` on permission-missing or resource-rule failure. See [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md).
 
 ### Static permission checks via `IAuthorize`
 
@@ -672,7 +672,7 @@ sequenceDiagram
     end
     Behavior->>Auth: Authorize actor and owners
     Auth-->>Behavior: Result Ok or Forbidden
-    Behavior-->>Mediator: Continue or short-circuit to 403
+    Behavior-->>Mediator: Continue, bubble leaf load failure verbatim, or short-circuit hop/rule failures to 403
 ```
 
 **Sketch:**
@@ -736,7 +736,7 @@ return result.ToHttpResponse(MyResponse.From, o => o
     .VaryForActor());
 ```
 
-At apply time the builder resolves the registered `IActorProvider` and reads its `IProvideActorVaryHeaders.VaryByHeaders` collection (a capability the bundled providers implement). The decorator chain is walked from outermost to innermost: the **first** provider in that walk that implements `IProvideActorVaryHeaders` supplies the headers, and unwrapping continues only to find the innermost provider for diagnostics. This shape means a wrapper that legitimately augments the header set (e.g. a tenant-scoping decorator adding `X-Tenant` alongside the inner provider's `Authorization`) is honored; `CachingActorProvider` is unwrapped because it delegates the capability rather than implementing it itself.
+At apply time the builder resolves the registered `IActorProvider` and reads its `IProvideActorVaryHeaders.VaryByHeaders` collection (a capability the bundled providers implement). The decorator chain is walked from outermost to innermost: the **first** provider in that walk that implements `IProvideActorVaryHeaders` supplies the headers, and unwrapping continues only to find the innermost provider for diagnostics. This shape means a wrapper that legitimately augments the header set (e.g. a tenant-scoping decorator adding `X-Tenant` alongside the inner provider's `Authorization`) is honored. `CachingActorProvider` implements `IProvideActorVaryHeaders` by delegating to its inner provider's `VaryByHeaders` — the chain is still walked all the way to the innermost provider so diagnostics name the actual identity source, not the caching wrapper.
 
 **Fail-closed semantics.** When no provider in the chain implements `IProvideActorVaryHeaders`, or when the implementation returns an empty `VaryByHeaders` collection, `VaryForActor()` throws `InvalidOperationException` at apply time — surfacing misconfiguration as a clear error rather than silently shipping a response that an intermediate cache could pollute across actors. Diagnostics name the **innermost** provider as the remediation site, not the wrapper.
 
@@ -763,6 +763,8 @@ builder.Services.AddCachingActorProvider<CookieClaimsActorProvider>();
 If you do not want the caching wrapper, replace the slot directly:
 
 ```csharp
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
 builder.Services.AddClaimsActorProvider(o => o.ActorIdClaim = "sub");
 builder.Services.Replace(ServiceDescriptor.Scoped<IActorProvider, CookieClaimsActorProvider>());
 ```
