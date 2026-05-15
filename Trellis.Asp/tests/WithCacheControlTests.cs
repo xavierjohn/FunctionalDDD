@@ -245,6 +245,45 @@ public sealed class WithCacheControlTests
         cc.Should().Contain("private").And.Contain("max-age=90");
     }
 
+    [Fact]
+    public async Task Selector_emits_on_Accepted_WriteOutcome()
+    {
+        // WriteOutcome.Accepted carries StatusBody : TDomain — the cache-control selector
+        // must run against that body too, not silently skip it as if Accepted had no domain.
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<Todo>.Accepted(new Todo(7, "queued", "v0"));
+        var r = Result.Ok<WriteOutcome<Todo>>(outcome);
+
+        await r.ToHttpResponse<Todo>(
+            o => o.WithCacheControl(t => new CacheControlHeaderValue
+            {
+                Private = true,
+                MaxAge = TimeSpan.FromSeconds(t.Id),
+            }))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(202);
+        var cc = ctx.Response.Headers.CacheControl.ToString();
+        cc.Should().Contain("private").And.Contain("max-age=7");
+    }
+
+    [Fact]
+    public async Task Selector_returning_null_falls_back_to_static_value()
+    {
+        // When both overloads are configured AND the selector returns null on this response,
+        // the static value remains in place (the selector "refines, then falls back").
+        var ctx = NewContext();
+        var r = Result.Ok(new Todo(1, "x", "abc"));
+
+        await r.ToHttpResponse(t => t, o => o
+                .WithCacheControl(CacheControl.NoStore())
+                .WithCacheControl(_ => null))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store",
+            "a null selector return preserves the static value rather than clearing the header");
+    }
+
     // ---------- Page<T> path ----------
 
     [Fact]
@@ -350,5 +389,33 @@ public sealed class WithCacheControlTests
         a.Extensions.Clear();
         var b = CacheControl.Immutable(TimeSpan.FromHours(1));
         b.Extensions.Select(e => e.Name).Should().Contain("immutable");
+    }
+
+    [Theory]
+    [InlineData("Public")]
+    [InlineData("Private")]
+    [InlineData("Immutable")]
+    public void CacheControl_timed_presets_reject_negative_maxAge(string presetName)
+    {
+        // RFC 9111 delta-seconds is non-negative. The BCL formats `max-age=-1` without
+        // complaint, so the presets must guard up front.
+        Action invoke = presetName switch
+        {
+            "Public" => () => CacheControl.Public(TimeSpan.FromSeconds(-1)),
+            "Private" => () => CacheControl.Private(TimeSpan.FromSeconds(-1)),
+            "Immutable" => () => CacheControl.Immutable(TimeSpan.FromSeconds(-1)),
+            _ => throw new ArgumentOutOfRangeException(nameof(presetName)),
+        };
+
+        FluentActions.Invoking(invoke).Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void CacheControl_timed_presets_accept_zero_maxAge()
+    {
+        // max-age=0 is legal (means "stale immediately, revalidate on every use").
+        CacheControl.Public(TimeSpan.Zero).MaxAge.Should().Be(TimeSpan.Zero);
+        CacheControl.Private(TimeSpan.Zero).MaxAge.Should().Be(TimeSpan.Zero);
+        CacheControl.Immutable(TimeSpan.Zero).MaxAge.Should().Be(TimeSpan.Zero);
     }
 }

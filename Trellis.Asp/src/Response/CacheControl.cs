@@ -35,12 +35,22 @@ public static class CacheControl
     public static CacheControlHeaderValue NoCache() => new() { NoCache = true };
 
     /// <summary><c>Cache-Control: public, max-age={seconds}</c> — shared caches may store the response.</summary>
-    /// <param name="maxAge">Freshness lifetime; emitted as <c>max-age</c> in seconds (truncated to whole seconds).</param>
-    public static CacheControlHeaderValue Public(TimeSpan maxAge) => new() { Public = true, MaxAge = maxAge };
+    /// <param name="maxAge">Freshness lifetime; emitted as <c>max-age</c> in seconds (truncated to whole seconds). Must be non-negative — RFC 9111 <c>delta-seconds</c> is unsigned.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxAge"/> is negative.</exception>
+    public static CacheControlHeaderValue Public(TimeSpan maxAge)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxAge, TimeSpan.Zero);
+        return new() { Public = true, MaxAge = maxAge };
+    }
 
     /// <summary><c>Cache-Control: private, max-age={seconds}</c> — only the requesting user agent may store the response.</summary>
-    /// <param name="maxAge">Freshness lifetime; emitted as <c>max-age</c> in seconds (truncated to whole seconds).</param>
-    public static CacheControlHeaderValue Private(TimeSpan maxAge) => new() { Private = true, MaxAge = maxAge };
+    /// <param name="maxAge">Freshness lifetime; emitted as <c>max-age</c> in seconds (truncated to whole seconds). Must be non-negative — RFC 9111 <c>delta-seconds</c> is unsigned.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxAge"/> is negative.</exception>
+    public static CacheControlHeaderValue Private(TimeSpan maxAge)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxAge, TimeSpan.Zero);
+        return new() { Private = true, MaxAge = maxAge };
+    }
 
     /// <summary>
     /// <c>Cache-Control: public, max-age={seconds}, immutable</c> — the response will not change for
@@ -48,9 +58,11 @@ public static class CacheControl
     /// (RFC 8246) is appended via the <see cref="CacheControlHeaderValue.Extensions"/> collection
     /// because the BCL type has no dedicated property for it.
     /// </summary>
-    /// <param name="maxAge">Freshness lifetime; emitted as <c>max-age</c> in seconds.</param>
+    /// <param name="maxAge">Freshness lifetime; emitted as <c>max-age</c> in seconds. Must be non-negative.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxAge"/> is negative.</exception>
     public static CacheControlHeaderValue Immutable(TimeSpan maxAge)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxAge, TimeSpan.Zero);
         var cc = new CacheControlHeaderValue { Public = true, MaxAge = maxAge };
         cc.Extensions.Add(new NameValueHeaderValue("immutable"));
         return cc;

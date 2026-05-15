@@ -147,11 +147,14 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
 
     /// <summary>
     /// Sets the <c>Cache-Control</c> response header from a selector run against the domain value.
-    /// Applies to success responses only — the failure path has no domain value. Returning
-    /// <see langword="null"/> from the selector omits the header on that response, regardless of
-    /// any value supplied via the non-selector overload.
+    /// Applies to success responses only — the failure path has no domain value.
     /// </summary>
-    /// <param name="selector">Selector invoked with the success-path domain value. May return null to skip the header.</param>
+    /// <param name="selector">
+    /// Selector invoked with the success-path domain value. Returning <see langword="null"/> from
+    /// the selector skips the per-domain header on that response; when the static-value overload
+    /// is also configured, that static value remains in place (the selector "refines, then falls
+    /// back to static" rather than "overrides to nothing").
+    /// </param>
     public HttpResponseOptionsBuilder<TDomain> WithCacheControl(Func<TDomain, System.Net.Http.Headers.CacheControlHeaderValue?> selector)
     {
         ArgumentNullException.ThrowIfNull(selector);

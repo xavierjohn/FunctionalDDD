@@ -147,6 +147,7 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
         {
             WriteOutcome<TDomain>.Created c => c.Value,
             WriteOutcome<TDomain>.Updated u => u.Value,
+            WriteOutcome<TDomain>.Accepted a => a.StatusBody,
             _ => default,
         };
 
