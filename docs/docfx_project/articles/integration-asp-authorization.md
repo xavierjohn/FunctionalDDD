@@ -242,7 +242,19 @@ using Trellis.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Required: keep claim names round-tripping with their RFC 7519 / OIDC short forms.
+        // Without this, JwtBearer remaps "tid", "amr", "sub" etc. onto WS-* long-form URNs
+        // before they reach HttpContext.User. EntraActorProvider's default MapAttributes
+        // checks short claim names directly ("tid", "amr") so the default ABAC attributes
+        // — Actor.GetAttribute(ActorAttributes.TenantId) and ActorAttributes.MfaAuthenticated
+        // — would silently come back empty / false under the ASP.NET default of true.
+        // See "MapInboundClaims and the short↔long fallback" below for the deeper trap.
+        options.MapInboundClaims = false;
+    });
 builder.Services.AddAuthorization();
 builder.Services.AddEntraActorProvider();
 
@@ -677,17 +689,19 @@ public sealed record UpdateMatchCommand(MatchId MatchId, string NewVenue)
 }
 ```
 
-Wire the loaders at the composition root (see Recipe 24 for the full walkthrough including AOT registration and the startup-rejection rules):
+Wire the path at the composition root via assembly scanning (multi-hop with a plural terminal — like cricket fan-out — requires either scanning or a hand-built `ResolvedAuthorizationPath`; the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only). The scanner picks up the `SharedResourceLoaderById<TResource, TId>` registrations alongside the command and entity declarations:
 
 ```csharp
-builder.Services.AddSharedResourceLoaderById<Match, MatchId, MatchRepository>();
-builder.Services.AddSharedResourceLoaderById<Team, TeamId, TeamRepository>();
-builder.Services.AddSharedResourceLoaderById<Owner, OwnerId, OwnerRepository>();
+builder.Services.AddScoped<SharedResourceLoaderById<Match, MatchId>, MatchLoader>();
+builder.Services.AddScoped<SharedResourceLoaderById<Team, TeamId>, TeamLoader>();
+builder.Services.AddScoped<SharedResourceLoaderById<Owner, OwnerId>, OwnerLoader>();
 builder.Services.AddResourceAuthorization(typeof(UpdateMatchCommand).Assembly);
 ```
 
+For Native AOT / trimming-strict deployments the cookbook walks through hand-building `ResolvedAuthorizationPath` for multi-hop chains. See [Recipe 24](../api_reference/trellis-api-cookbook.md#recipe-24--indirect-multi-hop-resource-authorization) for the full walkthrough.
+
 > [!IMPORTANT]
-> **Path resolution and security invariants fire at startup, not at request time.** `ResourceAuthorizationPathResolver` rejects (with `InvalidOperationException`): no path from leaf to owner, ambiguous path (multiple distinct routes), plural-in-middle (only the terminal hop may be plural, to avoid cartesian fan-out), leaf == owner (use `IAuthorizeResource<T>` instead), missing `SharedResourceLoaderById<,>` at any hop. Dual-mode commands (carrying both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>`) are also rejected — the framework refuses to silently skip a security-marked command. Intermediate load failures collapse to `Error.Forbidden`, not `Error.NotFound`, to avoid existence leaks across team / owner boundaries.
+> **What fires at startup vs at request time.** The path resolver runs at registration time (during `AddResourceAuthorization(...)`) and rejects with `InvalidOperationException`: no path from leaf to owner, ambiguous path (multiple distinct routes), plural-in-middle (only the terminal hop may be plural, to avoid cartesian fan-out), leaf == owner (use `IAuthorizeResource<T>` instead), via-command without `IIdentifyResource<TLeaf, TLeafId>`, and dual-mode commands (carrying both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` — security primitives are never silently composed). Missing `SharedResourceLoaderById<TTo, TToId>` registration for an intermediate hop is a request-time `InvalidOperationException` (deployment bug, not authorization denial — failing loud rather than masking as 403). Intermediate load *failures* (`Result<T>.IsFailure`) collapse to `Error.Forbidden`, not `Error.NotFound`, to avoid existence leaks across team / owner boundaries.
 
 > [!TIP]
 > The marker interfaces declare the path; the resolver computes the navigation chain once at registration time and caches it. If your authorization rule needs to traverse a hop that can't be expressed as "load by id" (cartesian joins, recursive hierarchies, conditional paths), fall back to the per-command `IResourceLoader<TMessage, TProjection>` escape hatch and write `Authorize(actor, projection)` directly. See [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md) and Recipe 24 in [`trellis-api-cookbook.md`](../api_reference/trellis-api-cookbook.md#recipe-24--indirect-multi-hop-resource-authorization) for the full reference.
