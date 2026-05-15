@@ -59,10 +59,10 @@ Six layers, in order of execution (each linked to its canonical section below):
 
 1. **Authentication.** `JwtBearer` (or your scheme) validates signature / expiry / issuer / audience and produces an authenticated `ClaimsPrincipal`. Trellis does not run here.
 2. **Claim mapping.** `JwtBearerOptions.MapInboundClaims` may rename claims before they reach `HttpContext.User` — see [`MapInboundClaims` and the short↔long fallback](#mapinboundclaims-and-the-shortlong-fallback) for the footgun.
-3. **Actor resolution.** A scoped `IActorProvider` reads `HttpContext.User` and returns `Maybe<Actor>` — see [Surface at a glance](#surface-at-a-glance) for the four bundled providers.
+3. **Actor resolution.** A scoped `IActorProvider` reads `HttpContext.User` and returns `Maybe<Actor>`; `Maybe.None` is the "no usable actor" signal. The mediator authorization pipeline maps it to HTTP 401; direct-endpoint code (like the Quick start) must translate it to 401 itself. See [Surface at a glance](#surface-at-a-glance) for the four bundled providers.
 4. **Static permission authorization.** Commands implementing `IAuthorize` get checked by `AuthorizationBehavior` — see [Static permission checks via `IAuthorize`](#static-permission-checks-via-iauthorize).
-5. **Resource-based authorization.** Commands implementing `IAuthorizeResource<T>` or `IAuthorizeResourceVia<TOwner>` get checked by the matching resource behavior — see [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner).
-6. **Handler.** Returns `Result<T>` / `Result<WriteOutcome<T>>` / `Result<Page<T>>`; `ToHttpResponse(...)` maps to HTTP status codes.
+5. **Resource-based authorization.** Single-hop authorizes the resource the command identifies (`IAuthorizeResource<T>`); multi-hop authorizes an ancestor reached from the leaf (`IAuthorizeResourceVia<TOwner>`). See [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner).
+6. **Handler.** Returns `Result<T>` / `Result<WriteOutcome<T>>` / `Result<Page<T>>`; `ToHttpResponse(...)` maps successes to HTTP status codes and sends failures through `ResponseFailureWriter` to ProblemDetails.
 
 For the failure modes — what produces 401 versus 403, and how `WWW-Authenticate` is populated — see [Anatomy of a 401](#anatomy-of-a-401) and [Anatomy of a 403](#anatomy-of-a-403) below.
 
@@ -562,7 +562,7 @@ public sealed record DeleteDocumentCommand(string DocumentId)
 }
 ```
 
-The behavior requires the actor to hold **every** listed permission (AND semantics). Returning `Result<Unit>` from the command is the canonical command shape.
+The behavior requires the actor to hold **every** listed permission (AND semantics) and is **deny-aware** — it goes through `Actor.HasPermission`, so any entry in `Actor.ForbiddenPermissions` overrides a corresponding grant. Returning `Result<Unit>` from the command is the canonical command shape.
 
 ### Resource-based checks via `IAuthorizeResource<TResource>`
 
@@ -775,7 +775,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 
 ## Composition
 
-`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); for a handler-side example using `Actor` predicates in `Result.Ensure` chains:
+`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); use handler-side `Result.Ensure` chains as an escape hatch for guards that cannot be expressed via `IAuthorize` / `IAuthorizeResource<T>` / `IAuthorizeResourceVia<TOwner>`, but prefer mediator behaviors for command authorization so the gate stays declarative and the pipeline stays fail-fast:
 
 ```csharp
 using System.Threading;
