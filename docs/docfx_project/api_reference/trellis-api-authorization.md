@@ -3,7 +3,7 @@ package: Trellis.Authorization
 namespaces: [Trellis.Authorization]
 types: [IActorProvider, ActorContext, Actor, Permission, AuthorizeAttribute, IAuthorizationRequirement, IResourceAuthorizationHandler]
 version: v3
-last_verified: 2026-05-01
+last_verified: 2026-05-14
 audience: [llm]
 ---
 # Trellis.Authorization — API Reference
@@ -11,6 +11,9 @@ audience: [llm]
 **Package:** `Trellis.Authorization`
 **Namespace:** `Trellis.Authorization`
 **Purpose:** Domain-layer authorization primitives — actor identity / permission / attribute model and the contracts used by the mediator's authorization behavior to perform static (permission) and resource-based authorization. This package contains no ASP.NET Core dependencies; the `IActorProvider` implementations and DI helpers ship in `Trellis.Asp` (see [`trellis-api-asp.md`](trellis-api-asp.md), namespace `Trellis.Asp.Authorization`).
+
+> [!TIP]
+> For the end-to-end mental model — JWT → JwtBearer → `IActorProvider` → mediator behaviors → 401/403 — plus decision trees and Mermaid diagrams, read [Mental model](../articles/integration-asp-authorization.md#mental-model) in the integration article first. This file is the type-by-type reference.
 
 See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package.
 
