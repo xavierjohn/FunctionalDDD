@@ -21,6 +21,7 @@ sequenceDiagram
     autonumber
     participant Client
     participant JwtBearer
+    participant Endpoint
     participant Pipeline as Mediator pipeline
     participant Provider as IActorProvider
     participant Auth as AuthorizationBehavior
@@ -31,28 +32,32 @@ sequenceDiagram
     JwtBearer->>JwtBearer: Validate signature expiry issuer audience
     JwtBearer->>JwtBearer: Project claims onto HttpContext.User
     Note right of JwtBearer: MapInboundClaims remaps short to long form
-    JwtBearer->>Pipeline: Endpoint invoked
+    JwtBearer->>Endpoint: Authenticated request
+    Endpoint->>Pipeline: Send command or query
     Pipeline->>Provider: GetCurrentActorAsync
     Provider-->>Pipeline: Maybe of Actor
 
     alt No usable actor
-        Pipeline-->>Client: 401 with synthesized WWW-Authenticate
+        Pipeline-->>Endpoint: Error Unauthorized
+        Endpoint-->>Client: 401 with synthesized WWW-Authenticate
     else Actor resolved
         Pipeline->>Auth: Check IAuthorize.RequiredPermissions
     end
 
     alt Static permission missing
-        Auth-->>Client: 403 Forbidden
+        Auth-->>Endpoint: Error Forbidden
+        Endpoint-->>Client: 403 Forbidden
     else Static permission ok
         Auth->>ResAuth: Load resource and call Authorize
     end
 
     alt Resource auth denied
-        ResAuth-->>Client: 403 Forbidden
+        ResAuth-->>Endpoint: Error Forbidden
+        Endpoint-->>Client: 403 Forbidden
     else Authorized
         ResAuth->>Handler: Invoke
-        Handler-->>ResAuth: Result of T
-        ResAuth-->>Client: Endpoint maps via ToHttpResponse to 200 or 201 or 204
+        Handler-->>Endpoint: Result of T
+        Endpoint-->>Client: ToHttpResponse maps to 200 or 201 or 204
     end
 ```
 
@@ -228,7 +233,7 @@ The actor providers ship in `Trellis.Asp` under namespace `Trellis.Asp.Authoriza
 
 ## Quick start
 
-Authenticate with `JwtBearer`, register `EntraActorProvider`, then read the current `Actor` from any endpoint or handler.
+Authenticate with `JwtBearer` against any OIDC provider, register an `IActorProvider`, then read the current `Actor` from any endpoint or handler. This article shows the framework mechanics; for IdP-specific wiring (Google, Microsoft Entra ID, Apple, Auth0, Okta, Keycloak, Facebook) see [Single Sign-On Integration](integration-sso.md).
 
 ```csharp
 using System.Linq;
@@ -236,27 +241,34 @@ using System.Threading;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis.Asp.Authorization;
 using Trellis.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
+var auth = builder.Configuration.GetSection("Authentication");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // Required: keep claim names round-tripping with their RFC 7519 / OIDC short forms.
-        // Without this, JwtBearer remaps "tid", "amr", "sub" etc. onto WS-* long-form URNs
-        // before they reach HttpContext.User. EntraActorProvider's default MapAttributes
-        // checks short claim names directly ("tid", "amr") so the default ABAC attributes
-        // — Actor.GetAttribute(ActorAttributes.TenantId) and ActorAttributes.MfaAuthenticated
-        // — would silently come back empty / false under the ASP.NET default of true.
-        // See "MapInboundClaims and the short↔long fallback" below for the deeper trap.
+        options.Authority = auth["Authority"];   // e.g. https://your-tenant.auth0.com/
+        options.Audience  = auth["Audience"];    // your API audience
+
+        // Recommended: keep claim names round-tripping with their RFC 7519 / OIDC short forms.
+        // ASP.NET Core's default of `true` silently remaps short claim names ("sub", "tid", "amr")
+        // onto WS-* long-form URNs before they reach HttpContext.User. The actor providers'
+        // short↔long fallback hides this, but configuring it explicitly keeps the wire shape
+        // predictable. See "MapInboundClaims and the short↔long fallback" below for the trap.
         options.MapInboundClaims = false;
     });
 builder.Services.AddAuthorization();
-builder.Services.AddEntraActorProvider();
+builder.Services.AddClaimsActorProvider(options =>
+{
+    options.ActorIdClaim     = "sub";
+    options.PermissionsClaim = "permissions";
+});
 
 var app = builder.Build();
 
@@ -273,8 +285,6 @@ app.MapGet("/me", [Authorize] async (IActorProvider actorProvider, CancellationT
     {
         actor.Id,
         Permissions = actor.Permissions.OrderBy(p => p).ToArray(),
-        TenantId = actor.GetAttribute(ActorAttributes.TenantId),
-        Mfa = actor.GetAttribute(ActorAttributes.MfaAuthenticated),
     });
 });
 
@@ -284,7 +294,12 @@ app.Run();
 > [!NOTE]
 > The provider extracts an `Actor` from `HttpContext.User`. It does **not** validate tokens — keep your normal authentication middleware in place.
 
+> [!TIP]
+> Microsoft Entra ID consumers can substitute `AddEntraActorProvider()` for `AddClaimsActorProvider(...)` to opt in to Entra-specific defaults (App Roles via `roles`, ABAC attributes from `tid` / `oid` / `amr`). See [SSO → Microsoft (Entra ID)](integration-sso.md#microsoft-entra-id).
+
 ## Entra ID provider
+
+For IdP wiring (Authority URL, audience format, multi-tenant pinning), see [SSO → Microsoft (Entra ID)](integration-sso.md#microsoft-entra-id). The table below covers the framework-side options.
 
 | Member | Default | Override to... |
 |---|---|---|
@@ -296,6 +311,8 @@ app.Run();
 `EntraActorProvider` returns `Maybe<Actor>.None` when no authenticated `ClaimsIdentity` exists or the configured `IdClaimType` is missing from the identity. The short `oid` fallback runs only when `IdClaimType` is left at the default long-form objectidentifier URI (`http://schemas.microsoft.com/identity/claims/objectidentifier`); a non-default `IdClaimType` (e.g. `"sub"`, `"upn"`) is looked up literally with no fallback. The mediator authorization pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). It throws `InvalidOperationException` only when invoked outside an HTTP request scope (no `HttpContext`) — a configuration bug that surfaces as HTTP 500. Any exception thrown by `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` is rewrapped in `InvalidOperationException` naming the failing delegate.
 
 ## Generic claims provider
+
+For IdP-specific Quick starts (Google, Apple, Auth0, Okta, Keycloak, Facebook-via-bridge), see [SSO → Provider recipes](integration-sso.md#provider-recipes). The table below covers the framework-side options.
 
 For any flat-claim OIDC token where you can name the id and permissions claim types directly.
 
@@ -776,7 +793,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 
 ## Composition
 
-`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); for guards that don't fit any mediator authorization shape, the framework supports two escape hatches in order of preference: (1) `IAuthorizeResource<TProjection>` + a custom `IResourceLoader<TMessage, TProjection>` that shapes the projection however your rule needs (see [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource)) so the gate stays declarative; (2) plain `Actor` predicates inside a handler's `Result` chain, for guards that depend on handler-local state, span multiple aggregates the mediator pipeline never loads together, or are reused from a service-layer helper called outside the mediator pipeline. The handler-side shape:
+`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); for a guard that doesn't fit the standard static/load-by-id/via shapes, the framework supports two escape hatches in order of preference: (1) `IAuthorizeResource<TProjection>` + a custom `IResourceLoader<TMessage, TProjection>` that shapes the projection however your rule needs (see [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource)) so the gate stays declarative; (2) plain `Actor` predicates inside a handler's `Result` chain, for guards that depend on handler-local state, span multiple aggregates the mediator pipeline never loads together, or are reused from a service-layer helper called outside the mediator pipeline. The handler-side shape:
 
 ```csharp
 using System.Threading;
