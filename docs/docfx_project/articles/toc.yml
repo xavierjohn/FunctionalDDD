@@ -52,7 +52,7 @@
     href: integration.md
   - name: ASP.NET Core
     href: integration-aspnet.md
-  - name: ASP.NET Core Authorization (Entra ID)
+  - name: ASP.NET Core Authorization
     href: integration-asp-authorization.md
   - name: Setting Up Single Sign-On (SSO)
     href: integration-sso.md
