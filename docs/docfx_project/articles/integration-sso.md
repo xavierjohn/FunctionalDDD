@@ -580,10 +580,10 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
-Each request goes through every listed scheme until one succeeds. The first scheme whose `Authority` / `Audience` matches the token's `iss` / `aud` validates it; the others short-circuit. `HttpContext.User` ends up with the validated principal regardless of which scheme won.
+For each request, ASP.NET Core's `PolicyEvaluator` invokes every scheme listed in the policy and merges the successful principals into `HttpContext.User`. With a single bearer token the issuer/audience match makes exactly one scheme succeed; the others return `AuthenticateResult.NoResult` and contribute nothing. The downstream actor provider sees one validated principal regardless of which scheme matched.
 
 > [!NOTE]
-> If you set a default scheme on `AddAuthentication("Microsoft")`, only that scheme runs by default and the other tokens come back 401. Either omit the default and list every scheme in the authorization policy (as above), or set a [forwarding scheme](https://learn.microsoft.com/aspnet/core/security/authentication/policyschemes) that picks per-request.
+> If your authorization policy does **not** list every scheme, only the default scheme runs and tokens from the other IdPs come back 401. The pattern above sidesteps that by enumerating all schemes in the policy. As an alternative, a [forwarding scheme](https://learn.microsoft.com/aspnet/core/security/authentication/policyschemes) (`AddPolicyScheme(...)` with a `ForwardDefaultSelector` that picks per-request based on token `iss`) lets you keep a single default scheme.
 
 ### Pick an actor provider strategy
 
@@ -655,7 +655,7 @@ For a multi-IdP API the simplest pattern is to derive a stable user key from `(i
 
 - **One audience per scheme.** Each `AddJwtBearer("<scheme>", ...)` validates exactly one (or via `ValidAudiences`, a set of) audience values. A token whose `aud` matches no scheme returns HTTP 401.
 - **Same scope, different schemes.** All registered schemes share `HttpContext.User` — once a token validates, the downstream actor provider, mediator pipeline, and handlers don't know (and don't need to know) which IdP issued it.
-- **WWW-Authenticate.** When every scheme rejects the token, Trellis's [`ResponseFailureWriter` synthesizes a `WWW-Authenticate` header](integration-asp-authorization.md#anatomy-of-a-401) listing each registered Bearer scheme so the client knows which IdPs the API accepts.
+- **WWW-Authenticate.** Trellis's [`ResponseFailureWriter`](integration-asp-authorization.md#anatomy-of-a-401) synthesizes a single `WWW-Authenticate` header from the configured *default* challenge / authenticate scheme — it does not enumerate every registered scheme. With the parameterless `AddAuthentication()` shown above there is no default, so the synthesizer emits nothing. If you need clients to discover multiple Bearer challenges, either (a) set a default scheme on `AddAuthentication("<scheme>")` so synthesis fires, accepting that only that scheme's name is advertised, or (b) emit explicit challenges per scheme via `Error.Unauthorized.Challenges` from your handler / failure mapper, which `ResponseFailureWriter` writes verbatim ahead of the synthesis path.
 - **Diagnostics.** Log `iss` and the winning scheme on first request from each IdP — silent "wrong scheme picked" is almost always an audience mismatch.
 
 ## JWT validation options
