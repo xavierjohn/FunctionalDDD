@@ -599,12 +599,13 @@ Different IdPs put the user id in different claims:
 
 Two viable strategies for a multi-IdP API:
 
-**Strategy 1 — One provider, normalize on `sub`.** Register `AddClaimsActorProvider(o => o.ActorIdClaim = "sub")` only. Entra v2.0 tokens carry `sub` alongside `oid`, so the same provider works for all three IdPs. The trade-off: Entra `sub` is **per-audience**, so two Entra-fronted APIs see different `sub` values for the same human; that is fine if you have one API or if you key users by `(iss, sub)`, and wrong if you need a single canonical user id across multiple Entra audiences.
+**Strategy 1 — One provider, normalize on `sub`.** Register `AddClaimsActorProvider(o => o.ActorIdClaim = "sub")` only. Entra v2.0 tokens carry `sub` alongside `oid`, so the same provider works for every IdP listed above. The trade-off: Entra `sub` is **per-audience**, so two Entra-fronted APIs see different `sub` values for the same human; that is fine if you have one API or if you key users by `(iss, sub)`, and wrong if you need a single canonical user id across multiple Entra audiences.
 
 **Strategy 2 — Route by issuer.** Wrap a thin router that inspects `HttpContext.User.FindFirstValue("iss")` and delegates to `EntraActorProvider` for Microsoft tokens (so you keep App Roles, ABAC attributes from `tid` / `oid` / `amr`, and the `oid` ↔ long-form fallback) and to `ClaimsActorProvider` for everything else.
 
 ```csharp
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
