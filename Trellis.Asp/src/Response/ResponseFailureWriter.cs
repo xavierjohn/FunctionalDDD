@@ -18,9 +18,9 @@ using Trellis;
 /// </summary>
 internal static class ResponseFailureWriter
 {
-    public static Task WriteAsync(HttpContext httpContext, Error error, int statusCode)
+    public static async Task WriteAsync(HttpContext httpContext, Error error, int statusCode)
     {
-        EmitCompanionHeaders(httpContext, error, statusCode);
+        await EmitCompanionHeadersAsync(httpContext, error, statusCode).ConfigureAwait(false);
 
         // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem.
         // Emitting the server-relative path+query (rather than the absolute URL) avoids host
@@ -56,10 +56,10 @@ internal static class ResponseFailureWriter
                 extensions: BuildExtensions(error, rules));
         }
 
-        return inner.ExecuteAsync(httpContext);
+        await inner.ExecuteAsync(httpContext).ConfigureAwait(false);
     }
 
-    private static void EmitCompanionHeaders(HttpContext httpContext, Error error, int statusCode)
+    private static Task EmitCompanionHeadersAsync(HttpContext httpContext, Error error, int statusCode)
     {
         var response = httpContext.Response;
         switch (error)
@@ -86,9 +86,10 @@ internal static class ResponseFailureWriter
             // attempting re-authentication. Mirrors the m-13 status-aware design used
             // by ValidationProblem detail scrubbing.
             case Error.Unauthorized unauth when statusCode == 401:
-                EmitWwwAuthenticate(httpContext, unauth);
-                break;
+                return EmitWwwAuthenticateAsync(httpContext, unauth);
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -115,7 +116,7 @@ internal static class ResponseFailureWriter
     ///   </description></item>
     /// </list>
     /// </summary>
-    private static void EmitWwwAuthenticate(HttpContext httpContext, Error.Unauthorized unauth)
+    private static async Task EmitWwwAuthenticateAsync(HttpContext httpContext, Error.Unauthorized unauth)
     {
         var response = httpContext.Response;
 
@@ -133,12 +134,12 @@ internal static class ResponseFailureWriter
         if (schemeProvider is null)
             return;
 
-        // Use the synchronous shape: IAuthenticationSchemeProvider's default scheme is cached and the
-        // documented implementation never blocks. Falling back to .Result here keeps the writer
-        // synchronous (it's called from a switch inside EmitCompanionHeaders, which sits on the
-        // hot path of WriteAsync).
-        var scheme = schemeProvider.GetDefaultChallengeSchemeAsync().GetAwaiter().GetResult()
-            ?? schemeProvider.GetDefaultAuthenticateSchemeAsync().GetAwaiter().GetResult();
+        // The IAuthenticationSchemeProvider contract is async; sync-over-async (.Result /
+        // .GetAwaiter().GetResult()) would deadlock under some SynchronizationContexts and
+        // stall the request thread if a custom implementation does real I/O. Await both
+        // before the ProblemDetails body is composed.
+        var scheme = await schemeProvider.GetDefaultChallengeSchemeAsync().ConfigureAwait(false)
+            ?? await schemeProvider.GetDefaultAuthenticateSchemeAsync().ConfigureAwait(false);
         if (scheme is null)
             return;
 
