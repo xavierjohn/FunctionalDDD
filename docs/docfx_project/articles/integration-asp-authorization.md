@@ -20,33 +20,34 @@ Authorization in a Trellis + ASP.NET Core service runs as a pipeline. Each layer
 sequenceDiagram
     autonumber
     participant Client
-    participant JwtBearer as JwtBearer<br/>(ASP.NET Core auth)
-    participant Pipeline as Mediator pipeline<br/>(Trellis.Mediator)
-    participant Provider as IActorProvider<br/>(Claims/Entra/Dev)
+    participant JwtBearer
+    participant Pipeline as Mediator pipeline
+    participant Provider as IActorProvider
     participant Auth as AuthorizationBehavior
     participant ResAuth as ResourceAuthorizationBehavior
     participant Handler
 
-    Client->>JwtBearer: Authorization: Bearer eyJ...
+    Client->>JwtBearer: Authorization Bearer eyJ...
     JwtBearer->>JwtBearer: Validate signature, expiry, issuer, audience
-    JwtBearer->>JwtBearer: Project claims onto HttpContext.User<br/>(MapInboundClaims remaps short → long)
+    JwtBearer->>JwtBearer: Project claims onto HttpContext.User
+    Note right of JwtBearer: MapInboundClaims remaps short to long form
     JwtBearer->>Pipeline: Endpoint invoked, command sent
-    Pipeline->>Provider: GetCurrentActorAsync(ct)
-    Provider->>Provider: Read HttpContext.User<br/>Build Actor (id + permissions + attributes)
-    Provider-->>Pipeline: Maybe&lt;Actor&gt;
-    alt Maybe.None
-        Pipeline->>Client: 401 + WWW-Authenticate<br/>(synthesized from scheme provider)
-    else Maybe.Some(actor)
+    Pipeline->>Provider: GetCurrentActorAsync
+    Provider->>Provider: Read HttpContext.User; build Actor
+    Provider-->>Pipeline: Maybe of Actor
+    alt None
+        Pipeline->>Client: 401 plus WWW-Authenticate (synthesized)
+    else Some actor
         Pipeline->>Auth: Check IAuthorize.RequiredPermissions
         alt Permission missing
             Auth->>Client: 403 Forbidden
         else
-            Auth->>ResAuth: Load resource(s), call Authorize(actor, resource)
+            Auth->>ResAuth: Load resource and call Authorize
             alt Resource auth denied
                 ResAuth->>Client: 403 Forbidden
             else
                 ResAuth->>Handler: Invoke
-                Handler-->>Client: 200 / 201 / 204 + body
+                Handler-->>Client: 200 or 201 or 204 plus body
             end
         end
     end
@@ -71,16 +72,16 @@ Six layers, in order of execution:
 ```mermaid
 flowchart TD
     Start[New command / query]
-    Q1{Does it need<br/>actor identity at all?}
-    Q2{Static permissions enough?<br/>(no resource state)}
-    Q3{Authorization rule depends<br/>on a loaded entity?}
-    Q4{Rule depends on an<br/>ancestor of the loaded entity?<br/>(e.g. match → team → owner)}
-    Q5{Need actor inside the<br/>handler for finer guards?}
+    Q1{"Does it need<br/>actor identity at all?"}
+    Q2{"Static permissions enough?<br/>no resource state"}
+    Q3{"Authorization rule depends<br/>on a loaded entity?"}
+    Q4{"Rule depends on an<br/>ancestor of the loaded entity?<br/>e.g. match -> team -> owner"}
+    Q5{"Need actor inside the<br/>handler for finer guards?"}
 
     Start --> Q1
-    Q1 -- No --> NoActor[No interface needed<br/>Anonymous endpoint]
+    Q1 -- No --> NoActor["No interface needed<br/>Anonymous endpoint"]
     Q1 -- Yes --> Q2
-    Q2 -- Yes --> IAuth[IAuthorize<br/>RequiredPermissions]
+    Q2 -- Yes --> IAuth["IAuthorize<br/>RequiredPermissions"]
     Q2 -- No --> Q3
     Q3 -- Yes --> Q4
     Q4 -- No --> IAuthRes["IAuthorizeResource&lt;T&gt;<br/>+ IIdentifyResource&lt;T, TId&gt;<br/>+ SharedResourceLoaderById"]
@@ -100,20 +101,20 @@ sequenceDiagram
     participant Client
     participant Asp as ASP.NET pipeline
     participant Provider as IActorProvider
-    participant Mediator as Mediator + ActorResolution
+    participant Mediator
     participant Writer as ResponseFailureWriter
 
-    Client->>Asp: Request (no/expired/invalid token)
+    Client->>Asp: Request with no, expired, or invalid token
     alt Token rejected by JwtBearer
-        Asp->>Asp: JwtBearerHandler.HandleChallengeAsync
-        Asp-->>Client: 401 + WWW-Authenticate: Bearer error="invalid_token"
+        Asp->>Asp: JwtBearerHandler HandleChallengeAsync
+        Asp-->>Client: 401 plus WWW-Authenticate Bearer error invalid_token
     else Token accepted but no usable actor
         Asp->>Mediator: Run command
         Mediator->>Provider: GetCurrentActorAsync
-        Provider-->>Mediator: Maybe&lt;Actor&gt;.None
-        Mediator->>Writer: Error.Unauthorized (Challenges=[])
-        Writer->>Writer: Resolve default scheme via<br/>IAuthenticationSchemeProvider
-        Writer-->>Client: 401 + WWW-Authenticate: &lt;scheme name&gt;
+        Provider-->>Mediator: Maybe of Actor is None
+        Mediator->>Writer: Error.Unauthorized with empty Challenges
+        Writer->>Writer: Resolve default scheme via IAuthenticationSchemeProvider
+        Writer-->>Client: 401 plus WWW-Authenticate scheme name
     end
 ```
 
@@ -125,24 +126,24 @@ Two 401 sources, one wire shape. The mediator-emitted 401 (right branch) is the 
 sequenceDiagram
     autonumber
     participant Mediator
-    participant Auth as AuthorizationBehavior<br/>(IAuthorize)
+    participant Auth as AuthorizationBehavior
     participant Loader as Resource loader
-    participant ResAuth as ResourceAuthorizationBehavior<br/>(IAuthorizeResource)
+    participant ResAuth as ResourceAuthorizationBehavior
     participant Writer as ResponseFailureWriter
 
-    Mediator->>Auth: Command + Actor
+    Mediator->>Auth: Command and Actor
     alt RequiredPermissions failed
-        Auth-->>Writer: Error.Forbidden(PolicyId, Resource=null)
-        Writer-->>Mediator: 403 + ProblemDetails
+        Auth-->>Writer: Error.Forbidden with PolicyId only
+        Writer-->>Mediator: 403 ProblemDetails
     else Static permissions pass
-        Auth->>Loader: GetByIdAsync(resourceId)
+        Auth->>Loader: GetByIdAsync resourceId
         alt Resource not found
-            Loader-->>Writer: Error.NotFound → 404
+            Loader-->>Writer: Error.NotFound becomes 404
         else
-            Loader->>ResAuth: Authorize(actor, resource)
+            Loader->>ResAuth: Authorize actor and resource
             alt Rule denied
-                ResAuth-->>Writer: Error.Forbidden(PolicyId, Resource=ref)
-                Writer-->>Mediator: 403 + ProblemDetails
+                ResAuth-->>Writer: Error.Forbidden with PolicyId and Resource
+                Writer-->>Mediator: 403 ProblemDetails
             else
                 ResAuth->>Mediator: Continue
             end
@@ -158,11 +159,11 @@ Cacheable responses (200, 206, 304, paginated lists) must include `Vary: <actor-
 
 ```mermaid
 flowchart LR
-    A[Cache-eligible response] --> B{Endpoint depends<br/>on actor identity?}
-    B -- No --> C[Cache-Control: public<br/>no Vary needed]
-    B -- Yes --> D{Provider implements<br/>IProvideActorVaryHeaders?}
-    D -- Yes --> E["o.VaryForActor()<br/>emits Vary: Authorization<br/>(or whatever the provider declares)"]
-    D -- No --> F[Cache-Control: private, no-store<br/>or implement IProvideActorVaryHeaders<br/>on a subclass]
+    A[Cache-eligible response] --> B{"Endpoint depends<br/>on actor identity?"}
+    B -- No --> C["Cache-Control: public<br/>no Vary needed"]
+    B -- Yes --> D{"Provider implements<br/>IProvideActorVaryHeaders?"}
+    D -- Yes --> E["o.VaryForActor()<br/>emits Vary: Authorization<br/>or whatever the provider declares"]
+    D -- No --> F["Cache-Control: private, no-store<br/>or implement IProvideActorVaryHeaders<br/>on a subclass"]
 ```
 
 The bundled `ClaimsActorProvider` / `EntraActorProvider` declare `VaryByHeaders = ["Authorization"]` (the JWT-bearer assumption); `DevelopmentActorProvider` declares `[X-Test-Actor]`; `CachingActorProvider` delegates to its inner. Services that use cookie / mTLS / forwarded-header auth must subclass and override `VaryByHeaders` — leaving the default would emit a wrong `Vary` header. See [`VaryForActor()` on `HttpResponseOptionsBuilder<T>`](../api_reference/trellis-api-asp.md#httpresponseoptionsbuildertdomain) and [Cache partitioning across actors (`VaryForActor()`)](#cache-partitioning-across-actors-varyforactor) below for the configured shape.
@@ -602,42 +603,40 @@ When the rule depends on an entity that is **not** the entity the command direct
 
 ```mermaid
 flowchart LR
-    subgraph PathDeclaration["Path declaration (resolved at registration time)"]
-        Cmd["Command: UpdateMatchCommand<br/>: IAuthorizeResourceVia&lt;Owner&gt;<br/>: IIdentifyResource&lt;Match, MatchId&gt;"]
-        Match["Match (leaf)<br/>: IIdentifyRelatedResource&lt;Team, TeamId&gt;<br/>(navigation: HomeTeamId)"]
-        Team["Team (intermediate)<br/>: IIdentifyRelatedResources&lt;Owner, OwnerId&gt;<br/>(navigation: Co-owners, terminal plural)"]
-        Owner["Owner (target)"]
+    Cmd["UpdateMatchCommand<br/>IAuthorizeResourceVia of Owner<br/>IIdentifyResource of Match, MatchId"]
+    Match["Match (leaf)<br/>IIdentifyRelatedResource of Team, TeamId"]
+    Team["Team (intermediate)<br/>IIdentifyRelatedResources of Owner, OwnerId"]
+    Owner["Owner (target)"]
 
-        Cmd -.identifies.-> Match
-        Match -.singular hop.-> Team
-        Team -.plural hop.-> Owner
-    end
+    Cmd -- identifies --> Match
+    Match -- singular hop --> Team
+    Team -- plural terminal hop --> Owner
 ```
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Mediator
-    participant Resolver as ResourceAuthorizationPathResolver<br/>(startup)
+    participant Resolver as ResourceAuthorizationPathResolver
     participant Behavior as ResourceAuthorizationViaBehavior
-    participant MatchLoader as SharedResourceLoaderById&lt;Match, MatchId&gt;
-    participant TeamLoader as SharedResourceLoaderById&lt;Team, TeamId&gt;
-    participant OwnerLoader as SharedResourceLoaderById&lt;Owner, OwnerId&gt;
-    participant Auth as Command.Authorize<br/>(actor, IReadOnlyList&lt;Owner&gt;)
+    participant MatchLoader as Match loader
+    participant TeamLoader as Team loader
+    participant OwnerLoader as Owner loader
+    participant Auth as Command Authorize
 
-    Note over Resolver: At startup: DFS the entity navigation graph<br/>resolve UpdateMatchCommand → Match → Team → Owners[]<br/>fail fast on no-path / ambiguity / plural-in-middle / leaf == owner
-    Mediator->>Behavior: UpdateMatchCommand + Actor
-    Behavior->>MatchLoader: GetByIdAsync(cmd.MatchId)
-    MatchLoader-->>Behavior: Match (or NotFound → 404)
-    Behavior->>TeamLoader: GetByIdAsync(match.HomeTeamId)
-    TeamLoader-->>Behavior: Team (or 403 to avoid existence leak)
-    Note over Behavior: Plural-terminal hop: ExtractIds(team) →<br/>distinct OwnerIds; load one per id
+    Note over Resolver: At startup, DFS the entity navigation graph; fail fast on no-path, ambiguity, plural-in-middle, or leaf equals owner
+    Mediator->>Behavior: UpdateMatchCommand and Actor
+    Behavior->>MatchLoader: LoadAsync MatchId
+    MatchLoader-->>Behavior: Match, or NotFound becomes 404
+    Behavior->>TeamLoader: LoadAsync HomeTeamId
+    TeamLoader-->>Behavior: Team, or 403 to avoid existence leak
+    Note over Behavior: Plural-terminal hop: extract distinct OwnerIds; load one per id
     loop each distinct OwnerId
-        Behavior->>OwnerLoader: LoadAsync(ownerId)
-        OwnerLoader-->>Behavior: Owner (or 403 on load failure)
+        Behavior->>OwnerLoader: LoadAsync ownerId
+        OwnerLoader-->>Behavior: Owner, or 403 on load failure
     end
-    Behavior->>Auth: Authorize(actor, IReadOnlyList&lt;Owner&gt;)
-    Auth-->>Behavior: Result (Ok or Forbidden)
+    Behavior->>Auth: Authorize actor and IReadOnlyList of Owner
+    Auth-->>Behavior: Result Ok or Forbidden
     Behavior-->>Mediator: Continue or short-circuit to 403
 ```
 
