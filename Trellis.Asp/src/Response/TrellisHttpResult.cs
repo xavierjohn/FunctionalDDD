@@ -68,6 +68,14 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
+        // Apply actor-vary headers BEFORE branching: cacheable failures (404 from a missing
+        // resource the actor cannot see, 403 shaped by visibility, validation 422s, etc.)
+        // must partition by actor too. Doing this here also runs the fail-closed validation
+        // before any response bytes are written, so misconfiguration surfaces with a clear
+        // error rather than a silent cache-poisoning vulnerability.
+        if (_options.VaryForActor)
+            AppendActorVaryHeaders(httpContext);
+
         return _result.IsSuccess
             ? ExecuteSuccessAsync(httpContext)
             : ResponseFailureWriter.WriteAsync(httpContext, _result.Error!, ResolveErrorStatusCode(httpContext, _result.Error!, _options));
@@ -82,9 +90,6 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
         if (_options.HonorPrefer)
             AppendVaryUnique(response, "Prefer");
-
-        if (_options.VaryForActor)
-            AppendActorVaryHeaders(httpContext);
 
         // No-payload Result<Unit> success — emit 204 No Content.
         // ETag/LastModified/Vary/ContentLanguage/Prefer headers (above) still apply.
@@ -225,6 +230,9 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     /// registered provider does not implement <c>IProvideActorVaryHeaders</c> —
     /// fail-closed rather than silently emit an incorrect or incomplete <c>Vary</c>
     /// header that would let intermediate caches serve actor A's response to actor B.
+    /// Decorating providers (such as <c>CachingActorProvider</c>) are unwrapped via
+    /// <c>IDecoratingActorProvider</c> so the diagnostic names the actual inner provider
+    /// the consumer needs to fix.
     /// </summary>
     internal static void AppendActorVaryHeaders(HttpContext httpContext)
     {
@@ -234,17 +242,24 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 "Register a provider via AddClaimsActorProvider/AddEntraActorProvider/AddDevelopmentActorProvider, " +
                 "or call .Vary(\"...\") explicitly with the headers that contribute to actor identity.");
 
+        // Unwrap decorating providers (e.g. CachingActorProvider) so error messages name the
+        // actual inner provider that needs the IProvideActorVaryHeaders implementation.
+        var underlying = provider;
+        while (underlying is Trellis.Asp.Authorization.IDecoratingActorProvider decorator)
+            underlying = decorator.Inner;
+
         if (provider is not Trellis.Asp.Authorization.IProvideActorVaryHeaders vary)
             throw new InvalidOperationException(
-                $"VaryForActor() requires the registered IActorProvider ('{provider.GetType().FullName}') to implement " +
-                "IProvideActorVaryHeaders, but it does not. Either implement IProvideActorVaryHeaders on the provider " +
+                $"VaryForActor() requires the registered IActorProvider " +
+                $"('{underlying.GetType().FullName}') to implement IProvideActorVaryHeaders, but it does not. " +
+                "Either implement IProvideActorVaryHeaders on the provider " +
                 "(returning the HTTP request headers that contribute to actor identity, e.g. [\"Authorization\"] for " +
                 "bearer auth), or call .Vary(\"...\") explicitly with the relevant headers.");
 
         var headers = vary.VaryByHeaders;
         if (headers.Count == 0)
             throw new InvalidOperationException(
-                $"VaryForActor() called against IActorProvider '{provider.GetType().FullName}' whose VaryByHeaders is empty. " +
+                $"VaryForActor() called against IActorProvider '{underlying.GetType().FullName}' whose VaryByHeaders is empty. " +
                 "An empty collection means the provider derives actor identity from request data that cannot be " +
                 "cleanly named by a single HTTP header (e.g. mTLS); such endpoints should not be cacheable across actors. " +
                 "Use Cache-Control: private, no-store instead of VaryForActor().");

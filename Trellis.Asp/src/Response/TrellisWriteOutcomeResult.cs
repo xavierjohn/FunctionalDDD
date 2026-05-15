@@ -36,6 +36,15 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
     public Task ExecuteAsync(HttpContext httpContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
+
+        // Apply actor-vary headers BEFORE the success/failure branch — cacheable failures
+        // (e.g. 412 Precondition Failed, 422 validation) must partition by actor too. Doing
+        // this here also runs the fail-closed validation before any response bytes are
+        // written, surfacing misconfiguration as a clear error rather than silent
+        // cache-poisoning.
+        if (_options.VaryForActor)
+            TrellisHttpResult<TDomain, TBody>.AppendActorVaryHeaders(httpContext);
+
         if (!_result.TryGetValue(out var outcome, out var outcomeError))
         {
             var sc = TrellisHttpResult<TDomain, TBody>.ResolveErrorStatusCode(httpContext, outcomeError, _options);
@@ -47,9 +56,6 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
         // Always emit Vary: Prefer when honoring Prefer.
         if (_options.HonorPrefer)
             TrellisHttpResult<TDomain, TBody>.AppendVaryUnique(response, "Prefer");
-
-        if (_options.VaryForActor)
-            TrellisHttpResult<TDomain, TBody>.AppendActorVaryHeaders(httpContext);
 
         ApplyBuilderMetadata(response, outcome);
 

@@ -245,16 +245,121 @@ public sealed class VaryForActorTests
     }
 
     [Fact]
-    public void CachingActorProvider_returns_empty_VaryByHeaders_when_inner_does_not_implement_interface()
+    public async Task VaryForActor_applies_on_failure_path_too()
     {
-        // Inner provider has not opted into IProvideActorVaryHeaders. CachingActorProvider
-        // cannot guess on its behalf — surface an empty collection so VaryForActor() throws
-        // fail-closed with a message that points at the wrapped (custom) provider as the
-        // remediation site.
+        // Cacheable failures (e.g. 404 Not Found that depends on actor visibility, or
+        // validation 422 that depends on actor-scoped business rules) must partition by
+        // actor in intermediate caches just like successful responses. Apply the actor-vary
+        // header before WriteAsync so the failure response carries it.
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        var r = Result.Fail<Thing>(new Error.NotFound(new ResourceRef("Thing", "missing")));
+
+        await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(404);
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization", "actor-vary headers must be emitted on cacheable failures, not just success");
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_on_WriteOutcome_failure_path_too()
+    {
+        // Same partitioning requirement for the WriteOutcome failure path.
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        var r = Result.Fail<WriteOutcome<Thing>>(new Error.Conflict(null, "duplicate"));
+
+        await r.ToHttpResponse<Thing>(o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization");
+    }
+
+    [Fact]
+    public async Task VaryForActor_throws_fail_closed_on_failure_path_when_provider_unconfigured()
+    {
+        // The fail-closed validation must run before the failure response is written, so
+        // misconfiguration surfaces with a clear error rather than silently shipping a
+        // 404/403 that can pollute a cache across actors.
+        var ctx = NewContext(provider: null);
+        var r = Result.Fail<Thing>(new Error.NotFound(new ResourceRef("Thing", "missing")));
+
+        var act = async () => await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_on_Error_ToHttpResponse_via_TrellisErrorOnlyResult()
+    {
+        // Standalone Error.ToHttpResponse(...) goes through TrellisErrorOnlyResult, which
+        // builds with the non-generic HttpResponseOptionsBuilder. VaryForActor() on that
+        // builder must also fire so cacheable error endpoints (e.g. dedicated
+        // /problem-details responses keyed off actor visibility) partition correctly.
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        var error = new Error.Forbidden("policy-1", new ResourceRef("Thing", "1"));
+
+        await error.ToHttpResponse(o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization");
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_on_paged_success_path()
+    {
+        // The Result<Page<T>>.ToHttpResponse(...) overload accepts the same builder shape
+        // as the non-paginated overloads. VaryForActor() on the paginated success path
+        // must apply or it would silently no-op for cursor-paginated list endpoints (the
+        // most common cacheable shape).
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        var page = new Page<Thing>([new Thing(1, "a"), new Thing(2, "b")], Next: null, Previous: null, RequestedLimit: 50, AppliedLimit: 50);
+        var r = Result.Ok(page);
+
+        await r.ToHttpResponse(
+            nextUrlBuilder: (cursor, limit) => $"/items?cursor={cursor}&limit={limit}",
+            body: t => t,
+            configure: o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization", "VaryForActor() must apply to the paged success path");
+    }
+
+    [Fact]
+    public async Task VaryForActor_applies_on_paged_failure_path()
+    {
+        // Paged failure path goes through TrellisErrorOnlyResult; VaryForActor must
+        // propagate from the Page<T> builder options into the error-only result.
+        var ctx = NewContext(new TestActorProvider(["Authorization"]));
+        var r = Result.Fail<Page<Thing>>(new Error.NotFound(new ResourceRef("ThingList", "missing")));
+
+        await r.ToHttpResponse(
+            nextUrlBuilder: (cursor, limit) => $"/items?cursor={cursor}&limit={limit}",
+            body: t => t,
+            configure: o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var vary = string.Join("|", ctx.Response.Headers.Vary.ToArray()!);
+        vary.Should().Contain("Authorization", "VaryForActor() must apply to the paged failure path too");
+    }
+
+    [Fact]
+    public async Task VaryForActor_failure_message_names_inner_provider_when_caching_wraps_a_provider_without_capability()
+    {
+        // Critical UX detail: when a CachingActorProvider wraps a custom IActorProvider that
+        // has not implemented IProvideActorVaryHeaders, the fail-closed message must point
+        // at the inner provider (the one the consumer needs to fix), not the caching
+        // wrapper. The IDecoratingActorProvider unwrap path makes this work.
         var inner = new ProviderWithoutVaryCapability();
         var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
-        var cache = new CachingActorProvider(inner, httpContextAccessor);
+        var caching = new CachingActorProvider(inner, httpContextAccessor);
+        var ctx = NewContext(caching);
+        var r = Result.Ok(new Thing(1, "x"));
 
-        ((IProvideActorVaryHeaders)cache).VaryByHeaders.Should().BeEmpty();
+        var act = async () => await r.ToHttpResponse(t => t, o => o.VaryForActor()).ExecuteAsync(ctx);
+
+        var ex = (await act.Should().ThrowAsync<InvalidOperationException>()).Which;
+        ex.Message.Should().Contain(typeof(ProviderWithoutVaryCapability).FullName!,
+            "the diagnostic must name the underlying provider that needs IProvideActorVaryHeaders, not the caching wrapper");
+        ex.Message.Should().NotContain(nameof(CachingActorProvider),
+            "the wrapper itself isn't the remediation site");
     }
 }

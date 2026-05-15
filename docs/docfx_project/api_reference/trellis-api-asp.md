@@ -99,6 +99,7 @@ Fluent options builder used by every generic `ToHttpResponse` overload. Selector
 | `WithETag(Func<TDomain, EntityTagValue> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Sets a strong or weak ETag from a caller-built `EntityTagValue`. |
 | `WithLastModified(Func<TDomain, DateTimeOffset> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Emits `Last-Modified` header in RFC 1123 format. |
 | `Vary(params string[] headers)` | `HttpResponseOptionsBuilder<TDomain>` | Appends headers to the response `Vary` header (existing values preserved; duplicates suppressed). |
+| `VaryForActor()` | `HttpResponseOptionsBuilder<TDomain>` | Appends the request header(s) that contribute to actor identity for the registered `IActorProvider` to the response `Vary` header. The provider must implement `IProvideActorVaryHeaders` (the bundled `ClaimsActorProvider` returns `["Authorization"]`, `DevelopmentActorProvider` returns `[X-Test-Actor]`, `CachingActorProvider` delegates to its inner). Throws `InvalidOperationException` at apply time when no provider is registered, the registered provider does not implement the capability, or the implementation returns an empty collection (fail-closed against silent cache-poisoning across actors). Decorating providers (e.g. `CachingActorProvider`) are unwrapped via the internal `IDecoratingActorProvider` so the diagnostic names the underlying provider that needs the implementation. Applies to success, failure, `WriteOutcome`, and paginated paths uniformly. |
 | `WithContentLanguage(params string[] languages)` | `HttpResponseOptionsBuilder<TDomain>` | Joins values into `Content-Language`. |
 | `WithContentLocation(Func<TDomain, string> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Sets the `Content-Location` header. |
 | `WithAcceptRanges(string acceptRanges)` | `HttpResponseOptionsBuilder<TDomain>` | Sets `Accept-Ranges` (e.g. `"bytes"` or `"none"`). |
@@ -127,6 +128,7 @@ Non-generic builder used for the value-less `Result` overload.
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `Vary(params string[] headers)` | `HttpResponseOptionsBuilder` | Appends headers to `Vary`. |
+| `VaryForActor()` | `HttpResponseOptionsBuilder` | Same contract as the generic builder's `VaryForActor()`. Applied by `Error.ToHttpResponse(...)` (the only consumer of the non-generic builder), so standalone error responses emitted via this verb partition by actor too. |
 | `HonorPrefer()` | `HttpResponseOptionsBuilder` | Always emits `Vary: Prefer`. |
 | `WithErrorMapping(Func<Error, int> mapper)` | `HttpResponseOptionsBuilder` | Per-call mapper for failure responses. |
 | `WithErrorMapping<TError>(int statusCode) where TError : Error` | `HttpResponseOptionsBuilder` | Per-call override for a single error type. |
@@ -380,6 +382,27 @@ The main DI surface for `Trellis.Asp` (in folder `Extensions/`).
 ### Namespace `Trellis.Asp.Authorization`
 
 The actor-provider DI surface absorbed from the former `Trellis.Asp.Authorization` package. Domain primitives (`Actor`, `IActorProvider`, etc.) live in `Trellis.Authorization` — see [`trellis-api-authorization.md`](trellis-api-authorization.md).
+
+### `IProvideActorVaryHeaders`
+
+**Declaration**
+
+```csharp
+public interface IProvideActorVaryHeaders
+{
+    IReadOnlyCollection<string> VaryByHeaders { get; }
+}
+```
+
+Optional capability that an `IActorProvider` implementation can expose so [`HttpResponseOptionsBuilder<TDomain>.VaryForActor`](#httpresponseoptionsbuildertdomain) can emit the correct request headers as response `Vary` entries for cache partitioning by actor.
+
+The bundled providers implement this:
+
+- `ClaimsActorProvider` (and `EntraActorProvider` via inheritance) — `virtual VaryByHeaders => ["Authorization"]`. Subclass and override for non-bearer auth (cookies, mTLS, forwarded headers); leaving the JWT-bearer default in place against a non-Bearer service allows the same cache-poisoning that `VaryForActor()` exists to prevent.
+- `DevelopmentActorProvider` — `[X-Test-Actor]` (the test header).
+- `CachingActorProvider` — delegates to the wrapped provider's `VaryByHeaders`; surfaces an empty collection when the wrapped provider does not implement the interface, so `VaryForActor()` throws fail-closed pointing at the inner provider as the remediation site (the writer unwraps caching wrappers via the internal `IDecoratingActorProvider` interface so the diagnostic names the right type).
+
+Custom providers that derive actor identity from request data that cannot be cleanly named by an HTTP header (mTLS, IP-based, etc.) should NOT implement this interface; consumers using such providers must mark cache-eligible endpoints with `Cache-Control: private, no-store` instead of calling `VaryForActor()`.
 
 ### `ServiceCollectionExtensions`
 
