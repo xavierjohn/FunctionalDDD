@@ -101,7 +101,10 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         // No-payload Result<Unit> success — emit 204 No Content.
         // ETag/LastModified/Vary/ContentLanguage/Prefer headers (above) still apply.
         if (s_isUnit)
+        {
+            ApplyCacheControlSelector(response, domain!);
             return Results.NoContent().ExecuteAsync(httpContext);
+        }
 
         if (_options.EvaluatePreconditions)
         {
@@ -113,7 +116,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 {
                     var decision = ConditionalRequestEvaluator.Evaluate(httpContext.Request, metadata, out var failedKind);
                     if (decision == ConditionalDecision.NotModified)
+                    {
+                        // 304 is a success disposition (the cached representation is still valid) —
+                        // apply the selector so the revalidation response carries the same Cache-Control
+                        // policy a fresh 200 would.
+                        ApplyCacheControlSelector(response, domain!);
                         return Results.StatusCode(StatusCodes.Status304NotModified).ExecuteAsync(httpContext);
+                    }
 
                     if (decision == ConditionalDecision.PreconditionFailed)
                     {
@@ -133,6 +142,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             if (error is not null)
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
 
+            ApplyCacheControlSelector(response, domain!);
             var bodyValue = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
             return new PartialContentHttpResult(from, to, total, Results.Ok(bodyValue)).ExecuteAsync(httpContext);
         }
@@ -148,12 +158,29 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
             }
 
+            ApplyCacheControlSelector(response, domain!);
             var body = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
             return Results.Created(location, body).ExecuteAsync(httpContext);
         }
 
+        ApplyCacheControlSelector(response, domain!);
         var payload = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
         return Results.Ok(payload).ExecuteAsync(httpContext);
+    }
+
+    // Selector-derived Cache-Control is applied only at the success-emit points (200/201/204/304/206)
+    // so a mid-flow failure (412 PreconditionFailed, 416 / range-error, 500 / location-missing) does
+    // NOT inherit a `public, max-age=N` selector value. That would otherwise turn a transient client
+    // error into a cached negative response. The static-value overload remains in place across both
+    // success and failure paths because it's written in ExecuteAsync before the branch.
+    private void ApplyCacheControlSelector(HttpResponse response, TDomain domain)
+    {
+        if (_options.CacheControlSelector is { } ccSel)
+        {
+            var v = ccSel(domain);
+            if (v is not null)
+                response.Headers["Cache-Control"] = v.ToString();
+        }
     }
 
     internal static int ResolveErrorStatusCode(HttpContext httpContext, Error error, HttpResponseOptions<TDomain> options) =>
@@ -210,17 +237,6 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
         if (!string.IsNullOrEmpty(_options.AcceptRanges))
             response.Headers["Accept-Ranges"] = _options.AcceptRanges;
-
-        // The per-domain selector overrides the static value set in ExecuteAsync (overwriting
-        // the header via indexer assignment). A selector returning null is "no header for this
-        // domain value" and leaves whatever the static path wrote in place — that's the natural
-        // composition: static value is the floor, selector refines per response.
-        if (_options.CacheControlSelector is { } ccSel)
-        {
-            var v = ccSel(domain);
-            if (v is not null)
-                response.Headers["Cache-Control"] = v.ToString();
-        }
     }
 
     internal static void AppendVaryUnique(HttpResponse response, string headerName)
