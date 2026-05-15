@@ -51,7 +51,8 @@ sequenceDiagram
         ResAuth-->>Client: 403 Forbidden
     else Authorized
         ResAuth->>Handler: Invoke
-        Handler-->>Client: Success 200 or 201 or 204
+        Handler-->>ResAuth: Result of T
+        ResAuth-->>Client: Endpoint maps via ToHttpResponse to 200 or 201 or 204
     end
 ```
 
@@ -775,7 +776,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 
 ## Composition
 
-`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); for guards that don't fit any mediator authorization shape, prefer first the mediator-level escape hatch (`IAuthorizeResource<TProjection>` + a custom `IResourceLoader<TMessage, TProjection>` that shapes the projection however your rule needs — see [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource)). Use handler-side `Result.Ensure` chains only when the guard cannot be expressed by any mediator authorization shape:
+`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); for guards that don't fit any mediator authorization shape, the framework supports two escape hatches in order of preference: (1) `IAuthorizeResource<TProjection>` + a custom `IResourceLoader<TMessage, TProjection>` that shapes the projection however your rule needs (see [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource)) so the gate stays declarative; (2) plain `Actor` predicates inside a handler's `Result` chain, for guards that depend on handler-local state, span multiple aggregates the mediator pipeline never loads together, or are reused from a service-layer helper called outside the mediator pipeline. The handler-side shape:
 
 ```csharp
 using System.Threading;
