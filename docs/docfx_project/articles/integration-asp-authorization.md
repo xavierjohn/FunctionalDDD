@@ -61,7 +61,7 @@ Six layers, in order of execution:
 
 2. **Claim mapping.** `JwtBearerOptions.MapInboundClaims = true` (the ASP.NET Core default) silently remaps RFC 7519 short claim names (`sub`, `email`, `role`) onto WS-* long-form URNs (`ClaimTypes.NameIdentifier`, `ClaimTypes.Email`, `ClaimTypes.Role`) **before** the claims reach `HttpContext.User`. This is the most common Trellis-integration footgun and is covered explicitly in [`MapInboundClaims` and the short↔long fallback](#mapinboundclaims-and-the-shortlong-fallback) below.
 
-3. **Actor resolution (`IActorProvider`).** A scoped service that reads `HttpContext.User`, applies your claim-mapping rules, and returns `Maybe<Actor>`. The bundled providers (`ClaimsActorProvider`, `EntraActorProvider`, `DevelopmentActorProvider`) cover the common cases; `CachingActorProvider` wraps any of them. Returning `Maybe<Actor>.None` is the framework's "this request has no identifiable actor" signal — it produces HTTP 401, not 500.
+3. **Actor resolution (`IActorProvider`).** A scoped service that reads `HttpContext.User`, applies your claim-mapping rules, and returns `Maybe<Actor>`. The bundled providers (`ClaimsActorProvider`, `EntraActorProvider`, `DevelopmentActorProvider`) cover the common cases; `CachingActorProvider` wraps any of them. Returning `Maybe<Actor>.None` is the framework's "no identifiable actor" signal — when the mediator authorization pipeline (layers 4–5 below) consumes it, the pipeline maps `None` to HTTP 401, not 500. Endpoints that resolve the actor directly (outside the mediator pipeline) are responsible for their own 401 — see the Quick start.
 
 4. **Static permission authorization (`AuthorizationBehavior`).** Commands implementing `IAuthorize` declare `RequiredPermissions`. The behavior reads the actor, checks every required permission against `Actor.Permissions` (deny-aware via `Actor.ForbiddenPermissions`), and emits `Error.Forbidden` → HTTP 403 when any check fails. No resource is loaded.
 
@@ -86,7 +86,9 @@ flowchart TD
     Q2 -- Yes --> IAuth["IAuthorize<br/>RequiredPermissions"]
     Q2 -- No --> Q3
     Q3 -- Yes --> Q4
-    Q4 -- No --> IAuthRes["IAuthorizeResource&lt;T&gt;<br/>+ IIdentifyResource&lt;T, TId&gt;<br/>+ SharedResourceLoaderById"]
+    Q4 -- No --> Q3b{"Standard load-by-id<br/>shape works?"}
+    Q3b -- Yes --> IAuthRes["IAuthorizeResource&lt;T&gt;<br/>+ IIdentifyResource&lt;T, TId&gt;<br/>+ SharedResourceLoaderById"]
+    Q3b -- No --> IAuthResCustom["IAuthorizeResource&lt;TProjection&gt;<br/>+ custom IResourceLoader&lt;TMessage, TProjection&gt;<br/>(projections, custom traversal)"]
     Q4 -- Yes --> IAuthVia["IAuthorizeResourceVia&lt;TOwner&gt;<br/>+ IIdentifyRelatedResource on path entities"]
     Q3 -- No --> Q5
     Q5 -- Yes --> InHandler["Inject IActorProvider<br/>+ Result.Ensure inside the handler"]
@@ -156,7 +158,7 @@ sequenceDiagram
     end
 ```
 
-403 always carries a `PolicyId` (the policy identifier the consumer authored) and optionally a `ResourceRef` (which resource the policy was evaluated against). 404 is reserved for "resource genuinely doesn't exist"; resource-authorization failure is always 403, never 404 — the framework deliberately surfaces the distinction so audit logs can tell "denied" apart from "doesn't exist".
+403 always carries a `PolicyId` (the policy identifier the consumer authored) and optionally a `ResourceRef` (which resource the policy was evaluated against). 404 is reserved for the leaf resource genuinely not existing in the single-resource path above; resource-authorization failure on a loaded entity is always 403, never 404. Multi-hop intermediate failures (a hop entity along the path failing to load) collapse to **403**, not 404, to avoid existence leaks across team / owner boundaries — see [Multi-hop resource authorization](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) for the full sequence.
 
 ### Cache partitioning across actors
 
@@ -187,7 +189,7 @@ The bundled `ClaimsActorProvider` / `EntraActorProvider` declare `VaryByHeaders 
 | Authorize against a loaded entity | `IAuthorizeResource<TResource>` | [Mediator integration](#mediator-integration) |
 | Authorize against an ancestor of the loaded entity (multi-hop) | `IAuthorizeResourceVia<TOwner>` + `IIdentifyRelatedResource(s)` on path entities | [Multi-hop resource authorization](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) |
 | Partition cache entries by actor | `o.VaryForActor()` on the response builder | [Cache partitioning across actors](#cache-partitioning-across-actors-varyforactor) |
-| Configure JWT bearer to avoid the `MapInboundClaims` footgun | `o.MapInboundClaims = false` on `AddJwtBearer(...)` or rely on the short↔long fallback | [`MapInboundClaims` and the short↔long fallback](#mapinboundclaims-and-the-shortlong-fallback) |
+| Configure JWT bearer to avoid the `MapInboundClaims` footgun | `o.MapInboundClaims = false` on `AddJwtBearer(...)` | [`MapInboundClaims` and the short↔long fallback](#mapinboundclaims-and-the-shortlong-fallback) |
 | Identify two `Actor` snapshots as the same principal | `actorA.Equals(actorB)` (Id-based) | [Surface at a glance](#surface-at-a-glance) |
 
 ## Use this guide when
@@ -482,6 +484,9 @@ builder.Services.AddEntraActorProvider(options =>
 
 ### Add forbidden permissions and custom attributes
 
+> [!WARNING]
+> Assigning `MapAttributes` (or `MapPermissions` / `MapForbiddenPermissions`) **replaces** the default Entra mapper — it does not augment. The Entra default `MapAttributes` populates `tid`, `preferred_username`, `azp`, `azpacr`, `acrs`, `ip_address`, and `mfa` from the `amr` claim; a replacement that only writes `region` and `ip_address` loses every other default attribute. If you need additional attributes ON TOP of the defaults, build a wrapper that first runs the default logic (copy from `EntraActorOptions.cs`) and then adds your own keys.
+
 ```csharp
 using System;
 using System.Collections.Generic;
@@ -559,7 +564,10 @@ The behavior requires the actor to hold **every** listed permission (AND semanti
 
 ### Resource-based checks via `IAuthorizeResource<TResource>`
 
-Use this when the rule depends on a loaded entity, not just static permissions. Pair it with `IIdentifyResource<TResource, TId>` + a `SharedResourceLoaderById<TResource, TId>` so every command authorizing against the same resource type loads it the same way.
+Use this when the rule depends on a loaded entity, not just static permissions. The framework supports two loader shapes — pick one per command:
+
+- **Per-command custom loader** (shown below): register `IResourceLoader<TMessage, TResource>` for one specific command. Useful when the load is a projection (joins, computed shape) or a custom traversal that can't be expressed as load-by-id.
+- **Shared load-by-id**: implement `IIdentifyResource<TResource, TId>` on the message and register a single `SharedResourceLoaderById<TResource, TId>` that bridges every command identifying the same resource through the same loader. Discoverable by `AddResourceAuthorization(Assembly[])`. Preferred when multiple commands authorize against the same resource type.
 
 ```csharp
 using Mediator;
@@ -689,7 +697,7 @@ public sealed record UpdateMatchCommand(MatchId MatchId, string NewVenue)
 }
 ```
 
-Wire the path at the composition root via assembly scanning (multi-hop with a plural terminal — like cricket fan-out — requires either scanning or a hand-built `ResolvedAuthorizationPath`; the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only). The scanner picks up the `SharedResourceLoaderById<TResource, TId>` registrations alongside the command and entity declarations:
+Wire the path at the composition root. Multi-hop with a plural terminal (cricket fan-out) requires either assembly scanning or a hand-built `ResolvedAuthorizationPath` — the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only. The `SharedResourceLoaderById<TResource, TId>` services still need explicit DI registrations (the assembly scanner discovers the `IAuthorizeResourceVia<TOwner>` marker and the navigation path; it does **not** auto-register concrete loader implementations):
 
 ```csharp
 builder.Services.AddScoped<SharedResourceLoaderById<Match, MatchId>, MatchLoader>();
@@ -757,7 +765,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 These providers compose three ways:
 
 - **Provider stack.** `AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code.
-- **Mediator pipeline.** Once an `IActorProvider` is registered, both `IAuthorize` (static) and `IAuthorizeResource<T>` (resource) checks run inside `AuthorizationBehavior` and fail with typed `Error.Forbidden`. ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps that to RFC 7807 `403`.
+- **Mediator pipeline.** Once an `IActorProvider` is registered, `IAuthorize` (static) runs inside `AuthorizationBehavior`, `IAuthorizeResource<T>` runs inside `ResourceAuthorizationBehavior`, and `IAuthorizeResourceVia<TOwner>` runs inside `ResourceAuthorizationViaBehavior`. The static behavior emits `Error.Unauthorized` when no actor is resolved and `Error.Forbidden` when a required permission is missing; the resource behaviors emit `Error.Forbidden` on rule denial. ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps `Unauthorized` to RFC 9110 `401` and `Forbidden` to RFC 7807 `403`.
 - **Result pipelines.** Inside handlers, `Actor` predicates return `bool`, so `Result.Ensure(actor.HasPermission(...), new Error.Forbidden(...))` plugs straight into `Bind` / `Map` chains.
 
 ```csharp
