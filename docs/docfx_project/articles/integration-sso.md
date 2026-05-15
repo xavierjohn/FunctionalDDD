@@ -20,6 +20,7 @@ This article is the **entry point** for wiring authentication into a Trellis ser
 | Validate Microsoft Entra ID v2.0 tokens with `oid` / `roles` / `tid` / `amr` defaults | `AddJwtBearer` + `AddEntraActorProvider(options?)` | [Microsoft (Entra ID)](#microsoft-entra-id) |
 | Validate Google ID tokens | Authority `https://accounts.google.com` + `ValidIssuers` accepting both forms | [Google sign-in](#google-sign-in) |
 | Validate Sign in with Apple ID tokens from an iOS/macOS app | Authority `https://appleid.apple.com` + bundle id as `Audience` | [Sign in with Apple (iOS / macOS app)](#sign-in-with-apple-ios--macos-app) |
+| Validate Google / Microsoft / OIDC tokens from an Android app | Same as the IdP recipe; client-side flow uses Credential Manager / MSAL / AppAuth | [Android app](#android-app) |
 | Validate Facebook tokens via an OIDC bridge | Authority for your bridge (Auth0/Cognito/etc.) + `AddClaimsActorProvider` | [Facebook (via OIDC bridge)](#facebook-via-oidc-bridge) |
 | Project nested JSON claims (Keycloak `realm_access.roles`) | Subclass `ClaimsActorProvider` + `AddCachingActorProvider<T>()` | [Keycloak / nested claims](#keycloak--nested-claims) |
 | Flatten roles, scopes, or `scp` into application permissions | Override `EntraActorOptions.MapPermissions` or use a custom `IActorProvider` | [Scope and permission extraction](#scope-and-permission-extraction) |
@@ -30,6 +31,7 @@ This article is the **entry point** for wiring authentication into a Trellis ser
 
 - You front a Trellis service with `JwtBearer` and need a single, predictable `Actor` shape regardless of which OIDC provider issued the token.
 - You need one configuration story for Google, Sign in with Apple, Microsoft (Entra), Facebook (via an OIDC bridge), Auth0, Okta, and Keycloak.
+- You need to wire an Android, iOS, or macOS app against the Trellis backend.
 - You need a Development-only seam (`X-Test-Actor`) that fail-closes outside `IsDevelopment()`.
 - You need to host a multi-tenant Entra app and pin which tenants may call your API.
 
@@ -314,6 +316,127 @@ func callTrellisApi(idToken: String, fullName: PersonNameComponents?, email: Str
 - **`sub` is team-scoped.** If you publish multiple apps under different Apple teams, the same human will have different `sub` values. Don't use `sub` as a cross-app primary key unless all apps share a team.
 - **Server-to-server validation only.** Don't trust the client's claim of "I signed in as X" — the backend must always validate the ID token signature against Apple's JWKS (`AddJwtBearer` does this automatically via OIDC discovery at `https://appleid.apple.com/.well-known/openid-configuration`).
 - **No app roles or scopes.** Treat Sign in with Apple as identity-only and layer your own permissions on top, e.g. via a custom `IActorProvider` that decorates `ClaimsActorProvider` and merges permissions from your database.
+
+### Android app
+
+An Android app authenticates the user against an OIDC provider on the device, obtains an ID token, and sends it to the Trellis backend as a bearer token. The **backend wiring is identical to the IdP-specific recipe above** — the choice of `Authority` and `Audience` is dictated by which IdP the app signed in with (Google, Microsoft Entra, Auth0, your own OIDC server). What changes on Android is the client-side library and a few audience-naming quirks.
+
+| IdP from the Android app | Recommended client library | Backend recipe |
+|---|---|---|
+| Google sign-in | [Credential Manager](https://developer.android.com/identity/sign-in/credential-manager-siwg) (`androidx.credentials`) with `GetGoogleIdOption` | [Google sign-in](#google-sign-in) |
+| Microsoft Entra ID (work / school / personal MS accounts) | [MSAL for Android](https://learn.microsoft.com/entra/identity-platform/msal-android) (`com.microsoft.identity.client:msal`) | [Microsoft (Entra ID)](#microsoft-entra-id) |
+| Auth0 | [Auth0 Android SDK](https://auth0.com/docs/quickstart/native/android) | [Generic OIDC](#generic-oidc) (Auth0 row) |
+| Okta | [Okta OIDC Android](https://github.com/okta/okta-oidc-android) (or AppAuth) | [Generic OIDC](#generic-oidc) (Okta row) |
+| Custom / any standards-compliant OIDC | [AppAuth for Android](https://github.com/openid/AppAuth-Android) | [Generic OIDC](#generic-oidc) |
+
+> [!NOTE]
+> The legacy "Google Sign-In for Android" SDK (`com.google.android.gms:play-services-auth`) is deprecated. New apps use Credential Manager. Existing apps on the old SDK still produce a valid OIDC ID token that the backend validates the same way.
+
+#### Google sign-in from Android (Credential Manager)
+
+Google sign-in from Android has one quirk the backend recipe doesn't mention: the audience claim. When the Android app calls Credential Manager with `setServerClientId(...)`, it passes the **Web OAuth client ID** configured in Google Cloud Console — not the Android OAuth client ID. The ID token Google issues then carries that Web client ID as its `aud` claim. The Trellis backend must validate against the same value.
+
+Google Cloud Console setup:
+
+1. Create an **Android** OAuth client (package name + SHA-1 of your signing key). This client has no client secret. It's what tells Google which app is calling.
+2. Create a **Web application** OAuth client. Its client id is what you pass as `serverClientId` and what the backend validates as `Audience`. The "Web" name is misleading — for native-app server-side validation flows, Google still requires a Web-type client.
+
+Android client (Kotlin):
+
+```kotlin
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import okhttp3.OkHttpClient
+import okhttp3.Request
+
+suspend fun signInAndCallApi(context: Context) {
+    val googleIdOption = GetGoogleIdOption.Builder()
+        // The WEB OAuth client id from Google Cloud Console. NOT the Android client id.
+        // The ID token's `aud` claim will equal this value.
+        .setServerClientId("YOUR_WEB_CLIENT_ID.apps.googleusercontent.com")
+        .setFilterByAuthorizedAccounts(false)
+        .build()
+
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(googleIdOption)
+        .build()
+
+    val response = CredentialManager.create(context).getCredential(context, request)
+    val credential = GoogleIdTokenCredential.createFrom(response.credential.data)
+    val idToken = credential.idToken
+
+    val http = OkHttpClient()
+    val apiRequest = Request.Builder()
+        .url("https://api.example.com/me")
+        .header("Authorization", "Bearer $idToken")
+        .build()
+    http.newCall(apiRequest).execute().use { /* read response */ }
+}
+```
+
+Backend (`Program.cs`) — same as [Google sign-in](#google-sign-in); make sure `Audience` matches the **Web** client id:
+
+```csharp
+services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://accounts.google.com";
+        options.Audience  = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com";
+        options.TokenValidationParameters.ValidIssuers =
+        [
+            "https://accounts.google.com",
+            "accounts.google.com",
+        ];
+        options.MapInboundClaims = false;
+    });
+
+services.AddClaimsActorProvider(options => options.ActorIdClaim = "sub");
+```
+
+#### Microsoft Entra ID from Android (MSAL)
+
+MSAL Android acquires an access token for your API's resource scope. The `aud` claim on the resulting JWT is your API client id (the same value the backend validates as `Audience`).
+
+Android client (Kotlin):
+
+```kotlin
+import com.microsoft.identity.client.IPublicClientApplication
+import com.microsoft.identity.client.PublicClientApplication
+import com.microsoft.identity.client.SilentAuthenticationCallback
+
+val scopes = arrayOf("api://YOUR_API_CLIENT_ID/.default")
+
+PublicClientApplication.createMultipleAccountPublicClientApplication(
+    context,
+    R.raw.msal_config, // JSON config with client_id, redirect_uri, authorities
+    object : IPublicClientApplication.IMultipleAccountApplicationCreatedListener {
+        override fun onCreated(app: com.microsoft.identity.client.IMultipleAccountPublicClientApplication) {
+            // ... acquireToken(activity, scopes, callback) — see MSAL docs for the full flow.
+            // The resulting authResult.accessToken is what you send as Authorization: Bearer.
+        }
+        override fun onError(exception: com.microsoft.identity.client.exception.MsalException) { /* log */ }
+    },
+)
+```
+
+Backend wiring is identical to [Microsoft (Entra ID)](#microsoft-entra-id). The `msal_config` JSON resource must specify your Entra app's `client_id`, `redirect_uri` (`msauth://<package>/<base64-sha1>`), and the authority (`https://login.microsoftonline.com/<tenant-id>`).
+
+#### Generic OIDC from Android (AppAuth)
+
+[AppAuth for Android](https://github.com/openid/AppAuth-Android) handles the OIDC authorization-code-with-PKCE flow against any standards-compliant issuer (Auth0, Okta, Keycloak, your own IdP). The resulting `AuthState.accessToken` (or `idToken`, depending on which claim your backend validates against) is what gets sent as `Authorization: Bearer …`. Backend wiring matches the corresponding [Generic OIDC](#generic-oidc) row.
+
+#### Operational notes
+
+- **Token type.** Google Credential Manager gives an **ID token** (audience = Web OAuth client id). MSAL gives an **access token** (audience = your API resource). Both arrive at the backend as `Authorization: Bearer …`; the JWT handler validates whichever the `Audience` configuration matches. Don't mix them: an access token sent where the backend expects an ID token (or vice-versa) fails audience validation with HTTP 401.
+- **App identity vs user identity.** The Android OAuth client (Google) or Entra Android client (MSAL) authenticates the *app* to the IdP; the user signs in to the IdP through that app. The token your backend receives identifies the *user*. There's no Trellis-side concept of "this token came from Android" — the backend can't (and shouldn't) distinguish device platforms from a validated token.
+- **HTTPS + certificate pinning.** All API calls from the app must be HTTPS. Android 7+ ignores user-installed CAs for app traffic by default; this is correct for production. If you need certificate pinning, configure it in `network_security_config.xml`.
+- **Refresh tokens stay on the device.** The backend never sees a refresh token. The app refreshes the access/ID token via the IdP (Credential Manager / MSAL / AppAuth handle this) and sends the fresh bearer token on each call.
+- **No `X-Test-Actor` from device builds.** [Development defaults](#development-defaults) is for local backend dev only. Don't ship a debug build that sends `X-Test-Actor` — the provider fails closed outside `IsDevelopment()` on the backend, but the convention is to not depend on it from a real device at all.
+- **Permissions still come from your store.** Google / Apple / generic OIDC tokens carry identity only. Layer Trellis permissions on top via a database-backed `IActorProvider` regardless of which Android sign-in flow the app uses. Entra tokens with `roles` are the exception (App Roles flatten into `Actor.Permissions` via the default Entra mapping).
 
 ### Facebook (via OIDC bridge)
 
