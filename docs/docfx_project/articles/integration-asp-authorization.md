@@ -160,7 +160,7 @@ sequenceDiagram
     end
 ```
 
-403 always carries a `PolicyId` (the policy identifier the consumer authored) and optionally a `ResourceRef` (which resource the policy was evaluated against). 404 is reserved for the leaf resource genuinely not existing in the single-resource path above; resource-authorization failure on a loaded entity is always 403, never 404. Multi-hop intermediate failures (a hop entity along the path failing to load) collapse to **403**, not 404, to avoid existence leaks across team / owner boundaries — see [Multi-hop resource authorization](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) for the full sequence.
+403 always carries a `PolicyId` (the policy identifier the consumer authored) and optionally a `ResourceRef` (which resource the policy was evaluated against). 404 is reserved for the leaf resource genuinely not existing in the single-resource path above; resource-authorization failure on a loaded entity is always 403, never 404. **In multi-hop authorization** the directly identified leaf load failure bubbles verbatim (so a missing leaf can still produce 404); only intermediate hop and terminal owner load failures collapse to 403 to avoid existence leaks across team / owner boundaries — see [Multi-hop resource authorization](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) for the full sequence.
 
 ### Cache partitioning across actors
 
@@ -438,7 +438,7 @@ The fallback is **bidirectional**: literal `Claim.Type` match first; if neither 
 > The OAuth scope claim `"scp"` is intentionally NOT in the fallback table. Its value is space-delimited per RFC 6749 §3.3 (e.g. `"orders.read orders.write"`); the provider snapshots claim values verbatim into the permission set, so a fallback for `scp` would still leave `Actor.HasPermission("orders.read")` returning `false` (the permission set would contain the single string `"orders.read orders.write"`). OAuth scope-as-permission requires a custom subclass that splits the value on whitespace.
 
 > [!TIP]
-> **Recommended for new services:** `services.AddAuthentication().AddJwtBearer(o => { o.MapInboundClaims = false; ... })`. Claim names then round-trip with their OIDC / RFC 7519 short names and the fallback never fires — keeping the production log quiet and the failure mode (`Maybe<Actor>.None`) tied to genuinely missing claims, not handler-side rename surprises.
+> **Recommended for new services:** `services.AddAuthentication().AddJwtBearer(o => { o.MapInboundClaims = false; ... })`. Claim names then round-trip with their OIDC / RFC 7519 short names and the **`ClaimsActorProvider` shared short↔long fallback** never fires — keeping the production log quiet and the failure mode (`Maybe<Actor>.None`) tied to genuinely missing claims, not handler-side rename surprises. `EntraActorProvider`'s own `oid` ↔ long-form fallback (documented below) is unaffected; it covers the v2.0 default and runs whether or not `MapInboundClaims` is set.
 
 > [!NOTE]
 > **`EntraActorProvider` does not inherit this fallback** — it overrides `GetCurrentActorAsync` and resolves the actor id with a single-purpose `oid` ↔ `http://schemas.microsoft.com/identity/claims/objectidentifier` fallback (covering the v2.0-default case). Permissions are mapped via the configured `MapPermissions` delegate against the raw claim list, not through the shared table. If you set `EntraActorOptions.IdClaimType` to a non-default short claim (`"sub"`, `"upn"`, etc.) AND your `JwtBearer` keeps `MapInboundClaims = true`, set `MapInboundClaims = false` or configure `IdClaimType` to the mapped long form explicitly — the shared fallback only applies under `ClaimsActorProvider`.
@@ -586,6 +586,16 @@ public sealed record EditDocumentCommand(string DocumentId)
             actor.IsOwner(resource.OwnerId) || actor.HasPermission("Documents.EditAny"),
             new Error.Forbidden("documents.edit") { Detail = "Only the owner can edit this document." });
 }
+
+// The per-command custom loader extracts whatever shape Authorize() needs.
+// Typically wraps a repository; can also project (joins, computed values) when the
+// authorization rule needs more than a single repository lookup.
+public sealed class DocumentResourceLoader(IDocumentRepository repository)
+    : IResourceLoader<EditDocumentCommand, Document>
+{
+    public Task<Result<Document>> LoadAsync(EditDocumentCommand message, CancellationToken cancellationToken)
+        => repository.GetByIdAsync(message.DocumentId, cancellationToken);
+}
 ```
 
 Wire the loader and pipeline behaviors in `Program.cs`:
@@ -698,7 +708,7 @@ public sealed record UpdateMatchCommand(MatchId MatchId, string NewVenue)
 }
 ```
 
-Wire the path at the composition root. Multi-hop with a plural terminal (cricket fan-out) requires either assembly scanning or a hand-built `ResolvedAuthorizationPath` — the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only. The assembly scanner discovers the `IAuthorizeResourceVia<TOwner>` marker, the navigation path, AND registers concrete `IResourceLoader<,>` / `SharedResourceLoaderById<,>` implementations it finds in the scanned assemblies (via `TryAddScoped`, so explicit registrations win). If your loader implementations live in a different assembly than the commands, pass that assembly to the scan too — or register them explicitly:
+Wire the path at the composition root. Multi-hop with a plural terminal (cricket fan-out) requires either assembly scanning or a hand-built `ResolvedAuthorizationPath` — the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only. The assembly scanner discovers the `IAuthorizeResourceVia<TOwner>` marker, the navigation path (which requires the path entity types to be in the scanned assemblies — explicit loader registrations do NOT add entity types to discovery), AND registers concrete `IResourceLoader<,>` / `SharedResourceLoaderById<,>` implementations it finds in those assemblies (via `TryAddScoped`, so explicit registrations win). If your loader implementations live in a different assembly than the commands and entities, pass that assembly to the scan too — or register them explicitly:
 
 ```csharp
 builder.Services.AddScoped<SharedResourceLoaderById<Match, MatchId>, MatchLoader>();
@@ -726,7 +736,7 @@ return result.ToHttpResponse(MyResponse.From, o => o
     .VaryForActor());
 ```
 
-At apply time the builder resolves the registered `IActorProvider`, reads its `IProvideActorVaryHeaders.VaryByHeaders` collection (a capability the bundled providers implement), and appends each header to the response `Vary`. Decorating providers (`CachingActorProvider`) are unwrapped via the internal `IDecoratingActorProvider` interface so the resolution finds the innermost capable provider; the outermost `IProvideActorVaryHeaders` in the chain wins so a custom wrapper that legitimately augments the header set (e.g. a tenant-scoping decorator adding `X-Tenant`) is honored.
+At apply time the builder resolves the registered `IActorProvider` and reads its `IProvideActorVaryHeaders.VaryByHeaders` collection (a capability the bundled providers implement). The decorator chain is walked from outermost to innermost: the **first** provider in that walk that implements `IProvideActorVaryHeaders` supplies the headers, and unwrapping continues only to find the innermost provider for diagnostics. This shape means a wrapper that legitimately augments the header set (e.g. a tenant-scoping decorator adding `X-Tenant` alongside the inner provider's `Authorization`) is honored; `CachingActorProvider` is unwrapped because it delegates the capability rather than implementing it itself.
 
 **Fail-closed semantics.** When no provider in the chain implements `IProvideActorVaryHeaders`, or when the implementation returns an empty `VaryByHeaders` collection, `VaryForActor()` throws `InvalidOperationException` at apply time — surfacing misconfiguration as a clear error rather than silently shipping a response that an intermediate cache could pollute across actors. Diagnostics name the **innermost** provider as the remediation site, not the wrapper.
 
@@ -766,7 +776,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 These providers compose three ways:
 
 - **Provider stack.** `AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code.
-- **Mediator pipeline.** Once an `IActorProvider` is registered, `IAuthorize` (static) runs inside `AuthorizationBehavior`, `IAuthorizeResource<T>` runs inside `ResourceAuthorizationBehavior`, and `IAuthorizeResourceVia<TOwner>` runs inside `ResourceAuthorizationViaBehavior`. The static behavior emits `Error.Unauthorized` when no actor is resolved and `Error.Forbidden` when a required permission is missing; the resource behaviors emit `Error.Forbidden` on rule denial. ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps `Unauthorized` to RFC 9110 `401` and `Forbidden` to RFC 7807 `403`.
+- **Mediator pipeline.** Once an `IActorProvider` is registered alongside the corresponding mediator behaviors, `IAuthorize` (static) runs inside `AuthorizationBehavior`, `IAuthorizeResource<T>` runs inside `ResourceAuthorizationBehavior`, and `IAuthorizeResourceVia<TOwner>` runs inside `ResourceAuthorizationViaBehavior`. Resource behaviors are wired by `AddResourceAuthorization(...)` (explicit overload per-message + assembly-scanning overload — see the [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) sections above). The static behavior emits `Error.Unauthorized` when no actor is resolved and `Error.Forbidden` when a required permission is missing; the resource behaviors emit `Error.Forbidden` on rule denial. ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps `Unauthorized` to RFC 9110 `401` and `Forbidden` to RFC 7807 `403`.
 - **Result pipelines.** Inside handlers, `Actor` predicates return `bool`, so `Result.Ensure(actor.HasPermission(...), new Error.Forbidden(...))` plugs straight into `Bind` / `Map` chains.
 
 ```csharp
