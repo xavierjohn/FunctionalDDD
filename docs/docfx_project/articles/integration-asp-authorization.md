@@ -55,19 +55,16 @@ sequenceDiagram
     end
 ```
 
-Six layers, in order of execution:
+Six layers, in order of execution (each linked to its canonical section below):
 
-1. **Authentication (`JwtBearer` or your scheme).** Validates the token's signature, issuer, audience, and expiry. Produces an authenticated `ClaimsPrincipal` on `HttpContext.User` — or a 401 challenge if the token is missing/invalid. Trellis does not run here; the auth handler owns this slice.
+1. **Authentication.** `JwtBearer` (or your scheme) validates signature / expiry / issuer / audience and produces an authenticated `ClaimsPrincipal`. Trellis does not run here.
+2. **Claim mapping.** `JwtBearerOptions.MapInboundClaims` may rename claims before they reach `HttpContext.User` — see [`MapInboundClaims` and the short↔long fallback](#mapinboundclaims-and-the-shortlong-fallback) for the footgun.
+3. **Actor resolution.** A scoped `IActorProvider` reads `HttpContext.User` and returns `Maybe<Actor>` — see [Surface at a glance](#surface-at-a-glance) for the four bundled providers.
+4. **Static permission authorization.** Commands implementing `IAuthorize` get checked by `AuthorizationBehavior` — see [Static permission checks via `IAuthorize`](#static-permission-checks-via-iauthorize).
+5. **Resource-based authorization.** Commands implementing `IAuthorizeResource<T>` or `IAuthorizeResourceVia<TOwner>` get checked by the matching resource behavior — see [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner).
+6. **Handler.** Returns `Result<T>` / `Result<WriteOutcome<T>>` / `Result<Page<T>>`; `ToHttpResponse(...)` maps to HTTP status codes.
 
-2. **Claim mapping.** `JwtBearerOptions.MapInboundClaims = true` (the ASP.NET Core default) silently remaps RFC 7519 short claim names (`sub`, `email`, `role`) onto WS-* long-form URNs (`ClaimTypes.NameIdentifier`, `ClaimTypes.Email`, `ClaimTypes.Role`) **before** the claims reach `HttpContext.User`. This is the most common Trellis-integration footgun and is covered explicitly in [`MapInboundClaims` and the short↔long fallback](#mapinboundclaims-and-the-shortlong-fallback) below.
-
-3. **Actor resolution (`IActorProvider`).** A scoped service that reads `HttpContext.User`, applies your claim-mapping rules, and returns `Maybe<Actor>`. The bundled providers (`ClaimsActorProvider`, `EntraActorProvider`, `DevelopmentActorProvider`) cover the common cases; `CachingActorProvider` wraps any of them. Returning `Maybe<Actor>.None` is the framework's "no identifiable actor" signal — when the mediator authorization pipeline (layers 4–5 below) consumes it, the pipeline maps `None` to HTTP 401, not 500. Endpoints that resolve the actor directly (outside the mediator pipeline) are responsible for their own 401 — see the Quick start.
-
-4. **Static permission authorization (`AuthorizationBehavior`).** Commands implementing `IAuthorize` declare `RequiredPermissions`. The behavior reads the actor, checks every required permission against `Actor.Permissions` (deny-aware via `Actor.ForbiddenPermissions`), and emits `Error.Forbidden` → HTTP 403 when any check fails. No resource is loaded.
-
-5. **Resource-based authorization.** Two distinct behaviors handle this. `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` handles commands implementing `IAuthorizeResource<TResource>` (single-hop): loads ONE entity via the configured `IResourceLoader<TMessage, TResource>` (typically `SharedResourceLoaderById<TResource, TId>` bridged through `IIdentifyResource<TResource, TId>`, but may be a custom per-command loader) and calls `Authorize(actor, resource)`. `ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>` handles commands implementing `IAuthorizeResourceVia<TOwner>` (multi-hop): loads the leaf, walks each navigation hop (each via its own `SharedResourceLoaderById<,>`), and calls `Authorize(actor, IReadOnlyList<TOwner>)` — multiple owners when the terminal hop is plural (e.g. cricket fan-out). Either denial emits `Error.Forbidden` → HTTP 403; both share one envelope shape.
-
-6. **Handler.** Receives a validated, authorized command. Returns `Result<T>` / `Result<WriteOutcome<T>>` / `Result<Page<T>>`. `ToHttpResponse(...)` maps success to 200/201/204/206 with appropriate companion headers; failures continue through `ResponseFailureWriter` to ProblemDetails.
+For the failure modes — what produces 401 versus 403, and how `WWW-Authenticate` is populated — see [Anatomy of a 401](#anatomy-of-a-401) and [Anatomy of a 403](#anatomy-of-a-403) below.
 
 ### Decision tree: which authorization shape?
 
@@ -164,8 +161,6 @@ sequenceDiagram
 
 ### Cache partitioning across actors
 
-Cacheable responses (200, 206, 304, paginated lists) must include `Vary: <actor-header>` so intermediate caches partition by actor — without it, actor A's response can be served to actor B.
-
 ```mermaid
 flowchart LR
     A[Cache-eligible response] --> B{"Endpoint depends<br/>on actor identity?"}
@@ -175,7 +170,7 @@ flowchart LR
     D -- No --> F["Cache-Control: private, no-store<br/>or implement IProvideActorVaryHeaders<br/>on a subclass"]
 ```
 
-The bundled `ClaimsActorProvider` / `EntraActorProvider` declare `VaryByHeaders = ["Authorization"]` (the JWT-bearer assumption); `DevelopmentActorProvider` declares `[X-Test-Actor]`; `CachingActorProvider` delegates to its inner. Services that use cookie or forwarded-header auth must subclass and override `VaryByHeaders` — leaving the default would emit a wrong `Vary` header. Services that derive actor identity from request data that cannot be cleanly named by a single HTTP header (mTLS client certificate, IP-based binding, etc.) must NOT call `VaryForActor()`; use `Cache-Control: private, no-store` on those endpoints instead. See [`VaryForActor()` on `HttpResponseOptionsBuilder<T>`](../api_reference/trellis-api-asp.md#httpresponseoptionsbuildertdomain) and [Cache partitioning across actors (`VaryForActor()`)](#cache-partitioning-across-actors-varyforactor) below for the configured shape.
+See [Cache partitioning across actors (`VaryForActor()`)](#cache-partitioning-across-actors-varyforactor) for the configured shape, fail-closed semantics, and the override-for-non-bearer-auth pattern.
 
 ## Patterns Index
 
@@ -780,11 +775,7 @@ If your provider derives actor identity from request data that cannot be cleanly
 
 ## Composition
 
-These providers compose three ways:
-
-- **Provider stack.** `AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code.
-- **Mediator pipeline.** All three authorization behaviors (`AuthorizationBehavior` for `IAuthorize`, `ResourceAuthorizationBehavior` for `IAuthorizeResource<T>`, `ResourceAuthorizationViaBehavior` for `IAuthorizeResourceVia<TOwner>`) share an internal `ActorResolution.TryResolveAsync` helper that calls the registered `IActorProvider` and short-circuits the pipeline with `Error.Unauthorized` when no actor is resolved. Each behavior then runs its own denial check and emits `Error.Forbidden` (static permission missing for `AuthorizationBehavior`; resource-rule denial for the two resource behaviors). Resource behaviors are wired by `AddResourceAuthorization(...)` (explicit overload per-message + assembly-scanning overload — see the [Resource-based checks](#resource-based-checks-via-iauthorizeresourcetresource) and [Multi-hop](#multi-hop-resource-authorization-via-iauthorizeresourceviatowner) sections above). ASP integration ([`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)) maps `Unauthorized` to RFC 9110 `401` and `Forbidden` to RFC 7807 `403`.
-- **Result pipelines.** Inside handlers, `Actor` predicates return `bool`, so `Result.Ensure(actor.HasPermission(...), new Error.Forbidden(...))` plugs straight into `Bind` / `Map` chains.
+`AddCachingActorProvider<TInner>()` decorates *any* `IActorProvider` — including a `ClaimsActorProvider` subclass you authored — without changing handler code. Mediator-side composition (which behaviors run, what each emits) is canonical in [Mediator integration](#mediator-integration); for a handler-side example using `Actor` predicates in `Result.Ensure` chains:
 
 ```csharp
 using System.Threading;
