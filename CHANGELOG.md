@@ -45,6 +45,12 @@ The mediator-emitted 401 carries an empty `Error.Unauthorized.Challenges` array,
 
 ### Fixed
 
+#### `WWW-Authenticate` synthesized on mediator-emitted 401
+
+`ResponseFailureWriter` previously only emitted `WWW-Authenticate` when the caller populated `Error.Unauthorized.Challenges` explicitly. The mediator authorization pipeline emits `Error.Unauthorized` with empty `Challenges` (it does not know the configured scheme), so any 401 originating from `IActorProvider.GetCurrentActorAsync` returning `Maybe<Actor>.None` shipped out without the header. RFC 9110 §11.6.1 requires every 401 to carry the header. The auth-handler path normally fills it in, but on anonymous-tolerant routes that host `IAuthorize` commands the auth handler is never invoked — so the mediator-emitted 401 was strictly non-compliant.
+
+`ResponseFailureWriter` now synthesizes a scheme-only challenge from `IAuthenticationSchemeProvider.GetDefaultChallengeSchemeAsync()` (falling back to `GetDefaultAuthenticateSchemeAsync()`) when (a) status is 401, (b) `Error.Unauthorized.Challenges` is empty, and (c) the response does not already carry `WWW-Authenticate`. If no auth scheme is configured at all (no `IAuthenticationSchemeProvider`, no default challenge), the header is still omitted — synthesizing "Bearer" for a service that does not use Bearer would mislead clients. Explicit `Error.Unauthorized.Challenges` continue to take precedence and are never synthesized over. The synthesized header uses the scheme NAME registered with `AddAuthentication` (so `AddJwtBearer("ApiJwt", ...)` produces `WWW-Authenticate: ApiJwt`); consumers needing a different wire token should populate `Error.Unauthorized.Challenges` themselves.
+
 #### `ClaimsActorProvider` short↔long claim-name fallback extended to `PermissionsClaim`
 
 `ClaimsActorProvider`'s `PermissionsClaim` resolution previously did literal-match lookup only. Once the `ActorIdClaim` fallback shipped (above), the same `JwtBearerOptions.MapInboundClaims = true` footgun moved one step down the stack: an authenticated actor whose permissions claim was remapped (e.g., `PermissionsClaim = "roles"` against a JWT whose `"roles"` claim had been remapped to `ClaimTypes.Role`) would resolve to an `Actor` with an empty permission set and produce silent 403s instead of silent 401s — still indistinguishable from "real" missing permissions.
