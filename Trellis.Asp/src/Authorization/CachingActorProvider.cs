@@ -1,5 +1,6 @@
 ﻿namespace Trellis.Asp.Authorization;
 
+using System.Collections.Generic;
 using Trellis.Authorization;
 
 /// <summary>
@@ -20,11 +21,28 @@ using Trellis.Authorization;
 /// database round-trips) that have already failed within the current request.
 /// </para>
 /// </remarks>
-public sealed class CachingActorProvider : IActorProvider
+public sealed class CachingActorProvider : IActorProvider, IProvideActorVaryHeaders, IDecoratingActorProvider
 {
     private readonly IActorProvider _inner;
     private readonly CancellationToken _requestAborted;
     private Task<Maybe<Actor>>? _cachedTask;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Delegates to the inner provider's headers when it implements
+    /// <see cref="IProvideActorVaryHeaders"/>; returns an empty collection when the wrapped
+    /// provider does not. An empty collection causes
+    /// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> to throw fail-closed,
+    /// preventing silent cache-poisoning for custom wrapped providers that have not opted
+    /// into the contract. The exception message names the inner provider (via
+    /// <see cref="IDecoratingActorProvider.Inner"/>) rather than the caching wrapper.
+    /// </remarks>
+    public IReadOnlyCollection<string> VaryByHeaders =>
+        _inner is IProvideActorVaryHeaders v ? v.VaryByHeaders : [];
+
+    /// <summary>The inner provider this caching wrapper delegates to. Internal — exposed
+    /// so the response writer can name the underlying provider in fail-closed diagnostics.</summary>
+    IActorProvider IDecoratingActorProvider.Inner => _inner;
 
     /// <summary>
     /// Initializes a new <see cref="CachingActorProvider"/>.

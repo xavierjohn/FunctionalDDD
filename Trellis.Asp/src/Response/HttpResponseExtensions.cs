@@ -211,12 +211,14 @@ public static class HttpResponseExtensions
             {
                 ErrorMapper = opts.ErrorMapper,
                 ErrorOverrides = opts.ErrorOverrides,
+                VaryForActor = opts.VaryForActor,
             });
         }
 
         var (envelope, linkHeader) = PagedResponseBuilder.Build(page, nextUrlBuilder, body);
         var ok = Results.Ok(envelope);
-        return linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
+        var inner = linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
+        return opts.VaryForActor ? new ActorVaryWrapperResult(inner) : inner;
     }
 
     /// <summary>Async <see cref="Task"/> overload.</summary>
@@ -255,10 +257,31 @@ internal sealed class TrellisErrorOnlyResult : Microsoft.AspNetCore.Http.IResult
 
     public Task ExecuteAsync(HttpContext httpContext)
     {
+        // Apply actor-vary headers BEFORE WriteAsync so the failure response partitions
+        // correctly across actors (e.g. cacheable 404/422). Same fail-closed semantics
+        // as the success path.
+        if (_options.VaryForActor)
+            TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
+
         var statusCode = ResolveStatusCode(httpContext, _error);
         return ResponseFailureWriter.WriteAsync(httpContext, _error, statusCode);
     }
 
     private int ResolveStatusCode(HttpContext httpContext, Error error) =>
         ErrorStatusCodeResolver.Resolve(httpContext, error, _options.ErrorMapper, _options.ErrorOverrides);
+}
+
+/// <summary>
+/// Internal IResult wrapper that applies <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/>
+/// to a wrapped result. Used by paths that don't otherwise consult the builder options
+/// (e.g. paginated success responses) so the actor-vary contract holds uniformly.
+/// </summary>
+internal sealed class ActorVaryWrapperResult(Microsoft.AspNetCore.Http.IResult inner) : Microsoft.AspNetCore.Http.IResult
+{
+    public Task ExecuteAsync(HttpContext httpContext)
+    {
+        ArgumentNullException.ThrowIfNull(httpContext);
+        TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
+        return inner.ExecuteAsync(httpContext);
+    }
 }

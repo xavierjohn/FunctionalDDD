@@ -68,6 +68,14 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
+        // Apply actor-vary headers BEFORE branching: cacheable failures (404 from a missing
+        // resource the actor cannot see, 403 shaped by visibility, validation 422s, etc.)
+        // must partition by actor too. Doing this here also runs the fail-closed validation
+        // before any response bytes are written, so misconfiguration surfaces with a clear
+        // error rather than a silent cache-poisoning vulnerability.
+        if (_options.VaryForActor)
+            AppendActorVaryHeaders(httpContext);
+
         return _result.IsSuccess
             ? ExecuteSuccessAsync(httpContext)
             : ResponseFailureWriter.WriteAsync(httpContext, _result.Error!, ResolveErrorStatusCode(httpContext, _result.Error!, _options));
@@ -213,6 +221,77 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         }
 
         response.Headers.Append("Vary", headerName);
+    }
+
+    /// <summary>
+    /// Resolves the registered <c>IActorProvider</c> and appends its
+    /// <c>VaryByHeaders</c> entries to the response <c>Vary</c> header. Throws
+    /// <see cref="InvalidOperationException"/> when no provider is registered or no
+    /// provider in the decorator chain implements <c>IProvideActorVaryHeaders</c> —
+    /// fail-closed rather than silently emit an incorrect or incomplete <c>Vary</c>
+    /// header that would let intermediate caches serve actor A's response to actor B.
+    /// Decorating providers (such as <c>CachingActorProvider</c>) are unwrapped via
+    /// <c>IDecoratingActorProvider</c>: the OUTERMOST <c>IProvideActorVaryHeaders</c>
+    /// in the chain wins (so a wrapper that legitimately augments the headers is
+    /// honored), and unwrapping continues past wrappers without the capability so the
+    /// fail-closed diagnostic names the innermost provider that needs the
+    /// implementation.
+    /// </summary>
+    internal static void AppendActorVaryHeaders(HttpContext httpContext)
+    {
+        var provider = httpContext.RequestServices?.GetService<Trellis.Authorization.IActorProvider>()
+            ?? throw new InvalidOperationException(
+                "VaryForActor() requires an IActorProvider in the request scope but none is registered. " +
+                "Register a provider via AddClaimsActorProvider/AddEntraActorProvider/AddDevelopmentActorProvider, " +
+                "or call .Vary(\"...\") explicitly with the headers that contribute to actor identity.");
+
+        // Walk the decorator chain. The outermost IProvideActorVaryHeaders wins so a custom
+        // wrapper that adds its own headers (e.g. a tenant-scoping decorator that appends
+        // X-Tenant to the inner provider's headers) is honored rather than silently bypassed.
+        // Keep unwrapping past wrappers that don't implement the capability so the fail-closed
+        // diagnostic, when no capability is found anywhere in the chain, names the innermost
+        // provider that the consumer must fix — not an intermediate wrapper. Bounded against
+        // self-referencing or cyclic IDecoratingActorProvider.Inner chains.
+        const int MaxDecoratorDepth = 16;
+        Trellis.Asp.Authorization.IProvideActorVaryHeaders? vary = null;
+        var underlying = provider;
+        var depth = 0;
+        while (true)
+        {
+            if (vary is null && underlying is Trellis.Asp.Authorization.IProvideActorVaryHeaders v)
+                vary = v;
+
+            if (underlying is Trellis.Asp.Authorization.IDecoratingActorProvider decorator)
+            {
+                if (++depth > MaxDecoratorDepth)
+                    throw new InvalidOperationException(
+                        $"IDecoratingActorProvider chain rooted at '{provider.GetType().FullName}' exceeded the maximum unwrap depth ({MaxDecoratorDepth}). " +
+                        "This usually means a decorator's Inner property returns itself or forms a cycle. Fix the offending IDecoratingActorProvider implementation.");
+                underlying = decorator.Inner;
+                continue;
+            }
+
+            break;
+        }
+
+        if (vary is null)
+            throw new InvalidOperationException(
+                $"VaryForActor() requires the registered IActorProvider " +
+                $"('{underlying.GetType().FullName}') to implement IProvideActorVaryHeaders, but neither it " +
+                "nor any IDecoratingActorProvider in its chain does. Either implement IProvideActorVaryHeaders on the provider " +
+                "(returning the HTTP request headers that contribute to actor identity, e.g. [\"Authorization\"] for " +
+                "bearer auth), or call .Vary(\"...\") explicitly with the relevant headers.");
+
+        var headers = vary.VaryByHeaders;
+        if (headers.Count == 0)
+            throw new InvalidOperationException(
+                $"VaryForActor() called against IActorProvider '{underlying.GetType().FullName}' whose VaryByHeaders is empty. " +
+                "An empty collection means the provider derives actor identity from request data that cannot be " +
+                "cleanly named by a single HTTP header (e.g. mTLS); such endpoints should not be cacheable across actors. " +
+                "Use Cache-Control: private, no-store instead of VaryForActor().");
+
+        foreach (var h in headers)
+            AppendVaryUnique(httpContext.Response, h);
     }
 
     private (long From, long To, long Total, Error? Error)? TryEvaluateRange(TDomain domain)

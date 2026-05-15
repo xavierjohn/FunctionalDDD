@@ -1,6 +1,7 @@
 ﻿namespace Trellis.Asp.Authorization;
 
 using System.Collections.Frozen;
+using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -152,8 +153,39 @@ public class ClaimsActorOptions
 /// is a worked example.
 /// </para>
 /// </remarks>
-public class ClaimsActorProvider : IActorProvider
+public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
 {
+    /// <summary>
+    /// HTTP request headers that contribute to this provider's actor identity. The default
+    /// is <c>["Authorization"]</c> — the JWT-bearer assumption baked into the framework's
+    /// bundled <c>AddClaimsActorProvider</c> / <c>AddEntraActorProvider</c> registration:
+    /// the actor identity is derived from claims on the authenticated principal, which
+    /// JwtBearer parses from the <c>Authorization</c> header.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Non-bearer auth.</b> If your service authenticates with a different scheme
+    /// (cookies, mTLS, forwarded headers, custom handler) the actor identity does NOT
+    /// vary by <c>Authorization</c> and the default is wrong. Subclass
+    /// <see cref="ClaimsActorProvider"/> and override
+    /// <see cref="VaryByHeaders"/> to declare the correct header(s) — for example
+    /// <c>["Cookie"]</c> for cookie-backed auth. Failing to do so allows an intermediate
+    /// HTTP cache to serve actor A's response to actor B's request when consumers call
+    /// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/>.
+    /// </para>
+    /// <para>
+    /// <b>Stability contract.</b> Overrides MUST return a collection whose contents do not
+    /// change between requests. The framework re-reads <c>VaryByHeaders</c> on every
+    /// response that opts into <c>VaryForActor()</c>; returning a mutable collection and
+    /// mutating it between requests would emit inconsistent <c>Vary</c> headers across
+    /// requests, breaking intermediate-cache partitioning. Return a frozen array literal
+    /// (<c>["Cookie"]</c>) or a precomputed <see cref="System.Collections.Frozen.FrozenSet{T}"/>;
+    /// do not return a <see cref="System.Collections.Generic.List{T}"/> field that the
+    /// subclass mutates over time.
+    /// </para>
+    /// </remarks>
+    public virtual IReadOnlyCollection<string> VaryByHeaders { get; } = ["Authorization"];
+
     /// <summary>
     /// Well-known short → long claim name pairs that match
     /// <c>JwtSecurityTokenHandler.DefaultInboundClaimTypeMap</c> /

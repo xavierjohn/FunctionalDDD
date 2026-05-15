@@ -1,5 +1,6 @@
 ﻿namespace Trellis.Asp.Authorization;
 
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
@@ -41,9 +42,12 @@ public sealed partial class DevelopmentActorProvider(
     IHttpContextAccessor httpContextAccessor,
     IHostEnvironment hostEnvironment,
     IOptions<DevelopmentActorOptions> options,
-    ILogger<DevelopmentActorProvider> logger) : IActorProvider
+    ILogger<DevelopmentActorProvider> logger) : IActorProvider, IProvideActorVaryHeaders
 {
     internal const string HeaderName = "X-Test-Actor";
+
+    /// <inheritdoc />
+    public IReadOnlyCollection<string> VaryByHeaders { get; } = [HeaderName];
 
     /// <inheritdoc />
     public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
