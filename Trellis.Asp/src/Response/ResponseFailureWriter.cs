@@ -20,7 +20,19 @@ internal static class ResponseFailureWriter
 {
     public static async Task WriteAsync(HttpContext httpContext, Error error, int statusCode)
     {
-        await EmitCompanionHeadersAsync(httpContext, error, statusCode).ConfigureAwait(false);
+        EmitCompanionHeaders(httpContext.Response, error, statusCode);
+
+        // The only async companion-header path: synthesize WWW-Authenticate when the mediator
+        // emitted Error.Unauthorized with no Challenges and the response doesn't already carry
+        // the header. EmitCompanionHeaders has already written explicit-Challenges challenges
+        // synchronously, so reaching here means the synthesis branch is the only one left.
+        if (error is Error.Unauthorized unauth
+            && statusCode == 401
+            && unauth.Challenges.Items.Length == 0
+            && !httpContext.Response.Headers.ContainsKey("WWW-Authenticate"))
+        {
+            await SynthesizeWwwAuthenticateAsync(httpContext).ConfigureAwait(false);
+        }
 
         // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem.
         // Emitting the server-relative path+query (rather than the absolute URL) avoids host
@@ -59,9 +71,8 @@ internal static class ResponseFailureWriter
         await inner.ExecuteAsync(httpContext).ConfigureAwait(false);
     }
 
-    private static Task EmitCompanionHeadersAsync(HttpContext httpContext, Error error, int statusCode)
+    private static void EmitCompanionHeaders(HttpResponse response, Error error, int statusCode)
     {
-        var response = httpContext.Response;
         switch (error)
         {
             case Error.MethodNotAllowed mae:
@@ -80,70 +91,50 @@ internal static class ResponseFailureWriter
                 response.Headers["Content-Range"] = $"{rnse.Unit} */{rnse.CompleteLength}";
                 break;
 
+            // Explicit challenges are emitted verbatim, synchronously. Synthesis (when
+            // Challenges is empty) needs IAuthenticationSchemeProvider and runs in
+            // SynthesizeWwwAuthenticateAsync from WriteAsync.
+            //
             // Gated on the resolved status code: WWW-Authenticate is RFC 9110 §11.6.1
             // tied specifically to 401. If WithErrorMapping promotes Error.Unauthorized
             // to a non-401 status, suppress the header rather than mislead clients into
             // attempting re-authentication. Mirrors the m-13 status-aware design used
             // by ValidationProblem detail scrubbing.
-            case Error.Unauthorized unauth when statusCode == 401:
-                return EmitWwwAuthenticateAsync(httpContext, unauth);
+            case Error.Unauthorized unauth when statusCode == 401 && unauth.Challenges.Items.Length > 0:
+                foreach (var challenge in unauth.Challenges.Items)
+                    response.Headers.Append("WWW-Authenticate", FormatChallenge(challenge));
+                break;
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Emits <c>WWW-Authenticate</c> on a 401. Three branches:
-    /// <list type="number">
-    ///   <item><description>
-    ///     Caller supplied explicit <see cref="Error.Unauthorized.Challenges"/>: emit each
-    ///     verbatim (authoritative; never synthesized over).
-    ///   </description></item>
-    ///   <item><description>
-    ///     Response already carries a <c>WWW-Authenticate</c> header (e.g. upstream auth
-    ///     middleware wrote one): preserve it. Prevents double-emission when a custom auth
-    ///     pipeline has already produced its challenge.
-    ///   </description></item>
-    ///   <item><description>
-    ///     Otherwise (the mediator-emitted "no actor → 401" path): synthesize a scheme-only
-    ///     challenge from the registered default-challenge scheme via
-    ///     <see cref="IAuthenticationSchemeProvider"/>. This is the RFC 9110 §11.6.1
-    ///     compliance fix for anonymous-tolerant routes where the auth handler is never
-    ///     invoked, so the ASP.NET Core auth subsystem cannot write the challenge itself.
-    ///     If no auth scheme is configured (<see cref="IAuthenticationSchemeProvider"/>
-    ///     unavailable or no default challenge), emit nothing — synthesizing "Bearer" for a
-    ///     service that does not use Bearer would mislead clients.
-    ///   </description></item>
-    /// </list>
+    /// Synthesizes a scheme-only <c>WWW-Authenticate</c> challenge from the registered
+    /// default-challenge scheme via <see cref="IAuthenticationSchemeProvider"/>. This is the
+    /// RFC 9110 §11.6.1 compliance path for the mediator-emitted <c>Error.Unauthorized</c>
+    /// with empty <see cref="Error.Unauthorized.Challenges"/> on anonymous-tolerant routes
+    /// where the ASP.NET Core auth handler is never invoked. If no auth scheme is configured
+    /// (<see cref="IAuthenticationSchemeProvider"/> unavailable or no default challenge),
+    /// emits nothing — synthesizing "Bearer" for a service that does not use Bearer would
+    /// mislead clients.
     /// </summary>
-    private static async Task EmitWwwAuthenticateAsync(HttpContext httpContext, Error.Unauthorized unauth)
+    /// <remarks>
+    /// Caller (<see cref="WriteAsync"/>) is responsible for the precondition checks
+    /// (<see cref="Error.Unauthorized.Challenges"/> empty, no existing
+    /// <c>WWW-Authenticate</c> header, status code 401). This method only does the async
+    /// scheme lookup and header append.
+    /// </remarks>
+    private static async Task SynthesizeWwwAuthenticateAsync(HttpContext httpContext)
     {
-        var response = httpContext.Response;
-
-        if (unauth.Challenges.Items.Length > 0)
-        {
-            foreach (var challenge in unauth.Challenges.Items)
-                response.Headers.Append("WWW-Authenticate", FormatChallenge(challenge));
-            return;
-        }
-
-        if (response.Headers.ContainsKey("WWW-Authenticate"))
-            return;
-
         var schemeProvider = httpContext.RequestServices?.GetService<IAuthenticationSchemeProvider>();
         if (schemeProvider is null)
             return;
 
-        // The IAuthenticationSchemeProvider contract is async; sync-over-async (.Result /
-        // .GetAwaiter().GetResult()) would deadlock under some SynchronizationContexts and
-        // stall the request thread if a custom implementation does real I/O. Await both
-        // before the ProblemDetails body is composed.
         var scheme = await schemeProvider.GetDefaultChallengeSchemeAsync().ConfigureAwait(false)
             ?? await schemeProvider.GetDefaultAuthenticateSchemeAsync().ConfigureAwait(false);
         if (scheme is null)
             return;
 
-        response.Headers.Append("WWW-Authenticate", scheme.Name);
+        httpContext.Response.Headers.Append("WWW-Authenticate", scheme.Name);
     }
 
     /// <summary>
