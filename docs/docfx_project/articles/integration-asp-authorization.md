@@ -89,7 +89,9 @@ flowchart TD
     Q4 -- No --> Q3b{"Standard load-by-id<br/>shape works?"}
     Q3b -- Yes --> IAuthRes["IAuthorizeResource&lt;T&gt;<br/>+ IIdentifyResource&lt;T, TId&gt;<br/>+ SharedResourceLoaderById"]
     Q3b -- No --> IAuthResCustom["IAuthorizeResource&lt;TProjection&gt;<br/>+ custom IResourceLoader&lt;TMessage, TProjection&gt;<br/>(projections, custom traversal)"]
-    Q4 -- Yes --> IAuthVia["IAuthorizeResourceVia&lt;TOwner&gt;<br/>+ IIdentifyRelatedResource on path entities"]
+    Q4 -- Yes --> Q4b{"Can the ancestor path be expressed<br/>by marker interfaces + load-by-id?"}
+    Q4b -- Yes --> IAuthVia["IAuthorizeResourceVia&lt;TOwner&gt;<br/>+ IIdentifyRelatedResource on path entities"]
+    Q4b -- No --> IAuthResProj["IAuthorizeResource&lt;TProjection&gt;<br/>+ custom IResourceLoader&lt;TMessage, TProjection&gt;<br/>(cartesian joins, recursive hierarchies, conditional paths)"]
     Q3 -- No --> Q5
     Q5 -- Yes --> InHandler["Inject IActorProvider<br/>+ Result.Ensure inside the handler"]
     Q5 -- No --> IAuth
@@ -226,7 +228,7 @@ Full signatures: [`trellis-api-authorization.md`](../api_reference/trellis-api-a
 dotnet add package Trellis.Asp
 ```
 
-The actor providers ship in `Trellis.Asp` under namespace `Trellis.Asp.Authorization`. Domain primitives (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource<T>`) come from `Trellis.Authorization`.
+The actor providers ship in `Trellis.Asp` under namespace `Trellis.Asp.Authorization`. Domain primitives (`Actor`, `IActorProvider`, `IAuthorize`, `IAuthorizeResource<T>`) come from `Trellis.Authorization`. The mediator-integration samples below additionally use `Trellis.Mediator` and the [Mediator](https://www.nuget.org/packages/Mediator) source generator your app already references when it sends commands through the pipeline.
 
 ## Quick start
 
@@ -543,7 +545,7 @@ var mfaPassed = actor.GetAttribute(ActorAttributes.MfaAuthenticated) == "true";
 
 ## Mediator integration
 
-When a request flows through `Trellis.Mediator`, prefer pipeline behaviors over per-handler permission checks — `AuthorizationBehavior<TMessage, TResponse>` (see [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md)) calls `IActorProvider.GetCurrentActorAsync` once and short-circuits the pipeline with a typed `Error.Forbidden`.
+When a request flows through `Trellis.Mediator`, prefer pipeline behaviors over per-handler permission checks. `AuthorizationBehavior<TMessage, TResponse>` (see [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md)) calls `IActorProvider.GetCurrentActorAsync` and short-circuits the pipeline with `Error.Unauthorized` when no actor is resolved, or `Error.Forbidden` when a required permission is missing.
 
 ### Static permission checks via `IAuthorize`
 
@@ -577,10 +579,8 @@ using Trellis.Authorization;
 public sealed record Document(string Id, string OwnerId);
 
 public sealed record EditDocumentCommand(string DocumentId)
-    : ICommand<Result<Unit>>, IAuthorizeResource<Document>, IIdentifyResource<Document, string>
+    : ICommand<Result<Unit>>, IAuthorizeResource<Document>
 {
-    public string GetResourceId() => DocumentId;
-
     public IResult Authorize(Actor actor, Document resource) =>
         Result.Ensure(
             actor.IsOwner(resource.OwnerId) || actor.HasPermission("Documents.EditAny"),
@@ -669,6 +669,7 @@ sequenceDiagram
 
 ```csharp
 using System.Collections.Generic;
+using System.Linq;
 using Mediator;
 using Trellis;
 using Trellis.Authorization;
@@ -697,7 +698,7 @@ public sealed record UpdateMatchCommand(MatchId MatchId, string NewVenue)
 }
 ```
 
-Wire the path at the composition root. Multi-hop with a plural terminal (cricket fan-out) requires either assembly scanning or a hand-built `ResolvedAuthorizationPath` — the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only. The `SharedResourceLoaderById<TResource, TId>` services still need explicit DI registrations (the assembly scanner discovers the `IAuthorizeResourceVia<TOwner>` marker and the navigation path; it does **not** auto-register concrete loader implementations):
+Wire the path at the composition root. Multi-hop with a plural terminal (cricket fan-out) requires either assembly scanning or a hand-built `ResolvedAuthorizationPath` — the AOT-friendly `AddRelatedResourceAuthorization<...>(extractOwnerId)` overload is single-hop only. The assembly scanner discovers the `IAuthorizeResourceVia<TOwner>` marker, the navigation path, AND registers concrete `IResourceLoader<,>` / `SharedResourceLoaderById<,>` implementations it finds in the scanned assemblies (via `TryAddScoped`, so explicit registrations win). If your loader implementations live in a different assembly than the commands, pass that assembly to the scan too — or register them explicitly:
 
 ```csharp
 builder.Services.AddScoped<SharedResourceLoaderById<Match, MatchId>, MatchLoader>();
@@ -709,7 +710,7 @@ builder.Services.AddResourceAuthorization(typeof(UpdateMatchCommand).Assembly);
 For Native AOT / trimming-strict deployments the cookbook walks through hand-building `ResolvedAuthorizationPath` for multi-hop chains. See [Recipe 24](../api_reference/trellis-api-cookbook.md#recipe-24--indirect-multi-hop-resource-authorization) for the full walkthrough.
 
 > [!IMPORTANT]
-> **What fires at startup vs at request time.** The path resolver runs at registration time (during `AddResourceAuthorization(...)`) and rejects with `InvalidOperationException`: no path from leaf to owner, ambiguous path (multiple distinct routes), plural-in-middle (only the terminal hop may be plural, to avoid cartesian fan-out), leaf == owner (use `IAuthorizeResource<T>` instead), via-command without `IIdentifyResource<TLeaf, TLeafId>`, and dual-mode commands (carrying both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` — security primitives are never silently composed). Missing `SharedResourceLoaderById<TTo, TToId>` registration for **any hop in the path** (including the terminal owner hop) is a request-time `InvalidOperationException` — the resolver builds the loader delegate at registration time but resolves the concrete loader from the request scope at request time, so an absent registration fails loud rather than masking as 403. Intermediate load *failures* (`Result<T>.IsFailure`) collapse to `Error.Forbidden`, not `Error.NotFound`, to avoid existence leaks across team / owner boundaries.
+> **What fires at startup vs at request time.** The path resolver runs at registration time (during `AddResourceAuthorization(...)`) and rejects with `InvalidOperationException`: no path from leaf to owner, ambiguous path (multiple distinct routes), plural-in-middle (only the terminal hop may be plural, to avoid cartesian fan-out), leaf == owner (use `IAuthorizeResource<T>` instead), via-command without `IIdentifyResource<TLeaf, TLeafId>`, and dual-mode commands (carrying both `IAuthorizeResource<T>` and `IAuthorizeResourceVia<TOwner>` — security primitives are never silently composed). Missing `SharedResourceLoaderById<TTo, TToId>` registration for **any hop in the path** (including the terminal owner hop) is a request-time `InvalidOperationException` — the resolver builds the loader delegate at registration time but resolves the concrete loader from the request scope at request time, so an absent registration fails loud rather than masking as 403. Intermediate or owner load *failures* (`Result<T>.IsFailure`) collapse to `Error.Forbidden`, not `Error.NotFound`, to avoid existence leaks across team / owner boundaries.
 
 > [!TIP]
 > The marker interfaces declare the path; the resolver computes the navigation chain once at registration time and caches it. If your authorization rule needs to traverse a hop that can't be expressed as "load by id" (cartesian joins, recursive hierarchies, conditional paths), fall back to the per-command `IResourceLoader<TMessage, TProjection>` escape hatch and write `Authorize(actor, projection)` directly. See [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md) and Recipe 24 in [`trellis-api-cookbook.md`](../api_reference/trellis-api-cookbook.md#recipe-24--indirect-multi-hop-resource-authorization) for the full reference.
