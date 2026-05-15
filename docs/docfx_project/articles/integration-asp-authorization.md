@@ -134,22 +134,25 @@ sequenceDiagram
     participant Writer as ResponseFailureWriter
 
     Mediator->>Auth: Command and Actor
+
     alt RequiredPermissions failed
         Auth-->>Writer: Error.Forbidden with PolicyId only
         Writer-->>Mediator: 403 ProblemDetails
     else Static permissions pass
         Auth->>Loader: GetByIdAsync resourceId
-        alt Resource not found
-            Loader-->>Writer: Error.NotFound becomes 404
-        else
-            Loader->>ResAuth: Authorize actor and resource
-            alt Rule denied
-                ResAuth-->>Writer: Error.Forbidden with PolicyId and Resource
-                Writer-->>Mediator: 403 ProblemDetails
-            else
-                ResAuth->>Mediator: Continue
-            end
-        end
+    end
+
+    alt Resource not found
+        Loader-->>Writer: Error.NotFound becomes 404
+    else Resource loaded
+        Loader->>ResAuth: Authorize actor and resource
+    end
+
+    alt Rule denied
+        ResAuth-->>Writer: Error.Forbidden with PolicyId and Resource
+        Writer-->>Mediator: 403 ProblemDetails
+    else Rule allowed
+        ResAuth->>Mediator: Continue
     end
 ```
 
