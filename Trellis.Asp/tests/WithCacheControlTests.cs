@@ -237,6 +237,115 @@ public sealed class WithCacheControlTests
             "selector is success-only; on 412 only the static value should remain");
     }
 
+    [Fact]
+    public async Task Selector_emits_on_304_NotModified()
+    {
+        // 304 is a success disposition (the cached representation is still valid) — the
+        // selector must fire so the revalidation response carries the same Cache-Control
+        // policy a fresh 200 would.
+        var ctx = NewContext();
+        ctx.Request.Method = HttpMethods.Get;
+        ctx.Request.Headers.IfNoneMatch = "\"abc\"";
+        var r = Result.Ok(new Todo(42, "hi", "abc"));
+
+        await r.ToHttpResponse(t => t, o => o
+                .WithETag(t => t.ETag)
+                .EvaluatePreconditions()
+                .WithCacheControl(t => CacheControl.Public(TimeSpan.FromSeconds(t.Id))))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(304);
+        var cc = ctx.Response.Headers.CacheControl.ToString();
+        cc.Should().Contain("public").And.Contain("max-age=42");
+    }
+
+    [Fact]
+    public async Task Selector_emits_on_Unit_204_success()
+    {
+        // Result<Unit> goes through the generic builder. The selector receives Unit.Value
+        // (the singleton) and the response is 204 No Content. Selector should fire because
+        // 204 is a success disposition.
+        var ctx = NewContext();
+        var r = Result.Ok();
+
+        await r.ToHttpResponse<Unit>(o => o
+                .WithCacheControl(_ => CacheControl.NoStore()))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(204);
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
+    }
+
+    [Fact]
+    public async Task Selector_emits_on_201_Created()
+    {
+        var ctx = NewContext();
+        var r = Result.Ok(new Todo(7, "hi", "abc"));
+
+        await r.ToHttpResponse(t => t, o => o
+                .Created(t => $"/todos/{t.Id}")
+                .WithCacheControl(t => CacheControl.Private(TimeSpan.FromSeconds(t.Id))))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(201);
+        var cc = ctx.Response.Headers.CacheControl.ToString();
+        cc.Should().Contain("private").And.Contain("max-age=7");
+    }
+
+    [Fact]
+    public async Task Selector_emits_on_206_PartialContent()
+    {
+        // Range-success path runs PartialContentHttpResult — selector must apply before
+        // delegation so the 206 carries the directive.
+        var ctx = NewContext();
+        ctx.Request.Method = HttpMethods.Get;
+        ctx.Request.Headers.Range = "bytes=0-9";
+        var r = Result.Ok(new Todo(13, "hi", "abc"));
+
+        await r.ToHttpResponse(t => t, o => o
+                .WithRange(0, 9, 100)
+                .WithCacheControl(t => CacheControl.Public(TimeSpan.FromSeconds(t.Id))))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(206);
+        var cc = ctx.Response.Headers.CacheControl.ToString();
+        cc.Should().Contain("public").And.Contain("max-age=13");
+    }
+
+    [Fact]
+    public async Task Selector_does_not_emit_on_500_LocationMissing()
+    {
+        // CreatedAtRoute with a route name that LinkGenerator can't resolve → 500
+        // InternalServerError via ResponseFailureWriter. Selector must not leak.
+        var ctx = NewContext();
+        var r = Result.Ok(new Todo(1, "hi", "abc"));
+
+        await r.ToHttpResponse(t => t, o => o
+                .CreatedAtRoute("NonExistent", _ => new Microsoft.AspNetCore.Routing.RouteValueDictionary())
+                .WithCacheControl(_ => CacheControl.Public(TimeSpan.FromMinutes(5))))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(500);
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty(
+            "selector is success-only; on 500 (location-missing) it must not leak");
+    }
+
+    [Fact]
+    public async Task Static_value_emits_on_500_LocationMissing()
+    {
+        // Parallel to the 412 case: static value applies to mid-flow failures too.
+        var ctx = NewContext();
+        var r = Result.Ok(new Todo(1, "hi", "abc"));
+
+        await r.ToHttpResponse(t => t, o => o
+                .CreatedAtRoute("NonExistent", _ => new Microsoft.AspNetCore.Routing.RouteValueDictionary())
+                .WithCacheControl(CacheControl.NoStore()))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(500);
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
+    }
+
     // ---------- Failure path ----------
 
     [Fact]
