@@ -27,29 +27,31 @@ sequenceDiagram
     participant ResAuth as ResourceAuthorizationBehavior
     participant Handler
 
-    Client->>JwtBearer: Authorization Bearer eyJ...
-    JwtBearer->>JwtBearer: Validate signature, expiry, issuer, audience
+    Client->>JwtBearer: Authorization header with Bearer token
+    JwtBearer->>JwtBearer: Validate signature expiry issuer audience
     JwtBearer->>JwtBearer: Project claims onto HttpContext.User
     Note right of JwtBearer: MapInboundClaims remaps short to long form
-    JwtBearer->>Pipeline: Endpoint invoked, command sent
+    JwtBearer->>Pipeline: Endpoint invoked
     Pipeline->>Provider: GetCurrentActorAsync
-    Provider->>Provider: Read HttpContext.User; build Actor
     Provider-->>Pipeline: Maybe of Actor
-    alt None
-        Pipeline->>Client: 401 plus WWW-Authenticate (synthesized)
-    else Some actor
+
+    alt No usable actor
+        Pipeline-->>Client: 401 with synthesized WWW-Authenticate
+    else Actor resolved
         Pipeline->>Auth: Check IAuthorize.RequiredPermissions
-        alt Permission missing
-            Auth->>Client: 403 Forbidden
-        else
-            Auth->>ResAuth: Load resource and call Authorize
-            alt Resource auth denied
-                ResAuth->>Client: 403 Forbidden
-            else
-                ResAuth->>Handler: Invoke
-                Handler-->>Client: 200 or 201 or 204 plus body
-            end
-        end
+    end
+
+    alt Static permission missing
+        Auth-->>Client: 403 Forbidden
+    else Static permission ok
+        Auth->>ResAuth: Load resource and call Authorize
+    end
+
+    alt Resource auth denied
+        ResAuth-->>Client: 403 Forbidden
+    else Authorized
+        ResAuth->>Handler: Invoke
+        Handler-->>Client: Success 200 or 201 or 204
     end
 ```
 
@@ -603,10 +605,10 @@ When the rule depends on an entity that is **not** the entity the command direct
 
 ```mermaid
 flowchart LR
-    Cmd["UpdateMatchCommand<br/>IAuthorizeResourceVia of Owner<br/>IIdentifyResource of Match, MatchId"]
-    Match["Match (leaf)<br/>IIdentifyRelatedResource of Team, TeamId"]
-    Team["Team (intermediate)<br/>IIdentifyRelatedResources of Owner, OwnerId"]
-    Owner["Owner (target)"]
+    Cmd["UpdateMatchCommand<br/>IAuthorizeResourceVia of Owner<br/>IIdentifyResource of Match MatchId"]
+    Match["Match leaf<br/>IIdentifyRelatedResource of Team TeamId"]
+    Team["Team intermediate<br/>IIdentifyRelatedResources of Owner OwnerId"]
+    Owner["Owner target"]
 
     Cmd -- identifies --> Match
     Match -- singular hop --> Team
@@ -624,18 +626,18 @@ sequenceDiagram
     participant OwnerLoader as Owner loader
     participant Auth as Command Authorize
 
-    Note over Resolver: At startup, DFS the entity navigation graph; fail fast on no-path, ambiguity, plural-in-middle, or leaf equals owner
+    Note over Resolver: At startup DFS the entity navigation graph and fail fast
     Mediator->>Behavior: UpdateMatchCommand and Actor
     Behavior->>MatchLoader: LoadAsync MatchId
-    MatchLoader-->>Behavior: Match, or NotFound becomes 404
+    MatchLoader-->>Behavior: Match or NotFound
     Behavior->>TeamLoader: LoadAsync HomeTeamId
-    TeamLoader-->>Behavior: Team, or 403 to avoid existence leak
-    Note over Behavior: Plural-terminal hop: extract distinct OwnerIds; load one per id
+    TeamLoader-->>Behavior: Team or 403
+    Note over Behavior: Plural terminal hop extract distinct OwnerIds
     loop each distinct OwnerId
         Behavior->>OwnerLoader: LoadAsync ownerId
-        OwnerLoader-->>Behavior: Owner, or 403 on load failure
+        OwnerLoader-->>Behavior: Owner or 403
     end
-    Behavior->>Auth: Authorize actor and IReadOnlyList of Owner
+    Behavior->>Auth: Authorize actor and owners
     Auth-->>Behavior: Result Ok or Forbidden
     Behavior-->>Mediator: Continue or short-circuit to 403
 ```
