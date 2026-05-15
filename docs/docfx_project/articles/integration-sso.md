@@ -22,6 +22,7 @@ This article is the **entry point** for wiring authentication into a Trellis ser
 | Validate Sign in with Apple ID tokens from an iOS/macOS app | Authority `https://appleid.apple.com` + bundle id as `Audience` | [Sign in with Apple (iOS / macOS app)](#sign-in-with-apple-ios--macos-app) |
 | Validate Google / Microsoft / OIDC tokens from an Android app | Same as the IdP recipe; client-side flow uses Credential Manager / MSAL / AppAuth | [Android app](#android-app) |
 | Validate Facebook tokens via an OIDC bridge | Authority for your bridge (Auth0/Cognito/etc.) + `AddClaimsActorProvider` | [Facebook (via OIDC bridge)](#facebook-via-oidc-bridge) |
+| Accept tokens from multiple IdPs in one API (e.g. Microsoft + Google + Apple) | Multiple `AddJwtBearer("<scheme>", ...)` + a default policy listing every scheme | [Multiple IdPs in one API](#multiple-idps-in-one-api) |
 | Project nested JSON claims (Keycloak `realm_access.roles`) | Subclass `ClaimsActorProvider` + `AddCachingActorProvider<T>()` | [Keycloak / nested claims](#keycloak--nested-claims) |
 | Flatten roles, scopes, or `scp` into application permissions | Override `EntraActorOptions.MapPermissions` or use a custom `IActorProvider` | [Scope and permission extraction](#scope-and-permission-extraction) |
 | Accept multi-tenant Entra tokens and pin allowed tenants | `JwtBearerOptions.TokenValidationParameters` + `ActorAttributes.TenantId` | [Multi-tenant Entra](#multi-tenant-entra) |
@@ -32,6 +33,7 @@ This article is the **entry point** for wiring authentication into a Trellis ser
 - You front a Trellis service with `JwtBearer` and need a single, predictable `Actor` shape regardless of which OIDC provider issued the token.
 - You need one configuration story for Google, Sign in with Apple, Microsoft (Entra), Facebook (via an OIDC bridge), Auth0, Okta, and Keycloak.
 - You need to wire an Android, iOS, or macOS app against the Trellis backend.
+- You need a **single API** to accept tokens from multiple IdPs at once — for example, a web frontend with Sign in with Microsoft *and* Sign in with Google buttons, plus phone apps signing in with Apple or Google.
 - You need a Development-only seam (`X-Test-Actor`) that fail-closes outside `IsDevelopment()`.
 - You need to host a multi-tenant Entra app and pin which tenants may call your API.
 
@@ -525,6 +527,136 @@ services.AddCachingActorProvider<KeycloakActorProvider>();
 ```
 
 `AddClaimsActorProvider(...)` configures `IOptions<ClaimsActorOptions>` (which `KeycloakActorProvider` consumes through its base constructor). `AddCachingActorProvider<T>` then registers `T` as scoped via `TryAddScoped` and wraps it with `CachingActorProvider`, so the JSON parse runs once per request even if multiple handlers ask for the actor. Because every `AddXxxActorProvider` Replaces the `IActorProvider` slot, the order matters: register the inner-provider's options helper first, then wrap.
+
+## Multiple IdPs in one API
+
+A single Trellis service can validate tokens from multiple IdPs at once — a typical "web frontend with Microsoft *and* Google sign-in buttons, plus iOS / Android apps signing in with Apple or Google" deployment. This is plain ASP.NET Core multi-scheme authentication: register one `AddJwtBearer("<scheme>", ...)` per issuer and let `JwtBearerHandler` pick the scheme whose `Authority` / `Audience` matches each incoming token.
+
+### Register one scheme per IdP
+
+```csharp
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
+using Trellis.Asp.Authorization;
+
+builder.Services
+    // No default scheme — the policy below names every accepted scheme explicitly.
+    .AddAuthentication()
+    .AddJwtBearer("Microsoft", o =>
+    {
+        o.Authority = "https://login.microsoftonline.com/<tenant-id>/v2.0";
+        o.Audience  = "<entra-api-client-id>";
+        o.MapInboundClaims = false;
+    })
+    .AddJwtBearer("Google", o =>
+    {
+        o.Authority = "https://accounts.google.com";
+        // The Web OAuth client id from Google Cloud Console — also what Android
+        // Credential Manager passes as setServerClientId.
+        o.Audience  = "<google-web-oauth-client-id>";
+        o.TokenValidationParameters.ValidIssuers =
+        [
+            "https://accounts.google.com",
+            "accounts.google.com",
+        ];
+        o.MapInboundClaims = false;
+    })
+    .AddJwtBearer("Apple", o =>
+    {
+        o.Authority = "https://appleid.apple.com";
+        // Bundle id for the iOS / macOS app; Services ID for web sign-in.
+        // Use ValidAudiences if you accept both.
+        o.Audience  = "<ios-bundle-id>";
+        o.MapInboundClaims = false;
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .AddAuthenticationSchemes("Microsoft", "Google", "Apple")
+        .Build();
+});
+```
+
+Each request goes through every listed scheme until one succeeds. The first scheme whose `Authority` / `Audience` matches the token's `iss` / `aud` validates it; the others short-circuit. `HttpContext.User` ends up with the validated principal regardless of which scheme won.
+
+> [!NOTE]
+> If you set a default scheme on `AddAuthentication("Microsoft")`, only that scheme runs by default and the other tokens come back 401. Either omit the default and list every scheme in the authorization policy (as above), or set a [forwarding scheme](https://learn.microsoft.com/aspnet/core/security/authentication/policyschemes) that picks per-request.
+
+### Pick an actor provider strategy
+
+Different IdPs put the user id in different claims:
+
+| IdP | Default user-id claim |
+|---|---|
+| Microsoft Entra ID v2.0 | `oid` (with `sub` also present, but `sub` is per-(user, audience) — not stable across audiences) |
+| Google | `sub` |
+| Apple | `sub` (team-scoped) |
+| Auth0 / Okta / custom OIDC | `sub` |
+
+Two viable strategies for a multi-IdP API:
+
+**Strategy 1 — One provider, normalize on `sub`.** Register `AddClaimsActorProvider(o => o.ActorIdClaim = "sub")` only. Entra v2.0 tokens carry `sub` alongside `oid`, so the same provider works for all three IdPs. The trade-off: Entra `sub` is **per-audience**, so two Entra-fronted APIs see different `sub` values for the same human; that is fine if you have one API or if you key users by `(iss, sub)`, and wrong if you need a single canonical user id across multiple Entra audiences.
+
+**Strategy 2 — Route by issuer.** Wrap a thin router that inspects `HttpContext.User.FindFirstValue("iss")` and delegates to `EntraActorProvider` for Microsoft tokens (so you keep App Roles, ABAC attributes from `tid` / `oid` / `amr`, and the `oid` ↔ long-form fallback) and to `ClaimsActorProvider` for everything else.
+
+```csharp
+using System;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Trellis.Asp.Authorization;
+using Trellis.Authorization;
+
+public sealed class IssuerRoutingActorProvider(
+    IHttpContextAccessor accessor,
+    EntraActorProvider entra,
+    ClaimsActorProvider generic) : IActorProvider
+{
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    {
+        var http = accessor.HttpContext
+            ?? throw new InvalidOperationException("No HttpContext available.");
+        var iss = http.User.FindFirstValue("iss");
+        return iss?.StartsWith("https://login.microsoftonline.com/", StringComparison.Ordinal) == true
+            ? entra.GetCurrentActorAsync(cancellationToken)
+            : generic.GetCurrentActorAsync(cancellationToken);
+    }
+}
+
+// Register both inner providers as concrete types, then expose the router as IActorProvider.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddOptions<EntraActorOptions>();
+builder.Services.AddOptions<ClaimsActorOptions>().Configure(o => o.ActorIdClaim = "sub");
+builder.Services.TryAddScoped<EntraActorProvider>();
+builder.Services.TryAddScoped<ClaimsActorProvider>();
+builder.Services.AddCachingActorProvider<IssuerRoutingActorProvider>();
+```
+
+`AddCachingActorProvider<T>` wraps the router so the issuer lookup + downstream provider call runs once per request even if multiple handlers ask for the `Actor`.
+
+### Permissions across IdPs
+
+Application permissions are an **API-side concept**, not a token-side one. Each IdP carries them differently:
+
+| IdP | Where permissions come from |
+|---|---|
+| Microsoft Entra ID | Entra App Roles → `roles` claim → flattened by `EntraActorOptions.MapPermissions` |
+| Google / Apple | Not in the token; load from your own permission store via a custom `IActorProvider` |
+| Auth0 / Okta | Either `permissions` (RBAC) or `scp` (delegated scopes); see [Scope and permission extraction](#scope-and-permission-extraction) |
+
+For a multi-IdP API the simplest pattern is to derive a stable user key from `(iss, sub)` (or `(iss, oid)` for Entra), look up the user's permissions in your database, and merge them into `Actor.Permissions` — see [SSO → Synthesizing app permissions during token validation](#synthesizing-app-permissions-during-token-validation) for the `OnTokenValidated` hook that runs once per request, and [Database-Backed Permissions](integration-db-permissions.md) for the IActorProvider-wrapping pattern.
+
+### Operational notes
+
+- **One audience per scheme.** Each `AddJwtBearer("<scheme>", ...)` validates exactly one (or via `ValidAudiences`, a set of) audience values. A token whose `aud` matches no scheme returns HTTP 401.
+- **Same scope, different schemes.** All registered schemes share `HttpContext.User` — once a token validates, the downstream actor provider, mediator pipeline, and handlers don't know (and don't need to know) which IdP issued it.
+- **WWW-Authenticate.** When every scheme rejects the token, Trellis's [`ResponseFailureWriter` synthesizes a `WWW-Authenticate` header](integration-asp-authorization.md#anatomy-of-a-401) listing each registered Bearer scheme so the client knows which IdPs the API accepts.
+- **Diagnostics.** Log `iss` and the winning scheme on first request from each IdP — silent "wrong scheme picked" is almost always an audience mismatch.
 
 ## JWT validation options
 
