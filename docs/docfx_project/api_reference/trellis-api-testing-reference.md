@@ -127,7 +127,7 @@ public static class IResultAssertionsExtensions
 
 Entry-point for assertions against members typed as the non-generic `IResult` interface — most commonly `IAuthorizeResource<TResource>.Authorize` and `IAuthorizeResourceVia<TOwner>.Authorize`, which both return `IResult` by contract. Mirrors the failure-side surface of `ResultAssertions<TValue>` (no `.HaveValue` because the non-generic interface carries no typed value).
 
-Overload resolution: a concrete `Result<T>` always binds to the typed `Should<T>(this Result<T>)` extension instead (struct is more specific than the `IResult` interface). The non-generic entry point fires only when the call-site type is `IResult`.
+Overload resolution: a concrete `Result<T>` always binds to the typed `Should<T>(this Result<T>)` extension instead (struct is more specific than the `IResult` interface). The non-generic entry point fires for any receiver statically typed as `IResult` — including `IResult<TValue>`, generic type parameters constrained to `IResult`, and custom concrete types implementing `IResult` — because no typed extension exists for those receivers. Consumers holding `IResult<TValue>` who want the typed `.HaveValue` surface should narrow the receiver to a concrete `Result<TValue>` first.
 
 ```csharp
 public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAssertions>

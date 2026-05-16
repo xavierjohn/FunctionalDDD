@@ -19,6 +19,16 @@ using FluentAssertions.Primitives;
 /// <c>Result&lt;T&gt;</c> is a struct, more specific than the <c>IResult</c> interface,
 /// so overload resolution prefers the typed extension at the call site.
 /// </remarks>
+/// <example>
+/// <para>
+/// Receivers statically typed as <see cref="IResult"/>, <see cref="IResult{TValue}"/>, or
+/// any other type that only satisfies the <see cref="IResult"/> contract bind to this
+/// non-generic entry point because the typed extension is only declared on the concrete
+/// <see cref="Result{TValue}"/> struct. Consumers holding <see cref="IResult{TValue}"/>
+/// who want <c>.HaveValue</c>-style typed assertions should narrow the receiver to a
+/// concrete <see cref="Result{TValue}"/> first.
+/// </para>
+/// </example>
 public static class IResultAssertionsExtensions
 {
     /// <summary>
