@@ -33,9 +33,12 @@ public static class IResultAssertionsExtensions
 {
     /// <summary>
     /// Returns an assertions object for fluent assertions on the non-generic
-    /// <see cref="IResult"/> interface.
+    /// <see cref="IResult"/> interface. Accepts <see langword="null"/> so that a null
+    /// receiver surfaces as a clean FluentAssertions failure ("Expected result to not be
+    /// &lt;null&gt;") rather than a <see cref="System.NullReferenceException"/> from the
+    /// first assertion call.
     /// </summary>
-    public static IResultAssertions Should(this IResult result) => new(result);
+    public static IResultAssertions Should(this IResult? result) => new(result);
 }
 
 /// <summary>
@@ -48,24 +51,33 @@ public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAsserti
     /// <summary>
     /// Initializes a new instance of the <see cref="IResultAssertions"/> class.
     /// </summary>
-    public IResultAssertions(IResult result) : base(result)
+    public IResultAssertions(IResult? result) : base(result!)
     {
     }
 
     /// <inheritdoc/>
     protected override string Identifier => "result";
 
+    private bool RequireNonNullSubject(string because, object[] becauseArgs) =>
+        Execute.Assertion
+            .BecauseOf(because, becauseArgs)
+            .ForCondition(Subject is not null)
+            .FailWith("Expected {context:result} to not be <null>{reason}.");
+
     /// <summary>Asserts that the result is a success.</summary>
     public AndConstraint<IResultAssertions> BeSuccess(
         string because = "",
         params object[] becauseArgs)
     {
-        Subject.TryGetError(out var error);
-        Execute.Assertion
-            .BecauseOf(because, becauseArgs)
-            .ForCondition(Subject.IsSuccess)
-            .FailWith("Expected {context:result} to be success{reason}, but it failed with error: {0}",
-                error);
+        if (RequireNonNullSubject(because, becauseArgs))
+        {
+            Subject!.TryGetError(out var error);
+            Execute.Assertion
+                .BecauseOf(because, becauseArgs)
+                .ForCondition(Subject.IsSuccess)
+                .FailWith("Expected {context:result} to be success{reason}, but it failed with error: {0}",
+                    error);
+        }
 
         return new AndConstraint<IResultAssertions>(this);
     }
@@ -75,12 +87,17 @@ public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAsserti
         string because = "",
         params object[] becauseArgs)
     {
-        Execute.Assertion
-            .BecauseOf(because, becauseArgs)
-            .ForCondition(Subject.IsFailure)
-            .FailWith("Expected {context:result} to be failure{reason}, but it succeeded.");
+        Error? error = null;
+        if (RequireNonNullSubject(because, becauseArgs))
+        {
+            Execute.Assertion
+                .BecauseOf(because, becauseArgs)
+                .ForCondition(Subject!.IsFailure)
+                .FailWith("Expected {context:result} to be failure{reason}, but it succeeded.");
 
-        Subject.TryGetError(out var error);
+            Subject.TryGetError(out error);
+        }
+
         return new AndWhichConstraint<IResultAssertions, Error>(this, error!);
     }
 
@@ -98,9 +115,12 @@ public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAsserti
         params object[] becauseArgs)
         where TError : Error
     {
+        if (!RequireNonNullSubject(because, becauseArgs))
+            return new AndWhichConstraint<IResultAssertions, TError>(this, (TError)default!);
+
         BeFailure(because, becauseArgs);
 
-        Subject.TryGetError(out var error);
+        Subject!.TryGetError(out var error);
         var matches = error is TError;
         Execute.Assertion
             .BecauseOf(because, becauseArgs)
@@ -120,10 +140,12 @@ public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAsserti
         string because = "",
         params object[] becauseArgs)
     {
-        BeFailure(because, becauseArgs);
-
-        Subject.TryGetError(out var error);
-        error!.Code.Should().Be(expectedCode, because, becauseArgs);
+        if (RequireNonNullSubject(because, becauseArgs))
+        {
+            BeFailure(because, becauseArgs);
+            Subject!.TryGetError(out var error);
+            error!.Code.Should().Be(expectedCode, because, becauseArgs);
+        }
 
         return new AndConstraint<IResultAssertions>(this);
     }
@@ -134,10 +156,12 @@ public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAsserti
         string because = "",
         params object[] becauseArgs)
     {
-        BeFailure(because, becauseArgs);
-
-        Subject.TryGetError(out var error);
-        error!.Detail!.Should().Be(expectedDetail, because, becauseArgs);
+        if (RequireNonNullSubject(because, becauseArgs))
+        {
+            BeFailure(because, becauseArgs);
+            Subject!.TryGetError(out var error);
+            error!.Detail!.Should().Be(expectedDetail, because, becauseArgs);
+        }
 
         return new AndConstraint<IResultAssertions>(this);
     }
@@ -148,10 +172,12 @@ public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAsserti
         string because = "",
         params object[] becauseArgs)
     {
-        BeFailure(because, becauseArgs);
-
-        Subject.TryGetError(out var error);
-        error!.Detail!.Should().Contain(substring, because, becauseArgs);
+        if (RequireNonNullSubject(because, becauseArgs))
+        {
+            BeFailure(because, becauseArgs);
+            Subject!.TryGetError(out var error);
+            error!.Detail!.Should().Contain(substring, because, becauseArgs);
+        }
 
         return new AndConstraint<IResultAssertions>(this);
     }

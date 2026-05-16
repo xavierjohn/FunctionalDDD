@@ -119,4 +119,33 @@ public class IResultAssertionsTests
         var result = Result.Ok(42);
         result.Should().BeSuccess().Which.Should().Be(42);
     }
+
+    // Null-receiver guard — null IResult surfaces a clean assertion failure, not NRE
+
+    [Fact]
+    public void BeSuccess_on_null_receiver_fails_assertion_not_NRE()
+    {
+        IResult? result = null;
+        var act = () => result.Should().BeSuccess();
+        act.Should().Throw<Exception>()
+            .Which.Should().NotBeOfType<NullReferenceException>("null receiver must surface as a clean assertion failure");
+    }
+
+    [Fact]
+    public void BeFailure_on_null_receiver_fails_assertion_not_NRE()
+    {
+        IResult? result = null;
+        var act = () => result.Should().BeFailure();
+        act.Should().Throw<Exception>()
+            .Which.Should().NotBeOfType<NullReferenceException>();
+    }
+
+    [Fact]
+    public void BeFailureOfType_on_null_receiver_fails_assertion_not_NRE()
+    {
+        IResult? result = null;
+        var act = () => result.Should().BeFailureOfType<Error.Forbidden>();
+        act.Should().Throw<Exception>()
+            .Which.Should().NotBeOfType<NullReferenceException>();
+    }
 }
