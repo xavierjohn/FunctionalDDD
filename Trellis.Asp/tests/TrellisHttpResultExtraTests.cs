@@ -168,6 +168,25 @@ public sealed class TrellisHttpResultExtraTests
     }
 
     [Fact]
+    public async Task Response_is_304_when_If_Modified_Since_matches_emitted_LastModified_at_sub_second_precision()
+    {
+        // Regression: the emitted Last-Modified RFC1123 header is second-precision, so the
+        // precondition metadata must also be truncated to seconds — otherwise a client
+        // sending back the exact emitted value would see selector-ticks > Parse(header).Ticks
+        // and miss the 304 short-circuit. Selector returns a sub-second timestamp on purpose.
+        var ctx = NewContext();
+        ctx.Request.Method = "GET";
+        var stamp = new DateTimeOffset(2024, 1, 1, 0, 0, 0, 500, TimeSpan.Zero);
+        ctx.Request.Headers["If-Modified-Since"] = "Mon, 01 Jan 2024 00:00:00 GMT";
+        var r = Result.Ok(new Todo(1, "x", "abc", stamp));
+
+        await r.ToHttpResponse(TodoBody.From, o => o.WithLastModified(t => t.Modified).EvaluatePreconditions())
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(304);
+    }
+
+    [Fact]
     public async Task Partial_static_range_returns_206_with_Content_Range_header()
     {
         var ctx = NewContext();

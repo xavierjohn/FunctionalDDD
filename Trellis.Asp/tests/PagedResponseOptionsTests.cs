@@ -321,6 +321,29 @@ public sealed class PagedResponseOptionsTests
         projectorCalls.Should().Be(0, "body projector must not run when the response fails into 412");
     }
 
+    [Fact]
+    public async Task EvaluatePreconditions_returns_304_on_If_Modified_Since_matching_emitted_LastModified()
+    {
+        // Regression: the emitted Last-Modified RFC1123 header is second-precision, so the
+        // precondition metadata must also be second-precision — otherwise a client sending
+        // back the exact emitted value would see selector-ticks > Parse(header).Ticks and
+        // miss the 304 short-circuit. Selector returns a sub-second timestamp on purpose.
+        var ctx = NewContext();
+        ctx.Request.Method = "GET";
+        var stamp = new DateTimeOffset(2026, 1, 15, 10, 30, 0, 500, TimeSpan.Zero);
+        // Client revalidates with the truncated value that was emitted to it.
+        ctx.Request.Headers["If-Modified-Since"] = "Thu, 15 Jan 2026 10:30:00 GMT";
+        var r = Result.Ok(SamplePage());
+
+        await r.ToHttpResponse(
+                (_, _) => "/todos?cursor=next",
+                t => t,
+                o => o.WithLastModified(_ => stamp).EvaluatePreconditions())
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(StatusCodes.Status304NotModified);
+    }
+
     // ---------- Combined coverage: every header on one response ----------
 
     [Fact]

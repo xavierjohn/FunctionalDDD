@@ -422,9 +422,13 @@ internal sealed class PagedSuccessHeaderWrapper(
 
         // Resolve ETag and Last-Modified once per execution; the cached values are reused
         // for header emission AND precondition evaluation so non-deterministic selectors
-        // cannot produce inconsistent header-vs-metadata values.
+        // cannot produce inconsistent header-vs-metadata values. Last-Modified is truncated
+        // to second precision before caching because the wire-format `R` HTTP-date emitter
+        // and HTTP clients both work at second granularity — keeping sub-second precision
+        // in the metadata would cause `If-Modified-Since` revalidation with the exact
+        // emitted header to miss the 304 path, since `selectorRaw > Parse(emittedHeader)`.
         var etag = resolveETag?.Invoke();
-        var lastModified = resolveLastModified?.Invoke();
+        var lastModified = TruncateToSeconds(resolveLastModified?.Invoke());
 
         if (etag is not null)
             response.Headers.ETag = etag.ToHeaderValue();
@@ -501,4 +505,7 @@ internal sealed class PagedSuccessHeaderWrapper(
             b = b.SetLastModified(lastModified.Value);
         return b.Build();
     }
+
+    private static DateTimeOffset? TruncateToSeconds(DateTimeOffset? value) =>
+        value.HasValue ? value.Value.AddTicks(-(value.Value.Ticks % TimeSpan.TicksPerSecond)) : null;
 }
