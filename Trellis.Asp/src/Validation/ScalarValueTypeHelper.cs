@@ -93,6 +93,37 @@ internal static class ScalarValueTypeHelper
     }
 
     /// <summary>
+    /// Creates an instance of a single-type-argument generic type via reflection, returning null
+    /// when dynamic code is not supported or construction fails. Same fail-soft semantics as the
+    /// two-type-argument overload above. Used by the Maybe&lt;TPrimitive&gt; binder factory path
+    /// where the closed generic takes only the inner primitive type as its single type argument.
+    /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "Reflection-enabled fallback only. Native AOT returns null before MakeGenericType; callers then rely on source-generated converters/binders.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Reflection-enabled fallback only. Types come from ASP.NET Core metadata or explicit model-binding inputs.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Guarded by RuntimeFeature.IsDynamicCodeSupported; Native AOT returns null before constructing a closed generic type.")]
+    public static TResult? CreateGenericInstance<TResult>(
+        Type genericTypeDefinition,
+        Type typeArgument)
+        where TResult : class
+    {
+        ArgumentNullException.ThrowIfNull(genericTypeDefinition);
+        ArgumentNullException.ThrowIfNull(typeArgument);
+
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+            return null;
+
+        try
+        {
+            var constructedType = genericTypeDefinition.MakeGenericType(typeArgument);
+            return Activator.CreateInstance(constructedType) as TResult;
+        }
+        catch (Exception ex) when (ex is TargetInvocationException or MemberAccessException or TypeLoadException or ArgumentException or InvalidOperationException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Invokes <c>TryCreate(string?, string?)</c> on a scalar value type and returns
     /// the validation errors as a dictionary suitable for <c>Results.ValidationProblem</c>.
     /// </summary>

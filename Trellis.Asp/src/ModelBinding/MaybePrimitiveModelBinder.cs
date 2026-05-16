@@ -1,17 +1,17 @@
 ﻿namespace Trellis.Asp.ModelBinding;
 
 using System;
-using System.Collections.Frozen;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Trellis;
+using Trellis.Asp.Validation;
 
 /// <summary>
 /// Model binder for <c>Maybe&lt;T&gt;</c> parameters where <typeparamref name="T"/> is an
-/// STJ-native primitive in the closed allowed list
-/// (<see cref="SupportedPrimitives"/>). Binds optional route, query, form, and header
-/// parameters into <see cref="Maybe{T}"/>.
+/// STJ-native primitive in the closed allowed list defined by
+/// <see cref="MaybePrimitives.SupportedPrimitives"/>. Binds optional route, query, form, and
+/// header parameters into <see cref="Maybe{T}"/>.
 /// </summary>
 /// <typeparam name="T">
 /// One of: <see cref="string"/>, <see cref="decimal"/>, <see cref="int"/>, <see cref="long"/>,
@@ -28,32 +28,14 @@ using Trellis;
 /// <para>
 /// Closes the binder-side parity gap with <c>MaybeScalarValueJsonConverterFactory</c>: route /
 /// query / header parameters typed <c>Maybe&lt;long&gt;</c> / <c>Maybe&lt;string&gt;</c> / etc.
-/// now bind directly without a wire-shape DTO + adapter at the seam.
+/// now bind directly without a wire-shape DTO + adapter at the seam. The allowed list lives on
+/// <see cref="MaybePrimitives"/> (non-generic) so the <see cref="System.Collections.Frozen.FrozenSet{T}"/>
+/// is allocated once for the entire framework rather than once per closed generic.
 /// </para>
 /// </remarks>
 public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
     where T : notnull
 {
-    /// <summary>
-    /// The closed set of primitive types this binder supports, mirroring
-    /// <see cref="Trellis.Asp.Validation.MaybePrimitiveJsonConverterFactory"/>'s allowed list.
-    /// </summary>
-    public static readonly FrozenSet<Type> SupportedPrimitives = new HashSet<Type>
-    {
-        typeof(string),
-        typeof(decimal),
-        typeof(int),
-        typeof(long),
-        typeof(short),
-        typeof(byte),
-        typeof(double),
-        typeof(float),
-        typeof(bool),
-        typeof(Guid),
-        typeof(DateTime),
-        typeof(DateTimeOffset),
-    }.ToFrozenSet();
-
     /// <inheritdoc />
     public Task BindModelAsync(ModelBindingContext bindingContext)
     {

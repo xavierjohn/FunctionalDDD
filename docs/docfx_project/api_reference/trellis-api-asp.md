@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Asp
 namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
-types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
+types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
 version: v3
 last_verified: 2026-05-01
 audience: [llm]
@@ -640,12 +640,27 @@ public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
     where T : notnull
 ```
 
-Binds `Maybe<T>` parameters where `T` is a primitive in the closed allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape.
+Binds `Maybe<T>` parameters where `T` is a primitive in the closed allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape. The allowed list itself is exposed via the non-generic [`MaybePrimitives`](#mayberimitives) helper so the `FrozenSet<Type>` is allocated once for the framework rather than once per closed generic instantiation.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static readonly FrozenSet<Type> SupportedPrimitives` | `FrozenSet<Type>` | The closed allowed list exposed for diagnostic / provider use; mirrors `MaybePrimitiveJsonConverterFactory`. |
 | `public Task BindModelAsync(ModelBindingContext bindingContext)` | `Task` | Missing or empty value → `ModelBindingResult.Success(Maybe<T>.None)`. Parseable primitive → `ModelBindingResult.Success(Maybe.From(parsed))`. Unparseable → adds a model-state error and returns `ModelBindingResult.Failed()`. Parses using invariant culture and the typed `TryParse` methods on each primitive type. |
+
+<a id="mayberimitives"></a>
+
+### `MaybePrimitives`
+
+**Declaration**
+
+```csharp
+public static class MaybePrimitives
+```
+
+Non-generic holder for the closed `Maybe<T>` primitive allowed list shared by `MaybePrimitiveJsonConverterFactory` and `MaybePrimitiveModelBinder<T>`. Exists as a non-generic class so the `FrozenSet<Type>` is shared across all closed generic instantiations of the binder (avoids per-`T` allocation and the CA1000 "no static members on generic types" guidance).
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static readonly FrozenSet<Type> SupportedPrimitives` | `FrozenSet<Type>` | The 12-type allowed list: `string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`. Used by both the JSON converter factory's `CanConvert` and the model binder provider's `GetBinder`. |
 
 ### `ScalarValueModelBinderProvider`
 
@@ -657,7 +672,7 @@ public class ScalarValueModelBinderProvider : IModelBinderProvider
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public IModelBinder? GetBinder(ModelBinderProviderContext context)` | `IModelBinder?` | Returns a `MaybeModelBinder<,>` for `Maybe<TScalar>` where `TScalar : IScalarValue<,>`, a `MaybePrimitiveModelBinder<T>` for `Maybe<T>` where `T` is in `MaybePrimitiveModelBinder<int>.SupportedPrimitives`, a `ScalarValueModelBinder<,>` for direct scalar values, or `null` otherwise. Annotated `[UnconditionalSuppressMessage]` for IL2070/IL2072/IL2075 and IL3050 — model binding is not Native AOT compatible. |
+| `public IModelBinder? GetBinder(ModelBinderProviderContext context)` | `IModelBinder?` | Returns a `MaybeModelBinder<,>` for `Maybe<TScalar>` where `TScalar : IScalarValue<,>`, a `MaybePrimitiveModelBinder<T>` for `Maybe<T>` where `T` is in `MaybePrimitives.SupportedPrimitives`, a `ScalarValueModelBinder<,>` for direct scalar values, or `null` otherwise. Annotated `[UnconditionalSuppressMessage]` for IL2070/IL2072/IL2075 and IL3050 — model binding is not Native AOT compatible. |
 
 ### Namespace `Trellis.Asp.Routing`
 

@@ -1,7 +1,6 @@
 ﻿namespace Trellis.Asp.Validation;
 
 using System;
-using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -36,27 +35,9 @@ using Trellis;
 /// </remarks>
 public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory
 {
-    // Closed allowed list mirroring CompositeValueObjectJsonConverter.IsSupportedPrimitive.
-    // Using FrozenSet for O(1) CanConvert lookup; the set is constructed once at type-init.
-    private static readonly FrozenSet<Type> SupportedPrimitives = new HashSet<Type>
-    {
-        typeof(string),
-        typeof(decimal),
-        typeof(int),
-        typeof(long),
-        typeof(short),
-        typeof(byte),
-        typeof(double),
-        typeof(float),
-        typeof(bool),
-        typeof(Guid),
-        typeof(DateTime),
-        typeof(DateTimeOffset),
-    }.ToFrozenSet();
-
     /// <summary>
     /// True when <paramref name="typeToConvert"/> is <c>Maybe&lt;T&gt;</c> and <c>T</c> is in
-    /// the closed primitive allowed list.
+    /// the closed primitive allowed list defined by <see cref="MaybePrimitives.SupportedPrimitives"/>.
     /// </summary>
     public override bool CanConvert(Type typeToConvert)
     {
@@ -66,7 +47,7 @@ public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory
         if (typeToConvert.GetGenericTypeDefinition() != typeof(Maybe<>))
             return false;
         var inner = typeToConvert.GetGenericArguments()[0];
-        return SupportedPrimitives.Contains(inner);
+        return MaybePrimitives.SupportedPrimitives.Contains(inner);
     }
 
     /// <summary>Creates a <see cref="MaybePrimitiveJsonConverter{T}"/> for the supplied <c>Maybe&lt;T&gt;</c>.</summary>

@@ -67,10 +67,11 @@ public class ScalarValueModelBinderProvider : IModelBinderProvider
             // counterpart of MaybeModelBinder<,>. Same allowed list as
             // MaybePrimitiveJsonConverterFactory so JSON body and route/query/header
             // binding stay symmetric.
-            if (MaybePrimitiveModelBinder<int>.SupportedPrimitives.Contains(maybeInnerType))
+            if (MaybePrimitives.SupportedPrimitives.Contains(maybeInnerType))
             {
-                return (IModelBinder?)Activator.CreateInstance(
-                    typeof(MaybePrimitiveModelBinder<>).MakeGenericType(maybeInnerType));
+                return ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+                    typeof(MaybePrimitiveModelBinder<>),
+                    maybeInnerType);
             }
 
             return null;
