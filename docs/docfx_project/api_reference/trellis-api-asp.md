@@ -640,13 +640,13 @@ public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
     where T : notnull
 ```
 
-Binds `Maybe<T>` parameters where `T` is a primitive in the closed allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape. The allowed list itself is exposed via the non-generic [`MaybePrimitives`](#mayberimitives) helper so the `FrozenSet<Type>` is allocated once for the framework rather than once per closed generic instantiation.
+Binds `Maybe<T>` parameters where `T` is a primitive in the closed allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape. The allowed list itself is exposed via the non-generic [`MaybePrimitives`](#maybeprimitives) helper so the `FrozenSet<Type>` is allocated once for the framework rather than once per closed generic instantiation.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public Task BindModelAsync(ModelBindingContext bindingContext)` | `Task` | Missing or empty value → `ModelBindingResult.Success(Maybe<T>.None)`. Parseable primitive → `ModelBindingResult.Success(Maybe.From(parsed))`. Unparseable → adds a model-state error and returns `ModelBindingResult.Failed()`. Parses using invariant culture and the typed `TryParse` methods on each primitive type. |
 
-<a id="mayberimitives"></a>
+<a id="maybeprimitives"></a>
 
 ### `MaybePrimitives`
 
