@@ -19,6 +19,12 @@ public partial class LenientDecimal : RequiredDecimal<LenientDecimal> { }
 [NotDefault] public partial class StrictLong : RequiredLong<StrictLong> { }
 [NotDefault] public partial class StrictDecimal : RequiredDecimal<StrictDecimal> { }
 
+// Both [NotDefault] and [Range] — used to verify NotDefault runs before Range so a
+// zero input on a range-positive type surfaces the per-type message, not the range message.
+[NotDefault, Range(1, 100)] public partial class StrictRangedInt : RequiredInt<StrictRangedInt> { }
+[NotDefault, Range(1L, 100L)] public partial class StrictRangedLong : RequiredLong<StrictRangedLong> { }
+[NotDefault, Range(1, 100)] public partial class StrictRangedDecimal : RequiredDecimal<StrictRangedDecimal> { }
+
 [NotDefault] public partial class NoDefaultOnlyString : RequiredString<NoDefaultOnlyString> { }
 [Trim] public partial class TrimOnlyString : RequiredString<TrimOnlyString> { }
 [Trim, NotDefault] public partial class TrimAndNotDefaultString : RequiredString<TrimAndNotDefaultString> { }
@@ -148,6 +154,64 @@ public class RequiredNotDefaultAndTrimTests
         result.IsFailure.Should().BeTrue();
         var ve = (Error.UnprocessableContent)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Decimal cannot be zero.");
+    }
+
+    // ---------- Validation order: [NotDefault] runs BEFORE [Range] ----------
+
+    [Fact]
+    public void StrictRangedInt_zero_input_surfaces_NotDefault_message_not_Range()
+    {
+        // Without correct ordering the Range(1,100) check fires first ("must be at least 1.").
+        var result = StrictRangedInt.TryCreate(0);
+        result.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        ve.Fields[0].Detail.Should().Be("Strict Ranged Int cannot be zero.");
+    }
+
+    [Fact]
+    public void StrictRangedInt_zero_input_via_nullable_overload_surfaces_NotDefault_message()
+    {
+        var result = StrictRangedInt.TryCreate((int?)0);
+        result.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        ve.Fields[0].Detail.Should().Be("Strict Ranged Int cannot be zero.");
+    }
+
+    [Fact]
+    public void StrictRangedInt_zero_input_via_string_overload_surfaces_NotDefault_message()
+    {
+        var result = StrictRangedInt.TryCreate("0");
+        result.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        ve.Fields[0].Detail.Should().Be("Strict Ranged Int cannot be zero.");
+    }
+
+    [Fact]
+    public void StrictRangedLong_zero_surfaces_NotDefault_message()
+    {
+        var result = StrictRangedLong.TryCreate(0L);
+        result.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        ve.Fields[0].Detail.Should().Be("Strict Ranged Long cannot be zero.");
+    }
+
+    [Fact]
+    public void StrictRangedDecimal_zero_surfaces_NotDefault_message()
+    {
+        var result = StrictRangedDecimal.TryCreate(0m);
+        result.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        ve.Fields[0].Detail.Should().Be("Strict Ranged Decimal cannot be zero.");
+    }
+
+    [Fact]
+    public void StrictRangedInt_negative_input_still_surfaces_Range_message()
+    {
+        // Negative input is not the zero sentinel, so the Range check is the right one to fire.
+        var result = StrictRangedInt.TryCreate(-5);
+        result.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        ve.Fields[0].Detail.Should().Be("Strict Ranged Int must be at least 1.");
     }
 
     // Strict types still accept non-zero values

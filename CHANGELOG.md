@@ -20,7 +20,7 @@ The `RequiredXxx<T>` family now follows a single, uniform rule: **reject only nu
 | `RequiredGuid<T>` | reject null | reject null + `Guid.Empty` (wording: "cannot be Guid.Empty.") |
 | `RequiredDateTime<T>` | reject null | reject null + `DateTime.MinValue` (wording: "cannot be DateTime.MinValue.") |
 | `RequiredBool<T>` | reject null | **compile-time error** (degenerate single-value type) |
-| `RequiredEnum<T>` | reject unknown member name | **compile-time error** (smart-enum has no CLR default) |
+| `RequiredEnum<T>` | reject null + unknown member name | **compile-time error** (smart-enum has no CLR default) |
 
 Validation order in the generated `TryCreate`: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
 
