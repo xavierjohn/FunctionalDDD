@@ -395,17 +395,17 @@ public class MaybeModelBinderTests
     }
 
     [Fact]
-    public void Provider_MaybeString_ReturnsNull()
+    public void Provider_MaybeString_ReturnsMaybePrimitiveBinder()
     {
-        // Arrange — Maybe<string> is not a scalar value object
+        // Was: returns null (Maybe<string> wasn't a scalar value object). Updated: the
+        // provider now also recognises Maybe<TPrimitive> for the closed primitive allowed list
+        // and creates a MaybePrimitiveModelBinder<T>, parity with the JSON converter side.
         var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(Maybe<string>));
 
-        // Act
         var binder = provider.GetBinder(context);
 
-        // Assert
-        binder.Should().BeNull("Maybe<string> is not wrapping a scalar value object");
+        binder.Should().BeOfType<MaybePrimitiveModelBinder<string>>();
     }
 
     [Theory]
@@ -416,16 +416,20 @@ public class MaybeModelBinderTests
     [InlineData(typeof(Maybe<DateTimeOffset>))]
     [InlineData(typeof(Maybe<bool>))]
     [InlineData(typeof(Maybe<decimal>))]
-    public void Provider_MaybePrimitive_ReturnsNull(Type maybePrimitive)
+    public void Provider_MaybePrimitive_ReturnsMaybePrimitiveBinder(Type maybePrimitive)
     {
-        // Boundary regression guard: route/query/header binding of primitive Maybe<T>
-        // is not supported (no scalar VO behind it). Consumers route/query-binding an
-        // optional primitive should accept `T?` and lift with `.AsMaybe()` in the handler.
+        // Was: returned null with note "primitive Maybe<T> is not wrapping a scalar value
+        // object". Updated: the provider now creates a MaybePrimitiveModelBinder<T> for the
+        // closed primitive allowed list so route/query/header binding of Maybe<T> works
+        // symmetrically with the JSON body case (MaybePrimitiveJsonConverterFactory).
         var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(maybePrimitive);
 
-        provider.GetBinder(context)
-            .Should().BeNull("primitive Maybe<T> is not wrapping a scalar value object");
+        var binder = provider.GetBinder(context);
+
+        binder.Should().NotBeNull();
+        binder!.GetType().IsGenericType.Should().BeTrue();
+        binder.GetType().GetGenericTypeDefinition().Should().Be(typeof(MaybePrimitiveModelBinder<>));
     }
 
     [Fact]

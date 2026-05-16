@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Asp
 namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
-types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
+types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
 version: v3
 last_verified: 2026-05-01
 audience: [llm]
@@ -631,6 +631,37 @@ public class MaybeModelBinder<TValue, TPrimitive>
 | `protected override ModelBindingResult? OnEmptyValue()` | `ModelBindingResult?` | Returns `ModelBindingResult.Success(Maybe<TValue>.None)`. |
 | `protected override ModelBindingResult OnSuccess(TValue value)` | `ModelBindingResult` | Returns `ModelBindingResult.Success(Maybe.From(value))`. |
 
+### `MaybePrimitiveModelBinder<T>`
+
+**Declaration**
+
+```csharp
+public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
+    where T : notnull
+```
+
+Binds `Maybe<T>` parameters where `T` is a primitive in the closed allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape. The allowed list itself is exposed via the non-generic [`MaybePrimitives`](#maybeprimitives) helper so the `FrozenSet<Type>` is allocated once for the framework rather than once per closed generic instantiation.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public Task BindModelAsync(ModelBindingContext bindingContext)` | `Task` | Missing or empty value → `ModelBindingResult.Success(Maybe<T>.None)`. Parseable primitive → `ModelBindingResult.Success(Maybe.From(parsed))`. Unparseable → adds a model-state error and returns `ModelBindingResult.Failed()`. Parses using invariant culture and the typed `TryParse` methods on each primitive type. |
+
+<a id="maybeprimitives"></a>
+
+### `MaybePrimitives`
+
+**Declaration**
+
+```csharp
+public static class MaybePrimitives
+```
+
+Non-generic holder for the closed `Maybe<T>` primitive allowed list shared by `MaybePrimitiveJsonConverterFactory` and `MaybePrimitiveModelBinder<T>`. Exists as a non-generic class so the `FrozenSet<Type>` is shared across all closed generic instantiations of the binder (avoids per-`T` allocation and the CA1000 "no static members on generic types" guidance).
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static readonly FrozenSet<Type> SupportedPrimitives` | `FrozenSet<Type>` | The 12-type allowed list: `string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`. Used by both the JSON converter factory's `CanConvert` and the model binder provider's `GetBinder`. |
+
 ### `ScalarValueModelBinderProvider`
 
 **Declaration**
@@ -641,7 +672,7 @@ public class ScalarValueModelBinderProvider : IModelBinderProvider
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public IModelBinder? GetBinder(ModelBinderProviderContext context)` | `IModelBinder?` | Returns a `MaybeModelBinder<,>` for `Maybe<TScalar>`, a `ScalarValueModelBinder<,>` for direct scalar values, or `null` otherwise. Annotated `[UnconditionalSuppressMessage]` for IL2070/IL2072/IL2075 and IL3050 — model binding is not Native AOT compatible. |
+| `public IModelBinder? GetBinder(ModelBinderProviderContext context)` | `IModelBinder?` | Returns a `MaybeModelBinder<,>` for `Maybe<TScalar>` where `TScalar : IScalarValue<,>`, a `MaybePrimitiveModelBinder<T>` for `Maybe<T>` where `T` is in `MaybePrimitives.SupportedPrimitives`, a `ScalarValueModelBinder<,>` for direct scalar values, or `null` otherwise. Annotated `[UnconditionalSuppressMessage]` for IL2070/IL2072/IL2075 and IL3050 — model binding is not Native AOT compatible. |
 
 ### Namespace `Trellis.Asp.Routing`
 
@@ -755,6 +786,39 @@ public sealed class MaybeScalarValueJsonConverterFactory : JsonConverterFactory
 | --- | --- | --- |
 | `public override bool CanConvert(Type typeToConvert)` | `bool` | `true` when `typeToConvert` is `Maybe<T>` and `T` is a scalar value type. |
 | `public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)` | `JsonConverter?` | Builds `MaybeScalarValueJsonConverter<TValue, TPrimitive>` for supported `Maybe<TScalar>` types. |
+
+### `MaybePrimitiveJsonConverter<T>`
+
+**Declaration**
+
+```csharp
+public sealed class MaybePrimitiveJsonConverter<T> : JsonConverter<Maybe<T>>
+    where T : notnull
+```
+
+JSON converter for `Maybe<T>` where `T` is an STJ-native primitive in the closed allowed list enforced by `MaybePrimitiveJsonConverterFactory`. Reads dispatch on `typeof(T)` to typed `Utf8JsonReader` methods (`GetString` / `GetInt32` / `GetDecimal` / `GetGuid` / `GetDateTime` / etc.) — no reflection, no `JsonSerializer` round-trip, AOT-safe by construction. `null` token → `Maybe<T>.None`; primitive value → `Maybe.From(value)`. `None` writes as JSON `null`.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public override Maybe<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)` | `Maybe<T>` | Reads JSON `null` as `Maybe<T>.None`; otherwise dispatches on the closed primitive allowed list. Wrong JSON shape throws the standard `JsonException`. |
+| `public override void Write(Utf8JsonWriter writer, Maybe<T> value, JsonSerializerOptions options)` | `void` | `Maybe.None` writes JSON `null`; otherwise switches on the unwrapped value and writes via the matching typed `Utf8JsonWriter` method. |
+
+### `MaybePrimitiveJsonConverterFactory`
+
+**Declaration**
+
+```csharp
+public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory
+```
+
+Closes the asymmetry where `MaybeScalarValueJsonConverterFactory` shipped support for `Maybe<TScalar>` (typed value objects) but `Maybe<long>` / `Maybe<int>` / `Maybe<string>` / `Maybe<DateTime>` etc. fell through to STJ's default object handling, producing JSON the converter cannot itself parse back. Auto-registered by `AddTrellisAsp(...)` alongside the scalar factory (same `JsonSerializer.IsReflectionEnabledByDefault` gate for AOT). The supported primitive set deliberately mirrors `CompositeValueObjectJsonConverter<T>`'s allowed list: the rule is "`Maybe<T>` works wherever `T` is a primitive Trellis already supports directly".
+
+Supported primitives: `string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`. Shapes outside this set (`DateOnly`, `TimeOnly`, unsigned numerics, arrays, collections, nested composites) continue to require the wire-shape DTO + adapter pattern (Cookbook Recipe 14).
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public override bool CanConvert(Type typeToConvert)` | `bool` | `true` when `typeToConvert` is `Maybe<T>` and `T` is in the closed primitive allowed list. Returns `false` for `Maybe<TScalar>` (handled by `MaybeScalarValueJsonConverterFactory`) and for unsupported primitive shapes (e.g. `Maybe<DateOnly>`) so the two factories don't compete. |
+| `public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)` | `JsonConverter?` | Builds `MaybePrimitiveJsonConverter<T>` for the inner primitive type. |
 
 ### `ScalarValueValidationFilter`
 

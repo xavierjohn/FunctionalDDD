@@ -55,12 +55,26 @@ public class ScalarValueModelBinderProvider : IModelBinderProvider
         if (maybeInnerType is not null)
         {
             var maybePrimitiveType = ScalarValueTypeHelper.GetPrimitiveType(maybeInnerType);
-            return maybePrimitiveType is null
-                ? null
-                : ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+            if (maybePrimitiveType is not null)
+            {
+                return ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
                     typeof(MaybeModelBinder<,>),
                     maybeInnerType,
                     maybePrimitiveType);
+            }
+
+            // Maybe<TPrimitive> for the closed primitive allowed list — the bare-primitive
+            // counterpart of MaybeModelBinder<,>. Same allowed list as
+            // MaybePrimitiveJsonConverterFactory so JSON body and route/query/header
+            // binding stay symmetric.
+            if (MaybePrimitives.SupportedPrimitives.Contains(maybeInnerType))
+            {
+                return ScalarValueTypeHelper.CreateGenericInstance<IModelBinder>(
+                    typeof(MaybePrimitiveModelBinder<>),
+                    maybeInnerType);
+            }
+
+            return null;
         }
 
         // Check for direct IScalarValue types

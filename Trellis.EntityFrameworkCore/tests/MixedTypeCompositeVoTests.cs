@@ -155,7 +155,7 @@ public class MixedTypeCompositeVoTests : IDisposable
         // of the body is never written. We construct the VO with everything at None to
         // prove the failure is type-driven, not value-driven. The single assertion below
         // captures the rule; tests of the same failure on `Maybe<string>` / `Maybe<DateTime[]>`
-        // in isolation would only repeat this — the converter's whitelist is identical for
+        // in isolation would only repeat this — the converter's allowed list is identical for
         // every position.
         var vo = TestMixedTypeVo.Create(
             TestOrderStatus.Draft,
@@ -213,7 +213,7 @@ public class MixedTypeCompositeVoTests : IDisposable
     // -------- Probe 4: counterpart "supported mixed VO" round-trips cleanly -----------
     //
     // To answer the question "is a mixed VO possible at all?" — yes, when every field is
-    // either a raw primitive from the converter's whitelist (string, decimal, int, long,
+    // either a raw primitive from the converter's allowed list (string, decimal, int, long,
     // short, byte, double, float, bool, Guid, DateTime, DateTimeOffset) or a Trellis scalar
     // value object that flattens to one of those primitives (RequiredEnum, RequiredGuid,
     // RequiredString, PhoneNumber, EmailAddress, ...). The fixture below mixes both and

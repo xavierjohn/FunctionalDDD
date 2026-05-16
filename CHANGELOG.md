@@ -83,6 +83,22 @@ All nine `Trellis.Asp` ProblemDetails emission sites now populate `ProblemDetail
 
 ### Added
 
+#### `MaybePrimitiveJsonConverterFactory` and `MaybePrimitiveModelBinder<T>` — `Maybe<TPrimitive>` direct support on DTOs and route/query/header parameters
+
+Closes the long-standing asymmetry where Trellis already shipped first-class JSON + binder support for `Maybe<TScalar>` (typed value objects implementing `IScalarValue<TSelf, TPrimitive>`) but raw `Maybe<long>` / `Maybe<int>` / `Maybe<string>` / `Maybe<DateTime>` fell through to STJ's default object handling, which would silently serialize the `Maybe<T>` struct's public members (`HasValue`, `HasNoValue`, `Value`) — producing JSON the converter cannot itself parse back. Consumers had to either declare nullable transports on every DTO and lift via `.AsMaybe()` at the seam, or wrap every primitive in a scalar value object even when no domain validation was warranted. The asymmetry was structurally backwards: the supported case (`Maybe<RequiredString<EmailAddress>>`) was *more* complex than the unsupported case (`Maybe<long>`).
+
+`Maybe<T>` now works directly on DTOs and route/query/header parameters for the closed primitive allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) — the same set `CompositeValueObjectJsonConverter` supports. The rule is uniform: "`Maybe<T>` works wherever `T` is a primitive Trellis already supports directly".
+
+Three shipped types:
+
+- `MaybePrimitiveJsonConverterFactory` — `JsonConverterFactory` that produces `MaybePrimitiveJsonConverter<T>` for `Maybe<T>` shapes in the allowed list. Auto-registered by `AddTrellisAsp(...)` alongside `MaybeScalarValueJsonConverterFactory` (same `JsonSerializer.IsReflectionEnabledByDefault` gate for AOT). JSON `null` or absent → `Maybe<T>.None`; primitive value → `Maybe.From(value)`. Reads and writes dispatch on the closed primitive allowed list via typed `Utf8JsonReader` / `Utf8JsonWriter` methods — no reflection, no `JsonSerializer` round-trip, no AOT/trim warnings.
+- `MaybePrimitiveJsonConverter<T> : JsonConverter<Maybe<T>>` where `T : notnull` — the concrete converter the factory produces.
+- `MaybePrimitiveModelBinder<T>` for route / query / header parameter binding. Missing or empty value → `Maybe<T>.None`; parseable value → `Maybe.From(parsed)`; unparseable value → `ModelState` error. `ScalarValueModelBinderProvider` extended to recognise the `Maybe<TPrimitive>` shape for the same allowed list and create the new binder — old null-return behavior on `Maybe<TPrimitive>` is replaced.
+
+The closed allowed list is intentional: shapes outside the set (`DateOnly`, `TimeOnly`, unsigned numerics, arrays, collections, nested composites, scalar VOs from outside the IScalarValue contract) continue to require the wire-shape DTO + adapter pattern (Cookbook Recipe 14, `T?` + `.AsMaybe()`). The factory's `CanConvert` and the binder provider's allowed list check both return false / null for those shapes so the existing `MaybeScalarValueJsonConverterFactory` retains exclusive responsibility for IScalarValue-shaped maybes, and unsupported shapes don't silently fall back to broken behavior.
+
+Recipe 14 updated with the new row, plus a third row clarifying the `Maybe<TUnsupportedPrimitive>` path still goes through the DTO seam.
+
 #### `WithCacheControl(...)` on `HttpResponseOptionsBuilder<T>` + `CacheControl` presets
 
 New fluent helper on `HttpResponseOptionsBuilder<T>` (and the non-generic `HttpResponseOptionsBuilder` for `Error.ToHttpResponse`) for declaring a per-endpoint `Cache-Control` directive. Closes the gap in the response-shaping surface: the builder already covered `WithETag`, `WithLastModified`, `Vary`, `WithContentLanguage`, `WithContentLocation`, `WithAcceptRanges`, `Created` / `CreatedAtRoute` / `CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, and `WithErrorMapping`, but had no `Cache-Control` helper. Consumers wanting a per-endpoint directive either skipped the header (intermediate proxies guess, browsers heuristic-cache), set it via separate middleware (loses the per-endpoint fluent shape), or wrote `Response.Headers.CacheControl = "..."` inside the handler (string-typed, no validation).

@@ -124,6 +124,7 @@ public static class ServiceCollectionExtensions
         {
             options.Converters.Add(new ValidatingJsonConverterFactory());
             options.Converters.Add(new MaybeScalarValueJsonConverterFactory());
+            options.Converters.Add(new MaybePrimitiveJsonConverterFactory());
         }
     }
 
