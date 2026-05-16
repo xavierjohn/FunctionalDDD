@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### `IResult`-aware FluentAssertions extension
+
+Tests asserting against members typed as the non-generic `IResult` interface — most commonly `IAuthorizeResource<TResource>.Authorize` and `IAuthorizeResourceVia<TOwner>.Authorize`, which both return `IResult` by contract — can now call `.Should().BeSuccess()` / `.BeFailureOfType<TError>()` / `.HaveErrorCode(...)` / `.HaveErrorDetail(...)` / `.HaveErrorDetailContaining(...)` directly without casting to `Result<Unit>`. New `IResultAssertions` mirrors the failure-side surface of the existing `ResultAssertions<TValue>`; `HaveValue` and equivalents are not offered because the non-generic interface carries no typed value. Concrete `Result<T>` continues to bind to the typed entry point — struct is more specific than the interface, so overload resolution prefers `Should<T>(this Result<T>)`.
+
 ### Fixed
 
 #### `Result<Page<T>>.ToHttpResponse` no longer silently drops `WithETag` / `WithLastModified` / `Vary` / `WithContentLanguage` / `WithContentLocation` / `EvaluatePreconditions`
