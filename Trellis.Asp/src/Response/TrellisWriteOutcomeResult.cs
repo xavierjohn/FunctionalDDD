@@ -174,7 +174,13 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
                 TrellisHttpResult<TDomain, TBody>.AppendVaryUnique(response, v);
         }
 
-        if (!hasDomain)
+        // Reference-type TDomain with a runtime-null Value / StatusBody: WriteOutcome's
+        // sealed records carry no null guard on construction, so a misbehaving caller can
+        // pass null. Domain-dependent selectors must not run against null — they'd NPE on
+        // the first member access. Keep the `domain is null` short-circuit for the
+        // hasDomain-true cases; the static-value path runs before ApplyBuilderMetadata in
+        // ExecuteAsync so directives like CacheControl.NoStore() still apply.
+        if (!hasDomain || domain is null)
             return;
 
         if (_options.ETagSelector is { } et)

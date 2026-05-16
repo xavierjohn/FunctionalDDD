@@ -220,14 +220,18 @@ public static class HttpResponseExtensions
         var ok = Results.Ok(envelope);
         var inner = linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
 
-        // Wrap so VaryForActor / Cache-Control (static + selector) apply on the paged success
-        // path too. The wrapper only fires when at least one builder option requires it; a
-        // plain page response continues to execute the inner result directly.
-        var staticCc = opts.CacheControl;
-        var selectorCc = opts.CacheControlSelector is { } sel ? sel(page) : null;
-        var pageScopedCc = selectorCc ?? staticCc;
-        if (opts.VaryForActor || pageScopedCc is not null)
-            return new PagedSuccessHeaderWrapper(inner, opts.VaryForActor, pageScopedCc);
+        // Wrap so VaryForActor / Cache-Control (static + selector) apply on the paged
+        // success path too. The wrapper holds the selector and `page` so evaluation runs
+        // inside ExecuteAsync — matching the non-paged code paths and avoiding any chance
+        // of stale state if the IResult is constructed in one scope and executed in
+        // another (e.g. minimal-api endpoint that defers ExecuteAsync).
+        var hasCacheControl = opts.CacheControl is not null || opts.CacheControlSelector is not null;
+        if (opts.VaryForActor || hasCacheControl)
+        {
+            Func<System.Net.Http.Headers.CacheControlHeaderValue?> resolveCacheControl =
+                () => (opts.CacheControlSelector is { } sel ? sel(page) : null) ?? opts.CacheControl;
+            return new PagedSuccessHeaderWrapper(inner, opts.VaryForActor, resolveCacheControl);
+        }
 
         return inner;
     }
@@ -310,12 +314,14 @@ internal sealed class ActorVaryWrapperResult(Microsoft.AspNetCore.Http.IResult i
 /// before delegating to the inner result. The paged success path produces the response via
 /// <see cref="Microsoft.AspNetCore.Http.Results.Ok(object?)"/> / <see cref="PagedHttpResult"/>,
 /// neither of which consults the builder options — this wrapper applies the option-driven
-/// headers so the contract matches the non-paged code paths.
+/// headers so the contract matches the non-paged code paths. The <c>Cache-Control</c>
+/// resolver is invoked inside <see cref="ExecuteAsync"/> so per-domain selectors evaluate
+/// at execution time, matching the timing of selectors on the non-paged paths.
 /// </summary>
 internal sealed class PagedSuccessHeaderWrapper(
     Microsoft.AspNetCore.Http.IResult inner,
     bool varyForActor,
-    System.Net.Http.Headers.CacheControlHeaderValue? cacheControl) : Microsoft.AspNetCore.Http.IResult
+    Func<System.Net.Http.Headers.CacheControlHeaderValue?> resolveCacheControl) : Microsoft.AspNetCore.Http.IResult
 {
     public Task ExecuteAsync(HttpContext httpContext)
     {
@@ -323,6 +329,7 @@ internal sealed class PagedSuccessHeaderWrapper(
         if (varyForActor)
             TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
 
+        var cacheControl = resolveCacheControl();
         if (cacheControl is not null)
             httpContext.Response.Headers["Cache-Control"] = cacheControl.ToString();
 

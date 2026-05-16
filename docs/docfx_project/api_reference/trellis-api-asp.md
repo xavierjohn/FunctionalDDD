@@ -133,7 +133,7 @@ Non-generic builder used for the value-less `Result` overload.
 | `Vary(params string[] headers)` | `HttpResponseOptionsBuilder` | Appends headers to `Vary`. |
 | `VaryForActor()` | `HttpResponseOptionsBuilder` | Same contract as the generic builder's `VaryForActor()`. Applied by `Error.ToHttpResponse(...)` (the only consumer of the non-generic builder), so standalone error responses emitted via this verb partition by actor too. |
 | `HonorPrefer()` | `HttpResponseOptionsBuilder` | Always emits `Vary: Prefer`. |
-| `WithCacheControl(CacheControlHeaderValue value)` | `HttpResponseOptionsBuilder` | Same contract as the generic builder's static-value overload. Applies to both `204 No Content` success and failure responses, so `Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))` keeps the response out of intermediate caches. |
+| `WithCacheControl(CacheControlHeaderValue value)` | `HttpResponseOptionsBuilder` | Same contract as the generic builder's static-value overload. The non-generic builder is consumed only by `Error.ToHttpResponse(...)`, so this overload sets `Cache-Control` on the ProblemDetails failure response — useful for `Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))` to keep deterministic-error responses out of intermediate caches. |
 | `WithErrorMapping(Func<Error, int> mapper)` | `HttpResponseOptionsBuilder` | Per-call mapper for failure responses. |
 | `WithErrorMapping<TError>(int statusCode) where TError : Error` | `HttpResponseOptionsBuilder` | Per-call override for a single error type. |
 

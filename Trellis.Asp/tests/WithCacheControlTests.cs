@@ -505,6 +505,84 @@ public sealed class WithCacheControlTests
         ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
     }
 
+    // Reference-type TDomain with a runtime-null Value: WriteOutcome's records have no null
+    // guard on their value/StatusBody parameters (Trellis.Core/src/WriteOutcome.cs), so a
+    // misbehaving repository can construct `WriteOutcome<Todo>.Created(null!, "/foo")`.
+    // Domain-dependent selectors (ETag, Last-Modified, Content-Location, Cache-Control) must
+    // not run against a null domain — they'd NPE on the first property access. The
+    // hasDomain-true switch case still needs a runtime null guard.
+    [Fact]
+    public async Task Selector_does_not_fire_on_Created_with_null_Value()
+    {
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<Todo>.Created(null!, "/todos/orphan");
+        var r = Result.Ok<WriteOutcome<Todo>>(outcome);
+        var selectorCalled = false;
+
+        await r.ToHttpResponse<Todo>(o => o.WithCacheControl(_ =>
+        {
+            selectorCalled = true;
+            return CacheControl.Public(TimeSpan.FromMinutes(5));
+        })).ExecuteAsync(ctx);
+
+        selectorCalled.Should().BeFalse(
+            "a null Value on WriteOutcome.Created carries no usable domain; domain-dependent " +
+            "selectors must not run against null");
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Selector_does_not_fire_on_Updated_with_null_Value()
+    {
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<Todo>.Updated(null!);
+        var r = Result.Ok<WriteOutcome<Todo>>(outcome);
+        var selectorCalled = false;
+
+        await r.ToHttpResponse<Todo>(o => o.WithCacheControl(_ =>
+        {
+            selectorCalled = true;
+            return CacheControl.Public(TimeSpan.FromMinutes(5));
+        })).ExecuteAsync(ctx);
+
+        selectorCalled.Should().BeFalse();
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Selector_does_not_fire_on_Accepted_with_null_StatusBody()
+    {
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<Todo>.Accepted(null!);
+        var r = Result.Ok<WriteOutcome<Todo>>(outcome);
+        var selectorCalled = false;
+
+        await r.ToHttpResponse<Todo>(o => o.WithCacheControl(_ =>
+        {
+            selectorCalled = true;
+            return CacheControl.Public(TimeSpan.FromMinutes(5));
+        })).ExecuteAsync(ctx);
+
+        selectorCalled.Should().BeFalse();
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Static_value_still_emits_on_Created_with_null_Value()
+    {
+        // Static value is set in ExecuteAsync before ApplyBuilderMetadata; the null-Value
+        // guard only suppresses domain-dependent selectors, not the static directive.
+        var ctx = NewContext();
+        var outcome = new WriteOutcome<Todo>.Created(null!, "/todos/orphan");
+        var r = Result.Ok<WriteOutcome<Todo>>(outcome);
+
+        await r.ToHttpResponse<Todo>(
+            o => o.WithCacheControl(CacheControl.NoStore()))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
+    }
+
     [Fact]
     public async Task Selector_returning_null_falls_back_to_static_value()
     {
@@ -544,6 +622,38 @@ public sealed class WithCacheControlTests
 
         ctx.Response.StatusCode.Should().Be(200);
         ctx.Response.Headers.CacheControl.ToString().Should().Be("public, max-age=60");
+    }
+
+    [Fact]
+    public async Task Paged_selector_is_invoked_in_ExecuteAsync_not_during_ToHttpResponse()
+    {
+        // Selector evaluation timing must match the non-paged paths — invoked per request
+        // during IResult.ExecuteAsync, not eagerly when ToHttpResponse constructs the
+        // wrapper. Building the IResult during a hosted-service warm path (or any reuse
+        // scenario) must not call the selector with stale state.
+        var ctx = NewContext();
+        var page = new Page<Todo>(
+            Items: [new Todo(1, "a", "e1")],
+            Next: null, Previous: null, RequestedLimit: 50, AppliedLimit: 50);
+        var r = Result.Ok(page);
+        var selectorCalled = false;
+
+        var http = r.ToHttpResponse(
+            (_, _) => "/next",
+            t => t,
+            o => o.WithCacheControl(_ =>
+            {
+                selectorCalled = true;
+                return CacheControl.NoStore();
+            }));
+
+        selectorCalled.Should().BeFalse(
+            "selector must defer to IResult.ExecuteAsync, not run during ToHttpResponse(...)");
+
+        await http.ExecuteAsync(ctx);
+
+        selectorCalled.Should().BeTrue();
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
     }
 
     // ---------- Non-generic builder ----------
