@@ -3,10 +3,12 @@
 using System.Text.Json;
 using Trellis.Testing;
 
+[NotDefault]
 public partial class OrderDate : RequiredDateTime<OrderDate>
 {
 }
 
+[NotDefault]
 internal partial class InternalDate : RequiredDateTime<InternalDate>
 {
 }
@@ -42,7 +44,7 @@ public class RequiredDateTimeTests
         result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
         var validation = (Error.UnprocessableContent)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/orderDate");
-        validation.Fields[0].Detail.Should().Be("Order Date cannot be empty.");
+        validation.Fields[0].Detail.Should().Be("Order Date cannot be DateTime.MinValue.");
     }
 
     [Fact]

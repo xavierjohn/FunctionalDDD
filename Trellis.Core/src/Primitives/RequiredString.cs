@@ -1,18 +1,19 @@
 ﻿namespace Trellis;
 
 /// <summary>
-/// Base class for creating strongly-typed string value objects that cannot be null or empty.
-/// Provides a foundation for domain primitives like names, descriptions, codes, and other textual concepts.
+/// Base class for creating strongly-typed string value objects. Rejects only <c>null</c> by
+/// default; per-type sentinel rejection ("cannot be empty") and trimming are opt-in via the
+/// <see cref="NotDefaultAttribute"/> and <see cref="TrimAttribute"/> attributes.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for string-based value objects
-/// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
-/// the PrimitiveValueObjectGenerator source generator automatically creates:
+/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for string-based value objects.
+/// When used with the <c>partial</c> keyword, the PrimitiveValueObjectGenerator source generator
+/// automatically creates:
 /// <list type="bullet">
 /// <item><c>IScalarValue&lt;TSelf, string&gt;</c> implementation for ASP.NET Core automatic validation</item>
 /// <item><c>TryCreate(string)</c> - Factory method for non-nullable strings (required by IScalarValue)</item>
-/// <item><c>TryCreate(string?, string?)</c> - Factory method with null/empty/whitespace validation and custom field name</item>
+/// <item><c>TryCreate(string?, string?)</c> - Factory method with null-only rejection by default (add <see cref="NotDefaultAttribute"/> for empty rejection and <see cref="TrimAttribute"/> for trim) and custom field name</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
 /// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
 /// <item>Explicit cast operator from string</item>
@@ -44,22 +45,34 @@
 /// Benefits over plain strings:
 /// <list type="bullet">
 /// <item><strong>Type safety</strong>: Cannot mix FirstName with LastName</item>
-/// <item><strong>Validation</strong>: Prevents null/empty strings at creation time</item>
+/// <item><strong>Validation</strong>: Prevents null at creation time; opt into empty / whitespace rejection with <c>[NotDefault]</c> / <c>[Trim]</c></item>
 /// <item><strong>Length constraints</strong>: Optional min/max length via <see cref="StringLengthAttribute"/></item>
 /// <item><strong>Domain clarity</strong>: Self-documenting code that expresses intent</item>
-/// <item><strong>Consistency</strong>: Centralized trimming and normalization</item>
+/// <item><strong>Consistency</strong>: Centralized normalization via opt-in attributes (<c>[Trim]</c>, <c>[NotDefault]</c>, <c>[StringLength]</c>) and the <c>ValidateAdditional</c> hook</item>
 /// <item><strong>Testability</strong>: Easy to test validation rules in isolation</item>
 /// </list>
 /// </para>
 /// </remarks>
 /// <example>
-/// Creating a strongly-typed name value object:
+/// Lenient default — only <c>null</c> is rejected:
 /// <code>
-/// // Define the value object (partial keyword enables source generation)
-/// public partial class FirstName : RequiredString&lt;FirstName&gt;
-/// {
-/// }
-/// 
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+///
+/// FirstName.TryCreate("John");        // Success("John")
+/// FirstName.TryCreate("");            // Success("") — stored verbatim
+/// FirstName.TryCreate("   ");         // Success("   ") — whitespace preserved
+/// FirstName.TryCreate("  John  ");    // Success("  John  ") — no auto-trim
+/// FirstName.TryCreate(null);          // Failure: "First Name cannot be empty."
+/// </code>
+/// </example>
+/// <example>
+/// Strict opt-in equivalent to the pre-realignment defaults — apply <see cref="TrimAttribute"/>
+/// and <see cref="NotDefaultAttribute"/> together for the recommended default for any string
+/// mapped to a database column:
+/// <code>
+/// [Trim, NotDefault]
+/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
+///
 /// // The source generator automatically creates:
 /// // - IScalarValue&lt;FirstName, string&gt; interface implementation
 /// // - public static Result&lt;FirstName&gt; TryCreate(string value)
@@ -68,38 +81,29 @@
 /// // - public static bool TryParse(string? s, IFormatProvider? provider, out FirstName result)
 /// // - public static explicit operator FirstName(string value)
 /// // - private FirstName(string value) : base(value) { }
-/// 
-/// // Usage examples:
-/// 
-/// // Create with validation
-/// var result1 = FirstName.TryCreate("John");
-/// // Returns: Success(FirstName("John"))
-/// 
-/// var result2 = FirstName.TryCreate("");
-/// // Returns: Failure(Error.UnprocessableContent with detail "First Name cannot be empty.")
-/// 
-/// var result3 = FirstName.TryCreate(null);
-/// // Returns: Failure(Error.UnprocessableContent with detail "First Name cannot be empty.")
-/// 
-/// var result4 = FirstName.TryCreate("  John  ");
-/// // Returns: Success(FirstName("John")) - automatically trimmed
-/// 
+///
+/// FirstName.TryCreate("John");        // Success("John")
+/// FirstName.TryCreate("  John  ");    // Success("John") — trimmed
+/// FirstName.TryCreate("   ");         // Failure: trim → "" → [NotDefault]
+/// FirstName.TryCreate("");            // Failure: "First Name cannot be empty."
+/// FirstName.TryCreate(null);          // Failure: "First Name cannot be empty."
+///
 /// // With custom field name for validation errors
-/// var result5 = FirstName.TryCreate(input, "user.firstName");
+/// FirstName.TryCreate(input, "user.firstName");
 /// // Error field will be "user.firstName" instead of default "firstName"
-/// 
+///
 /// // Using in entity creation
 /// public class Person : Entity&lt;PersonId&gt;
 /// {
 ///     public FirstName FirstName { get; }
 ///     public LastName LastName { get; }
-///     
+///
 ///     public static Result&lt;Person&gt; Create(string firstName, string lastName) =>
 ///         FirstName.TryCreate(firstName)
 ///             .Combine(LastName.TryCreate(lastName))
 ///             .Map((first, last) => new Person(PersonId.NewUniqueV7(), first, last));
-///     
-///     private Person(PersonId id, FirstName firstName, LastName lastName) 
+///
+///     private Person(PersonId id, FirstName firstName, LastName lastName)
 ///         : base(id)
 ///     {
 ///         FirstName = firstName;
@@ -255,27 +259,30 @@ public abstract class RequiredString<TSelf> : ScalarValueObject<TSelf, string>
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredString{TSelf}"/> class with the specified string value.
     /// </summary>
-    /// <param name="value">The string value. Must not be null or empty.</param>
+    /// <param name="value">The string value.</param>
     /// <remarks>
     /// <para>
     /// This constructor is protected and should be called by derived classes.
     /// When using the source generator (with <c>partial</c> keyword), a private constructor
-    /// is automatically generated that includes validation and trimming.
+    /// is automatically generated.
     /// </para>
     /// <para>
     /// Direct instantiation should be avoided. Instead, use the generated factory method:
     /// <list type="bullet">
-    /// <item><c>TryCreate(string?, string?)</c> - Create from string with validation and trimming</item>
+    /// <item><c>TryCreate(string?, string?)</c> - Create from string with validation</item>
     /// </list>
     /// </para>
     /// <para>
-    /// The generated TryCreate method automatically:
+    /// The generated <c>TryCreate</c> method always rejects <c>null</c> with
+    /// <c>"&lt;FieldName&gt; cannot be empty."</c>. Additional behavior is opt-in per attribute:
     /// <list type="bullet">
-    /// <item>Returns validation error for null values</item>
-    /// <item>Returns validation error for empty strings</item>
-    /// <item>Returns validation error for whitespace-only strings</item>
-    /// <item>Trims leading and trailing whitespace from valid strings</item>
+    /// <item><see cref="TrimAttribute"/> — trims leading and trailing whitespace before any subsequent check.</item>
+    /// <item><see cref="NotDefaultAttribute"/> — rejects <see cref="string.Empty"/> (operates on the post-trim value when <c>[Trim]</c> is also present).</item>
+    /// <item><see cref="StringLengthAttribute"/> — applies minimum and / or maximum length bounds; measures the post-trim value when <c>[Trim]</c> is present, the raw input otherwise.</item>
     /// </list>
+    /// Applying <c>[Trim, NotDefault]</c> together is the recommended setup for any string
+    /// mapped to a database column and recovers the pre-realignment "reject null + empty +
+    /// whitespace; auto-trim" default.
     /// </para>
     /// </remarks>
     protected RequiredString(string value) : base(value)

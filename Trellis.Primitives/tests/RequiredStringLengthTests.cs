@@ -6,7 +6,7 @@ using Trellis.Testing;
 /// <summary>
 /// Test value object with max length only.
 /// </summary>
-[StringLength(10)]
+[Trim, NotDefault, StringLength(10)]
 public partial class ShortCode : RequiredString<ShortCode>
 {
 }
@@ -14,7 +14,7 @@ public partial class ShortCode : RequiredString<ShortCode>
 /// <summary>
 /// Test value object with both min and max length.
 /// </summary>
-[StringLength(50, MinimumLength = 3)]
+[Trim, NotDefault, StringLength(50, MinimumLength = 3)]
 public partial class UserName : RequiredString<UserName>
 {
 }

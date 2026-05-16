@@ -6,6 +6,7 @@ using System.Text.Json;
 using Trellis.Testing;
 using Xunit;
 
+[NotDefault]
 public partial class EmployeeId : RequiredGuid<EmployeeId>
 {
 }
@@ -20,7 +21,7 @@ public class RequiredGuidTests
         guidId1.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
         var validation = (Error.UnprocessableContent)guidId1.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/employeeId");
-        validation.Fields[0].Detail.Should().Be("Employee Id cannot be empty.");
+        validation.Fields[0].Detail.Should().Be("Employee Id cannot be Guid.Empty.");
         validation.Fields[0].ReasonCode.Should().Be("validation.error");
     }
 
@@ -144,7 +145,7 @@ public class RequiredGuidTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create EmployeeId:*Employee Id cannot be empty*");
+            .WithMessage("Failed to create EmployeeId:*Employee Id cannot be Guid.Empty*");
     }
 
     [Theory]
@@ -164,20 +165,29 @@ public class RequiredGuidTests
 
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("00000000-0000-0000-0000-000000000000")]
-    public void Cannot_create_RequiredGuid_from_empty_string(string? value)
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_null_string()
     {
-        // Act
-        var myGuidResult = EmployeeId.TryCreate(value);
+        // Null string -> "cannot be empty" (the null-rejection message; consistent across the family).
+        var myGuidResult = EmployeeId.TryCreate((string?)null);
 
-        // Assert
         myGuidResult.IsFailure.Should().BeTrue();
-        myGuidResult.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        Error.UnprocessableContent ve = (Error.UnprocessableContent)myGuidResult.UnwrapError();
+        var ve = (Error.UnprocessableContent)myGuidResult.UnwrapError();
         ve.Fields[0].Field.Path.Should().Be("/employeeId");
         ve.Fields[0].Detail.Should().Be("Employee Id cannot be empty.");
+    }
+
+    [Fact]
+    public void Cannot_create_RequiredGuid_from_all_zero_string()
+    {
+        // "00000000-..." parses successfully into Guid.Empty, then the [NotDefault] check fires
+        // with the per-type "cannot be Guid.Empty." message — distinct from the null case above.
+        var myGuidResult = EmployeeId.TryCreate("00000000-0000-0000-0000-000000000000");
+
+        myGuidResult.IsFailure.Should().BeTrue();
+        var ve = (Error.UnprocessableContent)myGuidResult.UnwrapError();
+        ve.Fields[0].Field.Path.Should().Be("/employeeId");
+        ve.Fields[0].Detail.Should().Be("Employee Id cannot be Guid.Empty.");
     }
 
     [Fact]

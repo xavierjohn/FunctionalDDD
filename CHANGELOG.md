@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### `RequiredXxx<T>` family POLA realignment (breaking)
+
+The `RequiredXxx<T>` family now follows a single, uniform rule: **reject only null**. Per-type "zero value" rejection (`""` for `RequiredString`, `0` for numerics, `Guid.Empty`, `DateTime.MinValue`) is opt-in via the new `[NotDefault]` attribute. String trim is opt-in via the new `[Trim]` attribute. This realigns the family with `RequiredInt<T>(0)` — which has always succeeded — and matches the Principle of Least Astonishment.
+
+| Type | Default (no attributes) | With `[NotDefault]` |
+|---|---|---|
+| `RequiredInt<T>` / `RequiredLong<T>` / `RequiredDecimal<T>` | reject null | reject null + `0` (wording: "cannot be zero.") |
+| `RequiredString<T>` | reject null | reject null + `""` (after `[Trim]` if present) |
+| `RequiredGuid<T>` | reject null | reject null + `Guid.Empty` (wording: "cannot be Guid.Empty.") |
+| `RequiredDateTime<T>` | reject null | reject null + `DateTime.MinValue` (wording: "cannot be DateTime.MinValue.") |
+| `RequiredBool<T>` | reject null | **compile-time error** (degenerate single-value type) |
+| `RequiredEnum<T>` | reject null + unknown member name | **compile-time error** (smart-enum has no CLR default) |
+
+Validation order in the generated `TryCreate`: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
+
+New compile-time diagnostics:
+
+- `TRLS040` — `[NotDefault]` on `RequiredBool<T>` is not supported.
+- `TRLS041` — `[Trim]` on a non-`RequiredString` Required type is not supported.
+- `TRLS042` — `[NotDefault]` on `RequiredEnum<T>` is not supported.
+
+The EF Core `TrellisScalarConverter` calls `TryCreate` to rehydrate every row, so lenient-by-default types now accept persisted sentinel values (`Guid.Empty`, `""`, `DateTime.MinValue`) instead of throwing `TrellisPersistenceMappingException`. Add `[NotDefault]` to any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property to keep the strict rehydration guarantee.
+
+### Added
+
+#### `[NotDefault]` and `[Trim]` attributes for `RequiredXxx<T>` types
+
+Two new opt-in attributes in the `Trellis` namespace alongside `[StringLength]` / `[Range]`. Both are consumed at compile time by the primitive value-object source generator with no runtime reflection cost. See the `Changed` section above for the full behavior matrix.
+
 #### `IActorProvider.GetCurrentActorAsync` returns `Task<Maybe<Actor>>` (breaking)
 
 `IActorProvider.GetCurrentActorAsync` now returns `Task<Maybe<Actor>>` instead of `Task<Actor>`. "No authenticated actor on this request" is client-error state expressed via `Maybe<Actor>.None`; the mediator authorization pipeline maps it to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). Provider implementations should throw `InvalidOperationException` only for genuine infrastructure or configuration failures (no `HttpContext`, mapping delegate threw, option misconfigured); those still surface as `Error.InternalServerError` (HTTP 500), which is correct because they are bugs rather than authentication state.

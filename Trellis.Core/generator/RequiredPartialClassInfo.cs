@@ -139,6 +139,22 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
     public readonly string TypePath;
 
     /// <summary>
+    /// Gets whether the target class is annotated with <c>[NotDefault]</c>.
+    /// When true, the generator emits a per-type "zero value" rejection check
+    /// (rejects <see cref="string.Empty"/> for strings, <c>0</c> for numerics,
+    /// <see cref="System.Guid.Empty"/> for GUIDs, <see cref="System.DateTime.MinValue"/> for
+    /// date-times). Invalid on <c>RequiredBool</c> and <c>RequiredEnum</c>.
+    /// </summary>
+    public readonly bool HasNotDefault;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[Trim]</c>.
+    /// When true, the generator emits a trim of the input string before any other check.
+    /// Only valid on <c>RequiredString</c>-derived types.
+    /// </summary>
+    public readonly bool HasTrim;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="RequiredPartialClassInfo"/> class.
     /// </summary>
     /// <param name="nameSpace">The namespace of the partial class.</param>
@@ -155,6 +171,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
     /// <param name="rangeDoubleMax">Optional maximum value from <c>[Range]</c> attribute for RequiredDecimal with fractional bounds.</param>
     /// <param name="nestingParents">Containing type declarations needed to emit nested generated types.</param>
     /// <param name="typePath">A unique namespace-qualified type path used for generated hint names.</param>
+    /// <param name="hasNotDefault">True when the target carries <c>[NotDefault]</c>.</param>
+    /// <param name="hasTrim">True when the target carries <c>[Trim]</c>.</param>
     public RequiredPartialClassInfo(
         string nameSpace,
         string className,
@@ -169,7 +187,9 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
         double? rangeDoubleMin = null,
         double? rangeDoubleMax = null,
         string[]? nestingParents = null,
-        string? typePath = null)
+        string? typePath = null,
+        bool hasNotDefault = false,
+        bool hasTrim = false)
     {
         NameSpace = nameSpace;
         ClassName = className;
@@ -185,6 +205,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
         RangeDoubleMax = rangeDoubleMax;
         NestingParents = nestingParents ?? [];
         TypePath = typePath ?? (string.IsNullOrEmpty(nameSpace) ? className : $"{nameSpace}.{className}");
+        HasNotDefault = hasNotDefault;
+        HasTrim = hasTrim;
     }
 
     public bool Equals(RequiredPartialClassInfo? other)
@@ -204,6 +226,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
             && RangeLongMax == other.RangeLongMax
             && RangeDoubleMin == other.RangeDoubleMin
             && RangeDoubleMax == other.RangeDoubleMax
+            && HasNotDefault == other.HasNotDefault
+            && HasTrim == other.HasTrim
             && TypePath == other.TypePath
             && NestingParents.SequenceEqual(other.NestingParents);
     }
@@ -227,6 +251,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
             hash = (hash * 31) + RangeLongMax.GetHashCode();
             hash = (hash * 31) + RangeDoubleMin.GetHashCode();
             hash = (hash * 31) + RangeDoubleMax.GetHashCode();
+            hash = (hash * 31) + HasNotDefault.GetHashCode();
+            hash = (hash * 31) + HasTrim.GetHashCode();
             hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(TypePath);
             return hash;
         }

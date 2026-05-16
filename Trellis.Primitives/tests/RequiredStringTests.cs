@@ -4,9 +4,11 @@ using System.Globalization;
 using System.Text.Json;
 using Trellis.Testing;
 
+[Trim, NotDefault]
 public partial class TrackingId : RequiredString<TrackingId>
 {
 }
+[Trim, NotDefault]
 internal partial class InternalTrackingId : RequiredString<InternalTrackingId>
 {
 }

@@ -4,6 +4,7 @@ namespace Trellis.Primitives.Tests;
 /// <summary>
 /// RequiredGuid with custom validation — rejects Version 4 GUIDs (only allows V7).
 /// </summary>
+[NotDefault]
 public partial class V7OnlyId : RequiredGuid<V7OnlyId>
 {
     static partial void ValidateAdditional(Guid value, string fieldName, ref string? errorMessage)
@@ -17,6 +18,7 @@ public partial class V7OnlyId : RequiredGuid<V7OnlyId>
 /// <summary>
 /// RequiredGuid without ValidateAdditional — ensures the hook is optional.
 /// </summary>
+[NotDefault]
 public partial class PlainId : RequiredGuid<PlainId> { }
 
 /// <summary>
