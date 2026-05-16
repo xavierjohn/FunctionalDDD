@@ -404,10 +404,13 @@ public sealed class HttpResponseOptionsBuilder
     }
 
     /// <summary>
-    /// Sets the <c>Cache-Control</c> response header from the supplied directive. Applied to
-    /// success (204) AND failure responses. See
+    /// Sets the <c>Cache-Control</c> response header from the supplied directive. The non-generic
+    /// builder is consumed only by <see cref="HttpResponseExtensions.ToHttpResponse(Error, Action{HttpResponseOptionsBuilder}?)"/>,
+    /// so this overload applies the directive to the standalone <c>Error</c> ProblemDetails
+    /// response — useful for keeping deterministic-error responses out of intermediate caches
+    /// via <c>Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))</c>. See
     /// <see cref="HttpResponseOptionsBuilder{TDomain}.WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue)"/>
-    /// for full semantics.
+    /// for the generic builder's full success-and-failure semantics.
     /// </summary>
     public HttpResponseOptionsBuilder WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue value)
     {

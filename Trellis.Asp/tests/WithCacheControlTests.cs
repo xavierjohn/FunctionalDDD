@@ -583,6 +583,39 @@ public sealed class WithCacheControlTests
         ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
     }
 
+    // Reference-type T on the non-WriteOutcome success path: Result.Ok<T>(null!) is legal
+    // (Result<TValue> has no null check on the value). domain-dependent selectors on the
+    // TrellisHttpResult path must short-circuit just like they do on the WriteOutcome path.
+    [Fact]
+    public async Task Selector_does_not_fire_on_Result_Ok_with_null_value()
+    {
+        var ctx = NewContext();
+        var r = Result.Ok<Todo>(null!);
+        var selectorCalled = false;
+
+        await r.ToHttpResponse(t => t, o => o.WithCacheControl(_ =>
+        {
+            selectorCalled = true;
+            return CacheControl.Public(TimeSpan.FromMinutes(5));
+        })).ExecuteAsync(ctx);
+
+        selectorCalled.Should().BeFalse(
+            "Result.Ok<T>(null!) is legal — domain-dependent selectors must not run against null");
+        ctx.Response.Headers.CacheControl.ToString().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Static_value_still_emits_on_Result_Ok_with_null_value()
+    {
+        var ctx = NewContext();
+        var r = Result.Ok<Todo>(null!);
+
+        await r.ToHttpResponse(t => t, o => o.WithCacheControl(CacheControl.NoStore()))
+            .ExecuteAsync(ctx);
+
+        ctx.Response.Headers.CacheControl.ToString().Should().Be("no-store");
+    }
+
     [Fact]
     public async Task Selector_returning_null_falls_back_to_static_value()
     {

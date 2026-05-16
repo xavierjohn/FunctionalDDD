@@ -83,7 +83,7 @@ Two overloads on the generic builder, one on the non-generic:
 
 - `WithCacheControl(CacheControlHeaderValue value)` — static directive emitted on **success and failure** responses so a sensitive endpoint declaring `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 422 from intermediate-cache leakage just as much as the 200. A leaked 404 from `/api/users/{id}` reveals which user IDs exist; the static-value contract makes "do not cache this endpoint, ever" expressible as one call.
 - `WithCacheControl(Func<TDomain, CacheControlHeaderValue?> selector)` — per-domain selector, success-path only (failures carry no domain value, and `WriteOutcome.UpdatedNoContent` / `AcceptedNoContent` skip the selector since they carry no payload). Returning `null` from the selector skips the per-domain header; when the static-value overload is also configured, the static value remains in place (the selector "refines, then falls back to static" rather than "overrides to nothing").
-- Non-generic builder gets the static-value overload only (no domain value to project against).
+- Non-generic builder gets the static-value overload only. Consumed only by `Error.ToHttpResponse(...)`, so this overload sets `Cache-Control` on the ProblemDetails failure response — `Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))` keeps deterministic-error responses out of intermediate caches.
 
 New `CacheControl` static helper class with fresh-instance presets for the common directives:
 
