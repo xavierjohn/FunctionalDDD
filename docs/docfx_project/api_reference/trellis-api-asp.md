@@ -126,7 +126,7 @@ Fluent options builder used by every generic `ToHttpResponse` overload. Selector
 public sealed class HttpResponseOptionsBuilder
 ```
 
-Non-generic builder used for the value-less `Result` overload.
+Non-generic builder consumed only by `Error.ToHttpResponse(this Error error, Action<HttpResponseOptionsBuilder>?)` — used to shape the ProblemDetails response for a standalone `Error`.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
