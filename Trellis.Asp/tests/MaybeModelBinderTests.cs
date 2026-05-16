@@ -398,7 +398,7 @@ public class MaybeModelBinderTests
     public void Provider_MaybeString_ReturnsMaybePrimitiveBinder()
     {
         // Was: returns null (Maybe<string> wasn't a scalar value object). Updated: the
-        // provider now also recognises Maybe<TPrimitive> for the closed primitive whitelist
+        // provider now also recognises Maybe<TPrimitive> for the closed primitive allowed list
         // and creates a MaybePrimitiveModelBinder<T>, parity with the JSON converter side.
         var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(typeof(Maybe<string>));
@@ -420,7 +420,7 @@ public class MaybeModelBinderTests
     {
         // Was: returned null with note "primitive Maybe<T> is not wrapping a scalar value
         // object". Updated: the provider now creates a MaybePrimitiveModelBinder<T> for the
-        // closed primitive whitelist so route/query/header binding of Maybe<T> works
+        // closed primitive allowed list so route/query/header binding of Maybe<T> works
         // symmetrically with the JSON body case (MaybePrimitiveJsonConverterFactory).
         var provider = new ScalarValueModelBinderProvider();
         var context = CreateBinderProviderContext(maybePrimitive);

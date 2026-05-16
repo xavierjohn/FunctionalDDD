@@ -9,7 +9,7 @@ using Trellis;
 
 /// <summary>
 /// Model binder for <c>Maybe&lt;T&gt;</c> parameters where <typeparamref name="T"/> is an
-/// STJ-native primitive in the closed whitelist
+/// STJ-native primitive in the closed allowed list
 /// (<see cref="SupportedPrimitives"/>). Binds optional route, query, form, and header
 /// parameters into <see cref="Maybe{T}"/>.
 /// </summary>
@@ -36,7 +36,7 @@ public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
 {
     /// <summary>
     /// The closed set of primitive types this binder supports, mirroring
-    /// <see cref="Trellis.Asp.Validation.MaybePrimitiveJsonConverterFactory"/>'s whitelist.
+    /// <see cref="Trellis.Asp.Validation.MaybePrimitiveJsonConverterFactory"/>'s allowed list.
     /// </summary>
     public static readonly FrozenSet<Type> SupportedPrimitives = new HashSet<Type>
     {
@@ -88,7 +88,7 @@ public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
 
     private static bool TryParse(string raw, out T value)
     {
-        // Dispatch on the closed primitive whitelist via typed parse methods. Same shape
+        // Dispatch on the closed primitive allowed list via typed parse methods. Same shape
         // as the JSON converter's read path — no reflection, no JsonSerializer, AOT-safe.
         if (typeof(T) == typeof(string))
         {

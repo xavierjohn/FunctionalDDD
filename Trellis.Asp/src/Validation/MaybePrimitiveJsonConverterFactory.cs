@@ -21,7 +21,7 @@ using Trellis;
 /// silently serializes the <see cref="Maybe{T}"/> struct's public members (<c>HasValue</c>,
 /// <c>HasNoValue</c>, <c>Value</c>) — producing JSON the converter cannot itself parse back.
 /// The supported primitive set deliberately mirrors the
-/// <c>CompositeValueObjectJsonConverter&lt;T&gt;</c> whitelist (in <c>Trellis.Primitives</c>):
+/// <c>CompositeValueObjectJsonConverter&lt;T&gt;</c> allowed list (in <c>Trellis.Primitives</c>):
 /// the rule is "Maybe&lt;T&gt; works wherever T is a primitive Trellis already supports directly".
 /// </para>
 /// <para>
@@ -36,7 +36,7 @@ using Trellis;
 /// </remarks>
 public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory
 {
-    // Closed whitelist mirroring CompositeValueObjectJsonConverter.IsSupportedPrimitive.
+    // Closed allowed list mirroring CompositeValueObjectJsonConverter.IsSupportedPrimitive.
     // Using FrozenSet for O(1) CanConvert lookup; the set is constructed once at type-init.
     private static readonly FrozenSet<Type> SupportedPrimitives = new HashSet<Type>
     {
@@ -56,7 +56,7 @@ public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory
 
     /// <summary>
     /// True when <paramref name="typeToConvert"/> is <c>Maybe&lt;T&gt;</c> and <c>T</c> is in
-    /// the closed primitive whitelist.
+    /// the closed primitive allowed list.
     /// </summary>
     public override bool CanConvert(Type typeToConvert)
     {

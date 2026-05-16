@@ -285,12 +285,12 @@ public class MaybePrimitiveJsonConverterTests
     public void Factory_CanConvert_returns_false_for_unsupported_shapes()
     {
         var f = new MaybePrimitiveJsonConverterFactory();
-        f.CanConvert(typeof(Maybe<DateOnly>)).Should().BeFalse("DateOnly is not in the whitelist");
-        f.CanConvert(typeof(Maybe<TimeOnly>)).Should().BeFalse("TimeOnly is not in the whitelist");
-        f.CanConvert(typeof(Maybe<uint>)).Should().BeFalse("unsigned numerics are not in the whitelist");
-        f.CanConvert(typeof(Maybe<ulong>)).Should().BeFalse("unsigned numerics are not in the whitelist");
-        f.CanConvert(typeof(Maybe<int[]>)).Should().BeFalse("arrays are not in the whitelist");
-        f.CanConvert(typeof(Maybe<object>)).Should().BeFalse("object is not in the whitelist");
+        f.CanConvert(typeof(Maybe<DateOnly>)).Should().BeFalse("DateOnly is not in the allowed list");
+        f.CanConvert(typeof(Maybe<TimeOnly>)).Should().BeFalse("TimeOnly is not in the allowed list");
+        f.CanConvert(typeof(Maybe<uint>)).Should().BeFalse("unsigned numerics are not in the allowed list");
+        f.CanConvert(typeof(Maybe<ulong>)).Should().BeFalse("unsigned numerics are not in the allowed list");
+        f.CanConvert(typeof(Maybe<int[]>)).Should().BeFalse("arrays are not in the allowed list");
+        f.CanConvert(typeof(Maybe<object>)).Should().BeFalse("object is not in the allowed list");
         f.CanConvert(typeof(long)).Should().BeFalse("a bare primitive is not Maybe<T>");
         f.CanConvert(typeof(string)).Should().BeFalse("a bare primitive is not Maybe<T>");
     }
@@ -299,7 +299,7 @@ public class MaybePrimitiveJsonConverterTests
     public void Factory_does_not_claim_Maybe_of_scalar_VO()
     {
         // Maybe<TScalar> where TScalar : IScalarValue<,> is the existing scalar factory's
-        // territory. The new primitive factory must NOT claim those — its whitelist is
+        // territory. The new primitive factory must NOT claim those — its allowed list is
         // closed to STJ-native primitives only, so the two factories don't compete.
         var f = new MaybePrimitiveJsonConverterFactory();
         f.CanConvert(typeof(Maybe<MaybeScalarValueJsonConverterTests.Email>))

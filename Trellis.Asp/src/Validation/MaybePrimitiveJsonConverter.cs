@@ -7,7 +7,7 @@ using Trellis;
 
 /// <summary>
 /// JSON converter for <c>Maybe&lt;T&gt;</c> where <typeparamref name="T"/> is an STJ-native
-/// primitive in the whitelist enforced by <see cref="MaybePrimitiveJsonConverterFactory"/>.
+/// primitive in the allowed list enforced by <see cref="MaybePrimitiveJsonConverterFactory"/>.
 /// </summary>
 /// <typeparam name="T">
 /// One of: <see cref="string"/>, <see cref="decimal"/>, <see cref="int"/>, <see cref="long"/>,
@@ -23,7 +23,7 @@ using Trellis;
 ///   <item><see cref="Maybe{T}.None"/> writes as JSON <c>null</c>.</item>
 /// </list>
 /// <para>
-/// Reads and writes dispatch on the closed primitive whitelist via typed
+/// Reads and writes dispatch on the closed primitive allowed list via typed
 /// <see cref="Utf8JsonReader"/> / <see cref="Utf8JsonWriter"/> methods — no reflection, no
 /// <see cref="JsonSerializer"/> round-trip, no AOT/trim warnings.
 /// </para>
@@ -55,7 +55,7 @@ public sealed class MaybePrimitiveJsonConverter<T> : JsonConverter<Maybe<T>>
         if (typeof(T) == typeof(DateTime)) return Maybe.From((T)(object)reader.GetDateTime());
         if (typeof(T) == typeof(DateTimeOffset)) return Maybe.From((T)(object)reader.GetDateTimeOffset());
 
-        // Unreachable: the factory's CanConvert whitelist gates type creation; this guards
+        // Unreachable: the factory's CanConvert allowed list gates type creation; this guards
         // against a hand-constructed instance with an out-of-set T.
         throw new JsonException($"MaybePrimitiveJsonConverter does not support T = '{typeof(T)}'.");
     }

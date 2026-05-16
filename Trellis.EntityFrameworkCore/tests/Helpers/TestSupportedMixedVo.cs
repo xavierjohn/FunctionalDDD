@@ -4,7 +4,7 @@ using Trellis.Primitives;
 
 /// <summary>
 /// Counterpart to <see cref="TestMixedTypeVo"/>: a composite value object that mixes
-/// raw C# primitives from the supported whitelist with a Trellis scalar VO
+/// raw C# primitives from the supported allowed list with a Trellis scalar VO
 /// (<see cref="TestOrderStatus"/>) — and explicitly NO <c>Maybe&lt;&gt;</c> fields.
 /// This is the all-required mixed VO shape that round-trips cleanly through both
 /// EF Core <em>and</em> <c>CompositeValueObjectJsonConverter</c>.

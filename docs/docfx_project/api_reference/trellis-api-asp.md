@@ -640,11 +640,11 @@ public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
     where T : notnull
 ```
 
-Binds `Maybe<T>` parameters where `T` is a primitive in the closed whitelist (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape.
+Binds `Maybe<T>` parameters where `T` is a primitive in the closed allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) from route / query / form / header sources. Counterpart of `MaybeModelBinder<,>` for the no-scalar-VO case — the new `MaybePrimitiveJsonConverterFactory` handles the JSON body side of the same shape.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static readonly FrozenSet<Type> SupportedPrimitives` | `FrozenSet<Type>` | The closed whitelist exposed for diagnostic / provider use; mirrors `MaybePrimitiveJsonConverterFactory`. |
+| `public static readonly FrozenSet<Type> SupportedPrimitives` | `FrozenSet<Type>` | The closed allowed list exposed for diagnostic / provider use; mirrors `MaybePrimitiveJsonConverterFactory`. |
 | `public Task BindModelAsync(ModelBindingContext bindingContext)` | `Task` | Missing or empty value → `ModelBindingResult.Success(Maybe<T>.None)`. Parseable primitive → `ModelBindingResult.Success(Maybe.From(parsed))`. Unparseable → adds a model-state error and returns `ModelBindingResult.Failed()`. Parses using invariant culture and the typed `TryParse` methods on each primitive type. |
 
 ### `ScalarValueModelBinderProvider`
@@ -781,11 +781,11 @@ public sealed class MaybePrimitiveJsonConverter<T> : JsonConverter<Maybe<T>>
     where T : notnull
 ```
 
-JSON converter for `Maybe<T>` where `T` is an STJ-native primitive in the closed whitelist enforced by `MaybePrimitiveJsonConverterFactory`. Reads dispatch on `typeof(T)` to typed `Utf8JsonReader` methods (`GetString` / `GetInt32` / `GetDecimal` / `GetGuid` / `GetDateTime` / etc.) — no reflection, no `JsonSerializer` round-trip, AOT-safe by construction. `null` token → `Maybe<T>.None`; primitive value → `Maybe.From(value)`. `None` writes as JSON `null`.
+JSON converter for `Maybe<T>` where `T` is an STJ-native primitive in the closed allowed list enforced by `MaybePrimitiveJsonConverterFactory`. Reads dispatch on `typeof(T)` to typed `Utf8JsonReader` methods (`GetString` / `GetInt32` / `GetDecimal` / `GetGuid` / `GetDateTime` / etc.) — no reflection, no `JsonSerializer` round-trip, AOT-safe by construction. `null` token → `Maybe<T>.None`; primitive value → `Maybe.From(value)`. `None` writes as JSON `null`.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public override Maybe<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)` | `Maybe<T>` | Reads JSON `null` as `Maybe<T>.None`; otherwise dispatches on the closed primitive whitelist. Wrong JSON shape throws the standard `JsonException`. |
+| `public override Maybe<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)` | `Maybe<T>` | Reads JSON `null` as `Maybe<T>.None`; otherwise dispatches on the closed primitive allowed list. Wrong JSON shape throws the standard `JsonException`. |
 | `public override void Write(Utf8JsonWriter writer, Maybe<T> value, JsonSerializerOptions options)` | `void` | `Maybe.None` writes JSON `null`; otherwise switches on the unwrapped value and writes via the matching typed `Utf8JsonWriter` method. |
 
 ### `MaybePrimitiveJsonConverterFactory`
@@ -796,13 +796,13 @@ JSON converter for `Maybe<T>` where `T` is an STJ-native primitive in the closed
 public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory
 ```
 
-Closes the asymmetry where `MaybeScalarValueJsonConverterFactory` shipped support for `Maybe<TScalar>` (typed value objects) but `Maybe<long>` / `Maybe<int>` / `Maybe<string>` / `Maybe<DateTime>` etc. fell through to STJ's default object handling, producing JSON the converter cannot itself parse back. Auto-registered by `AddTrellisAsp(...)` alongside the scalar factory (same `JsonSerializer.IsReflectionEnabledByDefault` gate for AOT). The supported primitive set deliberately mirrors `CompositeValueObjectJsonConverter<T>`'s whitelist: the rule is "`Maybe<T>` works wherever `T` is a primitive Trellis already supports directly".
+Closes the asymmetry where `MaybeScalarValueJsonConverterFactory` shipped support for `Maybe<TScalar>` (typed value objects) but `Maybe<long>` / `Maybe<int>` / `Maybe<string>` / `Maybe<DateTime>` etc. fell through to STJ's default object handling, producing JSON the converter cannot itself parse back. Auto-registered by `AddTrellisAsp(...)` alongside the scalar factory (same `JsonSerializer.IsReflectionEnabledByDefault` gate for AOT). The supported primitive set deliberately mirrors `CompositeValueObjectJsonConverter<T>`'s allowed list: the rule is "`Maybe<T>` works wherever `T` is a primitive Trellis already supports directly".
 
 Supported primitives: `string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`. Shapes outside this set (`DateOnly`, `TimeOnly`, unsigned numerics, arrays, collections, nested composites) continue to require the wire-shape DTO + adapter pattern (Cookbook Recipe 14).
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public override bool CanConvert(Type typeToConvert)` | `bool` | `true` when `typeToConvert` is `Maybe<T>` and `T` is in the closed primitive whitelist. Returns `false` for `Maybe<TScalar>` (handled by `MaybeScalarValueJsonConverterFactory`) and for unsupported primitive shapes (e.g. `Maybe<DateOnly>`) so the two factories don't compete. |
+| `public override bool CanConvert(Type typeToConvert)` | `bool` | `true` when `typeToConvert` is `Maybe<T>` and `T` is in the closed primitive allowed list. Returns `false` for `Maybe<TScalar>` (handled by `MaybeScalarValueJsonConverterFactory`) and for unsupported primitive shapes (e.g. `Maybe<DateOnly>`) so the two factories don't compete. |
 | `public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)` | `JsonConverter?` | Builds `MaybePrimitiveJsonConverter<T>` for the inner primitive type. |
 
 ### `ScalarValueValidationFilter`

@@ -63,8 +63,8 @@ public class ScalarValueModelBinderProvider : IModelBinderProvider
                     maybePrimitiveType);
             }
 
-            // Maybe<TPrimitive> for the closed primitive whitelist — the bare-primitive
-            // counterpart of MaybeModelBinder<,>. Same whitelist as
+            // Maybe<TPrimitive> for the closed primitive allowed list — the bare-primitive
+            // counterpart of MaybeModelBinder<,>. Same allowed list as
             // MaybePrimitiveJsonConverterFactory so JSON body and route/query/header
             // binding stay symmetric.
             if (MaybePrimitiveModelBinder<int>.SupportedPrimitives.Contains(maybeInnerType))

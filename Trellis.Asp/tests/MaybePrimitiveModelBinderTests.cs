@@ -15,7 +15,7 @@ using Xunit;
 /// <see cref="ScalarValueModelBinderProvider"/> extension that creates it for
 /// <c>Maybe&lt;TPrimitive&gt;</c> parameters (route / query / header / form).
 /// Closes the binder-side parity gap with <see cref="MaybeScalarValueJsonConverterFactory"/>
-/// — same closed-primitive whitelist as the JSON converter factory.
+/// — same closed-primitive allowed list as the JSON converter factory.
 /// </summary>
 public class MaybePrimitiveModelBinderTests
 {
@@ -215,7 +215,7 @@ public class MaybePrimitiveModelBinderTests
         var provider = new ScalarValueModelBinderProvider();
         var ctx = CreateBinderProviderContext(typeof(Maybe<DateOnly>));
         var binder = provider.GetBinder(ctx);
-        binder.Should().BeNull("DateOnly is not in the closed primitive whitelist");
+        binder.Should().BeNull("DateOnly is not in the closed primitive allowed list");
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class MaybePrimitiveModelBinderTests
         var provider = new ScalarValueModelBinderProvider();
         var ctx = CreateBinderProviderContext(typeof(Maybe<uint>));
         var binder = provider.GetBinder(ctx);
-        binder.Should().BeNull("unsigned numerics are not in the whitelist");
+        binder.Should().BeNull("unsigned numerics are not in the allowed list");
     }
 
     // ---------------------------------------------------------------------
