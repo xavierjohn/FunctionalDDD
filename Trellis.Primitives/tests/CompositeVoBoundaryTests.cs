@@ -450,4 +450,67 @@ public partial class CompositeVoBoundaryTests
         act.Should().Throw<TrellisJsonValidationException>()
             .WithMessage("*nsupported primitive*");
     }
+
+    // ---------------------------------------------------------------------
+    // Known asymmetry — nullable scalar VO interior is write/read-asymmetric.
+    // Documented as a closed limitation in Recipe 13; fix requires propagating
+    // TryCreate parameter nullability through the converter's metadata (separate
+    // follow-up). The test below pins the current behavior so a future fix is
+    // visible (the test must be updated when the asymmetry is closed).
+    // ---------------------------------------------------------------------
+
+    [JsonConverter(typeof(CompositeValueObjectJsonConverter<NullableScalarBoundaryVo>))]
+    public sealed class NullableScalarBoundaryVo : BoundaryVo
+    {
+        public string Label { get; private set; } = string.Empty;
+        public TestStatus? Optional { get; private set; }
+        private NullableScalarBoundaryVo() { }
+        private NullableScalarBoundaryVo(string l, TestStatus? o) { Label = l; Optional = o; }
+        public static NullableScalarBoundaryVo Create(string l, TestStatus? o) => new(l, o);
+        public static Result<NullableScalarBoundaryVo> TryCreate(string label, string? optional, string? fieldName = null) =>
+            optional is null
+                ? Result.Ok(new NullableScalarBoundaryVo(label, null))
+                : TestStatus.TryCreate(optional).Map(s => new NullableScalarBoundaryVo(label, s));
+    }
+
+    [Fact]
+    public void Nullable_scalar_VO_interior_is_write_read_asymmetric_for_null_value()
+    {
+        // Known asymmetry on a SUPPORTED shape: writing a null `TestStatus? Optional`
+        // produces JSON `"optional":null` via the scalar projection, but ReadPrimitive's
+        // string branch unconditionally throws on `JsonTokenType.Null` (the "required
+        // string" guard for properties like IntStringVo.Label). The converter cannot
+        // distinguish "required scalar TryCreate(string)" from "nullable scalar
+        // TryCreate(string?)" because TryCreate parameter nullability is not captured
+        // in CompositeMetadata. Recipe 13 documents the trap; recommended workaround
+        // is the wire-shape DTO pattern (Recipe 14). When/if the fix lands (propagating
+        // NullabilityInfoContext through Build), this test should be updated to assert
+        // the round-trip succeeds.
+        var vo = NullableScalarBoundaryVo.Create("abc", null);
+
+        var json = JsonSerializer.Serialize(vo);
+        json.Should().Be("{\"label\":\"abc\",\"optional\":null}",
+            "scalar projection produces JSON null for a null nullable-scalar-VO property");
+
+        Action readBack = () => JsonSerializer.Deserialize<NullableScalarBoundaryVo>(json);
+        readBack.Should().Throw<TrellisJsonValidationException>()
+            .WithMessage("*must be a string*",
+                "ReadPrimitive's string branch rejects JsonTokenType.Null unconditionally — this is the known asymmetry");
+    }
+
+    [Fact]
+    public void Nullable_scalar_VO_interior_round_trips_when_value_is_present()
+    {
+        // The asymmetry only bites for null values. When Optional is set, the underlying
+        // string flows through cleanly on both sides.
+        var vo = NullableScalarBoundaryVo.Create("abc", TestStatus.Active);
+
+        var json = JsonSerializer.Serialize(vo);
+        json.Should().Be("{\"label\":\"abc\",\"optional\":\"Active\"}");
+
+        var rt = JsonSerializer.Deserialize<NullableScalarBoundaryVo>(json);
+        rt.Should().NotBeNull();
+        rt!.Label.Should().Be("abc");
+        rt.Optional.Should().Be(TestStatus.Active);
+    }
 }
