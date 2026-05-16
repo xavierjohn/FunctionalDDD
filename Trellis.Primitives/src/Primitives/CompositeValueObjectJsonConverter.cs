@@ -200,6 +200,15 @@ T> : JsonConverter<T>
 
     private static void WritePrimitive(Utf8JsonWriter writer, string jsonName, object? raw, Type primitiveType)
     {
+        // Validate the primitive type FIRST. If null were checked first, an unsupported
+        // shape with a null payload (e.g. `int? = null`, `string[] = null`, a null nested
+        // composite VO) would silently serialize as JSON null while deserialization of
+        // the same shape would throw — the converter would publish JSON it cannot itself
+        // parse back. Symmetric loud failure preserves the documented contract.
+        if (!IsSupportedPrimitive(primitiveType))
+            throw new TrellisJsonValidationException(
+                $"Unsupported primitive type '{primitiveType}' for JSON property '{jsonName}'.");
+
         if (raw is null)
         {
             writer.WriteNull(jsonName);
@@ -256,12 +265,28 @@ T> : JsonConverter<T>
         {
             writer.WriteString(jsonName, (DateTimeOffset)raw);
         }
-        else
-        {
-            throw new TrellisJsonValidationException(
-                $"Unsupported primitive type '{primitiveType}' for JSON property '{jsonName}'.");
-        }
     }
+
+    /// <summary>
+    /// The closed set of primitive types <see cref="ReadPrimitive"/> and <see cref="WritePrimitive"/>
+    /// support directly. Shapes outside this set (any <see cref="Maybe{T}"/>, enums, arrays,
+    /// nullable structs, <see cref="DateOnly"/> / <see cref="TimeOnly"/>, unsigned numerics,
+    /// nested composite VOs) throw <see cref="TrellisJsonValidationException"/> on either direction.
+    /// Cookbook Recipe 13 documents the full boundary plus the wire-shape-DTO escape hatch.
+    /// </summary>
+    private static bool IsSupportedPrimitive(Type t) =>
+        t == typeof(string)
+        || t == typeof(decimal)
+        || t == typeof(int)
+        || t == typeof(long)
+        || t == typeof(short)
+        || t == typeof(byte)
+        || t == typeof(double)
+        || t == typeof(float)
+        || t == typeof(bool)
+        || t == typeof(Guid)
+        || t == typeof(DateTime)
+        || t == typeof(DateTimeOffset);
 
     [SuppressMessage("Design", "CA1812", Justification = "Instantiated via static constructor.")]
     private sealed class PropertyMetadata
