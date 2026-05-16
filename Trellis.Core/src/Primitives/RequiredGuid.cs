@@ -18,7 +18,7 @@
 /// <item><c>NewUniqueV4()</c> - Factory method for generating new unique Version 4 (random) identifiers</item>
 /// <item><c>NewUniqueV7()</c> - Factory method for generating new unique Version 7 (time-ordered) identifiers</item>
 /// <item><c>TryCreate(Guid)</c> - Factory method for non-nullable GUIDs (required by IScalarValue)</item>
-/// <item><c>TryCreate(Guid?, string?)</c> - Factory method with empty GUID validation and custom field name</item>
+/// <item><c>TryCreate(Guid?, string?)</c> - Factory method with null-only rejection by default (add <see cref="NotDefaultAttribute"/> for <see cref="Guid.Empty"/> rejection) and custom field name</item>
 /// <item><c>TryCreate(string?, string?)</c> - Factory method for parsing strings with validation</item>
 /// <item><c>IParsable&lt;T&gt;</c> implementation (<c>Parse</c>, <c>TryParse</c>)</item>
 /// <item>JSON serialization support via <c>ParsableJsonConverter&lt;T&gt;</c></item>
@@ -39,7 +39,7 @@
 /// Benefits over plain GUIDs:
 /// <list type="bullet">
 /// <item><strong>Type safety</strong>: Cannot accidentally use CustomerId where OrderId is expected</item>
-/// <item><strong>Validation</strong>: Prevents empty/default GUIDs at creation time</item>
+/// <item><strong>Validation</strong>: Prevents null at creation time; opt into <see cref="Guid.Empty"/> rejection with <c>[NotDefault]</c></item>
 /// <item><strong>Domain clarity</strong>: Makes code more self-documenting and expressive</item>
 /// <item><strong>Serialization</strong>: Consistent JSON and database representation</item>
 /// <item><strong>Factory methods</strong>: Clean API for creating new unique identifiers</item>
@@ -76,13 +76,15 @@
 /// 
 /// // Create from existing GUID with validation
 /// var result1 = CustomerId.TryCreate(existingGuid);
-/// // Returns: Success(CustomerId) if guid != Guid.Empty
-/// // Returns: Failure(Error.UnprocessableContent) if guid == Guid.Empty
-/// 
+/// // Default (no [NotDefault]): Success regardless of value, including Guid.Empty.
+/// // With [NotDefault] on CustomerId: Success when guid != Guid.Empty;
+/// // Failure("Customer Id cannot be Guid.Empty.") when guid == Guid.Empty.
+///
 /// // Create from string with validation
 /// var result2 = CustomerId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
 /// // Returns: Success(CustomerId) if valid GUID format
-/// // Returns: Failure(Error.UnprocessableContent) if invalid format or empty GUID
+/// // Returns: Failure(Error.UnprocessableContent) if invalid format
+/// // (or, when [NotDefault] is applied, also Failure if the parsed GUID is Guid.Empty)
 /// 
 /// // With custom field name for validation errors
 /// var result3 = CustomerId.TryCreate(input, "customer.id");
@@ -120,7 +122,7 @@
 ///     [HttpGet("{id}")]
 ///     public async Task&lt;ActionResult&lt;Customer&gt;&gt; Get(CustomerId id) // Automatically validated!
 ///     {
-///         // If we reach here, 'id' is a valid, non-empty CustomerId
+///         // If we reach here, 'id' is a non-null CustomerId (and, with [NotDefault], non-Guid.Empty)
 ///         // Model binding validated it automatically
 ///         var customer = await _repository.GetByIdAsync(id);
 ///         return Ok(customer);
@@ -134,7 +136,7 @@
 ///     }
 /// }
 ///
-/// // Invalid GUID is rejected automatically:
+/// // Invalid GUID (with [NotDefault] on CustomerId) is rejected automatically:
 /// // GET /api/customers/00000000-0000-0000-0000-000000000000
 /// // Response: 422 Unprocessable Content
 /// // {
@@ -142,7 +144,7 @@
 /// //   "title": "One or more validation errors occurred.",
 /// //   "status": 422,
 /// //   "errors": {
-/// //     "id": ["Customer Id cannot be empty."]
+/// //     "id": ["Customer Id cannot be Guid.Empty."]
 /// //   }
 /// // }
 /// </code>
@@ -164,8 +166,8 @@
 /// // Request: GET /customers/550e8400-e29b-41d4-a716-446655440000
 /// // Response: { "customerId": "550e8400-e29b-41d4-a716-446655440000", "name": "John" }
 /// // 
-/// // Invalid GUID: GET /customers/00000000-0000-0000-0000-000000000000
-/// // Response: 422 Unprocessable Content with Error.UnprocessableContent
+/// // Invalid GUID (with [NotDefault] on CustomerId): GET /customers/00000000-0000-0000-0000-000000000000
+/// // Response: 422 Unprocessable Content with "Customer Id cannot be Guid.Empty." detail
 /// </code>
 /// </example>
 /// <example>
@@ -198,7 +200,7 @@ public abstract class RequiredGuid<TSelf> : ScalarValueObject<TSelf, Guid>
     /// <summary>
     /// Initializes a new instance of the <see cref="RequiredGuid{TSelf}"/> class with the specified GUID value.
     /// </summary>
-    /// <param name="value">The GUID value. Must not be <see cref="Guid.Empty"/>.</param>
+    /// <param name="value">The GUID value.</param>
     /// <remarks>
     /// <para>
     /// This constructor is protected and should be called by derived classes.
