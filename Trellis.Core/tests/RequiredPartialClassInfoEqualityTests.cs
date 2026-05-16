@@ -99,6 +99,101 @@ public class RequiredPartialClassInfoEqualityTests
         Make(classBase: "RequiredString", maxLength: 10).Equals(Make(classBase: "RequiredString", maxLength: 20)).Should().BeFalse();
 
     [Fact]
+    public void Differing_Accessibility_makes_infos_unequal() =>
+        Make(accessibility: "public").Equals(Make(accessibility: "internal")).Should().BeFalse();
+
+    [Fact]
+    public void Differing_MinLength_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredString", maxLength: 50, minLength: 1);
+        var b = Make(classBase: "RequiredString", maxLength: 50, minLength: 5);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_RangeMin_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredInt", rangeMin: 1, rangeMax: 100);
+        var b = Make(classBase: "RequiredInt", rangeMin: 2, rangeMax: 100);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_RangeMax_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredInt", rangeMin: 1, rangeMax: 100);
+        var b = Make(classBase: "RequiredInt", rangeMin: 1, rangeMax: 200);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_RangeLongMin_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredLong", rangeLongMin: 1L, rangeLongMax: 100L);
+        var b = Make(classBase: "RequiredLong", rangeLongMin: 2L, rangeLongMax: 100L);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_RangeLongMax_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredLong", rangeLongMin: 1L, rangeLongMax: 100L);
+        var b = Make(classBase: "RequiredLong", rangeLongMin: 1L, rangeLongMax: 200L);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_RangeDoubleMin_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredDecimal", rangeDoubleMin: 0.5, rangeDoubleMax: 99.5);
+        var b = Make(classBase: "RequiredDecimal", rangeDoubleMin: 0.6, rangeDoubleMax: 99.5);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_RangeDoubleMax_makes_infos_unequal()
+    {
+        var a = Make(classBase: "RequiredDecimal", rangeDoubleMin: 0.5, rangeDoubleMax: 99.5);
+        var b = Make(classBase: "RequiredDecimal", rangeDoubleMin: 0.5, rangeDoubleMax: 100.0);
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_TypePath_makes_infos_unequal()
+    {
+        var a = Make(typePath: "MyApp.Inner.OrderId");
+        var b = Make(typePath: "MyApp.Outer.OrderId");
+        a.Equals(b).Should().BeFalse();
+        a.GetHashCode().Should().NotBe(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_NestingParents_makes_infos_unequal()
+    {
+        // NestingParents is the only array-typed field; uses SequenceEqual in Equals.
+        // Both length-differs and element-differs must be detected.
+        var noParents = Make(nestingParents: []);
+        var oneParent = Make(nestingParents: ["public partial class Outer"]);
+        noParents.Equals(oneParent).Should().BeFalse();
+
+        var elementA = Make(nestingParents: ["public partial class Outer"]);
+        var elementB = Make(nestingParents: ["public partial class Container"]);
+        elementA.Equals(elementB).Should().BeFalse();
+
+        // Same content -> equal (content-based, not reference-based, equality)
+        var ref1 = Make(nestingParents: ["public partial class Outer", "public partial class Mid"]);
+        var ref2 = Make(nestingParents: ["public partial class Outer", "public partial class Mid"]);
+        ref1.Equals(ref2).Should().BeTrue();
+    }
+
+    [Fact]
     public void Equals_with_null_is_false() => Make().Equals(null).Should().BeFalse();
 
     [Fact]
