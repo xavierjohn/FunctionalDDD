@@ -1,13 +1,17 @@
 ﻿namespace Trellis;
 
 /// <summary>
-/// Base class for creating strongly-typed GUID value objects that cannot have the default (empty) GUID value.
-/// Provides a foundation for entity identifiers and other domain concepts represented by GUIDs.
+/// Base class for creating strongly-typed GUID value objects. Rejects only <c>null</c> by
+/// default; <see cref="System.Guid.Empty"/> rejection is opt-in via the
+/// <see cref="NotDefaultAttribute"/> attribute. **Recommended for any GUID type used as an
+/// <c>Aggregate&lt;TId&gt;</c> / <c>Entity&lt;TId&gt;</c> ID or as an EF-mapped property** to
+/// preserve the database invariant guarantee enforced by <c>TrellisScalarConverter</c> on
+/// rehydration.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for GUID-based value objects
-/// with automatic validation that prevents empty/default GUIDs. When used with the <c>partial</c> keyword,
+/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for GUID-based value objects.
+/// When used with the <c>partial</c> keyword,
 /// the PrimitiveValueObjectGenerator source generator automatically creates:
 /// <list type="bullet">
 /// <item><c>IScalarValue&lt;TSelf, Guid&gt;</c> implementation for ASP.NET Core automatic validation</item>

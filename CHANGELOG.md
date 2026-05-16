@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### `RequiredXxx<T>` family POLA realignment (breaking)
+
+The `RequiredXxx<T>` family now follows a single, uniform rule: **reject only null**. Per-type "zero value" rejection (`""` for `RequiredString`, `0` for numerics, `Guid.Empty`, `DateTime.MinValue`) becomes opt-in via the new `[NotDefault]` attribute. String trim becomes opt-in via the new `[Trim]` attribute. This realigns the family with `RequiredInt<T>(0)` — which has always succeeded — and matches the Principle of Least Astonishment.
+
+| Type | Before | After (no attributes) | After (`[NotDefault]`) |
+|---|---|---|---|
+| `RequiredInt<T>` / `RequiredLong<T>` / `RequiredDecimal<T>` | reject null | reject null | reject null + `0` (per-type wording "cannot be zero.") |
+| `RequiredString<T>` | reject null + empty + whitespace; auto-trim | reject null only | reject null + `""` (after `[Trim]` if present) |
+| `RequiredGuid<T>` | reject null + `Guid.Empty` | reject null only | reject null + `Guid.Empty` (per-type wording "cannot be Guid.Empty.") |
+| `RequiredDateTime<T>` | reject null + `DateTime.MinValue` | reject null only | reject null + `DateTime.MinValue` (per-type wording "cannot be DateTime.MinValue.") |
+| `RequiredBool<T>` | reject null | reject null | **analyzer + generator error** (degenerate single-value type) |
+| `RequiredEnum<T>` | reject unknown member name | reject unknown member name | **analyzer + generator error** (smart-enum has no CLR default) |
+
+**Migration:** add `[NotDefault]` (and `[Trim]` for strings) to any partial class derived from `RequiredString` / `RequiredGuid` / `RequiredDateTime` whose original strict behavior must be preserved. For `RequiredString`-derived types the equivalent of today's defaults is `[Trim, NotDefault]`. New compile-time diagnostics:
+
+- `TRLS040` — `[NotDefault]` on `RequiredBool<T>` is not supported.
+- `TRLS041` — `[Trim]` on a non-`RequiredString` Required type is not supported.
+- `TRLS042` — `[NotDefault]` on `RequiredEnum<T>` is not supported.
+
+**EF Core read-path impact (named breaking change).** `TrellisScalarConverter` calls `TryCreate` to rehydrate every row read from the database, so today's strict behavior was acting as a database invariant guard: a column containing `Guid.Empty` / `""` / `DateTime.MinValue` (legacy data, raw SQL, external writers) failed loudly via `TrellisPersistenceMappingException`. After the realignment an undecorated ID type silently rehydrates the sentinel value. **For any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property, add `[NotDefault]` to preserve the rehydration guarantee.**
+
+**`ValidateAdditional` override impact.** Subtype `ValidateAdditional` overrides on `RequiredString` that previously relied on non-empty / trimmed input will now receive `""` or whitespace if the type is undecorated. Indexing into `value[0]` etc. throws. Either add `[Trim, NotDefault]` or harden the override.
+
+Validation order in the generated `TryCreate`: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input — a behavior change from today.
+
+### Added
+
+#### `[NotDefault]` and `[Trim]` attributes for `RequiredXxx<T>` types
+
+Two new opt-in attributes in the `Trellis` namespace alongside `[StringLength]` / `[Range]`. Both are consumed at compile time by the primitive value-object source generator with no runtime reflection cost. See the `Changed` section above for the full behavior matrix.
+
 #### `IActorProvider.GetCurrentActorAsync` returns `Task<Maybe<Actor>>` (breaking)
 
 `IActorProvider.GetCurrentActorAsync` now returns `Task<Maybe<Actor>>` instead of `Task<Actor>`. "No authenticated actor on this request" is client-error state expressed via `Maybe<Actor>.None`; the mediator authorization pipeline maps it to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). Provider implementations should throw `InvalidOperationException` only for genuine infrastructure or configuration failures (no `HttpContext`, mapping delegate threw, option misconfigured); those still surface as `Error.InternalServerError` (HTTP 500), which is correct because they are bugs rather than authentication state.

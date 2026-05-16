@@ -1,8 +1,11 @@
 ﻿namespace Trellis;
 
 /// <summary>
-/// Base class for creating strongly-typed DateTime value objects that prevent primitive obsession for dates.
-/// Rejects <see cref="DateTime.MinValue"/> as the "empty" equivalent.
+/// Base class for creating strongly-typed DateTime value objects that prevent primitive
+/// obsession for dates. Rejects only <c>null</c> by default; <see cref="DateTime.MinValue"/>
+/// rejection is opt-in via the <see cref="NotDefaultAttribute"/> attribute. Recommended for
+/// any DateTime type used as an EF-mapped property to preserve the database invariant
+/// guarantee enforced by <c>TrellisScalarConverter</c> on rehydration.
 /// </summary>
 /// <remarks>
 /// <para>

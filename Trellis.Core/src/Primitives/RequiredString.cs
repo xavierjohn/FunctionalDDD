@@ -1,14 +1,15 @@
 ﻿namespace Trellis;
 
 /// <summary>
-/// Base class for creating strongly-typed string value objects that cannot be null or empty.
-/// Provides a foundation for domain primitives like names, descriptions, codes, and other textual concepts.
+/// Base class for creating strongly-typed string value objects. Rejects only <c>null</c> by
+/// default; per-type sentinel rejection ("cannot be empty") and trimming are opt-in via the
+/// <see cref="NotDefaultAttribute"/> and <see cref="TrimAttribute"/> attributes.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for string-based value objects
-/// with automatic validation that prevents null or empty strings. When used with the <c>partial</c> keyword,
-/// the PrimitiveValueObjectGenerator source generator automatically creates:
+/// This class extends <see cref="ScalarValueObject{TSelf, T}"/> to provide a specialized base for string-based value objects.
+/// When used with the <c>partial</c> keyword, the PrimitiveValueObjectGenerator source generator
+/// automatically creates:
 /// <list type="bullet">
 /// <item><c>IScalarValue&lt;TSelf, string&gt;</c> implementation for ASP.NET Core automatic validation</item>
 /// <item><c>TryCreate(string)</c> - Factory method for non-nullable strings (required by IScalarValue)</item>
