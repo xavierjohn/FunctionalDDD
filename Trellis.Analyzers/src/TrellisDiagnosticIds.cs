@@ -134,4 +134,13 @@ public static class TrellisDiagnosticIds
 
     /// <summary>TRLS039 — Scalar value object wraps a primitive that is not supported by the AOT-safe JSON converter generator.</summary>
     public const string UnsupportedScalarValuePrimitiveForAotJson = "TRLS039";
+
+    /// <summary>TRLS040 — <c>[NotDefault]</c> is not supported on <c>RequiredBool&lt;T&gt;</c> (a bool that rejects <c>false</c> would be degenerate).</summary>
+    public const string NotDefaultOnRequiredBool = "TRLS040";
+
+    /// <summary>TRLS041 — <c>[Trim]</c> is only valid on <c>RequiredString&lt;T&gt;</c>-derived types.</summary>
+    public const string TrimOnNonStringRequired = "TRLS041";
+
+    /// <summary>TRLS042 — <c>[NotDefault]</c> is not supported on <c>RequiredEnum&lt;T&gt;</c> (smart-enum has no CLR <c>default(T)</c>).</summary>
+    public const string NotDefaultOnRequiredEnum = "TRLS042";
 }

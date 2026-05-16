@@ -2,7 +2,6 @@
 
 using System;
 using Trellis;
-using Trellis.Testing;
 using Xunit;
 
 // Lenient and strict variants for the POLA realignment rehydration test.

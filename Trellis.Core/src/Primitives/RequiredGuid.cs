@@ -3,8 +3,8 @@
 /// <summary>
 /// Base class for creating strongly-typed GUID value objects. Rejects only <c>null</c> by
 /// default; <see cref="System.Guid.Empty"/> rejection is opt-in via the
-/// <see cref="NotDefaultAttribute"/> attribute. **Recommended for any GUID type used as an
-/// <c>Aggregate&lt;TId&gt;</c> / <c>Entity&lt;TId&gt;</c> ID or as an EF-mapped property** to
+/// <see cref="NotDefaultAttribute"/> attribute. Recommended for any GUID type used as an
+/// <c>Aggregate&lt;TId&gt;</c> / <c>Entity&lt;TId&gt;</c> ID or as an EF-mapped property to
 /// preserve the database invariant guarantee enforced by <c>TrellisScalarConverter</c> on
 /// rehydration.
 /// </summary>

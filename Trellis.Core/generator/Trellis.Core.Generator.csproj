@@ -26,6 +26,10 @@
       <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
    </ItemGroup>
 
+   <ItemGroup>
+      <InternalsVisibleTo Include="Trellis.Core.Tests" />
+   </ItemGroup>
+
    <!--
       Force-disable PublishAot/PublishTrimmed inherited from a parent AOT-publishing project.
       Source generators target netstandard2.0 (mandated by Roslyn) and cannot satisfy the

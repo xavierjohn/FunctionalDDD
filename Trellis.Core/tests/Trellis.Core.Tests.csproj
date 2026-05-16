@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\src\Trellis.Core.csproj" />
+		<ProjectReference Include="..\generator\Trellis.Core.Generator.csproj" ReferenceOutputAssembly="true" OutputItemType="None" />
 		<ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
 	</ItemGroup>
 
