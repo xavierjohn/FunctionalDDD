@@ -40,7 +40,7 @@ public class SourceGeneratedCreateMethodTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create EmployeeId:*Employee Id cannot be empty*");
+            .WithMessage("Failed to create EmployeeId:*Employee Id cannot be Guid.Empty*");
     }
 
     [Fact]

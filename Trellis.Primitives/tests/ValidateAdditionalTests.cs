@@ -8,7 +8,7 @@ using Trellis.Testing;
 /// <summary>
 /// RequiredString with regex pattern validation via ValidateAdditional.
 /// </summary>
-[StringLength(10)]
+[Trim, NotDefault, StringLength(10)]
 public partial class Sku : RequiredString<Sku>
 {
     static partial void ValidateAdditional(string value, string fieldName, ref string? errorMessage)
@@ -21,6 +21,7 @@ public partial class Sku : RequiredString<Sku>
 /// <summary>
 /// RequiredString without ValidateAdditional — ensures the hook is truly optional.
 /// </summary>
+[Trim, NotDefault]
 public partial class PlainName : RequiredString<PlainName> { }
 
 /// <summary>
