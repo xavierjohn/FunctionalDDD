@@ -20,6 +20,7 @@ audience: [developer]
 | Map `Result<WriteOutcome<T>>` to RFC 9110 write semantics | `result.ToHttpResponse(opts => opts.CreatedAtRoute(...))` | [Created responses](#created-responses), [WriteOutcome variants](#writeoutcomet-variants) |
 | Wrap as MVC `ActionResult<T>` | Chain `.AsActionResult<T>()` / `.AsActionResultAsync<T>()` | [MVC adapter](#mvc-adapter) |
 | Add ETag / `Last-Modified` and honor conditional `GET`/`HEAD` | `opts.WithETag(...).WithLastModified(...).EvaluatePreconditions()` | [ETag and conditional requests](#etag-and-conditional-requests) |
+| Set per-endpoint `Cache-Control` | `opts.WithCacheControl(CacheControl.NoStore())` / `opts.WithCacheControl(CacheControl.Public(TimeSpan.FromMinutes(5)))` / `opts.WithCacheControl(t => …)` | [Cache-Control](#cache-control) |
 | Honor `Prefer: return=minimal` / `return=representation` | `opts.HonorPrefer()` | [Prefer header](#prefer-header) |
 | Return `206 Partial Content` for byte ranges | `opts.WithRange(from, to, total)` / `opts.WithRange(selector)` | [Range responses](#range-responses) |
 | Return paginated JSON with RFC 8288 `Link` header | `result.ToHttpResponse(nextUrlBuilder, body)` on `Result<Page<T>>` | [Pagination](#pagination) |
@@ -58,6 +59,8 @@ Full signatures: [trellis-api-asp.md](../api_reference/trellis-api-asp.md).
 | `WithLastModified(Func<T, DateTimeOffset>)` | Emits `Last-Modified` in RFC 1123 format. |
 | `Vary(params string[])` | Appends to `Vary` (preserves existing values; case-insensitive dedupe). |
 | `WithContentLanguage(params string[])` / `WithContentLocation(Func<T, string>)` / `WithAcceptRanges(string)` | Sets the matching response header. |
+| `WithCacheControl(CacheControlHeaderValue)` | Sets `Cache-Control` on success (200 / 201 / 204 / 206 / 304 / WriteOutcome / paged) **and on failure** responses, so a sensitive endpoint declaring `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 412 / 422 from intermediate-cache leakage just as much as the 200. Throws `ArgumentNullException` on null. Use the [`CacheControl`](../api_reference/trellis-api-asp.md#cachecontrol) presets (`NoStore()`, `NoCache()`, `Public(TimeSpan)`, `Private(TimeSpan)`, `Immutable(TimeSpan)`) for common shapes. |
+| `WithCacheControl(Func<T, CacheControlHeaderValue?>)` | Per-domain selector — success path only (failures carry no domain value, and no-payload write outcomes like `UpdatedNoContent` / `AcceptedNoContent` also skip the selector since they carry no `T`). Returning `null` from the selector skips the per-domain header; when the static-value overload is also configured, the static value remains in place. |
 | `Created(string literal)` / `Created(Func<T, string>)` | `201 Created` with literal or value-derived `Location`. |
 | `CreatedAtRoute(name, Func<T, RouteValueDictionary>)` | `201 Created` via `LinkGenerator.GetUriByName`. AOT-safe. |
 | `CreatedAtAction(action, Func<T, RouteValueDictionary>, controller?)` | MVC `CreatedAtAction` equivalent. **Not trim/AOT-safe** — `RequiresUnreferencedCode` / `RequiresDynamicCode`. |
@@ -68,7 +71,7 @@ Full signatures: [trellis-api-asp.md](../api_reference/trellis-api-asp.md).
 | `WithErrorMapping(Func<Error, int>)` | Per-call error → status mapper. Highest precedence. |
 | `WithErrorMapping<TError>(int status)` | Per-call override for a single error type. |
 
-The non-generic `HttpResponseOptionsBuilder` (for `error.ToHttpResponse(...)`) only exposes `Vary`, `HonorPrefer`, and the two `WithErrorMapping` methods.
+The non-generic `HttpResponseOptionsBuilder` (for `error.ToHttpResponse(...)`) only exposes `Vary`, `HonorPrefer`, the static-value `WithCacheControl(CacheControlHeaderValue)` overload, and the two `WithErrorMapping` methods.
 
 > [!NOTE]
 > The options builder has no `body` method. To project the response body, use the `body` **parameter** of the `ToHttpResponse<TDomain, TBody>` overload. Selectors in the options builder always run against the `TDomain` value, not the projected body.
@@ -163,6 +166,45 @@ app.MapGet("/todos/{id:guid}", async (Guid id, ITodoService svc, CancellationTok
 
 Evaluation order (per `ConditionalRequestEvaluator`): `If-Match` → `If-Unmodified-Since` → `If-None-Match` → `If-Modified-Since`. Failed `If-Match` / `If-Unmodified-Since` → `412 Precondition Failed`; failed `If-None-Match` / `If-Modified-Since` on `GET`/`HEAD` → `304 Not Modified`. On unsafe methods, evaluate the precondition **before** the mutation (see [`integration-aspnet.md`](integration-aspnet.md#conditional-requests)).
 
+## Cache-Control
+
+`WithCacheControl(...)` declares an RFC 9111 `Cache-Control` directive on the response. The builder accepts a `System.Net.Http.Headers.CacheControlHeaderValue` directly; the framework-provided `CacheControl` presets cover the common shapes:
+
+```csharp
+app.MapGet("/me", [Authorize] (IActorProvider provider, CancellationToken ct) =>
+    provider.GetCurrentActorAsync(ct).ToHttpResponseAsync(o => o
+        .WithCacheControl(CacheControl.NoStore())   // identity data — keep out of intermediates
+        .VaryForActor()));
+```
+
+| Preset | Emits | Use when |
+|---|---|---|
+| `CacheControl.NoStore()` | `no-store` | Per-user identity, secrets, or anything that must not be cached anywhere. |
+| `CacheControl.NoCache()` | `no-cache` | Caches may store the response but must revalidate before serving. |
+| `CacheControl.Public(TimeSpan)` | `public, max-age={seconds}` | Public catalog / reference data; shared caches may serve any consumer for the lifetime. |
+| `CacheControl.Private(TimeSpan)` | `max-age={seconds}, private` | Per-user data safe to cache in the user agent only. Combine with `VaryForActor()` if any intermediate is in the path. |
+| `CacheControl.Immutable(TimeSpan)` | `public, max-age={seconds}, immutable` | RFC 8246 — the response will not change for the freshness lifetime, so clients should not revalidate. Use for versioned / content-addressed assets. |
+
+Each preset returns a fresh `CacheControlHeaderValue`, so consumer-side mutation cannot leak across responses. Timed presets reject negative durations.
+
+**The static-value overload applies to failures too.** `WithCacheControl(value)` sets the header before the success/failure branch, so a sensitive endpoint declaring `WithCacheControl(CacheControl.NoStore())` protects its 404 / 403 / 422 responses just as much as its 200 — a leaked 404 from `/api/users/{id}` reveals which user IDs exist and must not be cached.
+
+**The selector overload is success-only.** `WithCacheControl(Func<T, CacheControlHeaderValue?>)` runs against the success-path domain value. It does not fire on failure responses (no domain), and it does not fire on `WriteOutcome.UpdatedNoContent` / `WriteOutcome.AcceptedNoContent` (no payload). Returning `null` from the selector skips the per-domain header; when the static-value overload is also configured, the static value remains in place (the selector "refines, then falls back to static" rather than "overrides to nothing").
+
+For directives outside the preset set (`s-maxage`, `must-revalidate`, `stale-while-revalidate` via `Extensions`, etc.) pass a hand-built `CacheControlHeaderValue`:
+
+```csharp
+opts.WithCacheControl(new CacheControlHeaderValue
+{
+    Public = true,
+    MaxAge = TimeSpan.FromMinutes(5),
+    SharedMaxAge = TimeSpan.FromMinutes(15),
+    MustRevalidate = true,
+});
+```
+
+**Cache-Control and `VaryForActor()` are orthogonal.** Cache-Control says "is this cacheable, and for how long"; `Vary` says "by which request dimensions does the cache key vary." Per-user representations behind a shared cache combine both: `opts.WithCacheControl(CacheControl.Private(TimeSpan.FromMinutes(5))).VaryForActor()`.
+
 ## Prefer header
 
 `HonorPrefer()` is meaningful on `Result<WriteOutcome<T>>` updates: `Prefer: return=minimal` short-circuits `Updated → 204 No Content`; `return=representation` returns `200 OK` with the body. `Vary: Prefer` is always emitted when honored; `Preference-Applied` is emitted only when the preference was honored.
@@ -253,7 +295,7 @@ app.MapGet("/diagnostics/throttle",
         .ToHttpResponse(opts => opts.WithErrorMapping<Error.TooManyRequests>(StatusCodes.Status429TooManyRequests)));
 ```
 
-The non-generic `HttpResponseOptionsBuilder` exposes `Vary`, `HonorPrefer`, and the two `WithErrorMapping` overloads only.
+The non-generic `HttpResponseOptionsBuilder` exposes `Vary`, `HonorPrefer`, `WithCacheControl(value)`, and the two `WithErrorMapping` overloads only.
 
 ## MVC adapter
 

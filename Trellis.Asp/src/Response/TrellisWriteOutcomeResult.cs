@@ -45,6 +45,11 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
         if (_options.VaryForActor)
             TrellisHttpResult<TDomain, TBody>.AppendActorVaryHeaders(httpContext);
 
+        // Static Cache-Control applies to both success and failure outcomes — same contract
+        // as TrellisHttpResult.ExecuteAsync. Selector overlap is handled in ApplyBuilderMetadata.
+        if (_options.CacheControl is { } staticCc)
+            httpContext.Response.Headers["Cache-Control"] = staticCc.ToString();
+
         if (!_result.TryGetValue(out var outcome, out var outcomeError))
         {
             var sc = TrellisHttpResult<TDomain, TBody>.ResolveErrorStatusCode(httpContext, outcomeError, _options);
@@ -138,12 +143,30 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
 
     private void ApplyBuilderMetadata(HttpResponse response, WriteOutcome<TDomain> outcome)
     {
-        var domain = outcome switch
+        // Track payload presence explicitly: `default(TDomain) is null` is false for value-type
+        // TDomain (record struct VOs, primitive id types, etc.), which would otherwise let
+        // selectors run against a fake default value on UpdatedNoContent / AcceptedNoContent.
+        bool hasDomain;
+        TDomain domain;
+        switch (outcome)
         {
-            WriteOutcome<TDomain>.Created c => c.Value,
-            WriteOutcome<TDomain>.Updated u => u.Value,
-            _ => default,
-        };
+            case WriteOutcome<TDomain>.Created c:
+                hasDomain = true;
+                domain = c.Value;
+                break;
+            case WriteOutcome<TDomain>.Updated u:
+                hasDomain = true;
+                domain = u.Value;
+                break;
+            case WriteOutcome<TDomain>.Accepted a:
+                hasDomain = true;
+                domain = a.StatusBody;
+                break;
+            default:
+                hasDomain = false;
+                domain = default!;
+                break;
+        }
 
         if (_options.Vary is { Count: > 0 })
         {
@@ -151,7 +174,13 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
                 TrellisHttpResult<TDomain, TBody>.AppendVaryUnique(response, v);
         }
 
-        if (domain is null)
+        // Reference-type TDomain with a runtime-null Value / StatusBody: WriteOutcome's
+        // sealed records carry no null guard on construction, so a misbehaving caller can
+        // pass null. Domain-dependent selectors must not run against null — they'd NPE on
+        // the first member access. Keep the `domain is null` short-circuit for the
+        // hasDomain-true cases; the static-value path runs before ApplyBuilderMetadata in
+        // ExecuteAsync so directives like CacheControl.NoStore() still apply.
+        if (!hasDomain || domain is null)
             return;
 
         if (_options.ETagSelector is { } et)
@@ -180,6 +209,13 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
 
         if (!string.IsNullOrEmpty(_options.AcceptRanges))
             response.Headers["Accept-Ranges"] = _options.AcceptRanges;
+
+        if (_options.CacheControlSelector is { } ccSel)
+        {
+            var v = ccSel(domain);
+            if (v is not null)
+                response.Headers["Cache-Control"] = v.ToString();
+        }
     }
 
     public static void PopulateMetadata(System.Reflection.MethodInfo method, EndpointBuilder builder)

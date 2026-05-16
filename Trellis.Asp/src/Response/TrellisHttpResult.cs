@@ -76,6 +76,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         if (_options.VaryForActor)
             AppendActorVaryHeaders(httpContext);
 
+        // Static Cache-Control applies to both success and failure: a sensitive endpoint
+        // declaring `WithCacheControl(CacheControl.NoStore())` should not leak its 404 / 403
+        // through an intermediate cache any more than its 200. The selector overload (which
+        // needs a domain value) only fires on the success path inside ApplyMetadata.
+        if (_options.CacheControl is { } staticCc)
+            httpContext.Response.Headers["Cache-Control"] = staticCc.ToString();
+
         return _result.IsSuccess
             ? ExecuteSuccessAsync(httpContext)
             : ResponseFailureWriter.WriteAsync(httpContext, _result.Error!, ResolveErrorStatusCode(httpContext, _result.Error!, _options));
@@ -94,7 +101,10 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         // No-payload Result<Unit> success — emit 204 No Content.
         // ETag/LastModified/Vary/ContentLanguage/Prefer headers (above) still apply.
         if (s_isUnit)
+        {
+            ApplyCacheControlSelector(response, domain!);
             return Results.NoContent().ExecuteAsync(httpContext);
+        }
 
         if (_options.EvaluatePreconditions)
         {
@@ -106,7 +116,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 {
                     var decision = ConditionalRequestEvaluator.Evaluate(httpContext.Request, metadata, out var failedKind);
                     if (decision == ConditionalDecision.NotModified)
+                    {
+                        // 304 is a success disposition (the cached representation is still valid) —
+                        // apply the selector so the revalidation response carries the same Cache-Control
+                        // policy a fresh 200 would.
+                        ApplyCacheControlSelector(response, domain!);
                         return Results.StatusCode(StatusCodes.Status304NotModified).ExecuteAsync(httpContext);
+                    }
 
                     if (decision == ConditionalDecision.PreconditionFailed)
                     {
@@ -126,6 +142,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             if (error is not null)
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
 
+            ApplyCacheControlSelector(response, domain!);
             var bodyValue = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
             return new PartialContentHttpResult(from, to, total, Results.Ok(bodyValue)).ExecuteAsync(httpContext);
         }
@@ -141,12 +158,33 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
             }
 
+            ApplyCacheControlSelector(response, domain!);
             var body = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
             return Results.Created(location, body).ExecuteAsync(httpContext);
         }
 
+        ApplyCacheControlSelector(response, domain!);
         var payload = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
         return Results.Ok(payload).ExecuteAsync(httpContext);
+    }
+
+    // Selector-derived Cache-Control is applied only at the success-emit points (200/201/204/206/304)
+    // so a mid-flow failure (412 PreconditionFailed, 416 / range-error, 500 / location-missing) does
+    // NOT inherit a `public, max-age=N` selector value. That would otherwise turn a transient client
+    // error into a cached negative response. The static-value overload remains in place across both
+    // success and failure paths because it's written in ExecuteAsync before the branch. Also gates
+    // on `domain is null` because Result.Ok<TValue>(null!) is legal for reference-type TValue and
+    // the selector would NPE on the first member access.
+    private void ApplyCacheControlSelector(HttpResponse response, TDomain domain)
+    {
+        if (domain is null)
+            return;
+        if (_options.CacheControlSelector is { } ccSel)
+        {
+            var v = ccSel(domain);
+            if (v is not null)
+                response.Headers["Cache-Control"] = v.ToString();
+        }
     }
 
     internal static int ResolveErrorStatusCode(HttpContext httpContext, Error error, HttpResponseOptions<TDomain> options) =>
@@ -154,6 +192,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
     private RepresentationMetadata? BuildMetadataForEvaluation(TDomain domain)
     {
+        // Same domain-null guard as ApplyMetadata: the selectors would NPE on null TDomain.
+        // Returning null here means EvaluatePreconditions has nothing to evaluate against —
+        // 304/412 short-circuit logic is skipped, and the response continues as a normal 200
+        // (with a null body for Result.Ok<TValue>(null!)).
+        if (domain is null)
+            return null;
+
         var etag = _options.ETagSelector?.Invoke(domain);
         var lastMod = _options.LastModifiedSelector?.Invoke(domain);
         if (etag is null && lastMod is null)
@@ -171,14 +216,21 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
     private void ApplyMetadata(HttpResponse response, TDomain domain)
     {
-        if (_options.ETagSelector is { } et)
+        // Result.Ok<TValue>(...) carries no null guard on the value (Trellis.Core/src/Result.cs:29),
+        // so reference-type TDomain on the success path may arrive here with domain = null.
+        // Domain-dependent selectors (ETag / Last-Modified / Content-Location / Cache-Control)
+        // must short-circuit in that case — invoking them with null would NPE on the first
+        // member access. Non-domain headers (Vary / ContentLanguage / AcceptRanges) still apply.
+        var hasDomain = domain is not null;
+
+        if (hasDomain && _options.ETagSelector is { } et)
         {
             var v = et(domain);
             if (v is not null)
                 response.Headers.ETag = v.ToHeaderValue();
         }
 
-        if (_options.LastModifiedSelector is { } lm)
+        if (hasDomain && _options.LastModifiedSelector is { } lm)
         {
             var d = lm(domain);
             if (d.HasValue)
@@ -194,7 +246,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         if (_options.ContentLanguage is { Count: > 0 })
             response.Headers.ContentLanguage = string.Join(", ", _options.ContentLanguage);
 
-        if (_options.ContentLocationSelector is { } cls)
+        if (hasDomain && _options.ContentLocationSelector is { } cls)
         {
             var v = cls(domain);
             if (!string.IsNullOrEmpty(v))

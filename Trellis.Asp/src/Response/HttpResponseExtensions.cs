@@ -212,13 +212,28 @@ public static class HttpResponseExtensions
                 ErrorMapper = opts.ErrorMapper,
                 ErrorOverrides = opts.ErrorOverrides,
                 VaryForActor = opts.VaryForActor,
+                CacheControl = opts.CacheControl,
             });
         }
 
         var (envelope, linkHeader) = PagedResponseBuilder.Build(page, nextUrlBuilder, body);
         var ok = Results.Ok(envelope);
         var inner = linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
-        return opts.VaryForActor ? new ActorVaryWrapperResult(inner) : inner;
+
+        // Wrap so VaryForActor / Cache-Control (static + selector) apply on the paged
+        // success path too. The wrapper holds the selector and `page` so evaluation runs
+        // inside ExecuteAsync — matching the non-paged code paths and avoiding any chance
+        // of stale state if the IResult is constructed in one scope and executed in
+        // another (e.g. minimal-api endpoint that defers ExecuteAsync).
+        var hasCacheControl = opts.CacheControl is not null || opts.CacheControlSelector is not null;
+        if (opts.VaryForActor || hasCacheControl)
+        {
+            Func<System.Net.Http.Headers.CacheControlHeaderValue?> resolveCacheControl =
+                () => (opts.CacheControlSelector is { } sel ? sel(page) : null) ?? opts.CacheControl;
+            return new PagedSuccessHeaderWrapper(inner, opts.VaryForActor, resolveCacheControl);
+        }
+
+        return inner;
     }
 
     /// <summary>Async <see cref="Task"/> overload.</summary>
@@ -263,6 +278,12 @@ internal sealed class TrellisErrorOnlyResult : Microsoft.AspNetCore.Http.IResult
         if (_options.VaryForActor)
             TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
 
+        // Static Cache-Control flows through to failure responses too — the protection a
+        // sensitive endpoint declares via `WithCacheControl(CacheControl.NoStore())` must
+        // cover 403 / 404 / validation responses, not just the success-path body.
+        if (_options.CacheControl is { } staticCc)
+            httpContext.Response.Headers["Cache-Control"] = staticCc.ToString();
+
         var statusCode = ResolveStatusCode(httpContext, _error);
         return ResponseFailureWriter.WriteAsync(httpContext, _error, statusCode);
     }
@@ -282,6 +303,36 @@ internal sealed class ActorVaryWrapperResult(Microsoft.AspNetCore.Http.IResult i
     {
         ArgumentNullException.ThrowIfNull(httpContext);
         TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
+        return inner.ExecuteAsync(httpContext);
+    }
+}
+
+/// <summary>
+/// Internal IResult wrapper for paged success responses that applies
+/// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> and
+/// <see cref="HttpResponseOptionsBuilder{TDomain}.WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue)"/>
+/// before delegating to the inner result. The paged success path produces the response via
+/// <see cref="Microsoft.AspNetCore.Http.Results.Ok(object?)"/> / <see cref="PagedHttpResult"/>,
+/// neither of which consults the builder options — this wrapper applies the option-driven
+/// headers so the contract matches the non-paged code paths. The <c>Cache-Control</c>
+/// resolver is invoked inside <see cref="ExecuteAsync"/> so per-domain selectors evaluate
+/// at execution time, matching the timing of selectors on the non-paged paths.
+/// </summary>
+internal sealed class PagedSuccessHeaderWrapper(
+    Microsoft.AspNetCore.Http.IResult inner,
+    bool varyForActor,
+    Func<System.Net.Http.Headers.CacheControlHeaderValue?> resolveCacheControl) : Microsoft.AspNetCore.Http.IResult
+{
+    public Task ExecuteAsync(HttpContext httpContext)
+    {
+        ArgumentNullException.ThrowIfNull(httpContext);
+        if (varyForActor)
+            TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
+
+        var cacheControl = resolveCacheControl();
+        if (cacheControl is not null)
+            httpContext.Response.Headers["Cache-Control"] = cacheControl.ToString();
+
         return inner.ExecuteAsync(httpContext);
     }
 }

@@ -75,6 +75,32 @@ All nine `Trellis.Asp` ProblemDetails emission sites now populate `ProblemDetail
 
 ### Added
 
+#### `WithCacheControl(...)` on `HttpResponseOptionsBuilder<T>` + `CacheControl` presets
+
+New fluent helper on `HttpResponseOptionsBuilder<T>` (and the non-generic `HttpResponseOptionsBuilder` for `Error.ToHttpResponse`) for declaring a per-endpoint `Cache-Control` directive. Closes the gap in the response-shaping surface: the builder already covered `WithETag`, `WithLastModified`, `Vary`, `WithContentLanguage`, `WithContentLocation`, `WithAcceptRanges`, `Created` / `CreatedAtRoute` / `CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, and `WithErrorMapping`, but had no `Cache-Control` helper. Consumers wanting a per-endpoint directive either skipped the header (intermediate proxies guess, browsers heuristic-cache), set it via separate middleware (loses the per-endpoint fluent shape), or wrote `Response.Headers.CacheControl = "..."` inside the handler (string-typed, no validation).
+
+Two overloads on the generic builder, one on the non-generic:
+
+- `WithCacheControl(CacheControlHeaderValue value)` — static directive emitted on **success and failure** responses so a sensitive endpoint declaring `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 422 from intermediate-cache leakage just as much as the 200. A leaked 404 from `/api/users/{id}` reveals which user IDs exist; the static-value contract makes "do not cache this endpoint, ever" expressible as one call.
+- `WithCacheControl(Func<TDomain, CacheControlHeaderValue?> selector)` — per-domain selector, success-path only (failures carry no domain value, and `WriteOutcome.UpdatedNoContent` / `AcceptedNoContent` skip the selector since they carry no payload). Returning `null` from the selector skips the per-domain header; when the static-value overload is also configured, the static value remains in place (the selector "refines, then falls back to static" rather than "overrides to nothing").
+- Non-generic builder gets the static-value overload only. Consumed only by `Error.ToHttpResponse(...)`, so this overload sets `Cache-Control` on the ProblemDetails failure response — `Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))` keeps deterministic-error responses out of intermediate caches.
+
+New `CacheControl` static helper class with fresh-instance presets for the common directives:
+
+- `CacheControl.NoStore()` — `no-store`. Identity, secrets, anything that must not be cached anywhere.
+- `CacheControl.NoCache()` — `no-cache`. Caches may store but must revalidate before serving.
+- `CacheControl.Public(TimeSpan maxAge)` — `public, max-age={seconds}`. Public catalog / reference data.
+- `CacheControl.Private(TimeSpan maxAge)` — `max-age={seconds}, private`. Per-user data, user-agent caches only. Combine with `VaryForActor()` for shared-cache paths.
+- `CacheControl.Immutable(TimeSpan maxAge)` — `public, max-age={seconds}, immutable` (RFC 8246). Versioned / content-addressed assets that will not change for the freshness lifetime.
+
+Every preset is a method (not a property) so each call returns a fresh `CacheControlHeaderValue`. `CacheControlHeaderValue` is mutable; if presets returned shared instances a single caller mutating one value could corrupt every subsequent call. Timed presets reject negative durations (RFC 9111 `delta-seconds` is unsigned).
+
+Wired into all four success/failure response paths so the contract holds uniformly: `TrellisHttpResult` (`Result<T>` / `Result<Unit>`), `TrellisWriteOutcomeResult` (`Created` / `Updated` / `Accepted` with selector, plus static on `UpdatedNoContent` / `AcceptedNoContent` since the static value applies regardless of body), `TrellisErrorOnlyResult` (non-generic Error / Result failures), and a new `PagedSuccessHeaderWrapper` alongside the existing `ActorVaryWrapperResult` for `Result<Page<T>>` success.
+
+The `ApplyBuilderMetadata` payload-presence gate was lifted from `domain is null` to an explicit `(hasDomain, domain)` tracker so domain-dependent selectors (`ETag`, `Last-Modified`, `Content-Location`, `Cache-Control`) no longer run against `default(TDomain)` for value-type `TDomain` on the no-payload `WriteOutcome` cases. The previous gate worked for reference-type `TDomain` (default is null) but for `record struct` VOs or primitive id types it let selectors fire against a default-constructed value. The new `Cache-Control` selector exposed the bug; the older selectors had the same latent defect.
+
+Cache-Control composes with `VaryForActor()` — Cache-Control says "is this cacheable, and for how long"; `Vary` says "by which request dimensions does the cache key vary." Per-user representations behind a shared cache combine both: `opts.WithCacheControl(CacheControl.Private(TimeSpan.FromMinutes(5))).VaryForActor()`.
+
 #### `VaryForActor()` on `HttpResponseOptionsBuilder<T>` + `IProvideActorVaryHeaders`
 
 New fluent helper for partitioning intermediate-cache entries by actor without consumers having to remember which header(s) the registered `IActorProvider` actually depends on. Calling `o.VaryForActor()` on the response builder resolves the registered provider, checks for the new `IProvideActorVaryHeaders` capability interface, and appends each declared header (e.g. `Authorization` for the bundled `ClaimsActorProvider` / `EntraActorProvider`; `X-Test-Actor` for `DevelopmentActorProvider`) to the response `Vary` header. Closes a real cache-poisoning class of bug — a forgotten `Vary: Authorization` lets a misbehaving intermediate cache serve actor A's response to actor B.
