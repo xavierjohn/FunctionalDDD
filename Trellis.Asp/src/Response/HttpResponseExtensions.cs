@@ -216,10 +216,6 @@ public static class HttpResponseExtensions
             });
         }
 
-        var (envelope, linkHeader) = PagedResponseBuilder.Build(page, nextUrlBuilder, body);
-        var ok = Results.Ok(envelope);
-        var inner = linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
-
         // Detect any builder-option that the bare Results.Ok / PagedHttpResult would silently
         // drop on its way to the wire. The wrapper applies them before delegating to the
         // inner result so the paged path matches the non-paged TrellisHttpResult contract.
@@ -231,6 +227,17 @@ public static class HttpResponseExtensions
             || opts.LastModifiedSelector is not null
             || opts.ContentLocationSelector is not null
             || opts.EvaluatePreconditions;
+
+        // Lazy inner-result factory: defers PagedResponseBuilder.Build (which projects every
+        // item via the `body` mapper and allocates the envelope list) until a success-emit
+        // point is reached. This avoids running the body projector when a conditional GET
+        // short-circuits to 304 or a precondition fails into 412.
+        Microsoft.AspNetCore.Http.IResult BuildInner()
+        {
+            var (envelope, linkHeader) = PagedResponseBuilder.Build(page, nextUrlBuilder, body);
+            var ok = Results.Ok(envelope);
+            return linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
+        }
 
         if (opts.VaryForActor || hasCacheControl || hasOptionalHeaders)
         {
@@ -253,7 +260,7 @@ public static class HttpResponseExtensions
                 : null;
 
             return new PagedSuccessHeaderWrapper(
-                inner,
+                BuildInner,
                 opts.VaryForActor,
                 opts.CacheControl,
                 resolveCacheControlSelector,
@@ -267,7 +274,10 @@ public static class HttpResponseExtensions
                 ResourceRef.For<Page<T>>());
         }
 
-        return inner;
+        // No wrapper required — build the envelope eagerly and return the bare inner. There
+        // is no precondition / 304 / 412 path on this branch, so deferring would change
+        // nothing observable.
+        return BuildInner();
     }
 
     /// <summary>Async <see cref="Task"/> overload.</summary>
@@ -374,7 +384,7 @@ internal sealed class ActorVaryWrapperResult(Microsoft.AspNetCore.Http.IResult i
 /// </para>
 /// </remarks>
 internal sealed class PagedSuccessHeaderWrapper(
-    Microsoft.AspNetCore.Http.IResult inner,
+    Func<Microsoft.AspNetCore.Http.IResult> buildInner,
     bool varyForActor,
     System.Net.Http.Headers.CacheControlHeaderValue? staticCacheControl,
     Func<System.Net.Http.Headers.CacheControlHeaderValue?>? resolveCacheControlSelector,
@@ -462,9 +472,11 @@ internal sealed class PagedSuccessHeaderWrapper(
             }
         }
 
-        // Success-emit point: apply the selector Cache-Control before delegating to the inner
-        // 200 response.
+        // Success-emit point: apply the selector Cache-Control, then build the paged envelope
+        // lazily (avoids running the body projector when a 304 / 412 short-circuit fires
+        // upstream).
         ApplyCacheControlSelector(response);
+        var inner = buildInner();
         await inner.ExecuteAsync(httpContext).ConfigureAwait(false);
     }
 

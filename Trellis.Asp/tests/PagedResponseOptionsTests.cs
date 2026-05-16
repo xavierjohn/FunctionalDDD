@@ -2,7 +2,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -277,6 +276,49 @@ public sealed class PagedResponseOptionsTests
 
         etagCalls.Should().Be(1, "ETag selector must be invoked exactly once per request even when precondition evaluation also consults it");
         lastModCalls.Should().Be(1, "Last-Modified selector must be invoked exactly once per request even when precondition evaluation also consults it");
+    }
+
+    [Fact]
+    public async Task EvaluatePreconditions_304_does_not_run_body_projector()
+    {
+        // The body projector projects every item into the response envelope. On a 304
+        // revalidation the body is not emitted, so running the projector wastes work and
+        // (worse) may invoke expensive per-item logic that the consumer expected to be
+        // gated on a fresh 200. Regression for the eager-build bug where
+        // PagedResponseBuilder.Build ran before the precondition decision.
+        var ctx = NewContext();
+        ctx.Request.Method = "GET";
+        ctx.Request.Headers["If-None-Match"] = "\"page-2\"";
+        var r = Result.Ok(SamplePage());
+        var projectorCalls = 0;
+
+        await r.ToHttpResponse(
+                (_, _) => "/todos?cursor=next",
+                t => { projectorCalls++; return t; },
+                o => o.WithETag(p => $"page-{p.Items.Count}").EvaluatePreconditions())
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(StatusCodes.Status304NotModified);
+        projectorCalls.Should().Be(0, "body projector must not run when the response short-circuits to 304");
+    }
+
+    [Fact]
+    public async Task EvaluatePreconditions_412_does_not_run_body_projector()
+    {
+        var ctx = NewContext();
+        ctx.Request.Method = "GET";
+        ctx.Request.Headers["If-Match"] = "\"stale-etag\"";
+        var r = Result.Ok(SamplePage());
+        var projectorCalls = 0;
+
+        await r.ToHttpResponse(
+                (_, _) => "/todos?cursor=next",
+                t => { projectorCalls++; return t; },
+                o => o.WithETag(p => $"page-{p.Items.Count}").EvaluatePreconditions())
+            .ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(StatusCodes.Status412PreconditionFailed);
+        projectorCalls.Should().Be(0, "body projector must not run when the response fails into 412");
     }
 
     // ---------- Combined coverage: every header on one response ----------
