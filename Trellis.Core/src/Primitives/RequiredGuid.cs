@@ -136,7 +136,7 @@
 ///     }
 /// }
 ///
-/// // Invalid GUID (with [NotDefault] on CustomerId) is rejected automatically:
+/// // All-zero GUID (with [NotDefault] on CustomerId) is rejected as the sentinel value:
 /// // GET /api/customers/00000000-0000-0000-0000-000000000000
 /// // Response: 422 Unprocessable Content
 /// // {
@@ -166,7 +166,7 @@
 /// // Request: GET /customers/550e8400-e29b-41d4-a716-446655440000
 /// // Response: { "customerId": "550e8400-e29b-41d4-a716-446655440000", "name": "John" }
 /// // 
-/// // Invalid GUID (with [NotDefault] on CustomerId): GET /customers/00000000-0000-0000-0000-000000000000
+/// // All-zero GUID (rejected as the sentinel only when [NotDefault] is applied): GET /customers/00000000-0000-0000-0000-000000000000
 /// // Response: 422 Unprocessable Content with "Customer Id cannot be Guid.Empty." detail
 /// </code>
 /// </example>
