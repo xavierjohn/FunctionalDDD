@@ -905,7 +905,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         {{
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
-            if (string.IsNullOrWhiteSpace(value))
+            if (value is null)
                 return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!int.TryParse(value, System.Globalization.NumberStyles.Integer, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
                 return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }})));
@@ -1165,7 +1165,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         {{
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
-            if (string.IsNullOrWhiteSpace(value))
+            if (value is null)
                 return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!decimal.TryParse(value, System.Globalization.NumberStyles.Number, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
                 return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }})));
@@ -1404,7 +1404,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         {{
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
-            if (string.IsNullOrWhiteSpace(value))
+            if (value is null)
                 return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!long.TryParse(value, System.Globalization.NumberStyles.Integer, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
                 return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }})));
