@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Testing
 namespaces: [Trellis.Testing]
-types: ["FakeRepository<TAggregate, TId>", "FakeSharedResourceLoader<TResource, TId>", TestActorProvider, TestActorScope, "ResultAssertions<TValue>", ResultAssertionsExtensions, ResultAssertionsAsyncExtensions, "MaybeAssertions<T>", MaybeAssertionsExtensions, ErrorAssertions, ErrorAssertionsExtensions, ValidationErrorAssertions, ValidationErrorAssertionsExtensions, UnwrapExtensions, UnwrapFailedException, AggregateTestMutator]
+types: ["FakeRepository<TAggregate, TId>", "FakeSharedResourceLoader<TResource, TId>", TestActorProvider, TestActorScope, "ResultAssertions<TValue>", ResultAssertionsExtensions, ResultAssertionsAsyncExtensions, IResultAssertions, IResultAssertionsExtensions, "MaybeAssertions<T>", MaybeAssertionsExtensions, ErrorAssertions, ErrorAssertionsExtensions, ValidationErrorAssertions, ValidationErrorAssertionsExtensions, UnwrapExtensions, UnwrapFailedException, AggregateTestMutator]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -29,6 +29,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Assert a generic result succeeded | `result.Should().BeSuccess()` / `.HaveValue(...)` | [`ResultAssertions<TValue>`](#resultassertionstvalue) |
 | Assert a result failed with a specific error case | `result.Should().BeFailureOfType<TError>()` | [`ResultAssertions<TValue>`](#resultassertionstvalue) |
 | Assert error code/detail | `.HaveErrorCode(...)`, `.HaveErrorDetail(...)`, `.HaveErrorDetailContaining(...)` | [`ResultAssertions<TValue>`](#resultassertionstvalue) |
+| Assert against `IResult` (e.g., `IAuthorizeResource<T>.Authorize` return value) | `result.Should().BeSuccess()` / `.BeFailureOfType<TError>()` — same surface, no `.HaveValue` since the non-generic interface carries no typed value | [`IResultAssertions`](#iresultassertions) |
 | Extract success value in tests only | `result.Unwrap()` | [Usage notes](#usage-notes) |
 | Extract error in tests only | `result.UnwrapError()` | [Usage notes](#usage-notes) |
 | Provide an actor in handler tests | `TestActorProvider` | [`TestActorProvider`](#testactorprovider) |
@@ -108,6 +109,56 @@ public class ResultAssertions<TValue> : ReferenceTypeAssertions<Result<TValue>, 
 
     public AndConstraint<ResultAssertions<TValue>> NotBe(
         Result<TValue> unexpected,
+        string because = "",
+        params object[] becauseArgs);
+}
+```
+
+#### `IResultAssertionsExtensions`
+
+```csharp
+public static class IResultAssertionsExtensions
+{
+    public static IResultAssertions Should(this IResult result);
+}
+```
+
+#### `IResultAssertions`
+
+Entry-point for assertions against members typed as the non-generic `IResult` interface — most commonly `IAuthorizeResource<TResource>.Authorize` and `IAuthorizeResourceVia<TOwner>.Authorize`, which both return `IResult` by contract. Mirrors the failure-side surface of `ResultAssertions<TValue>` (no `.HaveValue` because the non-generic interface carries no typed value).
+
+Overload resolution: a concrete `Result<T>` always binds to the typed `Should<T>(this Result<T>)` extension instead (struct is more specific than the `IResult` interface). The non-generic entry point fires for any receiver statically typed as `IResult` — including `IResult<TValue>`, generic type parameters constrained to `IResult`, and custom concrete types implementing `IResult` — because no typed extension exists for those receivers. Consumers holding `IResult<TValue>` who want the typed `.HaveValue` surface should narrow the receiver to a concrete `Result<TValue>` first.
+
+```csharp
+public class IResultAssertions : ReferenceTypeAssertions<IResult, IResultAssertions>
+{
+    public IResultAssertions(IResult result);
+
+    public AndConstraint<IResultAssertions> BeSuccess(
+        string because = "",
+        params object[] becauseArgs);
+
+    public AndWhichConstraint<IResultAssertions, Error> BeFailure(
+        string because = "",
+        params object[] becauseArgs);
+
+    public AndWhichConstraint<IResultAssertions, TError> BeFailureOfType<TError>(
+        string because = "",
+        params object[] becauseArgs)
+        where TError : Error;
+
+    public AndConstraint<IResultAssertions> HaveErrorCode(
+        string expectedCode,
+        string because = "",
+        params object[] becauseArgs);
+
+    public AndConstraint<IResultAssertions> HaveErrorDetail(
+        string expectedDetail,
+        string because = "",
+        params object[] becauseArgs);
+
+    public AndConstraint<IResultAssertions> HaveErrorDetailContaining(
+        string substring,
         string because = "",
         params object[] becauseArgs);
 }
