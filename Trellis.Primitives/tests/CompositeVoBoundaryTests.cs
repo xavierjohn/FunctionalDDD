@@ -1,6 +1,4 @@
-﻿using Trellis.Testing;
-
-namespace Trellis.Primitives.Tests;
+﻿namespace Trellis.Primitives.Tests;
 
 using System;
 using System.Collections.Generic;
