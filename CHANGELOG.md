@@ -11,28 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### `RequiredXxx<T>` family POLA realignment (breaking)
 
-The `RequiredXxx<T>` family now follows a single, uniform rule: **reject only null**. Per-type "zero value" rejection (`""` for `RequiredString`, `0` for numerics, `Guid.Empty`, `DateTime.MinValue`) becomes opt-in via the new `[NotDefault]` attribute. String trim becomes opt-in via the new `[Trim]` attribute. This realigns the family with `RequiredInt<T>(0)` — which has always succeeded — and matches the Principle of Least Astonishment.
+The `RequiredXxx<T>` family now follows a single, uniform rule: **reject only null**. Per-type "zero value" rejection (`""` for `RequiredString`, `0` for numerics, `Guid.Empty`, `DateTime.MinValue`) is opt-in via the new `[NotDefault]` attribute. String trim is opt-in via the new `[Trim]` attribute. This realigns the family with `RequiredInt<T>(0)` — which has always succeeded — and matches the Principle of Least Astonishment.
 
-| Type | Before | After (no attributes) | After (`[NotDefault]`) |
-|---|---|---|---|
-| `RequiredInt<T>` / `RequiredLong<T>` / `RequiredDecimal<T>` | reject null | reject null | reject null + `0` (per-type wording "cannot be zero.") |
-| `RequiredString<T>` | reject null + empty + whitespace; auto-trim | reject null only | reject null + `""` (after `[Trim]` if present) |
-| `RequiredGuid<T>` | reject null + `Guid.Empty` | reject null only | reject null + `Guid.Empty` (per-type wording "cannot be Guid.Empty.") |
-| `RequiredDateTime<T>` | reject null + `DateTime.MinValue` | reject null only | reject null + `DateTime.MinValue` (per-type wording "cannot be DateTime.MinValue.") |
-| `RequiredBool<T>` | reject null | reject null | **analyzer + generator error** (degenerate single-value type) |
-| `RequiredEnum<T>` | reject unknown member name | reject unknown member name | **analyzer + generator error** (smart-enum has no CLR default) |
+| Type | Default (no attributes) | With `[NotDefault]` |
+|---|---|---|
+| `RequiredInt<T>` / `RequiredLong<T>` / `RequiredDecimal<T>` | reject null | reject null + `0` (wording: "cannot be zero.") |
+| `RequiredString<T>` | reject null | reject null + `""` (after `[Trim]` if present) |
+| `RequiredGuid<T>` | reject null | reject null + `Guid.Empty` (wording: "cannot be Guid.Empty.") |
+| `RequiredDateTime<T>` | reject null | reject null + `DateTime.MinValue` (wording: "cannot be DateTime.MinValue.") |
+| `RequiredBool<T>` | reject null | **compile-time error** (degenerate single-value type) |
+| `RequiredEnum<T>` | reject unknown member name | **compile-time error** (smart-enum has no CLR default) |
 
-**Migration:** add `[NotDefault]` (and `[Trim]` for strings) to any partial class derived from `RequiredString` / `RequiredGuid` / `RequiredDateTime` whose original strict behavior must be preserved. For `RequiredString`-derived types the equivalent of today's defaults is `[Trim, NotDefault]`. New compile-time diagnostics:
+Validation order in the generated `TryCreate`: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
+
+New compile-time diagnostics:
 
 - `TRLS040` — `[NotDefault]` on `RequiredBool<T>` is not supported.
 - `TRLS041` — `[Trim]` on a non-`RequiredString` Required type is not supported.
 - `TRLS042` — `[NotDefault]` on `RequiredEnum<T>` is not supported.
 
-**EF Core read-path impact (named breaking change).** `TrellisScalarConverter` calls `TryCreate` to rehydrate every row read from the database, so today's strict behavior was acting as a database invariant guard: a column containing `Guid.Empty` / `""` / `DateTime.MinValue` (legacy data, raw SQL, external writers) failed loudly via `TrellisPersistenceMappingException`. After the realignment an undecorated ID type silently rehydrates the sentinel value. **For any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property, add `[NotDefault]` to preserve the rehydration guarantee.**
-
-**`ValidateAdditional` override impact.** Subtype `ValidateAdditional` overrides on `RequiredString` that previously relied on non-empty / trimmed input will now receive `""` or whitespace if the type is undecorated. Indexing into `value[0]` etc. throws. Either add `[Trim, NotDefault]` or harden the override.
-
-Validation order in the generated `TryCreate`: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input — a behavior change from today.
+The EF Core `TrellisScalarConverter` calls `TryCreate` to rehydrate every row, so lenient-by-default types now accept persisted sentinel values (`Guid.Empty`, `""`, `DateTime.MinValue`) instead of throwing `TrellisPersistenceMappingException`. Add `[NotDefault]` to any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property to keep the strict rehydration guarantee.
 
 ### Added
 

@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, EntityTagValue, RetryAfterValue, PreconditionKind, InputPointer, FieldViolation, RuleViolation, AuthChallenge, RepresentationMetadata, "WriteOutcome<T>", IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, EntityTagValue, RetryAfterValue, PreconditionKind, InputPointer, FieldViolation, RuleViolation, AuthChallenge, RepresentationMetadata, "WriteOutcome<T>", IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -1679,7 +1679,24 @@ Marker subclass of `System.Text.Json.JsonException` thrown by Trellis JSON conve
 
 ## Primitive value object base classes
 
-These types ship in `Trellis.Core`. They are the building blocks for strongly-typed primitive value objects — derive a `partial class` from one of the `Required*<TSelf>` bases and the bundled `Trellis.Core.Generator` source generator emits the `TryCreate` / `Create` / `Parse` / `TryParse` / `JsonConverter` boilerplate. The validation attributes (`StringLengthAttribute`, `RangeAttribute`, `EnumValueAttribute`) attach declarative invariants that the generator wires into the generated validation. The concrete primitives that derive from these bases (`EmailAddress`, `Money`, etc.) live in `Trellis.Primitives` — see [trellis-api-primitives.md](trellis-api-primitives.md).
+These types ship in `Trellis.Core`. They are the building blocks for strongly-typed primitive value objects — derive a `partial class` from one of the `Required*<TSelf>` bases and the bundled `Trellis.Core.Generator` source generator emits the `TryCreate` / `Create` / `Parse` / `TryParse` / `JsonConverter` boilerplate. The validation attributes (`StringLengthAttribute`, `RangeAttribute`, `NotDefaultAttribute`, `TrimAttribute`, `EnumValueAttribute`) attach declarative invariants that the generator wires into the generated validation. The concrete primitives that derive from these bases (`EmailAddress`, `Money`, etc.) live in `Trellis.Primitives` — see [trellis-api-primitives.md](trellis-api-primitives.md).
+
+#### `Required*<TSelf>` default behavior and the `[NotDefault]` / `[Trim]` opt-ins
+
+Every `Required*<TSelf>` base now follows the same rule: **the generated `TryCreate` rejects only `null`**. Per-type "zero value" rejection (`""` for strings, `0` for numerics, `Guid.Empty`, `DateTime.MinValue`) is opt-in via `[NotDefault]`. String trim is opt-in via `[Trim]`. This realigns the family with `RequiredInt<TSelf>(0)` — which has always succeeded — and matches the Principle of Least Astonishment.
+
+| Base | Default (no attributes) rejects | Add `[NotDefault]` to also reject |
+|---|---|---|
+| `RequiredInt<TSelf>` / `RequiredLong<TSelf>` / `RequiredDecimal<TSelf>` | `null` | `0` (per-type message "cannot be zero.") |
+| `RequiredString<TSelf>` | `null` | `""` (after `[Trim]` if present; per-type message "cannot be empty.") |
+| `RequiredGuid<TSelf>` | `null` | `Guid.Empty` (per-type message "cannot be Guid.Empty.") |
+| `RequiredDateTime<TSelf>` | `null` | `DateTime.MinValue` (per-type message "cannot be DateTime.MinValue.") |
+| `RequiredBool<TSelf>` | `null` | **compile-time error** (TRLS040 — a bool that rejects `false` is degenerate). |
+| `RequiredEnum<TSelf>` | `null` and unknown member name | **compile-time error** (TRLS042 — smart-enum has no CLR default). |
+
+Generated `TryCreate` validation order: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
+
+The `[NotDefault]` rule also drives the EF Core `TrellisScalarConverter` read path: rows containing the per-type sentinel value materialize successfully for lenient types and throw `TrellisPersistenceMappingException` for strict types. Add `[NotDefault]` to any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property to keep the strict-on-rehydration guarantee.
 
 ### `RangeAttribute`
 
@@ -1713,6 +1730,32 @@ public sealed class StringLengthAttribute : Attribute
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public StringLengthAttribute(int maximumLength)` | `StringLengthAttribute` | Length metadata for `RequiredString<TSelf>`. |
+
+### `NotDefaultAttribute`
+
+```csharp
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class NotDefaultAttribute : Attribute
+```
+
+Marker attribute consumed at compile time by `Trellis.Core.Generator`. When present on a partial class derived from `RequiredString` / `RequiredInt` / `RequiredLong` / `RequiredDecimal` / `RequiredGuid` / `RequiredDateTime`, the generator emits an additional check that rejects the type's "zero value" (see the per-type behavior table at the top of this section). Not valid on `RequiredBool` (TRLS040) or `RequiredEnum` (TRLS042); the generator emits a compile-time error in those cases.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public NotDefaultAttribute()` | `NotDefaultAttribute` | Marker only — no constructor arguments. |
+
+### `TrimAttribute`
+
+```csharp
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class TrimAttribute : Attribute
+```
+
+Marker attribute consumed at compile time by `Trellis.Core.Generator`. When present on a `RequiredString<TSelf>`-derived partial class, the generator emits `value.Trim()` before any subsequent check. Combine with `[NotDefault]` to recover the pre-realignment "reject null + empty + whitespace; trim" default — the recommended setup for any string mapped to a database column. Only valid on `RequiredString`; the generator emits TRLS041 if applied to any other Required base.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public TrimAttribute()` | `TrimAttribute` | Marker only — no constructor arguments. |
 
 ### `EnumValueAttribute`
 
@@ -1943,7 +1986,7 @@ public static explicit operator TSelf(string value)
 static partial void ValidateAdditional(string value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: null/empty/whitespace rejection, trimming, optional `[StringLength]` checks.
+- Built-in validation: `null` rejection. Add `[NotDefault]` to also reject `""` (after `[Trim]` if present). `[StringLength]` operates on the post-`[Trim]` value when both are present, on the raw input otherwise.
 
 #### `RequiredGuid<TSelf>`
 
@@ -1962,7 +2005,7 @@ public static explicit operator TSelf(Guid value)
 static partial void ValidateAdditional(Guid value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: `Guid.Empty` rejection.
+- Built-in validation: `null` rejection. Add `[NotDefault]` to also reject `Guid.Empty` (recommended for any GUID used as an `Aggregate<TId>` / `Entity<TId>` ID or EF-mapped property — see EF read-path note above).
 
 #### `RequiredInt<TSelf>`
 
@@ -1980,7 +2023,7 @@ public static explicit operator TSelf(int value)
 static partial void ValidateAdditional(int value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: `null` rejection for nullable inputs, optional `[Range(int, int)]`.
+- Built-in validation: `null` rejection for nullable inputs, optional `[Range(int, int)]`. Add `[NotDefault]` to also reject `0`.
 
 #### `RequiredDecimal<TSelf>`
 
@@ -1998,7 +2041,7 @@ public static explicit operator TSelf(decimal value)
 static partial void ValidateAdditional(decimal value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: `null` rejection for nullable inputs, optional `[Range(int, int)]` or `[Range(double, double)]`.
+- Built-in validation: `null` rejection for nullable inputs, optional `[Range(int, int)]` or `[Range(double, double)]`. Add `[NotDefault]` to also reject `0m`.
 - String parsing: the plain `TryCreate(string?, string?)` overload uses invariant culture; use the `IFormatProvider` overload for culture-aware decimal formats.
 
 #### `RequiredLong<TSelf>`
@@ -2017,7 +2060,7 @@ public static explicit operator TSelf(long value)
 static partial void ValidateAdditional(long value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: `null` rejection for nullable inputs, optional `[Range(long, long)]`.
+- Built-in validation: `null` rejection for nullable inputs, optional `[Range(long, long)]`. Add `[NotDefault]` to also reject `0L`.
 
 #### `RequiredBool<TSelf>`
 
@@ -2034,7 +2077,7 @@ public static explicit operator TSelf(bool value)
 static partial void ValidateAdditional(bool value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: `null` rejection for nullable inputs; `false` is valid.
+- Built-in validation: `null` rejection for nullable inputs; `false` is valid. `[NotDefault]` is not supported on `RequiredBool` (TRLS040 — a bool that rejects `false` would be degenerate).
 
 #### `RequiredDateTime<TSelf>`
 
@@ -2052,7 +2095,7 @@ public static explicit operator TSelf(DateTime value)
 static partial void ValidateAdditional(DateTime value, string fieldName, ref string? errorMessage)
 ```
 
-- Built-in validation: `DateTime.MinValue` rejection.
+- Built-in validation: `null` rejection. Add `[NotDefault]` to also reject `DateTime.MinValue` (recommended for any DateTime used as an EF-mapped property — see EF read-path note above).
 
 #### `RequiredEnum<TSelf>`
 
