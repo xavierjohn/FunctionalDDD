@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### `Result<Page<T>>.ToHttpResponse` no longer silently drops `WithETag` / `WithLastModified` / `Vary` / `WithContentLanguage` / `WithContentLocation` / `EvaluatePreconditions`
+
+`HttpResponseOptionsBuilder<Page<T>>` accepts every option that the non-paged builder does, but until now only `VaryForActor` and `WithCacheControl` actually flowed through to the wire on the paged path — every other `.With*` call compiled, ran, and silently no-op'd. `ETag` / `Last-Modified` / `Vary` / `Content-Language` / `Content-Location` are now applied to paged success responses; `EvaluatePreconditions()` now performs conditional-request evaluation (`If-None-Match` / `If-Modified-Since` → 304, failing `If-Match` / `If-Unmodified-Since` → 412) against `Page<T>`-shaped selectors. Per-domain selectors evaluate inside `IResult.ExecuteAsync` (not eagerly during `ToHttpResponse`), `ETag` and `Last-Modified` resolve once per request and are reused for header emission and precondition evaluation so non-deterministic selectors cannot produce inconsistent header-vs-metadata values, and selector-derived `Cache-Control` applies only at the success-emit points (200 / 304) — generated 412 responses do not inherit it, matching the non-paged contract. Static `Cache-Control` continues to apply to both success and failure responses.
+
+Out of scope (deferred): `WithRange` / `WithLocation` / `WithCreatedAt*` / body projector / `HonorPrefer` / `WithAcceptRanges` are paged-incompatible by shape (range = byte ranges, location = 201 Created, Prefer = representation-vs-minimal, AcceptRanges = byte-range advertisement) and remain silently no-op on the paged path. Future work tracked in `BACKLOG.md`.
+
 ### Changed
 
 #### `RequiredXxx<T>` family POLA realignment (breaking)

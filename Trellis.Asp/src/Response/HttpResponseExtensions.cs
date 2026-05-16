@@ -216,24 +216,68 @@ public static class HttpResponseExtensions
             });
         }
 
-        var (envelope, linkHeader) = PagedResponseBuilder.Build(page, nextUrlBuilder, body);
-        var ok = Results.Ok(envelope);
-        var inner = linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
-
-        // Wrap so VaryForActor / Cache-Control (static + selector) apply on the paged
-        // success path too. The wrapper holds the selector and `page` so evaluation runs
-        // inside ExecuteAsync — matching the non-paged code paths and avoiding any chance
-        // of stale state if the IResult is constructed in one scope and executed in
-        // another (e.g. minimal-api endpoint that defers ExecuteAsync).
+        // Detect any builder-option that the bare Results.Ok / PagedHttpResult would silently
+        // drop on its way to the wire. The wrapper applies them before delegating to the
+        // inner result so the paged path matches the non-paged TrellisHttpResult contract.
         var hasCacheControl = opts.CacheControl is not null || opts.CacheControlSelector is not null;
-        if (opts.VaryForActor || hasCacheControl)
+        var hasOptionalHeaders =
+            (opts.Vary is { Count: > 0 })
+            || (opts.ContentLanguage is { Count: > 0 })
+            || opts.ETagSelector is not null
+            || opts.LastModifiedSelector is not null
+            || opts.ContentLocationSelector is not null
+            || opts.EvaluatePreconditions;
+
+        // Lazy inner-result factory: defers PagedResponseBuilder.Build (which projects every
+        // item via the `body` mapper and allocates the envelope list) until a success-emit
+        // point is reached. This avoids running the body projector when a conditional GET
+        // short-circuits to 304 or a precondition fails into 412.
+        Microsoft.AspNetCore.Http.IResult BuildInner()
         {
-            Func<System.Net.Http.Headers.CacheControlHeaderValue?> resolveCacheControl =
-                () => (opts.CacheControlSelector is { } sel ? sel(page) : null) ?? opts.CacheControl;
-            return new PagedSuccessHeaderWrapper(inner, opts.VaryForActor, resolveCacheControl);
+            var (envelope, linkHeader) = PagedResponseBuilder.Build(page, nextUrlBuilder, body);
+            var ok = Results.Ok(envelope);
+            return linkHeader is null ? ok : new PagedHttpResult(ok, linkHeader);
         }
 
-        return inner;
+        if (opts.VaryForActor || hasCacheControl || hasOptionalHeaders)
+        {
+            // Capture `page` in closures so selectors evaluate inside ExecuteAsync — matches
+            // the non-paged timing and avoids stale state if the IResult is constructed in
+            // one scope and executed in another.
+            Func<EntityTagValue?>? resolveETag = opts.ETagSelector is { } et
+                ? () => et(page)
+                : null;
+            Func<DateTimeOffset?>? resolveLastModified = opts.LastModifiedSelector is { } lm
+                ? () => lm(page)
+                : null;
+            Func<string?>? resolveContentLocation = opts.ContentLocationSelector is { } cls
+                ? () => cls(page)
+                : null;
+            Func<System.Net.Http.Headers.CacheControlHeaderValue?>? resolveCacheControlSelector =
+                opts.CacheControlSelector is { } ccSel ? () => ccSel(page) : null;
+            Func<HttpContext, Error, int>? resolveErrorStatusCode = opts.EvaluatePreconditions
+                ? (http, err) => ErrorStatusCodeResolver.Resolve(http, err, opts.ErrorMapper, opts.ErrorOverrides)
+                : null;
+
+            return new PagedSuccessHeaderWrapper(
+                BuildInner,
+                opts.VaryForActor,
+                opts.CacheControl,
+                resolveCacheControlSelector,
+                opts.Vary,
+                opts.ContentLanguage,
+                resolveETag,
+                resolveLastModified,
+                resolveContentLocation,
+                opts.EvaluatePreconditions,
+                resolveErrorStatusCode,
+                ResourceRef.For<Page<T>>());
+        }
+
+        // No wrapper required — build the envelope eagerly and return the bare inner. There
+        // is no precondition / 304 / 412 path on this branch, so deferring would change
+        // nothing observable.
+        return BuildInner();
     }
 
     /// <summary>Async <see cref="Task"/> overload.</summary>
@@ -308,31 +352,160 @@ internal sealed class ActorVaryWrapperResult(Microsoft.AspNetCore.Http.IResult i
 }
 
 /// <summary>
-/// Internal IResult wrapper for paged success responses that applies
-/// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> and
-/// <see cref="HttpResponseOptionsBuilder{TDomain}.WithCacheControl(System.Net.Http.Headers.CacheControlHeaderValue)"/>
-/// before delegating to the inner result. The paged success path produces the response via
-/// <see cref="Microsoft.AspNetCore.Http.Results.Ok(object?)"/> / <see cref="PagedHttpResult"/>,
-/// neither of which consults the builder options — this wrapper applies the option-driven
-/// headers so the contract matches the non-paged code paths. The <c>Cache-Control</c>
-/// resolver is invoked inside <see cref="ExecuteAsync"/> so per-domain selectors evaluate
-/// at execution time, matching the timing of selectors on the non-paged paths.
+/// Internal IResult wrapper for paged success responses. Applies every
+/// <see cref="HttpResponseOptionsBuilder{TDomain}"/>-driven header that the bare
+/// <see cref="Microsoft.AspNetCore.Http.Results.Ok(object?)"/> / <see cref="PagedHttpResult"/>
+/// would otherwise silently drop, so the paged contract matches the non-paged
+/// <c>TrellisHttpResult</c>: <c>VaryForActor</c>, static and selector <c>Cache-Control</c>,
+/// the explicit <c>Vary</c> list, <c>Content-Language</c>, <c>ETag</c>,
+/// <c>Last-Modified</c>, <c>Content-Location</c>, and conditional-request preconditions
+/// (<c>If-None-Match</c> / <c>If-Modified-Since</c> → 304; failing <c>If-Match</c> /
+/// <c>If-Unmodified-Since</c> → 412).
 /// </summary>
+/// <remarks>
+/// <para>
+/// All domain-shaped selectors (ETag, Last-Modified, Content-Location, selector
+/// Cache-Control) close over the <c>Page&lt;T&gt;</c> value at the call site and evaluate
+/// inside <see cref="ExecuteAsync"/> — matching the non-paged result type's timing and
+/// avoiding stale state if the IResult is constructed in one scope and executed in another.
+/// </para>
+/// <para>
+/// ETag and Last-Modified are resolved exactly once per request and reused for both header
+/// emission and precondition evaluation, so a non-deterministic or expensive selector does
+/// not produce inconsistent header-vs-metadata values.
+/// </para>
+/// <para>
+/// Selector-derived <c>Cache-Control</c> is applied only at the success-emit points (the
+/// inner 200 OK and the 304 Not Modified short-circuit). A generated 412 PreconditionFailed
+/// does not inherit the selector value — matching the non-paged contract that prevents
+/// caching of mid-flow failures. Static <c>Cache-Control</c> remains applied to both
+/// success and failure paths because it represents the consumer's policy for the endpoint
+/// as a whole.
+/// </para>
+/// </remarks>
 internal sealed class PagedSuccessHeaderWrapper(
-    Microsoft.AspNetCore.Http.IResult inner,
+    Func<Microsoft.AspNetCore.Http.IResult> buildInner,
     bool varyForActor,
-    Func<System.Net.Http.Headers.CacheControlHeaderValue?> resolveCacheControl) : Microsoft.AspNetCore.Http.IResult
+    System.Net.Http.Headers.CacheControlHeaderValue? staticCacheControl,
+    Func<System.Net.Http.Headers.CacheControlHeaderValue?>? resolveCacheControlSelector,
+    IReadOnlyList<string>? vary,
+    IReadOnlyList<string>? contentLanguage,
+    Func<EntityTagValue?>? resolveETag,
+    Func<DateTimeOffset?>? resolveLastModified,
+    Func<string?>? resolveContentLocation,
+    bool evaluatePreconditions,
+    Func<HttpContext, Error, int>? resolveErrorStatusCode,
+    ResourceRef preconditionFailedRef) : Microsoft.AspNetCore.Http.IResult
 {
-    public Task ExecuteAsync(HttpContext httpContext)
+    public async Task ExecuteAsync(HttpContext httpContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
+
         if (varyForActor)
             TrellisHttpResult<object, object>.AppendActorVaryHeaders(httpContext);
 
-        var cacheControl = resolveCacheControl();
-        if (cacheControl is not null)
-            httpContext.Response.Headers["Cache-Control"] = cacheControl.ToString();
+        var response = httpContext.Response;
 
-        return inner.ExecuteAsync(httpContext);
+        // Static Cache-Control applies before any branch — consumer's policy for the endpoint
+        // (e.g. private, no-store) should govern both the success body and any generated 412.
+        if (staticCacheControl is not null)
+            response.Headers["Cache-Control"] = staticCacheControl.ToString();
+
+        if (vary is { Count: > 0 })
+        {
+            foreach (var v in vary)
+                TrellisHttpResult<object, object>.AppendVaryUnique(response, v);
+        }
+
+        if (contentLanguage is { Count: > 0 })
+            response.Headers.ContentLanguage = string.Join(", ", contentLanguage);
+
+        // Resolve ETag and Last-Modified once per execution; the cached values are reused
+        // for header emission AND precondition evaluation so non-deterministic selectors
+        // cannot produce inconsistent header-vs-metadata values. Last-Modified is truncated
+        // to second precision before caching because the wire-format `R` HTTP-date emitter
+        // and HTTP clients both work at second granularity — keeping sub-second precision
+        // in the metadata would cause `If-Modified-Since` revalidation with the exact
+        // emitted header to miss the 304 path, since `selectorRaw > Parse(emittedHeader)`.
+        var etag = resolveETag?.Invoke();
+        var lastModified = TruncateToSeconds(resolveLastModified?.Invoke());
+
+        if (etag is not null)
+            response.Headers.ETag = etag.ToHeaderValue();
+
+        if (lastModified.HasValue)
+            response.Headers.LastModified = lastModified.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+        if (resolveContentLocation?.Invoke() is { Length: > 0 } loc)
+            response.Headers["Content-Location"] = loc;
+
+        if (evaluatePreconditions)
+        {
+            var method = httpContext.Request.Method;
+            if (HttpMethods.IsGet(method) || HttpMethods.IsHead(method))
+            {
+                var metadata = BuildMetadataForEvaluation(etag, lastModified);
+                if (metadata is not null)
+                {
+                    var decision = ConditionalRequestEvaluator.Evaluate(httpContext.Request, metadata, out var failedKind);
+                    if (decision == ConditionalDecision.NotModified)
+                    {
+                        // 304 is a success disposition — apply the selector so the revalidation
+                        // response carries the same Cache-Control policy a fresh 200 would.
+                        ApplyCacheControlSelector(response);
+                        await Results.StatusCode(StatusCodes.Status304NotModified).ExecuteAsync(httpContext).ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (decision == ConditionalDecision.PreconditionFailed)
+                    {
+                        // 412 deliberately does NOT inherit the selector value — a transient
+                        // client error must not be cached as a negative response.
+                        var pf = new Error.PreconditionFailed(
+                            preconditionFailedRef,
+                            failedKind ?? PreconditionKind.IfMatch)
+                        { Detail = "A conditional request header evaluated to false." };
+
+                        var statusCode = resolveErrorStatusCode is not null
+                            ? resolveErrorStatusCode(httpContext, pf)
+                            : StatusCodes.Status412PreconditionFailed;
+                        await ResponseFailureWriter.WriteAsync(httpContext, pf, statusCode).ConfigureAwait(false);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Success-emit point: apply the selector Cache-Control, then build the paged envelope
+        // lazily (avoids running the body projector when a 304 / 412 short-circuit fires
+        // upstream).
+        ApplyCacheControlSelector(response);
+        var inner = buildInner();
+        await inner.ExecuteAsync(httpContext).ConfigureAwait(false);
     }
+
+    private void ApplyCacheControlSelector(HttpResponse response)
+    {
+        if (resolveCacheControlSelector is null)
+            return;
+        var v = resolveCacheControlSelector();
+        if (v is not null)
+            response.Headers["Cache-Control"] = v.ToString();
+    }
+
+    private static RepresentationMetadata? BuildMetadataForEvaluation(EntityTagValue? etag, DateTimeOffset? lastModified)
+    {
+        if (etag is null && lastModified is null)
+            return null;
+
+        var b = RepresentationMetadata.Create();
+        if (etag is not null)
+            b = b.SetETag(etag);
+        if (lastModified.HasValue)
+            b = b.SetLastModified(lastModified.Value);
+        return b.Build();
+    }
+
+    private static DateTimeOffset? TruncateToSeconds(DateTimeOffset? value) =>
+        value.HasValue ? value.Value.AddTicks(-(value.Value.Ticks % TimeSpan.TicksPerSecond)) : null;
 }

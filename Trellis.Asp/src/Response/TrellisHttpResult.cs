@@ -200,7 +200,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             return null;
 
         var etag = _options.ETagSelector?.Invoke(domain);
-        var lastMod = _options.LastModifiedSelector?.Invoke(domain);
+        var lastModRaw = _options.LastModifiedSelector?.Invoke(domain);
+        // Truncate the metadata value to match what was emitted on the wire (see ApplyMetadata
+        // comment above) so revalidation requests bearing the exact emitted Last-Modified
+        // value hit the 304 path instead of being treated as "client sent stale timestamp".
+        var lastMod = lastModRaw.HasValue
+            ? lastModRaw.Value.AddTicks(-(lastModRaw.Value.Ticks % TimeSpan.TicksPerSecond))
+            : (DateTimeOffset?)null;
         if (etag is null && lastMod is null)
             return null;
 
@@ -234,7 +240,14 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         {
             var d = lm(domain);
             if (d.HasValue)
-                response.Headers["Last-Modified"] = d.Value.ToString("R");
+            {
+                // Truncate to second precision so the emitted RFC1123 header matches the
+                // value the precondition evaluator sees on the next request — preserving
+                // sub-second ticks would cause `If-Modified-Since: <emitted-value>` to miss
+                // the 304 short-circuit because `selectorTicks > Parse(headerString).Ticks`.
+                var truncated = d.Value.AddTicks(-(d.Value.Ticks % TimeSpan.TicksPerSecond));
+                response.Headers["Last-Modified"] = truncated.ToString("R");
+            }
         }
 
         if (_options.Vary is { Count: > 0 })
