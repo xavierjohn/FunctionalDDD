@@ -126,7 +126,7 @@ public sealed class MaybePrimitiveModelBinder<T> : IModelBinder
             return true;
         }
 
-        if (typeof(T) == typeof(Guid) && Guid.TryParse(raw, CultureInfo.InvariantCulture, out var g))
+        if (typeof(T) == typeof(Guid) && Guid.TryParse(raw, out var g))
         {
             value = (T)(object)g;
             return true;
