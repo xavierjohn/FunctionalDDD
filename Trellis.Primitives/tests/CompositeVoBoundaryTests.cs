@@ -16,9 +16,13 @@ using Trellis.Primitives;
 /// nested composite VOs, custom enum-backed scalars).
 ///
 /// Each fixture isolates one shape so the first failure can't mask later cases. Each shape
-/// covers serialize, deserialize, and where applicable the missing-property and explicit-null
-/// JSON variants — so we know whether the boundary is "throws loudly" (acceptable; document
-/// in cookbook) or "silently wrong" (real bug).
+/// covers serialize and deserialize of a representative non-null value (plus the null-write
+/// regression cases for unsupported shapes, and a write/read symmetry pin for the nullable
+/// scalar VO interior) — sufficient to characterize whether the boundary is "throws loudly"
+/// (acceptable; documented in cookbook Recipe 13) or "silently wrong" (real bug). Missing-
+/// property and explicit-JSON-null variants are not exhaustively covered per-shape; the
+/// converter's required-property and primitive-null behavior is exercised by the existing
+/// <see cref="CompositeValueObjectJsonConverterTests"/> against the supported primitives.
 ///
 /// Outcome of these tests informs P1-Test-1 in BACKLOG.md: do we extend converter support, or
 /// document the constraint and consider an analyzer rule (separate ID; not TRLS020 which is
