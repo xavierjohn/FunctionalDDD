@@ -7,11 +7,14 @@ using Xunit;
 
 /// <summary>
 /// Pins the fail-fast behavior of <see cref="ResultRequiresExplicitHttpMappingConverter"/>:
-/// direct JSON serialization / deserialization of <see cref="Result{TValue}"/> throws an
-/// actionable <see cref="InvalidOperationException"/> instead of silently producing a struct
+/// direct JSON serialization / deserialization of <see cref="Result{TValue}"/> (or an
+/// <see cref="IResult"/> / <see cref="IResult{TValue}"/>-declared receiver) throws an
+/// actionable <see cref="NotSupportedException"/> instead of silently producing a struct
 /// dump. The intended path is <c>.ToHttpResponse()</c> (Trellis.Asp) — proven by checking
 /// the message wording — and consumers who legitimately want raw JSON of a Result can
-/// override via <c>JsonSerializerOptions.Converters</c>.
+/// override via <c>JsonSerializerOptions.Converters</c>. The override must match the
+/// declared static type; the per-shape rule and the <see cref="System.Text.Json.Serialization.JsonConverterFactory"/>
+/// alternative are pinned in dedicated tests below.
 /// </summary>
 public class ResultJsonFailFastTests
 {
