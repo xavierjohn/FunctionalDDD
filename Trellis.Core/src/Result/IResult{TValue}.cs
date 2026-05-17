@@ -7,6 +7,7 @@
 /// <remarks>
 /// This interface extends <see cref="IResult"/> to add strongly-typed access to the success value.
 /// </remarks>
+[System.Text.Json.Serialization.JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]
 public interface IResult<TValue> : IResult
 {
     /// <summary>

@@ -7,6 +7,7 @@
 /// This interface allows polymorphic handling of results without knowing the success value type.
 /// Use <see cref="IResult{TValue}"/> for typed access to the success value.
 /// </remarks>
+[System.Text.Json.Serialization.JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]
 public interface IResult
 {
     /// <summary>

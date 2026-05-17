@@ -22,7 +22,7 @@ public class ResultJsonFailFastTests
 
         var act = () => JsonSerializer.Serialize(result);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<NotSupportedException>()
             .WithMessage("*Result<Int32>*cannot be serialized*ToHttpResponse*");
     }
 
@@ -31,7 +31,7 @@ public class ResultJsonFailFastTests
     {
         var act = () => JsonSerializer.Deserialize<Result<int>>("{\"IsSuccess\":true,\"Value\":42}");
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<NotSupportedException>()
             .WithMessage("*Result<Int32>*cannot be deserialized*ToHttpResponse*");
     }
 
@@ -42,7 +42,7 @@ public class ResultJsonFailFastTests
 
         var act = () => JsonSerializer.Serialize(result);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<NotSupportedException>()
             .WithMessage("*Result<Int32>*cannot be serialized*Match*TryGetValue*");
     }
 
@@ -60,11 +60,6 @@ public class ResultJsonFailFastTests
         json.Should().Be("\"OK:42\"");
     }
 
-    private static readonly JsonSerializerOptions s_optionsWithRawConverter = new()
-    {
-        Converters = { new RawResultConverter() },
-    };
-
     [Fact]
     public void Serializing_a_DTO_containing_Result_property_also_throws()
     {
@@ -74,11 +69,58 @@ public class ResultJsonFailFastTests
 
         var act = () => JsonSerializer.Serialize(dto);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<NotSupportedException>()
             .WithMessage("*Result<Int32>*ToHttpResponse*");
     }
 
+    // ---------- Interface-declared return-type coverage (Opus #1 finding) ----------
+
+    [Fact]
+    public void Serialize_via_IResult_T_interface_also_throws()
+    {
+        // STJ resolves [JsonConverter] against the static declared type. A controller signature
+        // like Task<IResult<int>> GetAsync() would previously bypass the throwing converter
+        // because the attribute was only on the struct, not the interface — re-creating the
+        // exact silent-struct-dump bug this PR is meant to prevent. The attribute now lives on
+        // both the struct AND the interfaces to close the gap.
+        IResult<int> result = Result.Ok(42);
+
+        var act = () => JsonSerializer.Serialize(result);
+
+        act.Should().Throw<NotSupportedException>()
+            .WithMessage("*Result<Int32>*ToHttpResponse*");
+    }
+
+    [Fact]
+    public void Serialize_DTO_with_IResult_T_property_also_throws()
+    {
+        var dto = new DtoCarryingIResultT(Result.Ok(42));
+
+        var act = () => JsonSerializer.Serialize(dto);
+
+        act.Should().Throw<NotSupportedException>()
+            .WithMessage("*Result<Int32>*ToHttpResponse*");
+    }
+
+    [Fact]
+    public void Serialize_via_non_generic_IResult_also_throws()
+    {
+        IResult result = Result.Ok(42);
+
+        var act = () => JsonSerializer.Serialize(result);
+
+        act.Should().Throw<NotSupportedException>()
+            .WithMessage("*ToHttpResponse*");
+    }
+
     private sealed record DtoCarryingResult(Result<int> Inner);
+
+    private sealed record DtoCarryingIResultT(IResult<int> Inner);
+
+    private static readonly JsonSerializerOptions s_optionsWithRawConverter = new()
+    {
+        Converters = { new RawResultConverter() },
+    };
 
     private sealed class RawResultConverter : JsonConverter<Result<int>>
     {
