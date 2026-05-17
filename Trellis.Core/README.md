@@ -27,6 +27,14 @@ Result<string> email = Result.Ok("ada@example.com")
 - Build resource-aware HTTP errors tersely with `ResourceRef.For<TResource>(id)`.
 - Define custom `Required*<TSelf>` value objects with source-generated parsing, JSON conversion, and tracing support.
 
+## `Result<T>` is not directly JSON-serializable
+
+`Result<T>` carries a default `[JsonConverter]` that throws `NotSupportedException` on direct `JsonSerializer.Serialize` / `Deserialize`. Returning a raw `Result<T>` from a controller would otherwise silently produce `{"IsSuccess": true, "Value": ..., "Error": null}` with no HTTP status-code mapping for `Error.*` cases (an `Error.NotFound` would render as 200 OK instead of 404). The throw fires at the first request with an actionable message. Fix paths:
+
+- **HTTP** — call `.ToHttpResponse()` (Trellis.Asp). The returned `Microsoft.AspNetCore.Http.IResult` writes the body itself; the struct never reaches STJ.
+- **Non-HTTP** — unwrap with `Match` / `TryGetValue` before serialization.
+- **Genuinely need raw JSON** (logging, IPC) — register a `JsonConverter<Result<T>>` in `JsonSerializerOptions.Converters`; option-registered converters take precedence over the type's `[JsonConverter]` attribute.
+
 ## Documentation
 - [Full documentation](https://xavierjohn.github.io/Trellis/articles/error-handling.html)
 - [API Reference](https://xavierjohn.github.io/Trellis/api/index.html)
