@@ -33,11 +33,32 @@ using System.Text.Json.Serialization;
 /// an actionable message naming <c>.ToHttpResponse()</c>.
 /// </para>
 /// <para>
-/// Consumers who legitimately want to serialize <see cref="Result{TValue}"/> for logging,
-/// IPC, or storage can register their own <see cref="JsonConverter{T}"/> for
-/// <see cref="Result{TValue}"/> in <c>options.Converters</c> — <see cref="JsonConverter"/>
-/// instances in <c>options.Converters</c> take precedence over the type's
-/// <see cref="JsonConverterAttribute"/>.
+/// <b>AOT-safe.</b> The factory throws directly from <see cref="CreateConverter"/> rather
+/// than instantiating a typed throwing converter via <c>MakeGenericType</c> /
+/// <c>Activator.CreateInstance</c>. This means no reflection-dependent paths run in Native
+/// AOT — consumers get the actionable Trellis message instead of an AOT-generated "native
+/// code not available" error before the message can fire.
+/// </para>
+/// <para>
+/// Consumers who legitimately want to serialize a result for logging, IPC, or storage can
+/// register a converter (or another <see cref="JsonConverterFactory"/>) in
+/// <see cref="JsonSerializerOptions.Converters"/> — option-registered converters take
+/// precedence over the type's <see cref="JsonConverterAttribute"/>. The override must match
+/// the <b>declared</b> static type of the value being serialized:
+/// <list type="bullet">
+///   <item>Value declared as <see cref="Result{TValue}"/> → register
+///     <c>JsonConverter&lt;Result&lt;T&gt;&gt;</c>.</item>
+///   <item>Value declared as <see cref="IResult{TValue}"/> → register
+///     <c>JsonConverter&lt;IResult&lt;T&gt;&gt;</c>.</item>
+///   <item>Value declared as <see cref="IResult"/> → register
+///     <c>JsonConverter&lt;IResult&gt;</c>.</item>
+///   <item>Mixed shapes → register a <see cref="JsonConverterFactory"/> whose
+///     <c>CanConvert</c> returns <see langword="true"/> for every
+///     shape the consumer needs.</item>
+/// </list>
+/// STJ resolves <c>[JsonConverter]</c> against the static declared type, not the runtime
+/// type, so a <c>JsonConverter&lt;Result&lt;T&gt;&gt;</c> alone does not cover
+/// <c>IResult&lt;T&gt;</c>-declared properties / return signatures.
 /// </para>
 /// </remarks>
 public sealed class ResultRequiresExplicitHttpMappingConverter : JsonConverterFactory
@@ -61,56 +82,55 @@ public sealed class ResultRequiresExplicitHttpMappingConverter : JsonConverterFa
         return def == typeof(Result<>) || def == typeof(IResult<>);
     }
 
-    /// <inheritdoc />
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming", "IL2055",
-        Justification = "T comes from Result<T> / IResult<T> the runtime is asking us to convert; the closed converter type is constructable from that T by definition.")]
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "AOT", "IL3050",
-        Justification = "The throwing converter has no AOT-incompatible dependencies; the MakeGenericType / Activator path is here only to surface the actionable error at the first STJ call attempt.")]
+    /// <summary>
+    /// Always throws <see cref="NotSupportedException"/> with the actionable Trellis message.
+    /// </summary>
+    /// <remarks>
+    /// Throwing directly from <see cref="CreateConverter"/> sidesteps the typed-converter
+    /// instantiation entirely. The previous design used <c>MakeGenericType</c> +
+    /// <c>Activator.CreateInstance</c> to materialise a typed <c>JsonConverter&lt;Result&lt;T&gt;&gt;</c>
+    /// that would throw on its first <c>Read</c> / <c>Write</c> call — but those reflection
+    /// paths are AOT-unsafe (IL2055 / IL3050) and could fail with a "native code not available"
+    /// error before the Trellis message had a chance to surface. Throwing here keeps the
+    /// converter AOT-safe and ensures consumers see the actionable Trellis message in every
+    /// runtime configuration.
+    /// </remarks>
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         ArgumentNullException.ThrowIfNull(typeToConvert);
+        throw new NotSupportedException(BuildMessage(typeToConvert));
+    }
 
+    private static string BuildMessage(Type typeToConvert)
+    {
+        var declaredShape = FormatDeclaredShape(typeToConvert);
+        return $"{declaredShape} cannot be JSON-serialized or deserialized directly. " +
+            "Result<T> is a domain disposition — call .ToHttpResponse() (Trellis.Asp) on a controller / minimal-API " +
+            "return to map success → 200/201/204 and Error.* → 4xx/5xx with problem-details, or unwrap the value " +
+            "via Match / TryGetValue before serialization. " +
+            "If you intentionally want to JSON-serialize a result (e.g. for logging or IPC), register a " +
+            $"JsonConverter for the declared static type ({declaredShape}) in JsonSerializerOptions.Converters — " +
+            "STJ resolves [JsonConverter] against the static declared type, not the runtime type, so a converter " +
+            "for one shape does not cover the others. Use a JsonConverterFactory if you need to cover multiple " +
+            "result shapes (Result<T>, IResult<T>, IResult) at once.";
+    }
+
+    private static string FormatDeclaredShape(Type typeToConvert)
+    {
         if (typeToConvert == typeof(IResult))
-            return new NonGenericThrowingConverter();
+            return "IResult";
 
-        var valueType = typeToConvert.GetGenericArguments()[0];
-        var converterType = typeof(ThrowingConverter<>).MakeGenericType(valueType);
-        return (JsonConverter)Activator.CreateInstance(converterType)!;
+        if (typeToConvert.IsGenericType)
+        {
+            var def = typeToConvert.GetGenericTypeDefinition();
+            var inner = typeToConvert.GetGenericArguments()[0].Name;
+            if (def == typeof(Result<>))
+                return $"Result<{inner}>";
+            if (def == typeof(IResult<>))
+                return $"IResult<{inner}>";
+        }
+
+        // CanConvert gate prevents this path in practice, but keep a defensible default.
+        return typeToConvert.Name;
     }
-
-    private sealed class ThrowingConverter<TValue> : JsonConverter<Result<TValue>>
-    {
-        // CanConvert override: the factory advertises Result<T>, IResult<T>, AND IResult,
-        // so STJ may ask this typed converter to handle an IResult<T>-declared property too.
-        // Allow that — the throw path is identical and Read/Write are gated on assignability.
-        public override bool CanConvert(Type typeToConvert) =>
-            typeToConvert == typeof(Result<TValue>)
-            || typeToConvert == typeof(IResult<TValue>);
-
-        public override Result<TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            throw new NotSupportedException(BuildMessage(typeof(TValue).Name, reading: true));
-
-        public override void Write(Utf8JsonWriter writer, Result<TValue> value, JsonSerializerOptions options) =>
-            throw new NotSupportedException(BuildMessage(typeof(TValue).Name, reading: false));
-    }
-
-    private sealed class NonGenericThrowingConverter : JsonConverter<IResult>
-    {
-        public override IResult Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            throw new NotSupportedException(BuildMessage("?", reading: true));
-
-        public override void Write(Utf8JsonWriter writer, IResult value, JsonSerializerOptions options) =>
-            throw new NotSupportedException(BuildMessage("?", reading: false));
-    }
-
-    private static string BuildMessage(string valueTypeName, bool reading) =>
-        $"Result<{valueTypeName}> / IResult cannot be {(reading ? "deserialized from" : "serialized to")} JSON directly. " +
-        "Result<T> is a domain disposition — call .ToHttpResponse() (Trellis.Asp) on a controller / minimal-API " +
-        "return to map success → 200/201/204 and Error.* → 4xx/5xx with problem-details, or unwrap the value " +
-        "via Match / TryGetValue before serialization. " +
-        "If you intentionally want to JSON-serialize a Result<T> (e.g. for logging or IPC), register a custom " +
-        "JsonConverter<Result<T>> in JsonSerializerOptions.Converters — converters there take " +
-        "precedence over the type's default [JsonConverter] attribute.";
 }

@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The new throw fires at the first request and names the canonical fix: call `.ToHttpResponse()` (Trellis.Asp) on the result, or unwrap the value via `Match` / `TryGetValue` before serialization. `NotSupportedException` (not `InvalidOperationException`) matches STJ's convention for "this type cannot be (de)serialized" so consumer `catch (NotSupportedException)` blocks around `JsonSerializer.Serialize` behave identically whether the type is unsupported by STJ or unsupported by Trellis policy.
 
-Consumers who legitimately want to serialize `Result<T>` (logging, IPC, storage) can register a `JsonConverter<Result<T>>` in `JsonSerializerOptions.Converters` — option-registered converters take precedence over the type's `[JsonConverter]` attribute, so the throwing default is bypassed.
+Consumers who legitimately want to serialize `Result<T>` (logging, IPC, storage) can register a converter (or a `JsonConverterFactory`) in `JsonSerializerOptions.Converters` — option-registered converters take precedence over the type's `[JsonConverter]` attribute. **The override must match the declared static type:** `JsonConverter<Result<T>>` only covers `Result<T>`-declared values; `IResult<T>`-declared values need `JsonConverter<IResult<T>>`; `IResult`-declared values need `JsonConverter<IResult>`. Use a `JsonConverterFactory` to cover multiple result shapes at once.
 
 ### Added
 

@@ -1710,7 +1710,7 @@ Default `[JsonConverter]` factory attached to `Result<T>`, `IResult`, and `IResu
 
 1. **HTTP path** — call `.ToHttpResponse()` (Trellis.Asp) on the result. The returned `Microsoft.AspNetCore.Http.IResult` writes the body itself; the struct never reaches STJ.
 2. **Non-HTTP path** — unwrap the value with `Match` / `TryGetValue` before serialization.
-3. **Explicit override** — register a `JsonConverter<Result<T>>` in `JsonSerializerOptions.Converters`. Option-registered converters take precedence over the type-level `[JsonConverter]` attribute, so the throwing default is bypassed for that specific options instance.
+3. **Explicit override** — register a converter (or a `JsonConverterFactory`) in `JsonSerializerOptions.Converters`. Option-registered converters take precedence over the type-level `[JsonConverter]` attribute. **The override must match the declared static type:** a `JsonConverter<Result<T>>` only covers `Result<T>`-declared values; `IResult<T>`-declared values need `JsonConverter<IResult<T>>`; `IResult`-declared values need `JsonConverter<IResult>`. Use a `JsonConverterFactory` whose `CanConvert` matches every shape to cover the mixed case in one registration.
 
 The attribute lives on both the struct AND the interfaces because STJ resolves `[JsonConverter]` against the static declared type: an endpoint declared as `Task<IResult<int>> GetAsync()` would otherwise bypass a converter attached only to the struct, silently producing the same struct-dump JSON shape (`{"IsSuccess": true, "Value": ..., "Error": null}`) the converter exists to prevent.
 

@@ -33,7 +33,7 @@ Result<string> email = Result.Ok("ada@example.com")
 
 - **HTTP** — call `.ToHttpResponse()` (Trellis.Asp). The returned `Microsoft.AspNetCore.Http.IResult` writes the body itself; the struct never reaches STJ.
 - **Non-HTTP** — unwrap with `Match` / `TryGetValue` before serialization.
-- **Genuinely need raw JSON** (logging, IPC) — register a `JsonConverter<Result<T>>` in `JsonSerializerOptions.Converters`; option-registered converters take precedence over the type's `[JsonConverter]` attribute.
+- **Genuinely need raw JSON** (logging, IPC) — register a converter (or a `JsonConverterFactory`) in `JsonSerializerOptions.Converters`; option-registered converters take precedence over the type's `[JsonConverter]` attribute. **The override must match the declared static type:** `JsonConverter<Result<T>>` covers only `Result<T>`-declared values; `IResult<T>`-declared values need `JsonConverter<IResult<T>>`; `IResult`-declared values need `JsonConverter<IResult>`. Use a `JsonConverterFactory` to cover multiple shapes at once.
 
 ## Documentation
 - [Full documentation](https://xavierjohn.github.io/Trellis/articles/error-handling.html)
