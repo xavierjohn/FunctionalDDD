@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### `Result<T>` JSON serialization now fails fast with an actionable message (breaking)
+
+`Result<T>` carries a default `[JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]` that throws `InvalidOperationException` on any direct JSON serialize / deserialize attempt. Previously, returning a raw `Result<T>` from an MVC controller or minimal-API handler silently produced a struct-dump JSON shape (`{"IsSuccess": true, "Value": ..., "Error": null}`) with no HTTP status-code mapping for `Error.*` cases — the consumer's `Error.NotFound` got 200 OK instead of 404. The new throw fires at the first request and names the canonical fix: call `.ToHttpResponse()` (Trellis.Asp) on the result, or unwrap the value via `Match` / `TryGetValue` before serialization.
+
+Consumers who legitimately want to serialize `Result<T>` (logging, IPC, storage) can register a `JsonConverter<Result<T>>` in `JsonSerializerOptions.Converters` — option-registered converters take precedence over the type's `[JsonConverter]` attribute, so the throwing default is bypassed.
+
 ### Added
 
 #### `IResult`-aware FluentAssertions extension
