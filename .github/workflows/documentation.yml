@@ -51,6 +51,20 @@ jobs:
         dotnet build Trellis.Asp/generator/Trellis.AspSourceGenerator.csproj --no-restore -c Release
         dotnet build Trellis.EntityFrameworkCore/generator/Trellis.EntityFrameworkCore.Generator.csproj --no-restore -c Release
 
+    - name: Build library projects to emit generator output for DocFX
+      # docfx 2.x's bundled Roslyn cannot load our newer-compiler source generators
+      # (FailedToLoadAnalyzer / ReferencesNewerCompiler), so any src project that derives a
+      # type from `RequiredXxx<T>` (e.g. Trellis.Authorization's ActorId) would fail docfx's
+      # source-parse with CS0311 because the generator-emitted partial is missing the
+      # IScalarValue<TSelf,T> interface declaration. Those projects opt into
+      # <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles> +
+      # <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath> so the
+      # generator's partial lands on disk during a real build, and docfx's metadata pass
+      # opts back in to those on-disk files via the TrellisDocfxMetadataBuild property set in
+      # docfx.json. This step does the "real build" so the on-disk files exist before docfx
+      # runs in the next step.
+      run: dotnet build --no-restore -c Release
+
     - name: Update doc tools
       run: dotnet tool update -g docfx
 
