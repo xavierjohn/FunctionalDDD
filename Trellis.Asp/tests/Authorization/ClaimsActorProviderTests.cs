@@ -526,6 +526,21 @@ public class ClaimsActorProviderTests
         result.HasNoValue.Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetCurrentActorAsync_EmptyOrWhitespaceActorIdClaim_ReturnsNone(string claimValue)
+    {
+        // The configured ActorIdClaim is present but carries an empty / whitespace-only value
+        // (malformed token). The provider must return Maybe.None rather than letting the empty
+        // string flow into Actor.Create, which would otherwise throw ArgumentException.
+        var user = AuthenticatedUser(new Claim("sub", claimValue));
+
+        var result = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        result.HasNoValue.Should().BeTrue();
+    }
+
     #endregion
 
     #region Nested-claim mapping (ga-15)

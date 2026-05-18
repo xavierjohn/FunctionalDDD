@@ -346,7 +346,7 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
         // robustness measure for ASP.NET Core's JwtBearerOptions.MapInboundClaims = true
         // default, which silently remaps RFC 7519 short names onto WS-* long-form URNs.
         var actorId = ResolveClaimWithFallback(identity, Options.ActorIdClaim);
-        if (actorId is null)
+        if (string.IsNullOrWhiteSpace(actorId))
             return Task.FromResult(Maybe<Actor>.None);
 
         var permissions = ResolveAllClaimsWithFallback(identity, Options.PermissionsClaim)

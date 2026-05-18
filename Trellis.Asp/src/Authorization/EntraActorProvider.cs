@@ -75,7 +75,7 @@ public sealed class EntraActorProvider : ClaimsActorProvider
         // can't be identified, treat as unauthenticated for the response. (Token-shape vs
         // server-side misconfig is indistinguishable here; same 401 outcome serves both.)
         var id = ResolveActorId(identity, _entraOptions);
-        if (id is null)
+        if (string.IsNullOrWhiteSpace(id))
             return Task.FromResult(Maybe<Actor>.None);
 
         var permissions = InvokeMapping(

@@ -310,6 +310,23 @@ public class EntraActorProviderTests
         result.HasNoValue.Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetCurrentActorAsync_EmptyOrWhitespaceOidClaim_ReturnsNone(string claimValue)
+    {
+        // The configured OID claim is present but carries an empty / whitespace-only value
+        // (malformed token). The provider must return Maybe.None rather than letting the empty
+        // string flow into Actor.Create, which would otherwise throw ArgumentException.
+        var user = AuthenticatedUser(new Claim("oid", claimValue));
+
+        var provider = CreateProvider(user);
+
+        var result = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        result.HasNoValue.Should().BeTrue();
+    }
+
     #endregion
 
     #region Custom options
