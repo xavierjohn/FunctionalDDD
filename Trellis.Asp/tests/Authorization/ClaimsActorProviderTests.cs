@@ -52,7 +52,7 @@ public class ClaimsActorProviderTests
 
         var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-sub-123");
+        actor.Id.Value.Should().Be("user-sub-123");
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class ClaimsActorProviderTests
 
         maybeActor.HasValue.Should().BeTrue(
             "ClaimsActorProvider should resolve actor id via the WS-* long-form URN fallback when JwtBearerHandler's default MapInboundClaims has remapped the 'sub' claim");
-        maybeActor.Unwrap().Id.Should().Be("user-sub-123");
+        maybeActor.Unwrap().Id.Value.Should().Be("user-sub-123");
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class ClaimsActorProviderTests
 
         maybeActor.HasValue.Should().BeTrue(
             "fallback is bidirectional — configured long-form should also try the short-form counterpart");
-        maybeActor.Unwrap().Id.Should().Be("user-sub-456");
+        maybeActor.Unwrap().Id.Value.Should().Be("user-sub-456");
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class ClaimsActorProviderTests
 
         var maybeActor = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
 
-        maybeActor.Unwrap().Id.Should().Be("literal-match",
+        maybeActor.Unwrap().Id.Value.Should().Be("literal-match",
             "the literal match on the configured claim name takes precedence over the fallback");
     }
 
@@ -171,7 +171,7 @@ public class ClaimsActorProviderTests
 
         maybeActor.HasValue.Should().BeTrue(
             $"reverse fallback for ClaimTypes.NameIdentifier must accept any of its mapped short forms — including '{shortForm}'");
-        maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+        maybeActor.Unwrap().Id.Value.Should().Be($"value-{shortForm}");
     }
 
     [Theory]
@@ -187,7 +187,7 @@ public class ClaimsActorProviderTests
 
         maybeActor.HasValue.Should().BeTrue(
             $"reverse fallback for ClaimTypes.Name must accept any of its mapped short forms — including '{shortForm}'");
-        maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+        maybeActor.Unwrap().Id.Value.Should().Be($"value-{shortForm}");
     }
 
     [Theory]
@@ -205,7 +205,7 @@ public class ClaimsActorProviderTests
 
         maybeActor.HasValue.Should().BeTrue(
             $"reverse fallback for ClaimTypes.Role must accept any of its mapped short forms — including '{shortForm}'");
-        maybeActor.Unwrap().Id.Should().Be($"value-{shortForm}");
+        maybeActor.Unwrap().Id.Value.Should().Be($"value-{shortForm}");
     }
 
     #endregion
@@ -418,7 +418,7 @@ public class ClaimsActorProviderTests
 
         var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be($"value-{shortForm}",
+        actor.Id.Value.Should().Be($"value-{shortForm}",
             $"configured '{shortForm}' must fall back to long-form '{longForm}' when MapInboundClaims = true remaps it");
     }
 
@@ -433,7 +433,7 @@ public class ClaimsActorProviderTests
 
         var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be($"value-{shortForm}",
+        actor.Id.Value.Should().Be($"value-{shortForm}",
             $"configured '{longForm}' must fall back to short form '{shortForm}'");
     }
 
@@ -467,7 +467,7 @@ public class ClaimsActorProviderTests
 
         var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-oid-456");
+        actor.Id.Value.Should().Be("user-oid-456");
     }
 
     [Fact]
@@ -526,6 +526,21 @@ public class ClaimsActorProviderTests
         result.HasNoValue.Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetCurrentActorAsync_EmptyOrWhitespaceActorIdClaim_ReturnsNone(string claimValue)
+    {
+        // The configured ActorIdClaim is present but carries an empty / whitespace-only value
+        // (malformed token). The provider must return Maybe.None rather than letting the empty
+        // string flow into Actor.Create, which would otherwise throw ArgumentException.
+        var user = AuthenticatedUser(new Claim("sub", claimValue));
+
+        var result = await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        result.HasNoValue.Should().BeTrue();
+    }
+
     #endregion
 
     #region Nested-claim mapping (ga-15)
@@ -562,7 +577,7 @@ public class ClaimsActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().BeEquivalentTo(["orders:read", "orders:write"]);
     }
 
@@ -619,7 +634,7 @@ public class ClaimsActorProviderTests
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         // Assert — actor should ONLY have claims from the authenticated identity
-        actor.Id.Should().Be("real-user-123", "should read from authenticated identity, not spoofed");
+        actor.Id.Value.Should().Be("real-user-123", "should read from authenticated identity, not spoofed");
         actor.HasPermission("orders:read").Should().BeTrue();
         actor.HasPermission("admin").Should().BeFalse("should NOT have permissions from unauthenticated identity");
         actor.HasPermission("orders:delete").Should().BeFalse("should NOT have permissions from unauthenticated identity");
@@ -650,7 +665,7 @@ public class ClaimsActorProviderTests
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         // Assert
-        actor.Id.Should().Be("real-user-123", "should ignore unauthenticated identity even when listed first");
+        actor.Id.Value.Should().Be("real-user-123", "should ignore unauthenticated identity even when listed first");
         actor.HasPermission("orders:read").Should().BeTrue();
         actor.HasPermission("admin").Should().BeFalse("should NOT have permissions from unauthenticated identity");
         actor.HasPermission("orders:delete").Should().BeFalse("should NOT have permissions from unauthenticated identity");

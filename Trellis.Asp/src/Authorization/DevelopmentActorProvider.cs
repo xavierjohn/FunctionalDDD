@@ -84,7 +84,7 @@ public sealed partial class DevelopmentActorProvider(
                 return HandleMalformedHeader(headerValue, "JSON parsed to null or is not an object");
 
             var id = GetPropertyCaseInsensitive(obj, "Id")?.GetValue<string>();
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrWhiteSpace(id))
                 return HandleMalformedHeader(headerValue, "Missing or empty 'Id' property");
 
             var permissions = ParseStringArray(GetPropertyCaseInsensitive(obj, "Permissions"));

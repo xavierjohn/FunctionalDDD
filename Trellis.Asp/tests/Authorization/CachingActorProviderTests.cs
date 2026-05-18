@@ -37,7 +37,7 @@ public class CachingActorProviderTests
 
         var result = (await caching.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        result.Id.Should().Be("user-1");
+        result.Id.Value.Should().Be("user-1");
         result.HasPermission("Write").Should().BeTrue();
     }
 

@@ -124,7 +124,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read"]);
     }
 
@@ -164,7 +164,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().BeEmpty();
     }
 
@@ -177,7 +177,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("minimal-user");
+        actor.Id.Value.Should().Be("minimal-user");
         actor.Permissions.Should().BeEmpty();
         actor.ForbiddenPermissions.Should().BeEmpty();
         actor.Attributes.Should().BeEmpty();
@@ -195,7 +195,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
         actor.Permissions.Should().BeEmpty();
     }
 
@@ -212,7 +212,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("admin");
+        actor.Id.Value.Should().Be("admin");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read"]);
     }
 
@@ -223,7 +223,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     #endregion
@@ -250,7 +250,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -261,7 +261,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -272,7 +272,21 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
+    }
+
+    [Fact]
+    public async Task GetCurrentActor_Development_WhitespaceOnlyId_FallsBackToDefault()
+    {
+        // Whitespace-only Id is treated as a malformed header (same as missing/empty Id).
+        // Without this guard, ActorId.TryCreate would reject the value and Actor.Create
+        // would throw ArgumentException instead of producing the configured default actor.
+        var context = CreateHttpContextWithHeader("""{"Id":"   ","Permissions":["orders:read"]}""");
+        var provider = CreateProvider(context);
+
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -301,6 +315,24 @@ public class DevelopmentActorProviderTests
             .WithMessage("*Malformed*Id*");
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetCurrentActor_Development_EmptyOrWhitespaceId_ThrowOnMalformedEnabled_Throws(string idValue)
+    {
+        // Parallel to MissingId: when ThrowOnMalformedHeader=true, an empty or whitespace-only
+        // Id is malformed-header input and must throw rather than silently fall back to the
+        // default actor.
+        var context = CreateHttpContextWithHeader($$"""{"Id":"{{idValue}}","Permissions":["orders:read"]}""");
+        var options = new DevelopmentActorOptions { ThrowOnMalformedHeader = true };
+        var provider = CreateProvider(context, options: options);
+
+        Func<Task> act = async () => await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Malformed*Id*");
+    }
+
     [Fact]
     public async Task GetCurrentActor_Development_NonStringPermissionValues_FallsBackToDefault()
     {
@@ -309,7 +341,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     #endregion
@@ -333,7 +365,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("round-trip-user");
+        actor.Id.Value.Should().Be("round-trip-user");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read", "products:manage-stock"]);
         actor.ForbiddenPermissions.Should().Contain("admin:delete");
         actor.GetAttribute("tid").Should().Be("tenant-abc");
@@ -350,7 +382,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("case-user");
+        actor.Id.Value.Should().Be("case-user");
         actor.Permissions.Should().Contain("orders:read");
     }
 

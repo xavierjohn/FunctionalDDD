@@ -1,9 +1,9 @@
 ﻿---
 package: Trellis.Authorization
 namespaces: [Trellis.Authorization]
-types: [IActorProvider, ActorContext, Actor, Permission, AuthorizeAttribute, IAuthorizationRequirement, IResourceAuthorizationHandler]
+types: [IActorProvider, ActorContext, Actor, ActorId, Permission, AuthorizeAttribute, IAuthorizationRequirement, IResourceAuthorizationHandler]
 version: v3
-last_verified: 2026-05-14
+last_verified: 2026-05-17
 audience: [llm]
 ---
 # Trellis.Authorization — API Reference
@@ -61,7 +61,8 @@ public sealed class Actor : IEquatable<Actor>
 
 | Signature | Description |
 | --- | --- |
-| `public Actor(string id, IReadOnlySet<string> permissions, IReadOnlySet<string> forbiddenPermissions, IReadOnlyDictionary<string, string> attributes)` | Snapshots the supplied state into frozen collections (ordinal comparison). Throws `ArgumentException` when `id` is null/whitespace; throws `ArgumentNullException` when `permissions`, `forbiddenPermissions`, or `attributes` is null. |
+| `public Actor(ActorId id, IReadOnlySet<string> permissions, IReadOnlySet<string> forbiddenPermissions, IReadOnlyDictionary<string, string> attributes)` | Typed constructor. Snapshots the supplied state into frozen collections (ordinal comparison). Throws `ArgumentNullException` when any argument is null. |
+| `public Actor(string id, IReadOnlySet<string> permissions, IReadOnlySet<string> forbiddenPermissions, IReadOnlyDictionary<string, string> attributes)` | Convenience overload that wraps the raw claim string in `ActorId` (via `ActorId.Create`) and delegates to the typed constructor. Throws `ArgumentException` when `id` is null / empty / whitespace. |
 
 **Fields**
 
@@ -73,7 +74,7 @@ public sealed class Actor : IEquatable<Actor>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Id` | `string` | Unique actor identifier (e.g. JWT `sub`). |
+| `Id` | `ActorId` | Strongly-typed principal identifier (e.g. JWT `sub`). Wraps the raw claim string in a [`RequiredString<ActorId>`](trellis-api-core.md) so the identity flows through authorization-layer APIs and consumer aggregate fields as a domain type rather than an untyped `string`. |
 | `Permissions` | `IReadOnlySet<string>` | Granted permissions. Ordinal comparison; setter snapshots into a `FrozenSet<string>`. |
 | `ForbiddenPermissions` | `IReadOnlySet<string>` | Explicit deny-list. Deny always overrides allow. Snapshotted into a `FrozenSet<string>`. |
 | `Attributes` | `IReadOnlyDictionary<string, string>` | ABAC attributes. Snapshotted into a `FrozenDictionary<string, string>` with ordinal comparer. |
@@ -82,14 +83,29 @@ public sealed class Actor : IEquatable<Actor>
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static Actor Create(string id, IReadOnlySet<string> permissions)` | `Actor` | Creates an actor with empty `ForbiddenPermissions` and empty `Attributes`. |
+| `public static Actor Create(ActorId id, IReadOnlySet<string> permissions)` | `Actor` | Typed factory. Creates an actor with empty `ForbiddenPermissions` and empty `Attributes`. Throws `ArgumentNullException` for null arguments. |
+| `public static Actor Create(string id, IReadOnlySet<string> permissions)` | `Actor` | Convenience factory that wraps the raw claim string in `ActorId`. |
 | `public bool HasPermission(string permission)` | `bool` | Returns `true` only when `permission` is in `Permissions` and not in `ForbiddenPermissions`. |
 | `public bool HasPermission(string permission, string scope)` | `bool` | Checks the scoped permission composed as `permission` + `':'` + `scope` (deny-aware). Throws `ArgumentNullException` when either argument is null. |
 | `public bool HasAllPermissions(IEnumerable<string> permissions)` | `bool` | `true` when every entry passes `HasPermission`. |
 | `public bool HasAnyPermission(IEnumerable<string> permissions)` | `bool` | `true` when at least one entry passes `HasPermission`. |
-| `public bool IsOwner(string resourceOwnerId)` | `bool` | Compares `Id` and `resourceOwnerId` with `StringComparison.Ordinal`. |
+| `public bool IsOwner(ActorId resourceOwnerId)` | `bool` | Typed equality check between `Id` and `resourceOwnerId` using `ActorId`'s value-equality semantics. Prefer this overload when the owner id is itself a typed `ActorId` so the comparison is type-checked at the call site. |
+| `public bool IsOwner(string resourceOwnerId)` | `bool` | Convenience overload that compares `Id.Value` and `resourceOwnerId` with `StringComparison.Ordinal`. |
 | `public bool HasAttribute(string key)` | `bool` | `true` when `Attributes` contains `key`. |
 | `public string? GetAttribute(string key)` | `string?` | Returns the attribute value or `null` when absent. |
+
+### `ActorId`
+
+**Declaration**
+
+```csharp
+[Trim, NotDefault]
+public sealed partial class ActorId : RequiredString<ActorId>;
+```
+
+Strongly-typed wrapper around the raw principal id (typically the JWT `sub` or AAD `oid` claim) so the authorization layer exposes a domain type instead of an untyped `string`. Decorated with `[Trim, NotDefault]`: the value is trimmed on construction and an empty / whitespace-only id is rejected. Generated factories `ActorId.Create(string)` / `ActorId.TryCreate(string?)` come from the bundled source generator (see [`trellis-api-core.md`](trellis-api-core.md)).
+
+Consumers that store the principal id at aggregate boundaries — audit-style fields like `Order.CreatedByActorId` or `Document.LastModifiedByActorId` — should reuse `ActorId` for those fields so cross-aggregate comparisons (`actor.IsOwner(order.CreatedByActorId)`) are type-checked end-to-end. Domain identifiers that are conceptually different from the principal id (a customer aggregate id, a tenant member id, a domain user aggregate's primary key) remain whatever VO the domain models and are resolved to / from the principal at the application service boundary.
 
 ### `ActorAttributes`
 

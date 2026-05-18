@@ -43,7 +43,7 @@ public class EntraActorProviderTests
 
         var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-oid-123");
+        actor.Id.Value.Should().Be("user-oid-123");
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class EntraActorProviderTests
 
         var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-oid-short-123");
+        actor.Id.Value.Should().Be("user-oid-short-123");
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class EntraActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("real-user-oid", "should read from authenticated identity, not spoofed");
+        actor.Id.Value.Should().Be("real-user-oid", "should read from authenticated identity, not spoofed");
         actor.HasPermission("Documents.Read").Should().BeTrue();
         actor.HasPermission("GlobalAdmin").Should().BeFalse("should NOT have permissions from unauthenticated identity");
         actor.HasPermission("Documents.Delete").Should().BeFalse("should NOT have permissions from unauthenticated identity");
@@ -260,7 +260,7 @@ public class EntraActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("real-user-oid", "should ignore unauthenticated identity even when listed first");
+        actor.Id.Value.Should().Be("real-user-oid", "should ignore unauthenticated identity even when listed first");
         actor.HasPermission("Documents.Read").Should().BeTrue();
         actor.HasPermission("GlobalAdmin").Should().BeFalse("should NOT have permissions from unauthenticated identity");
         actor.GetAttribute(ActorAttributes.TenantId).Should().Be("real-tenant");
@@ -310,6 +310,23 @@ public class EntraActorProviderTests
         result.HasNoValue.Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetCurrentActorAsync_EmptyOrWhitespaceOidClaim_ReturnsNone(string claimValue)
+    {
+        // The configured OID claim is present but carries an empty / whitespace-only value
+        // (malformed token). The provider must return Maybe.None rather than letting the empty
+        // string flow into Actor.Create, which would otherwise throw ArgumentException.
+        var user = AuthenticatedUser(new Claim("oid", claimValue));
+
+        var provider = CreateProvider(user);
+
+        var result = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        result.HasNoValue.Should().BeTrue();
+    }
+
     #endregion
 
     #region Custom options
@@ -323,7 +340,7 @@ public class EntraActorProviderTests
         var options = new EntraActorOptions { IdClaimType = "sub" };
         var actor = (await CreateProvider(user, options).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-sub-456");
+        actor.Id.Value.Should().Be("user-sub-456");
     }
 
     [Fact]

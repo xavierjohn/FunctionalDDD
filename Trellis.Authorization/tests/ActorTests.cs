@@ -1,5 +1,7 @@
 ﻿namespace Trellis.Authorization.Tests;
 
+using Trellis.Testing;
+
 /// <summary>
 /// Tests for the <see cref="Actor"/> record.
 /// </summary>
@@ -23,7 +25,7 @@ public class ActorTests
     {
         var actor = Actor.Create("user-1", new HashSet<string> { "Orders.Read" });
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().Contain("Orders.Read");
         actor.ForbiddenPermissions.Should().BeEmpty();
         actor.Attributes.Should().BeEmpty();
@@ -35,7 +37,7 @@ public class ActorTests
         var permissions = new HashSet<string> { "A", "B" };
         var fromFactory = Actor.Create("user-1", permissions);
 
-        fromFactory.Id.Should().Be("user-1");
+        fromFactory.Id.Value.Should().Be("user-1");
         fromFactory.Permissions.Should().BeEquivalentTo(permissions);
         fromFactory.ForbiddenPermissions.Should().BeEmpty();
         fromFactory.Attributes.Should().BeEmpty();
@@ -302,7 +304,7 @@ public class ActorTests
     {
         var actor = CreateActor(id: "user-1", permissions: ["A"]);
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().Contain("A");
         actor.ForbiddenPermissions.Should().BeEmpty();
         actor.Attributes.Should().BeEmpty();
@@ -465,6 +467,46 @@ public class ActorTests
 
         act.Should().Throw<ArgumentNullException>()
             .Where(exception => exception.ParamName == "resourceOwnerId");
+    }
+
+    [Fact]
+    public void IsOwner_TypedActorId_MatchingValue_ReturnsTrue()
+    {
+        var actor = CreateActor(id: "user-42");
+        var ownerId = ActorId.TryCreate("user-42").Unwrap();
+
+        actor.IsOwner(ownerId).Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsOwner_TypedActorId_DifferentValue_ReturnsFalse()
+    {
+        var actor = CreateActor(id: "user-42");
+        var ownerId = ActorId.TryCreate("user-99").Unwrap();
+
+        actor.IsOwner(ownerId).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Constructor_NullActorId_ThrowsArgumentNullException()
+    {
+        var act = () => new Actor(
+            id: (ActorId)null!,
+            permissions: new HashSet<string>(),
+            forbiddenPermissions: new HashSet<string>(),
+            attributes: new Dictionary<string, string>());
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "id");
+    }
+
+    [Fact]
+    public void Create_NullActorId_ThrowsArgumentNullException()
+    {
+        var act = () => Actor.Create(id: (ActorId)null!, new HashSet<string>());
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(exception => exception.ParamName == "id");
     }
 
     [Fact]
