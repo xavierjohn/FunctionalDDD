@@ -285,8 +285,18 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         {{
         }}
 
+        /// <summary>
+        /// Explicitly wraps a raw <paramref name=""{camelArg}""/> value into a
+        /// validated <see cref=""{g.ClassName}""/>. Equivalent to calling <c>Create</c>.
+        /// </summary>
         public static explicit operator {g.ClassName}({classType} {camelArg}) => Create({camelArg});
 
+        /// <summary>
+        /// Parses the input into a <see cref=""{g.ClassName}""/> or throws
+        /// <see cref=""FormatException""/> when the input fails validation.
+        /// </summary>
+        /// <param name=""s"">The value to parse.</param>
+        /// <param name=""provider"">Format provider (currently unused for non-IFormattable bases).</param>
         public static {g.ClassName} Parse(string s, IFormatProvider? provider)
         {{
             var r = TryCreate(s, {(isFormattable ? "provider" : "null")});
@@ -299,6 +309,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 }});
         }}
 
+        /// <summary>
+        /// Attempts to parse the input into a <see cref=""{g.ClassName}""/>.
+        /// Returns <see langword=""false""/> when the input fails validation.
+        /// </summary>
+        /// <param name=""s"">The value to parse.</param>
+        /// <param name=""provider"">Format provider (currently unused for non-IFormattable bases).</param>
+        /// <param name=""result"">The parsed value on success; otherwise <see langword=""default""/>.</param>
         public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out {g.ClassName} result)
         {{
             var r = TryCreate(s, {(isFormattable ? "provider" : "null")});
@@ -373,6 +390,12 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             return TryFromName(value, fieldName);
         }}
 
+        /// <summary>
+        /// Parses the input into a <see cref=""{g.ClassName}""/> by symbolic name lookup,
+        /// or throws <see cref=""FormatException""/> when no member matches.
+        /// </summary>
+        /// <param name=""s"">The symbolic name to look up.</param>
+        /// <param name=""provider"">Format provider (unused for enum derivations).</param>
         public static {g.ClassName} Parse(string s, IFormatProvider? provider)
         {{
             var r = TryCreate(s, null);
@@ -385,6 +408,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 }});
         }}
 
+        /// <summary>
+        /// Attempts to parse the input into a <see cref=""{g.ClassName}""/> by symbolic name lookup.
+        /// Returns <see langword=""false""/> when no member matches.
+        /// </summary>
+        /// <param name=""s"">The symbolic name to look up.</param>
+        /// <param name=""provider"">Format provider (unused for enum derivations).</param>
+        /// <param name=""result"">The matching member on success; otherwise <see langword=""default""/>.</param>
         public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out {g.ClassName} result)
         {{
             var r = TryCreate(s, null);

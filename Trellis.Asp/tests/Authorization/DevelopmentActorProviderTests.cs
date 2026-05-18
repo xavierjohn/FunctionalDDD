@@ -124,7 +124,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read"]);
     }
 
@@ -164,7 +164,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("user-1");
+        actor.Id.Value.Should().Be("user-1");
         actor.Permissions.Should().BeEmpty();
     }
 
@@ -177,7 +177,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("minimal-user");
+        actor.Id.Value.Should().Be("minimal-user");
         actor.Permissions.Should().BeEmpty();
         actor.ForbiddenPermissions.Should().BeEmpty();
         actor.Attributes.Should().BeEmpty();
@@ -195,7 +195,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
         actor.Permissions.Should().BeEmpty();
     }
 
@@ -212,7 +212,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("admin");
+        actor.Id.Value.Should().Be("admin");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read"]);
     }
 
@@ -223,7 +223,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     #endregion
@@ -250,7 +250,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -261,7 +261,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -272,7 +272,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     [Fact]
@@ -309,7 +309,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("development");
+        actor.Id.Value.Should().Be("development");
     }
 
     #endregion
@@ -333,7 +333,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("round-trip-user");
+        actor.Id.Value.Should().Be("round-trip-user");
         actor.Permissions.Should().BeEquivalentTo(["orders:create", "orders:read", "products:manage-stock"]);
         actor.ForbiddenPermissions.Should().Contain("admin:delete");
         actor.GetAttribute("tid").Should().Be("tenant-abc");
@@ -350,7 +350,7 @@ public class DevelopmentActorProviderTests
 
         var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
-        actor.Id.Should().Be("case-user");
+        actor.Id.Value.Should().Be("case-user");
         actor.Permissions.Should().Contain("orders:read");
     }
 

@@ -69,7 +69,7 @@ public static class WebApplicationFactoryExtensions
         var client = factory.CreateClient();
         var json = new JsonObject
         {
-            ["Id"] = actor.Id,
+            ["Id"] = actor.Id.Value,
             ["Permissions"] = new JsonArray(actor.Permissions.Select(p => (JsonNode)JsonValue.Create(p)!).ToArray()),
             ["ForbiddenPermissions"] = new JsonArray(actor.ForbiddenPermissions.Select(p => (JsonNode)JsonValue.Create(p)!).ToArray()),
             ["Attributes"] = new JsonObject(actor.Attributes.Select(kvp => new KeyValuePair<string, JsonNode?>(kvp.Key, JsonValue.Create(kvp.Value))).ToList())

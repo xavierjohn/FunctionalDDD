@@ -62,18 +62,17 @@ public sealed class Actor : IEquatable<Actor>
     /// Stores environmental metadata such as IP address, MFA status, risk score, or VPN status.
     /// Use <see cref="ActorAttributes"/> constants for well-known keys.
     /// </param>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is null, empty, or whitespace.</exception>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="permissions"/>, <paramref name="forbiddenPermissions"/>, or
-    /// <paramref name="attributes"/> is null.
+    /// Thrown when <paramref name="id"/>, <paramref name="permissions"/>,
+    /// <paramref name="forbiddenPermissions"/>, or <paramref name="attributes"/> is null.
     /// </exception>
     public Actor(
-        string id,
+        ActorId id,
         IReadOnlySet<string> permissions,
         IReadOnlySet<string> forbiddenPermissions,
         IReadOnlyDictionary<string, string> attributes)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(permissions);
         ArgumentNullException.ThrowIfNull(forbiddenPermissions);
         ArgumentNullException.ThrowIfNull(attributes);
@@ -84,14 +83,48 @@ public sealed class Actor : IEquatable<Actor>
     }
 
     /// <summary>
+    /// Convenience constructor that accepts the actor id as a raw <see cref="string"/>
+    /// (typically a claim value at the authentication boundary) and wraps it in
+    /// <see cref="ActorId"/>. Authors writing typed application code should prefer the
+    /// <see cref="Actor(ActorId, IReadOnlySet{string}, IReadOnlySet{string}, IReadOnlyDictionary{string, string})"/>
+    /// overload.
+    /// </summary>
+    /// <param name="id">The raw principal id (e.g., a JWT <c>sub</c> claim value).</param>
+    /// <param name="permissions">The set of permissions granted to the actor.</param>
+    /// <param name="forbiddenPermissions">Permissions explicitly denied for this actor.</param>
+    /// <param name="attributes">Contextual ABAC attributes.</param>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is null, empty, or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="permissions"/>, <paramref name="forbiddenPermissions"/>, or
+    /// <paramref name="attributes"/> is null.
+    /// </exception>
+    public Actor(
+        string id,
+        IReadOnlySet<string> permissions,
+        IReadOnlySet<string> forbiddenPermissions,
+        IReadOnlyDictionary<string, string> attributes)
+        : this(CoerceActorId(id), permissions, forbiddenPermissions, attributes)
+    {
+    }
+
+    private static ActorId CoerceActorId(string id)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        return (ActorId)id;
+    }
+
+    /// <summary>
     /// The separator used between permission name and scope in scoped permission strings.
     /// </summary>
     public const char PermissionScopeSeparator = ':';
 
     /// <summary>
     /// The unique identifier of the actor (e.g., user ID from JWT sub claim).
+    /// Strongly typed via <see cref="ActorId"/> so the principal identity flows through
+    /// authorization-layer APIs and consumer aggregate fields as a domain type rather
+    /// than an untyped <see cref="string"/>.
     /// </summary>
-    public string Id { get; init; }
+    public ActorId Id { get; init; }
 
     /// <summary>
     /// The set of permissions granted to the actor. Scoped permissions use the
@@ -127,6 +160,23 @@ public sealed class Actor : IEquatable<Actor>
     /// Convenience factory for the common case where only identity and permissions are needed.
     /// </summary>
     /// <param name="id">The unique identifier of the actor.</param>
+    /// <param name="permissions">The set of permissions granted to the actor.</param>
+    /// <returns>A new <see cref="Actor"/> instance.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="id"/> or <paramref name="permissions"/> is null.</exception>
+    public static Actor Create(ActorId id, IReadOnlySet<string> permissions)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(permissions);
+        return new(id, permissions, FrozenSet<string>.Empty, FrozenDictionary<string, string>.Empty);
+    }
+
+    /// <summary>
+    /// Convenience factory that accepts the actor id as a raw <see cref="string"/>
+    /// (typically a claim value at the authentication boundary) and wraps it in
+    /// <see cref="ActorId"/>. Authors writing typed application code should prefer
+    /// the <see cref="Create(ActorId, IReadOnlySet{string})"/> overload.
+    /// </summary>
+    /// <param name="id">The raw principal id (e.g., a JWT <c>sub</c> claim value).</param>
     /// <param name="permissions">The set of permissions granted to the actor.</param>
     /// <returns>A new <see cref="Actor"/> instance.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is null, empty, or whitespace.</exception>
@@ -195,15 +245,30 @@ public sealed class Actor : IEquatable<Actor>
 
     /// <summary>
     /// Returns true if this actor is the owner of the specified resource.
-    /// Compares the actor's <see cref="Id"/> against the resource owner ID using ordinal comparison.
+    /// Compares the actor's <see cref="Id"/> against the resource owner id using
+    /// <see cref="ActorId"/>'s value-equality semantics (ordinal string comparison).
     /// </summary>
-    /// <param name="resourceOwnerId">The identifier of the resource owner (e.g., creator ID).</param>
+    /// <param name="resourceOwnerId">The identifier of the resource owner (e.g., creator's actor id).</param>
+    /// <returns>True if the actor's ID matches the resource owner ID; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="resourceOwnerId"/> is null.</exception>
+    public bool IsOwner(ActorId resourceOwnerId)
+    {
+        ArgumentNullException.ThrowIfNull(resourceOwnerId);
+        return Id.Equals(resourceOwnerId);
+    }
+
+    /// <summary>
+    /// Convenience overload that accepts the resource owner id as a raw <see cref="string"/>.
+    /// Authors writing typed application code should prefer
+    /// <see cref="IsOwner(ActorId)"/> so the comparison is type-checked at the call site.
+    /// </summary>
+    /// <param name="resourceOwnerId">The identifier of the resource owner.</param>
     /// <returns>True if the actor's ID matches the resource owner ID; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="resourceOwnerId"/> is null.</exception>
     public bool IsOwner(string resourceOwnerId)
     {
         ArgumentNullException.ThrowIfNull(resourceOwnerId);
-        return string.Equals(Id, resourceOwnerId, StringComparison.Ordinal);
+        return string.Equals(Id.Value, resourceOwnerId, StringComparison.Ordinal);
     }
 
     /// <summary>Returns true if this actor has the specified attribute.</summary>
@@ -252,7 +317,7 @@ public sealed class Actor : IEquatable<Actor>
             return false;
         if (ReferenceEquals(this, other))
             return true;
-        return string.Equals(Id, other.Id, StringComparison.Ordinal);
+        return Id.Equals(other.Id);
     }
 
     /// <inheritdoc />
@@ -263,7 +328,7 @@ public sealed class Actor : IEquatable<Actor>
     /// The hash is derived from <see cref="Id"/> only, matching the identity-based equality
     /// contract on <see cref="Equals(Actor)"/>.
     /// </remarks>
-    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Id);
+    public override int GetHashCode() => Id.GetHashCode();
 
     /// <summary>
     /// Determines whether two actors represent the same principal (identity-based comparison).
