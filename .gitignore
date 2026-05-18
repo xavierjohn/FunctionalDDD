@@ -38,6 +38,11 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
+# Trellis source generator output (EmitCompilerGeneratedFiles=true on Trellis.Authorization
+# so docfx can see the partials; the build itself runs the generator in-memory and the
+# on-disk copy is only consumed by docfx).
+**/Generated/
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
