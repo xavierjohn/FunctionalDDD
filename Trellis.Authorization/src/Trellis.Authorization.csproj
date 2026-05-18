@@ -17,18 +17,25 @@
     <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
   <!--
-    During a real compile (normal `dotnet build` and `dotnet test`), the Trellis.Core source
-    generator runs and feeds the partial class into Roslyn in-memory; we must exclude the
-    on-disk copy under Generated/ from <Compile> to avoid duplicate-definition errors.
+    During a real compile (normal `dotnet build`, IDE IntelliSense via design-time builds,
+    `dotnet test`, etc.), the Trellis.Core source generator runs and feeds the partial
+    class into Roslyn in-memory; we must exclude the on-disk copy under Generated/ from
+    <Compile> to avoid duplicate-definition errors.
 
-    docfx loads the project as a design-time build (DesignTimeBuild=true) and does not run
-    our newer-compiler source generators — its bundled Roslyn rejects them with
-    FailedToLoadAnalyzer. To give docfx the missing partial, we keep the on-disk copy in
-    <Compile> only during a design-time build. The build itself emits these files (see
-    EmitCompilerGeneratedFiles above) so by the time docfx runs in CI (after `dotnet build`)
-    the files exist on disk for docfx to consume.
+    docfx's metadata step loads the project through its bundled (older) Roslyn, which
+    cannot load our newer-compiler source generators (FailedToLoadAnalyzer). When invoked
+    by docfx we set TrellisDocfxMetadataBuild=true (see docs/docfx_project/docfx.json
+    metadata.properties); under that flag we keep the on-disk Generated/*.g.cs in
+    <Compile> so docfx can see the generator-emitted partial. The build itself emits these
+    files (see EmitCompilerGeneratedFiles above) so by the time docfx runs in CI (after
+    `dotnet build`) the files exist on disk for docfx to consume.
+
+    Important: do NOT key this off `$(DesignTimeBuild)` — IDEs (Visual Studio, Rider, VS
+    Code with C# DevKit) set DesignTimeBuild=true for IntelliSense and DO run source
+    generators in that mode, which would produce both an in-memory copy and an on-disk
+    copy → CS0101.
   -->
-  <ItemGroup Condition="'$(DesignTimeBuild)' != 'true'">
+  <ItemGroup Condition="'$(TrellisDocfxMetadataBuild)' != 'true'">
     <Compile Remove="Generated/**/*.cs" />
   </ItemGroup>
   <ItemGroup>

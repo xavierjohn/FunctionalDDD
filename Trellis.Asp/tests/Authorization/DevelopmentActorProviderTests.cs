@@ -276,6 +276,20 @@ public class DevelopmentActorProviderTests
     }
 
     [Fact]
+    public async Task GetCurrentActor_Development_WhitespaceOnlyId_FallsBackToDefault()
+    {
+        // Whitespace-only Id is treated as a malformed header (same as missing/empty Id).
+        // Without this guard, ActorId.TryCreate would reject the value and Actor.Create
+        // would throw ArgumentException instead of producing the configured default actor.
+        var context = CreateHttpContextWithHeader("""{"Id":"   ","Permissions":["orders:read"]}""");
+        var provider = CreateProvider(context);
+
+        var actor = (await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
+
+        actor.Id.Value.Should().Be("development");
+    }
+
+    [Fact]
     public async Task GetCurrentActor_Development_MalformedJson_ThrowOnMalformedEnabled_Throws()
     {
         var context = CreateHttpContextWithHeader("not valid json");
