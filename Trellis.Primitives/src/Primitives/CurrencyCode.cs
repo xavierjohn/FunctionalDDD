@@ -14,6 +14,14 @@ using Trellis;
 /// German umlauts, Greek, or Cyrillic are rejected. The stored value is uppercase.
 /// </para>
 /// <para>
+/// <b>Scope of validation.</b> Only the ISO 4217 <i>format</i> (three uppercase ASCII letters)
+/// is enforced. The ISO 4217 <i>active-code list</i> is not consulted, so syntactically valid
+/// but reserved or unassigned codes such as <c>XXX</c>, <c>XTS</c>, and <c>ZZZ</c> are accepted.
+/// Applications that need to restrict to currencies actually supported by a payment processor,
+/// reject ISO reserved/test codes, or otherwise impose a narrower policy should layer an
+/// allow-list at the application boundary.
+/// </para>
+/// <para>
 /// <b>If these rules don't fit your domain</b> (e.g., cryptocurrency codes like BTC, ETH),
 /// create your own CurrencyCode value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
 /// </para>

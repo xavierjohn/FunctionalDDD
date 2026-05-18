@@ -40,6 +40,15 @@ public class Money : ValueObject
     /// <summary>
     /// Creates a Money instance with the specified amount and currency code.
     /// </summary>
+    /// <remarks>
+    /// Currency validation is delegated to <see cref="CurrencyCode.TryCreate"/> and is
+    /// syntactic only (three uppercase ASCII letters per ISO 4217 format). The ISO 4217
+    /// active-code list is not enforced — values like <c>XXX</c>, <c>XTS</c>, or <c>ZZZ</c>
+    /// satisfy the format and will be accepted. Applications that need to restrict to a
+    /// specific set of currencies (e.g., those a payment processor supports, or excluding
+    /// ISO reserved/test codes) should layer an allow-list at the application boundary
+    /// before calling <see cref="TryCreate"/>.
+    /// </remarks>
     /// <param name="amount">The monetary amount.</param>
     /// <param name="currencyCode">ISO 4217 currency code (e.g., "USD", "EUR").</param>
     /// <param name="fieldName">Optional field name for validation errors.</param>
