@@ -315,6 +315,24 @@ public class DevelopmentActorProviderTests
             .WithMessage("*Malformed*Id*");
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetCurrentActor_Development_EmptyOrWhitespaceId_ThrowOnMalformedEnabled_Throws(string idValue)
+    {
+        // Parallel to MissingId: when ThrowOnMalformedHeader=true, an empty or whitespace-only
+        // Id is malformed-header input and must throw rather than silently fall back to the
+        // default actor.
+        var context = CreateHttpContextWithHeader($$"""{"Id":"{{idValue}}","Permissions":["orders:read"]}""");
+        var options = new DevelopmentActorOptions { ThrowOnMalformedHeader = true };
+        var provider = CreateProvider(context, options: options);
+
+        Func<Task> act = async () => await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Malformed*Id*");
+    }
+
     [Fact]
     public async Task GetCurrentActor_Development_NonStringPermissionValues_FallsBackToDefault()
     {
