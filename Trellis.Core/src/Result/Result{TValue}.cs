@@ -45,6 +45,7 @@ using System.Diagnostics;
 /// </example>
 [DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure\"}, Value = {(_value is null ? \"<null>\" : _value)}, Error = {(IsSuccess ? \"<none>\" : EffectiveError().Code)}")]
 [DebuggerTypeProxy(typeof(ResultDebugView<>))]
+[System.Text.Json.Serialization.JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]
 public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>
 {
     /// <summary>

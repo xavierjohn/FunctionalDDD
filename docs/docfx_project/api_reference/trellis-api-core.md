@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, EntityTagValue, RetryAfterValue, PreconditionKind, InputPointer, FieldViolation, RuleViolation, AuthChallenge, RepresentationMetadata, "WriteOutcome<T>", IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, EntityTagValue, RetryAfterValue, PreconditionKind, InputPointer, FieldViolation, RuleViolation, AuthChallenge, RepresentationMetadata, "WriteOutcome<T>", IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -253,6 +253,8 @@ Represents either a successful `TValue` or a failure `Error`.
 > `AsUnit`) route through this sentinel so that `default(Result<T>)` is observationally equivalent to
 > `Result.Fail<T>(new Error.Unexpected("default_initialized"))`. Always construct via `Result.Ok(value)`
 > or `Result.Fail<T>(error)`. Analyzer **`TRLS019`** flags explicit `default(Result<T>)` at call sites.
+
+> **JSON serialization fails fast.** `Result<T>` (and the `IResult` / `IResult<T>` interfaces) carry a default `[JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]` that throws `NotSupportedException` on any direct `JsonSerializer.Serialize` / `Deserialize` call. The intended pattern is to call `.ToHttpResponse()` from `Trellis.Asp` on the result before it reaches STJ (the resulting `Microsoft.AspNetCore.Http.IResult` writes the body itself; the struct is never serialized), or to unwrap the value via `Match` / `TryGetValue` for non-HTTP contexts. Consumers who genuinely need a raw JSON dump (logging, IPC, storage) can register a converter (or a `JsonConverterFactory`) in `JsonSerializerOptions.Converters` — option-registered converters take precedence over the type-level `[JsonConverter]` attribute. **The override must match the declared static type:** a `JsonConverter<Result<T>>` covers only `Result<T>`-declared values; `IResult<T>`-declared values need `JsonConverter<IResult<T>>`; `IResult`-declared values need `JsonConverter<IResult>`. Use a `JsonConverterFactory` if you need to cover multiple result shapes at once.
 
 > **No `Value` property.** The throwing `public TValue Value` getter was removed. Use `TryGetValue`, `Match`, or `Deconstruct` to extract success values.
 
@@ -1697,6 +1699,25 @@ Every `Required*<TSelf>` base now follows the same rule: **the generated `TryCre
 Generated `TryCreate` validation order: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
 
 The `[NotDefault]` rule also drives the EF Core `TrellisScalarConverter` read path: rows containing the per-type sentinel value materialize successfully for lenient types and throw `TrellisPersistenceMappingException` for strict types. Add `[NotDefault]` to any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property to keep the strict-on-rehydration guarantee.
+
+### `ResultRequiresExplicitHttpMappingConverter`
+
+```csharp
+public sealed class ResultRequiresExplicitHttpMappingConverter : JsonConverterFactory
+```
+
+Default `[JsonConverter]` factory attached to `Result<T>`, `IResult`, and `IResult<T>`. Throws `NotSupportedException` on any direct `JsonSerializer.Serialize` / `Deserialize` call, with an actionable message that names the canonical fix:
+
+1. **HTTP path** — call `.ToHttpResponse()` (Trellis.Asp) on the result. The returned `Microsoft.AspNetCore.Http.IResult` writes the body itself; the struct never reaches STJ.
+2. **Non-HTTP path** — unwrap the value with `Match` / `TryGetValue` before serialization.
+3. **Explicit override** — register a converter (or a `JsonConverterFactory`) in `JsonSerializerOptions.Converters`. Option-registered converters take precedence over the type-level `[JsonConverter]` attribute. **The override must match the declared static type:** a `JsonConverter<Result<T>>` only covers `Result<T>`-declared values; `IResult<T>`-declared values need `JsonConverter<IResult<T>>`; `IResult`-declared values need `JsonConverter<IResult>`. Use a `JsonConverterFactory` whose `CanConvert` matches every shape to cover the mixed case in one registration.
+
+The attribute lives on both the struct AND the interfaces because STJ resolves `[JsonConverter]` against the static declared type: an endpoint declared as `Task<IResult<int>> GetAsync()` would otherwise bypass a converter attached only to the struct, silently producing the same struct-dump JSON shape (`{"IsSuccess": true, "Value": ..., "Error": null}`) the converter exists to prevent.
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public override bool CanConvert(Type typeToConvert)` | `bool` | `true` for `Result<T>`, `IResult<T>`, and the non-generic `IResult` interface. |
+| `public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)` | `JsonConverter` | Always throws `NotSupportedException` directly — the factory is terminal and never returns a typed converter. Throwing here (instead of returning a converter that throws on `Read` / `Write`) keeps the path AOT-safe: no `MakeGenericType` / `Activator.CreateInstance` reflection is needed, so Native AOT consumers see the actionable Trellis message instead of a "native code not available" error before the message can fire. The exception message names the declared shape (`Result<T>`, `IResult<T>`, or `IResult`) so the consumer sees the exact type to register an override for. |
 
 ### `RangeAttribute`
 
