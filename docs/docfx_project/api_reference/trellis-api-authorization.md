@@ -1,9 +1,9 @@
 ﻿---
 package: Trellis.Authorization
 namespaces: [Trellis.Authorization]
-types: [IActorProvider, ActorContext, Actor, Permission, AuthorizeAttribute, IAuthorizationRequirement, IResourceAuthorizationHandler]
+types: [IActorProvider, ActorContext, Actor, ActorId, Permission, AuthorizeAttribute, IAuthorizationRequirement, IResourceAuthorizationHandler]
 version: v3
-last_verified: 2026-05-14
+last_verified: 2026-05-17
 audience: [llm]
 ---
 # Trellis.Authorization — API Reference

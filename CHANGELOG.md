@@ -23,8 +23,6 @@ Consumer-side impact: code that compares `actor.Id` to a raw `string` (`actor.Id
 
 `Trellis.Core.Generator` adds `<summary>` doc comments to the four public members it emits in every `RequiredXxx<T>` partial — `Parse(string, IFormatProvider?)`, `TryParse(string?, IFormatProvider?, out T)`, and the `explicit operator T(TPrimitive)` conversion. Consumer projects that derive a Required type while running with `<GenerateDocumentationFile>true</GenerateDocumentationFile>` + `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` (the Trellis repo default) no longer get CS1591 errors against the generated members.
 
-### Changed
-
 #### `Result<T>` JSON serialization now fails fast with an actionable message (breaking)
 
 `Result<T>` and its `IResult` / `IResult<T>` interfaces all carry a default `[JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]` that throws `NotSupportedException` on any direct JSON serialize / deserialize attempt. Previously, returning a raw `Result<T>` from an MVC controller or minimal-API handler silently produced a struct-dump JSON shape (`{"IsSuccess": true, "Value": ..., "Error": null}`) with no HTTP status-code mapping for `Error.*` cases — the consumer's `Error.NotFound` got 200 OK instead of 404. The attribute also lives on the interfaces because STJ resolves `[JsonConverter]` against the static declared type — a controller signature like `Task<IResult<int>> GetAsync()` picks up the interface attribute, not the struct attribute, so attaching only the struct would have left the interface-declared return path silently broken.

@@ -23,7 +23,8 @@ IResult result = actor.HasPermission("orders:read")
 ```
 
 ## Key Features
-- Defines `Actor`, `IActorProvider`, `IAuthorize`, and resource authorization interfaces.
+- Defines `Actor`, `ActorId`, `IActorProvider`, `IAuthorize`, and resource authorization interfaces.
+- `Actor.Id` is the strongly-typed `ActorId` value object — reuse it on consumer aggregate boundaries (`Order.CreatedByActorId`, `Document.LastModifiedByActorId`) for type-checked principal-identity comparisons.
 - Works without ASP.NET Core, Mediator, or any web dependency.
 - Keeps permission rules inside the same Result-based workflow as the rest of your application.
 

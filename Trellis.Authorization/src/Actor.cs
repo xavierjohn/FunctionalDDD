@@ -1,6 +1,7 @@
 ﻿namespace Trellis.Authorization;
 
 using System.Collections.Frozen;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Represents the current authenticated user making the request.
@@ -66,6 +67,7 @@ public sealed class Actor : IEquatable<Actor>
     /// Thrown when <paramref name="id"/>, <paramref name="permissions"/>,
     /// <paramref name="forbiddenPermissions"/>, or <paramref name="attributes"/> is null.
     /// </exception>
+    [JsonConstructor]
     public Actor(
         ActorId id,
         IReadOnlySet<string> permissions,
