@@ -217,13 +217,15 @@ Trellis uses concrete error types such as:
 
 Each one carries intent, and the defaults map naturally to HTTP semantics.
 
-| Factory | Default code | Typical meaning |
+| Factory | Default `Kind` | Typical meaning |
 | --- | --- | --- |
-| `new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = ... }` | `validation.error` | Input or rule validation failed |
-| `new Error.NotFound(ResourceRef.For("Order", "42")) { Detail = ... }` | `not.found.error` | The resource does not exist |
-| `new Error.Conflict(null, "conflict") { Detail = ... }` | `conflict.error` | Current state prevents the operation |
-| `new Error.Forbidden("policy.id") { Detail = ... }` | `forbidden.error` | Caller is authenticated but not allowed |
-| `new Error.InternalServerError("fault-id") { Detail = ... }` | `unexpected.error` | Something unplanned failed |
+| `new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = ... }` | `unprocessable-content` | Input or rule validation failed |
+| `new Error.NotFound(ResourceRef.For<Order>("42")) { Detail = ... }` | `not-found` | The resource does not exist |
+| `new Error.Conflict(ResourceRef.For<Order>("42")) { Detail = ... }` | `conflict` | Current state prevents the operation |
+| `new Error.Forbidden("policy.id") { Detail = ... }` | `forbidden` | Caller is authenticated but not allowed |
+| `new Error.InternalServerError("fault-id") { Detail = ... }` | `internal-server-error` | Something unplanned failed |
+
+> The `Kind` column shows the `Error.Kind` constant the case exposes; this is what the closed-ADT pattern-match dispatches on. See [`error-handling.md`](error-handling.md) for the full case catalog and HTTP-status mapping.
 
 ```csharp
 using Trellis;

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0]
+
+Initial Trellis 3.0 release. This section folds in every change that accumulated under `[Unreleased]` during the 3.0-alpha line. Consumers who never installed an alpha can skip directly to the v1-to-v3 [migration guide](docs/docfx_project/articles/migration.md); consumers upgrading from a late-alpha read this section for the breaking-change deltas between the alpha and 3.0 GA.
+
 ### Changed
 
 #### `Actor.Id` is now strongly typed as `ActorId` (breaking)

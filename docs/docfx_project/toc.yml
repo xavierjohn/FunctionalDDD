@@ -1,5 +1,8 @@
 - name: Articles
   href: articles/
+- name: API Cookbook & Reference
+  href: api_reference/
+  homepage: api_reference/trellis-api-cookbook.md
 - name: Api Documentation
   href: api/
   homepage: api/index.md

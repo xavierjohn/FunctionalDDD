@@ -94,5 +94,5 @@
     href: performance.md
   - name: Benchmarks Data
     href: BENCHMARKS.md
-  - name: Migrating from v1 to v2
+  - name: Migrating from v1 to v3
     href: migration.md

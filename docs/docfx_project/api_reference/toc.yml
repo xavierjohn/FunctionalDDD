@@ -1,0 +1,36 @@
+- name: Cookbook (start here)
+  href: trellis-api-cookbook.md
+- name: Anti-pattern gallery
+  href: trellis-api-anti-patterns.md
+- name: Per-package reference
+  items:
+    - name: Trellis.Core
+      href: trellis-api-core.md
+    - name: Trellis.Primitives
+      href: trellis-api-primitives.md
+    - name: Trellis.Asp
+      href: trellis-api-asp.md
+    - name: Trellis.Asp.ApiVersioning
+      href: trellis-api-asp-apiversioning.md
+    - name: Trellis.Authorization
+      href: trellis-api-authorization.md
+    - name: Trellis.Mediator
+      href: trellis-api-mediator.md
+    - name: Trellis.EntityFrameworkCore
+      href: trellis-api-efcore.md
+    - name: Trellis.FluentValidation
+      href: trellis-api-fluentvalidation.md
+    - name: Trellis.Http
+      href: trellis-api-http.md
+    - name: Trellis.ServiceDefaults
+      href: trellis-api-servicedefaults.md
+    - name: Trellis.StateMachine
+      href: trellis-api-statemachine.md
+    - name: Trellis.Testing
+      href: trellis-api-testing-reference.md
+    - name: Trellis.Testing.AspNetCore
+      href: trellis-api-testing-aspnetcore.md
+- name: Analyzer surface
+  href: trellis-api-analyzers.md
+- name: Completeness report
+  href: completeness-report.md
