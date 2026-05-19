@@ -21,6 +21,7 @@
     <None Include="../NUGET_README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Trellis.Authorization\src\Trellis.Authorization.csproj" />
     <ProjectReference Include="..\..\Trellis.Core\src\Trellis.Core.csproj" />
     <ProjectReference Include="..\..\Trellis.Primitives\src\Trellis.Primitives.csproj" />
   </ItemGroup>
