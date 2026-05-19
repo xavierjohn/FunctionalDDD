@@ -2171,6 +2171,130 @@ Together with the duplicate-product case (two lines for the same product whose s
 
 ---
 
+## Recipe 26 — Version-aware response projection in a shared controller
+
+**Problem.** A service ships a v2 API that adds new fields to an existing response shape (e.g. v2 introduces `Returned` to `OrderStatus` plus two new fields `returnedAt` and `returnReason`), while v1 clients must keep seeing the v1 shape — no new fields, and a returned order projects back to `status: "Delivered"` so the v1 surface is byte-identical to the pre-v2 release. The v1 endpoints stay accessible under both api-versions; only the genuinely new endpoint (e.g. `POST /api/orders/{id}/return`) is v2-only.
+
+Asp.Versioning gives you the routing primitives (`[ApiVersion]` per class, `[MapToApiVersion]` per action). What it does not give you is the *response-shape dispatch* — there is no `[MapToApiVersionResponseShape]` attribute. Authors who reach this point typically reinvent one of two patterns from first principles: split the controller into two version-folders and duplicate every action, or keep a single controller and write a private `Project(T)` helper that branches on the runtime-matched api-version. The duplication tax for two versions and ~10 shared endpoints is ~100 lines per controller, multiplied across every controller whose response shape diverged. The single-controller form ships ~10 lines total per controller plus one `Project(T)` helper.
+
+This recipe documents the single-controller form because it scales better and keeps the spec rule *"v1 endpoints remain accessible under both versions"* expressible as a class-level attribute set rather than as a cross-folder convention.
+
+### The shape
+
+```csharp
+using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using Trellis;
+using Trellis.Asp;
+using Trellis.Asp.ApiVersioning;
+
+[ApiController]
+[ApiVersion("2026-11-12")]                  // v1: all endpoints below are reachable here.
+[ApiVersion("2026-12-01")]                  // v2: same endpoints, plus the v2-only Return.
+[Produces("application/json")]
+[Route("api/[controller]")]
+public sealed class OrdersController(ISender sender) : ControllerBase
+{
+    // Shared by both versions — response shape branches on requested version.
+    [HttpGet("{id}", Name = "Orders_GetById")]
+    [ProducesResponseType(typeof(OrderResponseV1), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrderResponseV2), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult<object>> GetById([CustomerResourceId] OrderId id, CancellationToken ct) =>
+        sender.Send(new GetOrderByIdQuery(id), ct).AsTask()
+            .ToHttpResponseAsync<Order, object>(
+                Project,
+                opts => opts.WithETag(o => EntityTagValue.Strong(o.ETag))
+                            .WithLastModified(o => o.LastModified)
+                            .EvaluatePreconditions())
+            .AsActionResultAsync<object>();
+
+    // v2-only action — Asp.Versioning emits 404 when called with ?api-version=2026-11-12.
+    [HttpPost("{id}/return")]
+    [Consumes("application/json")]
+    [MapToApiVersion("2026-12-01")]
+    [ProducesResponseType(typeof(OrderResponseV2), StatusCodes.Status200OK)]
+    public Task<ActionResult<object>> Return(
+        [CustomerResourceId] OrderId id,
+        [FromBody] ReturnOrderRequest request,
+        CancellationToken ct) =>
+        sender.Send(new ReturnOrderCommand(id, request.Reason), ct).AsTask()
+            .ToHttpResponseAsync<Order, object>(Project, opts => opts.WithETag(o => EntityTagValue.Strong(o.ETag)))
+            .AsActionResultAsync<object>();
+
+    // The single dispatch seam. One read of the matched version; one branch.
+    private object Project(Order order) =>
+        IsV2() ? OrderResponseV2.From(order) : OrderResponseV1.From(order);
+
+    private bool IsV2() =>
+        HttpContext.Features.Get<IApiVersioningFeature>()?.RequestedApiVersion?.ToString()
+            == "2026-12-01";
+}
+```
+
+The matched-version read uses `HttpContext.Features.Get<IApiVersioningFeature>()?.RequestedApiVersion`. `HttpRequest.GetRequestedApiVersion()` exists at the framework level but is not exposed on `HttpContext`; the feature lookup is the version-portable path.
+
+### Why `ActionResult<object>`
+
+`ToHttpResponseAsync<TDomain, TBody>(projection, opts)` requires a closed `TBody`. When the body's runtime type depends on the matched version, the only closed type that fits both branches is `object`. The opts selectors stay typed against `Order` (so `WithETag(o => …)` retains compile-time access to `o.ETag` etc.) — only the *body* type degrades to `object`. STJ serialises by runtime type, so the wire shape is correct for both `OrderResponseV1` and `OrderResponseV2`.
+
+The visible cost is OpenAPI metadata: a per-action `[ProducesResponseType(typeof(...), StatusCodes.Status200OK)]` now appears once per response shape (two lines instead of one), so consumers reading the OpenAPI document still see both response schemas — but the per-action body type in the action's signature is `object`, not the specific DTO. Authors who need typed `ActionResult<TDto>` for downstream tooling that introspects the action signature (rather than the `[ProducesResponseType]` metadata) should fall back to the split-controller form below.
+
+### Spec rules this pattern satisfies
+
+The convergent multi-version rule set in real services breaks down into four checks every version-aware endpoint MUST satisfy. The shape above satisfies them in one go:
+
+- **v1 endpoints reachable at both versions.** Both `[ApiVersion]` attributes on the class; no `[MapToApiVersion]` on shared actions.
+- **v2-only endpoints unreachable at v1.** `[MapToApiVersion("2026-12-01")]` on the v2-only action; Asp.Versioning emits 404 when called with the wrong version (not 400, not 405).
+- **v1 response shape stable.** `OrderResponseV1.From(order)` never includes the v2-only fields, and projects the `Returned` enum case back to `"Delivered"` at the DTO seam — `v1 dto.Status = order.Status == OrderStatus.Returned ? "Delivered" : order.Status.Value`.
+- **Location headers round-trip the requested api-version.** `CreatedAtVersionedRoute(...)` on creation responses; `Url.RouteUrl(name, { ["id"] = id, ["api-version"] = RequestedApiVersion() })` for 200 OK responses with Location (e.g., the Return endpoint).
+
+### Anti-pattern → fix
+
+```csharp
+// ❌ Splitting into two controllers in version-named folders just to vary the response shape.
+//    Now every action exists twice: 10 endpoints × 2 versions = 20 action bodies; every Maps,
+//    every authorization attribute, every [ProducesResponseType] is duplicated.
+namespace MyService.Api.v2026_11_12.Controllers { public sealed class OrdersController { /* 10 actions */ } }
+namespace MyService.Api.v2026_12_01.Controllers { public sealed class OrdersController { /* same 10 actions, v2 shapes */ } }
+```
+
+```csharp
+// ✅ One controller, [ApiVersion(..)] × N, [MapToApiVersion(..)] only on truly v-specific actions,
+//    one Project(T) seam. ~10 lines of class-level attribute set instead of N×duplicate actions.
+[ApiController]
+[ApiVersion("2026-11-12"), ApiVersion("2026-12-01")]
+public sealed class OrdersController { /* 10 shared actions + 1 v2-only + Project(T) */ }
+```
+
+```csharp
+// ❌ Reading the matched version from the query string directly. Works today; silently
+//    breaks if a future consumer enables MediaType or Header api-version readers.
+private string RequestedApiVersion() => HttpContext.Request.Query["api-version"].ToString();
+```
+
+```csharp
+// ✅ Use the feature exposed by Asp.Versioning; reader-agnostic.
+private bool IsV2() =>
+    HttpContext.Features.Get<IApiVersioningFeature>()?.RequestedApiVersion?.ToString() == "2026-12-01";
+```
+
+```csharp
+// ❌ Hand-rolling Location for 201 Created endpoints — Trellis already has the version-aware helper.
+HttpContext.Response.Headers["Location"] = $"/api/orders/{order.Id.Value}?api-version={RequestedApiVersion()}";
+```
+
+```csharp
+// ✅ Creation endpoints — CreatedAtVersionedRoute round-trips the requested api-version automatically.
+opts => opts.CreatedAtVersionedRoute("Orders_GetById", o => new RouteValueDictionary { ["id"] = (Guid)o.Id })
+```
+
+### When to split into per-version controllers anyway
+
+The single-controller form trades type-safety on the action signature (`ActionResult<object>`) for compactness. If your downstream tooling (e.g. an OpenAPI generator that drives a strongly-typed client) introspects the action *signature* rather than the `[ProducesResponseType]` metadata, or if the bodies for the two versions diverge enough that branching becomes the bulk of the action body, split. The break-even point in practice is "≥ 3 response fields differ and ≥ 4 actions return that response": below that, the single-controller form is the lower-cost shape.
+
+---
+
 ## Cross-references
 
 - [trellis-api-core.md](trellis-api-core.md#extension-class-catalog-full-signatures) — every `Result*Extensions(Async)` family with full signatures.
