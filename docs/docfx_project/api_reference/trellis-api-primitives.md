@@ -128,7 +128,7 @@ public class CurrencyCode : ScalarValueObject<CurrencyCode, string>, IScalarValu
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static Result<CurrencyCode> TryCreate(string? value, string? fieldName = null)` | `Result<CurrencyCode>` | Requires exactly three uppercase ASCII letters per ISO 4217 *format*. The ISO 4217 *active-code list* is not enforced — syntactically valid but reserved or unassigned codes such as `XXX`, `XTS`, `ZZZ` are accepted. Applications that need active-currency enforcement (e.g., payment processors that only support a subset, or excluding the ISO test/reserved codes) should layer an allow-list at the application boundary. |
+| `public static Result<CurrencyCode> TryCreate(string? value, string? fieldName = null)` | `Result<CurrencyCode>` | Requires exactly three ASCII letters per ISO 4217 *format*. Input is case-insensitive — `"usd"`, `"USD"`, and `"Usd"` are all accepted; the stored value is uppercase via `ToUpperInvariant()`. The ISO 4217 *active-code list* is not enforced — syntactically valid but reserved or unassigned codes such as `XXX`, `XTS`, `ZZZ` are accepted. Applications that need active-currency enforcement (e.g., payment processors that only support a subset, or excluding the ISO test/reserved codes) should layer an allow-list at the application boundary. |
 | `public static CurrencyCode Parse(string? s, IFormatProvider? provider)` | `CurrencyCode` | Throws `FormatException` on failure. |
 | `public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out CurrencyCode result)` | `bool` | Safe parse helper. |
 
@@ -262,7 +262,7 @@ public class Money : ValueObject
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static Result<Money> TryCreate(decimal amount, string currencyCode, string? fieldName = null)` | `Result<Money>` | Rejects negative amounts. Currency validation is delegated to [`CurrencyCode.TryCreate`](#currencycode) and is syntactic only — codes outside the ISO 4217 active list (`XXX`, `XTS`, `ZZZ`, etc.) are accepted because they satisfy the three-uppercase-ASCII-letter format. Layer an application-level allow-list when active-code enforcement is required. |
+| `public static Result<Money> TryCreate(decimal amount, string currencyCode, string? fieldName = null)` | `Result<Money>` | Rejects negative amounts. Currency validation is delegated to [`CurrencyCode.TryCreate`](#currencycode) and is syntactic only — three ASCII letters (case-insensitive input; normalized to uppercase). Codes outside the ISO 4217 active list (`XXX`, `XTS`, `ZZZ`, etc.) are accepted because they satisfy the format. Layer an application-level allow-list when active-code enforcement is required. |
 | `public static Money Create(decimal amount, string currencyCode)` | `Money` | Throwing factory. |
 | `public Result<Money> Add(Money other)` | `Result<Money>` | Requires matching currencies. Throws `ArgumentNullException` when `other` is null. Returns `Error.UnprocessableContent` on currency mismatch or addition overflow. |
 | `public Result<Money> Subtract(Money other)` | `Result<Money>` | Requires matching currencies and non-negative result. Throws `ArgumentNullException` when `other` is null. |

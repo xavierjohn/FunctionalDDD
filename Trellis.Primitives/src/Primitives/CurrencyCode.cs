@@ -10,20 +10,23 @@ using Trellis;
 /// <remarks>
 /// <b>Validation Rules (Opinionated):</b>
 /// <para>
-/// Valid codes are three ASCII letters (e.g., USD, EUR, GBP). Non-ASCII letters such as
-/// German umlauts, Greek, or Cyrillic are rejected. The stored value is uppercase.
+/// Valid codes are three ASCII letters (e.g., USD, EUR, GBP). Input is case-insensitive —
+/// <c>"usd"</c>, <c>"USD"</c>, and <c>"Usd"</c> all parse; the stored value is uppercase via
+/// <c>ToUpperInvariant()</c>. Non-ASCII letters such as German umlauts, Greek, or Cyrillic are
+/// rejected, and codes shorter or longer than three characters are rejected.
 /// </para>
 /// <para>
-/// <b>Scope of validation.</b> Only the ISO 4217 <i>format</i> (three uppercase ASCII letters)
-/// is enforced. The ISO 4217 <i>active-code list</i> is not consulted, so syntactically valid
+/// <b>Scope of validation.</b> Only the ISO 4217 <i>format</i> (three ASCII letters) is
+/// enforced. The ISO 4217 <i>active-code list</i> is not consulted, so syntactically valid
 /// but reserved or unassigned codes such as <c>XXX</c>, <c>XTS</c>, and <c>ZZZ</c> are accepted.
 /// Applications that need to restrict to currencies actually supported by a payment processor,
 /// reject ISO reserved/test codes, or otherwise impose a narrower policy should layer an
 /// allow-list at the application boundary.
 /// </para>
 /// <para>
-/// <b>If these rules don't fit your domain</b> (e.g., cryptocurrency codes like BTC, ETH),
-/// create your own CurrencyCode value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
+/// <b>If these rules don't fit your domain</b> (e.g., cryptocurrency ticker symbols longer than
+/// three characters like <c>USDT</c>, <c>DOGE</c>, <c>MATIC</c>), create your own currency-code
+/// value object using the <see cref="ScalarValueObject{TSelf, T}"/> base class.
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(ParsableJsonConverter<CurrencyCode>))]
