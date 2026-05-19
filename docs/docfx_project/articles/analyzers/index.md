@@ -22,6 +22,10 @@ Trellis analyzers help you keep `Result<T>`, `Maybe<T>`, EF Core integration, an
 | TRLS017 | Warning | Wrong [StringLength] or [Range] attribute namespace | [TRLS017](TRLS017.md) |
 | TRLS018 | Warning | Unsafe Result<T> deconstruction | [TRLS018](TRLS018.md) |
 | TRLS019 | Warning | Avoid default(Result&lt;T&gt;) / default(Maybe&lt;T&gt;) | [TRLS019](TRLS019.md) |
+| TRLS020 | Warning | Composite value object DTO property is not safely deserializable | [TRLS020](TRLS020.md) |
+| TRLS021 | Warning | EF configuration duplicates Trellis conventions | [TRLS021](TRLS021.md) |
+| TRLS022 | Warning | [OwnedEntity] property uses init-only setter | [TRLS022](TRLS022.md) |
+| TRLS023 | Warning | CreatedAtRoute on a versioned controller is missing the api-version route value | [TRLS023](TRLS023.md) |
 
 ## Code fixes at a glance
 

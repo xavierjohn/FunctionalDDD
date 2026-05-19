@@ -8,8 +8,10 @@
             "Trellis.Core/src/Trellis.Core.csproj",
             "Trellis.FluentValidation/src/Trellis.FluentValidation.csproj",
             "Trellis.Asp/src/Trellis.Asp.csproj",
+            "Trellis.Asp.ApiVersioning/src/Trellis.Asp.ApiVersioning.csproj",
             "Trellis.Http/src/Trellis.Http.csproj",
             "Trellis.Primitives/src/Trellis.Primitives.csproj",
+            "Trellis.ServiceDefaults/src/Trellis.ServiceDefaults.csproj",
             "Trellis.Testing/src/Trellis.Testing.csproj",
             "Trellis.Testing.AspNetCore/src/Trellis.Testing.AspNetCore.csproj",
             "Trellis.StateMachine/src/Trellis.StateMachine.csproj",
@@ -39,6 +41,7 @@
           "articles/**.md",
           "articles/**/toc.yml",
           "api_reference/**.md",
+          "api_reference/**/toc.yml",
           "adr/**.md",
           "toc.yml",
           "*.md"
