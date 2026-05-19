@@ -2235,7 +2235,7 @@ public sealed class OrdersController(ISender sender) : ControllerBase
 }
 ```
 
-The matched-version read uses the `HttpContext.RequestedApiVersion()` extension property shipped by `Asp.Versioning.Http`. This is the reader-agnostic primary signal — it reflects whatever `IApiVersionReader` is configured (query, header, media-type, URL segment, or a composite reader) and is what `Trellis.Asp.ApiVersioning`'s own runtime uses internally (see [`trellis-api-asp-apiversioning.md`](trellis-api-asp-apiversioning.md#per-request-resolution-order) for the full resolution order).
+The matched-version read uses the `HttpContext.RequestedApiVersion()` extension property shipped by `Asp.Versioning.Http`. This is the reader-agnostic primary signal — it reflects whatever `IApiVersionReader` is configured (query, header, media-type, URL segment, or a composite reader) and is what `Trellis.Asp.ApiVersioning`'s own runtime uses internally (see [`trellis-api-asp-apiversioning.md`](trellis-api-asp-apiversioning.md) for the full resolution order).
 
 ### Why `ActionResult<object>`
 
