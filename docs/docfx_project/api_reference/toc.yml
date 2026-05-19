@@ -30,6 +30,8 @@
       href: trellis-api-testing-reference.md
     - name: Trellis.Testing.AspNetCore
       href: trellis-api-testing-aspnetcore.md
+- name: Value-object taxonomy
+  href: trellis-value-object-taxonomy.md
 - name: Analyzer surface
   href: trellis-api-analyzers.md
 - name: Completeness report

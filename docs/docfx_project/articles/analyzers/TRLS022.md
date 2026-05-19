@@ -5,7 +5,7 @@
 
 ## What it detects
 
-Flags `{ get; init; }` properties declared on a type decorated with `[OwnedEntity]`. The supported, tested shape is `{ get; private set; }`.
+Flags `{ get; init; }` properties on a type decorated with `[OwnedEntity]`. The supported, tested shape is `{ get; private set; }`. The analyzer walks the inheritance chain — init-only properties declared on a base class (or grandparent, etc.) of the `[OwnedEntity]` type are reported on the derived type as well, unless they are hidden by a `new`-overriding property on the derived type.
 
 ## Why it matters
 

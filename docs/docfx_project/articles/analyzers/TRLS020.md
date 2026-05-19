@@ -5,10 +5,12 @@
 
 ## What it detects
 
-Flags request/response DTO properties whose type is a Trellis composite value object (anything that derives from `ValueObject` and is not a `ScalarValueObject<TSelf, T>`) when the property surface is not safely deserializable via `System.Text.Json`:
+Flags request/response DTO properties whose type is a `[OwnedEntity]`-decorated composite value object (inherits from `ValueObject`) when the property surface is not safely deserializable via `System.Text.Json`:
 
 - A bare composite VO property exposed by a DTO (`public ShippingAddress Address { get; init; }`) that is **not** decorated with `[JsonConverter(typeof(CompositeValueObjectJsonConverter<ShippingAddress>))]` on the type.
 - A `Maybe<TComposite>` property on a DTO. Trellis ships no `MaybeCompositeValueObjectJsonConverterFactory`, so STJ has no path to round-trip the optional-wrapped composite, even when the inner composite is correctly converter-decorated.
+
+The rule is scoped to `[OwnedEntity]` composites — scalar value objects, plain `ValueObject`-derived types without `[OwnedEntity]`, and non-VO types are out of scope (they use a different transport).
 
 ## Why it matters
 
@@ -20,6 +22,10 @@ Composite value objects validate their invariants in `TryCreate`. If STJ falls b
 ## Bad examples
 
 ```csharp
+// Composite VO must be [OwnedEntity]; this is the canonical Trellis composite-VO shape.
+[OwnedEntity]
+public sealed partial class ShippingAddress : ValueObject { /* ... TryCreate, properties ... */ }
+
 // Bare composite without the type-level converter → STJ default-constructs and bypasses TryCreate.
 public sealed record CreateCustomerRequest(string Email, ShippingAddress Address);       // TRLS020
 
@@ -31,6 +37,7 @@ public sealed record UpdateCustomerRequest(Maybe<ShippingAddress> Address);     
 
 ```csharp
 // Bare composite — converter on the type, applies to every DTO that surfaces it.
+[OwnedEntity]
 [JsonConverter(typeof(CompositeValueObjectJsonConverter<ShippingAddress>))]
 public sealed partial class ShippingAddress : ValueObject { /* ... */ }
 

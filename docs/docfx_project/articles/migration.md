@@ -1,17 +1,20 @@
 ﻿---
-title: Migrating from v1 to v3
+title: Migrating from v2 to v3
 package: Trellis (multiple)
-topics: [migration, breaking-changes, v1-to-v3, result-unit, error-adt, package-renames]
+topics: [migration, breaking-changes, v2-to-v3, result-unit, error-adt, package-renames]
 related_api_reference: [trellis-api-core.md, trellis-api-asp.md, trellis-api-mediator.md, trellis-api-http.md, trellis-api-statemachine.md, trellis-api-analyzers.md]
 last_verified: 2026-05-18
 audience: [developer]
 ---
-# Migrating from v1 to v3
+# Migrating from v2 to v3
 
 A package- and namespace-rename combined with a tightened public surface. Per-package "Breaking changes from v1" sections in `api_reference/` are the authoritative source of truth; this guide is the cross-cutting index and the recommended migration order.
 
 > [!NOTE]
-> **Coming from a 3.0-alpha build?** See [`CHANGELOG.md` → 3.0.0](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md#300) for the four breaking changes between the late-alpha and 3.0 GA: `Actor.Id` typed as `ActorId`, `Result<T>` JSON throws `NotSupportedException`, `RequiredXxx<T>` POLA realignment (opt-in `[NotDefault]` / `[Trim]`), and `IActorProvider.GetCurrentActorAsync` returning `Task<Maybe<Actor>>`. The rest of this guide covers v1 → 3.0 changes, which subsume the v1 → v2 migration that was never publicly released.
+> **Version-label key.** The previous public release line was published as `FunctionalDdd.*` packages (last GA: `2.1`). v3 ships as the renamed `Trellis.*` packages. Sections below sometimes use "v1" and "v2" as internal shorthand for transitional Trellis development surfaces during the rename; in terms of *public* releases, treat the v1→v2 transitions in this guide as the canonical FunctionalDdd 2.x → Trellis 3.0 upgrade path.
+
+> [!NOTE]
+> **Coming from a 3.0-alpha build?** See [`CHANGELOG.md` → 3.0.0](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md#300) for the four breaking changes between the late-alpha and 3.0 GA: `Actor.Id` typed as `ActorId`, `Result<T>` JSON throws `NotSupportedException`, `RequiredXxx<T>` POLA realignment (opt-in `[NotDefault]` / `[Trim]`), and `IActorProvider.GetCurrentActorAsync` returning `Task<Maybe<Actor>>`.
 
 ## Patterns Index
 

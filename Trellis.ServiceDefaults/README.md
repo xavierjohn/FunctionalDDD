@@ -28,7 +28,7 @@ builder.Services.AddTrellis(options => options
 
 ## Key Features
 - One composition root for the typical Trellis web service: `AddTrellis(...)` chains every framework slot (`UseAsp`, `UseMediator`, `UseFluentValidation`, an actor provider, `UseResourceAuthorization`, `UseEntityFrameworkUnitOfWork`) so consumers don't have to remember per-package wiring order.
-- Pipeline ordering is fixed (validation → authorization → UoW commits innermost) so the result-to-HTTP mapping, command authorization, and transactional commit semantics match the framework's documented contracts.
+- Mediator pipeline order is owned by `Trellis.Mediator` (outermost → innermost: `ExceptionBehavior`, `TracingBehavior`, `LoggingBehavior`, `AuthorizationBehavior`, `ResourceAuthorizationBehavior` (opt-in), `ValidationBehavior`, `TransactionalCommandBehavior` (opt-in)). `Trellis.ServiceDefaults` preserves that order across its helpers: `UseEntityFrameworkUnitOfWork<TContext>()` is always applied last so the transactional commit runs innermost; domain events also register before UoW when enabled.
 - Actor-provider selectors (`UseClaimsActorProvider`, `UseEntraActorProvider`, `UseDevelopmentActorProvider`, `UseCachingActorProvider<T>`) replace the `IActorProvider` slot atomically — calling more than one leaves exactly one provider registered (last call wins) per the `Trellis.Asp.Authorization` contract.
 
 ## AOT compatibility
