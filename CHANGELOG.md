@@ -9,1085 +9,190 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0]
 
-Initial Trellis 3.0 release. This section folds in every change that accumulated under `[Unreleased]` during the 3.0-alpha line. Consumers who never installed an alpha can skip directly to the v1-to-v3 [migration guide](docs/docfx_project/articles/migration.md); consumers upgrading from a late-alpha read this section for the breaking-change deltas between the alpha and 3.0 GA.
-
-### Changed
-
-#### `Actor.Id` is now strongly typed as `ActorId` (breaking)
-
-`Actor.Id` changes from `string` to the new value object `ActorId : RequiredString<ActorId>` (in the `Trellis.Authorization` namespace, decorated `[Trim, NotDefault]`). Authorization-layer APIs and consumer aggregate boundaries that store the actor's principal id (e.g. `Order.CreatedByActorId`) can now declare an `ActorId`-typed field instead of an untyped `string`, closing the recurring two-model lab finding that the framework was preaching against primitive obsession while exposing the principal id as a raw string. The intended consumer shape is to reuse `ActorId` for audit-style "who did this" fields (`CreatedByActorId`, `LastModifiedByActorId`); domain identifiers that are conceptually distinct (a customer aggregate id, a tenant member id) remain whatever VO the domain models and are resolved to / from the principal at the application service boundary.
-
-`Actor`'s typed constructor `Actor(ActorId, ...)` and `Actor.Create(ActorId, ...)` join the existing `string`-accepting overloads, which now wrap the raw value via `ActorId.Create` internally so authentication-boundary code (claim → actor) can keep passing the raw claim string. The string-accepting paths still reject null / empty / whitespace with `ArgumentException`, matching the original guard; the typed paths reject `null` with `ArgumentNullException("id")`. `Actor.IsOwner` gains a typed `IsOwner(ActorId)` overload alongside the existing `IsOwner(string)` so call sites that flow a typed identifier through (`actor.IsOwner(order.CreatedByActorId)`) are type-checked end-to-end.
-
-`Actor.Id`'s value-equality contract is unchanged (ordinal string comparison), but the hash code is now `ActorId.GetHashCode()` (which combines through `ScalarValueObject<,>`) instead of `StringComparer.Ordinal.GetHashCode(id)` — the equality contract holds (`Equals(a, b) ⇒ a.GetHashCode() == b.GetHashCode()`), but the specific numeric value differs. Tests that pinned exact hash codes (none in this repo) would need updating. The trim normalization is a small additional behavior beyond the original `ArgumentException.ThrowIfNullOrWhiteSpace(id)`: an id `"  user-1  "` now stores as `"user-1"`; previously it stored verbatim. Claim values in practice do not contain surrounding whitespace, but consumers comparing actor ids byte-for-byte against an external system should be aware.
-
-Consumer-side impact: code that compares `actor.Id` to a raw `string` (`actor.Id == resource.OwnerId` where `OwnerId : string`) continues to compile because `ScalarValueObject<,>` exposes an implicit `ActorId → string` conversion. Code that declared its own field as `string CreatedByActorId` and now wants the strong-typing payoff should re-type the field to `ActorId`; the comparison `actor.Id == order.CreatedByActorId` then dispatches through value equality at the VO level instead of via the implicit unwrap. JSON serialization of `ActorId`-typed fields emits the raw string (via `ParsableJsonConverter<ActorId>`), so wire-format compatibility is preserved.
-
-#### Generator: `RequiredXxx<T>` derivations now emit XML doc comments on `Parse` / `TryParse` / explicit operators
-
-`Trellis.Core.Generator` adds `<summary>` doc comments to the four public members it emits in every `RequiredXxx<T>` partial — `Parse(string, IFormatProvider?)`, `TryParse(string?, IFormatProvider?, out T)`, and the `explicit operator T(TPrimitive)` conversion. Consumer projects that derive a Required type while running with `<GenerateDocumentationFile>true</GenerateDocumentationFile>` + `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` (the Trellis repo default) no longer get CS1591 errors against the generated members.
-
-#### `Result<T>` JSON serialization now fails fast with an actionable message (breaking)
-
-`Result<T>` and its `IResult` / `IResult<T>` interfaces all carry a default `[JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]` that throws `NotSupportedException` on any direct JSON serialize / deserialize attempt. Previously, returning a raw `Result<T>` from an MVC controller or minimal-API handler silently produced a struct-dump JSON shape (`{"IsSuccess": true, "Value": ..., "Error": null}`) with no HTTP status-code mapping for `Error.*` cases — the consumer's `Error.NotFound` got 200 OK instead of 404. The attribute also lives on the interfaces because STJ resolves `[JsonConverter]` against the static declared type — a controller signature like `Task<IResult<int>> GetAsync()` picks up the interface attribute, not the struct attribute, so attaching only the struct would have left the interface-declared return path silently broken.
-
-The new throw fires at the first request and names the canonical fix: call `.ToHttpResponse()` (Trellis.Asp) on the result, or unwrap the value via `Match` / `TryGetValue` before serialization. `NotSupportedException` (not `InvalidOperationException`) matches STJ's convention for "this type cannot be (de)serialized" so consumer `catch (NotSupportedException)` blocks around `JsonSerializer.Serialize` behave identically whether the type is unsupported by STJ or unsupported by Trellis policy.
-
-Consumers who legitimately want to serialize `Result<T>` (logging, IPC, storage) can register a converter (or a `JsonConverterFactory`) in `JsonSerializerOptions.Converters` — option-registered converters take precedence over the type's `[JsonConverter]` attribute. **The override must match the declared static type:** `JsonConverter<Result<T>>` only covers `Result<T>`-declared values; `IResult<T>`-declared values need `JsonConverter<IResult<T>>`; `IResult`-declared values need `JsonConverter<IResult>`. Use a `JsonConverterFactory` to cover multiple result shapes at once.
-
-### Added
-
-#### `IResult`-aware FluentAssertions extension
-
-Tests asserting against members typed as the non-generic `IResult` interface — most commonly `IAuthorizeResource<TResource>.Authorize` and `IAuthorizeResourceVia<TOwner>.Authorize`, which both return `IResult` by contract — can now call `.Should().BeSuccess()` / `.BeFailureOfType<TError>()` / `.HaveErrorCode(...)` / `.HaveErrorDetail(...)` / `.HaveErrorDetailContaining(...)` directly without casting to `Result<Unit>`. New `IResultAssertions` mirrors the failure-side surface of the existing `ResultAssertions<TValue>`; `HaveValue` and equivalents are not offered because the non-generic interface carries no typed value. Concrete `Result<T>` continues to bind to the typed entry point — struct is more specific than the interface, so overload resolution prefers `Should<T>(this Result<T>)`.
-
-### Fixed
-
-#### `Result<Page<T>>.ToHttpResponse` no longer silently drops `WithETag` / `WithLastModified` / `Vary` / `WithContentLanguage` / `WithContentLocation` / `EvaluatePreconditions`
-
-`HttpResponseOptionsBuilder<Page<T>>` accepts every option that the non-paged builder does, but until now only `VaryForActor` and `WithCacheControl` actually flowed through to the wire on the paged path — every other `.With*` call compiled, ran, and silently no-op'd. `ETag` / `Last-Modified` / `Vary` / `Content-Language` / `Content-Location` are now applied to paged success responses; `EvaluatePreconditions()` now performs conditional-request evaluation (`If-None-Match` / `If-Modified-Since` → 304, failing `If-Match` / `If-Unmodified-Since` → 412) against `Page<T>`-shaped selectors. Per-domain selectors evaluate inside `IResult.ExecuteAsync` (not eagerly during `ToHttpResponse`), `ETag` and `Last-Modified` resolve once per request and are reused for header emission and precondition evaluation so non-deterministic selectors cannot produce inconsistent header-vs-metadata values, and selector-derived `Cache-Control` applies only at the success-emit points (200 / 304) — generated 412 responses do not inherit it, matching the non-paged contract. Static `Cache-Control` continues to apply to both success and failure responses.
-
-Out of scope (deferred): `WithRange` / `WithLocation` / `WithCreatedAt*` / body projector / `HonorPrefer` / `WithAcceptRanges` are paged-incompatible by shape (range = byte ranges, location = 201 Created, Prefer = representation-vs-minimal, AcceptRanges = byte-range advertisement) and remain silently no-op on the paged path. Future work tracked in `BACKLOG.md`.
-
-### Changed
-
-#### `RequiredXxx<T>` family POLA realignment (breaking)
-
-The `RequiredXxx<T>` family now follows a single, uniform rule: **reject only null**. Per-type "zero value" rejection (`""` for `RequiredString`, `0` for numerics, `Guid.Empty`, `DateTime.MinValue`) is opt-in via the new `[NotDefault]` attribute. String trim is opt-in via the new `[Trim]` attribute. This realigns the family with `RequiredInt<T>(0)` — which has always succeeded — and matches the Principle of Least Astonishment.
-
-| Type | Default (no attributes) | With `[NotDefault]` |
-|---|---|---|
-| `RequiredInt<T>` / `RequiredLong<T>` / `RequiredDecimal<T>` | reject null | reject null + `0` (wording: "cannot be zero.") |
-| `RequiredString<T>` | reject null | reject null + `""` (after `[Trim]` if present) |
-| `RequiredGuid<T>` | reject null | reject null + `Guid.Empty` (wording: "cannot be Guid.Empty.") |
-| `RequiredDateTime<T>` | reject null | reject null + `DateTime.MinValue` (wording: "cannot be DateTime.MinValue.") |
-| `RequiredBool<T>` | reject null | **compile-time error** (degenerate single-value type) |
-| `RequiredEnum<T>` | reject null + unknown member name | **compile-time error** (smart-enum has no CLR default) |
-
-Validation order in the generated `TryCreate`: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
-
-New compile-time diagnostics:
-
-- `TRLS040` — `[NotDefault]` on `RequiredBool<T>` is not supported.
-- `TRLS041` — `[Trim]` on a non-`RequiredString` Required type is not supported.
-- `TRLS042` — `[NotDefault]` on `RequiredEnum<T>` is not supported.
-
-The EF Core `TrellisScalarConverter` calls `TryCreate` to rehydrate every row, so lenient-by-default types now accept persisted sentinel values (`Guid.Empty`, `""`, `DateTime.MinValue`) instead of throwing `TrellisPersistenceMappingException`. Add `[NotDefault]` to any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property to keep the strict rehydration guarantee.
-
-### Added
-
-#### `[NotDefault]` and `[Trim]` attributes for `RequiredXxx<T>` types
-
-Two new opt-in attributes in the `Trellis` namespace alongside `[StringLength]` / `[Range]`. Both are consumed at compile time by the primitive value-object source generator with no runtime reflection cost. See the `Changed` section above for the full behavior matrix.
-
-#### `IActorProvider.GetCurrentActorAsync` returns `Task<Maybe<Actor>>` (breaking)
-
-`IActorProvider.GetCurrentActorAsync` now returns `Task<Maybe<Actor>>` instead of `Task<Actor>`. "No authenticated actor on this request" is client-error state expressed via `Maybe<Actor>.None`; the mediator authorization pipeline maps it to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). Provider implementations should throw `InvalidOperationException` only for genuine infrastructure or configuration failures (no `HttpContext`, mapping delegate threw, option misconfigured); those still surface as `Error.InternalServerError` (HTTP 500), which is correct because they are bugs rather than authentication state.
-
-Before this change the framework returned HTTP 500 in the "no actor" case (provider threw → `ExceptionBehavior` caught → `Error.InternalServerError`) instead of the RFC-correct 401, conflating client-error state with server bugs.
-
-**Migration for custom `IActorProvider` implementations:**
-
-```csharp
-// Before
-public Task<Actor> GetCurrentActorAsync(CancellationToken ct = default)
-{
-    if (httpContext.User.Identity?.IsAuthenticated != true)
-        throw new InvalidOperationException("No authenticated user...");
-    return Task.FromResult(BuildActor(httpContext.User));
-}
-
-// After
-public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken ct = default)
-{
-    if (httpContext.User.Identity?.IsAuthenticated != true)
-        return Task.FromResult(Maybe<Actor>.None);
-    return Task.FromResult(Maybe.From(BuildActor(httpContext.User)));
-}
-```
-
-The framework providers (`ClaimsActorProvider`, `EntraActorProvider`, `DevelopmentActorProvider`, `CachingActorProvider`, `TestActorProvider`) are migrated. The bundled `AuthorizationBehavior`, `ResourceAuthorizationBehavior`, and `ResourceAuthorizationViaBehavior` share an internal `ActorResolution.TryResolveAsync` helper that maps `Maybe<Actor>.None` → `Error.Unauthorized` consistently across all three.
-
-The mediator-emitted 401 carries an empty `Error.Unauthorized.Challenges` array, deferring the `WWW-Authenticate` header to the configured ASP.NET Core authentication handler (which knows the scheme and parameters). RFC 9110 §11.6.1 strict compliance still requires the auth handler to write the challenge.
-
-#### `CachingActorProvider` now caches synchronous failures from the inner provider
-
-`CachingActorProvider` previously documented "the failure is cached for the remainder of the request scope; subsequent calls re-throw the same exception." That contract held only for asynchronous (faulted-task) failures — synchronous throws from the inner provider escaped `LazyInitializer.EnsureInitialized` without setting `_cachedTask`, so subsequent calls in the same request retried the inner provider. The wrapper now converts synchronous throws into `Task.FromException<Maybe<Actor>>(ex)` before caching, matching the documented contract for both sync and async failure shapes.
-
-### Fixed
-
-#### `CompositeValueObjectJsonConverter` writes asymmetric JSON for unsupported-shape null payloads
-
-`CompositeValueObjectJsonConverter<T>.WritePrimitive` previously checked `raw is null` before validating the primitive type, so an unsupported interior shape with a null payload — `int? = null`, `string[] = null`, a null nested composite VO — silently serialized as JSON `null` while reading the same JSON threw a `TrellisJsonValidationException` from the read-side unsupported-primitive guard. The converter could therefore publish JSON it cannot itself parse back. The asymmetry defeated the load-bearing validation the converter is supposed to provide on both directions.
-
-The write path now validates the primitive type up front via a new `IsSupportedPrimitive(Type)` helper (the closed set: `string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`, mirroring the `if`-chain in `ReadPrimitive` and `WritePrimitive`). If the primitive is unsupported, the throw fires before the null check, matching the symmetric loud-failure behavior of the read path. The dead `else throw` at the end of the `WritePrimitive` chain is removed since the up-front check now covers every unreachable case.
-
-The new `Trellis.Primitives.Tests/CompositeVoBoundaryTests.cs` file (26 tests across 13 fixtures) pins the support boundary across 11 interior shapes (`Maybe<T>`, plain enums, `Nullable<T>`, `DateOnly`, `TimeOnly`, unsigned numerics, arrays, nested composites, etc.), the three null-write-throws regressions for the fix above, and the `RequiredEnum<TSelf>` positive round-trip (since `RequiredEnum<>` is `IScalarValue<TSelf, string>` — primitive resolves to `string`, which IS supported). One additional known asymmetry is pinned as characterization rather than fixed: a nullable Trellis scalar VO interior (`PropertyType? Optional`) writes JSON `null` cleanly via the scalar projection but `ReadPrimitive` rejects the same null with a primitive-specific validation error, because TryCreate parameter nullability isn't captured in `CompositeMetadata` — a proper fix requires propagating `System.Reflection.NullabilityInfoContext`, deferred as a follow-up. Cookbook Recipe 13 documents the trap and recommends the wire-shape DTO seam (Recipe 14, `Maybe<TScalar>`) as the workaround.
-
-#### `WWW-Authenticate` synthesized on mediator-emitted 401
-
-`ResponseFailureWriter` previously only emitted `WWW-Authenticate` when the caller populated `Error.Unauthorized.Challenges` explicitly. The mediator authorization pipeline emits `Error.Unauthorized` with empty `Challenges` (it does not know the configured scheme), so any 401 originating from `IActorProvider.GetCurrentActorAsync` returning `Maybe<Actor>.None` shipped out without the header. RFC 9110 §11.6.1 requires every 401 to carry the header. The auth-handler path normally fills it in, but on anonymous-tolerant routes that host `IAuthorize` commands the auth handler is never invoked — so the mediator-emitted 401 was strictly non-compliant.
-
-`ResponseFailureWriter` now synthesizes a scheme-only challenge from `IAuthenticationSchemeProvider.GetDefaultChallengeSchemeAsync()` (falling back to `GetDefaultAuthenticateSchemeAsync()`) when (a) status is 401, (b) `Error.Unauthorized.Challenges` is empty, and (c) the response does not already carry `WWW-Authenticate`. If no auth scheme is configured at all (no `IAuthenticationSchemeProvider`, no default challenge), the header is still omitted — synthesizing "Bearer" for a service that does not use Bearer would mislead clients. Explicit `Error.Unauthorized.Challenges` continue to take precedence and are never synthesized over. The synthesized header uses the scheme NAME registered with `AddAuthentication` (so `AddJwtBearer("ApiJwt", ...)` produces `WWW-Authenticate: ApiJwt`); consumers needing a different wire token should populate `Error.Unauthorized.Challenges` themselves.
-
-#### `ClaimsActorProvider` short↔long claim-name fallback extended to `PermissionsClaim`
-
-`ClaimsActorProvider`'s `PermissionsClaim` resolution previously did literal-match lookup only. Once the `ActorIdClaim` fallback shipped (above), the same `JwtBearerOptions.MapInboundClaims = true` footgun moved one step down the stack: an authenticated actor whose permissions claim was remapped (e.g., `PermissionsClaim = "roles"` against a JWT whose `"roles"` claim had been remapped to `ClaimTypes.Role`) would resolve to an `Actor` with an empty permission set and produce silent 403s instead of silent 401s — still indistinguishable from "real" missing permissions.
-
-`ClaimsActorProvider` now applies the same bidirectional short↔long fallback to `PermissionsClaim` as to `ActorIdClaim`: literal match first, then every counterpart in the provider's curated short↔long mapping table is also queried and merged into a single `FrozenSet<string>` (which dedupes overlapping values). The fallback fires a debug-level log entry when the configured claim resolves nothing but a counterpart does (i.e. the silent-403 footgun is the case the operator needs to see; the merge case where both forms contribute does not log). The default `PermissionsClaim = "permissions"` is not in the mapping table, so its resolution remains literal-only (regression-safe).
-
-The shared short↔long table is also extended in this release to cover Microsoft identity-platform claims that consumers realistically configure as an `ActorIdClaim` or `PermissionsClaim`: `oid` ↔ `http://schemas.microsoft.com/identity/claims/objectidentifier` (Entra v2.0 actor id), `tid` ↔ `http://schemas.microsoft.com/identity/claims/tenantid`, `upn` ↔ `ClaimTypes.Upn`, `idp` ↔ `http://schemas.microsoft.com/identity/claims/identityprovider`, `acr` ↔ `http://schemas.microsoft.com/claims/authnclassreference`, `amr` ↔ `http://schemas.microsoft.com/claims/authnmethodsreferences`. The table is a curated subset of `JwtSecurityTokenHandler.DefaultInboundClaimTypeMap`; the OAuth scope claim `scp` is intentionally NOT included because its value is space-delimited (RFC 6749 §3.3, e.g. `"orders.read orders.write"`) and `ClaimsActorProvider` snapshots claim values verbatim into the permission set, so wiring the fallback would still leave `Actor.HasPermission("orders.read")` returning `false`. Consumers using OAuth scope-as-permission should subclass `ClaimsActorProvider` to split the value. Device, certificate, request-transport, and password-policy claims from the inbound map are intentionally excluded for the same reason of not being authentication state.
-
-#### `ClaimsActorProvider` short↔long claim-name fallback for `JwtBearer.MapInboundClaims`
-
-`ClaimsActorProvider` previously did literal-match lookup of `ClaimsActorOptions.ActorIdClaim` against `ClaimsIdentity`. Combined with ASP.NET Core's `JwtBearerOptions.MapInboundClaims = true` default — which remaps RFC 7519 short claim names (e.g. `"sub"`) onto WS-* long-form URNs (e.g. `ClaimTypes.NameIdentifier`) before the principal reaches Trellis — the default `ActorIdClaim = "sub"` couldn't find the (now-remapped) claim, returned `Maybe<Actor>.None`, and the mediator emitted **401 on every authenticated request** with no diagnostic. The most common Trellis + JwtBearer integration footgun.
-
-`ClaimsActorProvider` now performs the literal lookup first, then falls back to the well-known short↔long counterpart from the JWT inbound claim-name map (`"sub"` ↔ `NameIdentifier`, `"email"` ↔ `Email`, `"role"`/`"roles"` ↔ `Role`, `"name"`/`"unique_name"` ↔ `Name`, `"family_name"` ↔ `Surname`, `"given_name"` ↔ `GivenName`, `"gender"` ↔ `Gender`, `"birthdate"` ↔ `DateOfBirth`, `"website"` ↔ `Webpage`, `"actort"` ↔ `Actor`, `"nameid"` ↔ `NameIdentifier`). Bidirectional — works under both `MapInboundClaims = true` and `MapInboundClaims = false`. The literal match takes precedence when both forms are present. The fallback fires a debug-level log entry naming the resolved counterpart, so operators can spot the `MapInboundClaims = true` default in their pipeline.
-
-Same Postel's-law robustness pattern `EntraActorProvider` has used for its `oid` ↔ `objectidentifier` lookup since the package shipped.
-
-`ClaimsActorProvider`'s constructor gained an optional `ILogger<ClaimsActorProvider>` parameter. The default `AddClaimsActorProvider(...)` registration extension wires it automatically; manual constructions pass `null` for no logging. `EntraActorProvider` (which subclasses `ClaimsActorProvider`) is unaffected — its `GetCurrentActorAsync` override does its own claim resolution.
-
-#### `ProblemDetails.Instance` populated from request URL ([#496](https://github.com/xavierjohn/Trellis/pull/496))
-
-All nine `Trellis.Asp` ProblemDetails emission sites now populate `ProblemDetails.Instance` from `HttpContext.Request.GetEncodedPathAndQuery()` per RFC 9457 §3.1: `ResponseFailureWriter` (both `Results.Problem` and `Results.ValidationProblem` branches), `ScalarValueValidationEndpointFilter` (Minimal API), three sites in `ScalarValueValidationFilter` (MVC), and four sites in `ScalarValueValidationMiddleware`. Server-relative form (path + query, percent-encoded) avoids host disclosure for services behind reverse proxies. The shipped contract documented in `trellis-api-core.md`, `trellis-api-asp.md`, `trellis-api-testing-reference.md`, `integration-aspnet.md`, `integration-testing.md`, `migration.md`, `Trellis.Asp/README.md`, and `Trellis.Asp/NUGET_README.md` is aligned with this behavior. `ResourceRef` integration into `Instance` (using the typed payload's resource identity when the request URL doesn't carry it) is tracked as a follow-up.
-
-### Added
-
-#### `MaybePrimitiveJsonConverterFactory` and `MaybePrimitiveModelBinder<T>` — `Maybe<TPrimitive>` direct support on DTOs and route/query/header parameters
-
-Closes the long-standing asymmetry where Trellis already shipped first-class JSON + binder support for `Maybe<TScalar>` (typed value objects implementing `IScalarValue<TSelf, TPrimitive>`) but raw `Maybe<long>` / `Maybe<int>` / `Maybe<string>` / `Maybe<DateTime>` fell through to STJ's default object handling, which would silently serialize the `Maybe<T>` struct's public members (`HasValue`, `HasNoValue`, `Value`) — producing JSON the converter cannot itself parse back. Consumers had to either declare nullable transports on every DTO and lift via `.AsMaybe()` at the seam, or wrap every primitive in a scalar value object even when no domain validation was warranted. The asymmetry was structurally backwards: the supported case (`Maybe<RequiredString<EmailAddress>>`) was *more* complex than the unsupported case (`Maybe<long>`).
-
-`Maybe<T>` now works directly on DTOs and route/query/header parameters for the closed primitive allowed list (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`) — the same set `CompositeValueObjectJsonConverter` supports. The rule is uniform: "`Maybe<T>` works wherever `T` is a primitive Trellis already supports directly".
-
-Three shipped types:
-
-- `MaybePrimitiveJsonConverterFactory` — `JsonConverterFactory` that produces `MaybePrimitiveJsonConverter<T>` for `Maybe<T>` shapes in the allowed list. Auto-registered by `AddTrellisAsp(...)` alongside `MaybeScalarValueJsonConverterFactory` (same `JsonSerializer.IsReflectionEnabledByDefault` gate for AOT). JSON `null` or absent → `Maybe<T>.None`; primitive value → `Maybe.From(value)`. Reads and writes dispatch on the closed primitive allowed list via typed `Utf8JsonReader` / `Utf8JsonWriter` methods — no reflection, no `JsonSerializer` round-trip, no AOT/trim warnings.
-- `MaybePrimitiveJsonConverter<T> : JsonConverter<Maybe<T>>` where `T : notnull` — the concrete converter the factory produces.
-- `MaybePrimitiveModelBinder<T>` for route / query / header parameter binding. Missing or empty value → `Maybe<T>.None`; parseable value → `Maybe.From(parsed)`; unparseable value → `ModelState` error. `ScalarValueModelBinderProvider` extended to recognise the `Maybe<TPrimitive>` shape for the same allowed list and create the new binder — old null-return behavior on `Maybe<TPrimitive>` is replaced.
-
-The closed allowed list is intentional: shapes outside the set (`DateOnly`, `TimeOnly`, unsigned numerics, arrays, collections, nested composites, scalar VOs from outside the IScalarValue contract) continue to require the wire-shape DTO + adapter pattern (Cookbook Recipe 14, `T?` + `.AsMaybe()`). The factory's `CanConvert` and the binder provider's allowed list check both return false / null for those shapes so the existing `MaybeScalarValueJsonConverterFactory` retains exclusive responsibility for IScalarValue-shaped maybes, and unsupported shapes don't silently fall back to broken behavior.
-
-Recipe 14 updated with the new row, plus a third row clarifying the `Maybe<TUnsupportedPrimitive>` path still goes through the DTO seam.
-
-#### `WithCacheControl(...)` on `HttpResponseOptionsBuilder<T>` + `CacheControl` presets
-
-New fluent helper on `HttpResponseOptionsBuilder<T>` (and the non-generic `HttpResponseOptionsBuilder` for `Error.ToHttpResponse`) for declaring a per-endpoint `Cache-Control` directive. Closes the gap in the response-shaping surface: the builder already covered `WithETag`, `WithLastModified`, `Vary`, `WithContentLanguage`, `WithContentLocation`, `WithAcceptRanges`, `Created` / `CreatedAtRoute` / `CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, and `WithErrorMapping`, but had no `Cache-Control` helper. Consumers wanting a per-endpoint directive either skipped the header (intermediate proxies guess, browsers heuristic-cache), set it via separate middleware (loses the per-endpoint fluent shape), or wrote `Response.Headers.CacheControl = "..."` inside the handler (string-typed, no validation).
-
-Two overloads on the generic builder, one on the non-generic:
-
-- `WithCacheControl(CacheControlHeaderValue value)` — static directive emitted on **success and failure** responses so a sensitive endpoint declaring `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 422 from intermediate-cache leakage just as much as the 200. A leaked 404 from `/api/users/{id}` reveals which user IDs exist; the static-value contract makes "do not cache this endpoint, ever" expressible as one call.
-- `WithCacheControl(Func<TDomain, CacheControlHeaderValue?> selector)` — per-domain selector, success-path only (failures carry no domain value, and `WriteOutcome.UpdatedNoContent` / `AcceptedNoContent` skip the selector since they carry no payload). Returning `null` from the selector skips the per-domain header; when the static-value overload is also configured, the static value remains in place (the selector "refines, then falls back to static" rather than "overrides to nothing").
-- Non-generic builder gets the static-value overload only. Consumed only by `Error.ToHttpResponse(...)`, so this overload sets `Cache-Control` on the ProblemDetails failure response — `Error.ToHttpResponse(o => o.WithCacheControl(CacheControl.NoStore()))` keeps deterministic-error responses out of intermediate caches.
-
-New `CacheControl` static helper class with fresh-instance presets for the common directives:
-
-- `CacheControl.NoStore()` — `no-store`. Identity, secrets, anything that must not be cached anywhere.
-- `CacheControl.NoCache()` — `no-cache`. Caches may store but must revalidate before serving.
-- `CacheControl.Public(TimeSpan maxAge)` — `public, max-age={seconds}`. Public catalog / reference data.
-- `CacheControl.Private(TimeSpan maxAge)` — `max-age={seconds}, private`. Per-user data, user-agent caches only. Combine with `VaryForActor()` for shared-cache paths.
-- `CacheControl.Immutable(TimeSpan maxAge)` — `public, max-age={seconds}, immutable` (RFC 8246). Versioned / content-addressed assets that will not change for the freshness lifetime.
-
-Every preset is a method (not a property) so each call returns a fresh `CacheControlHeaderValue`. `CacheControlHeaderValue` is mutable; if presets returned shared instances a single caller mutating one value could corrupt every subsequent call. Timed presets reject negative durations (RFC 9111 `delta-seconds` is unsigned).
-
-Wired into all four success/failure response paths so the contract holds uniformly: `TrellisHttpResult` (`Result<T>` / `Result<Unit>`), `TrellisWriteOutcomeResult` (`Created` / `Updated` / `Accepted` with selector, plus static on `UpdatedNoContent` / `AcceptedNoContent` since the static value applies regardless of body), `TrellisErrorOnlyResult` (non-generic Error / Result failures), and a new `PagedSuccessHeaderWrapper` alongside the existing `ActorVaryWrapperResult` for `Result<Page<T>>` success.
-
-The `ApplyBuilderMetadata` payload-presence gate was lifted from `domain is null` to an explicit `(hasDomain, domain)` tracker so domain-dependent selectors (`ETag`, `Last-Modified`, `Content-Location`, `Cache-Control`) no longer run against `default(TDomain)` for value-type `TDomain` on the no-payload `WriteOutcome` cases. The previous gate worked for reference-type `TDomain` (default is null) but for `record struct` VOs or primitive id types it let selectors fire against a default-constructed value. The new `Cache-Control` selector exposed the bug; the older selectors had the same latent defect.
-
-Cache-Control composes with `VaryForActor()` — Cache-Control says "is this cacheable, and for how long"; `Vary` says "by which request dimensions does the cache key vary." Per-user representations behind a shared cache combine both: `opts.WithCacheControl(CacheControl.Private(TimeSpan.FromMinutes(5))).VaryForActor()`.
-
-#### `VaryForActor()` on `HttpResponseOptionsBuilder<T>` + `IProvideActorVaryHeaders`
-
-New fluent helper for partitioning intermediate-cache entries by actor without consumers having to remember which header(s) the registered `IActorProvider` actually depends on. Calling `o.VaryForActor()` on the response builder resolves the registered provider, checks for the new `IProvideActorVaryHeaders` capability interface, and appends each declared header (e.g. `Authorization` for the bundled `ClaimsActorProvider` / `EntraActorProvider`; `X-Test-Actor` for `DevelopmentActorProvider`) to the response `Vary` header. Closes a real cache-poisoning class of bug — a forgotten `Vary: Authorization` lets a misbehaving intermediate cache serve actor A's response to actor B.
-
-Fail-closed: when the registered `IActorProvider` does not implement `IProvideActorVaryHeaders`, or when the implementation returns an empty `VaryByHeaders` collection, `VaryForActor()` throws `InvalidOperationException` at apply time rather than silently emit an incorrect or incomplete `Vary` header. Consumers with custom providers must implement `IProvideActorVaryHeaders` explicitly to opt into the helper; consumers whose actor identity is derived from request data that cannot be cleanly named by a single HTTP header (mTLS, IP-based, etc.) should use `Cache-Control: private, no-store` for those endpoints instead.
-
-The bundled `ClaimsActorProvider` returns `["Authorization"]` as the JWT-bearer assumption baked into `AddClaimsActorProvider` / `AddEntraActorProvider`. Services that authenticate with cookies, mTLS, forwarded headers, or another non-bearer scheme must subclass `ClaimsActorProvider` and override the `virtual VaryByHeaders` property to declare the correct header(s) — failing to do so allows the same cache-poisoning that `VaryForActor()` exists to prevent. `DevelopmentActorProvider` returns `[HeaderName]` (the test-actor header). `CachingActorProvider` delegates to the wrapped provider's `VaryByHeaders`; if the wrapped provider does not implement the interface, the caching wrapper surfaces an empty collection so `VaryForActor()` throws fail-closed pointing at the underlying provider as the remediation site.
-
-The helper plugs into both `TrellisHttpResult` (the standard `Result<T>` success path) and `TrellisWriteOutcomeResult` (the `Result<WriteOutcome<T>>` Created/Updated/Accepted success path), so endpoints returning either shape get consistent cache-partitioning behavior.
-
-#### `Trellis.Asp.ApiVersioning` package — `CreatedAtVersionedRoute` helpers + `TRLS023` analyzer
-
-New package `Trellis.Asp.ApiVersioning` ships two integrated parts that close the "201 Created Location header omits api-version → 404 on dereference" failure mode that recurred in every recent lab cycle.
-
-**Part A — runtime helper.** Three `CreatedAtVersionedRoute` extension overloads on `HttpResponseOptionsBuilder<TDomain>` resolve and inject the `api-version` route value at request time:
-
-```csharp
-result.ToHttpResponse(opts => opts
-    .CreatedAtVersionedRoute("Customers_GetById", c => c.Id.Value));
-//   ↑ Location = /customers/{id}?api-version=<requested-version>
-```
-
-Per-request resolution: `HttpContext.RequestedApiVersion` → endpoint metadata's single declared version → `ApiVersioningOptions.DefaultApiVersion` → throw `InvalidOperationException` (silent picking would resurrect the original 404 bug). Skips injection on `[ApiVersionNeutral]` endpoints and URL-segment-versioned routes. Three overloads cover multi-key, single-id-convenience, and explicit-version-pin cases.
-
-**Part B — `TRLS023` analyzer + code-fix.** Warns when `HttpResponseOptionsBuilder<T>.CreatedAtRoute(routeName, c => new RouteValueDictionary { ... })` is invoked on a controller decorated with `[ApiVersion(...)]` and the dictionary literal does not include an `"api-version"` key. The code-fix mechanically rewrites the call to `CreatedAtVersionedRoute(...)`. Bails to a false-negative (no warning) for non-literal route values, `[ApiVersionNeutral]` controllers, and non-versioned controllers — preventing alarm fatigue.
-
-This closes B37's regression risk: the analyzer catches the bug at compile time even for code that hasn't migrated to the helper.
-
-**Architecture (additive).** `Trellis.Asp` gains one new generic primitive — `HttpResponseOptionsBuilder<TDomain>.WithRouteValueResolver(string key, Func<HttpContext, string?> resolver)` — that lets any consumer register a per-request route-value injector for `Location`-header generation. `Trellis.Asp.ApiVersioning` builds `CreatedAtVersionedRoute` on top of this hook. The hook is reusable for tenant id, culture code, or any other cross-cutting per-request concern; the api-versioning package keeps its `Asp.Versioning.*` dependency contained.
-
-**Out of scope** (deferred to follow-up PRs):
-- **Literal-propagation generator (originally Part C).** Implemented and reverted in this PR after recognising the design flaw: a single `ApiVersionConstants.Current` doesn't model services that support multiple versions concurrently — older `[ApiVersion(...)]` literals stay pinned to historical values when a new version ships, so `Current` only covers brand-new endpoints. A correct generator would emit a multi-version directory (e.g., scan `[ApiVersion]` attributes at build time, emit `KnownApiVersions.V20261112`, `V20261201`, `Current = V20261201`). Tracked separately as a design spike.
-- **Text-asset substitution** for `http-client.env.json`, `.vscode/launch.json`, `api.http`. The MSBuild target that mutates tracked files needs its own design pass (file-mutation vs. template-with-output, IDE behaviour, merge conflicts).
-- **Custom route-value key configuration** — hosts using a non-default `IApiVersionReader` parameter name (e.g., `"v"` instead of `"api-version"`) should bypass `CreatedAtVersionedRoute` and call `WithRouteValueResolver` directly for now.
+The first GA release under the **Trellis** name. This release supersedes
+the `FunctionalDdd` 2.x line; consumers upgrading from `FunctionalDdd 2.1`
+should follow the [migration guide](docs/docfx_project/articles/migration.md)
+for step-by-step instructions. The summary below describes what changed in
+the move from FunctionalDdd 2.1 to Trellis 3.0.
+
+### Project rename and package reorganization (breaking)
+
+- The project is renamed from `FunctionalDdd` to `Trellis`. The root
+  namespace, all package ids, and all repository URLs change accordingly
+  (e.g., `FunctionalDdd.RailwayOrientedProgramming` becomes `Trellis.Core`).
+- The five FunctionalDdd packages are consolidated and expanded into the
+  Trellis package family:
+
+  | FunctionalDdd 2.1 package        | Trellis 3.0 package                                  |
+  |----------------------------------|------------------------------------------------------|
+  | `RailwayOrientedProgramming`     | `Trellis.Core` (folded with DomainDrivenDesign)      |
+  | `DomainDrivenDesign`             | `Trellis.Core`                                       |
+  | `CommonValueObjects`             | `Trellis.Primitives`                                 |
+  | `Asp`                            | `Trellis.Asp`                                        |
+  | `FluentValidation`               | `Trellis.FluentValidation`                           |
+
+### New packages
+
+- `Trellis.Mediator` — Result-aware in-process mediator with a canonical
+  pipeline (exception → tracing → logging → authorization → resource
+  authorization → validation → transactional commit, outermost to innermost).
+  Supports both reflection-based and AOT-friendly source-generated dispatch.
+- `Trellis.Authorization` — typed `Actor` / `ActorId`, `IAuthorize`,
+  `IAuthorizeResource<TResource>`, `IAuthorizeResourceVia<TOwner>`, and the
+  ASP integration points (`IActorProvider`, `ClaimsActorProvider`,
+  `EntraActorProvider`, `CachingActorProvider`).
+- `Trellis.EntityFrameworkCore` — unit-of-work, transactional command
+  behavior, `TrellisScalarConverter`, the composite value object EF
+  convention, `[OwnedEntity]` attribute, and supporting analyzers.
+- `Trellis.StateMachine` — declarative aggregate state machines with
+  compile-time transition validation.
+- `Trellis.Asp.ApiVersioning` — `CreatedAtVersionedRoute` helpers and
+  versioned-projection guard rails for `Asp.Versioning.Http`.
+- `Trellis.ServiceDefaults` — single composition root (`AddTrellis(...)`)
+  that wires every framework slot in the right order.
+- `Trellis.Http` — typed HTTP-client primitives for outbound calls.
+- `Trellis.Testing` and `Trellis.Testing.AspNetCore` — FluentAssertions
+  extensions for `Result<T>` / `IResult`, problem-details assertions, and
+  WebApplicationFactory helpers.
+- `Trellis.Analyzers` — Roslyn analyzers covering Maybe / Result misuse,
+  ValueObject derivation, EF / JSON converter wiring, etc. (`TRLS001` …
+  `TRLS042+`).
+
+### `Error` redesigned as a closed ADT (breaking)
+
+`Error` is no longer an open class with public constructors and ad-hoc
+factories. It is now a closed algebraic data type whose only inhabitants
+are the documented kinds: `Validation` / `UnprocessableContent`, `NotFound`,
+`Conflict`, `Forbidden`, `Unauthorized`, `InternalServerError`. Each kind
+has a typed factory (e.g., `Error.NotFound(...)`, `Error.Conflict(...)`)
+that surfaces the metadata the wire mapper needs (resource references,
+problem-details fields).
+
+Consumers porting from `FunctionalDdd.Error`'s open constructor / generic
+factories should map each call site to one of the kind-specific factories.
+The migration guide covers the mechanical replacements.
+
+### `Result<T>` JSON safety net (breaking)
+
+`Result<T>` (and the `IResult` / `IResult<T>` interfaces) now carry a
+default `[JsonConverter]` that throws `NotSupportedException` on any direct
+JSON serialize / deserialize attempt. Previously, returning a raw
+`Result<T>` from a controller silently produced a struct-dump JSON shape
+(`{"IsSuccess": true, "Value": ..., "Error": null}`) with no HTTP
+status-code mapping. The new converter fires on the first request and
+names the canonical fix: call `.ToHttpResponse()` (Trellis.Asp) or unwrap
+via `Match` / `TryGetValue` before serialization. Option-registered
+converters take precedence and let consumers opt back in for logging /
+IPC / storage scenarios.
+
+### `RequiredXxx<T>` POLA realignment (breaking)
+
+The `RequiredXxx<T>` family now follows a single rule: **reject only null**.
+Per-type "zero value" rejection (`""` for strings, `0` for numerics,
+`Guid.Empty`, `DateTime.MinValue`) is opt-in via the new `[NotDefault]`
+attribute. String trim is opt-in via `[Trim]`. This makes the family
+uniform with `RequiredInt<T>(0)` — which has always succeeded — and matches
+the Principle of Least Astonishment.
+
+Validation order in the generated `TryCreate` is `null → [Trim] →
+[NotDefault] → [StringLength] / [Range] → ValidateAdditional`. New
+compile-time diagnostics `TRLS040` (`[NotDefault]` on `RequiredBool<T>`),
+`TRLS041` (`[Trim]` on a non-`RequiredString`), and `TRLS042` (`[NotDefault]`
+on `RequiredEnum<T>`) cover degenerate combinations.
+
+The EF Core `TrellisScalarConverter` rehydrates via `TryCreate`, so
+lenient-by-default types now accept persisted sentinel values
+(`Guid.Empty`, `""`, `DateTime.MinValue`). Add `[NotDefault]` to any
+`RequiredGuid` / `RequiredDateTime` used as an aggregate id or EF-mapped
+property to preserve strict rehydration.
+
+### Actor model
+
+- `Actor` is an entity (identity-based equality on `ActorId`); equality
+  is no longer a record-style structural compare over every field.
+- `Actor.Id` is strongly typed as `ActorId : RequiredString<ActorId>`
+  (`[Trim, NotDefault]`). The string-accepting constructors and `Create`
+  overloads remain for authentication-boundary code (claim → actor) and
+  wrap the raw value via `ActorId.Create` internally. JSON serialization
+  emits the raw string for wire compatibility.
+- `IActorProvider.GetCurrentActorAsync` returns `Task<Maybe<Actor>>`
+  (breaking) — anonymous requests are an absence, not a thrown exception.
+  `CachingActorProvider` caches both successes and synchronous failures
+  from the inner provider.
+- `ClaimsActorProvider` understands both short and long claim-name forms
+  (including `PermissionsClaim` and `JwtBearer.MapInboundClaims`).
+
+### Mediator, domain events, and resource authorization
+
+- `Trellis.Mediator` introduces a Result-aware pipeline; `AddMediator` and
+  the AOT-friendly source-generator path share the same canonical order.
+- Domain event dispatch lands inside the unit-of-work commit so events
+  publish only when the transaction succeeds.
+- Resource authorization (`IAuthorizeResource<TResource>`,
+  `IAuthorizeResourceVia<TOwner>`) checks ownership / permissions against
+  the loaded resource exactly once per request, slotted immediately before
+  the validation behavior.
+- Unified validation: a single `ValidationBehavior` runs `IValidate.Validate`
+  plus every `IMessageValidator<TMessage>` in DI. FluentValidation plugs in
+  as one such validator (`AddTrellisFluentValidation()`) rather than as its
+  own pipeline slot.
+
+### EF Core integration
+
+- Composite value object convention: `[OwnedEntity]`-decorated composite
+  VOs flow through `TrellisCompositeValueObjectConvention` and a generated
+  EF model configuration. The supported shape is `{ get; private set; }`
+  on every property — `TRLS022` enforces this.
+- `TrellisScalarConverter` round-trips `ScalarValueObject<TSelf, T>` via
+  `TryCreate`, surfacing creation failures as
+  `TrellisPersistenceMappingException`.
+- `CompositeValueObjectJsonConverter<T>` and the matching analyzer
+  (`TRLS020`) ensure DTOs exposing `[OwnedEntity]` composites carry a
+  `[JsonConverter]` so STJ deserialization goes through `TryCreate`.
+- New analyzer `TRLS021` flags redundant manual EF configuration that the
+  convention already handles.
+
+### ASP wire contract
+
+- `Error.UnprocessableContent` is the canonical validation failure code;
+  domain validation, binder-level value-object validation, and MVC body
+  validation all return 422 with a problem-details payload that expands
+  composite value-object failures into per-leaf entries.
+- `WWW-Authenticate` is emitted on mediator-produced 401 responses.
+- `ProblemDetails.Instance` is populated from the request URL (#496).
+- `HttpResponseOptionsBuilder<T>` and `HttpResponseOptionsBuilder<Page<T>>`
+  support `WithCacheControl(...)` / `CacheControl` presets, `VaryForActor()`
+  / `IProvideActorVaryHeaders`, `WithETag` / `WithLastModified` /
+  `Vary` / `WithContentLanguage` / `WithContentLocation`, and
+  `EvaluatePreconditions()` (`If-None-Match` / `If-Modified-Since` → 304;
+  failing `If-Match` / `If-Unmodified-Since` → 412), evaluated once per
+  request so non-deterministic selectors do not produce inconsistent
+  headers.
+- `Maybe<TPrimitive>` is supported directly on DTOs (via
+  `MaybePrimitiveJsonConverterFactory`) and on route / query / header
+  parameters (via `MaybePrimitiveModelBinder<T>`).
 
 ### Documentation
 
-#### Cookbook Recipe 21 — Parallel independent loads in handlers (`Result.ParallelAsync` + `WhenAllAsync`)
-
-Added a dedicated cookbook recipe for the `Result.ParallelAsync(...).WhenAllAsync()` pattern in handlers that load multiple independent aggregates. The recipe shows the canonical handler shape, the matching anti-pattern (sequential `await` over independent loads), and the rule for "independent" (the second factory's body does not reference any value produced by the first).
-
-Empirical motivation: across two lab cycles and three AI models (Opus 4.7, GPT-5.5, Claude Sonnet), every `CreateDraftOrder`-style handler that loaded a customer plus a product was written sequentially — the framework's `ParallelAsync` API was discovered zero times out of six runs. The pattern was previously documented only by API reference (`trellis-api-core.md`) plus a one-line "Mistake-regression routing" pointer; that wasn't enough to surface the API at the moment of authoring.
-
-This release also:
-- adds the recipe to the Patterns Index `Task -> recipe lookup` table under "Load multiple independent aggregates in one handler";
-- replaces the Mistake-regression row's API-reference pointer with a direct Recipe 21 link;
-- cross-links from Recipe 2 (the canonical command/handler recipe) to Recipe 21 for the multi-load case;
-- adds a Cross-cutting tip listing the trigger ("two independent `await repo.X()` calls in a handler") so readers find the pattern by symptom even if they don't read recipes top-to-bottom;
-- ships a compiled `Examples/CookbookSnippets/Recipe21_ParallelAsync.cs` so the recipe code is verified at every CI build.
-
-The same recipe should also be mirrored into the ASP template's cookbook copies in the `xavierjohn/TrellisAspTemplate` repository — that's a separate follow-up because the template is its own repo.
-
-#### Cookbook cleanup — retire Recipe 15, fold residual into Recipe 8, fix Recipe 11 TRLS001 / Recipe 14 wording
-
-Recipe 15 (*Specifications with `Maybe<T>`: the fake/real divergence trap*) taught a `GetValueOrDefault(SENTINEL)` workaround for a `TRLS003` false positive on multi-clause `Maybe<T>` predicates inside `Specification<T>.ToExpression()`. The false positive was fixed in the analyzer (`UnsafeMaybeValueAccess` now recognises the multi-clause guard), so the workaround is no longer needed. The recipe was actively misleading: it labelled the natural multi-clause shape as "❌ Wrong — outer `&&` hides the guard" and the sentinel as "✅ Correct — the analyzer-clean form". GPT-5.5's 2026-05-06 lab feedback explicitly called out the sentinel-as-guidance as a footgun adopted *because* Recipe 15 told them to.
-
-Recipe 15 is now a stub redirecting to Recipe 8. The recipe number is preserved so existing bookmark and search-index entries remain stable; future content should renumber from Recipe 22 rather than reusing 15.
-
-Recipe 8's "Filtering on `Maybe<T>` properties in LINQ and `Specification<T>`" subsection picks up the residual content: natural multi-clause guard as the canonical specification shape, sentinel as a still-working alternative for "absence acts as the most-permissive value", `AddTrellisInterceptors()` prerequisite, and the "share the same `Specification<T>` between EF and `FakeRepository` — never duplicate the predicate" rule.
-
-Also in this release:
-
-- **Recipe 11 TRLS001 fix corrected.** The previous "fix" suggested `var _ = PlaceOrder(cmd).Match(_ => 0, e => throw new("..."));` — throwing from a terminal handler defeats the point of returning a `Result<T>` at all (the caller can no longer compose with the value). New guidance offers three alternatives: propagate up the ROP chain via `Map`, terminal side-effects via `Switch` (which is the void-returning sibling of `Match`), or terminal projection via `Match` returning a value from both branches. Note: TRLS010 only fires inside chain methods like `Bind`/`Map`/`Tap`/`Ensure` — not `Match` or `Switch` — so this is a Result-discipline guideline rather than an analyzer rule.
-- **Recipe 14 wording.** "the validation message produced by `PhoneNumber.Create`" → `PhoneNumber.TryCreate`. `Create` is the throwing factory; the validation message is produced by `TryCreate`.
-- **Patterns Index `Task -> recipe lookup` row** for "Map `Maybe<T>` or composite value objects with EF Core" no longer references Recipe 15.
-- **Mistake-regression routing row** for "Overdue/date-filter queries over `Maybe<DateTime>`" points at Recipe 8 directly.
-- **Cross-cutting tip** about `Maybe<T>.Value` inside expression trees rewritten to reflect TRLS003's post-fix recognition of multi-clause guards.
-- **Recipe 16's** cross-link "fake/real divergence trap from Recipe 15" → "Recipe 8".
-
-### Changed (Breaking)
-
-#### `Trellis.Mediator.LoggingBehavior` — per-message logs lowered from `Information` to `Debug`
-
-The mediator pipeline's `LoggingBehavior` previously emitted both the entry log (`Handling {MessageName}`) and the success-exit log (`Handled {MessageName} in {ElapsedMs:0.00}ms`) at `LogLevel.Information`. Under ASP.NET Core's default minimum log level (`Information`), every mediator dispatch produced two log lines per request — flooding production logs and burying the actual `Failed:` warnings during test runs.
-
-Per-call timing is cross-cutting observability noise, not a business event. This release lowers both the entry and success-exit lines to `LogLevel.Debug`. Failure exits stay at `LogLevel.Warning` so they continue to surface at the default minimum level. Failures that bypass mediator logging (exceptions in non-Trellis pipeline behaviors, etc.) are unaffected.
-
-| Stage | Before | After |
-|---|---|---|
-| `Handling {MessageName}` | `Information` | **`Debug`** |
-| `Handled {MessageName} in {…}ms` (success) | `Information` | **`Debug`** |
-| `Handled {…} — Failed: {ErrorSummary}` (failure) | `Warning` | `Warning` (unchanged) |
-
-**Migration**: consumers that depend on mediator timing in `Information`-level logs (dashboards, log aggregators, structured log queries on the `MessageName` template) must explicitly raise the level via `appsettings.json`:
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Trellis.Mediator": "Debug"
-    }
-  }
-}
-```
-
-For most production services, the right path forward is to derive per-message latency from the `Trellis.Mediator` `Activity` source (already populated by `TracingBehavior<,>`) rather than from log lines — the activity carries the same elapsed-ms data plus structured tags and trace-correlation IDs.
-
-#### Binder-level value object validation failures now return 422 (Unprocessable Content), aligning with domain handler failures
-
-The framework previously returned **400 Bad Request** for two distinct condition shapes:
-
-1. **Trellis-driven semantic validation failures during binding** — composite value object `TryCreate` failures inside `CompositeValueObjectJsonConverter`, missing required composite properties, unsupported primitive types, JSON shape mismatches, and scalar value object `TryCreate` failures on query/route parameters.
-2. **Plain JSON syntax errors** — malformed JSON tokens, unclosed braces, and other `System.Text.Json.JsonException`s that aren't a `TrellisJsonValidationException`.
-
-Domain handler failures returning `Result.Fail(Error.UnprocessableContent(...))` already returned **422 Unprocessable Content** via `ResponseFailureWriter`. Clients had to special-case both for the same logical "your input is invalid" condition.
-
-This release aligns the status code with the actual semantic distinction in RFC 9110 §15.5.21 ("well-formed but unable to be processed due to semantic errors"):
-
-- **422** — `TrellisJsonValidationException` from any source (composite VO converter, scalar VO TryCreate failure, `ValidationErrorsContext`-collected errors), via `ScalarValueValidationMiddleware`, `ScalarValueValidationFilter`, and `ScalarValueValidationEndpointFilter`.
-- **400** — plain `JsonException` (the bytes are not valid JSON, RFC 9110 §15.5.1).
-
-**Mixed-failure precedence**: when a request contains both a plain JSON syntax error AND a Trellis semantic failure (e.g., malformed body + invalid query scalar VO), 400 wins. The bytes weren't valid JSON, which is a more fundamental client error than any semantic failure on the same request.
-
-`ProblemDetails.Type`, `Title`, and `Status` populate via the framework defaults (no Trellis override) — `https://tools.ietf.org/html/rfc4918#section-11.2` for 422, `https://tools.ietf.org/html/rfc9110#section-15.5.1` for 400.
-
-**Migration**: clients with `if (statusCode == 400)` checks for input validation should switch to `if (statusCode == 400 || statusCode == 422)` or — better — handle both via the shared `ValidationProblemDetails.Errors` shape, which is unchanged.
-
-### Fixed
-
-#### MVC body-validation responses no longer include a phantom body-parameter entry and now expand composite value object failures into per-leaf entries
-
-When a controller action's `[FromBody]` parameter failed JSON deserialization, the 400 `ValidationProblemDetails` response contained two defects:
-
-1. A phantom `"<paramName>": ["The <paramName> field is required."]` entry, emitted by the model-binding layer after the input formatter recorded the deserialization error and the parameter bound to `null`.
-2. Composite value object validation failures landed under a single `$.<path>` key with all field-level reasons joined into one string — the per-leaf expansion added in the previous release only ran on the Minimal API path.
-
-Root cause for (2): MVC's `SystemTextJsonInputFormatter.WrapExceptionForModelState` wraps the original `JsonException` in an `InputFormatterException` when `JsonOptions.AllowInputFormatterExceptionMessages` is `true` (the framework default). `ModelStateDictionary.TryAddModelError` then takes its `InputFormatterException`/`ValueProviderException` shortcut that calls the string-only overload, dropping the exception object — so `TrellisJsonValidationException.UnprocessableContent` never reached the response writer.
-
-`AddTrellisAsp()` now sets `AllowInputFormatterExceptionMessages = false` so the original `TrellisJsonValidationException` is preserved in `ModelState` (the user-visible `ErrorMessage` text is unchanged either way). `ScalarValueValidationFilter` then unpacks any `TrellisJsonValidationException` it finds in `ModelState`, emits one entry per `FieldViolation` for the structured shape (or the curated exception message at the JSON path for the unstructured shape — missing required property, unsupported primitive, JSON shape mismatch), and drops the phantom body-parameter entry strictly by key match against the action's `[FromBody]` parameter name.
-
-#### `TRLS003` no longer flags multi-clause guarded `Maybe<T>.Value` access
-
-The `UnsafeMaybeValueAccess` analyzer recognized the short-circuit guard `m.HasValue && m.Value` only when the two clauses were the only operands of the `&&` expression. The natural multi-clause shape
-
-```csharp
-order => order.Status == Submitted && order.SubmittedAt.HasValue && order.SubmittedAt.Value < cutoff
-```
-
-raised a false `TRLS003` because C# left-associates `a && b && c` as `(a && b) && c`, making the immediate left operand of the outermost `&&` a binary expression rather than the `HasValue` member access.
-
-The analyzer now recognizes a `HasValue` guard anywhere in the connected `&&` subtree to the left of the `.Value` access, with parentheses transparent. Recursion stops at non-`&&` boundaries (`||`, `!`, ternary), so genuinely unguarded access — `m.Value < x && m.HasValue`, `m.HasValue || m.Value`, `!m.HasValue && m.Value` — still reports.
-
-### Changed
-
-#### Trellis.Core — focused re-inspection findings (m-C-1, m-C-2, i-C-1, i-C-2 + GPT-5.5 N-C-1..N-C-7)
-
-Closes a focused re-inspection of Trellis.Core (the foundational package — 144 source files, 116 unique public type names) from `files/core-inspection-report.md`. The Phase 1 pass was deliberately scope-bounded; **Phase 2 GPT-5.5 meta-review was explicitly relied on for the source areas I did not deeply inspect** (DDD, Errors, EquatableArray, Pagination, RopTrace, ResourceRef, EntityTagValue). Meta-review amended all 4 self-inspection findings and surfaced **7 NEW findings** (1 reframed Minor merged into m-C-1, 5 Minor, 2 Info).
-
-- **(Minor) m-C-1 — api ref frontmatter `types:` rewritten from 25 partial entries to 53 actual public surface types.** Previously listed only 25 of the package's data/model/interface/attribute types. Most-critical miss: `ValueObject` (the abstract base class for ALL composite value objects in user code). Other missing types added: 6 public interfaces (`IAggregate`, `IEntity`, `IResult`, `IResult<TValue>`, `IFailureFactory<TSelf>`, `IScalarValue<TSelf,TPrimitive>`, `IFormattableScalarValue<TSelf,TPrimitive>`), the 8 `Required*<TSelf>` scalar value object base classes, the 4 Trellis attributes (`RangeAttribute`, `StringLengthAttribute`, `RailwayTrackAttribute`, `EnumValueAttribute`), `MaybeInvariant`, `ResultDebugSettings`, `WriteOutcome<T>`, `TrellisJsonValidationException`, `RequiredEnumJsonConverter<T>`, `TrackBehavior`, plus the static companion factories `Maybe`, `Page`, `EquatableArray` (non-generic). Per the standing convention, multi-type-parameter generics are quoted in the YAML flow sequence. Same-shape pattern as m-T-1 / m-TA-1 / m-A-1 / m-EF-1; this is the highest-frequency drift point across the run. (Subsumes the GPT-5.5 N-C-1 finding which expanded the count.)
-
-- **(Minor) m-C-2 — sync LINQ extensions in `Result/Extensions/Linq.cs` and `Maybe/Extensions/Linq.cs` now null-guard at the public-API entry point.** Previously delegated to `Map`/`Bind`/`Ensure` without their own null-checks, producing two failure modes: (a) **paramName drift** — `ResultLinqExtensions.Select(selector)` delegated to `Map(func)`, so a null selector threw `ArgumentNullException(paramName: "func")` instead of `paramName: "selector"`; (b) **wrong exception type** — `ResultLinqExtensions.SelectMany(collectionSelector, resultSelector)` and `MaybeLinqExtensions.SelectMany(collectionSelector, resultSelector)` invoked the user's selectors inside compiler-generated lambdas; null selectors threw `NullReferenceException` rather than `ArgumentNullException` with the user's paramName. `MaybeLinqExtensions.Select` was unaffected because `Maybe<T>.Map`'s paramName is also `selector`. Fixed all 4 affected methods with entry-point `ArgumentNullException.ThrowIfNull(...)`. Same shape as PR #467 m-TA-4 / m-TA-7.
-
-- **(Minor) N-C-2 (GPT-5.5 meta-review) — `ResourceRef` doc/code drift corrected.** api ref claimed `ResourceRef.For<TResource>` uses `typeof(TResource).Name` exactly and warned about CLR backtick names for closed generics. Source actually peels `Maybe<T>` wrappers recursively and strips generic arity, so `ResourceRef.For<Maybe<Order>>()` correctly resolves to `"Order"`. Other generic wrappers are NOT peeled (e.g., `Result<Order>` arity-strips to `"Result"`, not `"Order"`). Updated the doc row to match (corrected during pre-commit review which caught an overclaim about `Result<T>` peeling).
-
-- **(Minor) N-C-3 (GPT-5.5 meta-review) — `Error.Aggregate` doc claim corrected.** api ref said `Error.Aggregate` "Disallows `Cause` (pure composition)", but `Cause` is the base `Error.cs:74-81` init property and `Error.Aggregate` does not override or block it. Removed the false claim and added a note that `Cause` is inherited from the base type and is not blocked on `Aggregate`.
-
-- **(Minor) N-C-4 (GPT-5.5 meta-review) — `Maybe.Optional` overloads now `ArgumentNullException.ThrowIfNull(function)` at entry.** Both reference-type and value-type overloads previously invoked `function(value)` without a null-guard. With non-null inputs and a null function, callers got `NullReferenceException` instead of `ArgumentNullException(paramName: "function")`. Added 2 RED tests pinning the right paramName.
-
-- **(Minor) N-C-5 (GPT-5.5 meta-review) — `EquatableArray<T>.Create` / `EquatableArray<T>.From` and the non-generic companion `EquatableArray.Create<T>` / `EquatableArray.From<T>` now null-guard `items` at entry.** These factories are foundational for immutable error collections (`Error.Aggregate(IEnumerable<Error>)` depends on `EquatableArray<Error>.From(errors)`); without entry guards, a null `items` produced a framework-level `NullReferenceException` from inside `ToImmutableArray()` instead of a clean `ArgumentNullException(paramName: "items")`. Added 4 RED tests.
-
-- **(Info) N-C-6 (GPT-5.5 meta-review) — `AddResultsInstrumentation` now null-guards `builder` at entry.** Previously called `builder.AddSource(...)` directly; null `builder` threw a delegated null failure. Added 1 RED test.
-
-- **(Info) N-C-7 (GPT-5.5 meta-review) — `EntityTagValue.{StrongEquals, WeakEquals}` now null-guard `other` at entry.** Previously dereferenced `other.IsWildcard` / `other.IsWeak` / `other.OpaqueTag` without a guard; null `other` threw `NullReferenceException`. Added 2 RED tests.
-
-- **(Info) i-C-1 — Two-step → single-step audit (per PR-466 standing checklist) — broader sweep amended by GPT-5.5.** Phase 1 reported "0 actionable" within its narrow spot-check; meta-review identified actionable opportunities to use the single-step `Result<T>.TryGetValue(out value, out error)` overload (`Result{TValue}.cs:202-215`) in places that currently use the two-step `TryGetValue(out value); ... result.Error;` pattern (e.g., `Bind.cs:32-33`, `SequenceAll.cs:37-43`). **Deferred to a follow-up PR** — broad scope, low correctness risk (the two-step pattern works correctly because `Result<T>` is immutable), and inflating this PR with a sweep across many files would dilute the focused-inspection scope.
-
-- **(Info) i-C-2 — Recently-added accumulating ops well-guarded.** Confirmed: `SequenceAll.cs` and `TraverseAll.cs` null-guard at entry; the async LINQ extensions over `Task<Result<T>>` and `ValueTask<Result<T>>` are uniformly null-guarded. Only the **sync** `Linq.cs` files had the m-C-2 entry-guard gap.
-
-Refuted findings: my Phase 1 hypothesis that `WriteOutcome` is an enum/marker — actually `WriteOutcome<T>` is a generic discriminated-union sentinel (`WriteOutcome.cs:14`); my Phase 1 hypothesis that `TrackBehavior` is nested inside `RailwayTrackAttribute.cs` — it's nested syntactically (line 63) but is a top-level public enum in the `Trellis` namespace; my Phase 1 hypothesis that the `Required*` family is non-generic — actually generic `RequiredString<TSelf>`, etc. (All amendments folded into the m-C-1 frontmatter rewrite.)
-
-Tests: **+15** new tests in `Trellis.Core.Tests`:
-- 3 in `Results/Extensions/LinqTests.cs` (m-C-2 paramName + wrong-exception fix for `Result.Select` / `Result.SelectMany`).
-- 3 in `Maybes/Extensions/MaybeLinqTests.cs` (m-C-2 paramName fix for `Maybe.Select` and wrong-exception fix for `Maybe.SelectMany`).
-- 2 in `Maybes/OptionalTests.cs` (N-C-4 `Maybe.Optional` overloads).
-- 4 in `Errors/EquatableArrayTests.cs` (N-C-5 generic + non-generic Create/From).
-- 2 in `EntityTagValueTests.cs` (N-C-7 StrongEquals/WeakEquals).
-- 1 new file `ResultsTraceProviderBuilderExtensionsTests.cs` (N-C-6 AddResultsInstrumentation).
-
-All 11 RED-checked findings (3+3+2+4+2+1=15 tests, but 4 of the EquatableArray tests cover `params T[]` overloads where the C# compiler may auto-promote — confirmed RED before fix for the 11 source-changed paths).
-
-Pre-commit GPT-5.5 review confirmed all source changes are sound: m-C-1 frontmatter has 53 entries (no remaining gaps within the convention); m-C-2 guards correctly produce the user's paramName; N-C-3..N-C-7 guards are straightforward entry-point checks; i-C-1 deferral is defensible (two-step `TryGetValue + result.Error` is lower-risk because `Result<T>` is immutable; sweeping it now would expand this PR beyond focused-inspection scope). Pre-commit raised one blocking concern and one non-blocking, both addressed before commit: (1) my N-C-2 doc fix overclaimed that `Result<Order>` peels to `"Order"` — actually only `Maybe<T>` is peeled, and `Result<T>` arity-strips to `"Result"`. Tightened the api ref wording and the CHANGELOG entry. (2) The new test file `ResultsTraceProviderBuilderExtensionsTests.cs` lacked UTF-8 BOM (repo convention requires BOM). Re-saved with BOM.
-
-#### Trellis.EntityFrameworkCore — inspection findings (m-EF-1, m-EF-2, m-EF-3, m-EF-4, i-EF-1..i-EF-3 + GPT-5.5 N-EF-1, N-EF-2)
-
-Closes the formal Trellis.EntityFrameworkCore inspection backlog from `files/efcore-inspection-report.md` after a Phase-2 GPT-5.5 meta-review validated all 4 self-inspection findings (with my Phase-1 type-count amended from 20 to 21 after a complete public-type enumeration), refuted i-EF-3 (the `MaybeQueryableExtensions.WhereXxx` cookbook reference asymmetry I flagged is not real — both api refs reference the canonical helper enumeration), and surfaced 2 NEW findings: 1 Major (later reclassified as Minor doc/code drift after revalidation) and 1 Minor.
-
-**This is the largest package inspected in this run** (21 public types + 4 source generators + 13 internal conventions/interceptors).
-
-- **(Minor) m-EF-1 — api ref frontmatter `types:` corrected (worst seen this session).** Previously listed `["RepositoryBase<TAggregate,TId>", IUnitOfWork, DbContextExtensions, SaveChangesResultAsync, OwnedEntityHelpers]`: `SaveChangesResultAsync` is a method (not a type), `OwnedEntityHelpers` does not exist anywhere in the package, and 18 of 21 actual public types were missing. Updated to a flat list of 21 actual public types, with multi-type-parameter generics quoted per the YAML flow-sequence convention established by PR #465.
-
-- **(Minor) m-EF-2 — `UnitOfWorkServiceCollectionExtensions.InsertTransactionalBehavior` collapsed to a single pass over `services` (per the PR-466 standing inspection-checklist memory).** Previously did two sequential O(n) loops — first to detect an existing `TransactionalCommandBehavior<,>` registration (idempotency), then to find the last `IPipelineBehavior<,>` index for innermost insertion. Now does both in one pass. Existing tests in `UnitOfWorkServiceCollectionExtensionsTests` exercise both the idempotency contract (call twice, registered once) and the ordering contract (innermost insertion); confirmed they still pass after the refactor.
-
-- **(Minor) m-EF-3 — `RepositoryBase.{FindByIdAsync, ExistsAsync, RemoveByIdAsync}` now `ArgumentNullException.ThrowIfNull(id)` at the public-API entry.** The `where TId : notnull` generic constraint is not enforced at runtime for reference TIds (a caller can pass null via `null!` suppression). Without explicit guards: `FindByIdAsync(null)` builds `entity.Id == null` and silently returns `Maybe<T>.None`; `ExistsAsync(null)` returns false; `RemoveByIdAsync(null)` either throws from `DbSet.FindAsync([null], ct)` (provider-dependent) or returns a not-found Result that masks the caller's null-bug. Added 3 RED tests (`FindByIdAsync_NullId_ThrowsArgumentNullException`, `ExistsAsync_NullId_ThrowsArgumentNullException`, `RemoveByIdAsync_NullId_ThrowsArgumentNullException`).
-
-- **(Minor) m-EF-4 — `MaybeQueryableExtensions.{WhereLessThan, WhereLessThanOrEqual, WhereGreaterThan, WhereGreaterThanOrEqual}` now null-check `source` and `propertySelector` at the entry point.** Previously the four expression-bodied methods delegated null-checking to the private `WhereComparison` helper, which produced the correct `paramName` but was inconsistent with the rest of the public-API surface (`WhereNone`/`WhereHasValue`/`WhereEquals`/`OrderByMaybe`/etc all guard at entry). Same shape as PR #467 m-TA-3. Added 4 explicit null-guard tests (`WhereLessThan_NullSource`, `WhereLessThanOrEqual_NullPropertySelector`, `WhereGreaterThan_NullSource`, `WhereGreaterThanOrEqual_NullPropertySelector`) covering both source and propertySelector.
-
-- **(Minor) N-EF-1 (GPT-5.5 meta-review) — `MaybeExpressionRewriter` rewriter limitations documented.** The meta-review surfaced this as a Major bug (`c.Phone == Maybe.From(value)` silently miss-queries to `_phone IS NULL`), but TDD-red-first investigation showed EF Core funcletizes both `Maybe<T>.None` and `Maybe.From(value)` operands to `QueryParameterExpression`s **before** `IQueryExpressionInterceptor.QueryCompilationStarting` (where `MaybeQueryInterceptor` runs), erasing the syntactic distinction at the timing this rewriter operates. Per-expression runtime evaluation would lose query-plan parameterization, and a strict throw would break the existing `Maybe<T>.None` comparisons. **Reclassified as Minor doc/code drift within the current `IQueryExpressionInterceptor` timing**: the rewriter conservatively treats any unrecognized `Maybe<T>`-typed operand as null, and the api ref + `MaybeExpressionRewriter` doc-comment now explicitly document the limitation and direct users to `MaybeQueryableExtensions.WhereEquals` for value comparisons. A future fix via `IEvaluatableExpressionFilterPlugin` (an EF Core hook that runs **before** funcletization) is noted as a follow-up. Added one regression test (`EqualsMaybeFromValue_DocumentedLimitation_NaturalFormMissQueriesUseWhereEqualsInstead`) that pins both the miss-query behavior and the documented migration path.
-
-- **(Minor) N-EF-2 (GPT-5.5 meta-review) — bare `Maybe<T>` projection limitation documented.** `MaybeQueryInterceptor` rewrites bare `entity.Phone` to `EF.Property<T?>(entity, "_phone")`, which changes the projection lambda's return type from `Maybe<T>` to `T?` and produces an EF translation error inside `.Select(c => c.Phone)`. The api ref Common Traps section and the rewriter doc-comment now explicitly call out this limitation and recommend `c.Phone.GetValueOrDefault(default)` or client-side materialization.
-
-- **(Info) i-EF-1 — `TrellisScalarConverter<TModel, TProvider>` uses `Expression.Compile()` and reflection without AOT/Trim attributes.** Documented in the inspection report. Trellis is not broadly AOT-targeted today; if AOT becomes a goal, the converter would need `[RequiresDynamicCode]` / `[RequiresUnreferencedCode]` coverage and a fallback path. Out of scope.
-
-- **(Info) i-EF-2 — Two-step → single-step audit (per the PR-466 standing checklist).** Audited every two-step API pattern in the inspected source. Net: **1 actionable** (m-EF-2). Other candidates verified non-actionable: `RepositoryBase.RemoveByIdAsync` requires load-then-remove (need entity for not-found error message); `RepositoryBase.Add` requires the `EntityState.Detached` check to avoid forcing Added state on already-tracked entities; `MaybeQueryableExtensions` ordering family delegates to a private helper (not a paired API).
-
-- **(Info) i-EF-3 — `TrellisPersistenceMappingException` simpler ctors leave `ValueObjectType` defaulted to `typeof(object)`.** Functionally fine — only the rich 4-arg ctor populates the diagnostic properties; the simpler ctors exist for serializer/`InvalidOperationException`-base-class compatibility. Documenting only.
-
-Refuted findings: i-EF-3 (`MaybeQueryableExtensions.WhereXxx` cookbook reference asymmetry — both api refs reference the canonical `WhereHasValue/WhereNone/WhereEquals/WhereLessThan/WhereLessThanOrEqual/WhereGreaterThan/WhereGreaterThanOrEqual` enumeration, no actionable drift); my initial Phase-1 hypothesis that the rewriter could be repaired to handle `Maybe.From(value)` operands (the QueryParameterExpression lifting blocks any compile-time syntactic detection — see N-EF-1).
-
-Tests: **+8** new tests in `Trellis.EntityFrameworkCore.Tests`:
-- `FindByIdAsync_NullId_ThrowsArgumentNullException`, `ExistsAsync_NullId_ThrowsArgumentNullException`, `RemoveByIdAsync_NullId_ThrowsArgumentNullException` (m-EF-3; all RED before fix).
-- `WhereLessThan_NullSource_ThrowsArgumentNullException`, `WhereLessThanOrEqual_NullPropertySelector_ThrowsArgumentNullException`, `WhereGreaterThan_NullSource_ThrowsArgumentNullException`, `WhereGreaterThanOrEqual_NullPropertySelector_ThrowsArgumentNullException` (m-EF-4; regression-only — paramName already correct via delegated guard, tests pin the entry-point guard).
-- `EqualsMaybeFromValue_DocumentedLimitation_NaturalFormMissQueriesUseWhereEqualsInstead` (N-EF-1; pins both the documented miss-query behavior and the `WhereEquals` migration path).
-
-Pre-commit GPT-5.5 review confirmed all source changes are sound: m-EF-2 single-pass refactor preserves both idempotency and innermost-insertion contracts; m-EF-3 covers all 3 `RepositoryBase` `TId`-taking entry points (no missed virtual-hook overloads); m-EF-4 paramName behavior unchanged; doc surfaces aligned. Pre-commit raised one substantive blocking issue and two non-blocking issues, all addressed before commit: (1) softened the N-EF-1 wording from "cannot be fixed" to "cannot be fixed within the current `IQueryExpressionInterceptor` timing" and noted `IEvaluatableExpressionFilterPlugin` as a follow-up since it runs before funcletization; (2) tightened the N-EF-1 regression test to explicitly assert the natural-form miss-query (so we'd notice if the behavior changed); (3) added 4 explicit null-guard tests for the m-EF-4 comparison family rather than relying on regression-only coverage.
-
-#### Trellis.Analyzers — inspection findings (m-A-1, m-A-2, m-A-3, m-A-5, i-A-1, i-A-2 + GPT-5.5 N-A-1, N-A-2)
-
-Closes the formal Trellis.Analyzers inspection backlog from `files/analyzers-inspection-report.md` after a Phase-2 GPT-5.5 meta-review amended my self-inspection counts (19 analyzers + 4 code-fix providers + 2 type-system classes = 25 public types, not 20), refuted m-A-4 once I revalidated against the test infrastructure (the `EndsWith(".Microsoft.AspNetCore.Builder")` clause is required for analyzer tests because `AnalyzerTestHelper.WrapInNamespace` produces nested namespaces like `TestNamespace.Microsoft.AspNetCore.Builder`), and surfaced two NEW findings: 1 Major (N-A-2) and 1 Minor (N-A-1).
-
-- **(Major) N-A-2 — `UnsafeResultDeconstructionAnalyzer` no longer accepts pre-deconstruction guards as proof of safety for the assignment form.** The analyzer's `IsGuardedRead` and `HasEarlyReturnGuard` walks now reject structural guards and early-return statements whose condition is authored *before* the deconstruction assignment. Previously, an `if (!success) return;` authored before the assignment-form `(success, value, error) = result;` (i.e., where `success` is an existing local) was accepted as a guard, which is a false negative because the pre-assignment value of `success` is unrelated to the freshly produced result triple. Threaded the deconstruction's `assignment.Span.End` into the guard walks so guards are only honored when their condition's `SpanStart` is at or after the assignment. The fresh-declaration form (`var (success, value, error) = result;`) is unaffected because there is no pre-existing local to gate on. Added a regression test (`ValueReadAfterStaleEarlyReturnGuard_BeforeAssignmentDeconstruction_ReportsDiagnostic`).
-
-- **(Minor) N-A-1 — `DiagnosticDescriptors` field for TRLS013 renamed from `UnsafeValueInLinq` to `UnsafeMaybeValueInLinq` for parity with `TrellisDiagnosticIds.UnsafeMaybeValueInLinq`.** The api ref's "Constants" table referenced the constant name (`UnsafeMaybeValueInLinq`) while the "Descriptors" table referenced the field name (`UnsafeValueInLinq`); each name only existed on its respective surface. Now both surfaces use the canonical `UnsafeMaybeValueInLinq`. The old `UnsafeValueInLinq` field is retained as an `[Obsolete]` alias pointing at the same `DiagnosticDescriptor` instance — existing references still resolve to the same descriptor so `SupportedDiagnostics` registration and rule-set tooling keep working, with CS0618 nudging external consumers toward the canonical name. Added a regression test (`UnsafeValueInLinq_DescriptorAlias_PointsToSameInstance`).
-
-- **(Minor) m-A-1 — api ref frontmatter `types:` corrected.** Previously `[TRLS001..TRLS022 diagnostic rules, TrellisDiagnosticIds]` — the first entry was descriptive prose, not a type name, breaking downstream tooling that expects `types:` to be a flat list. Updated to a flat list of 25 actual public types: `TrellisDiagnosticIds`, `DiagnosticDescriptors`, 19 analyzer classes, and 4 code-fix providers. Also updated `namespaces:` from `[Trellis.Analyzers]` to `[Trellis, Trellis.Analyzers]` because `TrellisDiagnosticIds` lives in the `Trellis` namespace.
-
-- **(Minor) m-A-2 — api ref Descriptors table category column corrected.** Previously claimed sub-categories (`Trellis.Result`, `Trellis.Maybe`, `Trellis.EntityFrameworkCore`, `Trellis.Asp`, `Trellis.Primitives`) but `DiagnosticDescriptors.cs:10` defines a single shared `Category = "Trellis"` and every descriptor uses it. Users filtering by category in `.editorconfig` (`dotnet_diagnostic.category-Trellis.Result.severity = ...`) would silently no-op. Removed the misleading column; added an explicit note that all rules share the `Trellis` category and that severity should be configured by diagnostic ID.
-
-- **(Minor) m-A-3 — `UnsafeValueInLinqAnalyzer` description softened in BOTH api ref and `DiagnosticDescriptors.UnsafeMaybeValueInLinq.Description`.** Previous wording said an earlier `.Where(x => x.HasValue)` "proves the access is safe", but the implementation in `ContainsPropertyCheck` is keyword-presence-only: any `.Where(...)` lambda mentioning `HasValue` anywhere in its body suppresses TRLS013, including `.Where(x => !x.HasValue).Select(x => x.Value)` (which still throws at runtime). Reworded both surfaces to state the actual behavior and call out the predicate-shape verification limitation.
-
-- **(Minor) m-A-5 — `Trellis.Analyzers` README.md and NUGET_README.md "Key Features" lists expanded.** Previously listed 5 features and named only TRLS003, TRLS020, TRLS021, and SaveChanges. Added explicit mention of TRLS001/004/005/007/009/010 (ROP anti-patterns), TRLS018/019/022 (deconstruction, default literals, owned-entity init-only), and added a final bullet linking the api ref so the README doesn't need to enumerate every diagnostic.
-
-- **(Info) i-A-1 — Test stub `Error` is non-abstract while production `Error` is an abstract record.** Documented in the inspection report. None of the existing analyzers gate on Error abstractness, so no current test masks a production-only bug. Out of scope for this PR; a follow-up could replace the stub with `abstract` + a derived `TestError` to harden against future analyzers that DO depend on Error abstractness.
-
-- **(Info) i-A-2 — `AnalyzerReleases.Shipped.md` is empty; all 22 diagnostic IDs sit in `AnalyzerReleases.Unshipped.md`.** Roslyn release-tracking accepts diagnostics in either file, so RS2007/RS2008 do not fire. This is operational drift (release-time entries should move from Unshipped to Shipped), not a code bug. Out of scope for this PR.
-
-- **(Info) i-A-3 — `MaybeQueryableExtensions.WhereXxx` cookbook reference asymmetry — REFUTED.** GPT-5.5 verified the analyzer api ref's shorthand and EF Core api ref's enumeration align (both reference `WhereHasValue/WhereNone/WhereEquals/WhereLessThan/WhereLessThanOrEqual/WhereGreaterThan/WhereGreaterThanOrEqual`). No actionable drift.
-
-Refuted findings: m-A-4 (`CompositeValueObjectDtoConverterAnalyzer.IsAspNetCoreBuilderNamespace`'s `EndsWith(".Microsoft.AspNetCore.Builder")` clause is NOT dead code — it is REQUIRED by the analyzer test infrastructure: `AnalyzerTestHelper.WrapInNamespace` wraps every test source in `namespace TestNamespace { ... }`, so test fixtures declaring an asp-builder shim via `namespace Microsoft.AspNetCore.Builder { ... }` resolve to the nested namespace `TestNamespace.Microsoft.AspNetCore.Builder`. Without the suffix branch, the existing `MinimalApiRequestDto_WithOwnedValueObjectMissingConverter_ReportsDiagnostic` and `MinimalApiMethodGroupRequestDto_WithOwnedValueObjectMissingConverter_ReportsDiagnostic` tests stop firing. Added an explanatory comment in source so future inspectors don't repeat the mistake.). Same shape as the m-TA-2 refutation in the previous inspection: appearance-only "dead code" that is actually deliberate test-support accommodation.
-
-Tests: **+2** new tests in `Trellis.Analyzers.Tests`:
-- `ValueReadAfterStaleEarlyReturnGuard_BeforeAssignmentDeconstruction_ReportsDiagnostic` (N-A-2; confirmed RED before fix).
-- `UnsafeValueInLinq_DescriptorAlias_PointsToSameInstance` (N-A-1; pins the obsolete alias still resolves to the same descriptor).
-
-Standing two-step → single-step audit (per the PR-466 inspection-checklist memory): 0 actionable opportunities. Most candidate patterns iterate over short fixed arrays (2–9 elements) or already use `ImmutableHashSet<string>` / `ImmutableDictionary<string, string>` for fast lookup.
-
-Pre-commit GPT-5.5 review confirmed all 7 fix points: N-A-2 `assignmentEnd` threading covers structural guards (if/while/ternary) AND early-return walks while leaving fresh-declaration form unaffected; N-A-1 alias points to the same `DiagnosticDescriptor` instance with no RS-rule duplicate-instance risk and no analyzer-release-tracking impact (release tracking is by ID `TRLS013`, not descriptor field name); m-A-4 refutation supported by existing Minimal-API tests that fail if the suffix branch is removed; doc surfaces aligned (api ref Descriptors table, Constants table, analyzer-class section, descriptor `description` field, README/NUGET_README all reference `UnsafeMaybeValueInLinq`). Surfaced **zero** additional blocking findings; one non-blocking note about CS0618 warning surfacing for external consumers under `TreatWarningsAsErrors`, addressed via tightened CHANGELOG wording (alias keeps source compatible while nudging migration through CS0618).
-
-#### Trellis.Testing.AspNetCore — inspection findings (m-TA-1, m-TA-3..m-TA-7, i-TA-1, i-TA-2 + GPT-5.5 N-TA-1)
-
-Closes the formal Trellis.Testing.AspNetCore inspection backlog from `files/testing-aspnetcore-inspection-report.md` after a Phase-2 GPT-5.5 meta-review validated 5 of 6 self-inspection findings, refuted m-TA-2 (the case-insensitive fallback in `ScenarioContext.TryResolve` is required because `Record` accepts public callers' arbitrary `IReadOnlyDictionary<string, string>` headers), promoted my refutation of `MsalTestTokenProvider.AcquireTokenAsync` testUserName null-check to a real Minor (m-TA-7), and surfaced 1 NEW Major (N-TA-1: UTF-8 BOM mishandling in `HttpFileParser`).
-
-- **(Major) N-TA-1 — `HttpFileParser` now strips a leading UTF-8 BOM (U+FEFF) before line dispatch.** Many editors save `.http` files with a UTF-8 BOM by default; without stripping it, the first line of the file failed all dispatch checks (`line.StartsWith("###")` returned false because line[0] was U+FEFF, `line[0] == '@'` returned false for the same reason) and fell into `ParseRequestLine`, producing a bogus request with method `"\uFEFF@HOST"` and URL `"="`. The variable definition was lost; subsequent `{{host}}` substitutions resolved against an empty bag. The repository has a real BOM-prefixed `.http` file at `Examples/ConditionalRequestExample/api.http` that demonstrates the case. Fix: strip a single leading `'\uFEFF'` from `content` at the top of `Parse(...)` before splitting into lines. Added a regression test (`Parse_strips_leading_UTF8_BOM_so_first_line_variable_is_registered`).
-
-- **(Minor) m-TA-1 — api ref frontmatter `types:` corrected.** Previously listed `[WebApplicationFactory<TEntryPoint>, TestClient, FakeTimeProvider, EntraTokenAcquirer, HttpFileReplayer]` — all 5 entries were wrong (some belong to other packages, others don't exist anywhere). Updated to the complete actual public-type list (16 types). The api ref body already documented the real surface; only the frontmatter was broken.
-
-- **(Minor) m-TA-3 — `WithFakeTimeProvider` `out`-overloads now `ArgumentNullException.ThrowIfNull(factory)` at their entry points.** Previously the null-check happened 2 calls deep in the delegated `(FakeTimeProvider)` overload. Per GPT-5.5: not an observable param-name bug (the delegated check produces `paramName: "factory"` correctly), but inconsistent with the public-API entry-point guard pattern used elsewhere in the package. Added entry-point guards + regression tests.
-
-- **(Minor) m-TA-4 — `CreateClientWithEntraTokenAsync` now null-checks `factory` and `testUserName`.** Previously only `tokenProvider` was null-checked. A null `factory` would NRE on `factory.CreateClient()` AFTER paying the cost of a real Entra token acquisition. A null `testUserName` flowed into `MsalTestTokenProvider.AcquireTokenAsync` which threw `ArgumentNullException(paramName: "key")` from `Dictionary.TryGetValue`, confusingly NOT matching the user's parameter name. Both companion `CreateClientWithActor` overloads already null-checked `factory`; this overload was the inconsistent one.
-
-- **(Minor) m-TA-5 — `HttpFileTheoryData.FromFile` now `ArgumentNullException.ThrowIfNull(path)`.** Companion `HttpFileParser.ParseFile` already had the explicit guard. `File.ReadAllText` would also throw on null `path`, but the explicit guard at the public-API entry point keeps the surface uniform.
-
-- **(Minor) m-TA-6 — `ScenarioContext.Record` now `ArgumentNullException.ThrowIfNull(headers)`.** Previously a null `headers` was stored in the `_named` dictionary and only NRE'd later in `TryResolve` (far from the misconfiguration site). Fails fast at `Record`'s entry now.
-
-- **(Minor) m-TA-7 (GPT-5.5 promotion) — `MsalTestTokenProvider.AcquireTokenAsync` now null-checks `testUserName`.** Same shape as m-TA-4 but at the inner `AcquireTokenAsync` public surface. Previously `Dictionary.TryGetValue(null, ...)` threw `ArgumentNullException(paramName: "key")`. Defensive convention: public-API entry points get an explicit guard surfacing the right parameter name.
-
-- **(Info) i-TA-1 — Two-step → single-step audit (per the PR-466 standing inspection-checklist memory).** Audited every two-step API pattern in the package. Result: only `ScenarioContext.TryResolve`'s case-insensitive fallback looked like a two-step that could collapse to a single TryGetValue, but GPT-5.5 correctly refuted that — the fallback IS required because `Record` accepts public callers' arbitrary `IReadOnlyDictionary<string, string>` (which may or may not be case-insensitive). Other audited locations: `HttpFileRunner.cs` content-header replace (no single-op equivalent in `HttpHeaders`); `ServiceCollectionDbProviderExtensions` Where-then-Remove (list-then-remove avoids in-iteration-modification); `IServiceCollection.RemoveAll<T>() + AddXxx` (canonical idiom; framework's `Replace(...)` has different semantics). Net: **0 actionable two-step → single-step opportunities** in this package.
-
-- **(Info) i-TA-2 — `WebApplicationFactoryExtensions.CreateClientWithActor` JSON-building duplication.** The two overloads share ~10 lines of `JsonObject` construction. Refactoring was deferred — the duplication is harmless and the shapes differ slightly (the simpler overload uses empty `JsonArray` / `JsonObject` for forbidden-permissions / attributes rather than copying from an `Actor`).
-
-Refuted findings: m-TA-2 (`ScenarioContext.TryResolve` case-insensitive fallback is NOT dead code; required by public `Record` accepting arbitrary `IReadOnlyDictionary<string, string>` — existing test `ScenarioContextTests.cs:177-181` records via case-sensitive `Dictionary<string, string>` and resolves `etag` against stored `ETag`); `MsalTestOptions` mutable `Dictionary<string, TestUserCredentials> TestUsers` (intentional configuration POCO); `HttpFileParser.SubstituteStaticVars` ordinal `IndexOf` (correct for `.http`-file byte-level parsing); `HttpFileRunner.RunSingleAsync` `client.BaseAddress` null-check (`HttpClient.SendAsync` documented to throw on relative URL with no BaseAddress); `MsalTestOptions.Scopes`/`TestUsers` getter-setter (configuration POCO).
-
-Tests: **+8** new tests in `Trellis.Testing.AspNetCore.Tests`:
-- `Parse_strips_leading_UTF8_BOM_so_first_line_variable_is_registered` (N-TA-1).
-- `WithFakeTimeProvider_OutOverload_NullFactory_Throws_ArgumentNullException`, `WithFakeTimeProvider_OutOverloadWithStartInstant_NullFactory_Throws_ArgumentNullException` (m-TA-3).
-- `CreateClientWithEntraTokenAsync_NullFactory_Throws_ArgumentNullException`, `CreateClientWithEntraTokenAsync_NullTestUserName_Throws_ArgumentNullException` (m-TA-4).
-- `FromFile_NullPath_Throws_ArgumentNullException` (m-TA-5).
-- `Record_NullHeaders_Throws_ArgumentNullException` (m-TA-6).
-- `AcquireTokenAsync_NullTestUserName_Throws_ArgumentNullException` (m-TA-7, in new `MsalTestTokenProviderTests.cs`).
-
-Pre-commit GPT-5.5 review confirmed all 7 fix points (correctness of BOM-strip, null-check ordering, out-overload guards before allocations, IL2026 suppression scope, test string construction, project test-globbing, no-network-trigger from null-tests, CHANGELOG-bullet/test-count alignment) and surfaced **zero** additional findings.
-
-#### Trellis.Testing — inspection findings (m-T-1, m-T-2, m-T-3, i-T-1 + GPT-5.5 N-T-1..N-T-4)
-
-Closes the formal Trellis.Testing inspection backlog from `files/testing-inspection-report.md` after a Phase-2 GPT-5.5 meta-review validated all 4 self-inspection findings and surfaced 4 additional ones (all Minor).
-
-- **(Minor) m-T-1 — api ref frontmatter `types:` corrected.** Previously listed `[FakeRepository<,>, InMemoryUnitOfWork, ResultAssertions]` — `InMemoryUnitOfWork` doesn't exist anywhere in source, and 13 of 16 public types were missing from the metadata. Updated to the complete public type list, with multi-type-parameter generics quoted per the YAML flow-sequence convention established by PR #465.
-
-- **(Minor) m-T-2 — `FakeRepository.SaveAsync` now `ArgumentNullException.ThrowIfNull(aggregate)`.** Previously a null `aggregate` produced an opaque `NullReferenceException` at `aggregate.Id`. The companion `Add(TAggregate)`, `Remove(TAggregate)`, `WithUniqueConstraint(Func<...>)`, `FindAsync(Func<...>)`, and both `WhereAsync(...)` overloads were already null-guarded; `SaveAsync` was the only public method missing the standard fail-fast guard.
-
-- **(Minor) m-T-3 — `FakeRepository.Remove` and `DeleteAsync` now capture domain events before removal.** Previously both methods removed the aggregate from the in-memory store WITHOUT capturing its `UncommittedEvents()` into `PublishedEvents` or calling `AcceptChanges()`. Deletion-related domain events (e.g., `OrderCancelled`, `CustomerArchived`) raised on an aggregate before removal were silently lost — handlers that relied on the deletion event firing would pass against EF (whose `SaveChanges` flow captures events at commit time) and silently fail against the fake. Both methods now mirror the `Add`/`SaveAsync` pattern: append uncommitted events to `PublishedEvents`, call `AcceptChanges()`, then remove from the store. Both methods use `Dictionary.Remove(key, out value)` — a single dictionary operation that returns the TRACKED instance, so the captured events are always from the change-tracker's tracked aggregate, not from a detached instance the caller might pass in (mirroring EF's `SaveChanges` semantics).
-
-- **(Minor) N-T-1 — `FakeRepository` now mirrors `RepositoryBase` read surface.** Added `QueryAsync(Specification<TAggregate>, CancellationToken)`, `ExistsAsync(TId, CancellationToken)`, `ExistsAsync(Specification<TAggregate>, CancellationToken)`, and `CountAsync(Specification<TAggregate>, CancellationToken)` — the four read-shape methods exposed by `Trellis.EntityFrameworkCore.RepositoryBase<TAggregate, TId>`. The api ref's claim that "the same `IRepository` contract works in both the EF and fake paths" is now actually true for the read surface. The legacy `FindAsync(Func<TAggregate, bool>)` / `WhereAsync(Func<TAggregate, bool>)` / `WhereAsync(Specification<TAggregate>)` helpers remain available for ad-hoc Func-based filtering; the api ref now recommends the `RepositoryBase`-shaped methods for same-contract test adapters.
-
-- **(Minor) N-T-2 — `TestActorProvider` now null-guards `Actor` arguments.** Previously `new TestActorProvider((Actor)null!)` silently stored null as the default actor (`GetCurrentActorAsync` returned a null `Actor` through the `Task<Actor>` result), and `provider.WithActor((Actor)null!)` silently set the `AsyncLocal` slot to null which `GetCurrentActorAsync` then coalesced to the default actor — silently turning "swap to a restricted actor" into "swap to the default actor". Both call sites now `ArgumentNullException.ThrowIfNull(actor)`.
-
-- **(Minor) N-T-3 — `BeFailureOfType<TError>` and `BeOfType<TError>` no longer throw `InvalidCastException` under an active `AssertionScope`.** Previously both methods recorded the type-mismatch failure via `Execute.Assertion.ForCondition(...).FailWith(...)` but then unconditionally cast `(TError)error!` / `(TError)Subject!`. Without an active FluentAssertions `AssertionScope`, `FailWith` aborts before the cast and the bug never fires; with an active scope the failure is collected and execution continues, so the wrong-type cast throws `InvalidCastException` and masks the intended assertion-failure message. Both methods now return `default(TError)!` on the wrong-type branch (mirroring the guarded pattern that `ErrorAssertions.BeOfType<TError>` already used for the null-subject branch). Tests inside an `AssertionScope` get the clean recorded assertion failure instead.
-
-- **(Minor) N-T-4 — `Task<Result<T>>` async assertion extensions now null-guard the receiver task.** Previously `((Task<Result<int>>)null!).BeSuccessAsync()` produced an opaque `NullReferenceException` at the await site. `UnwrapAsync(this Task<Result<T>>)` already had the guard; the assertion extensions did not. Added `ArgumentNullException.ThrowIfNull(resultTask)` to all three `Task<Result<T>>` overloads (`BeSuccessAsync`, `BeFailureAsync`, `BeFailureOfTypeAsync`). The `ValueTask<Result<T>>` overloads don't need the guard (value types).
-
-- **(Info) i-T-1 — `FakeRepository` async-method `CancellationToken` semantics now documented uniformly.** All `*Async` methods accept a `CancellationToken` for source-compat with `RepositoryBase` but don't observe it (the fake completes synchronously). The `RemoveByIdAsync` xmldoc previously called this out; the others didn't. Added an explicit "(accepted for source-compat with `RepositoryBase`; not observed — the fake completes synchronously)" note to the xmldoc on `GetByIdAsync`, `FindByIdAsync`, `SaveAsync`, `DeleteAsync`, and the four new `RepositoryBase`-mirror methods. Added a class-level remark in the api ref under the `FakeRepository<TAggregate, TId>` block.
-
-Refuted findings: `AggregateTestMutator` reflection helpers' AOT story is correct (carry `[RequiresUnreferencedCode]` + DAM/suppression annotations); `TestActorScope.Dispose()` thread-safety concern (intentional single-flow design); `HaveErrorDetail` / `HaveErrorDetailContaining` `error!.Detail!` "double-bang" (the `!` only suppresses the compiler nullable warning; FluentAssertions handles null subjects gracefully); `FakeRepository.GetByIdAsync` / `FindByIdAsync` not null-checking `id` (`TId : notnull` constraint); `WithUniqueConstraint` concurrent mutation (single-threaded test fake by contract).
-
-Pre-commit GPT-5.5 review confirmed all 8 fix points and surfaced 4 cross-cutting follow-ups, all addressed in the same commit:
-
-- **`Remove(TAggregate)` no-op-for-untracked semantics restored.** The m-T-3 fix unconditionally captured events + called `AcceptChanges` even for aggregates not in the store, breaking the documented "Remove of unknown aggregate is a no-op" contract. Wrapped the event-capture block in `if (_store.ContainsKey(aggregate.Id))` and added a regression test (`Remove_Untracked_Aggregate_Is_NoOp_Does_Not_Publish_Events`) pinning the no-op contract.
-- **N-T-3 chained-`.Which` behavior verified and documented (not a limitation).** Pre-commit GPT-5.5 raised a concern that chaining `.Which.Foo.Should()...` on a wrong-type `BeFailureOfType<TError>()` under an active `AssertionScope` could throw `NullReferenceException` and mask the recorded assertion failure. Empirically verified the actual behavior: when the chained NRE fires inside the `using var scope` block, the surrounding `scope.Dispose()` runs in the language finally block and raises the recorded assertion failure as `XunitException`, which masks the chained NRE. Net effect: the test still sees the "expected `TError`, found ..." assertion message. Updated the xmldoc on both `BeFailureOfType<TError>` and `BeOfType<TError>` to describe the actual behavior accurately, and added a regression test (`BeFailureOfType_Wrong_Type_With_Which_Chain_Inside_AssertionScope_Still_Surfaces_Recorded_Assertion_Failure`) pinning the observed Dispose-flush-masks-NRE order.
-- **Cookbook Recipe 15 `WhereAsync(spec.ToExpression(), ct)` corrected to `QueryAsync(spec, ct)`.** The cookbook recipe-15 example invoked `fake.WhereAsync(spec.ToExpression(), ct)` which doesn't compile — `FakeRepository` has no `WhereAsync(Expression<...>, CancellationToken)` overload. The recipe text recommended single-sourcing predicates via `Specification<T>`, but the snippet did exactly the opposite. Updated to use the new `QueryAsync(Specification<T>, CancellationToken)` (added in N-T-1) which preserves the single-sourcing intent.
-- **`AggregateTestMutator` AOT/trim warning surfaced in api ref.** The source carries `[RequiresUnreferencedCode]` on both public methods but the api ref code block didn't show the attribute. Added the attribute to the documented signatures and a "AOT/trim incompatibility" callout explaining that AOT-published consumers will receive IL2026 / IL3050 at the call site.
-
-PR-466 round-1 review surfaced 3 additional follow-ups, all addressed in the same commit:
-
-- **`Remove(TAggregate)` and `DeleteAsync(TId)` now use `Dictionary.Remove(key, out value)`.** The pre-commit `if (_store.ContainsKey(...))` + `_store.Remove(...)` pattern was two dictionary operations and the Remove-side comment misleadingly said the lookup-and-remove was "atomic". Switched to `Dictionary.Remove(key, out value)` — genuinely a single operation. Side benefit: the `out` parameter returns the TRACKED instance, so when a caller passes a different aggregate instance with the same ID (e.g. a re-loaded copy), `Remove` now correctly captures events from and AcceptChanges-on the tracked instance, mirroring EF's `SaveChanges` semantics. Added regression test `Remove_With_Different_Instance_Same_Id_Operates_On_Tracked_Instance_Not_Passed_In`.
-- **CHANGELOG "atomic" wording removed.** The previous wording "DeleteAsync looks up the aggregate via TryGetValue first so the lookup-and-remove is atomic" misleadingly implied thread-safety; reworded to describe the actual `Dictionary.Remove(key, out value)` single-op semantics.
-- **CHANGELOG duplicate "Tests:" sections consolidated.** A draft-vs-final wording oversight left two "Tests: +N new tests" sections in the same Trellis.Testing entry. Consolidated into a single section reflecting the final +15 count (the original 14 plus the new `Remove_With_Different_Instance_Same_Id_Operates_On_Tracked_Instance_Not_Passed_In` regression test).
-
-Tests: **+15** new tests in `Trellis.Testing.Tests`:
-- `SaveAsync_Should_Throw_ArgumentNullException_For_Null` (m-T-2).
-- `Remove_Should_Capture_Domain_Events_Before_Removing`, `Remove_Untracked_Aggregate_Is_NoOp_Does_Not_Publish_Events`, `Remove_With_Different_Instance_Same_Id_Operates_On_Tracked_Instance_Not_Passed_In`, `DeleteAsync_Should_Capture_Domain_Events_Before_Removing` (m-T-3 + pre-commit + PR-round-1 follow-ups).
-- `QueryAsync_With_Specification_Returns_Matching_Aggregates`, `ExistsAsync_With_Id_Returns_True_When_Aggregate_Exists`, `ExistsAsync_With_Specification_Returns_True_When_Any_Match`, `CountAsync_With_Specification_Returns_Match_Count` (N-T-1).
-- `Constructor_WithNullActor_Throws_ArgumentNullException`, `WithActor_NullActor_Throws_ArgumentNullException` (N-T-2).
-- `BeFailureOfType_Wrong_Type_Inside_AssertionScope_Reports_Assertion_Failure_Without_InvalidCastException`, `BeFailureOfType_Wrong_Type_With_Which_Chain_Inside_AssertionScope_Still_Surfaces_Recorded_Assertion_Failure`, `BeOfType_Wrong_Type_Inside_AssertionScope_Reports_Assertion_Failure_Without_InvalidCastException` (N-T-3 + pre-commit follow-up).
-- `BeSuccessAsync_Task_Receiver_Null_Throws_ArgumentNullException`, `BeFailureAsync_Task_Receiver_Null_Throws_ArgumentNullException`, `BeFailureOfTypeAsync_Task_Receiver_Null_Throws_ArgumentNullException` (N-T-4).
-
-#### Trellis.StateMachine — inspection findings (m-SM-1, m-SM-2, i-SM-1 + GPT-5.5 N-SM-1..N-SM-4)
-
-Closes the formal Trellis.StateMachine inspection backlog from `files/statemachine-inspection-report.md` after a Phase-2 GPT-5.5 meta-review validated all 3 self-inspection findings and surfaced 4 additional ones (3 Minor doc-drift findings and 1 Info scope-boundary documentation). All findings are documentation-only or source-comment-only — no behavioral changes; no new tests.
-
-- **(Minor) m-SM-1 — api ref frontmatter `types:` corrected.** Previously listed `["IStateMachine<,>", "StateBuilder<,>", "Transition<,>"]` — none of which exist in source. Updated to `[StateMachineExtensions, LazyStateMachine<TState, TTrigger>]`.
-
-- **(Minor) m-SM-2 — api ref Cross-references duplicate `trellis-api-core.md` entry replaced.** Previously had two identical entries. Replaced one with a `trellis-api-cookbook.md` cross-reference (Recipe 9) and added a `trellis-api-asp.md` link to clarify how `Error.UnprocessableContent` renders as HTTP 422.
-
-- **(Minor) N-SM-1 — `OnUnhandledTrigger` swallow docs no longer overstate "state unchanged".** The implementation calls `Result.Ok(stateMachine.State)` AFTER the user's callback runs, not on a snapshot. If the callback mutates or reroutes state, the surfaced state reflects the post-callback state. Updated wording in the api ref method-table row, api ref Behavioral notes, integration article surface table, cookbook Recipe 9 side-effects subsection, AND the source-code comment to say "the state read AFTER the callback runs (normally unchanged unless the callback itself mutates or reroutes state)".
-
-- **(Minor) N-SM-2 — Cookbook Recipe 9 now imports `Trellis.StateMachine`.** The recipe prose calls `machine.FireResult(...)` but the `using` block previously had only `using Stateless;` and `using Trellis;`. `FireResult` is an extension method in `Trellis.StateMachine`, so the recipe as shown wouldn't compile when copy-pasted. Added the missing `using Trellis.StateMachine;`. (The compiled snippet at `Examples/CookbookSnippets/Recipe09_StateMachine.cs` already had it.)
-
-- **(Minor) N-SM-3 — Cookbook namespace guidance no longer attributes `StateMachine<TState, TTrigger>` to the wrong namespace.** Line 1578 said `using Trellis.StateMachine;` is needed "for `StateMachine<TState, TTrigger>`" — wrong; that type is from the upstream `Stateless` namespace. Trellis.StateMachine provides the `FireResult` extension and `LazyStateMachine`. Reworded to: `using Stateless;` for `StateMachine<TState, TTrigger>` and `using Trellis.StateMachine;` for `FireResult` / `LazyStateMachine`.
-
-- **(Info) i-SM-1 — `FireResult` invalid-transition Detail dual-write rationale documented.** The implementation populates the same string into both `RuleViolation.Detail` (via `Error.UnprocessableContent.ForRule(detail)`) AND the outer `Error.Detail` (via `with { Detail = detail }`). This dual write is needed because `Trellis.Asp.ResponseFailureWriter` reads from BOTH surfaces — top-level `Problem Details.detail` from `Error.Detail`, per-rule context from `RuleViolation.Detail`. Added an inline source comment explaining the rationale so a future maintainer doesn't "simplify" by removing one and break either the unit test (which asserts on `err.Detail`) or the wire format.
-
-- **(Info) N-SM-4 — async / parameterized-trigger scope boundary documented.** `Trellis.StateMachine` deliberately wraps only the synchronous, parameterless trigger shape `Fire(TTrigger)`. Stateless also supports `FireAsync(...)` (for `OnEntryAsync`/`OnExitAsync` callbacks) and `Trigger<TArg>` parameterized triggers — neither is wrapped today. Added a "Scope boundary — async and parameterized triggers" section to the api ref documenting that consumers needing those shapes must drop to raw Stateless APIs and translate exceptions themselves; if a future Trellis version adds `FireResultAsync` / parameterized overloads, they will follow the same `CanFire` pre-check + `OnUnhandledTrigger`-policy-preserving design and will use library-source `ConfigureAwait(false)` on awaited Stateless operations.
-
-Refuted findings: `FireResult` evaluates guards twice (documented + tested as `at most twice` contract); `LazyStateMachine._machine ??= CreateMachine()` race (documented as not thread-safe — DDD aggregates are single-threaded consistency boundaries); `FireResult` doesn't null-check `stateMachine` receiver (documented behavior); article filename `state-machines.md` doesn't follow `integration-<pkg>.md` convention (intentional — positioned under "Building Blocks", not "Integration Guides").
-
-Tests: **+0** new tests. All findings are doc-only or source-comment-only; existing 38 tests already cover the contract surface comprehensively. Pre-commit GPT-5.5 review confirmed all 7 fix points and surfaced 2 cross-cutting follow-ups, both addressed in the same commit:
-
-- N-SM-4 wording referenced a Stateless API named `Trigger<TArg>` that doesn't exist in Stateless 5.20.1; corrected to `SetTriggerParameters<TArg>(...)` returning `TriggerWithParameters<TArg>`, fired via `Fire(triggerWithParameters, arg)` / `FireAsync(triggerWithParameters, arg)`.
-- `docs/docfx_project/adr/ADR-001-result-api-surface.md:371` cited `Trellis.StateMachine.StateMachineExtensions.FireResult` as an example of a 409 conflict case — stale cross-doc contradiction, since the package settled on HTTP 422 (`Error.UnprocessableContent`). Replaced with a clarifying note that state-machine guard failures map to 422.
-
-#### Trellis.FluentValidation — inspection findings (m-FV-1..m-FV-4, i-FV-2 + GPT-5.5 N-FV-1)
-
-Closes the formal Trellis.FluentValidation inspection backlog from `files/fluentvalidation-inspection-report.md` after a Phase-2 GPT-5.5 meta-review validated 5 of 6 self-inspection findings, refuted i-FV-1 (`/`-prefixed-input pass-through is documented escape-hatch + `InputPointer` validates escape sequences), and surfaced 1 additional Minor (N-FV-1: `ToResult<T>` doc/code drift). Pre-commit GPT-5.5 review confirmed all 6 fix points and surfaced 1 stale-wording cleanup (api ref Behavioral notes "Grouping rule" bullet + incomplete `ValidateToResultAsync` cancellation note); both addressed in the same commit. The "stale generated DocFX YAML" finding from the pre-commit review is moot — `*.yml` is gitignored under `docs/docfx_project/api/` and CI regenerates metadata fresh.
-
-- **(Minor) m-FV-1 — api ref frontmatter `types:` corrected.** Previously listed `[TrellisValidator<T>, ValidationResultExtensions]` — neither type exists in source. Updated to `[FluentValidationServiceCollectionExtensions, FluentValidationMessageValidatorAdapter<TMessage>, FluentValidationResultExtensions]`.
-
-- **(Minor) m-FV-2 — `FluentValidationMessageValidatorAdapter<TMessage>` constructor null-guards `validators`.** Previously the public primary-constructor parameter was captured directly; passing `null!` would defer the failure to a `NullReferenceException` at the first `foreach (var validator in validators)`. Converted to a traditional constructor with `ArgumentNullException.ThrowIfNull(validators)` at the entry point. Direct construction is reachable from tests (e.g. `new FluentValidationMessageValidatorAdapter<CreateUserCommand>([])` in the test suite), so this is a real public-API surface, not just a DI internal.
-
-- **(Minor) m-FV-3 — `FluentValidationExtension.cs` renamed to `FluentValidationResultExtensions.cs`.** Pure file rename to match the framework convention "one type per file with matching name". The other three source files in the package already follow this convention.
-
-- **(Minor) m-FV-4 — `AddTrellisFluentValidation()` idempotency check now uses `TryAddEnumerable`.** Replaced the manual `services.Any(d => ...)` linear scan with `services.TryAddEnumerable(ServiceDescriptor.Scoped(typeof(IMessageValidator<>), typeof(FluentValidationMessageValidatorAdapter<>)))` — the canonical .NET pattern matching `Trellis.Mediator.AddTrellisBehaviors`. Behavior unchanged: deduplicates by `(ServiceType, ImplementationType)` so repeated calls register the open-generic adapter exactly once.
-
-- **(Minor) N-FV-1 — `ToResult<T>` documentation corrected.** The api ref method-table row and the source xmldoc both contained behavior claims that didn't match the implementation:
-  - api ref claimed it "groups `validationResult.Errors` by property name" — implementation does NOT group; emits one `FieldViolation` per `ValidationFailure`. Multiple failures on the same property produce multiple violations (no information loss).
-  - api ref claimed it uses `FieldViolation(InputPointer.ForProperty(propName), ...)` — implementation uses `new InputPointer(JsonPointerNormalizer.ToJsonPointer(rawName))`.
-  - source xmldoc `<returns>` said failure "if validation failed or value is null" — implementation returns `Result.Ok(value)` whenever `validationResult.IsValid`, regardless of `value` being null. The api ref's behavioral notes correctly stated this; only the methods-table row and xmldoc were wrong.
-  All three drifts now corrected; api ref + xmldoc reflect the actual contract.
-
-- **(Info) i-FV-2 — `ValidateToResultAsync` now observes cancellation before the null-value short-circuit.** Previously a caller passing a cancelled `CancellationToken` AND a null `value` received a `Failure` result rather than the `OperationCanceledException` the documented "Cancellation token to observe" contract implies. Added `cancellationToken.ThrowIfCancellationRequested()` at the top of the method (after the `validator` null-check) so cancellation always wins over null-value short-circuit.
-
-Refuted findings: i-FV-1 (`JsonPointerNormalizer` `/`-prefixed pass-through is documented escape-hatch behavior; `InputPointer` rejects malformed `~` sequences anyway, so silent corruption is not possible). Refuted candidate findings: PII leakage via `failure.ErrorMessage` (FluentValidation message templates are consumer-controlled — Trellis must not silently rewrite them); open-generic `IMessageValidator<>` registration AOT compatibility (open-generic DI is AOT-safe; the scanning overload correctly carries `[RequiresUnreferencedCode]`).
-
-Tests: **+2** new tests in `Trellis.FluentValidation.Tests`:
-- `Constructor_throws_ArgumentNullException_when_validators_is_null` (m-FV-2).
-- `ValidateToResultAsync_NullValue_CancelledToken_observes_cancellation` (i-FV-2).
-
-#### Trellis.ServiceDefaults — inspection findings (M-S1, M-S2, m-S1..m-S3, i-S1..i-S4 + GPT-5.5 N-S1..N-S4)
-
-Closes the formal Trellis.ServiceDefaults inspection backlog from `files/servicedefaults-inspection-report.md` after a meta-review by GPT-5.5 validated all 9 self-inspection findings and surfaced 4 additional ones (one Major, two Minor, one Info).
-
-- **(Major) M-S1 — `UseEntityFrameworkUnitOfWork<TContext>()` now throws on duplicate call.** Previously chaining `.UseEntityFrameworkUnitOfWork<DbContextA>().UseEntityFrameworkUnitOfWork<DbContextB>()` silently overwrote the first registration so only `DbContextB`'s UoW was wired. The actor-provider slot already enforces fail-fast; UoW now matches that policy. Same-`TContext` duplicates also throw — the Trellis pipeline supports exactly one transactional `IUnitOfWork` per composition; chaining is always misconfiguration. Read/write context splits should run as separate composition roots or use a multi-tenant `DbContext`.
-
-- **(Major) M-S2 — AOT/trim incompatibility now documented prominently.** The package opts out of AOT/trim analyzers (`<IsAotCompatible>false</IsAotCompatible>`, `<EnableAotAnalyzer>false</EnableAotAnalyzer>`) and the fluent assembly-scanning methods (`UseFluentValidation(asm)`, `UseResourceAuthorization(asm)`, `UseDomainEvents(asm)`) wrap underlying `[RequiresUnreferencedCode]` + `[RequiresDynamicCode]` APIs without propagating the attributes — so downstream AOT consumers do NOT receive IL2026/IL3050 warnings at the wrapper call site. New "AOT compatibility" section in api ref + integration article + NUGET_README documents the limitation and recommends per-package direct APIs (with the AOT-friendly mapping table) for AOT/trim consumers. The parameterless `o.UseFluentValidation()` / `o.UseResourceAuthorization()` / `o.UseDomainEvents()` overloads are AOT-compatible.
-
-- **(Major) N-S1 — explicit `AddResourceAuthorization<TMessage, TResource, TResponse>()` calls made BEFORE `AddTrellis(...)` are now order-independent.** `InsertResourceAuthorizationBehavior` (in `Trellis.Mediator`) inserts before `ValidationBehavior<,>` if it exists; otherwise it appended to the end of the descriptor list. When `AddTrellis(...)` then ran, the standard pipeline was registered AFTER the closed-generic resource-auth behaviors, so they ended up at descriptor slot 0 — outside the canonical Exception/Tracing/Logging/Authorization/Validation envelope. `AddTrellisBehaviors()` now performs a relocation pass after registering the standard pipeline: any pre-existing closed-generic `ResourceAuthorizationBehavior<,,>` descriptors are re-inserted immediately before `ValidationBehavior`, mirroring the `AddTrellisUnitOfWork ↔ AddDomainEventDispatch` symmetry.
-
-- **(Info) N-S4 — new `UseCachingActorProvider<T>()` builder slot.** `Trellis.Asp` exposes `AddCachingActorProvider<T>()` for per-request caching of an inner `IActorProvider`, but the builder didn't expose a slot. Now does, with the same fail-fast duplicate-detection as the other actor-provider slots. Chain after the matching `UseXxxActorProvider(...)` so the inner provider's `IOptions<TOptions>` is configured before the wrap replaces the `IActorProvider` slot.
-
-- **(Minor) m-S1 — api ref frontmatter `types:` corrected.** Previously listed `[AddTrellisServiceDefaults, WebApplicationBuilderExtensions]` — neither type exists in source. Updated to `[TrellisServiceCollectionExtensions, TrellisServiceBuilder]`.
-
-- **(Minor) m-S2 — Behavior section step 6 mentions `IDomainEventPublisher`.** The api ref previously said "registers `DomainEventDispatchBehavior<,>` and any scanned handlers", omitting the default `IDomainEventPublisher` registration that the existing test `UseDomainEvents_WithoutAssemblies_RegistersDispatchBehaviorAndPublisher` confirms. Step 6 now explicitly mentions all three.
-
-- **(Minor) m-S3 — `Apply()` else-if branches are explicit about the flag invariant.** The second branch in each `_useFluentValidation`/`_useDomainEvents` pair previously checked only `_xxxAssemblies.Count > 0`, relying on the implicit invariant that those private lists are only mutated by methods that also set the flag. Now the branches are `else if (_useFluentValidation)` / `else if (_useDomainEvents)` — equivalent today, robust against future refactor.
-
-- **(Minor) N-S2 — new integration article `docs/docfx_project/articles/integration-servicedefaults.md`.** ServiceDefaults previously had only an api ref — convention is every package has both a per-LLM api ref and a per-developer integration article. Article added with quick start, canonical order, mutually-exclusive slots, per-request actor caching example, the order-independence section for explicit resource-auth registrations, AOT compatibility note, and layered-config usage. Also added to `articles/toc.yml` under "Integration Guides".
-
-- **(Minor) N-S3 — `Examples/CookbookSnippets/Recipe12_DiPlaybook.cs` rewritten to use the `AddTrellis(...)` builder.** The cookbook prose for Recipe 12 already taught the builder pattern; the compiled snippet still demonstrated direct package-specific registrations, contradicting the recipe. Snippet now uses the builder consistently.
-
-- **(Info) i-S1 — xmldoc `<remarks>` on `UseAsp` and `UseMediator` document the repeated-call combine semantics** (configure delegates compose in call order rather than overwriting, supporting layered library-then-host configuration).
-
-- **(Info) i-S2 — api ref clarifies `UseResourceAuthorization()` no-assembly mechanism.** New "Order-independence" subsection in the Behavior section explains that `AuthorizationBehavior<,>` (static-permission flavor) is registered unconditionally by `AddTrellisBehaviors()` (called via `UseMediator()`), and that the no-assembly path is for AOT consumers who register each `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` explicitly via `services.AddResourceAuthorization<TMessage, TResource, TResponse>()`.
-
-- **(Info) i-S3 — `TrellisServiceBuilder` class summary now documents the `Apply()` lifecycle.** Callers don't invoke `Apply()` directly; `AddTrellis(services, configure)` constructs the builder, hands it to the configure callback, and invokes `Apply()` after the callback returns. `<remarks>` paragraph now states this explicitly.
-
-Refuted findings (kept current behavior intentional): i-S4 (`UseEntityFrameworkUnitOfWork<TContext>` lacks a configure delegate — forward-looking only; no concrete need today). Multiple `AddTrellis(...)` calls within one composition (`AddDomainEventDispatch` and `AddTrellisUnitOfWork` are aware of each other and re-order regardless of registration order). `Apply()` thread safety (builder is constructed/configured/applied/discarded synchronously inside `AddTrellis(...)`).
-
-Tests: **+5** new tests in `Trellis.ServiceDefaults.Tests` covering UoW duplicate-call throw (same context + different context), explicit resource-auth before `AddTrellis` ordering, `UseCachingActorProvider<T>()` wrap behavior, and caching-slot duplicate throw.
-
-#### Trellis.Http — inspection findings (M-H1, M-H2, M-H3, i-H2, i-H3, N-H1, N-H2)
-
-Closes the formal Trellis.Http inspection backlog from `files/http-inspection-report.md` after a meta-review by GPT-5.5 validated, refuted, or adjusted each finding and surfaced 2 additional ones.
-
-- **(Minor) i-H2 — `MapStatusToError` now extracts response headers into the typed errors.** Previously produced typed errors with empty arrays / zero values (`Error.MethodNotAllowed(Allow: empty)`, `Error.TooManyRequests(RetryAfter: null)`, etc.) regardless of what the upstream sent. Since `Trellis.Asp`'s response writer renders these typed payloads on the wire (the `Allow` header is taken from `Error.MethodNotAllowed.Allow`; `Retry-After` from `Error.TooManyRequests.RetryAfter` / `Error.ServiceUnavailable.RetryAfter`; `WWW-Authenticate` from `Error.Unauthorized.Challenges`; `Content-Range` from `Error.RangeNotSatisfiable.Unit` + `CompleteLength`), the empty placeholders were actively wrong UX rather than just incomplete. The mapper now reads:
-  - `401` → copies `Headers.WwwAuthenticate` schemes (e.g. `Bearer`, `Basic`) **plus a best-effort RFC 7235 parameter parse** (`realm`, `error`, `error_description`, etc.) into `Error.Unauthorized.Challenges` so the full challenge round-trips through ASP. Parse failures fall back to scheme-only.
-  - `405` → copies `Content.Headers.Allow` into `Error.MethodNotAllowed.Allow`.
-  - `416` → copies `Content.Headers.ContentRange.Length` into `Error.RangeNotSatisfiable.CompleteLength` **and `Content.Headers.ContentRange.Unit` into `Error.RangeNotSatisfiable.Unit`** so a custom unit (e.g. `items`) round-trips instead of being rewritten as `bytes`.
-  - `429` / `503` → copies `Headers.RetryAfter` (delta seconds or HTTP date) into `Error.TooManyRequests.RetryAfter` / `Error.ServiceUnavailable.RetryAfter`. Malformed negative deltas (an adversarial / buggy upstream pattern) are treated as absent rather than crashing the mapper.
-
-  When the upstream omits the header, the typed error keeps its empty/null default — the mapper never invents values. **Two exceptions:** `405` without `Allow` and `416` without `Content-Range` fall through to `Error.InternalServerError` per the round-4/round-5 follow-up below; producing typed errors with default empty/zero values for those two cases would let ASP fabricate misleading wire headers.
-- **(Minor) M-H1 — `Handle*Async` methods now `ArgumentNullException.ThrowIfNull(error)`.** Previously `error` was deferred to `Result.Fail<T>(error)` (which itself throws on null), but the throw only happened on the matched-status path. A null `error` on a non-matching status was silently ignored. Aligns with the framework's defensive-coding posture and matches the existing `response` null-guard.
-- **(Minor) M-H2 — `ReadJsonAsync` / `ReadJsonMaybeAsync` move the `jsonTypeInfo` null check inside the `try` / `finally` so the awaited `HttpResponseMessage` is disposed even when `jsonTypeInfo` is null.** Previously the ANE thrown by `ArgumentNullException.ThrowIfNull(jsonTypeInfo)` skipped the `finally` block, leaking the response (deterministic disposal violated). The class-level disposal contract now holds on every exception path, including null-jsonTypeInfo.
-- **(Info) M-H3 — `ReadJsonAsync`'s caught `JsonException` no longer interpolates `ex.Message` or `ex.Path` into the failure `Detail`.** GPT-5.5 pre-commit review caught that `ex.Message` removal alone wasn't enough: `JsonException.Path` can also contain user-controlled dictionary keys (e.g. `$.customers['alice@example.com']`) for object-key payloads. The detail now uses only `LineNumber` / `BytePositionInLine` — schema-free position diagnostics that don't echo upstream-supplied content.
-- **(Info) i-H3 — Network/cancellation/JSON exception propagation** is now documented in `trellis-api-http.md` and `integration-http.md`. `HttpRequestException`, `OperationCanceledException` / `TaskCanceledException`, and `JsonException` from **both** `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` (which delegates to `ReadJsonMaybeAsync<T>` for non-404 statuses) propagate through the chain rather than being mapped to `Result.Fail`. This was always the case but wasn't documented; readers could reasonably believe `ToResultAsync()` always returned a `Result` and never threw.
-- **(Minor) N-H1 — API-reference frontmatter type list corrected.** `trellis-api-http.md` previously listed `[HttpResponseMessageExtensions, HttpClientResultExtensions]` — those names don't exist in source. Updated to `[HttpResponseExtensions]`.
-- **(Minor) N-H2 — 3xx-redirect handling under the strict default is now documented.** `HttpClient` follows redirects automatically by default; callers who set `AllowAutoRedirect = false` (e.g. SSO landing-page detection) get `Error.InternalServerError` for the unhandled 3xx because it falls through `MapStatusToError`. The strict-default doc section in both `trellis-api-http.md` and `integration-http.md` now flags this and recommends `ToResultAsync(statusMap)` for redirect-aware callers.
-
-Refuted findings (kept current behavior intentional and documented): i-H1 (`Error` ADT has no inner-exception slot — design intent); body-aware mapper cancellation path is already correct (catch-rethrow with disposal); `ReadJsonOrNoneOn404Async` has no double-dispose; 429 ctor usage is valid (`RetryAfter` is optional); multi-await is caller misuse; `statusMap` turning 2xx into failure is documented; `ReadJsonAsync` non-success fallback is documented; `HandleForbiddenAsync` deletion is deliberate; `ResourceRef.For("HttpResponse")` is semantically valid.
-
-- **(Minor) Copilot review round 2 / round 3 / round 4 / round 5 / round 6 — round-trip fidelity for absent or unusable upstream headers + remaining disposal-contract gaps + Retry-After overflow.** The bot iterated 5 times across these themes. The final converged design:
-  - **Round 2** flagged that an upstream 405/416 omitting its required header produces synthetic typed errors (`new Error.MethodNotAllowed(empty)` / `new Error.RangeNotSatisfiable(0)`) which then render as misleading wire headers. **Round 3** correctly pushed back on a renderer-side fix that would have overloaded the public type semantics. **Round 4** escalated the concern to the mapper side. **Round 5** caught a regression in the round-4 fix: keying the 416 typed mapping on `Length > 0` conflated "Content-Range absent" with "legitimately `bytes */0` (empty resource)". The accepted resolution: in `MapStatusToError`, **fall through to `Error.InternalServerError`** when the relevant header is absent, empty, or carries no usable typed context (RFC 9110 §15.5.6 says 405 MUST include `Allow`; §15.5.17 says 416 SHOULD include `Content-Range`). Specifically: 405 falls through when `Allow` is missing or empty; 416 falls through when `Content-Range` is missing or its complete-length is unspecified (e.g. `bytes 0-99/*`). When the header is present with a non-empty list / known length, the typed error is produced — including `RangeNotSatisfiable(0, "bytes")` for the legitimate empty-resource 416 case.
-  - **Round 4 also flagged a real resource leak** in the round-1 `Handle*Async` `null`-`error` guards: `client.GetAsync(...).HandleNotFoundAsync(null!)` would throw before awaiting the in-flight response Task, leaving the eventual `HttpResponseMessage` unowned and unreleased. Reordered all three `Handle*Async` methods (`HandleNotFoundAsync` / `HandleConflictAsync` / `HandleUnauthorizedAsync`) so they `await` first, then null-check `error` and dispose the message before throwing. The trade-off: a programmer's `null!` bug is delayed by the full HTTP round-trip, but the disposal contract is honored.
-  - **Round 6 closed two more disposal-contract gaps** that the round-1/round-4 fixes had missed: the body-aware `ToResultAsync(mapper, ct)` overload also had `ArgumentNullException.ThrowIfNull(mapper)` running BEFORE the response-task await, and `ReadJsonOrNoneOn404Async` had the same shape for its `jsonTypeInfo` guard. Both reordered to await-then-dispose-then-throw.
-  - **Round 6 also documented and pinned the `Retry-After` overflow contract.** RFC 9110 §10.2.3 permits arbitrary `delay-seconds` (1*DIGIT, no upper bound), but the typed `RetryAfterValue` uses `int`. The bot flagged that the previous code claimed to "clamp huge deltas to `int.MaxValue`" — implying a wire `Retry-After: 5000000000` would round-trip through ASP as ~68 years. In practice .NET's `HttpResponseHeaders` parser rejects out-of-range `delay-seconds` at the wire-parsing layer (`Headers.RetryAfter` returns `null`), so the clamp branch was unreachable. The mapper's guard was rewritten to treat overflow as absent (`null`) rather than clamp, the misleading xmldoc was corrected, and a new wire-form test (`TryAddWithoutValidation("Retry-After", "9999999999")`) pins the end-to-end contract: regardless of where in the stack the rejection happens, the typed error's `RetryAfter` is `null` and no misleading clamped value round-trips.
-  - **Documented limitation: token68 round-trip.** RFC 7235 also defines a `token68` form (`WWW-Authenticate: Negotiate <base64-token>`) used by SPNEGO/Negotiate/NTLM for multi-step authentication. `AuthChallenge` has no slot for the bare token, so when an upstream sends a token68-form challenge `BuildChallenge` captures only the scheme and the token is dropped on round-trip. Documented in `BuildChallenge` xmldoc and the 401 rows of both api ref and article; callers needing token68 fidelity can either pass a `statusMap` that returns `null` for 401 (the original `HttpResponseMessage` flows through as `Result.Ok` and the caller reads the raw `WWW-Authenticate` headers directly) or use the body-aware `ToResultAsync(mapper, ct)` overload, which receives the `HttpResponseMessage` directly. (The round-5 wording incorrectly claimed only the body-aware overload could help — the `statusMap`-returning-null path was overlooked. Round 6 corrected this in all three places: source xmldoc, api reference, integration article.)
-
-Tests: **+31** total on the branch vs `main` (round 1: +18; round 3 coverage: +4; round 4: +2 — null-error disposal consolidated across the three `Handle*Async` methods, 405 without `Allow` falls through, 416 without `Content-Range` falls through; round 5: +4 — 416 with `bytes */0` produces typed `RangeNotSatisfiable(0, "bytes")` for empty resource, 416 with `bytes 0-99/*` (no length) falls through, 405 with literal-empty `Allow:` value falls through, 429 with `Retry-After: 0` preserves zero delta; round 6: +3 — body-aware `ToResultAsync` null-mapper disposal, `ReadJsonOrNoneOn404Async` null-jsonTypeInfo disposal, 429 with `Retry-After` delta-seconds overflowing `int` treated as absent). The round-2 renderer guards and round-3 misleading empty-scheme test were withdrawn.
-
-Package READMEs (round 7): both `Trellis.Http/README.md` and `Trellis.Http/NUGET_README.md` updated to reflect the new strict-default header preservation behavior, the exception propagation rules, and the round-4/round-6 await-then-dispose pattern for null-argument paths. Consumers reading the package docs on GitHub or NuGet now see the same contract surface as the api ref and integration article.
-
-### Changed
-
-#### Trellis.Primitives — inspection findings (M-1..M-5, m-3..m-7, i-6) + GPT-5.5 review (New-1..New-3)
-
-Closes the formal inspection backlog from `files/primitives-inspection-report.md` after a meta-review by GPT-5.5 validated, refuted, or adjusted each finding and surfaced 3 additional ones I missed.
-
-- **(Major) New-1 — `Money.GetDecimalPlaces` minor-unit table was incomplete.** The previous switch only handled JPY/KRW (0 decimals) and BHD/KWD/OMR/TND (3 decimals); the rest defaulted to 2 decimals. ISO 4217 actually assigns 0 minor units to BIF, CLP, DJF, GNF, ISK, KMF, PYG, RWF, UGX, UYI, VND, VUV, XAF, XOF, XPF (in addition to JPY/KRW), 3 minor units to IQD/JOD/LYD (in addition to BHD/KWD/OMR/TND), and 4 minor units to CLF/UYW. `Money.TryCreate` rounds at construction time, so previously-affected currencies silently lost precision (e.g., `Money.TryCreate(100.99m, "ISK")` rounded to `100.99` instead of `101`). Now produces correct rounding per ISO 4217 minor-unit assignments.
-- **(Major) Allocate share-arithmetic overflow** — caught by GPT-5.5 pre-commit review. `Money.Allocate`'s inner `amountInMinorUnits * ratios[i] / totalRatio` is `long * int` arithmetic, which is **unchecked** by C# default and silently wraps for extreme inputs (e.g. `Money.Create(50_000_000_000m, "USD").Allocate(1_000_000_000, 1_000_000_000)` would have produced corrupted shares without throwing). Wrapped in `checked(...)` so overflow is caught by the existing `try` / `catch (OverflowException)` block and surfaced as `Result.Fail` like the rest of the arithmetic API.
-- **(Major) New-2 — ISO code primitives accepted non-ASCII letters.** `CountryCode`, `CurrencyCode`, and `LanguageCode` validated with `char.IsLetter`, which accepts Unicode letters (German umlauts, Greek/Cyrillic alphabets, etc.) — but ISO 3166-1 alpha-2, ISO 4217, and ISO 639-1 alpha-2 are all ASCII-only. Switched to `char.IsAsciiLetter`. Inputs like `"Ää"` or `"αβ"` now correctly fail with the existing validation error message.
-- **(Major) i-6 — `Money.Multiply` / `Divide` / `Allocate` now wrap `OverflowException` in `Result.Fail` for parity with `Add` / `Subtract`.** Previously `Money.Multiply(decimal)`, `Multiply(int)`, `Divide(decimal)`, `Divide(int)`, and the `Allocate` arithmetic could throw `OverflowException` for valid-but-extreme inputs (e.g. `Multiply(decimal.MaxValue / 2, 3m)`), violating the `Result<Money>`-returning contract. All five paths now catch and return `Error.UnprocessableContent` with a "would overflow" detail.
-- **(Major) M-3 — `Money.Allocate(int[] ratios)` adds null-guard and overflow handling.** Throws `ArgumentNullException` when `ratios` is null. Wraps the entire ratio-arithmetic block (including `ratios.Sum()`, `Math.Round(... * multiplier)`, and the decimal-to-`long` conversion) in a `try` / `catch (OverflowException)` so the `Result<Money[]>`-returning contract is never violated by extreme but otherwise valid inputs.
-- **(Minor) M-1 / M-2 — `Money` and `MonetaryAmount` arithmetic / comparison methods now `ArgumentNullException.ThrowIfNull(other)`.** `Money.Add`, `Subtract`, `IsGreaterThan`, `IsGreaterThanOrEqual`, `IsLessThan`, `IsLessThanOrEqual`, and `MonetaryAmount.Add`, `Subtract` previously NRE'd on a null `other`. Aligns with the framework's defensive-coding posture established by Trellis.Core 2.3-2 / Authorization #458 / Mediator #459 / EFCore #460.
-- **(Minor) M-5 — `PhoneNumber.GetCountryCode()` throws `InvalidOperationException` on lookup-table miss.** Previously fell through to `digits[..1]` and silently returned an invalid 1-digit prefix (e.g. `"5"`, `"8"`) when the input passed E.164 *shape* validation but its prefix wasn't in `s_twoDigitCountryCodes` / `s_threeDigitCountryCodes` and didn't start with `1` or `7`. Callers got bad data with no signal. Now throws with a message naming the offending phone number and noting that this may indicate stale lookup tables. (`Result<string>` was considered but rejected as a public-surface break per GPT-5.5's adjustment.)
-- **(Minor) m-3 — `PrimitiveValueObjectTraceProviderBuilderExtensions.AddPrimitiveValueObjectInstrumentation` now `ArgumentNullException.ThrowIfNull(builder)`.** Previously NRE'd on a null builder receiver.
-- **(Minor) m-4 — `MonetaryAmount` and `Percentage` string-overload `TryCreate` methods no longer open a redundant outer activity span.** Each previously opened its own `Activity` and then delegated to `TryCreate(decimal, ...)` which opened a second one with the same name. Now the leaf decimal overload owns the trace and the string overloads delegate without restarting; telemetry consumers see one span per call.
-- **(Minor) New-3 — `Money.Sum` / `MonetaryAmount.Sum` reject null elements with `ArgumentException` (paramName: `values`).** The receiver-null guard was already present (existing tests); element-null was previously NRE'd inside the loop.
-- **(Info) m-2 — `CompositeValueObjectJsonConverter<T>.Read` now aggregates all missing required-property names into one error.** Previously threw on the first missing property; multi-field violations required multiple round trips. New format: `Required properties missing: 'amount', 'currency'.` (single-property case unchanged: `Required property 'amount' is missing.`).
-
-Validated, refuted, or adjusted by GPT-5.5 meta-review of the inspection report. Refuted findings (kept current behavior intentional and documented): `Money.IsGreaterThan` etc. returning `false` for cross-currency comparisons (documented + tested); `Read` null-guarding `options`/`typeToConvert` (those parameters aren't dereferenced by the implementation); `Money.Zero("USD")` default (documented opinionated default); `MonetaryAmount` non-finite decimals (decimal has no NaN/Infinity); `Money` private EF parameterless ctor (private + EF-only convention); `Percentage.TryCreate(decimal?)` duplicate range check (refactor noise, not a bug); `PhoneNumber.GetCountryCode()` returning `string` rather than `CountryCode` (different semantic concepts).
-
-Tests: **+30** new tests in `Trellis.Primitives.Tests` covering null guards on `Money` / `MonetaryAmount` arithmetic + comparison methods; `Money.Allocate` null/overflow paths; `Money.Multiply` / `Divide` overflow returning `Result.Fail`; `Money.TryCreate` correct rounding for all 14 added 0-decimal currencies, the 3 added 3-decimal currencies, and 2 4-decimal currencies; `CountryCode` / `CurrencyCode` / `LanguageCode` rejection of Unicode-letter inputs; `PhoneNumber.GetCountryCode` lookup-miss throw; `Money.Sum` / `MonetaryAmount.Sum` element-null rejection; `CompositeValueObjectJsonConverter` aggregate-missing-property error format; trace-builder null guard.
-
-### Changed
-
-#### Trellis.EntityFrameworkCore — GPT-5.5 review fixes (5 findings)
-
-GPT-5.5 thorough review of the package surfaced 3 Major + 1 Minor + 1 Info finding; all addressed in this release.
-
-- **(Major)** `TransactionalCommandBehavior` previously committed every successful command immediately, so a successful inner command (sent via mediator from an outer command's handler) would commit BOTH the outer's staged work and the inner's. If the outer command then failed, the data was already persisted. Fixed by adding `IUnitOfWork.BeginScope()` (a **required** interface member — see breaking change below) and tracking depth in `EfUnitOfWork<TContext>`: `CommitAsync` defers (returns success without persisting) at depth > 1, so only the outermost scope's commit actually runs. The behavior wraps every command in `using var scope = unitOfWork.BeginScope();`. **Caveat documented in xmldoc**: if an inner command returns a failure but the outer handler ignores it and returns success, the outer's commit will persist any changes the inner staged before failing — the unit-of-work is shared with the outer's `DbContext`, so per-scope rollback of staged changes is not supported. Handlers that need to discard inner failures' staged work must detach the affected entities themselves.
-
-  **BREAKING:** `IUnitOfWork.BeginScope()` is required; custom `IUnitOfWork` implementations must implement depth-aware scope tracking. Migration: mirror the `EfUnitOfWork<TContext>` pattern (an `Interlocked.Increment`-counted depth field with a disposable releaser; `CommitAsync` returns `Result.Ok()` at depth > 1, persists otherwise). The `Trellis.Asp` `SAMPLES.md` `UnitOfWork` example has been updated to show the new shape.
-- **(Major)** `DbExceptionClassifier.IsDuplicateKey` and `IsForeignKeyViolation` previously had no MySQL/MariaDB branch; classification fell through to message-fragment matching that didn't catch MySQL's "Duplicate entry" / "Cannot add or update a child row" phrasing, so MySQL consumers got raw `DbUpdateException` instead of `Error.Conflict`. Added MySQL detection by reflection (typename `MySqlException`, error number `1062` for duplicate key / `1451`/`1452` for foreign-key, plus message-form fallback for older drivers that don't surface the error number). Works with both `MySql.Data.MySqlClient.MySqlException` and `MySqlConnector.MySqlException`. SQLSTATE `23000` is intentionally **not** trusted on its own because MySQL reuses it for both duplicate-key and foreign-key violations.
-- **(Major)** `MaybePartialPropertyGenerator` emitted invalid C# for valid nested user types: it used a stripped-down containing-type emission path that dropped `static` / `sealed` / `abstract` modifiers and conflated `record struct` with `record class`. It also grouped generated output by `Name` rather than `MetadataName`, so generic-arity overloads (`Foo<T>` and `Foo<T1,T2>`) in the same namespace would collapse into one generated partial declaration. Reused `OwnedEntityGenerator.BuildContainingTypeDeclaration` (which preserves all modifiers) and switched `BuildTypePath` to `MetadataName` (which encodes arity). Same `MetadataName`-based `BuildTypePath` change applied to `OwnedEntityGenerator` for consistency. Both generators' `TypeKindKeyword` now correctly emits `record struct` vs `record class`.
-- **(Minor)** Public extension methods on `DbContext` / `DbContextOptionsBuilder` / `IQueryable` / `IServiceCollection` / `ModelConfigurationBuilder` now consistently `ArgumentNullException.ThrowIfNull(...)` their receiver and key arguments. Affected: `DbContextExtensions.SaveChangesResultAsync` ×4 overloads, `DbContextOptionsBuilderExtensions.AddTrellisInterceptors` ×4 overloads, `QueryableExtensions.FirstOrDefaultMaybeAsync` ×2 / `SingleOrDefaultMaybeAsync` ×2 / `FirstOrDefaultResultAsync` ×2, `UnitOfWorkServiceCollectionExtensions.AddTrellisUnitOfWork` ×2, `ModelConfigurationBuilderExtensions.ApplyTrellisConventions` (assemblies + null elements), and `EfUnitOfWork<TContext>` / `TransactionalCommandBehavior<TMessage,TResponse>` constructors. Aligns with the framework discipline established by Trellis.Core 2.3-2 / Authorization PR #458 / Mediator PR #459.
-- **(Info)** API reference said the convention generator "follows public `DbSet<T>` roots", but the implementation enumerates all instance properties (any accessibility — `public`, `internal`, `private`, etc., as long as the entity type is accessible). Updated `docs/docfx_project/api_reference/trellis-api-efcore.md:117` to match the implementation.
-
-Tests: **+9** new tests in `Trellis.EntityFrameworkCore.Tests` covering the deferred-commit semantics for nested commands (`Handle_nested_inner_success_does_not_commit_until_outermost_scope_exits`, `Handle_nested_outer_failure_after_inner_success_does_not_commit_anything`), MySQL classification (5 tests for duplicate key + foreign-key cases), and the `TransactionalCommandBehavior` constructor null guard.
-
-### Changed
-
-#### Trellis.Mediator — defensive-coding sweep + small cleanups (m-1..m-4, m-7 + i-1..i-3, i-6) + GPT-5.5 review fixes
-
-Closes the entire Trellis.Mediator inspection backlog from `files/mediator-inspection-report.md` plus three additional findings surfaced by a GPT-5.5 review of the library.
-
-- **m-1** — Every behavior, the default publisher, and the shared-loader adapter now throw `ArgumentNullException` with the offending parameter name when constructed with null dependencies. Affects `AuthorizationBehavior`, `ResourceAuthorizationBehavior`, `SharedResourceLoaderAdapter`, `ValidationBehavior`, `LoggingBehavior`, `ExceptionBehavior`, `MediatorDomainEventPublisher`, and `DomainEventDispatchBehavior`. Primary-constructor parameters were converted to regular constructors with explicit guards. Mirrors the Authorization PR #458 / Asp PR #457 i-8 patterns.
-- **m-2** — `ServiceCollectionExtensions` public methods (`AddTrellisBehaviors` ×2, `AddResourceAuthorization` ×2, `AddResourceLoaders`, `AddSharedResourceLoader`) now consistently `ArgumentNullException.ThrowIfNull(services)`. The companion `DomainEventDispatchServiceCollectionExtensions` already had this discipline; the behavior-side helpers now match.
-- **m-3** — `AuthorizationBehavior` and `ResourceAuthorizationBehavior` previously threw `InvalidOperationException("No authenticated actor available. Ensure an IActorProvider is configured...")` when `IActorProvider.GetCurrentActorAsync` returned null. The check is **kept as defense-in-depth for the documented `ga-11` security guarantee** (the resource loader must not run when the caller is unauthenticated, even under contract violation), but the error message is rewritten to accurately describe what happened: a contract violation by the `IActorProvider` implementation.
-- **m-4** — `ResourceAuthorizationBehavior` previously called `loadResult.TryGetError(out var loadError); if (TryGetError) ...; if (!TryGetValue) throw new InvalidOperationException("Result is in an unexpected state.");` — the second branch is impossible because `TryGetError` and `TryGetValue` are mutually exclusive on `Result<T>`. Refactored to use the combined `Result<T>.TryGetValue(out value, out error)` overload (added precisely to support this shape). Removes the dead defensive throw.
-- **m-7** — `GetLoadableTypes` (in both `ServiceCollectionExtensions` and `DomainEventDispatchServiceCollectionExtensions`) replaced `ex.Types.Where(t => t is not null).ToArray()!` with `ex.Types.OfType<Type>().ToArray()`. Removes the null-forgiving operator (`!`) that was laundering a `Type?[]` to `Type[]`; `OfType<T>` filters AND narrows the static type in one step.
-- **i-1** — `ValidationBehavior` now uses the same `??= []; AddRange(...)` accumulator pattern in both the `IValidate` branch and the external-validator branch (previously the IValidate branch used `[.. upc.Fields.Items]` collection-expression seed). No behavior change; eliminates a maintenance hazard if the branches are reordered.
-- **i-2** — `MediatorDomainEventPublisher.CreateInvoker` previously used `nameof(IDomainEventHandler<IDomainEvent>.HandleAsync)` — a quirky closed-generic instantiation just to extract the method name. Replaced with a `private const string HandleAsyncMethodName = nameof(IDomainEventHandler<DummyDomainEvent>.HandleAsync);` field that uses a sentinel record explicitly scoped for this purpose.
-- **i-3** — `MediatorDomainEventPublisher.HandlerInvoker.InvokeAsync` previously had `result is ValueTask vt ? vt : ValueTask.CompletedTask;` — the fallback masks contract violations (`HandleAsync` is contractually `ValueTask`-returning). Replaced with a direct cast `(ValueTask)result!;` so a contract violation surfaces as an `InvalidCastException` rather than silently returning `CompletedTask`.
-- **i-6** — `LoggingBehavior` and `TracingBehavior` xmldoc on the `options` constructor parameter rewritten to clarify that under `AddTrellisBehaviors()` the singleton is always registered, so the parameter is non-null in production; the optional-null fallback exists only for consumers that instantiate the behavior outside DI (custom test fixtures).
-
-GPT-5.5 review fixes:
-
-- **(Major)** `ResourceAuthorizationBehavior` previously resolved the `IResourceLoader<TMessage, TResource>` from DI **before** checking the actor null-state. Loader DI factories are arbitrary user code (a custom factory may open a `DbContext` or pre-fetch state during construction), so loader **resolution** itself counts as I/O for the documented `ga-11` guarantee ("no I/O when unauthenticated"). Reordered the behavior to check the actor first, then resolve the loader, then invoke the loader. The existing ga-11 test only proved `LoadAsync` wasn't called; a new regression test (`ResourceAuthorization_NullActor_DoesNotInvokeLoaderDIFactory`) registers the loader via a counting factory and asserts the factory is never invoked when the caller is unauthenticated.
-- **(Major)** `AddResourceAuthorization(params Assembly[])` previously `continue`d silently when an `IAuthorizeResource<TResource>` command's `TResponse` didn't satisfy `IResult + IFailureFactory<TResponse>` — meaning a security-marked command could ship without resource authorization. (And because `IFailureFactory<TSelf>` is F-bounded, the original `MakeGenericType(tResponse).IsAssignableFrom(tResponse)` shape would actually have thrown `ArgumentException` rather than silently skipping — masking the real diagnostic.) The constraint check now fails fast with an `InvalidOperationException` naming the offending message type, response type, and required interfaces. Validation is extracted to an internal `ValidateResourceAuthorizationResponseType(messageType, resourceType, responseType)` so the assembly scanner's contract is unit-testable without round-tripping through a synthetic assembly.
-- **(Minor)** `DomainEventDispatchBehavior.BuildExtractorOrNoop` previously assumed `TResponse` was itself a single-arg generic and used `responseType.GetGenericArguments()[0]` to find the aggregate type — silently no-oping for custom non-generic types implementing `IResult<TAggregate>` (e.g. an envelope class). Rewritten to walk `responseType.GetInterfaces()` looking for `IResult<TValue>` where `TValue : IAggregate`. Multiple aggregate-valued `IResult<>` interfaces with distinct type arguments are now an explicit error rather than a silent picks-one-and-drops-the-other. New regression test (`Dispatch_NonGenericResponseImplementingIResult_DispatchesEvents`) covers the custom-envelope case.
-
-Tests: **+5** new regression tests in `Trellis.Mediator/tests/GptReviewRegressionTests.cs` (loader factory not invoked under null actor; `ValidateResourceAuthorizationResponseType` fail-fast for missing `IResult` and missing `IFailureFactory`; happy-path validation; non-generic envelope event dispatch).
-
-Tests: **+15** new tests in `Trellis.Mediator/tests/ArgumentValidationTests.cs` covering every constructor null-guard (8 tests) and every `IServiceCollection` extension-method null-guard (7 tests).
-
-### Added
-
-#### Trellis.Authorization — `Actor` is now an entity (identity-based equality), no longer a record
-
-`Actor` is converted from `sealed record` to `sealed class` with explicit identity-based equality. The `Id` property (e.g. JWT `sub` claim) is the principal identifier; `Permissions`, `ForbiddenPermissions`, and `Attributes` are point-in-time state about that principal (granted/revoked over time, ABAC attributes change every request). Two `Actor`s with the same `Id` are now equal regardless of their state — mirroring the framework's domain-layer `Trellis.Entity<TId>` pattern without inheriting the full `IAggregate` surface (Actor is an authorization-layer principal, not a domain aggregate root).
-
-`Actor.Equals(Actor?)` / `Actor.Equals(object?)` / `Actor.GetHashCode()` / `==` / `!=` are all overridden to use `Id` only (ordinal comparison). Init-only properties remain unchanged so the type is still immutable after construction. The `with`-expression syntax (a `record`-only feature) is no longer available — use the constructor directly when copy-with-changes is needed. **Behavior change**: as a `record`, equality was synthesised structurally but the collection-typed properties (`Permissions`, `ForbiddenPermissions`, `Attributes`) compared by **reference** (their interface types have no structural comparer). Distinct `Actor` instances built from independent inputs were therefore unequal even when logically identical, because the constructor snapshots inputs into fresh `FrozenSet`/`FrozenDictionary` instances; the only way two distinct `Actor`s could compare equal was if a caller passed the exact same `FrozenSet`/`FrozenDictionary` references to both constructors. After this change they get identity equality based on `Id` regardless of state. No current consumer in the framework was equality-keying actors; the upgrade is otherwise transparent.
-
-Inspection finding **Trellis.Authorization m-1**.
-
-#### Trellis.Core — `ResourceRef.FormatTypeName(Type)` public helper
-
-`ResourceRef.FormatTypeName(Type)` is a new public static helper that returns the simple CLR name of a type with backtick arity-mangling stripped (``List`1`` → `"List"`, ``Dictionary`2`` → `"Dictionary"`). It is used internally by `ResourceRef.For<TResource>()` and exposed publicly so other Trellis components — and consumer code — can sanitize type-derived identifiers without duplicating the algorithm. Non-generic types pass through unchanged.
-
-`ResourceRef.For<TResource>(id)` additionally peels `Maybe<T>` wrappers (recursively) before formatting, so `For<Maybe<Order>>()` produces `"Order"` instead of the previously-mangled ``"Maybe`1"``. This mirrors the documented use case where a result type happens to wrap its domain in `Maybe<>` (e.g. `Result<Maybe<Order>>.ToHttpResponse(...)` for the precondition-fail branch). Non-`Maybe` generics collapse to the outer simple name (e.g. `List<Order>` → `"List"`); when the inner type argument is the meaningful resource identifier, callers should continue to use `ResourceRef.For(string, object?)` with an explicit name. The xmldoc carries the full contract.
-
-#### Trellis.Asp — `WWW-Authenticate` emission for `Error.Unauthorized`
-
-`ResponseFailureWriter` now emits a `WWW-Authenticate` header for every `AuthChallenge` carried on `Error.Unauthorized.Challenges`, completing the round-trip that `AuthChallenge` already documented. Format follows RFC 9110 §11.6.1: scheme alone for parameterless challenges (e.g. `Bearer`), or `<scheme> key1="value1", key2="value2"` for parameterized ones; values are always emitted as quoted-strings with `"` and `\` backslash-escaped per §5.6.4. Multiple challenges produce one `WWW-Authenticate` header per challenge (matching ASP.NET Core authentication handler convention). Emission is gated on the resolved status code being `401` — if `WithErrorMapping` promotes `Error.Unauthorized` to a non-401 status, the header is suppressed, mirroring the m-13 status-aware design used by ValidationProblem detail scrubbing. When `Challenges` is empty (the default `Error.Unauthorized()`), no header is written — the configured authentication handler retains full ownership of that flow.
-
-#### Trellis.Asp — public `ValidationErrorsContext` validation-recording surface
-
-`ValidationErrorsContext.AddError(string fieldName, string errorMessage)`, `ValidationErrorsContext.AddError(Error.UnprocessableContent unprocessableContent)`, and `ValidationErrorsContext.CurrentPropertyName` (get/set) are now `public` (previously `internal`). Promoting these formalizes the contract that AOT-generated `JsonConverter<TValue>`s in consumer assemblies depend on. The reflection-mode `ScalarValueJsonConverterBase<,,>` continues to use the same APIs unchanged. No behavioral change for any existing caller.
-
-### Changed
-
-#### Trellis.Authorization — argument-null guards on the public surface
-
-`Actor` constructor, `Actor.Create`, every `Actor` lookup method (`HasPermission` / `HasPermission(string,string)` / `HasAllPermissions` / `HasAnyPermission` / `IsOwner` / `HasAttribute` / `GetAttribute`), and `ResourceLoaderById<TMessage,TResource,TId>.LoadAsync` now throw `ArgumentNullException` with the offending parameter name when called with a null argument. Previously these calls deferred null-checks to internal helpers (`SnapshotSet` / `FrozenSet.Contains` / `Enumerable.All` over a null `IEnumerable`) which surfaced as confusing `NullReferenceException`s with no parameter name. Aligns with the framework's defensive-coding posture established by Trellis.Core 2.3-2 / 2.3-7. Inspection findings **Trellis.Authorization m-2 / m-3 / i-3**.
-
-#### Trellis.Authorization — xmldoc and API reference clarifications
-
-Inspection findings **m-4 / m-5 / m-6 / i-4 / i-5 / i-6**:
-
-- `Actor` constructor xmldoc and API reference table now enumerate every `ArgumentNullException`-throwing parameter (previously only `id` was documented).
-- `Actor.Permissions` xmldoc nudges callers toward the `PermissionScopeSeparator` convention so scoped permissions round-trip through `HasPermission(string, string)` correctly.
-- `IAuthorize.RequiredPermissions` xmldoc and API reference clarify that duplicates and order are ignored under AND-semantics.
-- `IActorProvider.GetCurrentActorAsync` xmldoc and API reference now name `InvalidOperationException` as the canonical throw on unauthenticated, with subclass-specific guidance for concrete implementations.
-- `SharedResourceLoaderById<TResource, TId>` xmldoc and API reference document that `Trellis.Mediator.AddResourceAuthorization(...)` registers it as **scoped** (safe to depend on a `DbContext`).
-- The API reference's `HasPermission(string, string)` description previously rendered the composed key in TypeScript template-literal syntax (`${permission}:${scope}`); rewritten as plain prose to avoid misleading LLM-targeted doc consumers.
-
-#### Trellis.Core / Trellis.Asp / Trellis.EntityFrameworkCore / Trellis.Testing — sweep CLR-mangled type names out of resource refs and wire-facing error messages
-
-Across the framework, several wire-facing error messages and `ResourceRef` constructions used `typeof(T).Name` directly. For closed-generic Ts this leaks the CLR-mangled form (``List`1``, ``Maybe`1``) onto the wire — an inspection finding (ASP m-4 / m-7 / m-10, Core 2.4-4) flagged this as both ugly and a "one programming model" violation between modes (the AOT generator already emits friendly names at generation time; only the runtime/reflection paths mangled).
-
-This release routes every such site through one of two new Trellis.Core helpers:
-
-- `ResourceRef.For<TResource>(id)` — peels `Maybe<T>` wrappers (recursively, so `Result<Maybe<Order>>`-backed precondition fails report `"Order"` not ``"Maybe`1"``), then strips backtick mangling.
-- `ResourceRef.FormatTypeName(Type)` — strips backtick mangling only (no `Maybe<>` peeling, since that is intentionally scoped to the resource-naming contract on `For<T>`).
-
-Sites updated:
-
-- `Trellis.Asp/src/Response/TrellisHttpResult.cs:105` — `PreconditionFailed` resource ref in the conditional-evaluator path.
-- `Trellis.Asp/src/IfNoneMatchExtensions.cs:22` — `EnforceIfNoneMatchPrecondition<T>` resource ref.
-- `Trellis.Asp/src/Validation/ScalarValueJsonConverterBase.cs:56,70,104,115,124,129,173` — six fallback message templates plus `GetDefaultFieldName()` (the camel-cased-type-name fallback used when no `CurrentPropertyName` is set).
-- `Trellis.Asp/src/Validation/ValidatingJsonConverter.cs:41` — `OnNullToken` "TValue cannot be null." message.
-- `Trellis.Asp/src/Validation/PrimitiveJsonReader.cs:31,37` — `FormatException`/`InvalidOperationException` catch and unsupported-primitive fallbacks (the reflection-mode counterparts of the AOT generator's `__TryReadPrimitive` helper, restoring wire-shape parity between modes).
-- `Trellis.Core/src/DomainDrivenDesign/AggregateETagExtensions.cs:66,75,80` — three `Error.PreconditionFailed` resource refs.
-- `Trellis.EntityFrameworkCore/src/RepositoryBase.cs:223` — `RemoveByIdAsync` not-found resource ref + Detail.
-- `Trellis.Testing/src/FakeRepository.cs:82,189,210` — `GetByIdAsync` not-found, `SaveAsync` conflict, `DeleteAsync` not-found resource refs + Details. Also the `Add()` unique-constraint exception message at line 136.
-
-For non-generic CLR types (the typical case) all sweeps are no-ops; no existing test asserted on the mangled form. The fix is materially observable only when a wrapping generic appears in the type position — most commonly `Maybe<T>` for the m-4 path.
-
-#### Trellis.Asp — `ScalarValueModelBinderBase` removes dead `InvalidOperationException` (i-8)
-
-`ScalarValueModelBinderBase.BindModelAsync` previously called `parseResult.TryGetError(...)` followed by an unconditional `parseResult.TryGetValue(out var value)`, with a defensive `throw new InvalidOperationException("Result is in an unexpected state.")` for the impossible `(success, !TryGetValue)` branch. Replaced both calls with the combined `Result<T>.TryGetValue(out value, out error)` overload, which is mutually exclusive on the two outputs and removes the dead branch entirely. No behavior change for any path callers can actually reach.
-
-#### Trellis.Core — null-check consistency, default-uninit defensiveness, tracing perf docs
-
-Self-review of `Trellis.Core` surfaced six findings; all addressed in this release.
-
-- **`Result.Try<T>(Func<T>)` and `Result.TryAsync<T>(Func<Task<T>>)`** now throw `ArgumentNullException` when `func` is null, matching the no-payload `Try(Action)` / `TryAsync(Func<Task>)` overloads. Previously the value-bearing variants caught the resulting `NullReferenceException` and returned `Result.Fail(InternalServerError)`, hiding the programming error. **Behavior change**: callers that relied on the swallowing behavior (test or otherwise) need to handle null up-front. The existing `Try_WithNullFunction_ShouldReturnFailureResult` test was updated to assert `ArgumentNullException`.
-- **`Maybe<T>.Map<TResult>(selector)` and `Maybe<T>.Match<TResult>(some, none)`** now throw `ArgumentNullException` when their delegate parameters are null. Previously the failure mode was path-dependent (NRE only when the matching branch fired, particularly bad for `Match` because either delegate could fail depending on `HasValue`). Sibling methods (`Bind`, `Where`, `Tap`, `Or(Func<>)`, etc.) already null-checked.
-- **`NullableExtensions.ToResult<T>(Func<Error>)`** struct and class overloads now throw `ArgumentNullException` when `errorFactory` is null. Async variants inherit the fix transitively.
-- **`Page<T>.Items`** now returns `Array.Empty<T>()` when accessed on a default-constructed `Page<T>` (previously returned null despite the non-nullable annotation). Mirrors the `EquatableArray<T>.Items` pattern. `DeliveredCount` simplified to `Items.Count` since the property is now always non-null.
-- **`Cursor.Token`** now throws `InvalidOperationException` with a diagnostic message when accessed on `default(Cursor)` (previously returned null despite the non-nullable annotation and the doc'd "no empty cursor" invariant). The xmldoc invariant — "There is no empty cursor — a constructed Cursor always carries a non-empty token" — is now enforced at the property accessor.
-- **`RequiredDecimal<TSelf>` source generation** now uses invariant culture for the plain `TryCreate(string?, string?)` overload even when `[Range]` is applied. Previously the ranged generated path used the ambient current culture while the unranged path used invariant culture, so the same string could parse differently depending on whether the type had a range constraint.
-- **Nested required value-object source generation** now preserves containing-type modifiers such as `static` and `sealed` when emitting nested partial declarations. Previously nested `RequiredString<TSelf>` / `RequiredGuid<TSelf>` / numeric required value objects inside those containers could produce generated partial types that did not match the user's containing type declaration.
-- **Global-namespace required value objects** now generate valid source. Previously a `partial class GlobalCode : RequiredString<GlobalCode>` declared outside a namespace caused the generator to emit an invalid namespace declaration, leaving the generated `IScalarValue` interface implementation unavailable.
-- **`EntityTagValue.TryParse("*")`** now returns `EntityTagValue.Wildcard()`, so wildcard precondition tokens round-trip through `ToHeaderValue()` and the public parser. Previously only quoted strong and weak ETags parsed successfully.
-
-#### Trellis.Core — tracing performance documentation
-
-Documented the actual performance characteristics of `AddResultsInstrumentation` and the per-extension `using var activity = ActivitySource.StartActivity(...)` pattern, backed by a new BenchmarkDotNet suite (`Trellis.Benchmark/TracingOverheadBenchmarks.cs`). Measured on .NET 10 / x64:
-
-- **No listener registered** (production default): ~14–20 ns per `Bind`/`Map`/`Tap`, **0 bytes allocated**. The framework does not pay for tracing the consumer didn't ask for.
-- **`AddResultsInstrumentation` registered with full sampling**: ~200 ns + ~400 B per combinator. At 10k RPS × 10-step pipeline that's ~22 ms/sec CPU + 40 MB/sec GC pressure.
-
-The new docs make the granularity guidance explicit: per-Result-extension spans add limited signal beyond the outer pipeline-behavior or HTTP-request span; for high-throughput services, instrument at the pipeline-behavior altitude (`Trellis.Mediator.TracingBehavior`) and reserve `AddResultsInstrumentation` for development/debugging or low-rate paths. Updated `ResultsTraceProviderBuilderExtensions.cs` xmldoc and the corresponding section in `trellis-api-core.md`.
-
-#### Trellis.Asp — `ValidationProblem` error key shape (breaking)
-
-Every `Trellis.Asp` `ValidationProblem` emitter now produces field keys in the same MVC dot+bracket convention used by ASP.NET Core's built-in `ValidationProblemDetails`, instead of leaking JSON Pointer or JSONPath syntax onto the wire. The on-the-wire `errors` map keys are now consistent regardless of which layer produced the 400 (model binding, scalar-value endpoint filter, FluentValidation adapter, business-rule violations, deserialization failure middleware).
-
-- **Before:** mixed shapes per emitter — JSON Pointer (`/items/0/name`), JSONPath (`$.items[0].amount`, `$['property with space']`), or `"$"` for the root.
-- **After:** uniform MVC convention — `items[0].name`, `items[0].amount`, `property with space`, and `""` for the root.
-- A new internal translator (`Trellis.Asp.JsonPointerToMvc.Translate`) is wired into every emitter; the `ScalarValueValidationMiddleware` deserialization path additionally translates `System.Text.Json`'s `JsonException.Path` (including bracket-quoted JSONPath segments such as `$['a.b']`, `$['a/b']`, `$.items[0]['weird name']`) to the same shape.
-- **Edge-case caveat:** STJ's path serialization is genuinely lossy for dictionary keys containing the literal sequence `'][` (e.g. `a'][`, `a'][b`, `a'.b']['foo`). For those adversarial inputs the middleware translator picks the "multiple segments" interpretation, so the resulting MVC key for these keys may not match `JsonPointerToMvc.Translate` for the equivalent JSON Pointer. Property names with `'][` are not common in real APIs and the trade-off preserves correct handling of the legitimate adjacent-non-identifier-property-names case (e.g. `$['weird name']['another weird']`). Consumers needing lossless field paths should rely on `RuleViolation` payloads carrying raw JSON Pointers in `extensions["rules"][n].fields[]`.
-- **Escape hatch:** for `ValidationProblem` payloads carrying `RuleViolation`s, `extensions["rules"][n].fields[]` preserves the raw JSON Pointer values (`/items/0/name`) so consumers needing path fidelity for those payloads still have it. This escape hatch is `RuleViolation`-scoped only; flat field-violation payloads (`Error.UnprocessableContent` from FluentValidation, model binding, deserialization, etc.) are MVC-shape on the wire.
-
-**Migration:** consumers keying off the slash form (`/items/0/name`) or the JSONPath form (`$.items[0].name`, `$['name']`) for `errors` map lookups must migrate to the MVC dot+bracket form (`items[0].name`, `name`). Code generators and form libraries that already target ASP.NET Core's `ValidationProblemDetails` shape (OpenAPI, react-hook-form, Formik) require no change. Producers that emitted `RuleViolation`s and want to keep raw JSON Pointers in their integration tests should assert against `extensions.rules[n].fields[]` rather than `errors`.
-
-#### Trellis.Asp — AOT-generated JSON converters integrate with `ValidationErrorsContext`
-
-The source-generated `JsonConverter<TValue>` emitted by `Trellis.AspSourceGenerator` for each scalar value object now mirrors the reflection-mode `ScalarValueJsonConverterBase<,,>.Read` bit-for-bit. Previously the generated `Read` called `TValue.TryCreate(primitiveValue, null)` and silently coerced any failure to `null`, so under AOT a deserialization that should have produced a 422 ProblemDetails just dropped the value — divergent from the reflection-mode behavior and breaking the framework's "one programming model" promise across the two modes.
-
-After this fix, the generated `Read`:
-
-- Resolves the field name from `ValidationErrorsContext.CurrentPropertyName`, falling back to a baked-in camel-cased type name when the AOT path has no `PropertyNameAwareConverter<T>` setting it. The fallback name is computed at generation time using a port of `JsonNamingPolicy.CamelCase.ConvertName`, so acronym-leading types (`SKU` → `"sku"`, `URLValue` → `"urlValue"`, `IPAddress` → `"ipAddress"`) match reflection mode bit-for-bit instead of the naive `"sKU"`/`"uRLValue"`/`"iPAddress"`. The result is emitted as a string literal, so there is no runtime cost.
-- Sets `HandleNull = true` so JSON `null` tokens reach `Read` and get recorded as `"{TypeName} cannot be null."` instead of bypassing the converter.
-- Wraps the typed `Utf8JsonReader` getter (`reader.GetGuid()`, `reader.GetInt32()`, etc.) in a `try`/`catch` for `FormatException`/`InvalidOperationException` matching `PrimitiveJsonReader.TryRead`; an invalid token like `"not-a-guid"` for a `Guid`-backed value object is now recorded as `'{fieldName}' is not a valid Guid.` via `ValidationErrorsContext.AddError` instead of escaping as a `JsonException` from the deserializer.
-- Calls `TryCreate(primitiveValue, fieldName)` so the failure carries the correct field reference.
-- Forwards `Error.UnprocessableContent` failures verbatim via `ValidationErrorsContext.AddError(unprocessableContent)` (preserving `ReasonCode` / `Args` / `Detail`); records other failures with the failure's `Detail` (or `"{TypeName} is invalid."` when `Detail` is blank) keyed under `fieldName`.
-- Returns `null` after recording, matching reflection-mode `OnValidationFailure`.
-
-Direct typed `Utf8JsonReader`/`Utf8JsonWriter` calls (`reader.GetGuid()`, `writer.WriteNumberValue(i)`, etc.) are preserved — no boxing or `JsonSerializer.Deserialize` reflection is introduced.
-
-**Migration:** AOT consumers that previously caught the `null` and built their own ProblemDetails should remove that workaround and let `ScalarValueValidationMiddleware` produce the 422 from `ValidationErrorsContext`. Reflection-mode consumers see no change.
-
-### Added
-
-#### Trellis.Mediator — Domain event dispatch
-
-- **`IDomainEventHandler<TEvent>`** (new) — Implement this to handle a domain event. Dispatch matches the event's runtime type **exactly**; base-type and interface-type handlers are not auto-resolved. Handlers must be idempotent — non-cancellation exceptions thrown by a handler are logged at error level and swallowed so other handlers, other events, and the originating command still complete. `OperationCanceledException` matching the request's token is the one exception that propagates.
-- **`IDomainEventPublisher`** (new) — Used by the framework to fan out a single event. Inject only when publishing from non-pipeline contexts (background jobs, scheduled tasks). Default implementation (`MediatorDomainEventPublisher`, internal) resolves handlers via DI by runtime type.
-- **`DomainEventDispatchBehavior<TMessage, TResponse>`** (new) — Pipeline behavior constrained to `ICommand<TResponse>` (queries pass through). After a successful command whose response is `IResult<TAggregate>` (typically `Result<TAggregate>`) where `TAggregate : IAggregate`, drains `aggregate.UncommittedEvents()` in waves with index tracking. `AcceptChanges()` is called **once at the end** of a fully successful loop; cancellation propagates above the `AcceptChanges()` call so undispatched (and dispatched) events stay on the aggregate, and handlers must be idempotent because a retry will re-publish events that already fired. Wave count is capped at 8; cap-exceeded paths are logged and `AcceptChanges()` is called defensively. Other response shapes (`Result<Unit>`, `Result<TDto>`, `Result<(A,B)>`) pass through untouched in v1; manual dispatch remains the option for those flows.
-- **`DomainEventDispatchServiceCollectionExtensions.AddDomainEventDispatch()`** — Idempotent. Registers `DomainEventDispatchBehavior<,>` (open-generic, scoped) and the default `IDomainEventPublisher`. AOT-friendly (no scanning).
-- **`AddDomainEventHandler<TEvent, THandler>()`** — Explicit per-handler registration for AOT/trim scenarios. Idempotent.
-- **`AddDomainEventDispatch(params Assembly[] assemblies)`** — Assembly-scan overload (annotated `[RequiresUnreferencedCode]` + `[RequiresDynamicCode]`) that finds every concrete `IDomainEventHandler<TEvent>` and registers each as scoped.
-- **Pipeline placement** — Inserts after `ValidationBehavior` and before `TransactionalCommandBehavior` (when registered), so events fire after the transaction commits and handlers see committed state. When no transactional behavior is in the pipeline (e.g., applications committing directly inside the handler via a repository), dispatch runs immediately after the handler returns success.
-
-> **Failure model**: handlers run as **best-effort side effects**. Email failures, message-bus blips, and DI activation errors are all logged and swallowed; the originating command still succeeds. The one exception that propagates is `OperationCanceledException` matching the request's cancellation token — when the caller cancels, in-flight handlers that observe the token may throw OCE and the dispatcher lets it abort the remaining work. If a non-cancellation side effect must block command completion, do that work inside the command handler — not a domain-event handler.
-
-> **Migration**: applications dispatching events manually (e.g., `foreach (var evt in agg.UncommittedEvents()) await _publisher.PublishAsync(...); agg.AcceptChanges();`) can delete that boilerplate after wiring `AddDomainEventDispatch(...)`. If you must run both during migration, the framework dispatcher is safe **only when the manual path calls `AcceptChanges()` before returning** — typical implementations do, but verify. If the manual code skips `AcceptChanges()`, accepts conditionally, or accepts only some events, the framework dispatcher will see the remaining events and re-publish them. Recommendation: migrate fully or stay manual; don't ship a hybrid.
-
-#### Trellis.Mediator + Trellis.FluentValidation — Unified validation stage with composition
-
-- **`IMessageValidator<TMessage>`** (new, in `Trellis.Mediator`) — Extensibility seam that lets validator packages plug into the single `ValidationBehavior` stage instead of occupying their own pipeline slot. Multiple validators per message are supported; their `Error.UnprocessableContent` failures aggregate into one response.
-- **`ValidationBehavior` now runs for every message** (no longer constrained to `IValidate`). It composes `IValidate.Validate()` (when implemented) with every registered `IMessageValidator<TMessage>` and merges all field violations into a single `Error.UnprocessableContent`. Non-UPC failures (`Error.Conflict`, `Error.Forbidden`, …) short-circuit and propagate as-is.
-- **`AddTrellisFluentValidation()`** (`Trellis.FluentValidation`) — Parameterless overload registers an open-generic `FluentValidationMessageValidatorAdapter<TMessage>` as `IMessageValidator<>`. AOT-friendly (no assembly scanning, no reflection on the hot path); register each `IValidator<TCommand>` explicitly via `AddScoped<IValidator<...>, ...>()`. Assembly-scanning overload is annotated `[RequiresUnreferencedCode]` / `[RequiresDynamicCode]` for non-AOT scenarios.
-- **JSON Pointer normalization** — `FluentValidationMessageValidatorAdapter` and `validationResult.ToResult(value)` now translate FluentValidation property names into RFC 6901 JSON Pointers: `Metadata.Reference` → `/Metadata/Reference`, `Lines[0].Memo` → `/Lines/0/Memo`. Special characters are escaped per RFC 6901 (`~` → `~0`, `/` → `~1`).
-- **Showcase canonical demo** — `POST /api/transfers/batch/{fromId}` exercises `AddMediator(Scoped)` + `AddTrellisBehaviors()` + `AddTrellisFluentValidation()` end-to-end with nested + indexer FluentValidation rules and an `IValidate` business invariant. See [`Examples/Showcase/README.md`](Examples/Showcase/README.md).
-
-> **Note:** `AddMediator(...)` should be called as `AddMediator(opts => opts.ServiceLifetime = ServiceLifetime.Scoped)` in any host with a request scope. Mediator's default Singleton lifetime conflicts with the scoped Trellis behaviors and fails ASP.NET's root-scope validation. See [Mediator integration docs](docs/docfx_project/articles/integration-mediator.md).
-
-### Removed
-
-#### Trellis.Asp — legacy response verbs removed (Phase 3 cleanup)
-
-The seven extension classes deprecated by Phase 3 of the v2 redesign have been deleted. The single supported response API is now `result.ToHttpResponse(...)` / `result.ToHttpResponseAsync(...)` (returns `IResult`), with `.AsActionResult<T>()` / `.AsActionResultAsync<T>()` adapters for MVC.
-
-Removed types:
-- `ActionResultExtensions`, `ActionResultExtensionsAsync` (MVC `ToActionResult`, `ToCreatedAtActionResult`, metadata selector overloads)
-- `HttpResultExtensions`, `HttpResultExtensionsAsync` (Minimal API `ToHttpResult`, `ToCreatedAtRouteHttpResult`, `ToCreatedHttpResult`, `ToUpdatedHttpResult`, range overloads)
-- `PageActionResultExtensions` (`ToPagedActionResult`)
-- `PageHttpResultExtensions` (`ToPagedHttpResult`)
-- `WriteOutcomeExtensions` (`WriteOutcome<T>.ToActionResult`, `WriteOutcome<T>.ToHttpResult`, `ToUpdatedActionResult`)
-
-Migration: replace every call with the single fluent builder overload of `ToHttpResponse` / `ToHttpResponseAsync`. See [`docs/docfx_project/articles/asp-tohttpresponse.md`](docs/docfx_project/articles/asp-tohttpresponse.md) and [`MIGRATION_v3.md`](MIGRATION_v3.md) for the full mapping.
-
-### Breaking Changes
-
-#### Trellis.Core — Error redesigned as closed ADT
-
-The `Error` type is now an `abstract record` with **18 nested `sealed record` cases** (`Error.NotFound`, `Error.UnprocessableContent`, `Error.Conflict`, `Error.Forbidden`, …). The base type has a `private` constructor so the catalog is closed at the language level, and every `switch` over an `Error` reference is exhaustive at compile time.
-
-Key changes:
-- **No static factory methods.** Replace `Error.Validation("msg", "field")` with `new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "reason_code") { Detail = "msg" }))`. Same pattern for `Error.NotFound`, `Error.Conflict`, `Error.Forbidden`, `Error.Unexpected`, etc.
-- **Typed payloads.** Each case carries a strongly typed payload — `ResourceRef` for `NotFound`/`Gone`/`Conflict`, `EquatableArray<FieldViolation>` for `UnprocessableContent`, `PreconditionKind` for `PreconditionFailed`, etc. No more `object?` bags.
-- **`Detail` and `Cause` on the base.** Set them via object initializer; equality compares discriminator + payload + `Detail` (Cause excluded).
-- **`Result.Error` is now `public Error?`** (null on success, never throws). `Result<T>.Value` was removed; extract success values with `TryGetValue`, `Match`, `Deconstruct`, or `GetValueOrDefault`. See [ADR-001](docs/docfx_project/adr/ADR-001-result-api-surface.md) for the full design rationale.
-- **`Result<Unit>` collapsed to non-generic `Result`.** `Unit` is retained internally for tuple-result interop only.
-- **Removed:** `MatchError`, `SwitchError`, `FlattenValidationErrors` extensions; `ValidationError`/`NotFoundError`/`ConflictError`/etc. concrete subclasses; `Error.Instance` field. The ASP wire layer populates `ProblemDetails.Instance` from the server-relative request path+query (RFC 9457 §3.1); typed payloads expose `ResourceRef` (e.g. `Error.NotFound.Resource`) directly for callers that need to assert on the resource identity.
-- **Renamed wire identifiers.** Default `Code` values changed from `"validation.error"`/`"not.found.error"`/etc. to the IANA-aligned slugs `"unprocessable-content"`/`"not-found"`/etc.
-- **TRLS005 analyzer (`UseMatchErrorAnalyzer`) removed** — the C# compiler now provides exhaustiveness for free.
-
-Migration path: every `Error.X(...)` factory call site must be rewritten. `MatchError(...)` becomes `result.Match(_, e => e switch { Error.X => ..., ... })`. See [Error Handling](docs/docfx_project/articles/error-handling.md) for the full patterns and [api-results.md](docs/docfx_project/api_reference/trellis-api-core.md) for the reference table.
-
-#### Trellis.Testing — Package Restructure
-
-- **Removed `ResultBuilder`** — Use `Result.Ok(value)` and `Result.Fail<T>(new Error.X(...))` directly. `ResultBuilder` was a thin wrapper that added no value over the existing API.
-- **Removed `ValidationErrorBuilder`** — Construct an `Error.UnprocessableContent` directly with one `FieldViolation` per failure: `new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), reasonCode) { Detail = "..." }))`. Combine multiple validation results via `Combine`.
-- **Removed `Trellis.Testing.Builders` namespace** — All builder types have been removed.
-- **Removed `Trellis.Testing.Fakes` namespace** — `FakeRepository`, `FakeSharedResourceLoader`, `TestActorProvider`, and `TestActorScope` now live in the `Trellis.Testing` namespace. Replace `using Trellis.Testing.Fakes;` with `using Trellis.Testing;`.
-- **New package: `Trellis.Testing.AspNetCore`** — ASP.NET Core integration test helpers (`WebApplicationFactoryExtensions`, `WebApplicationFactoryTimeExtensions`, `ServiceCollectionExtensions`, `ServiceCollectionDbProviderExtensions`, `MsalTestTokenProvider`, `MsalTestOptions`, `TestUserCredentials`) moved to this new package. Add `dotnet add package Trellis.Testing.AspNetCore` and add `using Trellis.Testing.AspNetCore;` for these types. Projects using both core assertions and ASP.NET helpers will need both packages.
-- **`Trellis.Testing` no longer depends on ASP.NET Core, EF Core, or MSAL** — The core package now only depends on `Trellis.Core`, `Trellis.Authorization`, and `FluentAssertions`.
-
-### Added
-
-#### Trellis.Core + Trellis.Asp — Surfaceable JSON validation errors
-
-- **`TrellisJsonValidationException`** (new, in `Trellis.Core`) — A marker subclass of `System.Text.Json.JsonException` that Trellis JSON converters throw when a structured value object's invariants are violated during deserialization (e.g., `MoneyJsonConverter` rejecting a negative amount). The message is treated as curated/client-safe.
-- **`ScalarValueValidationMiddleware`** (Minimal API path) now surfaces the message of an inner `TrellisJsonValidationException` in the Problem Details body — using its `JsonException.Path` as the error key when populated. Plain `JsonException`s continue to map to the generic `"The request body contains invalid JSON."` message because their text can include internal type names (audit-respecting).
-- **`MoneyJsonConverter`** updated to throw `TrellisJsonValidationException` (was: plain `JsonException`). Callers see `"Amount cannot be negative."` etc. from the framework instead of the generic "invalid JSON" placeholder. This restores DX parity with MVC's model binder, which already includes per-field `JsonException` messages.
-
-#### Trellis.EntityFrameworkCore — Composite Value Object Convention
-
-- **`CompositeValueObjectConvention`** — `ApplyTrellisConventions` now automatically registers all composite `ValueObject` types (types extending `ValueObject` but not implementing `IScalarValue`) as EF Core owned types. No `OwnsOne` configuration needed for types like `Address`, `DateRange`, or `GeoCoordinate`. `Maybe<T>` is also supported — for simple composites, columns are marked nullable in the owner table; for composites with nested owned types (e.g., `Address` containing `Money`), the convention maps the optional dependent to a separate table with NOT NULL columns. `Money` retains its specialized column naming via `MoneyConvention`. Explicit `OwnsOne` configuration takes precedence.
-
-### Fixed
-
-#### Trellis.Analyzers — Ternary Guard Recognition
-
-- **TRLS003, TRLS004, TRLS006** — The unsafe-access analyzers now recognize ternary conditional expressions (`? :`) as valid guards. Previously, `maybe.HasValue ? maybe.Value : fallback` and similar patterns for `Result.Value`/`Result.Error` produced false-positive diagnostics.
-
-### Added
-
-#### Trellis.Testing — ReplaceResourceLoader
-
-- **`ReplaceResourceLoader<TMessage, TResource>`** — New `IServiceCollection` extension method that removes all existing `IResourceLoader<TMessage, TResource>` registrations and re-registers the replacement as scoped (matching the production lifetime of resource loaders). Accepts a `Func<IServiceProvider, IResourceLoader>` factory. Eliminates the need to manually call `RemoveAll` before re-registering when `AddMockAntiCorruptionLayer()` causes duplicate DI registrations.
-
-#### Trellis.Primitives — StringLength Attribute
-
-- **`[StringLength]`** — `RequiredString<TSelf>` derivatives now support `[StringLength(max)]` and `[StringLength(max, MinimumLength = min)]` for declarative length validation at creation time. The source generator emits `.Ensure()` length checks in `TryCreate` with clear validation error messages (e.g., `"First Name must be 50 characters or fewer."`).
-
-#### Trellis.EntityFrameworkCore — Money Convention
-
-- **`MoneyConvention`** — `ApplyTrellisConventions` now automatically maps `Money` properties as owned types with `{PropertyName}` (decimal 18,3) + `{PropertyName}Currency` (nvarchar 3) columns. Scale 3 accommodates all ISO 4217 minor units (BHD, KWD, OMR, TND). No `OwnsOne` configuration needed. Explicit `OwnsOne` takes precedence.
-
-#### Trellis.Primitives — Money EF Core Support
-
-- **`Money`** — Added private parameterless constructor and private setters on `Amount`/`Currency` for EF Core materialization support. No public API changes.
-
-#### Trellis.Authorization — NEW Package!
-
-Lightweight authorization primitives with zero dependencies beyond `Trellis.Core`:
-
-- **`Actor`** — Sealed record representing an authenticated user (`Id` + `Permissions`) with `HasPermission`, `HasAllPermissions`, `HasAnyPermission` helpers
-- **`IActorProvider`** — Abstraction for resolving the current actor (implement in API layer)
-- **`IAuthorize`** — Marker interface for static permission requirements (AND logic)
-- **`IAuthorizeResource<TResource>`** — Resource-based authorization with a loaded resource via `Authorize(Actor, TResource)`
-- **`IResourceLoader<TMessage, TResource>`** — Loads the resource required for resource-based authorization
-- **`ResourceLoaderById<TMessage, TResource, TId>`** — Convenience base class for ID-based resource loading
-
-Usable with or without CQRS — no Mediator dependency.
-
-#### Trellis.Mediator — NEW Package!
-
-Result-aware pipeline behaviors for [martinothamar/Mediator](https://github.com/martinothamar/Mediator) v3:
-
-- **`ValidationBehavior`** — Short-circuits on `IValidate.Validate()` failure
-- **`AuthorizationBehavior`** — Checks `IAuthorize.RequiredPermissions` via `IActorProvider`
-- **`ResourceAuthorizationBehavior<TMessage, TResource, TResponse>`** — Loads resource via `IResourceLoader`, delegates to `IAuthorizeResource<TResource>.Authorize(Actor, TResource)`. Auto-discovered via `AddResourceAuthorization(Assembly)` or registered explicitly for AOT.
-- **`LoggingBehavior`** — Structured logging with duration and Result outcome
-- **`TracingBehavior`** — OpenTelemetry activity span with Result status
-- **`ExceptionBehavior`** — Catches unhandled exceptions → `Error.Unexpected`
-- **`ServiceCollectionExtensions`** — `PipelineBehaviors` array and `AddTrellisBehaviors()` DI registration
-
-#### Trellis.Core — IFailureFactory
-
-- **`IFailureFactory<TSelf>`** — Static abstract interface for AOT-friendly typed failure creation in generic pipeline behaviors
-- **`Result<TValue>`** now implements `IFailureFactory<Result<TValue>>`
-
-#### Specification Pattern — Composable Business Rules
-
-`Specification<T>` is a new DDD building block for encapsulating business rules as composable, storage-agnostic expression trees:
-
-- **`Specification<T>`** — Abstract base class with `ToExpression()`, `IsSatisfiedBy(T)`, and `And`/`Or`/`Not` composition
-- **Expression-tree based** — Works with EF Core 8+ for server-side filtering via `IQueryable`
-- **Implicit conversion** to `Expression<Func<T, bool>>` for seamless LINQ integration
-- **In-memory evaluation** via `IsSatisfiedBy(T)` for domain logic and testing
-
-```csharp
-// Define a specification
-public class HighValueOrderSpec(decimal threshold) : Specification<Order>
-{
-    public override Expression<Func<Order, bool>> ToExpression() =>
-        order => order.TotalAmount > threshold;
-}
-
-// Compose specifications
-var spec = new OverdueOrderSpec(now).And(new HighValueOrderSpec(500m));
-var orders = await dbContext.Orders.Where(spec).ToListAsync();
-```
-
-#### Maybe<T> — First-Class Domain-Level Optionality
-
-`Maybe<T>` now has a `notnull` constraint and new transformation methods, making it a proper domain-level optionality type:
-
-- **`notnull` constraint** — `Maybe<T> where T : notnull` prevents wrapping nullable types
-- **`Map<TResult>`** — Transform the inner value: `maybe.Map(url => url.Value)` returns `Maybe<string>`
-- **`Match<TResult>`** — Pattern match: `maybe.Match(url => url.Value, () => "none")`
-- **Implicit operator** — `Maybe<Url> m = url;` works naturally
-
-#### ASP.NET Core Maybe<T> Integration
-
-Full support for optional value object properties in DTOs:
-
-- **`MaybeScalarValueJsonConverter<TValue,TPrimitive>`** — JSON deserialization: `null` → `Maybe.None`, valid → `Maybe.From(validated)`, invalid → validation error collected
-- **`MaybeScalarValueJsonConverterFactory`** — Auto-discovers `Maybe<T>` properties on DTOs
-- **`MaybeModelBinder<TValue,TPrimitive>`** — MVC model binding: absent/empty → `Maybe.None`, valid → `Maybe.From(result)`, invalid → ModelState error
-- **`MaybeSuppressChildValidationMetadataProvider`** — Prevents MVC from requiring child properties on `Maybe<T>` (fixes MVC crash)
-- **`ScalarValueTypeHelper`** additions — `IsMaybeScalarValue()`, `GetMaybeInnerType()`, `GetMaybePrimitiveType()`
-- **SampleWeb apps** updated at the time — `Maybe<Url> Website` on User/RegisterUserDto, `Maybe<FirstName> AssignedTo` on UpdateOrderDto. (SampleWeb has since been removed; see _Showcase consolidated; SampleWeb removed_ below.)
-
-### Changed
-
-- `Maybe<T>` now requires `where T : notnull` — see [Migration Guide](MIGRATION_v3.md#maybe-notnull-constraint) for details
-
-#### Examples — Showcase consolidated; SampleWeb removed
-
-The Showcase sample now hosts the **same banking domain** twice — once as MVC controllers and once as Minimal API endpoint groups — so users can compare hosting styles over an identical contract. This replaces the previously incoherent setup where Showcase was banking and `SampleMinimalApi` was a different (users/products/orders) domain with no shared code.
-
-**New project layout:**
-
-```
-Examples/Showcase/
-├── api.http                                 Single .http file with @host toggle (works on both hosts)
-├── src/
-│   ├── Showcase.Domain/                     (unchanged) pure domain
-│   ├── Showcase.Application/                NEW — workflows, services, persistence, DTOs, seed
-│   ├── Showcase.Mvc/                        renamed from Showcase.Api — controllers + Program.cs
-│   └── Showcase.MinimalApi/                 NEW — endpoint groups + Program.cs
-└── tests/
-    ├── Showcase.Tests/                      (unchanged) domain + MVC integration tests
-    └── Showcase.MinimalApi.Tests/           NEW — mirror of MVC integration tests against Minimal API host
-```
-
-The Minimal API host adds **zero** new application code — same DTOs, repository, `BankingWorkflow`, and seed. The only delta is route mapping and `ToHttpResult*` vs `ToActionResult*` for Result→HTTP conversion. `Showcase.MinimalApi.Tests` runs the same six integration assertions as the MVC tests against the Minimal API factory and proves identical HTTP behaviour.
-
-**Removed:** the entire `Examples/SampleWeb/` folder (`SampleMinimalApi`, `SampleMinimalApi.Tests`, `SampleUserLibrary`, four stale top-level `.http` files). `Trellis.Benchmark` no longer references the deleted `SampleUserLibrary`; the two VOs the benchmarks needed are now inlined in `Trellis.Benchmark/BenchmarkValueObjects.cs`.
-
-#### Examples — Sample-perfection sweep (v2 Phase 1c PR2)
-
-The `Examples/` folder was rewritten end-to-end so every kept sample passes the v2 axiom scorecard (A1–A11). Samples are the source of truth that flows into the ASP template and from there into AI-generated code; imperfections at this layer compound, so the sweep was scored against an explicit set of rules — see [Examples README](Examples/README.md) for the full list.
-
-**Lineup changes:**
-- **Removed** as redundant or noisy: `Examples/AuthorizationExample`, `Examples/BankingExample`, `Examples/EcommerceExample`, `Examples/SampleWeb/SampleWebApplication`, `Examples/SampleWeb/SampleMinimalApiNoAot`, `Examples/SampleWeb/SampleDataAccess`. Their teachings are now consolidated in `Showcase` (auth, banking workflows, lifecycle) and the Minimal API sample (data access via in-memory repos).
-- **Renamed** `Examples/Xunit` → `Examples/TestingPatterns` (folder name now describes the *intent*, not the runner). The csproj is `TestingPatterns.Tests.csproj` so `IsTestProject` auto-detection still applies.
-
-**Showcase (`Examples/Showcase`):**
-- **Architectural fix** — every state-changing use case now crosses `BankingWorkflow`, which centralizes `mutate aggregate → publish events → AcceptChanges → persist`. Previously `AccountsController` mutated aggregates directly for `Open`/`Deposit`/`Withdraw`/`Freeze`/`Unfreeze`/`Close`, so domain events from those flows were never published or accepted (only `SecureWithdraw` and `Transfer` did the right thing). This was the canonical "boundary leak" bug.
-- **Wire-boundary alignment** — `AccountResponse` exposes `AccountId`, `CustomerId`, `AccountType`, `Money`, `AccountStatus` directly instead of `Guid`/`string`/`decimal`. The existing `Money` JSON converter emits `{"amount", "currency"}`.
-- **`System.TimeProvider`** replaces the ad-hoc `IClock`/`SystemClock` seam (BCL standard since .NET 8). Tests use `FakeTimeProvider` from `Microsoft.Extensions.TimeProvider.Testing`.
-- **`.Value` purged from production code.** Seed-time invariants are centralized in a `Required<T>()` helper that throws `InvalidOperationException` with a clear message at startup.
-
-**SampleUserLibrary, SampleMinimalApi (`Examples/SampleWeb/*`):**
-- The standalone Minimal API sample and the shared `SampleUserLibrary` were folded into `Examples/Showcase/src/Showcase.MinimalApi`, which now hosts the same banking domain as `Showcase.Mvc` over identical DTOs. The shared-VO-library teaching is preserved by Showcase's `Showcase.Domain` / `Showcase.Application` split.
-- `ScalarValueValidationMiddleware` no longer parses `BadHttpRequestException.Message` to extract field names or invalid values for Minimal API scalar route/query binding failures. It now uses endpoint parameter metadata plus route/query raw values and re-runs Trellis scalar validation for `IScalarValue<,>` / `Maybe<TScalar>` parameters.
-
-**ConditionalRequestExample:**
-- Route templates use `{id:ProductId}` (not `{id:guid}`). Handler signatures bind `ProductId id` directly (generator-emitted `IParsable`).
-- `ProductResponse` exposes `ProductId`/`ProductName`/`MonetaryAmount` instead of `Guid`/`string`/`decimal`.
-- New `ConditionalRequestExample.Tests` covers all six conditional-request branches (200/304/412/428/etc.).
-
-**SsoExample, EfCoreExample:**
-- Re-audited. New minimal `*.Tests` projects added.
-
----
-
-#### Trellis.Analyzers - NEW Package! 🎉
-
-A comprehensive suite of Roslyn analyzers to enforce Railway Oriented Programming best practices at compile time:
-
-**Safety Rules (Warnings):**
-- **TRLS001**: Detect unhandled Result return values
-- **TRLS003**: Prevent unsafe `Result.Value` access without `IsSuccess` check
-- **TRLS004**: Prevent unsafe `Result.Error` access without `IsFailure` check
-- **TRLS006**: Prevent unsafe `Maybe.Value` access without `HasValue` check
-- **TRLS007**: Suggest `Create()` instead of `TryCreate().Value` for clearer intent
-- **TRLS008**: Detect `Result<Result<T>>` double wrapping
-- **TRLS009**: Prevent blocking on `Task<Result<T>>` with `.Result` or `.Wait()`
-- **TRLS011**: Detect `Maybe<Maybe<T>>` double wrapping
-- **TRLS014**: Detect async lambda used with sync method (Map instead of MapAsync)
-- **TRLS015**: Don't throw exceptions in Result chains (defeats ROP purpose)
-- **TRLS016**: Empty error messages provide no debugging context
-- **TRLS018**: Unsafe `.Value` access in LINQ without filtering first
-
-**Best Practice Rules (Info):**
-- **TRLS002**: Suggest `Bind` instead of `Map` when lambda returns Result
-- **TRLS005**: *(removed in V2)* — superseded by C# exhaustive `switch` on the closed `Error` ADT
-- **TRLS010**: Suggest specific error types instead of base `Error` class
-- **TRLS013**: Suggest `GetValueOrDefault`/`Match` instead of ternary operator
-
-**Benefits:**
-- ✅ Catch common ROP mistakes at compile time
-- ✅ Guide developers toward best practices
-- ✅ Improve code quality and maintainability
-- ✅ 149 comprehensive tests ensuring accuracy
-
-**Installation:**
-```bash
-dotnet add package Trellis.Analyzers
-```
-
-**Documentation:** [Analyzer Documentation](Analyzers/src/README.md)
+- New cookbook (`docs/docfx_project/api_reference/trellis-api-cookbook.md`)
+  with 26+ task-oriented recipes and a per-package API reference under
+  `docs/docfx_project/api_reference/`.
+- Value-object taxonomy reference
+  (`trellis-value-object-taxonomy.md`) covering scalar / composite /
+  primitive variants.
+- Analyzer surface documented per rule under
+  `docs/docfx_project/articles/analyzers/`.
+- Migration guide (`docs/docfx_project/articles/migration.md`) covers the
+  step-by-step move from FunctionalDdd 2.1 to Trellis 3.0.
+- `Trellis.Core` and `Trellis.ServiceDefaults` README files describe the
+  composition root and pipeline order.
 
 ---
 
 ## Previous Releases
 
+Releases prior to 3.0.0 shipped under the FunctionalDdd project name and
+are tracked in that repository's history.
 
-[Unreleased]: https://github.com/xavierjohn/Trellis/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/xavierjohn/Trellis/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/xavierjohn/Trellis/releases/tag/v3.0.0
