@@ -97,6 +97,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Return synchronous `Result` chains from `Task`/`ValueTask` APIs | [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), then `AsTask()` / `AsValueTask()` in [trellis-api-core.md](trellis-api-core.md) |
 | Create HTTP-oriented resource errors | Use `ResourceRef.For<TResource>(id)` from [trellis-api-core.md](trellis-api-core.md) |
 | Add a state transition | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult) |
+| Add a multi-version controller where v2 adds new fields to existing responses | [Recipe 26](#recipe-26--version-aware-response-projection-in-a-shared-controller) |
 | Write handler/domain tests | [Recipe 10](#recipe-10--test-handler-test-using-trellistesting-shouldbe--unwraperror) |
 | Define domain events | [Recipe 17](#recipe-17--defining-custom-domain-events-occurredat-is-the-only-timestamp) |
 | Fix analyzer warnings | [Recipe 11](#recipe-11--anti-pattern--fix-gallery-the-analyzers-in-action) |
@@ -113,6 +114,7 @@ These rows route recurring LLM lab mistakes to the most relevant reference befor
 | State transitions on an aggregate | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult), then [trellis-api-statemachine.md](trellis-api-statemachine.md#patterns-index) | Keep transition methods consistent and put domain mutation after `FireResult` succeeds. |
 | Cross-aggregate mutation such as cancel/return releasing stock | [Recipe 1](#recipe-1--crud-aggregate-ddd-value-objects--entity--repository-contract), [Recipe 2](#recipe-2--command--handler--fluentvalidation--ef-persistence), and [trellis-api-core.md](trellis-api-core.md#domain-driven-design) | The application handler orchestrates multiple aggregates; an aggregate mutates only itself. |
 | Single-loop mutate-as-you-validate over a collection of related aggregates (reserve stock per line item, etc.) | [Recipe 25](#recipe-25--two-pass-validate-then-mutate-over-a-collection-of-related-aggregates) | A later element's validation failure leaves earlier elements partially mutated in memory. Validate every fallible domain check across every participating aggregate before the first state-changing call. |
+| Multi-version controller where the response shape diverges between api-versions (v2 adds new fields; v1 must keep its original shape) | [Recipe 26](#recipe-26--version-aware-response-projection-in-a-shared-controller) | One controller, `[ApiVersion]` × N, a private `Project(T)` seam keyed on `HttpContext.RequestedApiVersion`. Scales better than per-version controller folders for the typical "v1 still works at v2; v2 adds a field" case. |
 | Result-returning ASP endpoints | [Recipe 4](#recipe-4--minimal-api-endpoint-wiring-resultt--httpresponseoptionsbuilder--tohttpresponse), [Recipe 5](#recipe-5--mvc-controller-using-asactionresult), then [trellis-api-asp.md](trellis-api-asp.md#patterns-index) | `AddTrellisAsp()` is required for Result-to-HTTP mapping; exception middleware is not the mapper. |
 | Failure-code OpenAPI metadata or `.http` examples | [trellis-api-asp.md](trellis-api-asp.md#endpoint-checklist-for-generated-apis), [trellis-api-testing-aspnetcore.md](trellis-api-testing-aspnetcore.md#api-failure-path-test-checklist) | Generated APIs need failure paths, not happy-path-only docs/tests. |
 | Resource authorization guards | [Recipe 7](#recipe-7--authorization-iactorprovider--iauthorize--resource-based-auth), then [trellis-api-authorization.md](trellis-api-authorization.md#patterns-index) | Use `Result.Ensure` for owner/admin boolean guards. |
@@ -2183,7 +2185,9 @@ This recipe documents the single-controller form because it scales better and ke
 
 ```csharp
 using Asp.Versioning;
+using Asp.Versioning.Http;           // HttpContext.RequestedApiVersion extension
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Trellis;
 using Trellis.Asp;
 using Trellis.Asp.ApiVersioning;
@@ -2200,7 +2204,7 @@ public sealed class OrdersController(ISender sender) : ControllerBase
     [ProducesResponseType(typeof(OrderResponseV1), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OrderResponseV2), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<ActionResult<object>> GetById([CustomerResourceId] OrderId id, CancellationToken ct) =>
+    public Task<ActionResult<object>> GetById(OrderId id, CancellationToken ct) =>
         sender.Send(new GetOrderByIdQuery(id), ct).AsTask()
             .ToHttpResponseAsync<Order, object>(
                 Project,
@@ -2215,7 +2219,7 @@ public sealed class OrdersController(ISender sender) : ControllerBase
     [MapToApiVersion("2026-12-01")]
     [ProducesResponseType(typeof(OrderResponseV2), StatusCodes.Status200OK)]
     public Task<ActionResult<object>> Return(
-        [CustomerResourceId] OrderId id,
+        OrderId id,
         [FromBody] ReturnOrderRequest request,
         CancellationToken ct) =>
         sender.Send(new ReturnOrderCommand(id, request.Reason), ct).AsTask()
@@ -2227,12 +2231,11 @@ public sealed class OrdersController(ISender sender) : ControllerBase
         IsV2() ? OrderResponseV2.From(order) : OrderResponseV1.From(order);
 
     private bool IsV2() =>
-        HttpContext.Features.Get<IApiVersioningFeature>()?.RequestedApiVersion?.ToString()
-            == "2026-12-01";
+        HttpContext.RequestedApiVersion()?.ToString() == "2026-12-01";
 }
 ```
 
-The matched-version read uses `HttpContext.Features.Get<IApiVersioningFeature>()?.RequestedApiVersion`. `HttpRequest.GetRequestedApiVersion()` exists at the framework level but is not exposed on `HttpContext`; the feature lookup is the version-portable path.
+The matched-version read uses the `HttpContext.RequestedApiVersion()` extension property shipped by `Asp.Versioning.Http`. This is the reader-agnostic primary signal — it reflects whatever `IApiVersionReader` is configured (query, header, media-type, URL segment, or a composite reader) and is what `Trellis.Asp.ApiVersioning`'s own runtime uses internally (see [`trellis-api-asp-apiversioning.md`](trellis-api-asp-apiversioning.md#per-request-resolution-order) for the full resolution order).
 
 ### Why `ActionResult<object>`
 
@@ -2247,7 +2250,19 @@ The convergent multi-version rule set in real services breaks down into four che
 - **v1 endpoints reachable at both versions.** Both `[ApiVersion]` attributes on the class; no `[MapToApiVersion]` on shared actions.
 - **v2-only endpoints unreachable at v1.** `[MapToApiVersion("2026-12-01")]` on the v2-only action; Asp.Versioning emits 404 when called with the wrong version (not 400, not 405).
 - **v1 response shape stable.** `OrderResponseV1.From(order)` never includes the v2-only fields, and projects the `Returned` enum case back to `"Delivered"` at the DTO seam — `v1 dto.Status = order.Status == OrderStatus.Returned ? "Delivered" : order.Status.Value`.
-- **Location headers round-trip the requested api-version.** `CreatedAtVersionedRoute(...)` on creation responses; `Url.RouteUrl(name, { ["id"] = id, ["api-version"] = RequestedApiVersion() })` for 200 OK responses with Location (e.g., the Return endpoint).
+- **Location headers round-trip the requested api-version.** `CreatedAtVersionedRoute(...)` on creation responses; for 200 OK responses with Location (e.g., the Return endpoint), build a `RouteValueDictionary` that includes the matched version:
+
+  ```csharp
+  var location = Url.RouteUrl(
+      "Orders_GetById",
+      new RouteValueDictionary
+      {
+          ["id"] = order.Id.Value,
+          ["api-version"] = HttpContext.RequestedApiVersion()?.ToString()
+      });
+  ```
+
+  The hyphenated `"api-version"` key cannot be expressed as an anonymous-object property, so `RouteValueDictionary` with string-indexer initialisation is the correct shape.
 
 ### Anti-pattern → fix
 
@@ -2269,24 +2284,25 @@ public sealed class OrdersController { /* 10 shared actions + 1 v2-only + Projec
 
 ```csharp
 // ❌ Reading the matched version from the query string directly. Works today; silently
-//    breaks if a future consumer enables MediaType or Header api-version readers.
+//    breaks if a future consumer enables MediaType, Header, URL-segment, or composite readers.
 private string RequestedApiVersion() => HttpContext.Request.Query["api-version"].ToString();
 ```
 
 ```csharp
-// ✅ Use the feature exposed by Asp.Versioning; reader-agnostic.
+// ✅ Use the Asp.Versioning extension; reader-agnostic, mirrors the framework's own resolution.
 private bool IsV2() =>
-    HttpContext.Features.Get<IApiVersioningFeature>()?.RequestedApiVersion?.ToString() == "2026-12-01";
+    HttpContext.RequestedApiVersion()?.ToString() == "2026-12-01";
 ```
 
 ```csharp
 // ❌ Hand-rolling Location for 201 Created endpoints — Trellis already has the version-aware helper.
-HttpContext.Response.Headers["Location"] = $"/api/orders/{order.Id.Value}?api-version={RequestedApiVersion()}";
+HttpContext.Response.Headers["Location"] = $"/api/orders/{order.Id.Value}?api-version={requestedVersion}";
 ```
 
 ```csharp
 // ✅ Creation endpoints — CreatedAtVersionedRoute round-trips the requested api-version automatically.
-opts => opts.CreatedAtVersionedRoute("Orders_GetById", o => new RouteValueDictionary { ["id"] = (Guid)o.Id })
+//    Use the single-id overload when the route has one parameter.
+opts => opts.CreatedAtVersionedRoute("Orders_GetById", o => o.Id)
 ```
 
 ### When to split into per-version controllers anyway
