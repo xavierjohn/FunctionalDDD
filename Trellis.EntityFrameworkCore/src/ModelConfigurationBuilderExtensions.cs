@@ -25,10 +25,10 @@ public static class ModelConfigurationBuilderExtensions
     /// protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     /// {
     ///     // Scans your assembly for CustomerId, OrderStatus, etc.
-    ///     // Also auto-scans Trellis.Primitives (EmailAddress, Url, PhoneNumber, ...) and
-    ///     // Trellis.Authorization (ActorId) so persisted audit fields like
-    ///     // Order.CreatedByActorId : ActorId get their scalar converter without an
-    ///     // explicit typeof(ActorId).Assembly hand-in.
+    ///     // Trellis.Primitives (EmailAddress, Url, PhoneNumber, ...) and Trellis.Authorization
+    ///     // (ActorId) are included in the default scan set, so persisted audit fields like
+    ///     // Order.CreatedByActorId : ActorId get their scalar converter without an explicit
+    ///     // typeof(ActorId).Assembly hand-in.
     ///     configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
     /// }
     /// </code>
