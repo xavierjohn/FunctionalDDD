@@ -1,4 +1,4 @@
-﻿namespace Trellis.EntityFrameworkCore.Tests;
+namespace Trellis.EntityFrameworkCore.Tests;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -6,17 +6,17 @@ using Trellis.Authorization;
 
 /// <summary>
 /// Regression coverage for <see cref="ModelConfigurationBuilderExtensions.ApplyTrellisConventions"/>'s
-/// auto-scan of the <c>Trellis.Authorization</c> assembly so that aggregates carrying a
-/// <see cref="ActorId"/>-typed audit field (the canonical <c>CreatedByActorId</c> shape) pick up
-/// the scalar converter without the consumer having to add
-/// <c>typeof(ActorId).Assembly</c> to the <c>ApplyTrellisConventions</c> call.
+/// default inclusion of the <c>Trellis.Authorization</c> assembly in the scan set, so that
+/// aggregates carrying an <see cref="ActorId"/>-typed audit field (the canonical
+/// <c>CreatedByActorId</c> shape) pick up the scalar converter without the consumer having to
+/// add <c>typeof(ActorId).Assembly</c> to the <c>ApplyTrellisConventions</c> call.
 /// </summary>
-public class AuthorizationAssemblyAutoScanTests : IDisposable
+public class AuthorizationAssemblyScanTests : IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly ActorIdTestDbContext _context;
 
-    public AuthorizationAssemblyAutoScanTests()
+    public AuthorizationAssemblyScanTests()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
@@ -54,9 +54,10 @@ public class AuthorizationAssemblyAutoScanTests : IDisposable
     [Fact]
     public void ActorId_column_is_mapped_as_text_not_as_unknown_clr_type()
     {
-        // Without the auto-scan, the model finalizer would either omit the property entirely
-        // (no surface) or surface it as an unknown CLR type EF Core cannot translate.
-        // Asserting the SQLite column type proves the scalar converter is registered.
+        // Without Trellis.Authorization in the default scan set, the model finalizer would
+        // either omit the property entirely (no surface) or surface it as an unknown CLR type
+        // EF Core cannot translate. Asserting the SQLite column type proves the scalar
+        // converter is registered.
         var entityType = _context.Model.FindEntityType(typeof(ActorIdHolder))!;
         var property = entityType.FindProperty(nameof(ActorIdHolder.CreatedByActorId))!;
 
@@ -82,8 +83,9 @@ public class AuthorizationAssemblyAutoScanTests : IDisposable
         {
         }
 
-        // Deliberately pass only this assembly. The auto-scan must add Trellis.Authorization
-        // so the ActorId property gets its scalar converter without an explicit hand-in.
+        // Deliberately pass only this assembly. The default scan set must include
+        // Trellis.Authorization so the ActorId property gets its scalar converter without
+        // an explicit hand-in.
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
             configurationBuilder.ApplyTrellisConventions(typeof(ActorIdTestDbContext).Assembly);
 
