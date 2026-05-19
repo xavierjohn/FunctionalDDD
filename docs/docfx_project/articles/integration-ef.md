@@ -39,7 +39,7 @@ audience: [developer]
 
 | Type / member | Kind | Purpose |
 |---|---|---|
-| `ModelConfigurationBuilderExtensions.ApplyTrellisConventions(params Assembly[])` | Conventions | Runtime scan; registers scalar converters, `Maybe<T>` / composite / `Money` / ETag / transient conventions. Always includes `Trellis.Primitives` and `Trellis.Authorization` in the scan so built-in primitives (`EmailAddress`, `Url`, …) and `ActorId` work without an explicit hand-in. |
+| `ModelConfigurationBuilderExtensions.ApplyTrellisConventions(params Assembly[])` | Conventions | Runtime scan; registers scalar converters, `Maybe<T>` / composite / `Money` / ETag / transient conventions. Always includes `Trellis.Core` (base `Required*` types), `Trellis.Primitives`, and `Trellis.Authorization` in the scan so built-in primitives (`EmailAddress`, `Url`, …) and `ActorId` work without an explicit hand-in. |
 | `GeneratedTrellisConventions.ApplyTrellisConventionsFor<TContext>()` | Conventions (source-generated) | Compile-time discovery alternative; no reflection. |
 | `DbContextOptionsBuilderExtensions.AddTrellisInterceptors([TimeProvider])` | Interceptors | Singleton `MaybeQueryInterceptor`, `ScalarValueQueryInterceptor`, `AggregateETagInterceptor`, `EntityTimestampInterceptor`. |
 | `OwnedEntityAttribute` | Attribute | Marks a `partial ValueObject` as EF-owned; generator emits the private parameterless constructor. |
@@ -130,7 +130,7 @@ Two configuration entry points and one interceptor registration cover model setu
 | Member | When to use |
 |---|---|
 | `ApplyTrellisConventionsFor<TContext>()` | Default. Source-generated, compile-time discovery. Walks reachable types from `TContext.DbSet<T>` properties. No reflection, no `MakeGenericType`. |
-| `ApplyTrellisConventions(params Assembly[])` | Fallback when the `DbContext` is not in the current compilation, or when you need to pass extra assemblies for composite value object discovery. Always includes `Trellis.Primitives` (built-in primitives) and `Trellis.Authorization` (`ActorId` for `CreatedByActorId` audit fields). |
+| `ApplyTrellisConventions(params Assembly[])` | Fallback when the `DbContext` is not in the current compilation, or when you need to pass extra assemblies for composite value object discovery. Always includes `Trellis.Core` (base `Required*` types), `Trellis.Primitives` (built-in primitives), and `Trellis.Authorization` (`ActorId` for `CreatedByActorId` audit fields). |
 | `AddTrellisInterceptors([TimeProvider])` | Always. Registers the four singleton interceptors. The `TimeProvider` overload constructs a fresh `EntityTimestampInterceptor(timeProvider)`. |
 
 Both convention paths register the same set: scalar converters, `MaybeConvention`, `CompositeValueObjectConvention`, `MoneyConvention`, `AggregateETagConvention`, `AggregateTransientPropertyConvention`, `ValueObjectMappingGuardConvention`.
@@ -139,7 +139,7 @@ Both convention paths register the same set: scalar converters, `MaybeConvention
 > `ApplyTrellisConventionsFor<TContext>()` only discovers `DbContext` types defined in the current compilation. Calling it for a context excluded from generation throws `InvalidOperationException`. Use the reflection-based overload in that case.
 
 > [!WARNING]
-> `ApplyTrellisConventions(...)` only discovers composite value objects in the assemblies you pass in (plus `Trellis.Primitives` and `Trellis.Authorization`). If a composite type lives in another assembly, include it.
+> `ApplyTrellisConventions(...)` only discovers composite value objects in the assemblies you pass in (plus `Trellis.Core`, `Trellis.Primitives`, and `Trellis.Authorization`). If a composite type lives in another assembly, include it.
 
 ## Owned composites
 

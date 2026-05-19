@@ -13,8 +13,8 @@ public static class ModelConfigurationBuilderExtensions
 {
     /// <summary>
     /// Registers pre-convention value converters for all Trellis value object types
-    /// found in the specified assemblies plus the built-in Trellis.Primitives and
-    /// Trellis.Authorization assemblies.
+    /// found in the specified assemblies plus the built-in Trellis.Core, Trellis.Primitives,
+    /// and Trellis.Authorization assemblies.
     /// <para>
     /// This tells EF Core to treat Trellis value objects as scalar properties
     /// <b>before</b> convention processing runs, eliminating the need for inline
@@ -25,10 +25,10 @@ public static class ModelConfigurationBuilderExtensions
     /// protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     /// {
     ///     // Scans your assembly for CustomerId, OrderStatus, etc.
-    ///     // Trellis.Primitives (EmailAddress, Url, PhoneNumber, ...) and Trellis.Authorization
-    ///     // (ActorId) are included in the default scan set, so persisted audit fields like
-    ///     // Order.CreatedByActorId : ActorId get their scalar converter without an explicit
-    ///     // typeof(ActorId).Assembly hand-in.
+    ///     // Trellis.Core (base Required* types), Trellis.Primitives (EmailAddress, Url,
+    ///     // PhoneNumber, ...) and Trellis.Authorization (ActorId) are included in the default
+    ///     // scan set, so persisted audit fields like Order.CreatedByActorId : ActorId get
+    ///     // their scalar converter without an explicit typeof(ActorId).Assembly hand-in.
     ///     configurationBuilder.ApplyTrellisConventions(typeof(CustomerId).Assembly);
     /// }
     /// </code>
@@ -37,9 +37,9 @@ public static class ModelConfigurationBuilderExtensions
     /// <param name="configurationBuilder">The model configuration builder.</param>
     /// <param name="assemblies">
     /// Assemblies containing Trellis value object types to register.
-    /// The Trellis.Primitives assembly (containing <c>EmailAddress</c>, <c>Url</c>, etc.) and
-    /// the Trellis.Authorization assembly (containing <c>ActorId</c>) are always included
-    /// automatically.
+    /// The Trellis.Core assembly (base <c>Required*</c> types), the Trellis.Primitives assembly
+    /// (containing <c>EmailAddress</c>, <c>Url</c>, etc.), and the Trellis.Authorization assembly
+    /// (containing <c>ActorId</c>) are always included automatically.
     /// </param>
     /// <returns>The same <see cref="ModelConfigurationBuilder"/> for chaining.</returns>
     public static ModelConfigurationBuilder ApplyTrellisConventions(
