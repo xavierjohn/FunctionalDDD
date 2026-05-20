@@ -46,7 +46,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     /// <summary>Hint for OpenAPI: the success status code expected on the success path.</summary>
     public int? StatusCode => s_isUnit
         ? StatusCodes.Status204NoContent
-        : _options.LocationKind != LocationKind.None
+        : _options.MarkAsCreated
             ? StatusCodes.Status201Created
             : StatusCodes.Status200OK;
 
@@ -153,14 +153,18 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             if (location is null)
             {
                 var error = new Error.InternalServerError(Guid.NewGuid().ToString("N"))
-                { Detail = "Could not generate Location URI for created resource." };
+                { Detail = "Could not generate Location URI for the response." };
 
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
             }
 
             ApplyCacheControlSelector(response, domain!);
             var body = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
-            return Results.Created(location, body).ExecuteAsync(httpContext);
+            if (_options.MarkAsCreated)
+                return Results.Created(location, body).ExecuteAsync(httpContext);
+
+            response.Headers.Location = location;
+            return Results.Ok(body).ExecuteAsync(httpContext);
         }
 
         ApplyCacheControlSelector(response, domain!);
@@ -480,7 +484,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     /// statuses any configuration of this result type may produce:
     /// <list type="bullet">
     ///   <item><description>200 OK — default success path with body.</description></item>
-    ///   <item><description>201 Created — when a Location is configured (Created/CreatedAtRoute/CreatedAtAction).</description></item>
+    ///   <item><description>201 Created — when <c>Created</c>, <c>CreatedAtRoute</c>, or <c>CreatedAtAction</c> set the builder's MarkAsCreated flag. Bare <c>WithLocation</c> emits a 200 OK + Location instead.</description></item>
     ///   <item><description>206 Partial Content — when a Range selector is configured and the request asked for a sub-range.</description></item>
     ///   <item><description>304 Not Modified — when conditional-request evaluation matches an If-None-Match / If-Modified-Since precondition.</description></item>
     ///   <item><description>400, 404, 412, 500 — error envelopes (problem+json) for the most common failure mappings.</description></item>

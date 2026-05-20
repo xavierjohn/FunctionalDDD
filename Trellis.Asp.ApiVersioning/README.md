@@ -1,12 +1,12 @@
 # Trellis.Asp.ApiVersioning
 
-API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Adds `CreatedAtVersionedRoute(...)` extensions on `HttpResponseOptionsBuilder<TDomain>` that auto-inject the `api-version` route value into `Location` headers, so 201 Created responses round-trip the requested version under query/header API versioning.
+API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Adds a `WithVersionedRoute(...)` extension on `HttpResponseOptionsBuilder<TDomain>` that auto-injects the `api-version` route value into `Location` headers, so responses round-trip the requested version under query/header API versioning. Chain after any builder method that emits a builder-generated `Location` header — `CreatedAtRoute(...)` / `CreatedAtAction(...)` for 201 Created, `WithLocation(...)` for state-transition 2xx responses on existing resources.
 
 ## Why this package exists
 
 Under query-string or header API versioning (`Asp.Versioning.QueryStringApiVersionReader`, `HeaderApiVersionReader`, or composite readers), `Location` headers from `HttpResponseOptionsBuilder<T>.CreatedAtRoute(routeName, routeValues)` silently omit the `api-version` parameter unless every author remembers to add it manually. The result: a `POST /api/orders?api-version=2026-12-01` returns `Location: /api/orders/42` (no version), and the follow-up `GET /api/orders/42` 404s because the controller is registered under the versioned route group.
 
-The bug is invisible without integration tests that assert on the full Location URL, easy to miss in code review, and silently regresses across cycles. `CreatedAtVersionedRoute` removes the trap by injecting the version at request time using the configured `IApiVersionReader` chain.
+The bug is invisible without integration tests that assert on the full Location URL, easy to miss in code review, and silently regresses across cycles. `.WithVersionedRoute()` removes the trap by injecting the version at request time using the configured `IApiVersionReader` chain.
 
 ## Resolution order
 
@@ -38,18 +38,22 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public ActionResult<Order> Create([FromBody] CreateOrderRequest req) =>
         _mediator.Send(new CreateOrderCommand(req))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
-                "Orders_GetById",
-                o => new RouteValueDictionary { ["id"] = o.Id }))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Orders_GetById",
+                    o => new RouteValueDictionary { ["id"] = o.Id })
+                .WithVersionedRoute())
             .AsActionResult<Order>();
 }
 ```
 
 The resulting `Location` header is `/api/orders/42?api-version=2026-12-01` (or whatever version the client requested).
 
+To pin a specific version regardless of what the client requested (cross-version `Location` redirects on deprecated endpoints), use the explicit overload: `.WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1)))`. The neutral and URL-segment skip rules still apply: an explicit pin is never injected into a Location targeting a `[ApiVersionNeutral]` endpoint or a `v{version:apiVersion}` template.
+
 ## Related diagnostics
 
-- **TRLS023** (`Trellis.Analyzers`) warns on `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)` calls inside `[ApiVersion]`-decorated controllers when the route values dictionary literal does not include an `"api-version"` key. The code fix rewrites the call to `CreatedAtVersionedRoute(...)` and adds `using Trellis.Asp.ApiVersioning;` when missing.
+- **TRLS023** (`Trellis.Analyzers`) warns on `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)` calls inside `[ApiVersion]`-decorated controllers when the chain is not followed by `.WithVersionedRoute(...)` (or the equivalent manual primitive `.WithRouteValueResolver("api-version", ...)`, matched case-insensitively) and the route values dictionary literal does not include an `"api-version"` key. The code fix appends `.WithVersionedRoute()` and adds `using Trellis.Asp.ApiVersioning;` when missing.
 
 ## Configuration
 

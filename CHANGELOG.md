@@ -50,8 +50,9 @@ the move from FunctionalDdd 2.1 to Trellis 3.0.
   convention, `[OwnedEntity]` attribute, and supporting analyzers.
 - `Trellis.StateMachine` — declarative aggregate state machines with
   compile-time transition validation.
-- `Trellis.Asp.ApiVersioning` — `CreatedAtVersionedRoute` helpers and
-  versioned-projection guard rails for `Asp.Versioning.Http`.
+- `Trellis.Asp.ApiVersioning` — `WithVersionedRoute()` helper (chained after
+  `CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)`) and versioned-projection guard
+  rails for `Asp.Versioning.Http`.
 - `Trellis.ServiceDefaults` — single composition root (`AddTrellis(...)`)
   that wires every framework slot in the right order.
 - `Trellis.Http` — typed HTTP-client primitives for outbound calls.

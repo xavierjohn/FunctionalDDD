@@ -17,12 +17,12 @@ using Trellis.Asp;
 
 /// <summary>
 /// Pins the per-request resolution behaviour of
-/// <see cref="HttpResponseOptionsBuilderApiVersioningExtensions.CreatedAtVersionedRoute{T}(HttpResponseOptionsBuilder{T}, string, Func{T, RouteValueDictionary})"/>.
+/// <see cref="HttpResponseOptionsBuilderApiVersioningExtensions.WithVersionedRoute{T}(HttpResponseOptionsBuilder{T})"/>.
 /// Each test stands up a minimal ASP.NET Core host with a specific versioning configuration,
 /// POSTs to a Created-returning controller action, and asserts the resulting <c>Location</c>
 /// header carries (or correctly omits) the <c>api-version</c> route value.
 /// </summary>
-public sealed class CreatedAtVersionedRouteTests
+public sealed class WithVersionedRouteTests
 {
     public const string ApiVersionV1 = "2026-11-12";
     public const string ApiVersionV2 = "2026-12-01";
@@ -196,6 +196,25 @@ public sealed class CreatedAtVersionedRouteTests
     }
 
     [Fact]
+    public async Task Explicit_version_overload_on_ApiVersionNeutral_controller_omits_api_version_from_Location()
+    {
+        // Regression: the explicit-version overload `WithVersionedRoute(ApiVersion)` must honor
+        // the same skip rules as the parameterless overload. A pinned version on a
+        // [ApiVersionNeutral] endpoint would emit a Location with a version the target endpoint
+        // doesn't accept — exactly the bug the type-level skip rules promise won't happen.
+        // The action pins ApiVersionV2; the request supplies ApiVersionV1. Either value showing
+        // up in the Location indicates the skip rule was bypassed.
+        using var host = CreateSingleVersionHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/neutral/pinned?api-version={ApiVersionV1}", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().NotContain("api-version");
+        resp.Headers.Location.OriginalString.Should().NotContain(ApiVersionV2);
+    }
+
+    [Fact]
     public async Task UrlSegment_versioned_route_omits_api_version_query_from_Location()
     {
         // URL-segment versioning embeds the version in the route template (`v{version:apiVersion}`).
@@ -215,6 +234,61 @@ public sealed class CreatedAtVersionedRouteTests
         resp.Headers.Location.OriginalString.Should().NotContain("&api-version=");
     }
 
+    [Fact]
+    public async Task Explicit_version_overload_on_url_segment_versioned_route_omits_api_version_query_from_Location()
+    {
+        // Regression: the explicit-version overload must honor the URL-segment skip rule too.
+        // The route template `v{version:apiVersion}/segments/...` already carries the version
+        // in its path; a pinned `?api-version=...` query parameter on the Location would create
+        // a redundant/conflicting parameter that contradicts the path. The action pins
+        // ApiVersionV2 while the request comes in under the ApiVersionV1 segment — either
+        // value appearing as a query parameter indicates the skip rule was bypassed.
+        using var host = CreateUrlSegmentHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/v{ApiVersionV1}/segments/pinned", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().Contain($"/v{ApiVersionV1}/segments/");
+        resp.Headers.Location.OriginalString.Should().NotContain("?api-version=");
+        resp.Headers.Location.OriginalString.Should().NotContain("&api-version=");
+        resp.Headers.Location.OriginalString.Should().NotContain($"={ApiVersionV2}");
+    }
+
+    [Fact]
+    public async Task WithLocation_after_CreatedAtRoute_clears_created_intent_and_returns_200_OK()
+    {
+        // Regression for a latent bug: WithLocation overwrites the location configuration but
+        // must also reset the Created flag the prior CreatedAtRoute call set. Otherwise the
+        // chain CreatedAtRoute(...).WithLocation(...) emits a stale 201 even though
+        // WithLocation is the state-transition primitive (200 OK + Location).
+        using var host = CreateSingleVersionHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/customers/transition?api-version={ApiVersionV1}", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        resp.Headers.Location!.OriginalString.Should().Contain("/customers/42");
+        resp.Headers.Location.OriginalString.Should().Contain($"api-version={ApiVersionV1}");
+    }
+
+    [Fact]
+    public async Task WithLocation_emits_versioned_Location_with_status_200_OK_not_201_Created()
+    {
+        // WithLocation is the state-transition primitive: it adds a Location header to point
+        // at the resource being mutated, but keeps the response's natural status code (200 OK
+        // here, since the handler returns Result.Ok). Chaining .WithVersionedRoute() must
+        // inject the api-version into the generated Location just like with CreatedAtRoute.
+        using var host = CreateMultiVersionHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/orders/99/return?api-version={ApiVersionV2}", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        resp.Headers.Location!.OriginalString.Should().Contain("/orders/99");
+        resp.Headers.Location.OriginalString.Should().Contain($"api-version={ApiVersionV2}");
+    }
+
     private static StringContent JsonContent(string json) =>
         new(json, System.Text.Encoding.UTF8, "application/json");
 }
@@ -222,7 +296,7 @@ public sealed class CreatedAtVersionedRouteTests
 #region Test fixtures
 
 [ApiController]
-[ApiVersion(CreatedAtVersionedRouteTests.ApiVersionV1)]
+[ApiVersion(WithVersionedRouteTests.ApiVersionV1)]
 [Route("customers")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
 public sealed class SingleVersionController : ControllerBase
@@ -233,21 +307,37 @@ public sealed class SingleVersionController : ControllerBase
     [HttpPost]
     public ActionResult<CreatedCustomer> Post() =>
         Result.Ok(new CreatedCustomer(42))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
-                "Customers_GetById",
-                c => new RouteValueDictionary { ["id"] = c.Id }))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Customers_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute())
             .AsActionResult<CreatedCustomer>();
 
     [HttpPost("single-id")]
     public ActionResult<CreatedCustomer> PostSingleId() =>
         Result.Ok(new CreatedCustomer(42))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute("Customers_GetById", c => (object)c.Id))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute("Customers_GetById", c => (object)c.Id)
+                .WithVersionedRoute())
+            .AsActionResult<CreatedCustomer>();
+
+    // Regression: a chain of `.CreatedAtRoute(...).WithLocation(...)` must produce a 200 OK,
+    // not a stale 201 from the prior CreatedAtRoute call. WithLocation takes ownership of the
+    // location configuration and clears the "this is a Created response" intent.
+    [HttpPost("transition")]
+    public ActionResult<CreatedCustomer> PostTransition() =>
+        Result.Ok(new CreatedCustomer(42))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute("Customers_GetById", c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithLocation("Customers_GetById", c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute())
             .AsActionResult<CreatedCustomer>();
 }
 
 [ApiController]
-[ApiVersion(CreatedAtVersionedRouteTests.ApiVersionV1)]
-[ApiVersion(CreatedAtVersionedRouteTests.ApiVersionV2)]
+[ApiVersion(WithVersionedRouteTests.ApiVersionV1)]
+[ApiVersion(WithVersionedRouteTests.ApiVersionV2)]
 [Route("orders")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
 public sealed class MultiVersionController : ControllerBase
@@ -258,18 +348,31 @@ public sealed class MultiVersionController : ControllerBase
     [HttpPost]
     public ActionResult<CreatedOrder> Post() =>
         Result.Ok(new CreatedOrder(99))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
-                "Orders_GetById",
-                o => new RouteValueDictionary { ["id"] = o.Id }))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Orders_GetById",
+                    o => new RouteValueDictionary { ["id"] = o.Id })
+                .WithVersionedRoute())
             .AsActionResult<CreatedOrder>();
 
     [HttpPost("pinned")]
     public ActionResult<CreatedOrder> PostPinned() =>
         Result.Ok(new CreatedOrder(99))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
-                "Orders_GetById",
-                o => new RouteValueDictionary { ["id"] = o.Id },
-                explicitVersion: new ApiVersion(new DateOnly(2026, 11, 12))))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Orders_GetById",
+                    o => new RouteValueDictionary { ["id"] = o.Id })
+                .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 11, 12))))
+            .AsActionResult<CreatedOrder>();
+
+    [HttpPost("{id:int}/return")]
+    public ActionResult<CreatedOrder> ReturnOrder(int id) =>
+        Result.Ok(new CreatedOrder(id))
+            .ToHttpResponse(opts => opts
+                .WithLocation(
+                    "Orders_GetById",
+                    o => new RouteValueDictionary { ["id"] = o.Id })
+                .WithVersionedRoute())
             .AsActionResult<CreatedOrder>();
 }
 
@@ -289,14 +392,26 @@ public sealed class NeutralController : ControllerBase
     [HttpPost]
     public ActionResult<CreatedCustomer> Post() =>
         Result.Ok(new CreatedCustomer(7))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
-                "Neutral_GetById",
-                c => new RouteValueDictionary { ["id"] = c.Id }))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Neutral_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute())
+            .AsActionResult<CreatedCustomer>();
+
+    [HttpPost("pinned")]
+    public ActionResult<CreatedCustomer> PostPinned() =>
+        Result.Ok(new CreatedCustomer(7))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Neutral_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))))
             .AsActionResult<CreatedCustomer>();
 }
 
 [ApiController]
-[ApiVersion(CreatedAtVersionedRouteTests.ApiVersionV1)]
+[ApiVersion(WithVersionedRouteTests.ApiVersionV1)]
 [Route("v{version:apiVersion}/segments")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
 public sealed class SegmentVersionController : ControllerBase
@@ -307,9 +422,21 @@ public sealed class SegmentVersionController : ControllerBase
     [HttpPost]
     public ActionResult<CreatedCustomer> Post() =>
         Result.Ok(new CreatedCustomer(13))
-            .ToHttpResponse(opts => opts.CreatedAtVersionedRoute(
-                "Segments_GetById",
-                c => new RouteValueDictionary { ["id"] = c.Id }))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Segments_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute())
+            .AsActionResult<CreatedCustomer>();
+
+    [HttpPost("pinned")]
+    public ActionResult<CreatedCustomer> PostPinned() =>
+        Result.Ok(new CreatedCustomer(13))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Segments_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))))
             .AsActionResult<CreatedCustomer>();
 }
 
