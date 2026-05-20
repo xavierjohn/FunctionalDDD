@@ -12,13 +12,13 @@ audience: [llm]
 
 - **Package:** `Trellis.Asp.ApiVersioning`
 - **Namespace:** `Trellis.Asp.ApiVersioning`
-- **Purpose:** API-versioning helper that auto-injects the `api-version` route value into `Location` headers emitted by `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)` (201 Created) and `HttpResponseOptionsBuilder<T>.WithLocation(...)` (200 OK on existing resources), so responses round-trip the requested version under query/header API versioning. Skips injection for `[ApiVersionNeutral]` and URL-segment-versioned endpoints.
+- **Purpose:** API-versioning helper that auto-injects the `api-version` route value into `Location` headers emitted by `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)` / `CreatedAtAction(...)` (201 Created) and `HttpResponseOptionsBuilder<T>.WithLocation(...)` (200 OK on existing resources), so responses round-trip the requested version under query/header API versioning. Skips injection for `[ApiVersionNeutral]` and URL-segment-versioned endpoints.
 
-See also: [trellis-api-asp.md](trellis-api-asp.md) — the underlying `HttpResponseOptionsBuilder<T>`, `CreatedAtRoute`, `WithLocation`, and `WithRouteValueResolver` hook this package builds on. [trellis-api-analyzers.md](trellis-api-analyzers.md) — `TRLS023` warns on `CreatedAtRoute` / `WithLocation` calls in versioned controllers that omit the `api-version` route value, and offers a code fix that chains `.WithVersionedRoute()`.
+See also: [trellis-api-asp.md](trellis-api-asp.md) — the underlying `HttpResponseOptionsBuilder<T>`, `CreatedAtRoute`, `CreatedAtAction`, `WithLocation`, and `WithRouteValueResolver` hook this package builds on. [trellis-api-analyzers.md](trellis-api-analyzers.md) — `TRLS023` warns on `CreatedAtRoute` / `CreatedAtAction` / `WithLocation` calls in versioned controllers that omit the `api-version` route value, and offers a code fix that chains `.WithVersionedRoute()`.
 
 ## Use this file when
 
-- You return `Result<T>` / `WriteOutcome<T>` responses from versioned controllers (`[ApiVersion("…")]`) and need the `Location` header to round-trip the client's requested `api-version`.
+- You return `Result<T>` responses from versioned controllers (`[ApiVersion("…")]`) and need a builder-generated `Location` header to round-trip the client's requested `api-version`.
 - You configured `Asp.Versioning` with `QueryStringApiVersionReader`, `HeaderApiVersionReader`, or a composite reader (anything that is *not* URL-segment versioning) and need link generation to preserve the version.
 - You want a per-request hook to inject any other route value into `Location` (the `WithRouteValueResolver` mechanism `Trellis.Asp` exposes; this package consumes it).
 
@@ -26,7 +26,7 @@ See also: [trellis-api-asp.md](trellis-api-asp.md) — the underlying `HttpRespo
 
 | Goal | Canonical API / pattern | See |
 |---|---|---|
-| Return 201 Created with versioned Location | Chain `.WithVersionedRoute()` after `CreatedAtRoute(...)` | [`HttpResponseOptionsBuilderApiVersioningExtensions`](#httpresponseoptionsbuilderapiversioningextensions) |
+| Return 201 Created with versioned Location | Chain `.WithVersionedRoute()` after `CreatedAtRoute(...)` or `CreatedAtAction(...)` | [`HttpResponseOptionsBuilderApiVersioningExtensions`](#httpresponseoptionsbuilderapiversioningextensions) |
 | Return 200 OK with versioned Location on an existing resource | Chain `.WithVersionedRoute()` after `WithLocation(...)` | [`WithLocation` composition](#withlocation-composition) |
 | Single id route value | `CreatedAtRoute(routeName, x => x.Id).WithVersionedRoute()` (uses the single-id overload from `Trellis.Asp`) | [Composition examples](#composition-examples) |
 | Multi-key route values | `CreatedAtRoute(routeName, x => new RouteValueDictionary { ["tenantId"] = x.TenantId, ["id"] = x.Id }).WithVersionedRoute()` | [Composition examples](#composition-examples) |
@@ -38,7 +38,7 @@ See also: [trellis-api-asp.md](trellis-api-asp.md) — the underlying `HttpRespo
 
 - Do **not** add `["api-version"] = …` manually inside the route values dictionary when you chain `.WithVersionedRoute()`. The resolver runs *after* the route-values selector and **overwrites** any pre-existing `api-version` entry, so manual entries are silently discarded. Either trust the resolver, or use the `WithRouteValueResolver` hook directly with your own logic.
 - Do not assume `.WithVersionedRoute()` works for URL-segment versioning. URL-segment templates resolve the version from the route template parameter, not from a query/header route value; the helper intentionally skips injection in that case.
-- `WithLocation(...)` produces a `Location` header **without** changing the status code (typically 200 OK). Use it on state-transition endpoints that mutate an existing resource and want to point clients at the canonical URL (e.g., `POST /orders/{id}/return` returning 200 OK). For new-resource creation, use `CreatedAtRoute(...)` (201 Created).
+- `WithLocation(...)` produces a `Location` header **without** changing the status code (typically 200 OK on `Result<T>` responses). Use it on state-transition endpoints that mutate an existing resource and want to point clients at the canonical URL (e.g., `POST /orders/{id}/return` returning 200 OK). For new-resource creation, use `CreatedAtRoute(...)` / `CreatedAtAction(...)` (201 Created). `Result<WriteOutcome<T>>` uses the `WriteOutcome` location/monitor URI instead; builder `WithLocation(...)` and route-value resolvers do not rewrite those outcome-owned URIs.
 - The route values selector should return a fresh `RouteValueDictionary` per call. The runtime clones the dictionary defensively before applying resolvers, but selectors that return a shared instance still cost an unnecessary allocation per request.
 - Configure `Asp.Versioning` with an explicit `DefaultApiVersion` if you support multiple declared versions on the same controller. With `AllowMultiple = true` `[ApiVersion]` and no client-supplied version, the resolver throws rather than silently picking one.
 
@@ -66,7 +66,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 
 | Signature | Returns | Behavior |
 | --- | --- | --- |
-| `WithVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder)` | `HttpResponseOptionsBuilder<TDomain>` | Injects the configured `api-version` route value into the `Location` header emitted by a preceding `CreatedAtRoute(...)` or `WithLocation(...)` call. The version is resolved per-request from `HttpContext`. Equivalent to `builder.WithRouteValueResolver("api-version", ResolveApiVersion)`. |
+| `WithVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder)` | `HttpResponseOptionsBuilder<TDomain>` | Injects the configured `api-version` route value into the `Location` header emitted by a preceding `CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)` call. The version is resolved per-request from `HttpContext`. Equivalent to `builder.WithRouteValueResolver("api-version", ResolveApiVersion)`. |
 | `WithVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, ApiVersion explicitVersion)` | `HttpResponseOptionsBuilder<TDomain>` | Escape hatch: pin the `Location` header to a specific `ApiVersion` regardless of what the client requested. Useful for cross-version `Location` redirects on deprecated endpoints. |
 
 #### Behavioral notes
@@ -120,7 +120,7 @@ return result.ToHttpResponse(opts => opts
     .WithVersionedRoute());
 ```
 
-Unlike `CreatedAtRoute`, `WithLocation` does **not** force the status code to 201 — the response's natural status (200 OK from `Result.Ok(...)`, 200 OK / 202 Accepted from `WriteOutcome.Replaced` / `WriteOutcome.Accepted`, etc.) is preserved.
+Unlike `CreatedAtRoute`, `WithLocation` does **not** force the status code to 201 — the `Result<T>` response's natural 200 OK status is preserved. It does not affect `Result<WriteOutcome<T>>` responses, where `WriteOutcome.Created`, `WriteOutcome.Accepted`, and `WriteOutcome.AcceptedNoContent` own their literal `Location` / monitor URI values.
 
 #### Explicit-version overload
 
@@ -151,4 +151,4 @@ The package depends on `Asp.Versioning.Http` (for `HttpContext.RequestedApiVersi
 
 ## Related diagnostics
 
-- **TRLS023** (`Trellis.Analyzers`) — warns on `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)` or `WithLocation(...)` calls inside `[ApiVersion]`-decorated controllers when the chain is not followed by `.WithVersionedRoute(...)` and the route values dictionary literal does not include an `"api-version"` key. Code fix appends `.WithVersionedRoute()` and adds `using Trellis.Asp.ApiVersioning;` when missing.
+- **TRLS023** (`Trellis.Analyzers`) — warns on `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)` calls inside `[ApiVersion]`-decorated controllers when the chain is not followed by `.WithVersionedRoute(...)` and the route values dictionary literal does not include an `"api-version"` key. Code fix appends `.WithVersionedRoute()` and adds `using Trellis.Asp.ApiVersioning;` when missing.

@@ -13,7 +13,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /// <summary>
 /// Code fix for TRLS023: chains <c>.WithVersionedRoute()</c> after the matched
-/// <c>CreatedAtRoute(...)</c> or <c>WithLocation(...)</c> call so that the framework
+/// <c>CreatedAtRoute(...)</c>, <c>CreatedAtAction(...)</c>, or <c>WithLocation(...)</c>
+/// call so that the framework
 /// injects the api-version into the generated Location header per-request.
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(CreatedAtRouteMissingApiVersionCodeFixProvider))]
@@ -38,7 +39,7 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
         if (invocation is null) return;
         if (invocation.Expression is not MemberAccessExpressionSyntax mae) return;
         var name = mae.Name.Identifier.Text;
-        if (name is not ("CreatedAtRoute" or "WithLocation")) return;
+        if (name is not ("CreatedAtRoute" or "CreatedAtAction" or "WithLocation")) return;
 
         context.RegisterCodeFix(
             CodeAction.Create(

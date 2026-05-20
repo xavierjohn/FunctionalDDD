@@ -44,6 +44,7 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
             {
                 public HttpResponseOptionsBuilder<TDomain> CreatedAtRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues) => this;
                 public HttpResponseOptionsBuilder<TDomain> CreatedAtRoute(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id") => this;
+                public HttpResponseOptionsBuilder<TDomain> CreatedAtAction(string actionName, Func<TDomain, RouteValueDictionary> routeValues, string? controllerName = null) => this;
                 public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, RouteValueDictionary> routeValues) => this;
                 public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id") => this;
             }
@@ -616,6 +617,111 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
                 .WithLocation(21, 9)
                 .WithArguments("CreatedAtRoute"));
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAtAction_on_versioned_controller_without_api_version_key_produces_warning()
+    {
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtAction(
+                        "GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id },
+                        "Customers");
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(18, 9)
+                .WithArguments("CreatedAtAction"));
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAtAction_chained_with_WithVersionedRoute_produces_no_warning()
+    {
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+            using Trellis.Asp.ApiVersioning;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtAction(
+                        "GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id },
+                        "Customers")
+                        .WithVersionedRoute();
+                }
+            }
+            """;
+
+        const string apiVersioningStub = """
+            namespace Trellis.Asp.ApiVersioning
+            {
+                using Trellis.Asp;
+
+                public static class HttpResponseOptionsBuilderApiVersioningExtensions
+                {
+                    public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
+                        this HttpResponseOptionsBuilder<TDomain> builder) => builder;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+        test.TestState.Sources.Add(("ApiVersioningStub.cs", apiVersioningStub));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAtAction_with_non_literal_routeValues_produces_no_warning()
+    {
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    var rv = new RouteValueDictionary { ["id"] = 1 };
+                    opts.CreatedAtAction("GetById", _ => rv, "Customers");
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
         test.TestState.Sources.Add(("Stubs.cs", StubSource));
 
         await test.RunAsync();

@@ -9,7 +9,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 /// <summary>
-/// TRLS023: Warns when <c>HttpResponseOptionsBuilder&lt;T&gt;.CreatedAtRoute(...)</c> or
+/// TRLS023: Warns when <c>HttpResponseOptionsBuilder&lt;T&gt;.CreatedAtRoute(...)</c>,
+/// <c>HttpResponseOptionsBuilder&lt;T&gt;.CreatedAtAction(...)</c>, or
 /// <c>HttpResponseOptionsBuilder&lt;T&gt;.WithLocation(...)</c> is invoked on a versioned
 /// controller (one with <c>[ApiVersion(...)]</c>) without either (a) an <c>"api-version"</c>
 /// entry in the supplied route-values dictionary literal, or (b) a chained
@@ -35,11 +36,10 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
     {
         var inv = (InvocationExpressionSyntax)context.Node;
 
-        // Quick syntactic filter: must look like `something.CreatedAtRoute(...)` or
-        // `something.WithLocation(...)`.
+        // Quick syntactic filter: must look like a Location-emitting builder method.
         if (inv.Expression is not MemberAccessExpressionSyntax mae) return;
         var methodName = mae.Name.Identifier.Text;
-        if (methodName is not ("CreatedAtRoute" or "WithLocation")) return;
+        if (methodName is not ("CreatedAtRoute" or "CreatedAtAction" or "WithLocation")) return;
 
         // Resolve the symbol to confirm it's HttpResponseOptionsBuilder<T> on Trellis.Asp.
         var methodSymbol = context.SemanticModel.GetSymbolInfo(inv).Symbol as IMethodSymbol;
@@ -79,7 +79,7 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         if (inv.ArgumentList.Arguments.Count >= 2)
         {
             var routeValuesArg = inv.ArgumentList.Arguments[1];
-            var isSingleIdOverload = methodSymbol.Parameters.Length >= 3;
+            var isSingleIdOverload = IsSingleIdOverload(methodSymbol);
             var shape = ClassifyRouteValuesShape(routeValuesArg, isSingleIdOverload);
             switch (shape.Kind)
             {
@@ -226,6 +226,20 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
+    private static bool IsSingleIdOverload(IMethodSymbol method)
+    {
+        if (method.Name is not ("CreatedAtRoute" or "WithLocation"))
+            return false;
+        if (method.Parameters.Length < 3)
+            return false;
+        if (method.Parameters[1].Type is not INamedTypeSymbol selectorType)
+            return false;
+        if (selectorType.Name != "Func" || selectorType.TypeArguments.Length != 2)
+            return false;
+
+        return selectorType.TypeArguments[1].SpecialType == SpecialType.System_Object;
+    }
+
     private static RouteValuesShape ClassifyRouteValuesShape(ArgumentSyntax arg, bool isSingleIdOverload)
     {
         // Lambda body shapes we recognize:
@@ -233,8 +247,8 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         //   c => { return new RouteValueDictionary { ... }; }→ Initializer
         //   c => new RouteValueDictionary(new { ... })       → AnonymousObjectCtorArg
         //
-        // The single-id overload `CreatedAtRoute(name, idSelector, idRouteKey = "id")` /
-        // `WithLocation(name, idSelector, idRouteKey = "id")` passes a `Func<T, object>` in arg 1;
+        // The single-id overloads `CreatedAtRoute(name, idSelector, idRouteKey = "id")` and
+        // `WithLocation(name, idSelector, idRouteKey = "id")` pass a `Func<T, object>` in arg 1;
         // when we detect that overload via the method symbol (3-parameter form), the api-version
         // is necessarily missing unless `.WithVersionedRoute()` is chained — even for non-lambda
         // selectors (method group, delegate variable). For the 2-arg dict overload, a non-literal

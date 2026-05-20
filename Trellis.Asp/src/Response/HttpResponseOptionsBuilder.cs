@@ -229,11 +229,13 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     /// <param name="routeValues">A function that returns a <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> for the resource being located.</param>
     /// <remarks>
     /// Unlike <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>,
-    /// this does <b>not</b> set the status code to 201 Created — the response ships with 200 OK.
-    /// Only applies on the <c>Result&lt;T&gt;</c> execution path (<c>ToHttpResponse</c>); the
-    /// <c>WriteOutcome&lt;T&gt;</c> path has its own Created/Updated/Deleted dispatch and ignores
-    /// <c>WithLocation</c>. To round-trip the requested <c>api-version</c> through the generated
-    /// <c>Location</c>, chain <c>WithVersionedRoute()</c> from <c>Trellis.Asp.ApiVersioning</c>.
+    /// this does <b>not</b> set the status code to 201 Created — the response ships with its
+    /// natural 2xx status code. This applies on the <c>Result&lt;T&gt;</c> execution path
+    /// (<c>ToHttpResponse</c>). On <c>Result&lt;WriteOutcome&lt;T&gt;&gt;</c>, the builder still
+    /// applies for other options, but <c>WithLocation</c> itself has no effect on the outcome's
+    /// Location handling. To round-trip the requested <c>api-version</c> through the generated
+    /// <c>Location</c>, chain <c>WithVersionedRoute()</c> from
+    /// <c>Trellis.Asp.ApiVersioning</c>.
     /// </remarks>
     public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues)
     {
@@ -309,8 +311,9 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     /// Designed for cross-cutting per-request concerns such as API versioning (a Location header
     /// that round-trips the requested version), tenant id, or culture. Multiple resolvers can be
     /// registered with distinct keys; calling this method again with the same key replaces the
-    /// previous resolver. Useful only with <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/> /
-    /// <see cref="CreatedAtAction"/>; ignored by literal/selector Location modes.
+    /// previous resolver. Useful with <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>,
+    /// <see cref="CreatedAtAction"/> and <see cref="WithLocation(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>;
+    /// ignored by literal/selector Location modes.
     /// </remarks>
     public HttpResponseOptionsBuilder<TDomain> WithRouteValueResolver(
         string key,

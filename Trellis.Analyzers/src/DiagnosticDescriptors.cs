@@ -326,17 +326,18 @@ public static class DiagnosticDescriptors
         helpLinkUri: HelpLinkBase + "TRLS022");
 
     /// <summary>
-    /// TRLS023: CreatedAtRoute on a versioned controller is missing the api-version route value.
+    /// TRLS023: A Location-emitting builder call on a versioned controller is missing the api-version route value.
     /// </summary>
     public static readonly DiagnosticDescriptor MissingApiVersionRouteValue = new(
         id: TrellisDiagnosticIds.MissingApiVersionRouteValue,
-        title: "CreatedAtRoute or WithLocation is missing the api-version route value",
+        title: "Location route is missing the api-version route value",
         messageFormat: "'{0}' on a versioned controller is not followed by '.WithVersionedRoute()' and does not include the 'api-version' route value. The resulting Location header will 404 on dereference under query/header API versioning. Chain '.WithVersionedRoute()' from 'Trellis.Asp.ApiVersioning' so the version is injected per-request.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "When a controller declares one or more [ApiVersion(...)] attributes and emits a Location header via " +
-                     "HttpResponseOptionsBuilder<T>.CreatedAtRoute or HttpResponseOptionsBuilder<T>.WithLocation, the " +
+                     "HttpResponseOptionsBuilder<T>.CreatedAtRoute, HttpResponseOptionsBuilder<T>.CreatedAtAction, or " +
+                     "HttpResponseOptionsBuilder<T>.WithLocation, the " +
                      "Location header must carry the api-version that the client requested so the URL round-trips " +
                      "correctly. Authoring the route values dictionary by hand (and forgetting api-version) is the most " +
                      "common cause of \"Location 404s\". Chaining .WithVersionedRoute() from Trellis.Asp.ApiVersioning lets " +

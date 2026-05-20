@@ -1,11 +1,11 @@
-﻿# TRLS023 — `CreatedAtRoute` / `WithLocation` is missing the `api-version` route value
+# TRLS023 — `CreatedAtRoute` / `CreatedAtAction` / `WithLocation` is missing the `api-version` route value
 
 - **Severity:** Warning
 - **Category:** Trellis
 
 ## What it detects
 
-Flags `HttpResponseOptionsBuilder<T>.CreatedAtRoute(routeName, routeValues)` and `HttpResponseOptionsBuilder<T>.WithLocation(routeName, routeValues)` invocations that produce `Location` headers without an `api-version` route value, when the enclosing controller is decorated with `[ApiVersion(...)]`.
+Flags `HttpResponseOptionsBuilder<T>.CreatedAtRoute(routeName, routeValues)`, `CreatedAtAction(actionName, routeValues, controllerName)`, and `WithLocation(routeName, routeValues)` invocations that produce `Location` headers without an `api-version` route value, when the enclosing controller is decorated with `[ApiVersion(...)]`.
 
 The analyzer suppresses when the same fluent builder chain calls `.WithVersionedRoute(...)` from `Trellis.Asp.ApiVersioning` — that helper injects the version per-request and removes the need to encode it in the route values literal.
 
@@ -24,7 +24,7 @@ The single-id overloads (`CreatedAtRoute(routeName, idSelector)` / `WithLocation
 
 ## Why it matters
 
-Under query-string or header API versioning (`Asp.Versioning.QueryStringApiVersionReader`, `HeaderApiVersionReader`, or any composite reader that is not URL-segment versioning), `LinkGenerator.GetUriByName(...)` does not auto-include the request's `api-version`. The route values dictionary is the only signal it has. Omitting `["api-version"]` produces a `Location` header like:
+Under query-string or header API versioning (`Asp.Versioning.QueryStringApiVersionReader`, `HeaderApiVersionReader`, or any composite reader that is not URL-segment versioning), link generation does not auto-include the request's `api-version`. The route values dictionary is the only signal it has. Omitting `["api-version"]` produces a `Location` header like:
 
 ```
 Location: /api/orders/42
@@ -95,7 +95,7 @@ Either form silences TRLS023.
 
 Yes. The code fix:
 
-1. Wraps the flagged `CreatedAtRoute(...)` (or `WithLocation(...)`) call so the chain becomes `<original>.WithVersionedRoute()`.
+1. Wraps the flagged `CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)` call so the chain becomes `<original>.WithVersionedRoute()`.
 2. Inserts `using Trellis.Asp.ApiVersioning;` if missing. The using is added in the same scope as existing usings (file-scoped namespace, block-scoped namespace, or top-level) and matches the file's existing line-ending style.
 
 The fix does **not** add the `Trellis.Asp.ApiVersioning` package reference. If the package isn't yet referenced you'll see a "type or namespace not found" build error pointing at the new namespace; add the package via:

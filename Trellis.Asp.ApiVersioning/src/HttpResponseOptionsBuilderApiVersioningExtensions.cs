@@ -12,8 +12,8 @@ using Trellis.Asp;
 /// API-versioning extensions on <see cref="HttpResponseOptionsBuilder{TDomain}"/> that auto-inject
 /// the <c>api-version</c> route value into <c>Location</c> headers so responses round-trip the
 /// requested version under query/header API versioning. Chain after any builder method that
-/// generates a <c>Location</c> header — <c>CreatedAtRoute(...)</c>, <c>WithLocation(...)</c>,
-/// etc.
+/// generates a <c>Location</c> header — <c>CreatedAtRoute(...)</c>, <c>CreatedAtAction(...)</c>,
+/// <c>WithLocation(...)</c>, etc.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -43,7 +43,8 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 {
     /// <summary>
     /// Injects the configured <c>api-version</c> route value into the <c>Location</c> header
-    /// emitted by a preceding <see cref="HttpResponseOptionsBuilder{TDomain}.CreatedAtRoute(string, Func{TDomain, RouteValueDictionary})"/>
+    /// emitted by a preceding <see cref="HttpResponseOptionsBuilder{TDomain}.CreatedAtRoute(string, Func{TDomain, RouteValueDictionary})"/>,
+    /// <see cref="HttpResponseOptionsBuilder{TDomain}.CreatedAtAction(string, Func{TDomain, RouteValueDictionary}, string?)"/>
     /// or <see cref="HttpResponseOptionsBuilder{TDomain}.WithLocation(string, Func{TDomain, RouteValueDictionary})"/>
     /// call. The version is resolved per-request from <see cref="HttpContext"/>.
     /// </summary>

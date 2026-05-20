@@ -1,6 +1,6 @@
 # Trellis.Asp.ApiVersioning
 
-API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Adds a `WithVersionedRoute(...)` extension on `HttpResponseOptionsBuilder<TDomain>` that auto-injects the `api-version` route value into `Location` headers, so responses round-trip the requested version under query/header API versioning. Chain after any builder method that emits a `Location` header — `CreatedAtRoute(...)` for 201 Created, `WithLocation(...)` for state-transition 2xx responses on existing resources.
+API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Adds a `WithVersionedRoute(...)` extension on `HttpResponseOptionsBuilder<TDomain>` that auto-injects the `api-version` route value into `Location` headers, so responses round-trip the requested version under query/header API versioning. Chain after any builder method that emits a builder-generated `Location` header — `CreatedAtRoute(...)` / `CreatedAtAction(...)` for 201 Created, `WithLocation(...)` for state-transition 2xx responses on existing resources.
 
 ## Why this package exists
 
@@ -53,7 +53,7 @@ To pin a specific version regardless of what the client requested (cross-version
 
 ## Related diagnostics
 
-- **TRLS023** (`Trellis.Analyzers`) warns on `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)` or `WithLocation(...)` calls inside `[ApiVersion]`-decorated controllers when the chain is not followed by `.WithVersionedRoute(...)` and the route values dictionary literal does not include an `"api-version"` key. The code fix appends `.WithVersionedRoute()` and adds `using Trellis.Asp.ApiVersioning;` when missing.
+- **TRLS023** (`Trellis.Analyzers`) warns on `HttpResponseOptionsBuilder<T>.CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)` calls inside `[ApiVersion]`-decorated controllers when the chain is not followed by `.WithVersionedRoute(...)` and the route values dictionary literal does not include an `"api-version"` key. The code fix appends `.WithVersionedRoute()` and adds `using Trellis.Asp.ApiVersioning;` when missing.
 
 ## Configuration
 

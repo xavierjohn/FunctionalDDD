@@ -21,13 +21,13 @@ result.ToHttpResponse(opts => opts
 //   ↑ Location header includes ?api-version=<requested-version> automatically.
 ```
 
-`WithVersionedRoute()` chains after any builder method that emits a `Location` header — including `CreatedAtRoute(...)` (201 Created) and `WithLocation(...)` (2xx state-transition responses on existing resources).
+`WithVersionedRoute()` chains after any builder method that emits a builder-generated `Location` header — including `CreatedAtRoute(...)` / `CreatedAtAction(...)` (201 Created) and `WithLocation(...)` (2xx state-transition responses on existing resources).
 
 ## Why
-Under query/header API versioning, `Location` headers from `CreatedAtRoute(...)` / `WithLocation(...)` silently omit the `api-version` parameter unless every author remembers to add it to the route values dictionary — a recurring source of dereference 404s that's invisible without integration tests. `WithVersionedRoute()` injects the version at request time using the configured `IApiVersionReader` chain, with sensible fallbacks and explicit failures for ambiguous configurations.
+Under query/header API versioning, `Location` headers from `CreatedAtRoute(...)` / `CreatedAtAction(...)` / `WithLocation(...)` silently omit the `api-version` parameter unless every author remembers to add it to the route values dictionary — a recurring source of dereference 404s that's invisible without integration tests. `WithVersionedRoute()` injects the version at request time using the configured `IApiVersionReader` chain, with sensible fallbacks and explicit failures for ambiguous configurations.
 
 ## Key Features
-- Composes with `CreatedAtRoute(...)`, `WithLocation(...)`, and any other Location-emitting builder method
+- Composes with `CreatedAtRoute(...)`, `CreatedAtAction(...)`, `WithLocation(...)`, and any other builder-generated Location method
 - Two overloads: per-request resolution (default) and explicit-version pinning (`WithVersionedRoute(ApiVersion)`)
 - Per-request resolution via `httpContext.RequestedApiVersion` (the `Asp.Versioning.Http` extension property), falling back to declared and default versions
 - Honours `[ApiVersionNeutral]` and URL-segment versioning by skipping injection

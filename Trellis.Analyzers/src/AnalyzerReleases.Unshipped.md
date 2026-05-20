@@ -24,4 +24,4 @@ TRLS019  | Trellis  | Warning  | Avoid default(Result&lt;T&gt;) and default(Mayb
 TRLS020  | Trellis  | Warning  | Composite value object DTO property is missing CompositeValueObjectJsonConverter<T>.
 TRLS021  | Trellis  | Warning  | EF configuration duplicates Trellis conventions for Maybe<T> or [OwnedEntity].
 TRLS022  | Trellis  | Warning  | [OwnedEntity] property uses init-only setter; use { get; private set; } instead.
-TRLS023  | Trellis  | Warning  | CreatedAtRoute or WithLocation on a versioned controller is missing the api-version route value; chain .WithVersionedRoute() instead.
+TRLS023  | Trellis  | Warning  | CreatedAtRoute, CreatedAtAction, or WithLocation on a versioned controller is missing the api-version route value; chain .WithVersionedRoute() instead.
