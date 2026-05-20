@@ -67,7 +67,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 | Signature | Returns | Behavior |
 | --- | --- | --- |
 | `WithVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder)` | `HttpResponseOptionsBuilder<TDomain>` | Injects the configured `api-version` route value into the `Location` header emitted by a preceding `CreatedAtRoute(...)`, `CreatedAtAction(...)`, or `WithLocation(...)` call. The version is resolved per-request from `HttpContext`. Equivalent to `builder.WithRouteValueResolver("api-version", ResolveApiVersion)`. |
-| `WithVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, ApiVersion explicitVersion)` | `HttpResponseOptionsBuilder<TDomain>` | Escape hatch: pin the `Location` header to a specific `ApiVersion` regardless of what the client requested. Useful for cross-version `Location` redirects on deprecated endpoints. |
+| `WithVersionedRoute<TDomain>(this HttpResponseOptionsBuilder<TDomain> builder, ApiVersion explicitVersion)` | `HttpResponseOptionsBuilder<TDomain>` | Escape hatch: pin the `Location` header to a specific `ApiVersion`, overriding the per-request resolution order (requested / declared / default). Skip rules still apply — `[ApiVersionNeutral]` endpoints and `:apiVersion` URL-segment templates receive no `api-version` route value even when explicitly pinned. Useful for cross-version `Location` redirects on deprecated endpoints. |
 
 #### Behavioral notes
 
@@ -77,10 +77,12 @@ The api-version resolver runs per request inside the `LinkGenerator` callback (a
 2. **Endpoint metadata `ApiVersionMetadata.Map(ApiVersionMapping.Implicit).DeclaredApiVersions`** — fallback when (1) is null and exactly one declared version exists. Throws if the endpoint declares multiple versions and the client supplied none.
 3. **`ApiVersioningOptions.DefaultApiVersion`** — final fallback, configured via `services.AddApiVersioning(o => o.DefaultApiVersion = …)`.
 
-The resolver short-circuits to a no-op (no `api-version` route value injected) when:
+Both overloads short-circuit to a no-op (no `api-version` route value injected) when:
 
 - The endpoint is decorated with `[ApiVersionNeutral]` — version-neutral endpoints must not carry a version in their `Location` header.
 - The endpoint participates in URL-segment versioning (the route template contains a `{version:apiVersion}` segment) — the segment is filled by the route template binder, not a query/header route value.
+
+The skip rules apply to the explicit-version overload as well: `WithVersionedRoute(explicitVersion)` overrides the resolution order but still respects neutral and URL-segment skips, so a pinned version is never injected into a Location that targets a neutral endpoint or duplicates a path-segment version.
 
 The route-value key is fixed at `"api-version"`, matching the default for `QueryStringApiVersionReader` and the conventional header name. Hosts using a non-default reader parameter name should register a custom resolver via `WithRouteValueResolver(<key>, …)` directly instead of using this package.
 
@@ -130,7 +132,7 @@ return result.ToHttpResponse(opts => opts
     .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))));
 ```
 
-Pins the `Location` to `?api-version=2026-12-01` regardless of what the client requested. Use this only for redirects to a fixed version (deprecation flows, version migration). For the common case, prefer the parameterless overload.
+Pins the `Location` to `?api-version=2026-12-01` regardless of what the client requested. Use this only for redirects to a fixed version (deprecation flows, version migration). For the common case, prefer the parameterless overload. The neutral and URL-segment skip rules still apply: an explicit pin is never injected into a Location that targets a `[ApiVersionNeutral]` endpoint or a `v{version:apiVersion}` template.
 
 ### Configuration
 

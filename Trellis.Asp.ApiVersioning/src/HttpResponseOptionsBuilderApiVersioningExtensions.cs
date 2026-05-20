@@ -31,7 +31,8 @@ using Trellis.Asp;
 /// <see cref="HttpResponseOptionsBuilder{TDomain}.WithRouteValueResolver"/> directly.
 /// </para>
 /// <para>
-/// Cases that skip injection (resolver returns <c>null</c>): version-neutral endpoints
+/// Cases that skip injection (resolver returns <c>null</c>, applies to both the per-request
+/// and explicit-version overloads): version-neutral endpoints
 /// (<c>ApiVersionMetadata.IsApiVersionNeutral</c> or <c>[ApiVersionNeutral]</c>) and
 /// URL-segment-versioned routes (route template contains <c>:apiVersion</c>; ambient
 /// routing handles substitution). Multi-version actions with no client-requested version
@@ -76,6 +77,16 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
     /// <typeparam name="TDomain">The domain value type from <c>Result&lt;TDomain&gt;</c>.</typeparam>
     /// <param name="builder">The builder to configure.</param>
     /// <param name="explicitVersion">The version to inject, regardless of client request or endpoint metadata.</param>
+    /// <remarks>
+    /// Explicit pinning overrides the per-request resolution order (requested / declared /
+    /// default), but the skip rules still apply: on a version-neutral endpoint
+    /// (<c>ApiVersionMetadata.IsApiVersionNeutral</c> or <c>[ApiVersionNeutral]</c>) and on
+    /// URL-segment-versioned routes (route template contains <c>:apiVersion</c>) the resolver
+    /// returns <c>null</c> and no <c>api-version</c> route value is injected. Injecting a
+    /// pinned version into a Location that targets a neutral endpoint would mislead clients;
+    /// injecting it as a query parameter alongside a path segment would create a redundant /
+    /// conflicting value. Both bugs are silent without this guard.
+    /// </remarks>
     public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
         this HttpResponseOptionsBuilder<TDomain> builder,
         ApiVersion explicitVersion)
@@ -86,7 +97,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         var pinnedValue = explicitVersion.ToString();
         return builder.WithRouteValueResolver(
             DefaultRouteValueKey,
-            _ => pinnedValue);
+            httpContext => ShouldSkipInjection(httpContext) ? null : pinnedValue);
     }
 
     /// <summary>
@@ -100,17 +111,15 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 
     private static string? ResolveApiVersion(HttpContext httpContext)
     {
+        // Skip injection on version-neutral endpoints (the response Location shouldn't carry
+        // a parameter the target endpoint doesn't accept) and on URL-segment versioning (the
+        // ambient route values already carry the version token; adding a query copy creates
+        // a redundant/conflicting parameter).
+        if (ShouldSkipInjection(httpContext))
+            return null;
+
         var endpoint = httpContext.GetEndpoint();
-
-        // (Best-effort) skip injection on version-neutral endpoints — the response Location
-        // shouldn't carry a parameter the target endpoint doesn't accept.
         var metadata = endpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
-        if (metadata is { IsApiVersionNeutral: true })
-            return null;
-
-        // Skip URL-segment versioning: ambient route values already carry the version token.
-        if (RouteTemplateContainsVersionToken(endpoint))
-            return null;
 
         // 1. Echo the version the client requested — primary signal.
         var requested = httpContext.RequestedApiVersion;
@@ -136,6 +145,30 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
             "version, the endpoint declares more than one (or none), and no DefaultApiVersion is configured. " +
             "Either configure ApiVersioningOptions.DefaultApiVersion or use the explicit-version " +
             "WithVersionedRoute(explicitVersion) overload.");
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> when the configured api-version resolver must NOT inject a route
+    /// value, regardless of which resolution path produced the candidate. Centralised so the
+    /// per-request resolver and the explicit-pinning overload share identical skip semantics.
+    /// </summary>
+    private static bool ShouldSkipInjection(HttpContext httpContext)
+    {
+        var endpoint = httpContext.GetEndpoint();
+
+        // Version-neutral endpoints reject any api-version parameter; emitting one would
+        // mislead clients into resending the same Location with an unsupported value.
+        var metadata = endpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
+        if (metadata is { IsApiVersionNeutral: true })
+            return true;
+
+        // URL-segment versioning embeds the version in the path; ambient routing fills the
+        // segment from RouteData, and a query-string copy would create a redundant /
+        // conflicting parameter on the Location URI.
+        if (RouteTemplateContainsVersionToken(endpoint))
+            return true;
+
+        return false;
     }
 
     private static bool RouteTemplateContainsVersionToken(Microsoft.AspNetCore.Http.Endpoint? endpoint)

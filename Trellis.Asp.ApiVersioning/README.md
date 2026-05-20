@@ -49,7 +49,7 @@ public class OrdersController : ControllerBase
 
 The resulting `Location` header is `/api/orders/42?api-version=2026-12-01` (or whatever version the client requested).
 
-To pin a specific version regardless of what the client requested (cross-version `Location` redirects on deprecated endpoints), use the explicit overload: `.WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1)))`.
+To pin a specific version regardless of what the client requested (cross-version `Location` redirects on deprecated endpoints), use the explicit overload: `.WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1)))`. The neutral and URL-segment skip rules still apply: an explicit pin is never injected into a Location targeting a `[ApiVersionNeutral]` endpoint or a `v{version:apiVersion}` template.
 
 ## Related diagnostics
 

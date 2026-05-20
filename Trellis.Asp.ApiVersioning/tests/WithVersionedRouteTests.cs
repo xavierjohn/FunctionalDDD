@@ -196,6 +196,25 @@ public sealed class WithVersionedRouteTests
     }
 
     [Fact]
+    public async Task Explicit_version_overload_on_ApiVersionNeutral_controller_omits_api_version_from_Location()
+    {
+        // Regression: the explicit-version overload `WithVersionedRoute(ApiVersion)` must honor
+        // the same skip rules as the parameterless overload. A pinned version on a
+        // [ApiVersionNeutral] endpoint would emit a Location with a version the target endpoint
+        // doesn't accept — exactly the bug the type-level skip rules promise won't happen.
+        // The action pins ApiVersionV2; the request supplies ApiVersionV1. Either value showing
+        // up in the Location indicates the skip rule was bypassed.
+        using var host = CreateSingleVersionHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/neutral/pinned?api-version={ApiVersionV1}", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().NotContain("api-version");
+        resp.Headers.Location.OriginalString.Should().NotContain(ApiVersionV2);
+    }
+
+    [Fact]
     public async Task UrlSegment_versioned_route_omits_api_version_query_from_Location()
     {
         // URL-segment versioning embeds the version in the route template (`v{version:apiVersion}`).
@@ -213,6 +232,27 @@ public sealed class WithVersionedRouteTests
         resp.Headers.Location!.OriginalString.Should().Contain($"/v{ApiVersionV1}/segments/");
         resp.Headers.Location.OriginalString.Should().NotContain("?api-version=");
         resp.Headers.Location.OriginalString.Should().NotContain("&api-version=");
+    }
+
+    [Fact]
+    public async Task Explicit_version_overload_on_url_segment_versioned_route_omits_api_version_query_from_Location()
+    {
+        // Regression: the explicit-version overload must honor the URL-segment skip rule too.
+        // The route template `v{version:apiVersion}/segments/...` already carries the version
+        // in its path; a pinned `?api-version=...` query parameter on the Location would create
+        // a redundant/conflicting parameter that contradicts the path. The action pins
+        // ApiVersionV2 while the request comes in under the ApiVersionV1 segment — either
+        // value appearing as a query parameter indicates the skip rule was bypassed.
+        using var host = CreateUrlSegmentHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/v{ApiVersionV1}/segments/pinned", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().Contain($"/v{ApiVersionV1}/segments/");
+        resp.Headers.Location.OriginalString.Should().NotContain("?api-version=");
+        resp.Headers.Location.OriginalString.Should().NotContain("&api-version=");
+        resp.Headers.Location.OriginalString.Should().NotContain($"={ApiVersionV2}");
     }
 
     [Fact]
@@ -358,6 +398,16 @@ public sealed class NeutralController : ControllerBase
                     c => new RouteValueDictionary { ["id"] = c.Id })
                 .WithVersionedRoute())
             .AsActionResult<CreatedCustomer>();
+
+    [HttpPost("pinned")]
+    public ActionResult<CreatedCustomer> PostPinned() =>
+        Result.Ok(new CreatedCustomer(7))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Neutral_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))))
+            .AsActionResult<CreatedCustomer>();
 }
 
 [ApiController]
@@ -377,6 +427,16 @@ public sealed class SegmentVersionController : ControllerBase
                     "Segments_GetById",
                     c => new RouteValueDictionary { ["id"] = c.Id })
                 .WithVersionedRoute())
+            .AsActionResult<CreatedCustomer>();
+
+    [HttpPost("pinned")]
+    public ActionResult<CreatedCustomer> PostPinned() =>
+        Result.Ok(new CreatedCustomer(13))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Segments_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))))
             .AsActionResult<CreatedCustomer>();
 }
 
