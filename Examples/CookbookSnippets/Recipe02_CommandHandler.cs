@@ -35,7 +35,7 @@ public sealed class PlaceOrderHandler(IOrderRepository repo)
         new(OrderId.TryCreate(command.OrderId)
             .BindZip(id => CurrencyCode.TryCreate(command.Currency).Map(c => new Money(command.Amount, c)))
             .BindZip(_ => ActorId.TryCreate(command.OwnerId))
-            .Bind(t => Order.Create(t.Item1.Item1, t.Item1.Item2, t.Item2))
+            .Bind(t => Order.TryCreate(t.Item1.Item1, t.Item1.Item2, t.Item2))
             .Tap(repo.Add)
             .Map(o => o.Id));
 }

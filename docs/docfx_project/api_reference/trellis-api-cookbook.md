@@ -125,6 +125,7 @@ These rows route recurring LLM lab mistakes to the most relevant reference befor
 
 ```csharp
 using Trellis;
+using Trellis.Authorization;
 
 // Strongly-typed ID: source-generated factory, equality, parsing, JSON converter.
 public sealed partial class OrderId : RequiredGuid<OrderId>;
@@ -151,11 +152,18 @@ public sealed class Order : Aggregate<OrderId>
 {
     public Money Total { get; private set; } = default!;
     public OrderStatus Status { get; private set; }
+    public ActorId OwnerId { get; private set; } = default!;
 
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 
-    public static Result<Order> Create(OrderId id, Money total) =>
-        Result.Ok(new Order(id) { Total = total, Status = OrderStatus.Draft });
+    // Idiomatic ROP factory: nullable parameters lift to Result<T> via T?.ToResult(error);
+    // Combine aggregates per-field errors into a single Error.UnprocessableContent; Map
+    // constructs the aggregate from the tuple of validated non-null values.
+    public static Result<Order> TryCreate(OrderId? id, Money? total, ActorId? ownerId) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Order id is required."))
+            .Combine(total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required.")))
+            .Combine(ownerId.ToResult(Error.UnprocessableContent.ForField("ownerId", "validation.error", "Owner id is required.")))
+            .Map(t => new Order(t.Item1) { Total = t.Item2, Status = OrderStatus.Draft, OwnerId = t.Item3 });
 }
 
 // Trellis convention: model finite domain states as RequiredEnum<TSelf>
