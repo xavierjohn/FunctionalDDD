@@ -7,7 +7,7 @@
 
 Flags `HttpResponseOptionsBuilder<T>.CreatedAtRoute(routeName, routeValues)`, `CreatedAtAction(actionName, routeValues, controllerName)`, and `WithLocation(routeName, routeValues)` invocations that produce `Location` headers without an `api-version` route value, when the enclosing controller is decorated with `[ApiVersion(...)]`.
 
-The analyzer suppresses when the same fluent builder chain calls `.WithVersionedRoute(...)` from `Trellis.Asp.ApiVersioning` — that helper injects the version per-request and removes the need to encode it in the route values literal.
+The analyzer suppresses when the same fluent builder chain calls `.WithVersionedRoute(...)` from `Trellis.Asp.ApiVersioning` — that helper injects the version per-request and removes the need to encode it in the route values literal. The analyzer also suppresses when the chain calls the underlying primitive directly: `.WithRouteValueResolver("api-version", httpContext => ...)` on `HttpResponseOptionsBuilder<T>`. The key match is case-insensitive (`"API-Version"` also suppresses).
 
 The analyzer runs only inside controllers/types annotated with `[ApiVersion]` and not `[ApiVersionNeutral]`. `[ApiVersion]` is `Inherited = false`, so the analyzer inspects the immediate type — derived controllers without their own `[ApiVersion]` attribute are ignored.
 
@@ -20,7 +20,7 @@ Recognised dictionary shapes (suppress the warning when an `api-version` key is 
 
 Key matching is case-insensitive (matches `RouteValueDictionary`'s runtime semantics): `"API-VERSION"`, `"Api-Version"`, etc., are all accepted.
 
-The single-id overloads (`CreatedAtRoute(routeName, idSelector)` / `WithLocation(routeName, idSelector)`) construct the dictionary internally with a single non-`"api-version"` key, so they are always flagged unless followed by `.WithVersionedRoute()`.
+The single-id overloads (`CreatedAtRoute(routeName, idSelector)` / `WithLocation(routeName, idSelector)`) construct the dictionary internally with a single non-`"api-version"` key, so they are always flagged unless followed by `.WithVersionedRoute()` (or the equivalent manual `.WithRouteValueResolver("api-version", ...)`).
 
 ## Why it matters
 
