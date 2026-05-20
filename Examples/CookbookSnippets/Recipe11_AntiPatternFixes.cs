@@ -19,11 +19,10 @@ public static class AntiPatternFixes
     public static void TRLS001_Wrong(Result<OrderId> r) => PlaceOrder(default!);
 #endif
 
-    public static void TRLS001_Fix(Result<OrderId> r)
-    {
-        // FIX — handle the value or assign it.
-        var _ = r.Match(_ => 0, e => throw new InvalidOperationException(e.ToString()));
-    }
+    // FIX — Discard() is the analyzer-recognised marker that the Result
+    // has been consciously dropped. Never throw in a Result-returning code
+    // path; that defeats the point of ROP.
+    public static void TRLS001_Fix(Result<OrderId> r) => r.Discard();
 
     // ─── TRLS003 — Unsafe Maybe.Value ──────────────────────────────────────
     public static void TRLS003_Fix(Customer customer)

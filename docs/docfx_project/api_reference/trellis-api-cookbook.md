@@ -125,6 +125,7 @@ These rows route recurring LLM lab mistakes to the most relevant reference befor
 
 ```csharp
 using Trellis;
+using Trellis.Authorization;
 
 // Strongly-typed ID: source-generated factory, equality, parsing, JSON converter.
 public sealed partial class OrderId : RequiredGuid<OrderId>;
@@ -151,11 +152,19 @@ public sealed class Order : Aggregate<OrderId>
 {
     public Money Total { get; private set; } = default!;
     public OrderStatus Status { get; private set; }
+    public ActorId OwnerId { get; private set; } = default!;
 
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 
-    public static Result<Order> Create(OrderId id, Money total) =>
-        Result.Ok(new Order(id) { Total = total, Status = OrderStatus.Draft });
+    // Idiomatic ROP factory: nullable parameters lift to Result<T> via T?.ToResult(error);
+    // Combine aggregates per-field errors into a single Error.UnprocessableContent; Map's
+    // tuple-deconstructing overload lets the lambda bind the validated non-null values
+    // directly as id/total/ownerId.
+    public static Result<Order> TryCreate(OrderId? id, Money? total, ActorId? ownerId) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Order id is required."))
+            .Combine(total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required.")))
+            .Combine(ownerId.ToResult(Error.UnprocessableContent.ForField("ownerId", "validation.error", "Owner id is required.")))
+            .Map((id, total, ownerId) => new Order(id) { Total = total, Status = OrderStatus.Draft, OwnerId = ownerId });
 }
 
 // Trellis convention: model finite domain states as RequiredEnum<TSelf>
@@ -219,18 +228,19 @@ using Trellis.FluentValidation;
 using Trellis.Mediator;
 using Trellis.Primitives;
 
-public sealed record PlaceOrderRequest(Guid OrderId, decimal Amount, string Currency);
+public sealed record PlaceOrderRequest(Guid OrderId, decimal Amount, string Currency, string OwnerId);
 
-public sealed record PlaceOrderCommand(OrderId OrderId, Money Total)
+public sealed record PlaceOrderCommand(OrderId OrderId, Money Total, ActorId OwnerId)
     : ICommand<Result<OrderId>>
 {
     public static Result<PlaceOrderCommand> TryCreate(PlaceOrderRequest request) =>
         Result.Combine(
                 OrderId.TryCreate(request.OrderId, nameof(request.OrderId)),
                 MonetaryAmount.TryCreate(request.Amount, nameof(request.Amount)),
-                CurrencyCode.TryCreate(request.Currency, nameof(request.Currency)))
-            .Map((orderId, amount, currency) =>
-                new PlaceOrderCommand(orderId, Money.Create(amount.Value, currency.Value)));
+                CurrencyCode.TryCreate(request.Currency, nameof(request.Currency)),
+                ActorId.TryCreate(request.OwnerId, nameof(request.OwnerId)))
+            .Map((orderId, amount, currency, ownerId) =>
+                new PlaceOrderCommand(orderId, new Money(amount.Value, currency), ownerId));
 }
 
 public sealed class PlaceOrderValidator : AbstractValidator<PlaceOrderCommand>
@@ -247,7 +257,7 @@ public sealed class PlaceOrderHandler(IOrderRepository repo)
     : ICommandHandler<PlaceOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(PlaceOrderCommand cmd, CancellationToken cancellationToken) =>
-        Order.Create(cmd.OrderId, cmd.Total)
+        Order.TryCreate(cmd.OrderId, cmd.Total, cmd.OwnerId)
             .Tap(repo.Add)
             .Map(o => o.Id)
             .AsValueTask();
@@ -810,7 +820,7 @@ public static class CompositionRoot
 
 The unobvious bits this recipe pins down:
 
-- `ApplyTrellisConventions` already configures `[OwnedEntity]` types as owned navigations — **you do not need `builder.OwnsOne(...)` in your `IEntityTypeConfiguration`** (the `CompositeValueObjectConvention` discovers them by attribute when the assembly is passed to `ApplyTrellisConventions`).
+- `ApplyTrellisConventions` already configures composite value objects as owned navigations — **you do not need `builder.OwnsOne(...)` in your `IEntityTypeConfiguration`** (the `CompositeValueObjectConvention` discovers them by **inheritance from `ValueObject`** when the assembly is passed to `ApplyTrellisConventions`). The `[OwnedEntity]` attribute is **not** the convention's discovery key — it drives the source generator (which emits the parameterless ctor EF Core's materializer needs) and the analyzers `TRLS036` / `TRLS037` / `TRLS038`. The convention will Owned-map any `ValueObject` subtype in the scanned assemblies; without `[OwnedEntity]` the generator does not emit the parameterless ctor and materialization fails at runtime — `[OwnedEntity]` is therefore required in practice even though the convention doesn't read it directly.
 - The class **must** be `partial` (`TRLS036`), inherit `ValueObject` (`TRLS038`), and have **no** parameterless constructor (`TRLS037`) — the source generator emits one for EF Core's materialization path.
 - `[JsonConverter(typeof(CompositeValueObjectJsonConverter<TSelf>))]` routes JSON deserialization through the public `TryCreate`, so the API surface and the domain agree on what's valid. Without it, model binding produces a default-constructed VO that bypasses `TryCreate`.
 
@@ -878,10 +888,11 @@ public sealed partial class Customer : Aggregate<CustomerId>
         Name = name; ShippingAddress = shipping;
     }
 
-    public static Result<Customer> Create(CustomerId id, string name, ShippingAddress shipping) =>
-        string.IsNullOrWhiteSpace(name)
-            ? Result.Fail<Customer>(Error.UnprocessableContent.ForField("name", "required", "Name is required."))
-            : Result.Ok(new Customer(id, name, shipping));
+    public static Result<Customer> TryCreate(CustomerId? id, string? name, ShippingAddress? shipping) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Customer id is required."))
+            .Combine(name.EnsureNotNullOrWhiteSpace(Error.UnprocessableContent.ForField("name", "required", "Name is required.")))
+            .Combine(shipping.ToResult(Error.UnprocessableContent.ForField("shipping", "validation.error", "Shipping address is required.")))
+            .Map((id, name, shipping) => new Customer(id, name, shipping));
 }
 
 // CONFIGURATION — note the absence of OwnsOne(c => c.ShippingAddress).
@@ -1008,8 +1019,10 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         {
             li.ToTable("LineItems");
             li.HasKey(x => x.Id);
-            // Inner [OwnedEntity] composites (e.g., LineItem.UnitPrice : Money)
-            // are still picked up by CompositeValueObjectConvention — no extra OwnsOne needed here.
+            // Inner composite VO properties (e.g., LineItem.UnitPrice : Money) are
+            // discovered by EF Core's NavigationDiscoveryConvention because
+            // CompositeValueObjectConvention registers each composite VO type as Owned
+            // globally at model initialization — no extra OwnsOne needed here.
         });
     }
 }
@@ -1023,7 +1036,7 @@ The string `"_lineItems"` is unfortunately part of the public mapping contract: 
 | `private const string LineItemsField = "_lineItems";` on `Order`, then `builder.OwnsMany<LineItem>(Order.LineItemsField, …)` | Refactoring tools follow the constant. Still no compile check that the field actually exists. | Leaks the field name through `internal`/`public` constant on the aggregate — adds public surface for a persistence concern. |
 | `builder.OwnsMany(o => o.LineItems, …)` directly against the facade | n/a | Does not work: EF reports it cannot determine the relationship from `IReadOnlyList<LineItem>`. |
 
-**Why no `[OwnedEntity]`-style convention for collections (yet).** `[OwnedEntity]` + `CompositeValueObjectConvention` discovers composite owned *value objects* by attribute. An equivalent collection convention would need to walk every aggregate, find `IReadOnlyList<T>` / `IReadOnlyCollection<T>` properties whose `T` is an entity, locate a matching `_camelCase` backing field, and register the `OwnsMany` against it. This is on the roadmap (tracked as the analogue of `MaybeConvention` for collections); for now the cookbook pattern above is the supported approach.
+**Why no `[OwnedEntity]`-style convention for collections (yet).** `CompositeValueObjectConvention` discovers composite owned *value objects* by inheritance from `ValueObject`. An equivalent collection convention would need to walk every aggregate, find `IReadOnlyList<T>` / `IReadOnlyCollection<T>` properties whose `T` is an entity, locate a matching `_camelCase` backing field, and register the `OwnsMany` against it. This is on the roadmap (tracked as the analogue of `MaybeConvention` for collections); for now the cookbook pattern above is the supported approach.
 
 ### Supported property shapes inside a composite VO — when to map to a DTO instead
 
@@ -1207,7 +1220,7 @@ public sealed class CreateOrderHandler(IOrderRepository repo)
     : ICommandHandler<CreateOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(CreateOrderCommand cmd, CancellationToken ct) =>
-        Order.Create(cmd.Total)
+        Order.TryCreate(cmd.Total)
             .Tap(repo.Add)                  // stages — no save here
             .Map(o => o.Id)
             .AsValueTask();                 // handler returns immediately
@@ -1232,7 +1245,7 @@ public sealed class CreateOrderHandler(IOrderRepository repo)
 //   ETag bumps, audit logs) end up in inconsistent states. Also: you've now committed even
 //   if a later behavior in the pipeline fails post-handler.
 public ValueTask<Result<OrderId>> Handle(CreateOrderCommand cmd, CancellationToken ct) =>
-    Order.Create(cmd.Total)
+    Order.TryCreate(cmd.Total)
         .Tap(repo.Add)
         .TapAsync(_ => dbContext.SaveChangesAsync(ct));   // ❌ — duplicates UoW, racy
 
@@ -1249,12 +1262,12 @@ public ValueTask<Result<OrderId>> Handle(CreateOrderCommand cmd, CancellationTok
 ```csharp
 // ✅ Setup: void Add — no .GetAwaiter().GetResult(), no Result assertion in setup.
 var customers = new FakeRepository<Customer, CustomerId>();
-customers.Add(Customer.Create(/* ... */));   // matches the handler's surface exactly
+customers.Add(MakeAlice());   // helper builds a valid Customer via Customer.TryCreate(...)
 
 // ✅ Conflict-result test: SaveAsync returns the Error.Conflict so the test can assert.
 var customers = new FakeRepository<Customer, CustomerId>().WithUniqueConstraint(c => c.Email);
-customers.Add(Customer.Create("alice@x.com"));
-var result = await customers.SaveAsync(Customer.Create("alice@x.com"));   // intentional conflict
+customers.Add(MakeAlice());                                          // first alice — accepted
+var result = await customers.SaveAsync(MakeAlice());                 // intentional conflict
 result.UnwrapError().Should().BeOfType<Error.Conflict>();
 ```
 
@@ -1652,14 +1665,23 @@ public sealed class ReturnOrderHandler(
         if (missing.Length > 1)
             return Result.Fail<Order>(new Error.Aggregate(missing.Select(NotFoundFor).ToArray()));
 
-        // All related aggregates reachable. Safe to apply side effects.
+        // All related aggregates reachable. Preflight the per-aggregate domain
+        // invariants (Recipe 25: pure CanReleaseStock predicate paired with the
+        // mutating ReleaseStock) before any mutation. Releasing stock on Product
+        // A and then failing on Product B's release would leave A in a partially-
+        // released state that TransactionalCommandBehavior cannot roll back from
+        // the in-memory aggregate graph within the same request.
+        var preflight = order.LineItems
+            .Select(li => byId[li.ProductId].CanReleaseStock(li.Quantity))
+            .SequenceAll();
+        if (preflight.IsFailure)
+            return Result.Fail<Order>(preflight.Error);
+
+        // Pass 1 succeeded for every line item — every Pass 2 mutation below has
+        // a matching Can* predicate that just returned Ok, so the mutation is
+        // provably non-failing. Discard() marks the Result as consciously dropped.
         foreach (var li in order.LineItems)
-        {
-            var product = byId[li.ProductId];
-            var release = product.ReleaseStock(li.Quantity);
-            if (release.Error is { } err)
-                return Result.Fail<Order>(err);
-        }
+            byId[li.ProductId].ReleaseStock(li.Quantity).Discard();
 
         return order.Return(command.Reason, timeProvider.GetUtcNow()).Map(_ => order);
     }
@@ -1850,7 +1872,7 @@ public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResources<Team, 
 
 public sealed class Team : Aggregate<TeamId>
 {
-    public string CreatedByActorId { get; }
+    public ActorId CreatedByActorId { get; }
 }
 
 public sealed record UploadScorecardCommand(MatchId MatchId, /* fields */)

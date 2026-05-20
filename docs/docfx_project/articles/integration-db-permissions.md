@@ -321,7 +321,6 @@ using Trellis.Authorization;
 using Trellis.Primitives;
 
 public sealed partial class OrderId : RequiredGuid<OrderId>;
-public sealed partial class ActorId : RequiredString<ActorId>;
 
 public sealed record Order(OrderId Id, ActorId OwnerId);
 
@@ -337,7 +336,7 @@ public sealed record CancelOrderCommand(OrderId OrderId)
 
     public IResult Authorize(Actor actor, Order order) =>
         Result.Ensure(
-            order.OwnerId.Value == actor.Id || actor.HasPermission(Permissions.OrdersCancelAny),
+            order.OwnerId == actor.Id || actor.HasPermission(Permissions.OrdersCancelAny),
             new Error.Forbidden("orders.cancel")
                 { Detail = "Only the owner can cancel this order." });
 }

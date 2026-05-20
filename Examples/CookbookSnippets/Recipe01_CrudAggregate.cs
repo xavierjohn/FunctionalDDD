@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trellis;
+using Trellis.Authorization;
 
 // Strongly-typed ID: source-generated factory, equality, parsing, JSON converter.
 public sealed partial class OrderId : RequiredGuid<OrderId>;
@@ -42,12 +43,20 @@ public sealed class Order : Aggregate<OrderId>
     public OrderStatus Status { get; private set; } = OrderStatus.Draft;
 
     // Owner identifier referenced by Recipe 7's resource-based authorization sample.
-    public string OwnerId { get; private set; } = string.Empty;
+    // Typed as Trellis.Authorization.ActorId so the auth check stays type-safe end-to-end
+    // (rather than dropping to string and relying on implicit conversions).
+    public ActorId OwnerId { get; private set; } = default!;
 
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 
-    public static Result<Order> Create(OrderId id, Money total) =>
-        Result.Ok(new Order(id) { Total = total, Status = OrderStatus.Draft });
+    // Idiomatic ROP factory: nullable parameters lift to Result<T> via T?.ToResult(error);
+    // Combine aggregates per-field errors into a single Error.UnprocessableContent; Map
+    // constructs the aggregate from the tuple of validated non-null values.
+    public static Result<Order> TryCreate(OrderId? id, Money? total, ActorId? ownerId) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Order id is required."))
+            .Combine(total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required.")))
+            .Combine(ownerId.ToResult(Error.UnprocessableContent.ForField("ownerId", "validation.error", "Owner id is required.")))
+            .Map((id, total, ownerId) => new Order(id) { Total = total, Status = OrderStatus.Draft, OwnerId = ownerId });
 
     // Exercises the protected `DomainEvents` member inherited from Aggregate<TId>.
     // Compile-verifies the cookbook's Recipe 1 inherited-members callout claim

@@ -9,11 +9,12 @@ using FluentValidation;
 using global::Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis;
+using Trellis.Authorization;
 using Trellis.EntityFrameworkCore;
 using Trellis.FluentValidation;
 using Trellis.Mediator;
 
-public sealed record PlaceOrderCommand(System.Guid OrderId, decimal Amount, string Currency)
+public sealed record PlaceOrderCommand(System.Guid OrderId, decimal Amount, string Currency, string OwnerId)
     : ICommand<Result<OrderId>>;
 
 public sealed class PlaceOrderValidator : AbstractValidator<PlaceOrderCommand>
@@ -23,6 +24,7 @@ public sealed class PlaceOrderValidator : AbstractValidator<PlaceOrderCommand>
         RuleFor(x => x.OrderId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
         RuleFor(x => x.Currency).Length(3);
+        RuleFor(x => x.OwnerId).NotEmpty();
     }
 }
 
@@ -30,9 +32,11 @@ public sealed class PlaceOrderHandler(IOrderRepository repo)
     : ICommandHandler<PlaceOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(PlaceOrderCommand command, CancellationToken cancellationToken) =>
-        new(OrderId.TryCreate(command.OrderId)
-            .BindZip(id => CurrencyCode.TryCreate(command.Currency).Map(c => new Money(command.Amount, c)))
-            .Bind(t => Order.Create(t.Item1, t.Item2))
+        new(Result.Combine(
+                OrderId.TryCreate(command.OrderId),
+                CurrencyCode.TryCreate(command.Currency).Map(c => new Money(command.Amount, c)),
+                ActorId.TryCreate(command.OwnerId))
+            .Bind((id, money, ownerId) => Order.TryCreate(id, money, ownerId))
             .Tap(repo.Add)
             .Map(o => o.Id));
 }

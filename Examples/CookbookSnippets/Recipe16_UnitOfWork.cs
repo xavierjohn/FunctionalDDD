@@ -25,9 +25,9 @@ public sealed class Order : Aggregate<OrderId>
 
     private Order(OrderId id) : base(id) { }
 
-    public static Result<Order> Create(Money total) =>
-        OrderId.TryCreate(Guid.NewGuid())
-            .Map(id => new Order(id) { Total = total });
+    public static Result<Order> TryCreate(Money? total) =>
+        total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required."))
+            .Map(t => new Order(OrderId.NewUniqueV4()) { Total = t });
 }
 
 public interface IOrderRepository
@@ -43,7 +43,7 @@ public sealed class CreateOrderHandler(IOrderRepository repo)
     : ICommandHandler<CreateOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(CreateOrderCommand command, CancellationToken cancellationToken) =>
-        Order.Create(command.Total)
+        Order.TryCreate(command.Total)
             .Tap(repo.Add)
             .Map(o => o.Id)
             .AsValueTask();
