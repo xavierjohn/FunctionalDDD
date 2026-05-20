@@ -4,10 +4,9 @@ namespace CookbookSnippets.Recipe17;
 using System;
 using System.Collections.Generic;
 using Trellis;
+using Trellis.Authorization;
 
 public sealed partial class OrderId : RequiredGuid<OrderId>;
-
-public sealed partial class ActorId : RequiredGuid<ActorId>;
 
 public sealed partial class TrackingNumber : RequiredString<TrackingNumber>;
 
@@ -60,11 +59,13 @@ public sealed class Order : Aggregate<OrderId>
 
 internal static class Recipe17Demonstrator
 {
-    public static void DomainEventSurface(OrderSubmitted submitted, TimeProvider clock)
+    public static void DomainEventSurface(OrderSubmitted submitted, Actor approver, TimeProvider clock)
     {
         DateTimeOffset occurredAt = ((IDomainEvent)submitted).OccurredAt;
         DateTimeOffset now = clock.GetUtcNow();
-        OrderApproved approved = new(submitted.OrderId, ActorId.NewUniqueV7(), now);
+        // Actors come from the authenticated request, not from a generator. Pass the
+        // approver's typed ActorId through directly.
+        OrderApproved approved = new(submitted.OrderId, approver.Id, now);
 
         _ = (occurredAt, approved);
     }

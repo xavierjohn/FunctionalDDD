@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trellis;
+using Trellis.Authorization;
 
 // Strongly-typed ID: source-generated factory, equality, parsing, JSON converter.
 public sealed partial class OrderId : RequiredGuid<OrderId>;
@@ -42,7 +43,9 @@ public sealed class Order : Aggregate<OrderId>
     public OrderStatus Status { get; private set; } = OrderStatus.Draft;
 
     // Owner identifier referenced by Recipe 7's resource-based authorization sample.
-    public string OwnerId { get; private set; } = string.Empty;
+    // Typed as Trellis.Authorization.ActorId so the auth check stays type-safe end-to-end
+    // (rather than dropping to string and relying on implicit conversions).
+    public ActorId OwnerId { get; private set; } = default!;
 
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 

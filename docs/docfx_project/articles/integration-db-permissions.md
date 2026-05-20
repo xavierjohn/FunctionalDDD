@@ -321,7 +321,6 @@ using Trellis.Authorization;
 using Trellis.Primitives;
 
 public sealed partial class OrderId : RequiredGuid<OrderId>;
-public sealed partial class ActorId : RequiredString<ActorId>;
 
 public sealed record Order(OrderId Id, ActorId OwnerId);
 

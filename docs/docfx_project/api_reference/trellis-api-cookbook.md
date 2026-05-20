@@ -810,7 +810,7 @@ public static class CompositionRoot
 
 The unobvious bits this recipe pins down:
 
-- `ApplyTrellisConventions` already configures `[OwnedEntity]` types as owned navigations — **you do not need `builder.OwnsOne(...)` in your `IEntityTypeConfiguration`** (the `CompositeValueObjectConvention` discovers them by attribute when the assembly is passed to `ApplyTrellisConventions`).
+- `ApplyTrellisConventions` already configures composite value objects as owned navigations — **you do not need `builder.OwnsOne(...)` in your `IEntityTypeConfiguration`** (the `CompositeValueObjectConvention` discovers them by **inheritance from `ValueObject`** when the assembly is passed to `ApplyTrellisConventions`). The `[OwnedEntity]` attribute is **not** the convention's discovery key — it drives the source generator (which emits the parameterless ctor EF Core's materializer needs) and the analyzers `TRLS036` / `TRLS037` / `TRLS038`. The convention will Owned-map any `ValueObject` subtype in the scanned assemblies; without `[OwnedEntity]` the generator does not emit the parameterless ctor and materialization fails at runtime — `[OwnedEntity]` is therefore required in practice even though the convention doesn't read it directly.
 - The class **must** be `partial` (`TRLS036`), inherit `ValueObject` (`TRLS038`), and have **no** parameterless constructor (`TRLS037`) — the source generator emits one for EF Core's materialization path.
 - `[JsonConverter(typeof(CompositeValueObjectJsonConverter<TSelf>))]` routes JSON deserialization through the public `TryCreate`, so the API surface and the domain agree on what's valid. Without it, model binding produces a default-constructed VO that bypasses `TryCreate`.
 
@@ -1008,8 +1008,13 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         {
             li.ToTable("LineItems");
             li.HasKey(x => x.Id);
-            // Inner [OwnedEntity] composites (e.g., LineItem.UnitPrice : Money)
-            // are still picked up by CompositeValueObjectConvention — no extra OwnsOne needed here.
+            // Inner composite VO properties (e.g., LineItem.UnitPrice : Money) inside a
+            // private-backing-field OwnsMany navigation are NOT discovered by
+            // CompositeValueObjectConvention — the convention only descends into owned
+            // navigations expressed as public property expressions (OwnsMany(x => x.Items)).
+            // For the canonical DDD shape above (backing field hidden behind a read-only
+            // facade), you must call li.OwnsOne(x => x.UnitPrice) explicitly here.
+            li.OwnsOne(x => x.UnitPrice);
         });
     }
 }
@@ -1023,7 +1028,7 @@ The string `"_lineItems"` is unfortunately part of the public mapping contract: 
 | `private const string LineItemsField = "_lineItems";` on `Order`, then `builder.OwnsMany<LineItem>(Order.LineItemsField, …)` | Refactoring tools follow the constant. Still no compile check that the field actually exists. | Leaks the field name through `internal`/`public` constant on the aggregate — adds public surface for a persistence concern. |
 | `builder.OwnsMany(o => o.LineItems, …)` directly against the facade | n/a | Does not work: EF reports it cannot determine the relationship from `IReadOnlyList<LineItem>`. |
 
-**Why no `[OwnedEntity]`-style convention for collections (yet).** `[OwnedEntity]` + `CompositeValueObjectConvention` discovers composite owned *value objects* by attribute. An equivalent collection convention would need to walk every aggregate, find `IReadOnlyList<T>` / `IReadOnlyCollection<T>` properties whose `T` is an entity, locate a matching `_camelCase` backing field, and register the `OwnsMany` against it. This is on the roadmap (tracked as the analogue of `MaybeConvention` for collections); for now the cookbook pattern above is the supported approach.
+**Why no `[OwnedEntity]`-style convention for collections (yet).** `CompositeValueObjectConvention` discovers composite owned *value objects* by inheritance from `ValueObject`. An equivalent collection convention would need to walk every aggregate, find `IReadOnlyList<T>` / `IReadOnlyCollection<T>` properties whose `T` is an entity, locate a matching `_camelCase` backing field, and register the `OwnsMany` against it. This is on the roadmap (tracked as the analogue of `MaybeConvention` for collections); for now the cookbook pattern above is the supported approach.
 
 ### Supported property shapes inside a composite VO — when to map to a DTO instead
 
@@ -1850,7 +1855,7 @@ public sealed class Match : Aggregate<MatchId>, IIdentifyRelatedResources<Team, 
 
 public sealed class Team : Aggregate<TeamId>
 {
-    public string CreatedByActorId { get; }
+    public ActorId CreatedByActorId { get; }
 }
 
 public sealed record UploadScorecardCommand(MatchId MatchId, /* fields */)

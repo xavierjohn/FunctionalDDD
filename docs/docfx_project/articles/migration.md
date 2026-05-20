@@ -42,6 +42,8 @@ A package- and namespace-rename combined with a tightened public surface. Per-pa
 | `Trellis.AspSourceGenerator` package | Bundled in `Trellis.Asp.nupkg` | [Package map](#package-map-legacy--current) |
 | `Trellis.EntityFrameworkCore.Generator` package | Bundled in `Trellis.EntityFrameworkCore.nupkg` | [Package map](#package-map-legacy--current) |
 | `Trellis.Asp.Authorization` package | Folded into `Trellis.Asp.nupkg` (namespace unchanged) | [Package map](#package-map-legacy--current) |
+| Raw `string Actor.Id` + `string CreatedByActorId` audit fields | Typed `Actor.Id : ActorId` (`RequiredString<ActorId>` in `Trellis.Authorization`) + `ActorId CreatedByActorId` aggregate fields | [Typed `ActorId` audit fields](#typed-actorid-audit-fields-trellisauthorization) |
+| `services.AddApiVersioning().AddMvc(...)` with default `IActorProvider` | Optional `Maybe<Actor>` return from `IActorProvider.GetCurrentActorAsync` for anonymous-allowed endpoints | (see CHANGELOG `[3.0.0]` for the actor-provider breaking change) |
 | OpenTelemetry source `"Trellis.Results"` | `"Trellis.Core"` (`RopTrace.ActivitySourceName`) | [Observability](#observability) |
 | Analyzer IDs `TRLSGEN001`..`TRLSGEN103` | `TRLS031`..`TRLS038` | [Analyzer ID renames](#analyzer-id-renames) |
 
@@ -221,6 +223,19 @@ Two cross-cutting changes affect ASP consumers:
 - **`Trellis.Asp.Authorization` package was folded into `Trellis.Asp.nupkg`.** The actor providers (`ClaimsActorProvider`, `EntraActorProvider`, `DevelopmentActorProvider`, `CachingActorProvider`) and the `AddTrellisAspAuthorization()` extension are unchanged; the namespace stays `Trellis.Asp.Authorization`. Drop the standalone `PackageReference`. `Trellis.Asp` now transitively brings in `Trellis.Authorization`.
 
 Both rows are documented in [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) (the `WriteOutcome` move and the package-merge entries). The current ASP API surface lives in [`trellis-api-asp.md`](../api_reference/trellis-api-asp.md).
+
+## Typed ActorId audit fields (Trellis.Authorization)
+
+`Actor.Id` is now `ActorId` (a `RequiredString<ActorId>` value object in the `Trellis.Authorization` namespace) instead of raw `string`. Aggregates that persist a "who created this" audit reference (`CreatedByActorId`, `LastModifiedByActorId`, `ApprovedByActorId`, etc.) should retype the field from `string` to `ActorId` to keep the chain type-safe end to end. Migration steps:
+
+1. **Retype the audit field on the aggregate.** Change `public string CreatedByActorId { get; private set; }` to `public ActorId CreatedByActorId { get; private set; }`. Update the constructor / `TryCreate` to take `ActorId` and assign directly. The framework's `Actor` exposes `Id` as `ActorId`, so callers pass `actor.Id` through without conversion.
+2. **Update comparisons.** `actor.Id == "literal-id"` becomes `actor.Id == ActorId.Create("literal-id")` (or rely on `ScalarValueObject<,>`'s implicit `ActorId → string` conversion if you prefer keeping the literal). Owner checks like `order.CreatedByActorId == actor.Id` become typed-value-equality after both sides are `ActorId`.
+3. **No schema migration needed.** `ActorId`'s scalar converter stores as `TEXT` — the same column type the prior `string` mapping produced. Existing rows continue to round-trip; no `dotnet ef migrations add` step is required for this change alone.
+4. **EF Core convention discovery is automatic** as of `Trellis.EntityFrameworkCore` 3.0.0-alpha.294. `ApplyTrellisConventions(typeof(YourDomainId).Assembly)` now includes the `Trellis.Authorization` assembly in its default scan set, so the `ActorId` scalar converter registers without you having to pass `typeof(ActorId).Assembly` explicitly. (Earlier alpha builds required the explicit hand-in; see `CHANGELOG.md` `[Unreleased]` for that fix.)
+5. **JSON wire format is unchanged.** `ParsableJsonConverter<ActorId>` emits and accepts the raw string, so request/response shapes that previously carried `"createdByActorId": "alice"` continue to work as-is. No client-side change required.
+6. **Hash-code stability caveat.** `ActorId.GetHashCode()` flows through `ScalarValueObject<,>` rather than `StringComparer.Ordinal.GetHashCode(id)`, so the specific numeric hash differs from the previous `string`-backed value. The equality contract holds (`Equals(a, b) ⇒ a.GetHashCode() == b.GetHashCode()`), but tests that pinned exact hash code values (none in the framework) would need updating.
+
+The typed `ActorId` is also the canonical shape exposed by `IAuthorizeResource<T>` / `IAuthorizeResourceVia<T>` examples in `trellis-api-authorization.md` and Recipe 7 of `trellis-api-cookbook.md`. Aggregates that keep `string CreatedByActorId` still compile (`ActorId → string` implicit conversion exists), but lose the type-safety win that motivated PR #511.
 
 ## Mediator (Trellis.Mediator)
 

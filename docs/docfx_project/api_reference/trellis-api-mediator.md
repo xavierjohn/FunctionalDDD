@@ -583,7 +583,6 @@ var behaviorOrder = Trellis.Mediator.ServiceCollectionExtensions.PipelineBehavio
 Console.WriteLine(string.Join(", ", behaviorOrder.Select(type => type.Name)));
 
 public sealed partial class OrderId : RequiredGuid<OrderId>;
-public sealed partial class ActorId : RequiredString<ActorId>;
 
 public sealed record Order(OrderId Id, ActorId OwnerId);
 
@@ -597,7 +596,7 @@ public sealed record GetOrderQuery(OrderId Id)
     public IResult Validate() => Result.Ok();
 
     public IResult Authorize(Actor actor, Order resource) =>
-        resource.OwnerId.Value == actor.Id
+        resource.OwnerId == actor.Id
             ? Result.Ok()
             : Result.Fail(new Error.Forbidden("orders.read") { Detail = "Only the owner can view the order." });
 }
