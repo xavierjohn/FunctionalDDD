@@ -216,6 +216,23 @@ public sealed class WithVersionedRouteTests
     }
 
     [Fact]
+    public async Task WithLocation_after_CreatedAtRoute_clears_created_intent_and_returns_200_OK()
+    {
+        // Regression for a latent bug: WithLocation overwrites the location configuration but
+        // must also reset the Created flag the prior CreatedAtRoute call set. Otherwise the
+        // chain CreatedAtRoute(...).WithLocation(...) emits a stale 201 even though
+        // WithLocation is the state-transition primitive (200 OK + Location).
+        using var host = CreateSingleVersionHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync($"/customers/transition?api-version={ApiVersionV1}", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        resp.Headers.Location!.OriginalString.Should().Contain("/customers/42");
+        resp.Headers.Location.OriginalString.Should().Contain($"api-version={ApiVersionV1}");
+    }
+
+    [Fact]
     public async Task WithLocation_emits_versioned_Location_with_status_200_OK_not_201_Created()
     {
         // WithLocation is the state-transition primitive: it adds a Location header to point
@@ -262,6 +279,18 @@ public sealed class SingleVersionController : ControllerBase
         Result.Ok(new CreatedCustomer(42))
             .ToHttpResponse(opts => opts
                 .CreatedAtRoute("Customers_GetById", c => (object)c.Id)
+                .WithVersionedRoute())
+            .AsActionResult<CreatedCustomer>();
+
+    // Regression: a chain of `.CreatedAtRoute(...).WithLocation(...)` must produce a 200 OK,
+    // not a stale 201 from the prior CreatedAtRoute call. WithLocation takes ownership of the
+    // location configuration and clears the "this is a Created response" intent.
+    [HttpPost("transition")]
+    public ActionResult<CreatedCustomer> PostTransition() =>
+        Result.Ok(new CreatedCustomer(42))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute("Customers_GetById", c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithLocation("Customers_GetById", c => new RouteValueDictionary { ["id"] = c.Id })
                 .WithVersionedRoute())
             .AsActionResult<CreatedCustomer>();
 }

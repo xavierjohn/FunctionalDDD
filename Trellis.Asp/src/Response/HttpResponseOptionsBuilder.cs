@@ -241,6 +241,12 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         _locationKind = LocationKind.Route;
         _routeName = routeName;
         _routeValuesSelector = routeValues;
+        // WithLocation takes ownership of the location configuration: it's the
+        // state-transition primitive (2xx + Location), not a 201 Created. If a
+        // prior Created/CreatedAtRoute/CreatedAtAction call had marked this builder
+        // as Created, that intent is being replaced — clear the flag so the response
+        // ships with its natural status code rather than a stale 201.
+        _markAsCreated = false;
         return this;
     }
 
