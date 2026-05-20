@@ -12,16 +12,15 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /// <summary>
-/// Code fix for TRLS023: rewrites <c>CreatedAtRoute(routeName, routeValues)</c> to
-/// <c>CreatedAtVersionedRoute(routeName, routeValues)</c>. The latter is provided by
-/// the <c>Trellis.Asp.ApiVersioning</c> package and injects the api-version route value
-/// at request time.
+/// Code fix for TRLS023: chains <c>.WithVersionedRoute()</c> after the matched
+/// <c>CreatedAtRoute(...)</c> or <c>WithLocation(...)</c> call so that the framework
+/// injects the api-version into the generated Location header per-request.
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(CreatedAtRouteMissingApiVersionCodeFixProvider))]
 [Shared]
 public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Use CreatedAtVersionedRoute";
+    private const string Title = "Chain .WithVersionedRoute()";
 
     public override ImmutableArray<string> FixableDiagnosticIds =>
         ImmutableArray.Create(DiagnosticDescriptors.MissingApiVersionRouteValue.Id);
@@ -38,36 +37,46 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
         var invocation = node.FirstAncestorOrSelf<InvocationExpressionSyntax>();
         if (invocation is null) return;
         if (invocation.Expression is not MemberAccessExpressionSyntax mae) return;
-        if (mae.Name.Identifier.Text != "CreatedAtRoute") return;
+        var name = mae.Name.Identifier.Text;
+        if (name is not ("CreatedAtRoute" or "WithLocation")) return;
 
         context.RegisterCodeFix(
             CodeAction.Create(
                 title: Title,
-                createChangedDocument: c => RewriteAsync(context.Document, mae, c),
+                createChangedDocument: c => RewriteAsync(context.Document, invocation, c),
                 equivalenceKey: Title),
             diagnostic);
     }
 
     private static async Task<Document> RewriteAsync(
         Document document,
-        MemberAccessExpressionSyntax memberAccess,
+        InvocationExpressionSyntax invocation,
         CancellationToken cancellationToken)
     {
         var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
         if (root is null) return document;
 
-        // 1. Rename the member: CreatedAtRoute → CreatedAtVersionedRoute.
-        var newName = SyntaxFactory.IdentifierName("CreatedAtVersionedRoute")
-            .WithTriviaFrom(memberAccess.Name);
-        var newMemberAccess = memberAccess.WithName(newName);
-        var newRoot = root.ReplaceNode(memberAccess, newMemberAccess);
+        // Wrap the original invocation as the receiver of `.WithVersionedRoute()` — the chain
+        // becomes `<original>.WithVersionedRoute()`. Trailing trivia from the original is moved
+        // onto the new outer invocation so block-statement terminators (semicolons, closing
+        // parens) stay attached to the chain's tail.
+        var trailing = invocation.GetTrailingTrivia();
+        var receiver = invocation.WithTrailingTrivia(SyntaxFactory.TriviaList());
+        var chainedAccess = SyntaxFactory.MemberAccessExpression(
+            SyntaxKind.SimpleMemberAccessExpression,
+            receiver,
+            SyntaxFactory.IdentifierName("WithVersionedRoute"));
+        var chainedInvocation = SyntaxFactory.InvocationExpression(chainedAccess)
+            .WithTrailingTrivia(trailing);
 
-        // 2. Ensure `using Trellis.Asp.ApiVersioning;` is in scope. Without this the rewritten
-        //    extension call won't resolve and the code-fix produces uncompilable code. We don't
-        //    detect the package reference here (analyzers can't observe project metadata
-        //    reliably), so we always add the using if missing — if the package isn't referenced,
-        //    the user gets a clear "missing reference" build error pointing to the new namespace
-        //    rather than a confusing "method not found" error.
+        var newRoot = root.ReplaceNode(invocation, chainedInvocation);
+
+        // Ensure `using Trellis.Asp.ApiVersioning;` is in scope. Without this the rewritten
+        // extension call won't resolve and the code-fix produces uncompilable code. We don't
+        // detect the package reference here (analyzers can't observe project metadata
+        // reliably), so we always add the using if missing — if the package isn't referenced,
+        // the user gets a clear "missing reference" build error pointing to the new namespace
+        // rather than a confusing "method not found" error.
         if (newRoot is CompilationUnitSyntax cu && !HasUsing(cu, ApiVersioningNamespace))
         {
             cu = AddUsing(cu, ApiVersioningNamespace);
@@ -88,7 +97,6 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
     /// </summary>
     private static CompilationUnitSyntax AddUsing(CompilationUnitSyntax cu, string namespaceName)
     {
-        // Locate where existing usings live, so we add the new using to the same scope.
         var (fileScopedNs, blockScopedNs) = FindNamespaceWithUsings(cu);
 
         if (fileScopedNs is not null)
@@ -115,7 +123,6 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
             return cu.ReplaceNode(blockScopedNs, updated);
         }
 
-        // No namespace usings — fall back to top-level usings.
         var topTrailing = cu.Usings.Count > 0
             ? cu.Usings[cu.Usings.Count - 1].GetTrailingTrivia()
             : SyntaxFactory.TriviaList(SyntaxFactory.ElasticCarriageReturnLineFeed);
@@ -128,9 +135,6 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
     private static (FileScopedNamespaceDeclarationSyntax? FileScoped, NamespaceDeclarationSyntax? BlockScoped)
         FindNamespaceWithUsings(CompilationUnitSyntax cu)
     {
-        // Prefer a namespace that already declares usings (matches the existing scope). If none
-        // does, fall back to the first namespace declaration found (still keeps usings consistent
-        // with the file's namespace style).
         FileScopedNamespaceDeclarationSyntax? firstFileScoped = null;
         NamespaceDeclarationSyntax? firstBlockScoped = null;
 
@@ -151,8 +155,6 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
             }
         }
 
-        // No namespace had usings. If the file uses namespace declarations at all, prefer adding
-        // there (consistent style); otherwise the caller falls back to top-level.
         if (cu.Usings.Count > 0)
             return (null, null);
 
@@ -161,21 +163,12 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProvider : CodeFixProv
 
     private static bool HasUsing(CompilationUnitSyntax cu, string namespaceName)
     {
-        // Top-level usings (file-scoped or block-scoped) before any namespace declaration.
         foreach (var u in cu.Usings)
         {
             if (u.Name?.ToString() == namespaceName)
                 return true;
         }
 
-        // Usings inside namespace declarations. The repo convention is file-scoped namespaces
-        // with usings *inside* the namespace block:
-        //
-        //     namespace Trellis.Foo;
-        //     using Bar;
-        //
-        // so cu.Usings is often empty even when `using Trellis.Asp.ApiVersioning;` is already
-        // in scope. Walk both NamespaceDeclarationSyntax and FileScopedNamespaceDeclarationSyntax.
         foreach (var member in cu.Members)
         {
             var nsUsings = member switch

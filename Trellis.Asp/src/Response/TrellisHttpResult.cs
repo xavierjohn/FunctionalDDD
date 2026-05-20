@@ -46,7 +46,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     /// <summary>Hint for OpenAPI: the success status code expected on the success path.</summary>
     public int? StatusCode => s_isUnit
         ? StatusCodes.Status204NoContent
-        : _options.LocationKind != LocationKind.None
+        : _options.MarkAsCreated
             ? StatusCodes.Status201Created
             : StatusCodes.Status200OK;
 
@@ -153,14 +153,18 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             if (location is null)
             {
                 var error = new Error.InternalServerError(Guid.NewGuid().ToString("N"))
-                { Detail = "Could not generate Location URI for created resource." };
+                { Detail = "Could not generate Location URI for the response." };
 
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
             }
 
             ApplyCacheControlSelector(response, domain!);
             var body = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
-            return Results.Created(location, body).ExecuteAsync(httpContext);
+            if (_options.MarkAsCreated)
+                return Results.Created(location, body).ExecuteAsync(httpContext);
+
+            response.Headers.Location = location;
+            return Results.Ok(body).ExecuteAsync(httpContext);
         }
 
         ApplyCacheControlSelector(response, domain!);

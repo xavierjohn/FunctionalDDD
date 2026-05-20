@@ -29,6 +29,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     private string? _controllerName;
     private Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary>? _routeValuesSelector;
     private Dictionary<string, Func<Microsoft.AspNetCore.Http.HttpContext, string?>>? _routeValueResolvers;
+    private bool _markAsCreated;
 
     private bool _evaluatePreconditions;
     private bool _honorPrefer;
@@ -168,6 +169,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         ArgumentException.ThrowIfNullOrWhiteSpace(locationLiteral);
         _locationKind = LocationKind.Literal;
         _locationLiteral = locationLiteral;
+        _markAsCreated = true;
         return this;
     }
 
@@ -177,6 +179,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         ArgumentNullException.ThrowIfNull(selector);
         _locationKind = LocationKind.Selector;
         _locationSelector = selector;
+        _markAsCreated = true;
         return this;
     }
 
@@ -193,7 +196,70 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         _locationKind = LocationKind.Route;
         _routeName = routeName;
         _routeValuesSelector = routeValues;
+        _markAsCreated = true;
         return this;
+    }
+
+    /// <summary>
+    /// Convenience overload for the common single-id route shape (e.g. <c>{ ["id"] = order.Id.Value }</c>).
+    /// Constructs the <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> from the supplied
+    /// id selector and route key, then chains <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>.
+    /// </summary>
+    /// <param name="routeName">The route name.</param>
+    /// <param name="idSelector">A function that returns the id value for the new resource.</param>
+    /// <param name="idRouteKey">The route-value key for the id (defaults to <c>"id"</c>).</param>
+    public HttpResponseOptionsBuilder<TDomain> CreatedAtRoute(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id")
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
+        ArgumentNullException.ThrowIfNull(idSelector);
+        ArgumentException.ThrowIfNullOrWhiteSpace(idRouteKey);
+        return CreatedAtRoute(
+            routeName,
+            value => new Microsoft.AspNetCore.Routing.RouteValueDictionary { [idRouteKey] = idSelector(value) });
+    }
+
+    /// <summary>
+    /// Adds a <c>Location</c> header to the response (status code unchanged — typically 200 OK),
+    /// generated via <c>LinkGenerator.GetUriByName</c> at execute time. RFC 9110 §10.2.2 permits
+    /// <c>Location</c> on any 2xx response that identifies a related resource; use this on
+    /// state-transition endpoints that mutate an existing resource and want to point clients at
+    /// the canonical URL (e.g. <c>POST /orders/{id}/return</c> returning 200 OK).
+    /// </summary>
+    /// <param name="routeName">The route name.</param>
+    /// <param name="routeValues">A function that returns a <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> for the resource being located.</param>
+    /// <remarks>
+    /// Unlike <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>,
+    /// this does <b>not</b> set the status code to 201 Created — the pipeline's default
+    /// (200 OK, or whatever <see cref="WriteOutcome{T}"/> drives) is preserved. To round-trip
+    /// the requested <c>api-version</c> through the generated <c>Location</c>, chain
+    /// <c>WithVersionedRoute()</c> from <c>Trellis.Asp.ApiVersioning</c>.
+    /// </remarks>
+    public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
+        ArgumentNullException.ThrowIfNull(routeValues);
+        _locationKind = LocationKind.Route;
+        _routeName = routeName;
+        _routeValuesSelector = routeValues;
+        return this;
+    }
+
+    /// <summary>
+    /// Convenience overload for the common single-id route shape. Constructs the
+    /// <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> from the supplied id selector
+    /// and route key, then chains <see cref="WithLocation(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>.
+    /// </summary>
+    /// <param name="routeName">The route name.</param>
+    /// <param name="idSelector">A function that returns the id value for the resource being located.</param>
+    /// <param name="idRouteKey">The route-value key for the id (defaults to <c>"id"</c>).</param>
+    public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id")
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
+        ArgumentNullException.ThrowIfNull(idSelector);
+        ArgumentException.ThrowIfNullOrWhiteSpace(idRouteKey);
+        return WithLocation(
+            routeName,
+            value => new Microsoft.AspNetCore.Routing.RouteValueDictionary { [idRouteKey] = idSelector(value) });
     }
 
     /// <summary>
@@ -205,7 +271,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     /// <param name="controllerName">Optional controller name (defaults to the current controller).</param>
     /// <remarks>
     /// This method is not trim-safe / AOT-safe because MVC's <c>ControllerLinkGeneratorExtensions</c>
-    /// is not annotated. Use <see cref="CreatedAtRoute"/> with a named route instead for AOT scenarios.
+    /// is not annotated. Use <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/> with a named route instead for AOT scenarios.
     /// </remarks>
     [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("CreatedAtAction relies on MVC's ControllerLinkGeneratorExtensions which is not trim-safe. Use CreatedAtRoute with a named route for AOT/trim scenarios.")]
     [System.Diagnostics.CodeAnalysis.RequiresDynamicCode("CreatedAtAction relies on MVC's ControllerLinkGeneratorExtensions which is not AOT-safe. Use CreatedAtRoute with a named route for AOT scenarios.")]
@@ -217,13 +283,14 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         _actionName = actionName;
         _controllerName = controllerName;
         _routeValuesSelector = routeValues;
+        _markAsCreated = true;
         return this;
     }
 
     /// <summary>
     /// Registers a per-request resolver that injects (or overrides) a single route-value entry
     /// at <c>Location</c>-header generation time. Invoked AFTER the
-    /// <see cref="CreatedAtRoute"/> / <see cref="CreatedAtAction"/> route-values selector runs;
+    /// <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/> / <see cref="CreatedAtAction"/> route-values selector runs;
     /// if the resolver returns non-null, the value is set under <paramref name="key"/> in the
     /// resulting <see cref="Microsoft.AspNetCore.Routing.RouteValueDictionary"/> (overriding any
     /// existing entry under the same key). If the resolver returns null, the entry is left
@@ -235,7 +302,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     /// Designed for cross-cutting per-request concerns such as API versioning (a Location header
     /// that round-trips the requested version), tenant id, or culture. Multiple resolvers can be
     /// registered with distinct keys; calling this method again with the same key replaces the
-    /// previous resolver. Useful only with <see cref="CreatedAtRoute"/> /
+    /// previous resolver. Useful only with <see cref="CreatedAtRoute(string, Func{TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/> /
     /// <see cref="CreatedAtAction"/>; ignored by literal/selector Location modes.
     /// </remarks>
     public HttpResponseOptionsBuilder<TDomain> WithRouteValueResolver(
@@ -322,6 +389,7 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         ControllerName = _controllerName,
         RouteValuesSelector = _routeValuesSelector,
         RouteValueResolvers = _routeValueResolvers,
+        MarkAsCreated = _markAsCreated,
         EvaluatePreconditions = _evaluatePreconditions,
         HonorPrefer = _honorPrefer,
         RangeSelector = _rangeSelector,
@@ -353,6 +421,7 @@ internal sealed class HttpResponseOptions<TDomain>
     public string? ControllerName { get; init; }
     public Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary>? RouteValuesSelector { get; init; }
     public IReadOnlyDictionary<string, Func<Microsoft.AspNetCore.Http.HttpContext, string?>>? RouteValueResolvers { get; init; }
+    public bool MarkAsCreated { get; init; }
 
     public bool EvaluatePreconditions { get; init; }
     public bool HonorPrefer { get; init; }

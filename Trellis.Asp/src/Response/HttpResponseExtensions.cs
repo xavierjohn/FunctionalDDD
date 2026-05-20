@@ -54,7 +54,7 @@ public static class HttpResponseExtensions
     /// Maps a <see cref="Result{TValue}"/> to a 200 OK (success, body = <typeparamref name="T"/>) or
     /// Problem Details (failure). When configured via
     /// <see cref="HttpResponseOptionsBuilder{T}.Created(string)"/> or
-    /// <see cref="HttpResponseOptionsBuilder{T}.CreatedAtRoute"/>, returns 201 Created with a
+    /// <see cref="HttpResponseOptionsBuilder{T}.CreatedAtRoute(string, Func{T, Microsoft.AspNetCore.Routing.RouteValueDictionary})"/>, returns 201 Created with a
     /// Location header.
     /// </summary>
     public static Microsoft.AspNetCore.Http.IResult ToHttpResponse<T>(

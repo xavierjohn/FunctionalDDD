@@ -10,8 +10,10 @@ using Trellis.Asp;
 
 /// <summary>
 /// API-versioning extensions on <see cref="HttpResponseOptionsBuilder{TDomain}"/> that auto-inject
-/// the <c>api-version</c> route value into <c>Location</c> headers so 201 Created responses
-/// round-trip the requested version under query/header API versioning.
+/// the <c>api-version</c> route value into <c>Location</c> headers so responses round-trip the
+/// requested version under query/header API versioning. Chain after any builder method that
+/// generates a <c>Location</c> header — <c>CreatedAtRoute(...)</c>, <c>WithLocation(...)</c>,
+/// etc.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -40,89 +42,50 @@ using Trellis.Asp;
 public static class HttpResponseOptionsBuilderApiVersioningExtensions
 {
     /// <summary>
-    /// Returns 201 Created with a <c>Location</c> header generated via <c>LinkGenerator.GetUriByName</c>,
-    /// with the configured <c>api-version</c> route value injected per-request.
+    /// Injects the configured <c>api-version</c> route value into the <c>Location</c> header
+    /// emitted by a preceding <see cref="HttpResponseOptionsBuilder{TDomain}.CreatedAtRoute(string, Func{TDomain, RouteValueDictionary})"/>
+    /// or <see cref="HttpResponseOptionsBuilder{TDomain}.WithLocation(string, Func{TDomain, RouteValueDictionary})"/>
+    /// call. The version is resolved per-request from <see cref="HttpContext"/>.
     /// </summary>
     /// <typeparam name="TDomain">The domain value type from <c>Result&lt;TDomain&gt;</c>.</typeparam>
     /// <param name="builder">The builder to configure.</param>
-    /// <param name="routeName">The named route to resolve (typically the <c>[HttpGet("...", Name = "...")]</c> name on the GetById action).</param>
-    /// <param name="routeValues">A function that returns a <see cref="RouteValueDictionary"/> for the new resource. The <c>api-version</c> entry is injected automatically — do not add it manually.</param>
     /// <remarks>
     /// See the type-level remarks on <see cref="HttpResponseOptionsBuilderApiVersioningExtensions"/>
     /// for the version-resolution order and skip rules. The route-value key is fixed at
     /// <c>"api-version"</c> — matches Asp.Versioning's defaults.
     /// </remarks>
-    public static HttpResponseOptionsBuilder<TDomain> CreatedAtVersionedRoute<TDomain>(
-        this HttpResponseOptionsBuilder<TDomain> builder,
-        string routeName,
-        Func<TDomain, RouteValueDictionary> routeValues)
+    public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
+        this HttpResponseOptionsBuilder<TDomain> builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
-        ArgumentNullException.ThrowIfNull(routeValues);
 
         // Resolution happens per-request from HttpContext (inside the resolver delegate);
         // only the route-value key is fixed at registration time. The key is the constant
         // `DefaultRouteValueKey` ("api-version") — no IOptions lookup is involved for the key.
-        return builder
-            .CreatedAtRoute(routeName, routeValues)
-            .WithRouteValueResolver(
-                DefaultRouteValueKey,
-                ResolveApiVersion);
+        return builder.WithRouteValueResolver(
+            DefaultRouteValueKey,
+            ResolveApiVersion);
     }
 
     /// <summary>
-    /// Convenience overload for the common single-id route (e.g., <c>{ ["id"] = order.Id.Value }</c>) —
-    /// constructs the <see cref="RouteValueDictionary"/> from the supplied id selector and route key,
-    /// then chains <see cref="CreatedAtVersionedRoute{TDomain}(HttpResponseOptionsBuilder{TDomain}, string, Func{TDomain, RouteValueDictionary})"/>.
+    /// Escape hatch: pin the <c>Location</c> header to a specific <see cref="ApiVersion"/>
+    /// regardless of what the client requested. Use for cross-version <c>Location</c> redirects
+    /// on deprecated endpoints.
     /// </summary>
     /// <typeparam name="TDomain">The domain value type from <c>Result&lt;TDomain&gt;</c>.</typeparam>
     /// <param name="builder">The builder to configure.</param>
-    /// <param name="routeName">The named route to resolve.</param>
-    /// <param name="idSelector">A function that returns the id value for the new resource.</param>
-    /// <param name="idRouteKey">The route-value key for the id (defaults to <c>"id"</c>).</param>
-    public static HttpResponseOptionsBuilder<TDomain> CreatedAtVersionedRoute<TDomain>(
-        this HttpResponseOptionsBuilder<TDomain> builder,
-        string routeName,
-        Func<TDomain, object> idSelector,
-        string idRouteKey = "id")
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
-        ArgumentNullException.ThrowIfNull(idSelector);
-        ArgumentException.ThrowIfNullOrWhiteSpace(idRouteKey);
-
-        return builder.CreatedAtVersionedRoute(
-            routeName,
-            value => new RouteValueDictionary { [idRouteKey] = idSelector(value) });
-    }
-
-    /// <summary>
-    /// Escape hatch: pin the <c>Location</c> header to a specific <see cref="ApiVersion"/> regardless
-    /// of what the client requested. Use for cross-version Location redirects on deprecated endpoints.
-    /// </summary>
-    /// <typeparam name="TDomain">The domain value type from <c>Result&lt;TDomain&gt;</c>.</typeparam>
-    /// <param name="builder">The builder to configure.</param>
-    /// <param name="routeName">The named route to resolve.</param>
-    /// <param name="routeValues">A function that returns a <see cref="RouteValueDictionary"/> for the new resource.</param>
     /// <param name="explicitVersion">The version to inject, regardless of client request or endpoint metadata.</param>
-    public static HttpResponseOptionsBuilder<TDomain> CreatedAtVersionedRoute<TDomain>(
+    public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
         this HttpResponseOptionsBuilder<TDomain> builder,
-        string routeName,
-        Func<TDomain, RouteValueDictionary> routeValues,
         ApiVersion explicitVersion)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(routeName);
-        ArgumentNullException.ThrowIfNull(routeValues);
         ArgumentNullException.ThrowIfNull(explicitVersion);
 
         var pinnedValue = explicitVersion.ToString();
-        return builder
-            .CreatedAtRoute(routeName, routeValues)
-            .WithRouteValueResolver(
-                DefaultRouteValueKey,
-                _ => pinnedValue);
+        return builder.WithRouteValueResolver(
+            DefaultRouteValueKey,
+            _ => pinnedValue);
     }
 
     /// <summary>
@@ -171,7 +134,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
             "Cannot determine the api-version for the Location header: the request did not specify a " +
             "version, the endpoint declares more than one (or none), and no DefaultApiVersion is configured. " +
             "Either configure ApiVersioningOptions.DefaultApiVersion or use the explicit-version " +
-            "CreatedAtVersionedRoute(routeName, routeValues, explicitVersion) overload.");
+            "WithVersionedRoute(explicitVersion) overload.");
     }
 
     private static bool RouteTemplateContainsVersionToken(Microsoft.AspNetCore.Http.Endpoint? endpoint)

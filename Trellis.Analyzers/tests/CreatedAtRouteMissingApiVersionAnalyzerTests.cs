@@ -72,7 +72,8 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
         var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
-                .WithLocation(18, 9));
+                .WithLocation(18, 9)
+                .WithArguments("CreatedAtRoute"));
         test.TestState.Sources.Add(("Stubs.cs", StubSource));
 
         await test.RunAsync();
@@ -284,7 +285,8 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
         var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
             source,
             AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
-                .WithLocation(18, 9));
+                .WithLocation(18, 9)
+                .WithArguments("CreatedAtRoute"));
         test.TestState.Sources.Add(("Stubs.cs", StubSource));
 
         // The stubs declare RouteValueDictionary as inheriting from Dictionary<string,object>,
