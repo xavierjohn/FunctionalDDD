@@ -81,10 +81,11 @@ public sealed partial class Customer : Aggregate<CustomerId>
         ShippingAddress = shipping;
     }
 
-    public static Result<Customer> Create(CustomerId id, string name, ShippingAddress shipping) =>
-        string.IsNullOrWhiteSpace(name)
-            ? Result.Fail<Customer>(Error.UnprocessableContent.ForField("name", "required", "Name is required."))
-            : Result.Ok(new Customer(id, name, shipping));
+    public static Result<Customer> TryCreate(CustomerId? id, string? name, ShippingAddress? shipping) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Customer id is required."))
+            .Combine(name.EnsureNotNullOrWhiteSpace(Error.UnprocessableContent.ForField("name", "required", "Name is required.")))
+            .Combine(shipping.ToResult(Error.UnprocessableContent.ForField("shipping", "validation.error", "Shipping address is required.")))
+            .Map((id, name, shipping) => new Customer(id, name, shipping));
 }
 
 // CONFIGURATION — note the absence of OwnsOne(c => c.ShippingAddress).

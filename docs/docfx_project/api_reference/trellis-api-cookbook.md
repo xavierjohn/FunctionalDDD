@@ -228,18 +228,19 @@ using Trellis.FluentValidation;
 using Trellis.Mediator;
 using Trellis.Primitives;
 
-public sealed record PlaceOrderRequest(Guid OrderId, decimal Amount, string Currency);
+public sealed record PlaceOrderRequest(Guid OrderId, decimal Amount, string Currency, string OwnerId);
 
-public sealed record PlaceOrderCommand(OrderId OrderId, Money Total)
+public sealed record PlaceOrderCommand(OrderId OrderId, Money Total, ActorId OwnerId)
     : ICommand<Result<OrderId>>
 {
     public static Result<PlaceOrderCommand> TryCreate(PlaceOrderRequest request) =>
         Result.Combine(
                 OrderId.TryCreate(request.OrderId, nameof(request.OrderId)),
                 MonetaryAmount.TryCreate(request.Amount, nameof(request.Amount)),
-                CurrencyCode.TryCreate(request.Currency, nameof(request.Currency)))
-            .Map((orderId, amount, currency) =>
-                new PlaceOrderCommand(orderId, Money.Create(amount.Value, currency.Value)));
+                CurrencyCode.TryCreate(request.Currency, nameof(request.Currency)),
+                ActorId.TryCreate(request.OwnerId, nameof(request.OwnerId)))
+            .Map((orderId, amount, currency, ownerId) =>
+                new PlaceOrderCommand(orderId, new Money(amount.Value, currency), ownerId));
 }
 
 public sealed class PlaceOrderValidator : AbstractValidator<PlaceOrderCommand>
@@ -256,7 +257,7 @@ public sealed class PlaceOrderHandler(IOrderRepository repo)
     : ICommandHandler<PlaceOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(PlaceOrderCommand cmd, CancellationToken cancellationToken) =>
-        Order.Create(cmd.OrderId, cmd.Total)
+        Order.TryCreate(cmd.OrderId, cmd.Total, cmd.OwnerId)
             .Tap(repo.Add)
             .Map(o => o.Id)
             .AsValueTask();
@@ -887,10 +888,11 @@ public sealed partial class Customer : Aggregate<CustomerId>
         Name = name; ShippingAddress = shipping;
     }
 
-    public static Result<Customer> Create(CustomerId id, string name, ShippingAddress shipping) =>
-        string.IsNullOrWhiteSpace(name)
-            ? Result.Fail<Customer>(Error.UnprocessableContent.ForField("name", "required", "Name is required."))
-            : Result.Ok(new Customer(id, name, shipping));
+    public static Result<Customer> TryCreate(CustomerId? id, string? name, ShippingAddress? shipping) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Customer id is required."))
+            .Combine(name.EnsureNotNullOrWhiteSpace(Error.UnprocessableContent.ForField("name", "required", "Name is required.")))
+            .Combine(shipping.ToResult(Error.UnprocessableContent.ForField("shipping", "validation.error", "Shipping address is required.")))
+            .Map((id, name, shipping) => new Customer(id, name, shipping));
 }
 
 // CONFIGURATION — note the absence of OwnsOne(c => c.ShippingAddress).
@@ -1218,7 +1220,7 @@ public sealed class CreateOrderHandler(IOrderRepository repo)
     : ICommandHandler<CreateOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(CreateOrderCommand cmd, CancellationToken ct) =>
-        Order.Create(cmd.Total)
+        Order.TryCreate(cmd.Total)
             .Tap(repo.Add)                  // stages — no save here
             .Map(o => o.Id)
             .AsValueTask();                 // handler returns immediately
@@ -1243,7 +1245,7 @@ public sealed class CreateOrderHandler(IOrderRepository repo)
 //   ETag bumps, audit logs) end up in inconsistent states. Also: you've now committed even
 //   if a later behavior in the pipeline fails post-handler.
 public ValueTask<Result<OrderId>> Handle(CreateOrderCommand cmd, CancellationToken ct) =>
-    Order.Create(cmd.Total)
+    Order.TryCreate(cmd.Total)
         .Tap(repo.Add)
         .TapAsync(_ => dbContext.SaveChangesAsync(ct));   // ❌ — duplicates UoW, racy
 
@@ -1260,12 +1262,12 @@ public ValueTask<Result<OrderId>> Handle(CreateOrderCommand cmd, CancellationTok
 ```csharp
 // ✅ Setup: void Add — no .GetAwaiter().GetResult(), no Result assertion in setup.
 var customers = new FakeRepository<Customer, CustomerId>();
-customers.Add(Customer.Create(/* ... */));   // matches the handler's surface exactly
+customers.Add(MakeAlice());   // helper builds a valid Customer via Customer.TryCreate(...)
 
 // ✅ Conflict-result test: SaveAsync returns the Error.Conflict so the test can assert.
 var customers = new FakeRepository<Customer, CustomerId>().WithUniqueConstraint(c => c.Email);
-customers.Add(Customer.Create("alice@x.com"));
-var result = await customers.SaveAsync(Customer.Create("alice@x.com"));   // intentional conflict
+customers.Add(MakeAlice());                                          // first alice — accepted
+var result = await customers.SaveAsync(MakeAlice());                 // intentional conflict
 result.UnwrapError().Should().BeOfType<Error.Conflict>();
 ```
 
@@ -1663,14 +1665,23 @@ public sealed class ReturnOrderHandler(
         if (missing.Length > 1)
             return Result.Fail<Order>(new Error.Aggregate(missing.Select(NotFoundFor).ToArray()));
 
-        // All related aggregates reachable. Safe to apply side effects.
+        // All related aggregates reachable. Preflight the per-aggregate domain
+        // invariants (Recipe 25: pure CanReleaseStock predicate paired with the
+        // mutating ReleaseStock) before any mutation. Releasing stock on Product
+        // A and then failing on Product B's release would leave A in a partially-
+        // released state that TransactionalCommandBehavior cannot roll back from
+        // the in-memory aggregate graph within the same request.
+        var preflight = order.LineItems
+            .Select(li => byId[li.ProductId].CanReleaseStock(li.Quantity))
+            .SequenceAll();
+        if (preflight.IsFailure)
+            return Result.Fail<Order>(preflight.Error);
+
+        // Pass 1 succeeded for every line item — every Pass 2 mutation below has
+        // a matching Can* predicate that just returned Ok, so the mutation is
+        // provably non-failing. Discard() marks the Result as consciously dropped.
         foreach (var li in order.LineItems)
-        {
-            var product = byId[li.ProductId];
-            var release = product.ReleaseStock(li.Quantity);
-            if (release.Error is { } err)
-                return Result.Fail<Order>(err);
-        }
+            byId[li.ProductId].ReleaseStock(li.Quantity).Discard();
 
         return order.Return(command.Reason, timeProvider.GetUtcNow()).Map(_ => order);
     }

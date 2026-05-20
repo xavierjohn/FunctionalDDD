@@ -40,8 +40,10 @@ public sealed class Order : Aggregate<OrderId>
 
     private Order(OrderId id) : base(id) { }
 
-    public static Result<Order> Create(OrderId id, Money total) =>
-        Result.Ok(new Order(id) { Total = total });
+    public static Result<Order> TryCreate(OrderId? id, Money? total) =>
+        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Order id is required."))
+            .Combine(total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required.")))
+            .Map((id, total) => new Order(id) { Total = total });
 
     public Result<Order> Submit(TimeProvider clock)
     {

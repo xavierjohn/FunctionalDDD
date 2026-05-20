@@ -92,7 +92,7 @@ public sealed class CreateDraftOrderHandler(
             .WhenAllAsync()
             //  ↑ awaits Task.WhenAll, folds the two Result<T> into Result<(Customer, Product)>
             //    via Result.Combine.
-            .BindAsync(t => DraftOrder.CreateDraft(t.Item1, t.Item2, command.Quantity))
+            .BindAsync((customer, product) => DraftOrder.CreateDraft(customer, product, command.Quantity))
             .TapAsync(orders.Add)
             .MapAsync(o => o.Id));
 }

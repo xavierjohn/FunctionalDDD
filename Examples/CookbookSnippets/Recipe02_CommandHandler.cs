@@ -32,10 +32,11 @@ public sealed class PlaceOrderHandler(IOrderRepository repo)
     : ICommandHandler<PlaceOrderCommand, Result<OrderId>>
 {
     public ValueTask<Result<OrderId>> Handle(PlaceOrderCommand command, CancellationToken cancellationToken) =>
-        new(OrderId.TryCreate(command.OrderId)
-            .BindZip(id => CurrencyCode.TryCreate(command.Currency).Map(c => new Money(command.Amount, c)))
-            .BindZip(_ => ActorId.TryCreate(command.OwnerId))
-            .Bind(t => Order.TryCreate(t.Item1.Item1, t.Item1.Item2, t.Item2))
+        new(Result.Combine(
+                OrderId.TryCreate(command.OrderId),
+                CurrencyCode.TryCreate(command.Currency).Map(c => new Money(command.Amount, c)),
+                ActorId.TryCreate(command.OwnerId))
+            .Bind((id, money, ownerId) => Order.TryCreate(id, money, ownerId))
             .Tap(repo.Add)
             .Map(o => o.Id));
 }
