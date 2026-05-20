@@ -233,9 +233,12 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     /// natural 2xx status code. This applies on the <c>Result&lt;T&gt;</c> execution path
     /// (<c>ToHttpResponse</c>). On <c>Result&lt;WriteOutcome&lt;T&gt;&gt;</c>, the builder still
     /// applies for other options, but <c>WithLocation</c> itself has no effect on the outcome's
-    /// Location handling. To round-trip the requested <c>api-version</c> through the generated
-    /// <c>Location</c>, chain <c>WithVersionedRoute()</c> from
-    /// <c>Trellis.Asp.ApiVersioning</c>.
+    /// Location handling — that path reads <c>WriteOutcome.Created.Location</c> /
+    /// <c>WriteOutcome.AcceptedNoContent.MonitorUri</c> directly. On the <c>Result&lt;T&gt;</c>
+    /// path, to round-trip the requested <c>api-version</c> through the generated <c>Location</c>,
+    /// chain <c>WithVersionedRoute()</c> from <c>Trellis.Asp.ApiVersioning</c>; on the
+    /// <c>Result&lt;WriteOutcome&lt;T&gt;&gt;</c> path, the version must instead be present in the
+    /// URL the outcome itself carries.
     /// </remarks>
     public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, Microsoft.AspNetCore.Routing.RouteValueDictionary> routeValues)
     {
