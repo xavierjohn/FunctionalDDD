@@ -49,8 +49,8 @@ public sealed class Order : Aggregate<OrderId>
 
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 
-    public static Result<Order> Create(OrderId id, Money total) =>
-        Result.Ok(new Order(id) { Total = total, Status = OrderStatus.Draft });
+    public static Result<Order> Create(OrderId id, Money total, ActorId ownerId) =>
+        Result.Ok(new Order(id) { Total = total, Status = OrderStatus.Draft, OwnerId = ownerId });
 
     // Exercises the protected `DomainEvents` member inherited from Aggregate<TId>.
     // Compile-verifies the cookbook's Recipe 1 inherited-members callout claim

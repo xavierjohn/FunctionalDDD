@@ -1008,13 +1008,10 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         {
             li.ToTable("LineItems");
             li.HasKey(x => x.Id);
-            // Inner composite VO properties (e.g., LineItem.UnitPrice : Money) inside a
-            // private-backing-field OwnsMany navigation are NOT discovered by
-            // CompositeValueObjectConvention — the convention only descends into owned
-            // navigations expressed as public property expressions (OwnsMany(x => x.Items)).
-            // For the canonical DDD shape above (backing field hidden behind a read-only
-            // facade), you must call li.OwnsOne(x => x.UnitPrice) explicitly here.
-            li.OwnsOne(x => x.UnitPrice);
+            // Inner composite VO properties (e.g., LineItem.UnitPrice : Money) are
+            // discovered by EF Core's NavigationDiscoveryConvention because
+            // CompositeValueObjectConvention registers each composite VO type as Owned
+            // globally at model initialization — no extra OwnsOne needed here.
         });
     }
 }

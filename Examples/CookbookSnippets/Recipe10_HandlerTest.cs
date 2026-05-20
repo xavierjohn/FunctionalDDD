@@ -21,7 +21,7 @@ public class PlaceOrderHandlerTests
         var sut = new PlaceOrderHandler(repo);
 
         var result = await sut.Handle(
-            new PlaceOrderCommand(Guid.NewGuid(), 100m, "USD"),
+            new PlaceOrderCommand(Guid.NewGuid(), 100m, "USD", "alice"),
             CancellationToken.None);
 
         result.Should().BeSuccess();
@@ -34,7 +34,7 @@ public class PlaceOrderHandlerTests
         var sut = new PlaceOrderHandler(new InMemoryOrderRepository());
 
         var result = await sut.Handle(
-            new PlaceOrderCommand(Guid.NewGuid(), 100m, "US"),
+            new PlaceOrderCommand(Guid.NewGuid(), 100m, "US", "alice"),
             CancellationToken.None);
 
         var error = result.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
