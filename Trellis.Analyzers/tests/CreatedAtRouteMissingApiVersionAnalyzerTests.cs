@@ -43,6 +43,9 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
             public sealed class HttpResponseOptionsBuilder<TDomain>
             {
                 public HttpResponseOptionsBuilder<TDomain> CreatedAtRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues) => this;
+                public HttpResponseOptionsBuilder<TDomain> CreatedAtRoute(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id") => this;
+                public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, RouteValueDictionary> routeValues) => this;
+                public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, object> idSelector, string idRouteKey = "id") => this;
             }
         }
         """;
@@ -463,6 +466,156 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
             """;
 
         var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task WithLocation_on_versioned_controller_without_api_version_key_produces_warning()
+    {
+        // WithLocation (200 OK + Location) is subject to the same versioning trap as
+        // CreatedAtRoute (201 + Location): under query/header API versioning the generated
+        // Location must carry api-version or it 404s on dereference.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.WithLocation(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id });
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(18, 9)
+                .WithArguments("WithLocation"));
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task WithLocation_chained_with_WithVersionedRoute_produces_no_warning()
+    {
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+            using Trellis.Asp.ApiVersioning;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.WithLocation(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id })
+                        .WithVersionedRoute();
+                }
+            }
+            """;
+
+        const string apiVersioningStub = """
+            namespace Trellis.Asp.ApiVersioning
+            {
+                using Trellis.Asp;
+
+                public static class HttpResponseOptionsBuilderApiVersioningExtensions
+                {
+                    public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
+                        this HttpResponseOptionsBuilder<TDomain> builder) => builder;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+        test.TestState.Sources.Add(("ApiVersioningStub.cs", apiVersioningStub));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task WithLocation_single_id_overload_without_WithVersionedRoute_produces_warning()
+    {
+        // The single-id overload constructs a one-entry dictionary internally with the supplied
+        // route key (default "id") and no api-version. Without .WithVersionedRoute() the
+        // generated Location is missing the version.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.WithLocation("Customers_GetById", c => (object)c.Id);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(18, 9)
+                .WithArguments("WithLocation"));
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task Single_id_overload_with_method_group_selector_still_produces_warning()
+    {
+        // Regression: a method-group / delegate-variable selector on the 3-arg single-id
+        // overload is not a LambdaExpressionSyntax, so the previous ClassifyRouteValuesShape
+        // would classify it as Unrecognized and silently miss the diagnostic. The shape
+        // classifier now routes non-lambda arguments to SingleIdSelector when the method
+        // symbol identifies the single-id overload.
+        const string source = """
+            using System;
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                private static object GetId(Customer c) => c.Id;
+
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute("Customers_GetById", GetId);
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(21, 9)
+                .WithArguments("CreatedAtRoute"));
         test.TestState.Sources.Add(("Stubs.cs", StubSource));
 
         await test.RunAsync();

@@ -37,6 +37,7 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProviderTests
             public sealed class HttpResponseOptionsBuilder<TDomain>
             {
                 public HttpResponseOptionsBuilder<TDomain> CreatedAtRoute(string routeName, Func<TDomain, RouteValueDictionary> routeValues) => this;
+                public HttpResponseOptionsBuilder<TDomain> WithLocation(string routeName, Func<TDomain, RouteValueDictionary> routeValues) => this;
             }
         }
 
@@ -109,6 +110,67 @@ public sealed class CreatedAtRouteMissingApiVersionCodeFixProviderTests
             new DiagnosticResult(DiagnosticDescriptors.MissingApiVersionRouteValue)
                 .WithLocation(12, 9)
                 .WithArguments("CreatedAtRoute"));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task Fix_chains_WithVersionedRoute_after_WithLocation()
+    {
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.WithLocation(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id });
+                }
+            }
+            """;
+
+        const string fixedSource = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+            using Trellis.Asp.ApiVersioning;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.WithLocation(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id }).WithVersionedRoute();
+                }
+            }
+            """;
+
+        var test = new CSharpCodeFixTest<
+            CreatedAtRouteMissingApiVersionAnalyzer,
+            CreatedAtRouteMissingApiVersionCodeFixProvider,
+            DefaultVerifier>
+        {
+            TestCode = source,
+            FixedCode = fixedSource,
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80,
+        };
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+        test.FixedState.Sources.Add(("Stubs.cs", StubSource));
+        test.ExpectedDiagnostics.Add(
+            new DiagnosticResult(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(12, 9)
+                .WithArguments("WithLocation"));
 
         await test.RunAsync();
     }

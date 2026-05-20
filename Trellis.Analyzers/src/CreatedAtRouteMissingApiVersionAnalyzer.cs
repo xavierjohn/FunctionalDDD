@@ -235,11 +235,16 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         //
         // The single-id overload `CreatedAtRoute(name, idSelector, idRouteKey = "id")` /
         // `WithLocation(name, idSelector, idRouteKey = "id")` passes a `Func<T, object>` in arg 1;
-        // when we detect that overload via the method symbol (3-parameter form), any non-dictionary
-        // lambda body is treated as SingleIdSelector. For the 2-arg dict overload, a non-literal
+        // when we detect that overload via the method symbol (3-parameter form), the api-version
+        // is necessarily missing unless `.WithVersionedRoute()` is chained — even for non-lambda
+        // selectors (method group, delegate variable). For the 2-arg dict overload, a non-literal
         // lambda body is Unrecognized (computed dictionary — we can't tell what's inside).
         if (arg.Expression is not LambdaExpressionSyntax lambda)
-            return new RouteValuesShape(RouteValuesShapeKind.Unrecognized, null);
+        {
+            return isSingleIdOverload
+                ? new RouteValuesShape(RouteValuesShapeKind.SingleIdSelector, null)
+                : new RouteValuesShape(RouteValuesShapeKind.Unrecognized, null);
+        }
 
         ExpressionSyntax? bodyExpr = lambda.Body switch
         {

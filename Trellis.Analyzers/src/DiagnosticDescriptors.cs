@@ -330,7 +330,7 @@ public static class DiagnosticDescriptors
     /// </summary>
     public static readonly DiagnosticDescriptor MissingApiVersionRouteValue = new(
         id: TrellisDiagnosticIds.MissingApiVersionRouteValue,
-        title: "CreatedAtRoute is missing the api-version route value",
+        title: "CreatedAtRoute or WithLocation is missing the api-version route value",
         messageFormat: "'{0}' on a versioned controller is not followed by '.WithVersionedRoute()' and does not include the 'api-version' route value. The resulting Location header will 404 on dereference under query/header API versioning. Chain '.WithVersionedRoute()' from 'Trellis.Asp.ApiVersioning' so the version is injected per-request.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
