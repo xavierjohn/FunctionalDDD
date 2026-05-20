@@ -336,7 +336,7 @@ public sealed record CancelOrderCommand(OrderId OrderId)
 
     public IResult Authorize(Actor actor, Order order) =>
         Result.Ensure(
-            order.OwnerId.Value == actor.Id || actor.HasPermission(Permissions.OrdersCancelAny),
+            order.OwnerId == actor.Id || actor.HasPermission(Permissions.OrdersCancelAny),
             new Error.Forbidden("orders.cancel")
                 { Detail = "Only the owner can cancel this order." });
 }
