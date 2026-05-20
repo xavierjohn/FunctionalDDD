@@ -48,6 +48,104 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzerTests
         """;
 
     [Fact]
+    public async Task CreatedAtRoute_chained_with_Trellis_WithVersionedRoute_produces_no_warning()
+    {
+        // The fluent chain CreatedAtRoute(...).WithVersionedRoute() means the api-version is
+        // injected by the framework per-request — the literal dictionary doesn't need the key.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+            using Trellis.Asp.ApiVersioning;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id })
+                        .WithVersionedRoute();
+                }
+            }
+            """;
+
+        const string apiVersioningStub = """
+            namespace Trellis.Asp.ApiVersioning
+            {
+                using Trellis.Asp;
+
+                public static class HttpResponseOptionsBuilderApiVersioningExtensions
+                {
+                    public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
+                        this HttpResponseOptionsBuilder<TDomain> builder) => builder;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateNoDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(source);
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+        test.TestState.Sources.Add(("ApiVersioningStub.cs", apiVersioningStub));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
+    public async Task CreatedAtRoute_chained_with_foreign_WithVersionedRoute_extension_still_produces_warning()
+    {
+        // A user-defined .WithVersionedRoute(...) extension on the same builder type that lives
+        // OUTSIDE Trellis.Asp.ApiVersioning must not falsely suppress TRLS023. The analyzer's
+        // chain check resolves the symbol and verifies the containing type/namespace.
+        const string source = """
+            using Asp.Versioning;
+            using Microsoft.AspNetCore.Routing;
+            using Trellis.Asp;
+            using ContosoExtensions;
+
+            public sealed record Customer(int Id);
+
+            [ApiVersion("2026-11-12")]
+            public class CustomersController
+            {
+                public void DoIt(HttpResponseOptionsBuilder<Customer> opts)
+                {
+                    opts.CreatedAtRoute(
+                        "Customers_GetById",
+                        c => new RouteValueDictionary { ["id"] = c.Id })
+                        .WithVersionedRoute();
+                }
+            }
+            """;
+
+        // Foreign extension method living in a different namespace with the same name.
+        const string foreignStub = """
+            namespace ContosoExtensions
+            {
+                using Trellis.Asp;
+
+                public static class ContosoBuilderExtensions
+                {
+                    public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
+                        this HttpResponseOptionsBuilder<TDomain> builder) => builder;
+                }
+            }
+            """;
+
+        var test = AnalyzerTestHelper.CreateDiagnosticTest<CreatedAtRouteMissingApiVersionAnalyzer>(
+            source,
+            AnalyzerTestHelper.Diagnostic(DiagnosticDescriptors.MissingApiVersionRouteValue)
+                .WithLocation(19, 9)
+                .WithArguments("CreatedAtRoute"));
+        test.TestState.Sources.Add(("Stubs.cs", StubSource));
+        test.TestState.Sources.Add(("ForeignExtension.cs", foreignStub));
+
+        await test.RunAsync();
+    }
+
+    [Fact]
     public async Task CreatedAtRoute_on_versioned_controller_without_api_version_key_produces_warning()
     {
         const string source = """

@@ -70,7 +70,7 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
 
         // Skip if the same fluent builder chain already contains `.WithVersionedRoute(...)`.
         // The api-version is supplied per-request — no need to encode it in the route-values literal.
-        if (ChainContainsWithVersionedRoute(inv))
+        if (ChainContainsWithVersionedRoute(inv, context.SemanticModel))
             return;
 
         // Otherwise, inspect the route-values argument. If it's a literal that already includes
@@ -113,19 +113,25 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
 
     /// <summary>
     /// Returns true if the fluent builder chain containing <paramref name="inv"/> also calls
-    /// <c>.WithVersionedRoute(...)</c>. Walks both downstream (calls chained AFTER
-    /// <paramref name="inv"/>) and upstream (calls that appear earlier in the chain on the
-    /// same receiver). Order doesn't matter at runtime — <c>WithVersionedRoute</c> just
-    /// registers a route-value resolver — so we accept both.
+    /// <c>Trellis.Asp.ApiVersioning.HttpResponseOptionsBuilderApiVersioningExtensions.WithVersionedRoute(...)</c>.
+    /// Walks both downstream (calls chained AFTER <paramref name="inv"/>) and upstream (calls that
+    /// appear earlier in the chain on the same receiver). Order doesn't matter at runtime —
+    /// <c>WithVersionedRoute</c> just registers a route-value resolver — so we accept both.
     /// </summary>
-    private static bool ChainContainsWithVersionedRoute(InvocationExpressionSyntax inv)
+    /// <remarks>
+    /// Resolves each candidate to its method symbol and verifies the containing type/namespace,
+    /// so a user-defined <c>.WithVersionedRoute(...)</c> extension on an unrelated type cannot
+    /// falsely suppress this diagnostic. The outer-shape check earlier in
+    /// <see cref="AnalyzeInvocation"/> uses the same semantic-model gate for symmetry.
+    /// </remarks>
+    private static bool ChainContainsWithVersionedRoute(InvocationExpressionSyntax inv, SemanticModel semanticModel)
     {
         SyntaxNode? current = inv;
         while (current?.Parent is MemberAccessExpressionSyntax outerMae &&
                outerMae.Expression == current &&
                outerMae.Parent is InvocationExpressionSyntax outerInv)
         {
-            if (outerMae.Name.Identifier.Text == "WithVersionedRoute")
+            if (IsTrellisWithVersionedRoute(outerInv, semanticModel))
                 return true;
             current = outerInv;
         }
@@ -134,12 +140,36 @@ public sealed class CreatedAtRouteMissingApiVersionAnalyzer : DiagnosticAnalyzer
         while (receiver is InvocationExpressionSyntax receiverInv &&
                receiverInv.Expression is MemberAccessExpressionSyntax receiverMae)
         {
-            if (receiverMae.Name.Identifier.Text == "WithVersionedRoute")
+            if (IsTrellisWithVersionedRoute(receiverInv, semanticModel))
                 return true;
             receiver = receiverMae.Expression;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Returns true when <paramref name="candidate"/> is a call to
+    /// <c>Trellis.Asp.ApiVersioning.HttpResponseOptionsBuilderApiVersioningExtensions.WithVersionedRoute</c>.
+    /// Cheap name-match first to short-circuit the common case, then semantic verification.
+    /// </summary>
+    private static bool IsTrellisWithVersionedRoute(InvocationExpressionSyntax candidate, SemanticModel semanticModel)
+    {
+        if (candidate.Expression is not MemberAccessExpressionSyntax mae)
+            return false;
+        if (mae.Name.Identifier.Text != "WithVersionedRoute")
+            return false;
+
+        if (semanticModel.GetSymbolInfo(candidate).Symbol is not IMethodSymbol method)
+            return false;
+
+        // Extension methods resolve to the reduced symbol (instance form); ReducedFrom carries
+        // the original static extension method whose containing type holds the namespace we care
+        // about. Fall back to ContainingType when the symbol isn't a reduced extension.
+        var containingType = method.ReducedFrom?.ContainingType ?? method.ContainingType;
+        if (containingType is null) return false;
+        return containingType.Name == "HttpResponseOptionsBuilderApiVersioningExtensions" &&
+               containingType.ContainingNamespace?.ToDisplayString() == "Trellis.Asp.ApiVersioning";
     }
 
     private enum RouteValuesShapeKind
