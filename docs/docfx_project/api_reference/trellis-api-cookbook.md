@@ -157,13 +157,14 @@ public sealed class Order : Aggregate<OrderId>
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 
     // Idiomatic ROP factory: nullable parameters lift to Result<T> via T?.ToResult(error);
-    // Combine aggregates per-field errors into a single Error.UnprocessableContent; Map
-    // constructs the aggregate from the tuple of validated non-null values.
+    // Combine aggregates per-field errors into a single Error.UnprocessableContent; Map's
+    // tuple-deconstructing overload lets the lambda bind the validated non-null values
+    // directly as id/total/ownerId.
     public static Result<Order> TryCreate(OrderId? id, Money? total, ActorId? ownerId) =>
         id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Order id is required."))
             .Combine(total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required.")))
             .Combine(ownerId.ToResult(Error.UnprocessableContent.ForField("ownerId", "validation.error", "Owner id is required.")))
-            .Map(t => new Order(t.Item1) { Total = t.Item2, Status = OrderStatus.Draft, OwnerId = t.Item3 });
+            .Map((id, total, ownerId) => new Order(id) { Total = total, Status = OrderStatus.Draft, OwnerId = ownerId });
 }
 
 // Trellis convention: model finite domain states as RequiredEnum<TSelf>
