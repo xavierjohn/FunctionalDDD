@@ -70,7 +70,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
     {
         List<FieldViolation>? violations = null;
         List<RuleViolation>? rules = null;
-        var sawUnprocessableContent = false;
+        var sawInvalidInput = false;
 
         if (message is IValidate validatable)
         {
@@ -79,7 +79,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
             {
                 if (error is Error.InvalidInput upc)
                 {
-                    sawUnprocessableContent = true;
+                    sawInvalidInput = true;
                     if (upc.Fields.Items.Length > 0)
                     {
                         violations ??= [];
@@ -108,7 +108,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
 
             if (error is Error.InvalidInput upc)
             {
-                sawUnprocessableContent = true;
+                sawInvalidInput = true;
                 if (upc.Fields.Items.Length > 0)
                 {
                     violations ??= [];
@@ -127,7 +127,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
             return TResponse.CreateFailure(error);
         }
 
-        if (sawUnprocessableContent)
+        if (sawInvalidInput)
         {
             var fieldsArray = violations is { Count: > 0 }
                 ? EquatableArray.Create(violations.ToArray())

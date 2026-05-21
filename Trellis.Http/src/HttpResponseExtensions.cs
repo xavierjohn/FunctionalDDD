@@ -195,9 +195,9 @@ public static class HttpResponseExtensions
                 => new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, cr.Unit ?? "bytes")),
             HttpStatusCode.UnprocessableEntity => Error.InvalidInput.ForRule("http.unprocessable_content"),
             (HttpStatusCode)428 => new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch)),
-            (HttpStatusCode)429 => new Error.RateLimited(),
-            HttpStatusCode.NotImplemented => new Error.Unexpected("http.not_implemented"),
-            HttpStatusCode.ServiceUnavailable => new Error.Unavailable(),
+            (HttpStatusCode)429 => new Error.RateLimited(ExtractRetryAdvice(response)),
+            HttpStatusCode.NotImplemented => new Error.Unexpected("not_implemented"),
+            HttpStatusCode.ServiceUnavailable => new Error.Unavailable(Retry: ExtractRetryAdvice(response)),
             _ => new Error.Unexpected(Guid.NewGuid().ToString("N")),
         };
 
@@ -214,6 +214,23 @@ public static class HttpResponseExtensions
         if (allow is null || allow.Count == 0)
             return EquatableArray<string>.Empty;
         return new EquatableArray<string>([.. allow]);
+    }
+
+    /// <summary>
+    /// Extracts the response's <c>Retry-After</c> header into a transport-neutral
+    /// <see cref="RetryAdvice"/>. RFC 9110 §10.2.3 lets the header carry either a delta-seconds
+    /// value or an HTTP-date; .NET surfaces them as <see cref="System.Net.Http.Headers.RetryConditionHeaderValue.Delta"/>
+    /// and <see cref="System.Net.Http.Headers.RetryConditionHeaderValue.Date"/> respectively.
+    /// Returns <see langword="null"/> when the header is absent or unparsable so the resulting
+    /// <see cref="Error.RateLimited"/> / <see cref="Error.Unavailable"/> simply omits retry advice.
+    /// </summary>
+    private static RetryAdvice? ExtractRetryAdvice(HttpResponseMessage response)
+    {
+        var header = response.Headers.RetryAfter;
+        if (header is null)
+            return null;
+
+        return new RetryAdvice(After: header.Delta, At: header.Date);
     }
 
     /// <summary>

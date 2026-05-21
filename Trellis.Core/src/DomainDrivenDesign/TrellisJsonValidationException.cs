@@ -68,5 +68,5 @@ public sealed class TrellisJsonValidationException : JsonException
     /// as the value.
     /// </para>
     /// </remarks>
-    public Error.InvalidInput? UnprocessableContent { get; init; }
+    public Error.InvalidInput? InvalidInput { get; init; }
 }

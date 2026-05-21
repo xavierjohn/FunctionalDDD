@@ -138,7 +138,7 @@ public static class DbContextExtensions
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public static Task<Result<int>> SaveChangesResultAsync(this DbContext context, CancellationToken cancellationToken = default)` | `Task<Result<int>>` | Convenience overload for `SaveChangesResultAsync(context, true, cancellationToken)`. |
-| `public static Task<Result<int>> SaveChangesResultAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)` | `Task<Result<int>>` | Wraps `SaveChangesAsync`; maps `DbUpdateConcurrencyException` to `new Error.Conflict(null, "concurrency.modified")`, duplicate-key `DbUpdateException` to `new Error.Conflict(null, "duplicate.key")`, and foreign-key `DbUpdateException` to `new Error.Conflict(null, "referential.integrity")`. |
+| `public static Task<Result<int>> SaveChangesResultAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)` | `Task<Result<int>>` | Wraps `SaveChangesAsync`; maps `DbUpdateConcurrencyException` to `new Error.Conflict(null, "concurrent_modification")`, duplicate-key `DbUpdateException` to `new Error.Conflict(null, "duplicate.key")`, and foreign-key `DbUpdateException` to `new Error.Conflict(null, "referential.integrity")`. |
 | `public static Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | Saves changes and discards the row count. |
 | `public static Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | Saves changes with explicit `acceptAllChangesOnSuccess`. |
 
@@ -242,7 +242,7 @@ public class EfUnitOfWork<TContext> : IUnitOfWork
     where TContext : DbContext
 ```
 
-EF Core implementation of `IUnitOfWork`. Delegates to `DbContextExtensions.SaveChangesResultUnitAsync` which maps `DbUpdateConcurrencyException` → `new Error.Conflict(null, "concurrency.modified")`, duplicate-key → `new Error.Conflict(null, "duplicate.key")`, and FK violations → `new Error.Conflict(null, "referential.integrity")`. Tracks scope depth via an internal counter; `CommitAsync` defers (returns success without persisting) when depth > 1.
+EF Core implementation of `IUnitOfWork`. Delegates to `DbContextExtensions.SaveChangesResultUnitAsync` which maps `DbUpdateConcurrencyException` → `new Error.Conflict(null, "concurrent_modification")`, duplicate-key → `new Error.Conflict(null, "duplicate.key")`, and FK violations → `new Error.Conflict(null, "referential.integrity")`. Tracks scope depth via an internal counter; `CommitAsync` defers (returns success without persisting) when depth > 1.
 
 | Signature | Returns | Description |
 | --- | --- | --- |

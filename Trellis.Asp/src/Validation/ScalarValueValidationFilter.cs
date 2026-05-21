@@ -138,7 +138,7 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
             return false;
 
         var freshModelState = new ModelStateDictionary();
-        if (trellisEx.UnprocessableContent is { Fields.Length: > 0 } structured)
+        if (trellisEx.InvalidInput is { Fields.Length: > 0 } structured)
         {
             foreach (var fv in structured.Fields)
             {

@@ -82,12 +82,12 @@ When `statusMap` is omitted, the default mapper in `Trellis.Http/src/HttpRespons
 | `416` (with Content-Range length) | `new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, unit))` |
 | `422` | `Error.InvalidInput.ForRule("http.unprocessable_content")` |
 | `428` | `new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` |
-| `429` | `new Error.RateLimited()` |
-| `501` | `new Error.Unexpected("http.not_implemented")` |
-| `503` | `new Error.Unavailable()` |
+| `429` | `new Error.RateLimited(retryAdvice)` (parses `Retry-After` into `RetryAdvice`) |
+| `501` | `new Error.Unexpected("not_implemented")` |
+| `503` | `new Error.Unavailable(Retry: retryAdvice)` (parses `Retry-After` into `RetryAdvice`) |
 | other / `5xx` default | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
 
-A `416` without a known `Content-Range` length, or a `405` without `Allow`, also falls through to `new Error.Unexpected(Guid.NewGuid().ToString("N"))`. `WWW-Authenticate` and `Retry-After` are not parsed into the core 401 / 429 / 503 cases — the strict default preserves only the payloads that need a dedicated transport-fault envelope (`Allow` and `Content-Range`). Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer detail.
+A `416` without a known `Content-Range` length, or a `405` without `Allow`, also falls through to `new Error.Unexpected(Guid.NewGuid().ToString("N"))`. The strict default parses `Retry-After` into `RetryAdvice` for the core 429 / 503 cases (delta-seconds → `After`, HTTP-date → `At`); `WWW-Authenticate` on 401 is not parsed into `Error.AuthenticationRequired`. Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer detail.
 
 ## Exception propagation
 

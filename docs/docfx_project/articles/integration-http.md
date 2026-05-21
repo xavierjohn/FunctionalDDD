@@ -102,12 +102,12 @@ Bare `ToResultAsync()` uses the built-in mapper from `Trellis.Http/src/HttpRespo
 | `416` with known `Content-Range` length | `new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, unit))` |
 | `422` | `Error.InvalidInput.ForRule("http.unprocessable_content")` |
 | `428` | `new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` |
-| `429` | `new Error.RateLimited()` |
-| `501` | `new Error.Unexpected("http.not_implemented")` |
-| `503` | `new Error.Unavailable()` |
+| `429` | `new Error.RateLimited(retryAdvice)` (parses `Retry-After` into `RetryAdvice`) |
+| `501` | `new Error.Unexpected("not_implemented")` |
+| `503` | `new Error.Unavailable(Retry: retryAdvice)` (parses `Retry-After` into `RetryAdvice`) |
 | other / default | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
 
-A `405` without `Allow`, a `416` without a known `Content-Range` length, and all unmapped 3xx/5xx statuses fall through to `new Error.Unexpected(Guid.NewGuid().ToString("N"))`. The strict default does **not** parse `WWW-Authenticate` or `Retry-After` into `Error.AuthenticationRequired`, `Error.RateLimited`, or `Error.Unavailable`; those core cases stay transport-neutral. Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer header detail.
+A `405` without `Allow`, a `416` without a known `Content-Range` length, and all unmapped 3xx/5xx statuses fall through to `new Error.Unexpected(Guid.NewGuid().ToString("N"))`. The strict default parses `Retry-After` into `RetryAdvice` on `Error.RateLimited` and `Error.Unavailable` (delta-seconds → `After`, HTTP-date → `At`), but it does **not** parse `WWW-Authenticate` into `Error.AuthenticationRequired`. Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer header detail.
 
 > [!IMPORTANT]
 > **3xx redirects under the strict default fold into `Error.Unexpected`.** `HttpClient` follows redirects automatically by default, so this is mostly relevant only when `AllowAutoRedirect = false` (for example, SSO landing-page detection).
@@ -218,7 +218,7 @@ public sealed class InvoicesClient(HttpClient httpClient)
                 return response.StatusCode switch
                 {
                     HttpStatusCode.Conflict   => new Error.Conflict(null, "conflict") { Detail = body },
-                    HttpStatusCode.BadRequest => Error.InvalidInput.ForRule("bad-req") { Detail = body },
+                    HttpStatusCode.BadRequest => Error.InvalidInput.ForRule("bad-req", body),
                     _ => new Error.Unexpected("unexpected_fault", "upstream") { Detail = $"Invoice request failed with {(int)response.StatusCode}: {body}" },
                 };
             }, ct)

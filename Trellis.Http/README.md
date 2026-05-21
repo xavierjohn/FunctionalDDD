@@ -61,13 +61,13 @@ Calling `ToResultAsync()` without a `statusMap` produces typed errors that prese
 | Upstream status | Strict-default result |
 | --- | --- |
 | `401 Unauthorized` | `Error.AuthenticationRequired`. `WWW-Authenticate` is not preserved into the error payload; downstream ASP synthesis can still emit a scheme-only challenge when authentication is configured. |
-| `405 Method Not Allowed` | `new Error.TransportFault(new HttpError.MethodNotAllowed(...))` with `Allow` preserved. Missing or empty `Allow` falls through to `new Error.Unexpected("upstream_header_missing")`. |
+| `405 Method Not Allowed` | `new Error.TransportFault(new HttpError.MethodNotAllowed(...))` with `Allow` preserved. Missing or empty `Allow` falls through to an opaque `new Error.Unexpected(...)` with a generated `FaultId`. |
 | `406` / `412` / `413` / `415` / `428` | `new Error.TransportFault(new HttpError.*(...))` with the corresponding HTTP fault case. |
-| `416 Range Not Satisfiable` | `new Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with `Content-Range` unit + complete-length preserved. Missing header or unspecified length falls through to `new Error.Unexpected("upstream_header_missing")`. |
-| `429 Too Many Requests` / `503 Service Unavailable` | `Error.RateLimited` / `Error.Unavailable` with no `Retry-After` payload preservation. |
+| `416 Range Not Satisfiable` | `new Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with `Content-Range` unit + complete-length preserved. Missing header or unspecified length falls through to an opaque `new Error.Unexpected(...)` with a generated `FaultId`. |
+| `429 Too Many Requests` / `503 Service Unavailable` | `Error.RateLimited` / `Error.Unavailable` with `Retry-After` parsed into `RetryAdvice` (delta-seconds → `After`, HTTP-date → `At`). |
 | Other non-2xx statuses | The same typed Trellis errors as before (`Error.InvalidInput`, `Error.Forbidden`, `Error.NotFound`, `Error.Conflict`, `Error.Gone`, `Error.Unexpected`, etc.). |
 
-3xx responses fall through to `new Error.Unexpected("unexpected_redirect")` under the strict default. Callers who set `AllowAutoRedirect = false` (e.g. SSO landing-page detection) should pass a `statusMap`.
+3xx responses fall through to an opaque `new Error.Unexpected(...)` with a generated `FaultId` under the strict default. Callers who set `AllowAutoRedirect = false` (e.g. SSO landing-page detection) should pass a `statusMap`.
 
 See the [API reference](https://xavierjohn.github.io/Trellis/api_reference/trellis-api-http.html) for the complete behavior matrix.
 

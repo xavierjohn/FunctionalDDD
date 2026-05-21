@@ -361,7 +361,7 @@ public static class ServiceCollectionExtensions
         // an InputFormatterException ("safe to expose" marker). ModelStateDictionary then
         // takes the string-only path for InputFormatterException, dropping the original
         // exception object and its inner exception chain. That destroys our structured
-        // payload — TrellisJsonValidationException.UnprocessableContent — which the
+        // payload — TrellisJsonValidationException.InvalidInput — which the
         // ScalarValueValidationFilter needs to render per-field wire entries instead of
         // a single ;-joined string under the parent path. Disabling the wrap preserves the
         // exception object in ModelState. The user-visible ErrorMessage on the wire is

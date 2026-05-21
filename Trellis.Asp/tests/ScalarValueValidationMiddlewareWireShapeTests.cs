@@ -297,7 +297,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         //   }
         //
         // The composite VO converter must carry the structured `Error.InvalidInput`
-        // on the thrown `TrellisJsonValidationException` (via the new `UnprocessableContent`
+        // on the thrown `TrellisJsonValidationException` (via the `InvalidInput`
         // init property) so the middleware can emit per-leaf entries instead of one opaque
         // joined string.
         var ctx = NewContext();
@@ -314,7 +314,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.shippingAddress");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -356,7 +356,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         // Root path — JsonException.Path stays default ("$" or null).
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -391,7 +391,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
 
@@ -424,7 +424,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.shippingAddress");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -459,7 +459,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.shippingAddress");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -494,7 +494,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.order");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -532,7 +532,7 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.items");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);

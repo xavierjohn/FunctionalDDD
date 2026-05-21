@@ -106,7 +106,7 @@ T> : JsonConverter<T>
             // render one wire entry per FieldViolation under <parent>.<leaf> keys.
             throw new TrellisJsonValidationException(error.GetDisplayMessage())
             {
-                UnprocessableContent = error as Error.InvalidInput,
+                InvalidInput = error as Error.InvalidInput,
             };
         }
 

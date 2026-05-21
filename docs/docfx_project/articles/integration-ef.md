@@ -260,7 +260,7 @@ Failure mapping (identical for both):
 
 | EF Core failure | Trellis result |
 |---|---|
-| `DbUpdateConcurrencyException` | `new Error.Conflict(null, "concurrency.modified")` |
+| `DbUpdateConcurrencyException` | `new Error.Conflict(null, "concurrent_modification")` |
 | Duplicate-key `DbUpdateException` | `new Error.Conflict(null, "duplicate.key")` |
 | Foreign-key `DbUpdateException` | `new Error.Conflict(null, "referential.integrity")` |
 
@@ -396,7 +396,7 @@ Once `ApplyTrellisConventions*` and `AddTrellisInterceptors()` are wired:
 - a new `ETag` is generated on **Added** and **Modified** aggregates,
 - aggregate roots are also promoted when loaded dependents change, so concurrency works at the aggregate boundary.
 
-A losing writer surfaces as `DbUpdateConcurrencyException` → `new Error.Conflict(null, "concurrency.modified")` from `SaveChangesResult*Async` (and therefore from `IUnitOfWork.CommitAsync` / the transactional pipeline behavior). You do **not** configure `AggregateETagConvention` or `AggregateETagInterceptor` directly — they are internal types reached through the supported public entry points.
+A losing writer surfaces as `DbUpdateConcurrencyException` → `new Error.Conflict(null, "concurrent_modification")` from `SaveChangesResult*Async` (and therefore from `IUnitOfWork.CommitAsync` / the transactional pipeline behavior). You do **not** configure `AggregateETagConvention` or `AggregateETagInterceptor` directly — they are internal types reached through the supported public entry points.
 
 ## Composition
 

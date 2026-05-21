@@ -346,7 +346,7 @@ public class ToResultAsyncTests
     }
 
     [Fact]
-    public async Task Default_429_with_Retry_After_header_still_returns_TooManyRequests()
+    public async Task Default_429_with_Retry_After_header_preserves_RetryAdvice_After()
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.TooManyRequests);
         tracker.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(60));
@@ -354,11 +354,14 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.RateLimited>();
+        var rate = result.Should().BeFailureOfType<Error.RateLimited>().Subject;
+        rate.Retry.Should().NotBeNull();
+        rate.Retry!.Value.After.Should().Be(TimeSpan.FromSeconds(60));
+        rate.Retry.Value.At.Should().BeNull();
     }
 
     [Fact]
-    public async Task Default_503_with_Retry_After_header_still_returns_ServiceUnavailable()
+    public async Task Default_503_with_Retry_After_header_preserves_RetryAdvice_At()
     {
         var when = new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.ServiceUnavailable);
@@ -367,7 +370,22 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.Unavailable>();
+        var unavailable = result.Should().BeFailureOfType<Error.Unavailable>().Subject;
+        unavailable.Retry.Should().NotBeNull();
+        unavailable.Retry!.Value.At.Should().Be(when);
+        unavailable.Retry.Value.After.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Default_501_maps_to_Unexpected_with_not_implemented_reason_code()
+    {
+        var tracker = new TrackingHttpResponseMessage(HttpStatusCode.NotImplemented);
+        var task = Task.FromResult<HttpResponseMessage>(tracker);
+
+        var result = await task.ToResultAsync();
+
+        var unexpected = result.Should().BeFailureOfType<Error.Unexpected>().Subject;
+        unexpected.ReasonCode.Should().Be("not_implemented");
     }
 
     [Fact]

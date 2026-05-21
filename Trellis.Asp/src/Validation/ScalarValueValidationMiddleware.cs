@@ -219,10 +219,10 @@ public sealed class ScalarValueValidationMiddleware
         // each violation's leaf path is appended in MVC dot+bracket convention via
         // JsonPointerToMvc.Translate.
         //
-        // Rules-only UnprocessableContent (no FieldViolations) falls through to the unstructured
+        // Rules-only InvalidInput (no FieldViolations) falls through to the unstructured
         // branch so the curated exception message surfaces under the parent key — emitting an
         // empty `errors` object would silently swallow the rule violation.
-        if (ex.InnerException is TrellisJsonValidationException { UnprocessableContent: { Fields.Length: > 0 } structuredError })
+        if (ex.InnerException is TrellisJsonValidationException { InvalidInput: { Fields.Length: > 0 } structuredError })
         {
             var perLeafErrors = new Dictionary<string, string[]>(StringComparer.Ordinal);
             foreach (var fv in structuredError.Fields)
